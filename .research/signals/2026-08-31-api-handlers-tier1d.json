@@ -1,0 +1,72 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-08-31T00:00:00Z",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned",
+  "selection_detail": "Standalone Tier-1d demand-driven run (dispatcher claimable buffer starved of LANDABLE work: the actionable backlog is structurally mobile-native/KMP-gated and unlandable in this cloud runner, so fresh landable NON-mobile-native review vectors were required). CHURN_FILES from the dispatcher: backend/servers/reality-server/src/sso.rs, backend/servers/reality-server/src/services/search_alert_drainer.rs, backend/servers/api-server/src/routes/compliance.rs. The reality-server churn landed a full 3-finding Tier-1d run earlier TODAY (2026-08-31-reality-server-tier1d.json: agent self-review, pagination offset overflow, saved-search error-string status) and state.review_cursor.reality-server is already 2026-08-31, so that segment is exhausted for fresh distinct findings this cycle. Pivoted churn selection onto the api-server churn file compliance.rs, which maps to segment api-handlers (NOTE: the skill segment map lists api-handlers root as backend/api-server/src/handlers/, but the real tree has NO handlers/ dir — the actual Axum handler layer is backend/servers/api-server/src/routes/, 76 route files; compliance.rs is a route/handler file, so api-handlers is the correct segment id and root=routes/). Saturation check passed: 0 OPEN code-review-finding rows for api-handlers in backlog.json. Primary expert = Rust, secondary = Security (per segment->expert map). Static-only: grep sweep of routes/compliance.rs (822 lines) for unwrap/expect/unsafe/todo/panic/dynamic-SQL/StatusCode-on-error/owner-scoping/PII-in-logs, then a full read of the file. gh CLI unavailable in this runner — dep-version / dependabot-history checks skipped gracefully (no manifest findings emitted).",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 3,
+  "note": "compliance.rs is platform-tier gated end-to-end (every one of the 10 handlers opens with require_platform_admin(&user)?, and that guard now correctly uses AuthUser::is_platform_admin() covering SuperAdmin+PlatformAdmin — the prior superadmin-exact-match finding, code-review-api-handlers-compliance-superadmin-exact-match, is landed/done and confirmed fixed at :30-39, backed by unit tests :798-821). No unwrap/expect/unsafe/todo/panic in non-test code. All hand-written SQL (:395,:453,:471,:482,:534,:615,:625,:680,:710,:722) is fully parameterized via .bind() — no injection. The already-emitted unbounded-pagination-limit finding (2026-08-29) covers the missing upper clamp on AuditLogQueryParams.limit (doc says 'max 1000' at :78 but no clamp exists here), so this run deliberately does NOT re-flag the limit clamp. The three findings below are genuine, distinct, landable defects that survived that sweep, each confined to compliance.rs, each a self-contained fix, none overlapping any prior api-handlers finding.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-data-export-report-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "evidence": [
+        "get_data_export_report (routes/compliance.rs:346-369, GET /api/v1/compliance/gdpr/data-exports, Epic 9 Story 9.7 GDPR reporting) is a production-shipped stub that returns materially false compliance figures. It explicitly discards its filter params (`let _ = params;` at :353, dropping from_date/to_date/org_id), then hardcodes `exports: vec![]` (:363), `completed_count: 0` (:365) and `downloaded_count: 0` (:367) regardless of actual data. The only live query is data_export_repo.get_pending(1000) (:356-360), whose length is used for BOTH total_requests and pending_count (:364,:366).",
+        "Consequences on a GDPR compliance report: (a) the exports list is ALWAYS empty even when export requests exist; (b) completed_count and downloaded_count ALWAYS read 0 — a GDPR auditor / platform admin reading this report would conclude no data exports have ever been completed or downloaded, which is false whenever any export has completed; (c) total_requests counts ONLY pending exports (completed/failed are excluded because get_pending returns only pending rows), so 'total' is a misnomer and undercounts; (d) the get_pending(1000) hard cap silently truncates the pending count itself once >1000 exports are pending. The inline comment `// For now, return a summary (in production, this would query with filters)` (:352) confirms this is a known stub that nonetheless ships on a compliance-reporting surface.",
+        "This is materially different from the two prior compliance.rs findings: superadmin-exact-match (auth guard, done) and unbounded-pagination-limit (limit clamp) — neither touches the data-export report body or its hardcoded zero counts. Fix: back the response with real repo queries — count completed/pending/downloaded by status over the requested date range (honouring from_date/to_date/org_id), and populate the exports vec (or paginate it) — instead of the stub. IG3: an integration test seeding one completed+downloaded export and one pending export asserts completed_count==1, downloaded_count==1, pending_count==1 and a non-empty exports list.",
+        "Confidence medium: the discarded params, empty vec, and hardcoded zero counts are confirmed by static read of the full handler; 'medium' not 'high' because the surface is platform-admin-gated (not anonymous) and the harm is misleading compliance output / data-integrity of a report rather than a crash, data loss, or cross-tenant leak."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-user-audit-logs-total-page-len",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "evidence": [
+        "get_user_audit_logs (routes/compliance.rs:238-280, GET /api/v1/compliance/audit-logs/user/{user_id}) returns AuditLogListResponse whose `total` field is computed as `let total = log_responses.len() as i64;` (:272) — i.e. the length of the CURRENT PAGE, not the true number of audit-log rows for the user. The handler fetches a single page via get_user_logs(user_id, limit.unwrap_or(100), offset.unwrap_or(0)) (:245-252) and never issues a count query.",
+        "AuditLogListResponse.total (:117-120) is the pagination total that clients divide by `limit` to compute page count. Because total here equals the page size, a user with 5000 audit logs returns total=100 (the default limit) on every full page and total=<remainder> on the final partial page. A UI paginator built on this shows '1 page' (100/100 -> ceil = 1) and hides pages 2..N, silently truncating access to the bulk of a user's audit trail — the opposite of what a compliance/audit surface must guarantee.",
+        "This is a confirmed inconsistency WITHIN the same file: the sibling list handler get_audit_logs (:124-179) does it correctly, issuing a dedicated `state.audit_log_repo.count(query)` (:150-154) for total. get_user_audit_logs simply omits the equivalent count. Distinct from unbounded-pagination-limit (which is about clamping the limit param, not the total field). Fix: add a per-user count query (or a repo count_user_logs(user_id)) and use it for total, mirroring get_audit_logs; the AuthUser/require_platform_admin gate is already in place. IG3: an integration test seeding N>limit user audit logs asserts response.total == N while response.logs.len() == limit.",
+        "Confidence medium: the page-length-as-total computation and the divergence from the count()-backed sibling are confirmed by static read; severity medium (+2) because it corrupts a user-facing pagination contract on an audit/compliance surface (under-exposes audit data) rather than crashing or leaking cross-tenant data."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-compliance-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "evidence": [
+        "Every fallible DB/repo call in compliance.rs maps its error straight into the client-facing 500 body via `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))` — 12 sites: :148,:154,:209,:253,:303,:360,:405,:463,:479,:489,:622,:632 (plus :695,:719,:731). The raw sqlx/anyhow Display string (which can include column names, constraint names, table names, SQLSTATE, and fragments of the failing statement) is returned verbatim to the HTTP client instead of a scrubbed generic message.",
+        "This is the exact anti-pattern the reality-server segment centralised away: reality-server routes funnel DB errors through util/errors::db_error, which scrubs every sqlx/anyhow error to a generic 500 and is unit-tested for leak-freedom (see the 2026-08-31 reality-server run note). compliance.rs (and the api-server routes layer generally) has no such wrapper applied here, so internal error detail escapes on the GDPR/audit/security report endpoints.",
+        "Exposure is bounded because all 10 handlers are require_platform_admin-gated (:129,:204,:244,:296,:351,:393,:451,:527,:613,:674), so only SuperAdmin/PlatformAdmin principals can trigger the leak — hence low severity (+1), not a public disclosure. It remains a real defect: internal schema/error strings should not reach any client response body, and the inconsistency with the reality-server db_error convention makes this a clean, mechanical hardening. Fix: introduce/reuse an api-server error mapper that logs the full error server-side (tracing) and returns a fixed generic 500 message, then replace the 12 `.to_string()` maps in this file with it. IG3: a unit/integration test asserting the 500 body for a forced DB failure does not contain table/column identifiers.",
+        "Confidence medium: the verbatim `e.to_string()` in the client tuple is confirmed by static read at all sites, and the contrast with reality-server's scrubbing wrapper is established; severity low because the endpoints are platform-admin-gated, so this is information-hygiene / defense-in-depth rather than an anonymous data leak."
+      ]
+    }
+  ]
+}
