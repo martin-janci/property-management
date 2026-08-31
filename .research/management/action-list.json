@@ -164,23 +164,6 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-2895-reality",
-      "action": "screen-map-drift: PR #2895 touched reality-web routes without updating docs/scre",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-31T04:25:43Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-31T04:25:43Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
       "action": "churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer.",
       "owner_role": "pm-tech-lead",
