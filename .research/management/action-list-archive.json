@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-31T18:29:45Z",
+  "archived_at": "2026-08-31T20:30:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6235,6 +6235,29 @@
         "merged_pr": 2893,
         "merged_at": "2026-08-30T16:40:51Z",
         "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-per-call-client-no-timeout",
+      "action": "SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-08-31T20:24:27Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b1902b11c5387461893fe79a2f4d489c79a57100",
+        "subject": "code-review-reality-server-sso-per-call-client-no-timeout: reuse pooled SSO HTTP client with timeouts (#2897)",
+        "at": "2026-08-31T20:24:27Z"
       }
     },
     {

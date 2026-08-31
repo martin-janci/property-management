@@ -1,0 +1,25 @@
+{
+  "generated": "2026-08-31T00:00:00Z",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt"
+      ],
+      "evidence": [
+        "Navigation.kt:493 (composable(Screen.CreateListing.route)) hardwires CreateListingScreen's onSubmit to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. This is a reachable production nav-graph path, not a test/stub module — a realtor navigating MyListings -> CreateListing and submitting the form ALWAYS gets a guaranteed failure. The realtor Create-Listing feature is dead end-to-end despite the UI being fully built.",
+        "CreateListingScreen.kt is a complete implementation, not a placeholder: onSubmit: suspend (CreateListingInput) -> Result<Unit> (:41), full form + validation + footer, and a real submit handler (:105-127) that sets isSubmitting, awaits onSubmit(...), then result.fold(onSuccess = { onCreated() }, onFailure = { ... }). Because onSubmit can only ever return the injected NotImplementedError failure, onCreated() (navigate back to MyListings, Navigation.kt:494) is unreachable and the user only ever sees the onFailure error branch.",
+        "The backing repository already exists and is used elsewhere in the SAME file: PortalListingsRepository (Navigation.kt:471 listMyListings, plus getPortfolioAnalytics referenced ~:498). So this is not a missing-backend gap — the create call simply was never wired to the repository. Fix: replace the NotImplementedError lambda with a real suspend call into PortalListingsRepository.create*(input) returning its Result, mirroring the listMyListings/onSuccess/onFailure pattern already in the file.",
+        "Confidence high: the failure is unconditional and statically traced from the nav-graph wiring (Navigation.kt:493) through the screen's fold (CreateListingScreen.kt:120-127) — no runtime state can make onSubmit succeed. Severity medium (+2): a whole realtor feature is non-functional on a user-facing path, but it fails closed with a handled error rather than crashing."
+      ]
+    }
+  ]
+}

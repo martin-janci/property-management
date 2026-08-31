@@ -118,23 +118,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-sso-per-call-client-no-timeout",
-      "action": "SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T14:23:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
       "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — currently 7/8 open backlog items are structurally unclaimable in cloud, forcing Tier-1d generator kicks every run",
       "owner_role": "pm-devops",

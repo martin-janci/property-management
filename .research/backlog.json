@@ -10018,7 +10018,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep)"
       ],
@@ -10032,7 +10032,12 @@
         "backend/servers/reality-server/src/state.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-31T20:24:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2897
+      }
     },
     {
       "id": "code-review-reality-server-bytelen-charcount-validation",
@@ -10193,7 +10198,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "top-3 churn 2026-08-31 (PR #2896)"
       ],
@@ -10205,7 +10210,12 @@
       ],
       "created_at": "2026-08-31",
       "updated_at": "2026-08-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-31T20:24:27Z",
+        "assignment_status": "merged",
+        "pr_number": 2905
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
