@@ -1,0 +1,201 @@
+{
+  "generated_at": "2026-08-31T02:40:00Z",
+  "since_iso": "2026-08-30T12:41:00Z",
+  "cursor_pr": 2888,
+  "cursor_issue": 2847,
+  "trigger": "buffer-low refill — claimable=0/72, all open backlog mobile-native/KMP (unlandable in cloud, #2652)",
+  "phases_run": ["1", "2", "3", "4", "6"],
+  "phases_skipped": [
+    { "phase": "1.5", "reason": "dispatcher Tier-1d generator (00:37 UTC) already covered reality-server segment today with 3 findings; folded here to avoid double-review" },
+    { "phase": "1.6", "reason": "buffer-low refill focus — pm rotation unchanged (pm_cursor.next_index=4, pm-devops), no management artifact writes this run" }
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "churn-hotspot",
+      "source": "git log 9ba2f31c..HEAD",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "4 touches / 1150 lines over 14d (window 2026-08-17..2026-08-31); re-emit — cumulative type, no score double-count"
+      ],
+      "cumulative_reemit": true
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "churn-hotspot",
+      "source": "git log 9ba2f31c..HEAD",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 touches / 640 lines over 14d; re-emit — cumulative type"
+      ],
+      "cumulative_reemit": true
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "type": "churn-hotspot",
+      "source": "git log 9ba2f31c..HEAD",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 touches / 585 lines over 14d; re-emit — cumulative type"
+      ],
+      "cumulative_reemit": true
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1 → 2",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "moderation.rs hit hotspot in prior run (2026-08-28) and again this run — instability proxy"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1 → 2",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "auth_policy.rs hit hotspot in prior run (2026-08-28) and again this run"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1 → 2",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "ContentModerationPage.tsx hit hotspot in prior run (2026-08-28) and again this run"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2889-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2889",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": ["frontend/apps/ppt-web/src/App.tsx"],
+      "evidence": [
+        "PR #2889 touched frontend/apps/ppt-web/src/App.tsx (WebSocketWrapper wiring for realtime cache invalidation) without a matching docs/screens/ppt/*.md update in the same window. Best-effort heuristic — review candidate only."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2890-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2890",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "evidence": [
+        "PR #2890 touched three reality-web route files with isError inline alerts without a matching docs/screens/reality/*.md update. Best-effort heuristic — review candidate only."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2894-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2894",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": ["frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"],
+      "evidence": [
+        "PR #2894 i18n'd reality-web saved-searches page without a matching docs/screens/reality/*.md update. Best-effort heuristic — review candidate only."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2895-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2895",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": ["frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"],
+      "evidence": [
+        "PR #2895 i18n'd reality-web inquiries page without a matching docs/screens/reality/*.md update. Best-effort heuristic — review candidate only."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-agent-review-self-review",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server, folded into routine)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/agent_reviews.rs"],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:198 create_review (POST /api/v1/realtors/{id}/reviews) never checks the target realtor_profiles row is not owned by principal.user_id — a realtor can POST a 5-star review of their own profile; unauth public reads render avg + count, so this is a reputation-inflation gap"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-pagination-offset-overflow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server, folded into routine)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/articles.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "evidence": [
+        "articles.rs:157, inquiries.rs:590 and inquiries.rs:642 compute offset as an unchecked i64 mul of user-controlled `page` against per_page/limit; a crafted query overflows to negative offset (release) or panics (debug); articles list is unauth"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-saved-search-error-string-status",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server, folded into routine)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/saved_searches.rs"],
+      "evidence": [
+        "saved_searches.rs:93-103 (create) and :166-176 (update) map DB errors to HTTP status via substring-matching Display strings owned by the repo/sqlx layer; a wording change silently regresses public contract to 500 (max-reached and not-owned)"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-08-31.md && head -1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json advanced vs HEAD (cursors + seen_signals + hotspot_history)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | length == (unique | length)'", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "signal id uniqueness vs seen_signals (churn-hotspot re-emits carry score_delta=0)", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap + decay (no decay-eligible items this run)", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — adversarial-pass grep vacuous", "observed": "true", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "0 new plans (≤2 cap)", "observed": "0", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "staged only .research/", "observed": "0 outside", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets / private hostnames in staged non-baseline files", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md regen byte-identical", "observed": "match", "expected": "match" },
+    { "goal": "G11", "passed": true, "command": "no phase 'failed' — 1.5/1.6 documented as skipped-by-policy, not failed", "observed": "true", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "no prior-run plan silently deleted", "observed": "true", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count non-decreasing", "observed": "8 >= 8", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regen byte-identical", "observed": "match", "expected": "match" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty, no PR/issue/comment", "observed": "empty", "expected": "empty" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run → no-op", "observed": "skipped", "expected": "no-op-when-skipped" },
+    { "goal": "G17", "passed": true, "command": "no telegram token value in staged diff", "observed": "0", "expected": "0" }
+  ]
+}

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-30T12:41:00Z",
-  "last_run_ms": 4000,
-  "last_pr_seen": 2888,
+  "last_run_iso": "2026-08-31T02:40:00Z",
+  "last_run_ms": 4500,
+  "last_pr_seen": 2899,
   "last_issue_seen": 2847,
-  "last_commit_sha": "9ba2f31c6a0c773989a50a78df8584e0dee4f5a7",
+  "last_commit_sha": "d0ba29047a99b250a30502782c4a158a5526d26d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -498,19 +498,19 @@
       "recent_churn": 175
     },
     "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-28",
-      "recent_churn": 4
+      "runs_seen": 2,
+      "last_seen": "2026-08-31",
+      "recent_churn": 585
     },
     "backend/servers/api-server/src/services/auth_policy.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-28",
-      "recent_churn": 3
+      "runs_seen": 2,
+      "last_seen": "2026-08-31",
+      "recent_churn": 640
     },
     "backend/servers/api-server/src/routes/aml_dsa/moderation.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-28",
-      "recent_churn": 2
+      "runs_seen": 2,
+      "last_seen": "2026-08-31",
+      "recent_churn": 1150
     }
   },
   "seen_signals": [
@@ -969,13 +969,23 @@
     "code-review-reality-server-sso-introspect-negcache-poison",
     "code-review-reality-server-sso-per-call-client-no-timeout",
     "code-review-reality-server-bytelen-charcount-validation",
-    "code-review-reality-server-report-contact-unvalidated"
+    "code-review-reality-server-report-contact-unvalidated",
+    "repeated-churn-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+    "repeated-churn-backend/servers/api-server/src/services/auth_policy.rs",
+    "repeated-churn-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
+    "screen-map-drift-pr-2889-ppt",
+    "screen-map-drift-pr-2890-reality",
+    "screen-map-drift-pr-2894-reality",
+    "screen-map-drift-pr-2895-reality",
+    "code-review-reality-server-agent-review-self-review",
+    "code-review-reality-server-pagination-offset-overflow",
+    "code-review-reality-server-saved-search-error-string-status"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-29",
     "api-core": "2026-08-29",
-    "reality-server": "2026-08-28",
+    "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-08-29",
     "ppt-web-core": "2026-08-29",
     "reality-web": "2026-08-29",
@@ -983,8 +993,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 74,
-    "vectors_created": 352,
+    "runs": 75,
+    "vectors_created": 362,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
