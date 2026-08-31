@@ -10149,12 +10149,14 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2894"
+        "PR #2894",
+        "PR #2900"
       ],
       "evidence": [
-        "PR #2894 modified frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx without updating docs/screens/reality/saved-searches.md"
+        "PR #2894 modified frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx without updating docs/screens/reality/saved-searches.md",
+        "resolved: PR #2900 merged 2026-08-31 updated docs/screens/reality/saved-searches.md"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
@@ -10169,12 +10171,14 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2895"
+        "PR #2895",
+        "PR #2903"
       ],
       "evidence": [
-        "PR #2895 modified frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx without updating docs/screens/reality/inquiries.md"
+        "PR #2895 modified frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx without updating docs/screens/reality/inquiries.md",
+        "resolved: PR #2903 merged 2026-08-31 updated docs/screens/reality/inquiries.md"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
