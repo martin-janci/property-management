@@ -861,6 +861,13 @@ pub struct AppState {
     pub sso_token_service: SsoTokenService,
     /// PM API HTTP client (Epic 104.1)
     pub pm_api_client: PmApiClient,
+    /// Shared pooled HTTP client for the PM OAuth/SSO calls (token exchange,
+    /// userinfo, introspection). Built once with connect + request timeouts so
+    /// the SSO handlers reuse one connection pool instead of constructing a
+    /// fresh, timeout-less `reqwest::Client` per call (which pools nothing and
+    /// can hang indefinitely if the PM endpoint stalls). `reqwest::Client` is
+    /// internally `Arc`-backed, so cloning it out of `AppState` is cheap.
+    pub pm_oauth_client: reqwest::Client,
     /// PM API health check cache (Epic 104.1)
     pub health_cache: HealthCheckCache,
     /// SSO token validation cache (Epic 104.2)
@@ -940,6 +947,18 @@ impl AppState {
         // Epic 104.1: Create PM API client for health checks
         let pm_api_client = PmApiClient::new(config.pm_api_health_url.clone(), 5);
 
+        // Shared pooled HTTP client for the SSO OAuth calls (exchange /
+        // userinfo / introspect). Built once here so the three handlers reuse a
+        // single connection pool and inherit bounded timeouts, rather than each
+        // spinning up a fresh, timeout-less `reqwest::Client::new()` per request.
+        // Mirrors the `.timeout()` + `.connect_timeout()` convention used by the
+        // integration clients (e.g. `booking::client`).
+        let pm_oauth_client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(15))
+            .connect_timeout(Duration::from_secs(5))
+            .build()
+            .unwrap_or_default();
+
         // Epic 104.1: Health check cache with 30 second TTL
         let health_cache = HealthCheckCache::new(30);
 
@@ -993,6 +1012,7 @@ impl AppState {
             session_service,
             sso_token_service: SsoTokenService::new(),
             pm_api_client,
+            pm_oauth_client,
             health_cache,
             token_cache,
             // Phase 1: shared host-resolution cache
