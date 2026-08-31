@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings \u2014 dashboard under-reports on large portfolios",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -20,7 +20,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit \u2014 up to 100 parallel GETs from a mobile device [retry 1/2 of failed code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -68,7 +68,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -85,7 +85,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout \u2014 every suspend API call can hang indefinitely on Android + iOS",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -102,7 +102,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -119,7 +119,7 @@
     },
     {
       "id": "code-review-reality-server-sso-per-call-client-no-timeout",
-      "action": "SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk",
+      "action": "SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout \u2014 no pooling, hang risk",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -133,7 +133,19 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-devops-unblock-mobile-native-cloud-builds",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 currently 7/8 open backlog items are structurally unclaimable in cloud, forcing Tier-1d generator kicks every run",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-08-31",
+      "first_open_at": "2026-08-31T03:10:00Z"
     }
   ],
-  "generated": "2026-08-25T04:24:00Z"
+  "generated": "2026-08-31T03:10:00Z"
 }

@@ -1,0 +1,263 @@
+{
+  "generated": "2026-08-31T03:11:00Z",
+  "run": {
+    "trigger": "",
+    "since_iso": "2026-08-30T12:41:00Z",
+    "lag_hours": 14,
+    "autofix_disabled": false
+  },
+  "counts": {
+    "merged_prs": 10,
+    "open_prs_touched": 1,
+    "closed_not_merged": 0,
+    "issues": 0,
+    "commits_on_dev": 21,
+    "signals_emitted": 7
+  },
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-2889-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2889",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "product": "ppt",
+      "evidence": [
+        "PR #2889 modified frontend/apps/ppt-web/src/App.tsx without touching docs/screens/ppt/*.md \u2014 see heuristic caveat (App.tsx wrapper-only edit; likely false positive)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2890-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2890",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "product": "reality",
+      "evidence": [
+        "PR #2890 modified frontend/apps/reality-web/src/app/[locale]/{favorites,inquiries,saved-searches}/page.tsx without updating docs/screens/reality/*.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2894-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2894",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "product": "reality",
+      "evidence": [
+        "PR #2894 modified frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx without updating docs/screens/reality/saved-searches.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2895-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2895",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "product": "reality",
+      "evidence": [
+        "PR #2895 modified frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx without updating docs/screens/reality/inquiries.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-08-31 (PR #2896)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "churn=222 lines this run (PRs [2896])"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-08-31 (PR #2893)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "churn=151 lines this run (PRs [2893])",
+        "cumulative re-emit \u2014 score_delta suppressed to 0 (already in state.seen_signals)"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-08-31 (PR #2891)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "churn=151 lines this run (PRs [2891])"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx"
+      ]
+    }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "reality-server",
+    "selection_reason": "churn-aligned (search_alert_drainer.rs, sso.rs, inquiries.rs all under reality-server segment)",
+    "experts_used": [
+      "rust"
+    ],
+    "findings_count": 0,
+    "note": "Dispatcher tier-1d dev-review generator ran on reality-server at 2026-08-31T00:37Z and emitted 3 findings already recorded at .research/signals/2026-08-31-reality-server-tier1d.json (agent-review-self-review, pagination-offset-overflow, saved-search-error-string-status). Routine's Phase 1.5 static re-scan confirmed those and found no additional high-value items to double-emit."
+  },
+  "phase_1_6": {
+    "role_run": "pm-devops",
+    "pm_cursor_next_index_before": 4,
+    "pm_cursor_next_index_after": 5,
+    "coverage_cursor_next_index_before": 6,
+    "coverage_cursor_next_index_after": 7,
+    "epic_rechecked": "epic-81"
+  },
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/... && head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev HEAD:state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals dedup filter",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans for adversarial pass",
+      "observed": "no new plans this run",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases-that-failed line",
+      "observed": "none",
+      "expected": "none or cursors match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs in current tree",
+      "observed": "0 missing of 24",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files archive count vs HEAD",
+      "observed": ">=",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions counts",
+      "observed": "true (all 0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "jq management artifacts + cursors",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token pattern",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
