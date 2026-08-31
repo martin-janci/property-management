@@ -104,10 +104,13 @@ UC-04 voting list. Quorum tile pattern matches `ui_kits/ppt-web/manager-dashboar
 - Close countdown chip styling: default neutral, amber <24h, danger <2h (synchronized with vote-detail header).
 - 6-state pillset uses `--status-vote-{state}-{bg|ink}` token pairs.
 - Mobile voting screen reuses card pattern but compresses quorum tile to inline mini-bar.
+- 2026-08-31 — realtime sync (PR #2889): the `votes` query root now auto-refetches on a `notification.created` frame with `category: votes`. Previously `WebSocketContext.eventToQueryKeys` keyed on dead `entity:*` names the api-server never emits (100% dead sync); PR #2889 added `categoryToQueryKeys.votes → ['votes']` and wired `App.tsx`'s `onEntityEvent`. REST wiring unchanged.
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=votes` now invalidates the `votes` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 
 - 2026-06-08 — agent (CTO/PAP-19): built ppt-web `features/voting/VotingPage` (status-filtered vote list, quorum tile, create CTA) wired to `@ppt/api-client` `useVotes`/`useBuildings`; mounted `votingRoutes()` (`/voting`) in `AppRoutes.tsx` + lazyRoutes; flipped ppt-web buildStatus planned→shipped, apiStatus stub→complete, added route. Functional MVP (English labels); Slovak-localized design-system polish remains a follow-up.
 - 2026-05-09 — agent: integrated Batch E (pages/ppt-voting.html list — 4 artboards: loaded-1-selected/empty/loading/error) + Batch F1 (MobVotingScreen); flipped ppt-web from n/a → planned + redesignStatus → in-progress (drift: route not in sitemap); mobile redesignStatus → in-progress; attached 2 designSources; populated 8 sections + 4 states + 4 notes; declared 7 sharedComponents; added 3 relatedScreens (vote-detail + vote-create children, ppt/home parent)
