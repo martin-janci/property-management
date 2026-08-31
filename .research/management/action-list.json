@@ -213,6 +213,26 @@
         "score": 0,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "gh-issue-2906",
+      "action": "backend CI: api-server audit-log RBAC test failing on dev (test-shard 1) — blocking approved PR merges (Closes #2906)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-08-31T10:29:11Z (#2906)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-31T10:29:11Z",
+      "issue_ref": {
+        "number": 2906,
+        "url": "https://github.com/martin-janci/property-management/issues/2906",
+        "labels": [
+          "bug",
+          "follow-up"
+        ]
+      }
     }
   ],
   "generated": "2026-08-31T03:10:00Z"

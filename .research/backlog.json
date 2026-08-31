@@ -10230,7 +10230,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "top-3 churn 2026-08-31 (PR #2891)"
       ],
@@ -10242,7 +10242,12 @@
       ],
       "created_at": "2026-08-31",
       "updated_at": "2026-08-31",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-08-31T10:29:00Z",
+        "assignment_status": "merged",
+        "pr_number": 2904
+      }
     }
   ]
 }
