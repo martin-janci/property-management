@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-31T16:30:46Z",
+  "generated": "2026-08-31T18:26:32Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-08-31T14:41:22Z",
+      "last_updated": "2026-08-31T18:29:34Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -28,13 +28,13 @@
       "branch": "auto-impl/code-review-reality-server-sso-per-call-80f4afe0",
       "status": "review",
       "claimed_at": "2026-08-30T16:26:58Z",
-      "last_updated": "2026-08-31T16:30:46Z",
+      "last_updated": "2026-08-31T18:29:34Z",
       "status_changed_at": "2026-08-31T04:40:17Z",
       "pr_number": 2897,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2897",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": " [Phase5.7 respawn r1: CI red on own diff — cargo fmt failing in sso.rs tests + test-shard(1) failure; re-running specialist to fix] | r1 done: cargo fmt fixed check/fmt-clippy (new head ed9ed10, force-pushed); test-shard(1) assessed as unrelated DB-integration tests — CI on ed9ed10 is authoritative | [dispatcher 2026-08-31: reviewer=approve but HELD — test-shard(1) red on unrelated listing_analytics/portal_track_listing_view Postgres integ test (unreproducible in cloud sandbox; other shards+check+fmt-clippy green; shard1 green on dev as of #2865). Commented on PR #2897 requesting maintainer re-run; fix_rounds unchanged, not respawning] | [dispatcher 2026-08-31: correction — prior note wrongly assumed shard-1 green; shard-1 is GENUINELY red on the audit-log RBAC base failure (get_audit_logs_requires_super_admin 403 vs 200), NOT flaky DB tests. Fix in progress via gh-issue-2906 respawn; this PR (reality-server sso, unrelated diff) will merge once base is green + rebased] [base test-shard-1 fixed by #2907; branch updated to re-run CI on fixed base — expect green next cycle]",
+      "implementer_summary": " [Phase5.7 respawn r1: CI red on own diff — cargo fmt failing in sso.rs tests + test-shard(1) failure; re-running specialist to fix] | r1 done: cargo fmt fixed check/fmt-clippy (new head ed9ed10, force-pushed); test-shard(1) assessed as unrelated DB-integration tests — CI on ed9ed10 is authoritative | [dispatcher 2026-08-31: reviewer=approve but HELD — test-shard(1) red on unrelated listing_analytics/portal_track_listing_view Postgres integ test (unreproducible in cloud sandbox; other shards+check+fmt-clippy green; shard1 green on dev as of #2865). Commented on PR #2897 requesting maintainer re-run; fix_rounds unchanged, not respawning] | [dispatcher 2026-08-31: correction — prior note wrongly assumed shard-1 green; shard-1 is GENUINELY red on the audit-log RBAC base failure (get_audit_logs_requires_super_admin 403 vs 200), NOT flaky DB tests. Fix in progress via gh-issue-2906 respawn; this PR (reality-server sso, unrelated diff) will merge once base is green + rebased] [base test-shard-1 fixed by #2907; branch updated to re-run CI on fixed base — expect green next cycle] [dispatcher 2026-08-31 18:2x: prior CI run on ef6114b had test-shard(2)+(4) CANCELLED at ~90min job-timeout (shards 1&3 + all other checks green); rerun_failed_jobs 403-blocked for integration, so re-triggered a fresh CI run via branch-update — expect green + mergeable next cycle]",
       "reviewer_summary": "verdict=approve note=clean-pooled-client-timeout-refactor-consistent-wiring-verified",
       "last_reviewed_oid": "ed9ed10fd34521c59fe7abe1d4cd996a8a601fd0",
       "scope_drift": null,
@@ -50,7 +50,7 @@
       "branch": "auto-impl/screen-map-drift-pr-2894-reality-b0a2b158",
       "status": "review",
       "claimed_at": "2026-08-31T06:26:28Z",
-      "last_updated": "2026-08-31T16:30:46Z",
+      "last_updated": "2026-08-31T18:29:34Z",
       "status_changed_at": "2026-08-31T06:38:30Z",
       "pr_number": 2902,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2902",
@@ -66,28 +66,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
-      "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-cfbafd3f",
-      "status": "review",
-      "claimed_at": "2026-08-31T06:26:28Z",
-      "last_updated": "2026-08-31T16:30:46Z",
-      "status_changed_at": "2026-08-31T06:57:49Z",
-      "pr_number": 2905,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/2905",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=2905 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=floored drainer poll_interval to 1s min to prevent tokio interval zero-period panic; +test; verify green (env: local pg + swagger mirror) | [dispatcher 2026-08-31: confirmed base-blocked on the audit-log RBAC shard-1 failure (as reviewer noted); fix in progress via gh-issue-2906 respawn; will merge once base green + rebased] [base test-shard-1 fixed by #2907; branch updated to re-run CI on fixed base — expect green next cycle]",
-      "reviewer_summary": "verdict=approve note=minimal correct zero-period floor fix; drainer tests pass; sole CI red is unrelated pre-existing api-server audit-log RBAC test (403 vs 200); COMMENT (no self-approve)",
-      "last_reviewed_oid": "cf7782e4c3b5f4fcb2508725f24da6faf7e2ade0",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-08-31T16:30:46Z"
     }
   ]
 }

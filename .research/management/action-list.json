@@ -164,23 +164,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
-      "action": "churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer.",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-31T04:25:43Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-31T04:25:43Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
       "action": "churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi",
       "owner_role": "pm-tech-lead",

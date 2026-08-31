@@ -1727,6 +1727,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-cfbafd3f",
+      "status": "merged",
+      "claimed_at": "2026-08-31T06:26:28Z",
+      "last_updated": "2026-08-31T18:26:32Z",
+      "status_changed_at": "2026-08-31T18:26:32Z",
+      "pr_number": 2905,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2905",
+      "merged_at": "2026-08-31T18:25:46Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2905 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=floored drainer poll_interval to 1s min to prevent tokio interval zero-period panic; +test; verify green (env: local pg + swagger mirror) | [dispatcher 2026-08-31: confirmed base-blocked on the audit-log RBAC shard-1 failure (as reviewer noted); fix in progress via gh-issue-2906 respawn; will merge once base green + rebased] [base test-shard-1 fixed by #2907; branch updated to re-run CI on fixed base — expect green next cycle]",
+      "reviewer_summary": "verdict=approve note=minimal correct zero-period floor fix; drainer tests pass; sole CI red is unrelated pre-existing api-server audit-log RBAC test (403 vs 200); COMMENT (no self-approve)",
+      "last_reviewed_oid": "cf7782e4c3b5f4fcb2508725f24da6faf7e2ade0",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-08-31T16:30:46Z"
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
       "branch": "auto-impl/churn-hotspot-frontend-apps-mobile-app-c-c36f6bf5",
       "status": "failed",
@@ -16841,5 +16863,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-31T16:31:52Z"
+  "archived_at": "2026-08-31T18:29:34Z"
 }
