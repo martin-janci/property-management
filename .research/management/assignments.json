@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-31T06:38:47Z",
+  "generated": "2026-08-31T06:57:49Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -92,18 +92,18 @@
     {
       "task_id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-cfbafd3f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-08-31T06:26:28Z",
-      "last_updated": "2026-08-31T06:26:28Z",
-      "status_changed_at": "2026-08-31T06:26:28Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-08-31T06:57:49Z",
+      "status_changed_at": "2026-08-31T06:57:49Z",
+      "pr_number": 2905,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2905",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2905 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=floored drainer poll_interval to 1s min to prevent tokio interval zero-period panic; +test; verify green (env: local pg + swagger mirror)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
