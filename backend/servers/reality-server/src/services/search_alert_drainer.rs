@@ -275,6 +275,17 @@ impl SearchAlertDrainerConfig {
             max_attempts,
         }
     }
+
+    /// Poll cadence as a `Duration`, guaranteed non-zero.
+    ///
+    /// `tokio::time::interval` panics on a zero period, so a misconfigured
+    /// `SEARCH_ALERT_DRAINER_INTERVAL_SECS=0` (which [`from_env`] parses as a
+    /// valid `0`) must never reach it. Floor at 1s.
+    ///
+    /// [`from_env`]: SearchAlertDrainerConfig::from_env
+    fn poll_interval(&self) -> Duration {
+        Duration::from_secs(self.poll_interval_secs.max(1))
+    }
 }
 
 /// Background worker that drains undelivered `search_alert_queue` rows to email
@@ -329,7 +340,7 @@ impl SearchAlertDrainerWorker {
                     batch_size = self.config.batch_size,
                     "[BIT-139] SearchAlertDrainerWorker started"
                 );
-                let mut ticker = interval(Duration::from_secs(self.config.poll_interval_secs));
+                let mut ticker = interval(self.config.poll_interval());
                 loop {
                     ticker.tick().await;
                     self.run_once().await;
@@ -426,6 +437,25 @@ impl SearchAlertDrainerWorker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn poll_interval_is_floored_to_avoid_zero_period_panic() {
+        // A zero period would panic inside `tokio::time::interval`; the config
+        // must floor it so a `SEARCH_ALERT_DRAINER_INTERVAL_SECS=0` misconfig
+        // never crashes the worker task.
+        let cfg = SearchAlertDrainerConfig {
+            poll_interval_secs: 0,
+            ..SearchAlertDrainerConfig::default()
+        };
+        assert_eq!(cfg.poll_interval(), Duration::from_secs(1));
+
+        // A valid value passes through unchanged.
+        let cfg = SearchAlertDrainerConfig {
+            poll_interval_secs: 45,
+            ..SearchAlertDrainerConfig::default()
+        };
+        assert_eq!(cfg.poll_interval(), Duration::from_secs(45));
+    }
 
     #[test]
     fn absent_or_unknown_locale_falls_back_to_english() {
