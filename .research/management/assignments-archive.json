@@ -14249,6 +14249,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2906",
+      "branch": "auto-impl/gh-issue-2906-733e464e",
+      "status": "merged",
+      "claimed_at": "2026-08-31T10:32:35Z",
+      "last_updated": "2026-08-31T16:30:46Z",
+      "status_changed_at": "2026-08-31T16:30:46Z",
+      "pr_number": 2907,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2907",
+      "merged_at": "2026-08-31T16:30:46Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2907 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=issue misdiagnosed; real shard-1 fail was booking_cross_user_idor_tests 401 (JWT-secret mismatch vs process-global JWT_VERIFIER OnceLock), aligned test secret, suite_2 412/0 | [dispatcher 2026-08-31 Phase5.7 respawn r1: ci-fail routing — booking-IDOR fix landed but REAL remaining shard-1 red is compliance_wave1b_tests::get_audit_logs_requires_super_admin (compliance.rs:1057 platform_admin→200, expected 403). Respawned rust-backend to add require_super_admin gate on /api/v1/compliance/audit-logs endpoints. This is THE base failure blocking 2897+2905 too] [merged via #2907 squash 691400d7; test-shard-1 base fix landed; issue #2906 closed]",
+      "reviewer_summary": "verdict=approve note=test-only-jwt-secret-alignment-verified-oncelock-and-canonical-secret-confirmed-scope-drift-justified",
+      "last_reviewed_oid": "5f806f8dd62993522463aa6b3d3ab05bac4c6375",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -16819,5 +16841,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-31T14:41:32Z"
+  "archived_at": "2026-08-31T16:31:52Z"
 }
