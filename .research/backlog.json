@@ -9801,7 +9801,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30"
       ],
@@ -9813,7 +9813,12 @@
         "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-31T00:29:18Z",
+        "assignment_status": "merged",
+        "pr_number": 2894
+      }
     },
     {
       "id": "code-review-reality-web-inquiries-i18n",
@@ -9821,7 +9826,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-08-30"
       ],
@@ -9833,7 +9838,12 @@
         "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-08-30"
+      "updated_at": "2026-08-30",
+      "reconciled": {
+        "at": "2026-08-31T00:29:18Z",
+        "assignment_status": "merged",
+        "pr_number": 2895
+      }
     },
     {
       "id": "code-review-api-handlers-compliance-superadmin-exact-match",
