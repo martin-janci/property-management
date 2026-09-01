@@ -38,6 +38,7 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Create legal routes router.
@@ -903,7 +904,7 @@ async fn list_audit_trail(
             query.requirement_id,
             query.document_id,
             query.notice_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit.map(i64::from), 50) as i32,
             query.offset.unwrap_or(0),
         )
         .await

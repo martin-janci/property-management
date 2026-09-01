@@ -15,6 +15,7 @@ use api_core::extractors::RlsConnection;
 use db::models::enhanced_tenant_screening::*;
 use db::repositories::enhanced_tenant_screening::ComponentScores;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
@@ -35,7 +36,7 @@ pub(super) async fn list_ai_results(
         .list_ai_results(
             &mut **rls.conn(),
             org_id,
-            q.limit.unwrap_or(50),
+            clamp_limit(q.limit.map(i64::from), 50) as i32,
             q.offset.unwrap_or(0),
         )
         .await;

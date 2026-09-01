@@ -1,5 +1,6 @@
 //! Fault routes (Epic 4: Fault Reporting & Resolution).
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
@@ -644,7 +645,7 @@ async fn list_my_faults(
         .fault_repo
         .list_by_reporter(
             principal.user_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await

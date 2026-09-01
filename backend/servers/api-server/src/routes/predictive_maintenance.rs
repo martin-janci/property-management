@@ -706,7 +706,7 @@ async fn get_equipment_by_health(
     Query(query): Query<ByHealthQuery>,
 ) -> Response {
     let org_id = rls.tenant_id();
-    let limit = query.limit.unwrap_or(20);
+    let limit = clamp_limit(query.limit, 20);
 
     let resp = match s
         .predictive_maintenance_repo
