@@ -276,7 +276,7 @@ pub async fn list_favorite_alerts(
         .limit
         .unwrap_or(ALERTS_DEFAULT_LIMIT)
         .clamp(1, ALERTS_MAX_LIMIT);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
 
     let (alerts, unread_count) = tokio::try_join!(
         state

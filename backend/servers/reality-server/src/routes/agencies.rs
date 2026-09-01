@@ -122,7 +122,7 @@ pub async fn list_agencies(
     Query(query): Query<ListAgenciesQuery>,
 ) -> Result<Json<AgencyListResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(50).clamp(1, 200);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
 
     let (agencies, total) = state
         .reality_portal_repo
