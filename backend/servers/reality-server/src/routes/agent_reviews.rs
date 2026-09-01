@@ -26,6 +26,26 @@ use uuid::Uuid;
 /// server so free-text limits stay consistent.
 const MAX_REVIEW_BODY_LEN: usize = 5000;
 
+/// Guard: a realtor must not review their own profile.
+///
+/// `reviewer_user_id` is the authenticated principal posting the review;
+/// `realtor_user_id` is the user account that owns the realtor profile being
+/// reviewed. When they are the same account the request is a self-review — an
+/// agent grading their own reviews — which is rejected with `403 Forbidden`.
+/// Without this gate the `subject != reviewer` invariant was unenforced.
+fn reject_self_review(
+    reviewer_user_id: Uuid,
+    realtor_user_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    if reviewer_user_id == realtor_user_id {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "You cannot review your own realtor profile".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Create agent reviews router.
 /// Mounted at /api/v1/realtors/:id/reviews via main.rs.
 pub fn router() -> Router<AppState> {
@@ -191,6 +211,7 @@ pub async fn list_reviews(
         (status = 201, description = "Review created", body = RealtorReview),
         (status = 400, description = "Invalid rating or already reviewed"),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Cannot review your own realtor profile"),
         (status = 404, description = "Realtor not found")
     ),
     security(("session_token" = []))
@@ -222,20 +243,27 @@ pub async fn create_review(
         .await
         .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
-    // Verify realtor exists
-    let realtor_exists: bool =
-        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM realtor_profiles WHERE id = $1)")
+    // Verify realtor exists and fetch the owning user account so we can reject
+    // self-reviews (an agent reviewing their own profile).
+    let realtor_user_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT user_id FROM realtor_profiles WHERE id = $1")
             .bind(realtor_id)
-            .fetch_one(&mut *conn)
+            .fetch_optional(&mut *conn)
             .await
             .map_err(|e| crate::util::errors::db_error("check realtor", e))?;
 
-    if !realtor_exists {
-        return Err((
-            axum::http::StatusCode::NOT_FOUND,
-            "Realtor not found".to_string(),
-        ));
-    }
+    let realtor_user_id = match realtor_user_id {
+        Some(uid) => uid,
+        None => {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                "Realtor not found".to_string(),
+            ))
+        }
+    };
+
+    // Reject self-reviews: the reviewer must not be the profile's own account.
+    reject_self_review(principal.user_id, realtor_user_id)?;
 
     // Determine verified_buyer: check for a prior responded inquiry with this realtor.
     // listing_inquiries.realtor_id references portal_users.id (the realtor's user_id).
@@ -304,5 +332,34 @@ pub async fn create_review(
             axum::http::StatusCode::BAD_REQUEST,
             "You have already reviewed this realtor".to_string(),
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Guard the self-review invariant without a database. `create_review`
+    //! delegates the `subject != reviewer` decision to [`reject_self_review`],
+    //! so pinning that helper covers the rejection contract on every PR.
+    use super::reject_self_review;
+    use axum::http::StatusCode;
+    use uuid::Uuid;
+
+    #[test]
+    fn self_review_is_rejected_with_403() {
+        let account = Uuid::new_v4();
+        // Reviewer and realtor profile owner are the same account => self-review.
+        let err = reject_self_review(account, account)
+            .expect_err("a realtor reviewing their own profile must be rejected");
+        assert_eq!(err.0, StatusCode::FORBIDDEN);
+    }
+
+    #[test]
+    fn distinct_accounts_pass() {
+        let reviewer = Uuid::new_v4();
+        let realtor = Uuid::new_v4();
+        assert!(
+            reject_self_review(reviewer, realtor).is_ok(),
+            "reviewing a different realtor's profile must be allowed"
+        );
     }
 }
