@@ -1,11 +1,12 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-08-31 14:45 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-01 10:50 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
 | 6 | test-gap | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | `backend/servers/reality-server/src/routes/inquiries.rs (+1)` | PR #497 (+2) | 2026-05-26 | done | plans/_archive/test-gap-inquiry-idor-regression.md |
 | 5 | security | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature | `backend/servers/api-server/src/routes/voice_webhooks.rs (+1)` | standing-scan-2026-07-28 | 2026-07-28 | dropped | — |
+| 4 | bug | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | `mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp) (+1) | 2026-09-01 | open | — |
 | 3 | security | api-server client-ip resolver trusts CF-Connecting-IP on any private-range peer — CF-only gate missing, reintroduces #2789 spoof class | `backend/servers/api-server/src/client_ip.rs` | dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-core client-ip) | 2026-08-29 | done | plans/code-review-api-core-client-ip-cf-spoof.md |
 | 3 | bug | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt (+3)` | mobile-native-kmp segment review 2026-08-16 | 2026-08-25 | ready | plans/code-review-mobile-native-kmp-inquiries-response-contract.md |
 | 3 | bug | frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:129-176 — window.promp | `frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx` | ppt-web-ui segment review 2026-08-25 | 2026-08-25 | done | plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md |
@@ -30,20 +31,25 @@
 | 3 | bug | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | `frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx` | rotating-expert-review reality-web 2026-06-14 | 2026-06-14 | dropped | plans/code-review-reality-web-share-comparison-404.md |
 | 3 | bug | Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx (+1)` | rotating-expert-review reality-web 2026-06-14 | 2026-06-14 | dropped | plans/code-review-reality-web-listing-page-ssr-crash.md |
 | 3 | bug | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted | `mobile-native/iosApp/iosApp/Features/Search/SearchView.swift` | issue #1266 (+1) | 2026-06-11 | dropped | plans/bug-ios-searchview-uncompilable.md |
-| 3 | security | PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged | `—` | PR #1203 | 2026-06-10 | dropped | — |
-| 3 | security | PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merg | `—` | PR #1193 | 2026-06-10 | dropped | — |
+| 3 | security | PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged | — | PR #1203 | 2026-06-10 | dropped | — |
+| 3 | security | PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merg | — | PR #1193 | 2026-06-10 | dropped | — |
 | 3 | bug | Schema drift: runtime SQL errors from non-existent columns in voting/messaging/notification paths | `backend/crates/db/src/repositories/vote.rs (+3)` | Issue #1008 (+2) | 2026-06-07 | done | — |
 | 3 | security | IDOR: ai.rs LLM-doc handlers publish/list/get any tenant's listing descriptions & photo enhancements unscoped | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-29 (+4) | 2026-06-01 | dropped | plans/security-llm-doc-idor.md |
 | 3 | security | IDOR: reality-server realtors mark_inquiry_read flips any realtor's inquiry by ID with no owner scoping | `backend/servers/reality-server/src/routes/realtors.rs (+2)` | issue #519 (+3) | 2026-05-26 | done | plans/_archive/security-realtors-mark-inquiry-read-idor.md |
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | api-server push_fanout: FCM HTTP v1 uses a static FCM_OAUTH_TOKEN loaded once at startup — Google's ~1h token TTL breaks Android push after first hour | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout) | 2026-09-01 | open | — |
+| 2 | perf | api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout) | 2026-09-01 | open | — |
+| 2 | bug | ppt-web-ui EmergencyContactDirectoryPage: 5 error handlers show raw `err.message` (English backend copy) — the t() i18n fallback is dead code on the common failure path | `frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts) | 2026-09-01 | open | — |
+| 2 | bug | api-server compliance.rs get_data_export_report returns hardcoded zeros — GDPR data-export report ships as a stub reporting materially false counts to platform admins | `backend/servers/api-server/src/routes/compliance.rs` | rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers) | 2026-09-01 | open | — |
+| 2 | bug | api-server compliance.rs get_user_audit_logs: `total = log_responses.len()` returns the page size, not the true user-audit-log count — UI paginator hides pages 2..N on a compliance surface | `backend/servers/api-server/src/routes/compliance.rs` | rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers) | 2026-09-01 | open | — |
+| 2 | bug | reality-server agent review endpoint allows self-review — an agent can post a review of their own reviews via missing subject != reviewer gate | `backend/servers/reality-server/src/routes/reviews.rs` | rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server) | 2026-09-01 | open | — |
 | 2 | test-gap | screen-map-drift: PR #2889 touched ppt-web routes without updating docs/screens/ | `frontend/apps/ppt-web/src/App.tsx` | PR #2889 | 2026-08-31 | done | — |
 | 2 | test-gap | screen-map-drift: PR #2890 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx (+2)` | PR #2890 | 2026-08-31 | done | — |
 | 2 | test-gap | screen-map-drift: PR #2894 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx` | PR #2894 (+1) | 2026-08-31 | done | — |
 | 2 | test-gap | screen-map-drift: PR #2895 touched reality-web routes without updating docs/scre | `frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx` | PR #2895 (+1) | 2026-08-31 | done | — |
 | 2 | bug | Mutations on favorites/saved-searches/inquiries silently swallow errors (no onError, no isError surfacing) | `frontend/apps/reality-web/src/app/[locale]/favorites/page.tsx (+2)` | rotating-expert-review 2026-08-30 | 2026-08-30 | done | — |
-| 2 | bug | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | `mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp) | 2026-08-30 | open | — |
 | 2 | bug | WebSocketContext eventToQueryKeys keys on `entity:*` but api-server emits `domain.action` — realtime cache invalidation 100% dead | `frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx (+2)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core) | 2026-08-30 | done | — |
 | 2 | bug | SSO introspect_pm_token caches active=false on PM 5xx — 60s spurious session denials during PM introspection outages | `backend/servers/reality-server/src/routes/sso.rs (+1)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep) | 2026-08-30 | done | — |
 | 2 | bug | Reality Portal length validators measure bytes but errors say characters — over-rejects sk/cs/de accented input | `backend/servers/reality-server/src/routes/inquiries.rs (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server) | 2026-08-30 | done | — |
@@ -128,7 +134,7 @@
 | 2 | test-gap | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | `backend/servers/reality-server/src/routes/listings.rs` | PR #959 (+2) | 2026-07-05 | done | — |
 | 2 | test-gap | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix | `frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx` | PR #1418 (+1) | 2026-07-05 | done | — |
 | 2 | bug | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id}/results | `backend/crates/db/src/repositories/vote.rs` | code-review api-core 2026-06-15 (+1) | 2026-06-16 | done | — |
-| 2 | test-gap | PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO  | `—` | PR #1196 | 2026-06-10 | dropped | — |
+| 2 | test-gap | PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO  | — | PR #1196 | 2026-06-10 | dropped | — |
 | 2 | dx | PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op | `backend/servers/api-server/src/services/push_fanout.rs` | PR #515 (+2) | 2026-06-06 | done | — |
 | 2 | refactor | ai.rs (3,134 LOC) — explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod}.rs | `backend/servers/api-server/src/routes/ai.rs` | pm-tech-lead analysis 2026-05-25 (+3) | 2026-06-06 | done | — |
 | 2 | refactor | announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work) | `backend/servers/api-server/src/routes/announcements.rs` | git log origin/dev since 2026-05-24 (+4) | 2026-06-06 | done | — |
@@ -168,7 +174,13 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
-| 1 | refactor | churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer. | `backend/servers/reality-server/src/services/search_alert_drainer.rs` | top-3 churn 2026-08-31 (PR #2896) | 2026-08-31 | open | — |
+| 1 | bug | api-server push_fanout: FCM legacy fallback (`https://fcm.googleapis.com/fcm/send`) is Google-decommissioned dead code — send_fcm_legacy can never deliver in production | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout) | 2026-09-01 | open | — |
+| 1 | bug | ppt-web-ui meters feature: toLocaleDateString()/toLocaleString() called with NO locale argument across 8 sites — dates follow browser locale, not the user's in-app language | `frontend/apps/ppt-web/src/features/meters/components/MeterCard.tsx (+4)` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui meters) | 2026-09-01 | open | — |
+| 1 | bug | ppt-web-ui NotificationSettingsPage: hardcoded English error toasts ('Failed to update preference. Please try again.') on wired Settings > Notifications surface | `frontend/apps/ppt-web/src/features/settings/notifications/NotificationSettingsPage.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui settings/notifications) | 2026-09-01 | open | — |
+| 1 | bug | api-server compliance.rs: sqlx errors bubbled to the client via `e.to_string()` (:272,:322 etc) leak raw DB messages/column names on failure paths | `backend/servers/api-server/src/routes/compliance.rs` | rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers) | 2026-09-01 | open | — |
+| 1 | bug | reality-server list endpoints: offset accepts arbitrary large integers — postgres integer offset overflow / no cap | `backend/servers/reality-server/src/routes/listings.rs` | rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server) | 2026-09-01 | open | — |
+| 1 | bug | reality-server saved-search: error strings compared to derive UI status — string-typed status codes are fragile to backend copy changes | `backend/servers/reality-server/src/routes/saved_searches.rs` | rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server) | 2026-09-01 | open | — |
+| 1 | refactor | churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer. | `backend/servers/reality-server/src/services/search_alert_drainer.rs` | top-3 churn 2026-08-31 (PR #2896) | 2026-08-31 | done | — |
 | 1 | refactor | churn-hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unautho | `frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx` | top-3 churn 2026-08-31 (PR #2891) | 2026-08-31 | done | — |
 | 1 | bug | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | mobile-native-kmp segment review 2026-08-16 | 2026-08-30 | open | — |
 | 1 | bug | Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app | `frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx` | rotating-expert-review 2026-08-30 | 2026-08-30 | done | — |
@@ -176,7 +188,7 @@
 | 1 | bug | compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier hierarchy) | `backend/servers/api-server/src/routes/compliance.rs (+2)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d api-handlers) | 2026-08-30 | done | — |
 | 1 | bug | lib/api.ts onUnauthorized callback never wired — 401 branch dead, getApiClient consumers stuck on token expiry | `frontend/apps/ppt-web/src/lib/api.ts (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core) | 2026-08-30 | done | — |
 | 1 | bug | SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent notification-i18n gap | `backend/servers/reality-server/src/services/search_alert_drainer.rs (+1)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server services sweep) | 2026-08-30 | done | — |
-| 1 | bug | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk | `backend/servers/reality-server/src/routes/sso.rs (+1)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep) | 2026-08-30 | open | — |
+| 1 | bug | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk | `backend/servers/reality-server/src/routes/sso.rs (+1)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep) | 2026-08-30 | done | — |
 | 1 | bug | submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation | `backend/servers/reality-server/src/routes/reports.rs` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server) | 2026-08-30 | done | — |
 | 1 | bug | ai/ocr photo submit returns 201 with fabricated `pending-upload/…` URL when storage disabled — image bytes dropped, no reconciler | `backend/servers/api-server/src/routes/ai/ocr.rs` | dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers) | 2026-08-29 | done | — |
 | 1 | bug | ppt-web iot.tsx sensor-delete confirm is hardcoded English `window.confirm(…)` — sk/cs/de users see raw English on destructive action | `frontend/apps/ppt-web/src/routes/groups/iot.tsx` | dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes) | 2026-08-29 | done | — |
@@ -189,9 +201,9 @@
 | 1 | refactor | Churn hotspot: auth_policy.rs — 3 touches (email-verify policy #2858, membership ordering + dead capability-grant path #2864) — auth layer being iterated | `backend/servers/api-server/src/services/auth_policy.rs` | commits 142ae17..origin/dev | 2026-08-28 | done | — |
 | 1 | refactor | Churn hotspot: aml_dsa/moderation.rs — 2 touches (#2856 server-side overdue filter, #2860 truncation notice) — same file surfaced 2 unvalidated-input findings in Tier-1d | `backend/servers/api-server/src/routes/aml_dsa/moderation.rs` | commits 142ae17..origin/dev | 2026-08-28 | done | — |
 | 1 | bug | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt (+8)` | Tier1d review 2026-08-11 (mobile-native-kmp) | 2026-08-25 | open | — |
-| 1 | refactor | churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches | `—` | PR #2826, PR #2834 | 2026-08-25 | dropped | — |
-| 1 | refactor | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | `—` | PR #2829, PR #2833 | 2026-08-25 | done | — |
-| 1 | refactor | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | `—` | PR #2829, PR #2833 | 2026-08-25 | done | — |
+| 1 | refactor | churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches | — | PR #2826, PR #2834 | 2026-08-25 | dropped | — |
+| 1 | refactor | churn hotspot: AmlDashboardPage.tsx — high line-count / repeated PR touches | — | PR #2829, PR #2833 | 2026-08-25 | done | — |
+| 1 | refactor | churn hotspot: AmlDashboardPage.test.tsx — high line-count / repeated PR touches | — | PR #2829, PR #2833 | 2026-08-25 | done | — |
 | 1 | refactor | frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx:1-322 — no useTranslation imp | `frontend/apps/ppt-web/src/features/compliance/pages/DsaReportsPage.tsx` | ppt-web-ui segment review 2026-08-25 (+1) | 2026-08-25 | done | — |
 | 1 | refactor | Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX) | `frontend/apps/mobile/src/voice/VoiceCommands.ts` | rotating-expert-review [mobile-rn] | 2026-08-23 | done | — |
 | 1 | refactor | ThreadDetailScreen renders hardcoded English UI strings (composer, labels, fallbacks) | `frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx` | rotating-expert-review [mobile-rn] | 2026-08-23 | done | — |
@@ -227,10 +239,10 @@
 | 1 | test-gap | ppt-web rentals API↔UI mappers now covered by regression tests — monitor for further churn | `frontend/apps/ppt-web/src/routes/groups/rentals.mappers.test.tsx` | PR #2735 | 2026-08-12 | done | — |
 | 1 | test-gap | mobile useOfflineSupport now covered by retryable-4xx regression tests — verify future changes don't re-introduce data loss | `frontend/apps/mobile/src/hooks/useOfflineSupport.test.ts` | PR #2738 | 2026-08-12 | done | — |
 | 1 | refactor | api-server oauth.rs churning around token-usage recording — monitor for further refactor pressure | `backend/servers/api-server/src/services/oauth.rs (+1)` | PR #2732 | 2026-08-12 | done | — |
-| 1 | dx | stalled review: PR #2555 feat(acc) UC-ACC-05.17 wire sent/cancelled invoice lifecycle (15d open, 13d idle) | `—` | PR #2555 | 2026-08-12 | needs-human-judgement | — |
-| 1 | dx | stalled review: PR #2558 feat(acc) UC-ACC-05.9 invoice PDF render endpoint (15d open, 13d idle) | `—` | PR #2558 | 2026-08-12 | needs-human-judgement | — |
-| 1 | dx | stalled review: PR #2559 feat(acc) UC-ACC-05.8 PAY by square QR endpoint (15d open, 13d idle) | `—` | PR #2559 | 2026-08-12 | needs-human-judgement | — |
-| 1 | dx | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry closed unmerged, investigate root cause | `—` | PR #2705 | 2026-08-12 | done | — |
+| 1 | dx | stalled review: PR #2555 feat(acc) UC-ACC-05.17 wire sent/cancelled invoice lifecycle (15d open, 13d idle) | — | PR #2555 | 2026-08-12 | needs-human-judgement | — |
+| 1 | dx | stalled review: PR #2558 feat(acc) UC-ACC-05.9 invoice PDF render endpoint (15d open, 13d idle) | — | PR #2558 | 2026-08-12 | needs-human-judgement | — |
+| 1 | dx | stalled review: PR #2559 feat(acc) UC-ACC-05.8 PAY by square QR endpoint (15d open, 13d idle) | — | PR #2559 | 2026-08-12 | needs-human-judgement | — |
+| 1 | dx | closed-not-merged: PR #2705 dx-cnm-pr-2385-retry2 (rust-toolchain 1.94.1→1.100.0) — second retry closed unmerged, investigate root cause | — | PR #2705 | 2026-08-12 | done | — |
 | 1 | bug | Notification pipeline swallows quiet-hours schedule DB error and fails open — push delivered during user's configured quiet hours | `backend/servers/api-server/src/services/notification_pipeline.rs` | tier1d-dispatcher-generator (+1) | 2026-08-10 | done | — |
 | 1 | bug | reality-web ListingForm hardcodes English throughout a next-intl sk/cs/de/en app | `frontend/apps/reality-web/src/components/realtor/ListingForm.tsx` | Tier1d review 2026-08-07 (reality-web) | 2026-08-07 | done | — |
 | 1 | refactor | Churn hotspot: backend/servers/api-server/src/services/workflow_executor.rs (+265/-192 in #2685 workflow NOT-group fix) | `backend/servers/api-server/src/services/workflow_executor.rs` | PR #2685 | 2026-08-07 | done | — |
@@ -266,7 +278,7 @@
 | 1 | refactor | Churn hotspot: platform_admin_authz_batch2_tests.rs — 417 lines this run (BIT-557 test backfill) | `backend/servers/api-server/tests/platform_admin_authz_batch2_tests.rs` | git-log-since-2026-07-21T03:13:00Z | 2026-07-23 | done | — |
 | 1 | refactor | Churn hotspot: org_property_authz_backfill_tests.rs — 412 lines this run (BIT-268/BIT-559 authz salvage) | `backend/servers/api-server/tests/org_property_authz_backfill_tests.rs` | git-log-since-2026-07-21T03:13:00Z | 2026-07-23 | done | — |
 | 1 | refactor | Churn hotspot: infra_ops_authz_backfill_tests.rs — 364 lines this run (BIT-268 test backfill) | `backend/servers/api-server/tests/infra_ops_authz_backfill_tests.rs` | git-log-since-2026-07-21T03:13:00Z | 2026-07-23 | dropped | — |
-| 1 | triage | PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491 | `—` | PR #2489 | 2026-07-23 | dropped | — |
+| 1 | triage | PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491 | — | PR #2489 | 2026-07-23 | dropped | — |
 | 1 | refactor | Churn hotspot: docs/repo-map.md — 4 touches this window (per-PR route-map refresh) | `docs/repo-map.md` | git-log-since-2026-07-16 (+1) | 2026-07-21 | done | — |
 | 1 | refactor | Churn hotspot: docs/screens/ppt/dashboard.md — 3 touches this run (Layout & Content Manager pilot integration) | `docs/screens/ppt/dashboard.md` | git-log-since-2026-07-20T03:12:00Z | 2026-07-21 | done | — |
 | 1 | refactor | Churn hotspot: frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx — 2 touches, 900 lines this run | `frontend/apps/admin-web/src/features/layout-editor/LayoutEditorPage.tsx` | git-log-since-2026-07-20T03:12:00Z | 2026-07-21 | done | — |
@@ -302,10 +314,10 @@
 | 1 | refactor | PR #1378 closed without merge — DROP-OWNED-BY teardown theory for #1332 was wrong root cause, superseded by #1379 | `backend/crates/db/src/repositories/form.rs (+2)` | PR #1378 (+1) | 2026-06-15 | done | — |
 | 1 | test-gap | PKCE unit test became a tautology after services/oauth.rs DRY refactor (#1132) | `backend/servers/api-server/src/services/oauth.rs` | #1137 (+2) | 2026-06-07 | done | — |
 | 1 | triage | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | `.research/management/assignments-archive.json` | Issue #1061 (+1) | 2026-06-07 | done | — |
-| 1 | triage | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | `—` | #950 (+2) | 2026-06-07 | done | — |
-| 1 | triage | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | `—` | #952 (+2) | 2026-06-07 | done | — |
-| 1 | triage | Issue #769 (no labels, OPEN): Current dev review: Deploy server | `—` | #769 (+2) | 2026-06-07 | done | — |
-| 1 | triage | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | `—` | #789 (+2) | 2026-06-07 | done | — |
+| 1 | triage | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | — | #950 (+2) | 2026-06-07 | done | — |
+| 1 | triage | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | — | #952 (+2) | 2026-06-07 | done | — |
+| 1 | triage | Issue #769 (no labels, OPEN): Current dev review: Deploy server | — | #769 (+2) | 2026-06-07 | done | — |
+| 1 | triage | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | — | #789 (+2) | 2026-06-07 | done | — |
 | 1 | dx | docker/nginx admin-web + ppt-web templates churned twice this run (security headers + redirects) | `docker/nginx/admin-web.nginx.conf.template (+1)` | PR #963 (+2) | 2026-06-06 | done | — |
 | 1 | refactor | ai.rs churn-hot — 3,142 lines this run; 3,142-line route monolith, candidate for module split | `backend/servers/api-server/src/routes/ai.rs` | git log origin/dev since 2026-05-24 (+1) | 2026-06-06 | done | — |
 | 1 | refactor | ppt-web e2e auth-refresh.spec.ts added (+252 lines, story 79-2 token-refresh coverage) | `frontend/apps/ppt-web/e2e/auth-refresh.spec.ts` | PR #1047 (+1) | 2026-06-06 | done | — |
@@ -320,51 +332,51 @@
 | 1 | refactor | Watch routes/oauth.rs churn after audit-log + hardening PRs | `backend/servers/api-server/src/routes/oauth.rs` | PR #930 (+2) | 2026-06-06 | done | — |
 | 1 | refactor | Watch services/oauth.rs churn after introspect/revoke hardening (#933) | `backend/servers/api-server/src/services/oauth.rs` | PR #933 (+1) | 2026-06-06 | done | — |
 | 1 | test-gap | Mobile VotingScreen pure transforms toUiStatus/toUiVote have no tests | `frontend/apps/mobile/src/screens/voting/VotingScreen.tsx` | code-review mobile-rn 2026-05-27 (+2) | 2026-06-06 | done | — |
-| 1 | triage | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | `—` | #749 (+1) | 2026-06-06 | done | — |
-| 1 | triage | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | `—` | #755 (+1) | 2026-06-06 | done | — |
-| 1 | triage | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | `—` | #764 (+1) | 2026-06-06 | done | — |
-| 1 | triage | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | `—` | #765 (+1) | 2026-06-06 | done | — |
+| 1 | triage | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | — | #749 (+1) | 2026-06-06 | done | — |
+| 1 | triage | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | — | #755 (+1) | 2026-06-06 | done | — |
+| 1 | triage | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | — | #764 (+1) | 2026-06-06 | done | — |
+| 1 | triage | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | — | #765 (+1) | 2026-06-06 | done | — |
 | 1 | bug | Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize | `frontend/apps/mobile/src/screens/voting/VotingScreen.tsx` | PR #1083 (+2) | 2026-06-05 | done | — |
 | 1 | bug | Reality-web listing generateMetadata can throw during SSR on malformed 200 body | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #1085 (+2) | 2026-06-05 | done | — |
 | 1 | security | PR #908 (fix(security): require PKCE on OAuth authorization-code flow, closes #823) was closed unmerged — verify whether PKCE enforcement still pending | `backend/servers/api-server/src/routes/oauth_provider.rs` | PR #908 (+1) | 2026-06-03 | done | — |
-| 1 | triage | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | `—` | #751 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | `—` | #752 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider | `—` | #756 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #761 (no labels, OPEN): Current dev review: Epic 84 E-Signature & Leases | `—` | #761 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #763 (no labels, OPEN): Current dev review: Reality Server & Inquiries | `—` | #763 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app | `—` | #767 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #768 (no labels, OPEN): Current dev review: Admin-web features (10B) | `—` | #768 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure) | `—` | #920 (+1) | 2026-06-02 | done | — |
-| 1 | triage | Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings | `—` | #750 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication | `—` | #753 | 2026-06-01 | done | — |
-| 1 | triage | Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management | `—` | #754 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #757 (no labels, OPEN): Current dev review: Epic 10B Platform Administration | `—` | #757 | 2026-06-01 | done | — |
-| 1 | triage | Issue #760 (no labels, OPEN): Current dev review: Epic 79 Disputes & Mediation | `—` | #760 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #762 (no labels, OPEN): Current dev review: Reports & Schedules | `—` | #762 | 2026-06-01 | done | — |
-| 1 | triage | Issue #766 (no labels, OPEN): Current dev review: AI & LLM routes | `—` | #766 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #770 (no labels, OPEN): Current dev review: Faults & triage | `—` | #770 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #771 (no labels, OPEN): Current dev review: Research dispatcher & CI automation | `—` | #771 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #772 (no labels, OPEN): Current dev review: Auth core (delta confirmation) | `—` | #772 | 2026-06-01 | done | — |
-| 1 | triage | Issue #773 (no labels, OPEN): Current dev review: Leases & rental | `—` | #773 | 2026-06-01 | done | — |
-| 1 | triage | Issue #774 (no labels, OPEN): Current dev review: Reality server (broad) | `—` | #774 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime | `—` | #775 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log | `—` | #776 | 2026-06-01 | done | — |
-| 1 | triage | Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR | `—` | #777 | 2026-06-01 | done | — |
-| 1 | triage | Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation | `—` | #778 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces | `—` | #788 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware | `—` | #790 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves | `—` | #791 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #846 (no labels, OPEN): Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev) | `—` | #846 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev) | `—` | #847 | 2026-06-01 | done | — |
-| 1 | triage | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev) | `—` | #848 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev) | `—` | #850 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev) | `—` | #851 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500) | `—` | #859 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently | `—` | #867 (+1) | 2026-06-01 | done | — |
-| 1 | triage | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | `—` | #836 (+1) | 2026-05-31 | done | — |
-| 1 | triage | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | `—` | #845 (+1) | 2026-05-31 | done | — |
-| 1 | triage | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | `—` | #849 (+1) | 2026-05-31 | done | — |
-| 0 | refactor | churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi | `backend/servers/reality-server/src/routes/sso.rs` | top-3 churn 2026-08-31 (PR #2893) | 2026-08-31 | open | — |
+| 1 | triage | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | — | #751 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | — | #752 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider | — | #756 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #761 (no labels, OPEN): Current dev review: Epic 84 E-Signature & Leases | — | #761 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #763 (no labels, OPEN): Current dev review: Reality Server & Inquiries | — | #763 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app | — | #767 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #768 (no labels, OPEN): Current dev review: Admin-web features (10B) | — | #768 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure) | — | #920 (+1) | 2026-06-02 | done | — |
+| 1 | triage | Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings | — | #750 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication | — | #753 | 2026-06-01 | done | — |
+| 1 | triage | Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management | — | #754 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #757 (no labels, OPEN): Current dev review: Epic 10B Platform Administration | — | #757 | 2026-06-01 | done | — |
+| 1 | triage | Issue #760 (no labels, OPEN): Current dev review: Epic 79 Disputes & Mediation | — | #760 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #762 (no labels, OPEN): Current dev review: Reports & Schedules | — | #762 | 2026-06-01 | done | — |
+| 1 | triage | Issue #766 (no labels, OPEN): Current dev review: AI & LLM routes | — | #766 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #770 (no labels, OPEN): Current dev review: Faults & triage | — | #770 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #771 (no labels, OPEN): Current dev review: Research dispatcher & CI automation | — | #771 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #772 (no labels, OPEN): Current dev review: Auth core (delta confirmation) | — | #772 | 2026-06-01 | done | — |
+| 1 | triage | Issue #773 (no labels, OPEN): Current dev review: Leases & rental | — | #773 | 2026-06-01 | done | — |
+| 1 | triage | Issue #774 (no labels, OPEN): Current dev review: Reality server (broad) | — | #774 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime | — | #775 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log | — | #776 | 2026-06-01 | done | — |
+| 1 | triage | Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR | — | #777 | 2026-06-01 | done | — |
+| 1 | triage | Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation | — | #778 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces | — | #788 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware | — | #790 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves | — | #791 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #846 (no labels, OPEN): Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev) | — | #846 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev) | — | #847 | 2026-06-01 | done | — |
+| 1 | triage | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev) | — | #848 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev) | — | #850 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev) | — | #851 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500) | — | #859 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently | — | #867 (+1) | 2026-06-01 | done | — |
+| 1 | triage | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | — | #836 (+1) | 2026-05-31 | done | — |
+| 1 | triage | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | — | #845 (+1) | 2026-05-31 | done | — |
+| 1 | triage | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | — | #849 (+1) | 2026-05-31 | done | — |
+| 0 | refactor | churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi | `backend/servers/reality-server/src/routes/sso.rs` | top-3 churn 2026-08-31 (PR #2893) | 2026-08-31 | done | — |
 | 0 | test-gap | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt` | Tier1d review 2026-08-11 (mobile-native-kmp) | 2026-08-25 | dropped | — |
 | 0 | dx | Cloud routine cadence recovery — reduce 3–4d gaps between runs | `.research/state.json` | routine self-signal 2026-07-09 | 2026-07-09 | dropped | — |
 | 0 | refactor | Churn hotspot: 1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026 | `backend/servers/api-server/src/routes/emergency.rs` | local git numstat since 2026-06-07 | 2026-07-05 | dropped | — |
@@ -379,15 +391,15 @@
 | 0 | refactor | Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy | `frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx` | PR #1101 (+3) | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy | `frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts` | PR #1101 (+3) | 2026-07-05 | dropped | — |
 | 0 | triage | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | `.research/management/action-list.json (+1)` | #1014 | 2026-07-05 | dropped | — |
-| 0 | triage | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | `—` | #951 | 2026-07-05 | dropped | — |
-| 0 | dx | PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged — superseded by #1313 after auto-rebase fix landed | `—` | PR #1274 | 2026-07-05 | dropped | — |
+| 0 | triage | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | — | #951 | 2026-07-05 | dropped | — |
+| 0 | dx | PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged — superseded by #1313 after auto-rebase fix landed | — | PR #1274 | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry) | `backend/crates/integrations/src/booking.rs` | PR #1294 commit 7ccce8a | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/servers/api-server/src/routes/api_ecosystem.rs (+106/−27 in PR #1293 PAP-171; second touch in 24h) | `backend/servers/api-server/src/routes/api_ecosystem.rs` | PR #1293 commit 1e50156 | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping) | `backend/crates/db/src/repositories/reality_portal.rs` | PR #1297 commit 8c711c6 | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/servers/api-server/src/routes/iot.rs (+278/-403 in PR #1321/#1322 PAP-151 re-land + fmt) | `backend/servers/api-server/src/routes/iot.rs` | PR #1321 commit (+1) | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/servers/api-server/src/routes/reserve_funds.rs (+228/-255 in PR #1321 PAP-151 re-land) | `backend/servers/api-server/src/routes/reserve_funds.rs` | PR #1321 commit | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/crates/db/src/repositories/sensor.rs (+248/-86 in PR #1321/#1322 PAP-151 re-land + fmt) | `backend/crates/db/src/repositories/sensor.rs` | PR #1321 commit (+1) | 2026-07-05 | dropped | — |
-| 0 | triage | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline | `—` | #1331 | 2026-07-05 | dropped | — |
+| 0 | triage | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline | — | #1331 | 2026-07-05 | dropped | — |
 | 0 | dx | Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision | `frontend/packages/e2e/` | PR #988 | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) | `backend/servers/api-server/src/routes/forms.rs` | local git numstat since 2026-06-12 (+1) | 2026-07-05 | dropped | — |
 | 0 | refactor | Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13) | `backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs` | local git numstat since 2026-06-12 | 2026-07-05 | dropped | — |
@@ -399,9 +411,9 @@
 | 0 | refactor | booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage) | `backend/servers/api-server/tests/booking_oauth_csrf_tests.rs` | local git numstat since 2026-06-15 (commit 67c24bd..origin/dev) | 2026-07-05 | dropped | — |
 | 0 | refactor | booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage) | `backend/servers/api-server/tests/booking_oauth_routes_tests.rs` | local git numstat since 2026-06-15 | 2026-07-05 | dropped | — |
 | 0 | refactor | forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening) | `backend/servers/api-server/src/routes/forms.rs` | hotspot_history.runs_seen 1→2 with new churn this run | 2026-07-05 | dropped | — |
-| 0 | dx | PR #1425 (GH #1377 document presigned-URL tests) closed unmerged — superseded by merged #1394 | `—` | PR #1425 | 2026-07-05 | dropped | — |
-| 0 | dx | PR #1179 (docs(epics) catalog backfill for 37 mounted-but-undocumented backend modules) — stalled at 7d, no reviewDecision | `—` | PR #1179 | 2026-07-05 | dropped | — |
+| 0 | dx | PR #1425 (GH #1377 document presigned-URL tests) closed unmerged — superseded by merged #1394 | — | PR #1425 | 2026-07-05 | dropped | — |
+| 0 | dx | PR #1179 (docs(epics) catalog backfill for 37 mounted-but-undocumented backend modules) — stalled at 7d, no reviewDecision | — | PR #1179 | 2026-07-05 | dropped | — |
 | 0 | refactor | Stabilize oauth_integration_tests churn — heavy edits across 3 OAuth fix PRs | `backend/servers/api-server/tests/oauth_integration_tests.rs` | PR #930 (+1) | 2026-06-16 | dropped | — |
-| 0 | triage | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | `—` | #779 | 2026-06-13 | dropped | — |
+| 0 | triage | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | — | #779 | 2026-06-13 | dropped | — |
 | 0 | bug | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | `frontend/apps/ppt-web/src/components/Announcer.tsx` | code-review ppt-web-ui 2026-05-24 (+1) | 2026-06-07 | dropped | — |
 | 0 | dx | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | `frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx` | PR #328 (+1) | 2026-06-04 | dropped | — |

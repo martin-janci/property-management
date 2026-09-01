@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-31T14:45:57Z",
-  "last_run_ms": 4000,
-  "last_pr_seen": 2904,
+  "last_run_iso": "2026-09-01T10:50:45Z",
+  "last_run_ms": 419093,
+  "last_pr_seen": 2911,
   "last_issue_seen": 2847,
-  "last_commit_sha": "0b2999f361dfb88ad2f9fa38977ee799d3dece5d",
+  "last_commit_sha": "71fb2923b1b0ddaefa2747a424221378afc35a2f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -988,7 +988,20 @@
     "untriaged-issue-952",
     "lag-warning-supplement-2026-08-31",
     "resolution-check-2026-08-31-drift-2894",
-    "resolution-check-2026-08-31-drift-2895"
+    "resolution-check-2026-08-31-drift-2895",
+    "code-review-api-core-fcm-v1-static-oauth-token",
+    "code-review-api-core-apns-jwt-per-send-mint",
+    "code-review-api-core-fcm-legacy-dead-endpoint",
+    "code-review-ppt-web-ui-emergency-dir-raw-err-message",
+    "code-review-ppt-web-ui-meters-dates-no-locale",
+    "code-review-ppt-web-ui-notif-settings-hardcoded-errors",
+    "code-review-api-handlers-data-export-report-stub",
+    "code-review-api-handlers-user-audit-logs-total-page-len",
+    "code-review-api-handlers-compliance-raw-db-error-leak",
+    "code-review-reality-server-agent-review-self-review",
+    "code-review-reality-server-pagination-offset-overflow",
+    "code-review-reality-server-saved-search-error-string-status",
+    "code-review-mobile-native-kmp-create-listing-notimpl-stub"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1002,8 +1015,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 76,
-    "vectors_created": 359,
+    "runs": 77,
+    "vectors_created": 371,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
