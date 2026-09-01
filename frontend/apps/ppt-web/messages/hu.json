@@ -1480,6 +1480,15 @@
     }
   },
   "settings": {
+    "notifications": {
+      "title": "Értesítési beállítások",
+      "subtitle": "Válassza ki, hogyan szeretne értesítéseket kapni.",
+      "loadError": "Nem sikerült betölteni az értesítési beállításokat. Kérjük, próbálja újra.",
+      "updateError": "Nem sikerült frissíteni a beállítást. Kérjük, próbálja újra.",
+      "disableError": "Nem sikerült kikapcsolni az értesítéseket. Kérjük, próbálja újra.",
+      "dismiss": "Bezárás",
+      "lastUpdated": "Utoljára frissítve: {{when}}"
+    },
     "portalWebhooks": {
       "title": "Portál webhookok",
       "subtitle": "Az ingatlanportál-webhookok kézbesítési állapota és tevékenysége — megtekintések, érdeklődések és szinkronizálási állapot portálonként.",
