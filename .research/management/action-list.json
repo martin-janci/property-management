@@ -145,43 +145,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
-      "action": "churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-31T04:25:43Z (score=0 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-31T04:25:43Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 0,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "gh-issue-2909",
-      "action": "Follow-up: extend clamp_limit to the list endpoints PR #2878 left unbounded (PR #2878) (Closes #2909)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-08-31T22:35:41Z (#2909)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-31T22:35:41Z",
-      "issue_ref": {
-        "number": 2909,
-        "url": "https://github.com/martin-janci/property-management/issues/2909",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-08-31T03:10:00Z"

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-08-31T20:30:36Z",
+  "archived_at": "2026-09-01T02:33:11Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1604,6 +1604,30 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-08-25T08:23:13Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "action": "churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-08-31T04:25:43Z (score=0 conf=high vector=refactor) | gc1-reconcile 2026-09-01T02:32:43Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-31T04:25:43Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 0,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2910,
+        "merged_at": "2026-09-01T02:25:09Z",
+        "at": "2026-09-01T02:32:43Z"
       }
     },
     {
@@ -15750,6 +15774,33 @@
         "merged_pr": 2907,
         "merged_at": "2026-08-31T16:30:46Z",
         "at": "2026-08-31T16:31:52Z"
+      }
+    },
+    {
+      "id": "gh-issue-2909",
+      "action": "Follow-up: extend clamp_limit to the list endpoints PR #2878 left unbounded (PR #2878) (Closes #2909)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-08-31T22:35:41Z (#2909) | gc1-reconcile 2026-09-01T02:32:43Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-31T22:35:41Z",
+      "issue_ref": {
+        "number": 2909,
+        "url": "https://github.com/martin-janci/property-management/issues/2909",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2911,
+        "merged_at": "2026-09-01T02:27:49Z",
+        "at": "2026-09-01T02:32:43Z"
       }
     },
     {

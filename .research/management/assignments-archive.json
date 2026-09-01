@@ -1727,6 +1727,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-0ff73b2d",
+      "status": "merged",
+      "claimed_at": "2026-08-31T22:29:00Z",
+      "last_updated": "2026-09-01T02:32:00Z",
+      "status_changed_at": "2026-09-01T02:32:00Z",
+      "pr_number": 2910,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2910",
+      "merged_at": "2026-09-01T02:25:09Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2910 status=done specialist=rust-backend scope_drift=true(mapping-artifact:pm-tech-lead not mapped to reality-server routes; diff is only sso.rs) code_reuse_warn=none note=bound in-memory sso_sessions PKCE map via prune-on-login (mirrors accepted #820/#921 sweep pattern) + extracted PENDING_SSO_SESSION_TTL_MINUTES + 3 tests; fmt/clippy/reality-server unit tests green; only unrelated sqlx Postgres integration tests fail (no DB in sandbox, CI authoritative per #2897)",
+      "reviewer_summary": "verdict=approve note=in-scope bounded-map hardening, boundary-consistent prune, 3 tests; formal APPROVE blocked (self-PR) so posted as comment",
+      "last_reviewed_oid": "d5f3d5ab383a73a9657d2ed36e628490862a0c94",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-01T02:32:00Z"
+    },
+    {
       "task_id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-cfbafd3f",
       "status": "merged",
@@ -14315,6 +14337,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2909",
+      "branch": "auto-impl/gh-issue-2909-8c83374c",
+      "status": "merged",
+      "claimed_at": "2026-09-01T00:27:35Z",
+      "last_updated": "2026-09-01T02:32:00Z",
+      "status_changed_at": "2026-09-01T02:32:00Z",
+      "pr_number": 2911,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2911",
+      "merged_at": "2026-09-01T02:27:49Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2911 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=swept 10 unbounded list handlers to clamp_limit + IG3 test; listings/rentals/compliance verified repo-clamped (skipped); verify green via uncommitted utoipa vendored workaround (swagger dl egress-blocked)",
+      "reviewer_summary": "verdict=approve note=in-scope clamp_limit sweep across 10 api-server list handlers; IG3 test both clamp shapes; additive/idempotent, no regression",
+      "last_reviewed_oid": "a25ec765ec55bf91f48f81b101cee20d2f5ecc9c",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-01T02:32:00Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -16885,5 +16929,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-08-31T20:30:35Z"
+  "archived_at": "2026-09-01T02:32:35Z"
 }
