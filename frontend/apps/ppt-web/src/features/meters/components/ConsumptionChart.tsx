@@ -33,7 +33,7 @@ export function ConsumptionChart({
   isLoading,
   showTrend = true,
 }: ConsumptionChartProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (isLoading) {
     return (
@@ -177,7 +177,7 @@ export function ConsumptionChart({
               .map((point) => (
                 <span key={point.date}>
                   {point.label ||
-                    new Date(point.date).toLocaleDateString('en-US', {
+                    new Date(point.date).toLocaleDateString(i18n.language, {
                       month: 'short',
                     })}
                 </span>
