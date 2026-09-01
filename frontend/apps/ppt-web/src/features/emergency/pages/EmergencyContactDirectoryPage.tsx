@@ -56,7 +56,7 @@ export const EmergencyContactDirectoryPage: React.FC = () => {
 
         setContacts(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('emergency.errors.failedToLoad'));
+        setError(t('emergency.errors.failedToLoad'));
         console.error('Failed to load emergency contacts:', err);
       } finally {
         setIsLoading(false);
@@ -89,7 +89,7 @@ export const EmergencyContactDirectoryPage: React.FC = () => {
       });
       setContacts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('emergency.errors.failedToReload'));
+      setError(t('emergency.errors.failedToReload'));
       console.error('Failed to reload emergency contacts:', err);
     }
   }, [organizationId, filterType, showInactive, t]);
@@ -104,7 +104,7 @@ export const EmergencyContactDirectoryPage: React.FC = () => {
       setShowForm(false);
       await reloadContacts();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('emergency.errors.failedToCreate'));
+      setError(t('emergency.errors.failedToCreate'));
       console.error('Failed to create emergency contact:', err);
     } finally {
       setIsSubmitting(false);
@@ -124,7 +124,7 @@ export const EmergencyContactDirectoryPage: React.FC = () => {
       setShowForm(false);
       await reloadContacts();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('emergency.errors.failedToUpdate'));
+      setError(t('emergency.errors.failedToUpdate'));
       console.error('Failed to update emergency contact:', err);
     } finally {
       setIsSubmitting(false);
@@ -155,7 +155,7 @@ export const EmergencyContactDirectoryPage: React.FC = () => {
       setContactToDelete(null);
       await reloadContacts();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('emergency.errors.failedToDelete'));
+      setError(t('emergency.errors.failedToDelete'));
       console.error('Failed to delete emergency contact:', err);
     } finally {
       setIsDeleting(false);
