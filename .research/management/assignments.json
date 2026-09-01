@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-01T04:34:00Z",
+  "generated": "2026-09-01T06:32:38Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -41,6 +41,28 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish-retry1",
+      "branch": "auto-impl/pm-scrum-master-shepherd-84-1-84-2-front-aac5ea51",
+      "status": "in-progress",
+      "claimed_at": "2026-09-01T06:26:38Z",
+      "last_updated": "2026-09-01T06:32:38Z",
+      "status_changed_at": "2026-09-01T06:26:38Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web: 84-1 direct-to-S3 upload + 84-2 /sign page ALREADY SHIPPED on dev (empty diff, verified in clean worktree); no code PR warranted. Residual: stale coverage.json 84-1/84-2 partial-to-done (dispatcher-owned .research write; findings.json:778). NOT terminalized this run: archive-write wedge (#2743) blocks archiving terminal rows (both archives over 800KB vs 64KiB MCP ceiling; direct git transport proxy-403).",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null

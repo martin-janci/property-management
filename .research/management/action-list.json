@@ -145,6 +145,20 @@
         "score": 2,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish-retry1",
+      "action": "Shepherd the 2 remaining partial MVP stories (84-1 direct-to-S3 wiring + 84-2 signer page) to done — both frontend-only on shipped APIs; assign an implementer pair next window to close 49/49 delivery [retry 1/2 of failed pm-scrum-master-shepherd-84-1-84-2-frontend-finish]",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-09-01T06:25:02Z (retry_of=pm-scrum-master-shepherd-84-1-84-2-frontend-finish reason=failed-no-pr cooldown_ok newest_failure=2026-08-25T05:06:26Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T06:25:02Z",
+      "retry_of": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish",
+      "retry_round": 1
     }
   ],
   "generated": "2026-08-31T03:10:00Z"
