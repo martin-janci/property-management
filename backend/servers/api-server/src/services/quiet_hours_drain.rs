@@ -12,7 +12,7 @@ use std::time::Duration;
 
 use common::notifications::pipeline::DeliveryStatus;
 use common::notifications::PipelineResult;
-use db::{repositories::GranularNotificationRepository, DbPool};
+use db::{models::HeldNotification, repositories::GranularNotificationRepository, DbPool};
 use tokio::time::interval;
 use tracing::Instrument;
 
@@ -152,6 +152,9 @@ impl QuietHoursDrainWorker {
     /// delivered by exactly one of them. `claim_notifications_to_release` stamps
     /// `claimed_at` under `FOR UPDATE SKIP LOCKED` and hands back only the rows
     /// this replica won; a peer polling the same tick claims a disjoint set.
+    ///
+    /// The claimed batch is delivered row-by-row (see [`Self::deliver_one`]);
+    /// this method only owns the claim, the loop, and the per-tick summary log.
     async fn drain_due(&self) {
         let due = match self
             .granular_repo
@@ -173,71 +176,12 @@ impl QuietHoursDrainWorker {
 
         let mut released = 0usize;
         let mut dead_lettered = 0usize;
-        for held in due {
-            // Deliver first, then decide. A held row is marked released ONLY
-            // when delivery left nothing to retry (no channel reported a
-            // transient `Failed`). If any channel failed we leave `released_at`
-            // NULL so the next tick re-attempts, rather than permanently
-            // dropping the notification on a transient failure. `deliver_held`
-            // is best-effort per channel and never panics.
-            let outcome = self.pipeline.deliver_held(&held).await;
-            if !should_mark_released(&outcome) {
-                // Issue #2823: a channel failed, so the row stays held. Before
-                // the next tick re-attempts it, persist the channels that DID
-                // succeed this tick so they are not re-delivered (duplicate),
-                // and bump the attempt counter so a permanently-failing row is
-                // eventually dead-lettered instead of looping forever.
-                let delivered =
-                    merge_delivered(&held.delivered_channels, &delivered_channels(&outcome));
-                let attempts = held.attempts.saturating_add(1);
-                if let Err(e) = self
-                    .granular_repo
-                    .record_held_attempt(held.id, &delivered, attempts)
-                    .await
-                {
-                    tracing::warn!(id = %held.id, error = %e, "[#2823] Failed to persist held-notification attempt progress; may re-deliver a channel");
-                }
-                if should_give_up(attempts, self.config.max_attempts) {
-                    // Dead-letter: stop retrying a row that never drains cleanly.
-                    if let Err(e) = self
-                        .granular_repo
-                        .mark_notification_dead_lettered(held.id)
-                        .await
-                    {
-                        tracing::warn!(id = %held.id, error = %e, "[#2823] Failed to dead-letter exhausted held notification; will keep retrying");
-                    } else {
-                        dead_lettered += 1;
-                        tracing::error!(
-                            id = %held.id,
-                            attempts = attempts,
-                            max_attempts = self.config.max_attempts,
-                            delivered_channels = ?delivered,
-                            "[#2823] Held notification exhausted retry budget; dead-lettered (giving up)"
-                        );
-                    }
-                } else {
-                    tracing::warn!(
-                        id = %held.id,
-                        sent = outcome.sent,
-                        failed = outcome.failed,
-                        attempts = attempts,
-                        max_attempts = self.config.max_attempts,
-                        "[#980] Held notification delivery failed on ≥1 channel; leaving held for retry"
-                    );
-                }
-                continue;
+        for held in &due {
+            match self.deliver_one(held).await {
+                RowOutcome::Released => released += 1,
+                RowOutcome::DeadLettered => dead_lettered += 1,
+                RowOutcome::Held => {}
             }
-            if let Err(e) = self.granular_repo.mark_notification_released(held.id).await {
-                tracing::warn!(id = %held.id, error = %e, "[#980] Delivered held notification but failed to mark released; may re-deliver");
-                continue;
-            }
-            released += 1;
-            tracing::debug!(
-                id = %held.id,
-                sent = outcome.sent,
-                skipped = outcome.skipped,
-                "[#980] Released held notification"
-            );
         }
 
         if released > 0 || dead_lettered > 0 {
@@ -248,6 +192,108 @@ impl QuietHoursDrainWorker {
             );
         }
     }
+
+    /// Deliver a single claimed held row and decide its fate.
+    ///
+    /// Deliver first, then decide. A held row is marked released ONLY when
+    /// delivery left nothing to retry (no channel reported a transient
+    /// `Failed`). If any channel failed we leave `released_at` NULL so the next
+    /// tick re-attempts, rather than permanently dropping the notification on a
+    /// transient failure. `deliver_held` is best-effort per channel and never
+    /// panics.
+    async fn deliver_one(&self, held: &HeldNotification) -> RowOutcome {
+        let outcome = self.pipeline.deliver_held(held).await;
+        if !should_mark_released(&outcome) {
+            return self.record_failure(held, &outcome).await;
+        }
+        if let Err(e) = self.granular_repo.mark_notification_released(held.id).await {
+            tracing::warn!(id = %held.id, error = %e, "[#980] Delivered held notification but failed to mark released; may re-deliver");
+            return RowOutcome::Held;
+        }
+        tracing::debug!(
+            id = %held.id,
+            sent = outcome.sent,
+            skipped = outcome.skipped,
+            "[#980] Released held notification"
+        );
+        RowOutcome::Released
+    }
+
+    /// A channel failed, so the row stays held. Persist the channels that DID
+    /// succeed this tick so they are not re-delivered (duplicate) on the next
+    /// attempt, and bump the attempt counter so a permanently-failing row is
+    /// eventually dead-lettered instead of looping forever (issue #2823).
+    async fn record_failure(
+        &self,
+        held: &HeldNotification,
+        outcome: &PipelineResult,
+    ) -> RowOutcome {
+        let delivered = merge_delivered(&held.delivered_channels, &delivered_channels(outcome));
+        let attempts = held.attempts.saturating_add(1);
+        if let Err(e) = self
+            .granular_repo
+            .record_held_attempt(held.id, &delivered, attempts)
+            .await
+        {
+            tracing::warn!(id = %held.id, error = %e, "[#2823] Failed to persist held-notification attempt progress; may re-deliver a channel");
+        }
+        if should_give_up(attempts, self.config.max_attempts) {
+            return self.dead_letter(held, attempts, &delivered).await;
+        }
+        tracing::warn!(
+            id = %held.id,
+            sent = outcome.sent,
+            failed = outcome.failed,
+            attempts = attempts,
+            max_attempts = self.config.max_attempts,
+            "[#980] Held notification delivery failed on ≥1 channel; leaving held for retry"
+        );
+        RowOutcome::Held
+    }
+
+    /// Dead-letter a row that has exhausted its retry budget: stop retrying a
+    /// row that never drains cleanly (issue #2823). If the dead-letter write
+    /// itself fails the row stays held and is retried next tick.
+    async fn dead_letter(
+        &self,
+        held: &HeldNotification,
+        attempts: i32,
+        delivered: &[String],
+    ) -> RowOutcome {
+        if let Err(e) = self
+            .granular_repo
+            .mark_notification_dead_lettered(held.id)
+            .await
+        {
+            tracing::warn!(id = %held.id, error = %e, "[#2823] Failed to dead-letter exhausted held notification; will keep retrying");
+            return RowOutcome::Held;
+        }
+        tracing::error!(
+            id = %held.id,
+            attempts = attempts,
+            max_attempts = self.config.max_attempts,
+            delivered_channels = ?delivered,
+            "[#2823] Held notification exhausted retry budget; dead-lettered (giving up)"
+        );
+        RowOutcome::DeadLettered
+    }
+}
+
+/// Terminal fate of a single held row within one drain tick. Returned by
+/// [`QuietHoursDrainWorker::deliver_one`] so `drain_due` can tally per-tick
+/// counters without carrying the branching logic inline.
+///
+/// `Held` covers both the "left for retry" path and every write-failure path
+/// (the row keeps `released_at`/`dead_lettered_at` NULL and is re-fetched next
+/// tick) — neither bumps a summary counter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RowOutcome {
+    /// Marked `released_at` — delivered cleanly, will not be re-fetched.
+    Released,
+    /// Marked `dead_lettered_at` — exhausted its retry budget.
+    DeadLettered,
+    /// Still held — left for retry, or a write failed mid-handling.
+    Held,
 }
 
 /// Decide whether a drained held-notification row may be marked released.
@@ -310,6 +356,19 @@ mod tests {
             failed,
             ..PipelineResult::default()
         }
+    }
+
+    #[test]
+    fn row_outcome_variants_are_distinct() {
+        // The drain loop tallies per-tick counters by matching on RowOutcome;
+        // only Released and DeadLettered bump a counter, Held bumps neither.
+        // Guard that the three fates stay distinct (and the Copy/Eq derives the
+        // loop relies on keep compiling).
+        assert_ne!(RowOutcome::Released, RowOutcome::Held);
+        assert_ne!(RowOutcome::DeadLettered, RowOutcome::Held);
+        assert_ne!(RowOutcome::Released, RowOutcome::DeadLettered);
+        let copied = RowOutcome::Released;
+        assert_eq!(copied, RowOutcome::Released);
     }
 
     #[test]
