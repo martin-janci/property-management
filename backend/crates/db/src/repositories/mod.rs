@@ -221,7 +221,10 @@ pub use government_portal::GovernmentPortalRepository;
 // Epics 31-34: Reality Portal Professional
 pub mod reality_portal;
 
-pub use reality_portal::{FavoriteAlertReadOutcome, RealityPortalRepository};
+pub use reality_portal::{
+    FavoriteAlertReadOutcome, RealityPortalRepository, SavedSearchError,
+    MAX_SAVED_SEARCHES_PER_USER,
+};
 
 // Epic 37: Community & Social Features
 pub mod community;
