@@ -38,7 +38,7 @@ export function ReadingComparisonPage({
   onCompare,
   onExport,
 }: ReadingComparisonPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [selectedMeterIds, setSelectedMeterIds] = useState<string[]>([]);
   const [startDate, setStartDate] = useState(() => {
@@ -105,7 +105,7 @@ export function ReadingComparisonPage({
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
   };
 
   // Y-axis labels

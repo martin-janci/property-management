@@ -93,7 +93,7 @@ function MeterTypeIcon({ type }: { type: MeterType }) {
 }
 
 export function MeterCard({ meter, onView, onSubmitReading }: MeterCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const lastReadingFormatted =
     meter.lastReadingValue !== undefined
@@ -101,7 +101,7 @@ export function MeterCard({ meter, onView, onSubmitReading }: MeterCardProps) {
       : t('meters.noReadings');
 
   const lastReadingDate = meter.lastReadingDate
-    ? new Date(meter.lastReadingDate).toLocaleDateString()
+    ? new Date(meter.lastReadingDate).toLocaleDateString(i18n.language)
     : null;
 
   return (
