@@ -57,6 +57,21 @@ fn require_super_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
     }
 }
 
+/// Map a data-layer error to a sanitized client response.
+///
+/// Compliance handlers must never surface raw SQLx / DB errors to the caller:
+/// their `Display` output leaks table and column names, SQL fragments, and
+/// connection details. Log the full error server-side (`tracing::error!`) for
+/// operators and return an opaque 500 to the client — mirroring how the other
+/// api-server routes handle DB failures (e.g. `my_units`, `unit_residents`).
+fn db_error(e: impl std::fmt::Display) -> (StatusCode, String) {
+    tracing::error!(error = %e, "compliance report query failed");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Internal server error".to_string(),
+    )
+}
+
 /// Create the compliance router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -164,13 +179,9 @@ async fn get_audit_logs(
         .audit_log_repo
         .query(query.clone())
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
-    let total = state
-        .audit_log_repo
-        .count(query)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let total = state.audit_log_repo.count(query).await.map_err(db_error)?;
 
     let log_responses: Vec<AuditLogResponse> = logs
         .into_iter()
@@ -225,7 +236,7 @@ async fn get_audit_summary(
         .audit_log_repo
         .get_action_counts(params.from_date, params.to_date, params.org_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let total_entries: i64 = action_counts.iter().map(|c| c.count).sum();
 
@@ -269,7 +280,7 @@ async fn get_user_audit_logs(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let log_responses: Vec<AuditLogResponse> = logs
         .into_iter()
@@ -336,7 +347,7 @@ async fn verify_audit_integrity(
         .audit_log_repo
         .verify_integrity(Some(entries_to_check))
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let message = if verified {
         "All audit log entries passed integrity verification".to_string()
@@ -395,7 +406,7 @@ async fn get_data_export_report(
         .data_export_repo
         .report_summary(params.from_date, params.to_date, 1000)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let exports = summary
         .entries
@@ -454,7 +465,7 @@ async fn get_deletion_requests_report(
     )
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let now = Utc::now();
     let requests: Vec<DeletionRequestReportEntry> = rows
@@ -512,7 +523,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let visibility_distribution: Vec<PrivacySettingsReportEntry> = visibility_rows
         .into_iter()
@@ -528,7 +539,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Get total users
     let (total_users,): (i64,) = sqlx::query_as(
@@ -538,7 +549,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(PrivacySettingsReportResponse {
@@ -598,7 +609,7 @@ async fn get_login_activity_report(
     .bind(to_date)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Aggregate by date
     let mut activity_map: std::collections::HashMap<String, (i64, i64)> =
@@ -671,7 +682,7 @@ async fn get_mfa_status_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Count total active users
     let (total_users,): (i64,) = sqlx::query_as(
@@ -681,7 +692,7 @@ async fn get_mfa_status_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let mfa_disabled = total_users - mfa_enabled;
     let adoption_rate = if total_users > 0 {
@@ -744,7 +755,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let failed_logins: Vec<FailedLoginEntry> = rows
         .into_iter()
@@ -768,7 +779,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Get unique IPs
     let (unique_ips,): (i64,) = sqlx::query_as(
@@ -780,7 +791,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(FailedLoginsReportResponse {
@@ -890,5 +901,21 @@ mod tests {
             let err = require_super_admin(&user_with_role(role)).unwrap_err();
             assert_eq!(err.0, StatusCode::FORBIDDEN);
         }
+    }
+
+    #[test]
+    fn db_error_does_not_leak_raw_detail_to_client() {
+        // Regression: compliance handlers previously bubbled `e.to_string()`
+        // straight to the client, leaking table/column names and SQL fragments.
+        // The sanitizer must return an opaque 500 and drop the raw detail.
+        let raw = sqlx::Error::ColumnNotFound("users.scheduled_deletion_at".to_string());
+        let (status, body) = db_error(raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body, "Internal server error");
+        assert!(
+            !body.contains("scheduled_deletion_at") && !body.contains("users"),
+            "sanitized body must not contain DB identifiers, got: {body}"
+        );
     }
 }
