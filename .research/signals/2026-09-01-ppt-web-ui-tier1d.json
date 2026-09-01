@@ -1,0 +1,70 @@
+{
+  "generated": "2026-09-01T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-01",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (landable only; mobile-native-kmp excluded as the parked cloud-build blocker). Among landable segments ppt-web-ui carried the oldest actual Tier-1d coverage — last reviewed 2026-08-28, vs api-core/ppt-web-core 08-30 and api-handlers/reality-server 08-31. api-core was re-checked first this run and every candidate finding (email/notification action stubs, syndication fake-synced) proved to be an already-reported duplicate, so the pass moved to ppt-web-ui per oldest-unreviewed.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx:59,92,107,127,158 — all five error handlers (load, reload, create, update, delete) set the user-facing error banner with `setError(err instanceof Error ? err.message : t('emergency.errors.<key>'))`. The i18n fallback via t() is only reached when the thrown value is NOT an Error — but the api-client (listEmergencyContacts / createEmergencyContact / updateEmergencyContact / deleteEmergencyContact) rejects with an Error on every HTTP/network failure, so the COMMON failure path always takes the `err.message` branch and the translated fallback is effectively dead code.",
+        "Effect on a 4-locale product (sk/cs/de/en per repo architecture): a Slovak/Czech/German manager who hits any backend/network error on the wired `/emergency` screen (route + nav mounted in routes/groups/core.tsx:189, sitemap id `ppt-emergency`, Epic 62) sees a raw ENGLISH/technical error string ('Failed to fetch', 'Network request failed', an HTTP status text, or a serialized server error) rather than the localized emergency.errors.* copy the file already ships. It also surfaces raw backend error detail directly in the UI (information-disclosure smell).",
+        "The component HAS i18n wired (useTranslation imported at :17, t() used throughout), which makes this a latent bug rather than a blanket i18n gap: the localized message exists but is unreachable in the path that actually fires. Fix: drop the `err instanceof Error ? err.message :` prefix and always render the localized `t('emergency.errors.*')` copy (optionally log err.message to console for diagnostics, which the file already does via console.error on each branch).",
+        "Distinct from the prior 2026-08-28 finding code-review-ppt-web-ui-errorboundary-raw-message-prod (global ErrorBoundary at components/ErrorBoundary.tsx): same defect CLASS (raw err.message shown to end users) but a different, feature-level location on a safety-relevant surface (emergency contact directory). Confidence medium: the reachability of the Error branch is confirmed by static read of the handlers; 'medium' not 'high' because exactly which raw string renders depends on the api-client's runtime error shape, not verified without execution."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-meters-dates-no-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui meters)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/components/MeterCard.tsx",
+        "frontend/apps/ppt-web/src/features/meters/pages/MeterDetailPage.tsx",
+        "frontend/apps/ppt-web/src/features/meters/pages/MetersPage.tsx",
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingValidationCard.tsx",
+        "frontend/apps/ppt-web/src/features/meters/pages/EditReadingPage.tsx"
+      ],
+      "evidence": [
+        "The wired meters feature (route group routes/groups/meters.tsx) formats every displayed date via `new Date(...).toLocaleDateString()` with NO locale argument: MeterCard.tsx:104, MeterDetailPage.tsx:307/431/457, MetersPage.tsx:377-378, ReadingValidationCard.tsx:104/112 (toLocaleString), EditReadingPage.tsx:153. With no explicit locale these follow the browser's runtime locale, which is independent of the user's in-app i18n language (sk/cs/de/en) — a German-UI user on an en-US browser sees US month/day ordering, and vice-versa. ReadingValidationCard.tsx:112 has the same issue on a full toLocaleString() timestamp.",
+        "Consumption values are also formatted with `toLocaleString(undefined, ...)` (MeterCard.tsx:34, ReadingValidationCard.tsx:92/96/151) — same locale-mismatch on the decimal/grouping separators (1.234,56 vs 1,234.56), which for meter readings changes how the number reads.",
+        "Same defect CLASS as the prior 2026-08-24 finding code-review-ppt-web-ui-date-number-formatters-no-locale (leases/LeaseCard.tsx) — this is a distinct, un-reviewed feature (meters) with 8+ occurrences across 5 files. Fix: pass the active i18n language (from useTranslation/i18n.language) as the first arg to toLocaleDateString/toLocaleString, or route through a shared locale-aware formatter. Confidence medium: the missing-locale calls are confirmed by static read; user-visible impact depends on the browser-vs-app locale delta at runtime."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-notif-settings-hardcoded-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui settings/notifications)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/NotificationSettingsPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/NotificationSettingsPage.tsx:40 `setUpdateError('Failed to update preference. Please try again.')` and :55-56 `setUpdateError('Failed to disable notifications. Please try again.')` — user-facing error toast strings hardcoded in English on the wired core settings surface (Settings > Notifications). No t() wrapping; the strings render in English regardless of the user's selected sk/cs/de/en language.",
+        "The sibling settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx carries the same pattern in its catch blocks (:76, :301, :317, :335) and should be swept in the same pass.",
+        "Low severity / i18n-gap class (consistent with prior ppt-web-ui i18n findings), but net-new location on a wired, always-reachable settings page rather than an unwired feature. Fix: move the strings into the settings i18n namespace and render via t(). Confidence medium (static read; no runtime confirmation)."
+      ]
+    }
+  ]
+}
