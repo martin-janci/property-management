@@ -1152,6 +1152,51 @@ async fn get_user_audit_logs_super_admin_returns_filtered_logs(pool: PgPool) {
     assert!(body["logs"].is_array());
 }
 
+/// Regression: `get_user_audit_logs` must return the TRUE row count for the
+/// user in `total`, not the length of the current page. Previously the
+/// handler set `total = log_responses.len()`, so with 3 rows and a page size
+/// of 2 the paginator saw `total = 2` and hid page 2 — a compliance surface
+/// where audit rows silently disappeared. Seed 3 rows, ask for a page of 2,
+/// and assert the page holds 2 while `total` reports 3.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_user_audit_logs_total_reflects_full_count_not_page(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "user-log-total").await;
+    let sadmin_id = seed_user(&pool, "sadmin-user-log-total").await;
+    seed_membership(&pool, org_id, sadmin_id, "super_admin").await;
+    let token = mint_token(sadmin_id, Some(org_id), Some("super_admin"));
+
+    let target_user = seed_user(&pool, "audited-user-total").await;
+    for _ in 0..3 {
+        sqlx::query("INSERT INTO audit_logs (user_id, action) VALUES ($1, 'login')")
+            .bind(target_user)
+            .execute(&pool)
+            .await
+            .expect("seed audit log");
+    }
+
+    let resp = app
+        .get(&format!(
+            "/api/v1/compliance/audit-logs/user/{target_user}?limit=2&offset=0"
+        ))
+        .bearer(&token)
+        .build();
+    let r = app.execute(resp).await;
+    assert_eq!(r.status, StatusCode::OK);
+    let body = r.json_value();
+
+    assert_eq!(
+        body["logs"].as_array().map(|a| a.len()),
+        Some(2),
+        "page should hold the requested limit of 2 rows"
+    );
+    assert_eq!(
+        body["total"].as_i64(),
+        Some(3),
+        "total must be the full user row count (3), not the page length"
+    );
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn verify_audit_integrity_requires_super_admin(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
