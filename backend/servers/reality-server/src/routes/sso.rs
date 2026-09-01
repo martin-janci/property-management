@@ -16,6 +16,15 @@ use utoipa::ToSchema;
 use crate::extractors::auth::{extract_session_cookie, extract_session_token};
 use crate::state::AppState;
 
+/// Maximum lifetime of a pending PKCE SSO login session, in minutes.
+///
+/// `sso_login` stores server-side PKCE state under a random session id; the
+/// matching `sso_callback` must arrive within this window or the session is
+/// rejected as expired. Kept as a single constant so the callback's expiry
+/// check and the opportunistic prune in `sso_login` (see
+/// [`prune_expired_sso_sessions`]) can never drift apart.
+const PENDING_SSO_SESSION_TTL_MINUTES: i64 = 10;
+
 /// Create SSO router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -90,8 +99,13 @@ pub async fn sso_login(
     // Store code verifier in session (to be retrieved in callback)
     let session_id = uuid::Uuid::new_v4().to_string();
 
-    // Store session data for callback
-    state.sso_sessions.lock().await.insert(
+    // Store session data for callback. Opportunistically prune abandoned
+    // pending sessions first (under the lock we already hold) so the in-memory
+    // map stays bounded to the TTL window instead of growing unbounded with
+    // never-completed logins — see prune_expired_sso_sessions.
+    let mut sessions = state.sso_sessions.lock().await;
+    prune_expired_sso_sessions(&mut sessions, chrono::Utc::now());
+    sessions.insert(
         session_id.clone(),
         PendingSsoSession {
             code_verifier,
@@ -99,6 +113,7 @@ pub async fn sso_login(
             created_at: chrono::Utc::now(),
         },
     );
+    drop(sessions);
 
     // Build OAuth authorize URL
     let oauth_authorize_url = format!(
@@ -176,6 +191,27 @@ fn check_redirect_uri_allowed(raw: &str, allowed_origins: &[String]) -> Result<(
     }
 }
 
+/// Drop pending PKCE sessions older than [`PENDING_SSO_SESSION_TTL_MINUTES`]
+/// from `sessions`, relative to `now`.
+///
+/// Robustness / DoS hardening: `sso_login` stores one `PendingSsoSession` per
+/// login attempt, but only the attempt whose `sso_callback` actually completes
+/// is ever removed (by id). Abandoned logins — a user closing the tab, or an
+/// attacker hammering `/login` — would otherwise accumulate in the in-memory
+/// map forever. Such entries can never be redeemed anyway: `sso_callback`
+/// already rejects any session past the same TTL. Pruning them when a new login
+/// is stored therefore bounds the map to sessions created within the TTL window
+/// without affecting any legitimate flow. Mirrors the accepted sweep-on-mint
+/// hardening already applied to the mobile SSO token store (issue #820 / PR
+/// #921).
+fn prune_expired_sso_sessions(
+    sessions: &mut std::collections::HashMap<String, PendingSsoSession>,
+    now: chrono::DateTime<chrono::Utc>,
+) {
+    let ttl = chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES);
+    sessions.retain(|_, s| now - s.created_at <= ttl);
+}
+
 /// SSO callback query parameters.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct SsoCallbackQuery {
@@ -248,8 +284,10 @@ pub async fn sso_callback(
             )
         })?;
 
-    // Check session expiry (10 minutes max)
-    if chrono::Utc::now() - pending_session.created_at > chrono::Duration::minutes(10) {
+    // Check session expiry (PENDING_SSO_SESSION_TTL_MINUTES max)
+    if chrono::Utc::now() - pending_session.created_at
+        > chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES)
+    {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(SsoError::new("session_expired", "SSO session expired")),
@@ -1418,6 +1456,85 @@ fn derive_pm_roles(scope: Option<&str>, requested: Option<&[String]>) -> Vec<Str
             .collect(),
         // No filter supplied: use the authoritative scope roles as-is.
         None => scope_roles,
+    }
+}
+
+// ============ Pending-session prune tests ============
+
+#[cfg(test)]
+mod pending_session_prune_tests {
+    use super::{prune_expired_sso_sessions, PendingSsoSession, PENDING_SSO_SESSION_TTL_MINUTES};
+    use std::collections::HashMap;
+
+    fn session(created_at: chrono::DateTime<chrono::Utc>) -> PendingSsoSession {
+        PendingSsoSession {
+            code_verifier: "verifier".to_string(),
+            redirect_uri: None,
+            created_at,
+        }
+    }
+
+    /// Abandoned sessions older than the TTL are dropped while still-live ones
+    /// are kept — the core bound on unbounded in-memory growth.
+    #[test]
+    fn prunes_expired_keeps_live() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        sessions.insert(
+            "fresh".to_string(),
+            session(now - chrono::Duration::minutes(1)),
+        );
+        sessions.insert(
+            "stale".to_string(),
+            session(now - chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES + 5)),
+        );
+
+        prune_expired_sso_sessions(&mut sessions, now);
+
+        assert!(sessions.contains_key("fresh"), "live session must survive");
+        assert!(
+            !sessions.contains_key("stale"),
+            "abandoned session past the TTL must be pruned"
+        );
+    }
+
+    /// A session exactly at the TTL boundary is retained (`<=`), matching the
+    /// callback's own `> TTL` expiry check so a session is never pruned while
+    /// the callback would still accept it; one second past is pruned.
+    #[test]
+    fn boundary_is_inclusive() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        sessions.insert(
+            "at_ttl".to_string(),
+            session(now - chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES)),
+        );
+        sessions.insert(
+            "just_past".to_string(),
+            session(
+                now - chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES)
+                    - chrono::Duration::seconds(1),
+            ),
+        );
+
+        prune_expired_sso_sessions(&mut sessions, now);
+
+        assert!(
+            sessions.contains_key("at_ttl"),
+            "a session exactly at the TTL must still be redeemable"
+        );
+        assert!(
+            !sessions.contains_key("just_past"),
+            "a session one second past the TTL must be pruned"
+        );
+    }
+
+    /// Pruning an empty map is a no-op (no panic, stays empty).
+    #[test]
+    fn empty_map_is_noop() {
+        let mut sessions: HashMap<String, PendingSsoSession> = HashMap::new();
+        prune_expired_sso_sessions(&mut sessions, chrono::Utc::now());
+        assert!(sessions.is_empty());
     }
 }
 
