@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-08-31T14:45:57Z",
-  "last_run_ms": 4000,
-  "last_pr_seen": 2904,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "0b2999f361dfb88ad2f9fa38977ee799d3dece5d",
+  "last_run_iso": "2026-09-01T03:15:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2911,
+  "last_issue_seen": 2909,
+  "last_commit_sha": "55cf8f939c5a44384d849c58ab51e747ee2c8ddd",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -343,9 +343,9 @@
       "recent_churn": 3
     },
     "backend/servers/reality-server/src/routes/sso.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-08-31",
-      "recent_churn": 151
+      "runs_seen": 3,
+      "last_seen": "2026-09-01",
+      "recent_churn": 125
     },
     "frontend/apps/ppt-web/messages/en.json": {
       "runs_seen": 1,
@@ -513,14 +513,19 @@
       "recent_churn": 2
     },
     "backend/servers/reality-server/src/services/search_alert_drainer.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-31",
-      "recent_churn": 222
+      "runs_seen": 2,
+      "last_seen": "2026-09-01",
+      "recent_churn": 32
     },
     "frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx": {
       "runs_seen": 1,
       "last_seen": "2026-08-31",
       "recent_churn": 151
+    },
+    "backend/servers/api-server/src/routes/compliance.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-01",
+      "recent_churn": 47
     }
   },
   "seen_signals": [
@@ -988,7 +993,10 @@
     "untriaged-issue-952",
     "lag-warning-supplement-2026-08-31",
     "resolution-check-2026-08-31-drift-2894",
-    "resolution-check-2026-08-31-drift-2895"
+    "resolution-check-2026-08-31-drift-2895",
+    "churn-hotspot-backend/servers/api-server/src/routes/compliance.rs",
+    "repeated-churn-backend/servers/reality-server/src/routes/sso.rs",
+    "repeated-churn-backend/servers/reality-server/src/services/search_alert_drainer.rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1002,8 +1010,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 76,
-    "vectors_created": 359,
+    "runs": 77,
+    "vectors_created": 360,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0

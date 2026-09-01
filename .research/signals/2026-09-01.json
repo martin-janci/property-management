@@ -1,0 +1,173 @@
+{
+  "generated": "2026-09-01T03:15:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn (PR #2910)",
+      "score_delta": 0,
+      "evidence": "sso.rs +121/-4 in PR #2910; cumulative re-emit \u2014 item now marked done (churn cleanup landed)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/services/search_alert_drainer.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn (PR #2905)",
+      "score_delta": 0,
+      "evidence": "search_alert_drainer.rs +31/-1 in PR #2905; cumulative re-emit \u2014 item already done from previous run",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/compliance.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn (PR #2907)",
+      "score_delta": 1,
+      "evidence": "compliance.rs +43/-4 in PR #2907 (added require_super_admin gate); NEW hotspot (runs_seen=1)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 2\u21923",
+      "score_delta": 1,
+      "evidence": "sso.rs runs_seen advanced from 2 to 3 across PRs #2893 \u2192 #2897 \u2192 #2910",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/reality-server/src/services/search_alert_drainer.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1\u21922",
+      "score_delta": 1,
+      "evidence": "search_alert_drainer.rs runs_seen advanced from 1 to 2 (PR #2896 \u2192 PR #2905); already refactored in-run",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head match",
+      "observed": "will pass after brief write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors advanced + hotspot_history + seen_signals",
+      "observed": "last_pr_seen 2904\u21922911; last_commit_sha bumped; 3 new signal IDs; hotspot_history bumped",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog id uniqueness",
+      "observed": "unique after mutation",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen-signals dedup",
+      "observed": "cumulative sso+drainer re-emit have score_delta=0; new signals not in prior seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no item exceeds 8; no open item >14d needed decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass on new plans",
+      "observed": "no new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans with all 15 sections",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "will verify at commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "will verify at commit",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity to regen",
+      "observed": "regenerated from JSON with new timestamp",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "Phase 1.5 + 1.6 skipped, noted in brief; cursors unchanged for those phases",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "no plans deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "no archive changes this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity to regen",
+      "observed": "regenerated with new timestamp",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "Phase 5 skipped this run \u2014 no candidate",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "Phase 1.6 skipped \u2192 no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal",
+      "observed": "will verify at commit",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist this run"
+}

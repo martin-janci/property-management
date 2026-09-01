@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-08-31 14:45 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-01 03:15 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -168,7 +168,8 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
-| 1 | refactor | churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer. | `backend/servers/reality-server/src/services/search_alert_drainer.rs` | top-3 churn 2026-08-31 (PR #2896) | 2026-08-31 | open | — |
+| 1 | refactor | churn-hotspot: backend/servers/reality-server/src/services/search_alert_drainer. | `backend/servers/reality-server/src/services/search_alert_drainer.rs` | top-3 churn 2026-08-31 (PR #2896) | 2026-09-01 | done | — |
+| 1 | refactor | churn-hotspot: backend/servers/api-server/src/routes/compliance.rs — 47 lines this run (PR #2907 added require_super_admin gate) | `backend/servers/api-server/src/routes/compliance.rs` | top-3 churn 2026-09-01 (PR #2907) | 2026-09-01 | open | — |
 | 1 | refactor | churn-hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unautho | `frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx` | top-3 churn 2026-08-31 (PR #2891) | 2026-08-31 | done | — |
 | 1 | bug | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | mobile-native-kmp segment review 2026-08-16 | 2026-08-30 | open | — |
 | 1 | bug | Saved Searches page + SavedSearchCard render hardcoded English strings in a 4-language app | `frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx` | rotating-expert-review 2026-08-30 | 2026-08-30 | done | — |
@@ -176,7 +177,7 @@
 | 1 | bug | compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier hierarchy) | `backend/servers/api-server/src/routes/compliance.rs (+2)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d api-handlers) | 2026-08-30 | done | — |
 | 1 | bug | lib/api.ts onUnauthorized callback never wired — 401 branch dead, getApiClient consumers stuck on token expiry | `frontend/apps/ppt-web/src/lib/api.ts (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d ppt-web-core) | 2026-08-30 | done | — |
 | 1 | bug | SearchAlertDrainer composes English-only subject+body despite carrying recipient locale — latent notification-i18n gap | `backend/servers/reality-server/src/services/search_alert_drainer.rs (+1)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server services sweep) | 2026-08-30 | done | — |
-| 1 | bug | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk | `backend/servers/reality-server/src/routes/sso.rs (+1)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep) | 2026-08-30 | open | — |
+| 1 | bug | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk | `backend/servers/reality-server/src/routes/sso.rs (+1)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server sso sweep) | 2026-08-30 | done | — |
 | 1 | bug | submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation | `backend/servers/reality-server/src/routes/reports.rs` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d reality-server) | 2026-08-30 | done | — |
 | 1 | bug | ai/ocr photo submit returns 201 with fabricated `pending-upload/…` URL when storage disabled — image bytes dropped, no reconciler | `backend/servers/api-server/src/routes/ai/ocr.rs` | dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-handlers) | 2026-08-29 | done | — |
 | 1 | bug | ppt-web iot.tsx sensor-delete confirm is hardcoded English `window.confirm(…)` — sk/cs/de users see raw English on destructive action | `frontend/apps/ppt-web/src/routes/groups/iot.tsx` | dispatcher Tier-1d rotating-expert-review 2026-08-29 (ppt-web-core routes) | 2026-08-29 | done | — |
@@ -364,7 +365,7 @@
 | 1 | triage | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | `—` | #836 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | `—` | #845 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | `—` | #849 (+1) | 2026-05-31 | done | — |
-| 0 | refactor | churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi | `backend/servers/reality-server/src/routes/sso.rs` | top-3 churn 2026-08-31 (PR #2893) | 2026-08-31 | open | — |
+| 0 | refactor | churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi | `backend/servers/reality-server/src/routes/sso.rs` | top-3 churn 2026-08-31 (PR #2893) (+1) | 2026-09-01 | done | — |
 | 0 | test-gap | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt` | Tier1d review 2026-08-11 (mobile-native-kmp) | 2026-08-25 | dropped | — |
 | 0 | dx | Cloud routine cadence recovery — reduce 3–4d gaps between runs | `.research/state.json` | routine self-signal 2026-07-09 | 2026-07-09 | dropped | — |
 | 0 | refactor | Churn hotspot: 1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026 | `backend/servers/api-server/src/routes/emergency.rs` | local git numstat since 2026-06-07 | 2026-07-05 | dropped | — |
