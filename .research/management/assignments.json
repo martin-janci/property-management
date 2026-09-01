@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-01T08:33:45Z",
+  "generated": "2026-09-01T09:02:04Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -48,18 +48,18 @@
     {
       "task_id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs-retry1",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-ff2cd8ab",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-01T08:28:38Z",
-      "last_updated": "2026-09-01T08:28:38Z",
-      "status_changed_at": "2026-09-01T08:28:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-01T09:02:04Z",
+      "status_changed_at": "2026-09-01T09:02:04Z",
+      "pr_number": 2912,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2912",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2912 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=refactor-only; fmt+clippy clean; 670/671 tests pass (all quiet_hours green); sole fail=env-only SSRF dns-rebind net test in untouched api_call.rs; CI authoritative",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
