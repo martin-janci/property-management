@@ -288,7 +288,24 @@ async fn get_user_audit_logs(
         })
         .collect();
 
-    let total = log_responses.len() as i64;
+    // Count the full result set (not just this page) so the paginator can
+    // reach pages 2..N. `get_user_logs` filters purely by user_id, so mirror
+    // that with a user_id-only count query (reuses AuditLogRepository::count).
+    let total = state
+        .audit_log_repo
+        .count(AuditLogQuery {
+            user_id: Some(user_id),
+            action: None,
+            resource_type: None,
+            resource_id: None,
+            org_id: None,
+            from_date: None,
+            to_date: None,
+            limit: None,
+            offset: None,
+        })
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
