@@ -147,17 +147,31 @@
       }
     },
     {
-      "id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish-retry1",
-      "action": "Shepherd the 2 remaining partial MVP stories (84-1 direct-to-S3 wiring + 84-2 signer page) to done — both frontend-only on shipped APIs; assign an implementer pair next window to close 49/49 delivery [retry 1/2 of failed pm-scrum-master-shepherd-84-1-84-2-frontend-finish]",
-      "owner_role": "pm-frontend",
-      "priority": "high",
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs-retry1",
+      "action": "churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches [retry 1/2 of failed churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
       "status": "open",
-      "source": "dispatcher-retry-remint 2026-09-01T06:25:02Z (retry_of=pm-scrum-master-shepherd-84-1-84-2-frontend-finish reason=failed-no-pr cooldown_ok newest_failure=2026-08-25T05:06:26Z)",
+      "source": "dispatcher-retry-remint 2026-09-01T08:25:00Z (retry_of=churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs reason=failed-no-pr cooldown_ok newest_failure=2026-08-25T06:43:30Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-09-01T06:25:02Z",
-      "retry_of": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish",
+      "first_open_at": "2026-09-01T08:25:00Z",
+      "retry_of": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test-retry1",
+      "action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared [retry 1/2 of failed pm-qa-aml-dashboard-dialog-state-per-assessment-test]",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-09-01T08:25:00Z (retry_of=pm-qa-aml-dashboard-dialog-state-per-assessment-test reason=failed-no-pr cooldown_ok newest_failure=2026-08-25T06:43:54Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T08:25:00Z",
+      "retry_of": "pm-qa-aml-dashboard-dialog-state-per-assessment-test",
       "retry_round": 1
     }
   ],
