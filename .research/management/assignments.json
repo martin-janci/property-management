@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-01T12:33:18Z",
+  "generated": "2026-09-01T14:34:21Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -136,24 +136,24 @@
     {
       "task_id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
       "branch": "auto-impl/code-review-ppt-web-ui-emergency-dir-raw-4f146b37",
-      "status": "in-progress",
+      "status": "merged",
       "claimed_at": "2026-09-01T12:32:35Z",
-      "last_updated": "2026-09-01T12:32:35Z",
-      "status_changed_at": "2026-09-01T12:32:35Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
+      "last_updated": "2026-09-01T14:34:21Z",
+      "status_changed_at": "2026-09-01T14:34:21Z",
+      "pr_number": 2913,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2913",
+      "merged_at": "2026-09-01T14:34:21Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2913 status=done specialist=react-web: routed 5 EmergencyContactDirectoryPage error handlers through i18n t() (dead-code fallback fix) + regression test; frontend suite 2579 tests pass, CI green (31 checks); scope_drift=owner-role/area mismatch only (benign)",
+      "reviewer_summary": "verdict=approve note=i18n-dead-code-fix-correct-tested-scoped-CI-green (posted as comment; self-PR)",
+      "last_reviewed_oid": "43be13f95e2faf99eab5c7de2f6e31f8b0446cbb",
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-09-01T14:34:21Z"
     },
     {
       "task_id": "code-review-reality-server-agent-review-self-review",
