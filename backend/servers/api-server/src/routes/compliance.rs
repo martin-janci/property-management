@@ -368,22 +368,38 @@ async fn get_data_export_report(
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<DataExportReportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    // For now, return a summary (in production, this would query with filters)
-    let _ = params;
 
-    // Get all pending exports to give a count
-    let pending = state
+    // GDPR compliance figures come straight from `data_export_requests` so the
+    // report reflects true platform activity (this endpoint previously returned
+    // an empty list and hard-coded zeros for the completed/downloaded counts).
+    // `org_id` is not applied here — export requests are user-scoped, not
+    // org-scoped; `from_date`/`to_date` bound `created_at`.
+    let summary = state
         .data_export_repo
-        .get_pending(1000)
+        .report_summary(params.from_date, params.to_date, 1000)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+    let exports = summary
+        .entries
+        .into_iter()
+        .map(|r| DataExportReportEntry {
+            id: r.id,
+            user_id: r.user_id,
+            status: r.status.as_str().to_string(),
+            format: r.format,
+            created_at: r.created_at,
+            completed_at: r.completed_at,
+            downloaded: r.downloaded_at.is_some(),
+        })
+        .collect();
+
     Ok(Json(DataExportReportResponse {
-        exports: vec![],
-        total_requests: pending.len() as i64,
-        completed_count: 0,
-        pending_count: pending.len() as i64,
-        downloaded_count: 0,
+        exports,
+        total_requests: summary.total_requests,
+        completed_count: summary.completed_count,
+        pending_count: summary.pending_count,
+        downloaded_count: summary.downloaded_count,
     }))
 }
 

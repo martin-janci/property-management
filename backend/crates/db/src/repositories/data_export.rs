@@ -3,12 +3,12 @@
 #![allow(clippy::type_complexity)]
 
 use crate::models::data_export::{
-    ActivityExport, AnnouncementExport, CreateDataExportRequest, DataExportRequest, DocumentExport,
-    ExportFormat, ExportMetadata, FaultExport, MessageExport, OrganizationExport, ProfileExport,
-    ResidencyExport, UserDataExport, VoteExport,
+    ActivityExport, AnnouncementExport, CreateDataExportRequest, DataExportReportSummary,
+    DataExportRequest, DocumentExport, ExportFormat, ExportMetadata, FaultExport, MessageExport,
+    OrganizationExport, ProfileExport, ResidencyExport, UserDataExport, VoteExport,
 };
 use crate::DbPool;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
@@ -91,6 +91,65 @@ impl DataExportRepository {
         .bind(limit)
         .fetch_all(&self.pool)
         .await
+    }
+
+    /// Aggregate counts + a bounded most-recent slice for the platform GDPR
+    /// data-export compliance report (see [`DataExportReportSummary`]).
+    ///
+    /// The four counts are computed in one filtered aggregate so they stay
+    /// mutually consistent. `from_date` / `to_date` bound `created_at` (either
+    /// may be `None` to leave that side unbounded); `limit` bounds only the
+    /// detail `entries`, never the counts.
+    pub async fn report_summary(
+        &self,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+        limit: i64,
+    ) -> Result<DataExportReportSummary, SqlxError> {
+        let (total_requests, pending_count, completed_count, downloaded_count): (
+            i64,
+            i64,
+            i64,
+            i64,
+        ) = sqlx::query_as(
+            r#"
+            SELECT
+                COUNT(*),
+                COUNT(*) FILTER (WHERE status IN ('pending', 'processing')),
+                COUNT(*) FILTER (WHERE status IN ('ready', 'downloaded', 'expired')),
+                COUNT(*) FILTER (WHERE downloaded_at IS NOT NULL)
+            FROM data_export_requests
+            WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+              AND ($2::timestamptz IS NULL OR created_at <= $2)
+            "#,
+        )
+        .bind(from_date)
+        .bind(to_date)
+        .fetch_one(&self.pool)
+        .await?;
+
+        let entries = sqlx::query_as::<_, DataExportRequest>(
+            r#"
+            SELECT * FROM data_export_requests
+            WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+              AND ($2::timestamptz IS NULL OR created_at <= $2)
+            ORDER BY created_at DESC
+            LIMIT $3
+            "#,
+        )
+        .bind(from_date)
+        .bind(to_date)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(DataExportReportSummary {
+            total_requests,
+            pending_count,
+            completed_count,
+            downloaded_count,
+            entries,
+        })
     }
 
     /// Mark an export as processing.
