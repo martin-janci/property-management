@@ -14425,6 +14425,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test-retry1",
+      "branch": "auto-impl/pm-qa-aml-dashboard-dialog-state-per-ass-3d9db493",
+      "status": "failed",
+      "claimed_at": "2026-09-01T08:28:38Z",
+      "last_updated": "2026-09-01T08:33:45Z",
+      "status_changed_at": "2026-09-01T08:33:45Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=tests already present on dev (3f710e4, PR #2899); both #2832 dialog-state-reset regression tests + assessment2 fixture exist; zero diff, no PR needed [already-landed]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-qa-booking-connect-non-manager-hijack-regression-test",
       "branch": "auto-impl/pm-qa-booking-connect-non-manager-hijack-dec7b0b3",
       "status": "merged",
@@ -16951,5 +16973,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-01T06:37:14Z"
+  "archived_at": "2026-09-01T08:33:45Z"
 }
