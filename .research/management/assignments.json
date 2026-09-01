@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-01T00:32:56Z",
+  "generated": "2026-09-01T01:03:44Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -70,18 +70,18 @@
     {
       "task_id": "gh-issue-2909",
       "branch": "auto-impl/gh-issue-2909-8c83374c",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-01T00:27:35Z",
-      "last_updated": "2026-09-01T00:27:35Z",
-      "status_changed_at": "2026-09-01T00:27:35Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-01T01:03:44Z",
+      "status_changed_at": "2026-09-01T01:03:44Z",
+      "pr_number": 2911,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2911",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2911 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=swept 10 unbounded list handlers to clamp_limit + IG3 test; listings/rentals/compliance verified repo-clamped (skipped); verify green via uncommitted utoipa vendored workaround (swagger dl egress-blocked)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
