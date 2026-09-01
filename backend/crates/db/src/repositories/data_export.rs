@@ -100,12 +100,27 @@ impl DataExportRepository {
     /// mutually consistent. `from_date` / `to_date` bound `created_at` (either
     /// may be `None` to leave that side unbounded); `limit` bounds only the
     /// detail `entries`, never the counts.
+    ///
+    /// The aggregate and the detail slice are two statements, so a concurrent
+    /// write landing between them would otherwise yield a summary whose counts
+    /// disagree with its entries (issue #2924). Both reads run inside one
+    /// `REPEATABLE READ` transaction: PostgreSQL freezes the transaction
+    /// snapshot at the first statement, so the counts and the entries always
+    /// observe the exact same set of rows regardless of concurrent commits.
     pub async fn report_summary(
         &self,
         from_date: Option<DateTime<Utc>>,
         to_date: Option<DateTime<Utc>>,
         limit: i64,
     ) -> Result<DataExportReportSummary, SqlxError> {
+        // A read-only REPEATABLE READ transaction pins one snapshot for both
+        // reads. `SET TRANSACTION` must precede any data statement, so it is
+        // issued as the transaction's first command.
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+            .execute(&mut *tx)
+            .await?;
+
         let (total_requests, pending_count, completed_count, downloaded_count): (
             i64,
             i64,
@@ -125,7 +140,7 @@ impl DataExportRepository {
         )
         .bind(from_date)
         .bind(to_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         let entries = sqlx::query_as::<_, DataExportRequest>(
@@ -140,8 +155,11 @@ impl DataExportRepository {
         .bind(from_date)
         .bind(to_date)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *tx)
         .await?;
+
+        // Read-only transaction: commit is cheap and just releases the snapshot.
+        tx.commit().await?;
 
         Ok(DataExportReportSummary {
             total_requests,

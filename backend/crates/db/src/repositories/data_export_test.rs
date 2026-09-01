@@ -9,7 +9,7 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::models::data_export::{CreateDataExportRequest, ExportFormat};
+    use crate::models::data_export::{CreateDataExportRequest, DataExportStatus, ExportFormat};
     use crate::repositories::data_export::DataExportRepository;
     use sqlx::Row;
     use uuid::Uuid;
@@ -85,6 +85,67 @@ mod tests {
                 .filter(|e| e.downloaded_at.is_some())
                 .count(),
             2,
+        );
+    }
+
+    /// Issue #2924: the aggregate counts and the detail `entries` are two
+    /// statements, so a concurrent write between them must not be able to
+    /// desync them. `report_summary` runs both reads inside one REPEATABLE
+    /// READ snapshot; here we pin the observable invariant — when `limit`
+    /// covers every matching row, each aggregate count must exactly equal the
+    /// count derived from `entries`. If the two statements ever saw different
+    /// snapshots, this equality would break.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn report_summary_counts_agree_with_entries(pool: sqlx::PgPool) {
+        let repo = DataExportRepository::new(pool.clone());
+        let user = make_user(&pool, "consistent@example.com").await;
+
+        insert_request(&pool, user, "pending", false).await;
+        insert_request(&pool, user, "processing", false).await;
+        insert_request(&pool, user, "ready", false).await;
+        insert_request(&pool, user, "downloaded", true).await;
+        insert_request(&pool, user, "expired", true).await;
+        insert_request(&pool, user, "failed", false).await;
+
+        // limit >= number of rows, so `entries` holds the full snapshot.
+        let s = repo.report_summary(None, None, 1000).await.unwrap();
+
+        assert_eq!(
+            s.total_requests as usize,
+            s.entries.len(),
+            "total_requests must equal the number of entries in the same snapshot"
+        );
+        assert_eq!(
+            s.pending_count as usize,
+            s.entries
+                .iter()
+                .filter(|e| matches!(
+                    e.status,
+                    DataExportStatus::Pending | DataExportStatus::Processing
+                ))
+                .count(),
+            "pending_count must match the in-flight entries in the same snapshot"
+        );
+        assert_eq!(
+            s.completed_count as usize,
+            s.entries
+                .iter()
+                .filter(|e| matches!(
+                    e.status,
+                    DataExportStatus::Ready
+                        | DataExportStatus::Downloaded
+                        | DataExportStatus::Expired
+                ))
+                .count(),
+            "completed_count must match the completed entries in the same snapshot"
+        );
+        assert_eq!(
+            s.downloaded_count as usize,
+            s.entries
+                .iter()
+                .filter(|e| e.downloaded_at.is_some())
+                .count(),
+            "downloaded_count must match the downloaded entries in the same snapshot"
         );
     }
 
