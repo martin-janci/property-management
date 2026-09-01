@@ -10301,7 +10301,7 @@
       "vector": "perf",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)"
       ],
@@ -10315,7 +10315,12 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-01T20:38:46Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-api-core-fcm-legacy-dead-endpoint",
@@ -10539,7 +10544,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
       ],
@@ -10552,7 +10557,12 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-01T20:38:46Z",
+        "assignment_status": "merged",
+        "pr_number": 2922
+      }
     },
     {
       "id": "code-review-api-handlers-compliance-raw-db-leak-regression",
