@@ -3746,6 +3746,15 @@
     }
   },
   "settings": {
+    "notifications": {
+      "title": "Notification Settings",
+      "subtitle": "Choose how you want to receive notifications.",
+      "loadError": "Failed to load notification preferences. Please try again.",
+      "updateError": "Failed to update preference. Please try again.",
+      "disableError": "Failed to disable notifications. Please try again.",
+      "dismiss": "Dismiss",
+      "lastUpdated": "Last updated: {{when}}"
+    },
     "portalWebhooks": {
       "title": "Portal Webhooks",
       "subtitle": "Delivery status and activity from real-estate portal webhooks — views, inquiries and sync health per portal.",

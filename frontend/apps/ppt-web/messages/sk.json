@@ -1560,6 +1560,15 @@
     }
   },
   "settings": {
+    "notifications": {
+      "title": "Nastavenia upozornení",
+      "subtitle": "Vyberte si, ako chcete dostávať upozornenia.",
+      "loadError": "Nepodarilo sa načítať predvoľby upozornení. Skúste to znova.",
+      "updateError": "Nepodarilo sa aktualizovať predvoľbu. Skúste to znova.",
+      "disableError": "Nepodarilo sa vypnúť upozornenia. Skúste to znova.",
+      "dismiss": "Zavrieť",
+      "lastUpdated": "Naposledy aktualizované: {{when}}"
+    },
     "portalWebhooks": {
       "title": "Webhooky portálov",
       "subtitle": "Stav doručenia a aktivita z webhookov realitných portálov — zobrazenia, dopyty a stav synchronizácie podľa portálu.",

@@ -1507,6 +1507,15 @@
     }
   },
   "settings": {
+    "notifications": {
+      "title": "Benachrichtigungseinstellungen",
+      "subtitle": "Wählen Sie, wie Sie Benachrichtigungen erhalten möchten.",
+      "loadError": "Benachrichtigungseinstellungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "updateError": "Einstellung konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+      "disableError": "Benachrichtigungen konnten nicht deaktiviert werden. Bitte versuchen Sie es erneut.",
+      "dismiss": "Schließen",
+      "lastUpdated": "Zuletzt aktualisiert: {{when}}"
+    },
     "portalWebhooks": {
       "title": "Portal-Webhooks",
       "subtitle": "Zustellstatus und Aktivität von Webhooks der Immobilienportale — Aufrufe, Anfragen und Synchronisierungszustand pro Portal.",
