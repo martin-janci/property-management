@@ -41,6 +41,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 // ==================== Authorization Helpers ====================
@@ -791,7 +792,7 @@ async fn list_all_subscriptions(
         .list_all_subscriptions(
             &mut **rls.conn(),
             query.status.as_deref(),
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit.map(i64::from), 50) as i32,
             query.offset.unwrap_or(0),
         )
         .await

@@ -26,6 +26,7 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Create disputes router.
@@ -925,7 +926,7 @@ async fn list_activities(
         .list_activities(
             id,
             organization_id,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit.map(i64::from), 50) as i32,
             query.offset.unwrap_or(0),
         )
         .await

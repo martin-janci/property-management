@@ -30,6 +30,7 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Rating dimension configuration
@@ -1102,7 +1103,7 @@ async fn list_my_quotes(
         .marketplace_repo
         .list_provider_quotes(
             provider.id,
-            query.limit.unwrap_or(20),
+            clamp_limit(query.limit.map(i64::from), 20) as i32,
             query.offset.unwrap_or(0),
         )
         .await
@@ -1249,7 +1250,7 @@ async fn list_my_invitations(
         .marketplace_repo
         .list_provider_invitations(
             provider.id,
-            query.limit.unwrap_or(20),
+            clamp_limit(query.limit.map(i64::from), 20) as i32,
             query.offset.unwrap_or(0),
         )
         .await
@@ -1431,7 +1432,10 @@ async fn get_verification_queue(
 
     let queue = state
         .marketplace_repo
-        .get_verification_queue(query.limit.unwrap_or(20), query.offset.unwrap_or(0))
+        .get_verification_queue(
+            clamp_limit(query.limit.map(i64::from), 20) as i32,
+            query.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to get verification queue");
@@ -1724,7 +1728,7 @@ async fn list_provider_reviews(
 ) -> Result<Json<Vec<ProviderReviewWithResponse>>, (StatusCode, Json<ErrorResponse>)> {
     let reviews = state
         .marketplace_repo
-        .list_provider_reviews(id, query.limit.unwrap_or(20))
+        .list_provider_reviews(id, clamp_limit(query.limit.map(i64::from), 20) as i32)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to list reviews");

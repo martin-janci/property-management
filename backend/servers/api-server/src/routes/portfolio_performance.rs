@@ -2,6 +2,7 @@
 //! API endpoints for portfolio configuration, income/expense tracking,
 //! ROI calculations, benchmarking, and analytics dashboard.
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 use api_core::extractors::AuthUser;
 use axum::{
@@ -760,7 +761,7 @@ async fn list_alerts(
         .list_alerts(
             portfolio_id,
             query.unread_only.unwrap_or(false),
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit.map(i64::from), 50) as i32,
         )
         .await
         .map_err(internal_error)?;

@@ -37,6 +37,7 @@ use db::models::building_certification::{
     UpdateCertificationCredit, UpdateCertificationMilestone,
 };
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Create the router for building certifications.
@@ -164,7 +165,7 @@ async fn list_certifications(
             &mut **rls.conn(),
             org_id,
             filters,
-            query.limit.unwrap_or(50),
+            clamp_limit(query.limit, 50),
             query.offset.unwrap_or(0),
         )
         .await
@@ -696,7 +697,7 @@ async fn list_audit_logs(
             &mut **rls.conn(),
             org_id,
             cert_id,
-            query.limit.unwrap_or(100),
+            clamp_limit(query.limit, 100),
         )
         .await
         .map(Json)

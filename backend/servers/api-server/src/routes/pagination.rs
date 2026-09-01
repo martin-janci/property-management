@@ -62,4 +62,25 @@ mod tests {
         assert_eq!(clamp_limit_capped(None, 100, 1_000), 100);
         assert_eq!(clamp_limit_capped(Some(-5), 100, 1_000), 1);
     }
+
+    #[test]
+    fn handler_straggler_patterns_cap_hostile_limit() {
+        // IG3 (#2909): the list handlers swept in this change apply one of two
+        // clamp shapes at the handler boundary. A hostile `?limit=1000000`
+        // must collapse to MAX_PAGE_LIMIT for BOTH — never reach SQL as an
+        // unbounded full-table-scan `LIMIT`.
+
+        // i32 straggler pattern, e.g. work_orders / marketplace / disputes /
+        // legal / subscriptions / portfolio_performance / enhanced_tenant_screening:
+        //     clamp_limit(query.limit.map(i64::from), N) as i32
+        let hostile_i32: Option<i32> = Some(1_000_000);
+        let applied_i32 = clamp_limit(hostile_i32.map(i64::from), 50) as i32;
+        assert_eq!(applied_i32, MAX_PAGE_LIMIT as i32);
+
+        // i64 straggler pattern, e.g. faults::list_my_faults /
+        // building_certifications / predictive_maintenance::get_equipment_by_health:
+        //     clamp_limit(query.limit, N)
+        let hostile_i64: Option<i64> = Some(1_000_000);
+        assert_eq!(clamp_limit(hostile_i64, 50), MAX_PAGE_LIMIT);
+    }
 }

@@ -37,6 +37,7 @@ use sqlx::PgConnection;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::routes::pagination::clamp_limit;
 use crate::state::AppState;
 
 /// Create work orders router.
@@ -460,7 +461,7 @@ async fn list_overdue(
             .list_overdue(
                 &mut **rls.conn(),
                 query.organization_id,
-                query.limit.unwrap_or(20),
+                clamp_limit(query.limit.map(i64::from), 20) as i32,
             )
             .await
             .map(Json)
@@ -718,7 +719,7 @@ async fn list_comments(
             .list_updates(
                 &mut **rls.conn(),
                 id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await
@@ -810,7 +811,7 @@ async fn get_upcoming_schedules(
                 &mut **rls.conn(),
                 query.organization_id,
                 query.days_ahead.unwrap_or(30),
-                query.limit.unwrap_or(20),
+                clamp_limit(query.limit.map(i64::from), 20) as i32,
             )
             .await
             .map(Json)
@@ -1029,7 +1030,7 @@ async fn list_executions(
             .list_executions(
                 &mut **rls.conn(),
                 id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await
@@ -1102,7 +1103,7 @@ async fn get_equipment_service_history(
             .get_service_history(
                 &mut **rls.conn(),
                 equipment_id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await
@@ -1157,7 +1158,7 @@ async fn get_building_service_history(
             .get_building_service_history(
                 &mut **rls.conn(),
                 building_id,
-                query.limit.unwrap_or(50),
+                clamp_limit(query.limit.map(i64::from), 50) as i32,
                 query.offset.unwrap_or(0),
             )
             .await
