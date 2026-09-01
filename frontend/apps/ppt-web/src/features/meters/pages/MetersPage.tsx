@@ -33,7 +33,7 @@ export function MetersPage({
   onNavigateToComparison,
   onExport,
 }: MetersPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [typeFilter, setTypeFilter] = useState<MeterType | ''>('');
   const [showInactive, setShowInactive] = useState(false);
 
@@ -374,8 +374,8 @@ export function MetersPage({
                   <div className="flex justify-between">
                     <span className="text-gray-600">{t('meters.export.dateRange')}:</span>
                     <span className="font-medium">
-                      {new Date(exportStartDate).toLocaleDateString()} -{' '}
-                      {new Date(exportEndDate).toLocaleDateString()}
+                      {new Date(exportStartDate).toLocaleDateString(i18n.language)} -{' '}
+                      {new Date(exportEndDate).toLocaleDateString(i18n.language)}
                     </span>
                   </div>
                   <div className="flex justify-between">
