@@ -18,6 +18,7 @@ pub mod audit_log;
 pub mod building;
 pub mod critical_notification;
 pub mod data_export;
+pub mod data_export_test;
 pub mod delegation;
 pub mod device_push_token;
 pub mod document;
