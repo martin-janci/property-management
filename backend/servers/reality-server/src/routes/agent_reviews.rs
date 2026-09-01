@@ -91,7 +91,7 @@ pub async fn list_reviews(
     Query(query): Query<ReviewsQuery>,
 ) -> Result<Json<ReviewsResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
 
     let mut conn = state
         .acquire_public_conn()

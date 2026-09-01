@@ -429,7 +429,7 @@ pub async fn list_my_listings(
     Query(query): Query<MyListingsQuery>,
 ) -> Result<Json<MyListingsResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset_i32(query.offset);
     let status = query.status.as_deref();
 
     let listings = state

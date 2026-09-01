@@ -356,7 +356,7 @@ pub async fn list_comments(
         .limit
         .unwrap_or(DEFAULT_COMMENTS_LIMIT)
         .clamp(1, MAX_COMMENTS_LIMIT);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
 
     let mut conn = state
         .acquire_public_conn()
