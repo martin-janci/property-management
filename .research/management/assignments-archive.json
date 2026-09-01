@@ -1727,6 +1727,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs-retry1",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-ff2cd8ab",
+      "status": "merged",
+      "claimed_at": "2026-09-01T08:28:38Z",
+      "last_updated": "2026-09-01T12:28:43Z",
+      "status_changed_at": "2026-09-01T12:28:43Z",
+      "pr_number": 2912,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2912",
+      "merged_at": "2026-09-01T12:27:25Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2912 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=refactor-only; fmt+clippy clean; 670/671 tests pass (all quiet_hours green); sole fail=env-only SSRF dns-rebind net test in untouched api_call.rs; CI authoritative",
+      "reviewer_summary": "verdict=approve head_oid=d7df3a8fe500a064a332dbc76c185d5ffec1aca2 note=behavior-identical refactor, CI green (28 checks), scope_drift expected/benign; approved via comment (self-PR)",
+      "last_reviewed_oid": "d7df3a8fe500a064a332dbc76c185d5ffec1aca2",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-01T10:34:14Z"
+    },
+    {
       "task_id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-0ff73b2d",
       "status": "merged",
@@ -5457,6 +5479,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-25T08:39:01Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
+      "branch": "auto-impl/code-review-ppt-web-ui-emergency-dir-raw-4f146b37",
+      "status": "merged",
+      "claimed_at": "2026-09-01T12:32:35Z",
+      "last_updated": "2026-09-01T14:34:21Z",
+      "status_changed_at": "2026-09-01T14:34:21Z",
+      "pr_number": 2913,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2913",
+      "merged_at": "2026-09-01T14:34:21Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2913 status=done specialist=react-web: routed 5 EmergencyContactDirectoryPage error handlers through i18n t() (dead-code fallback fix) + regression test; frontend suite 2579 tests pass, CI green (31 checks); scope_drift=owner-role/area mismatch only (benign)",
+      "reviewer_summary": "verdict=approve note=i18n-dead-code-fix-correct-tested-scoped-CI-green (posted as comment; self-PR)",
+      "last_reviewed_oid": "43be13f95e2faf99eab5c7de2f6e31f8b0446cbb",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-01T14:34:21Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
@@ -16973,5 +17017,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-01T08:33:45Z"
+  "archived_at": "2026-09-01T16:28:39Z"
 }

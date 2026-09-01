@@ -10343,7 +10343,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts)"
       ],
@@ -10357,7 +10357,12 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-01T16:24:13Z",
+        "assignment_status": "merged",
+        "pr_number": 2913
+      }
     },
     {
       "id": "code-review-ppt-web-ui-meters-dates-no-locale",
