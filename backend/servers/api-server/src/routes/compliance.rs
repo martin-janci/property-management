@@ -316,7 +316,7 @@ async fn get_user_audit_logs(
             offset: None,
         })
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
@@ -917,5 +917,34 @@ mod tests {
             !body.contains("scheduled_deletion_at") && !body.contains("users"),
             "sanitized body must not contain DB identifiers, got: {body}"
         );
+    }
+
+    #[test]
+    fn no_handler_bubbles_raw_db_error_to_client() {
+        // Regression for the #2915 re-leak: the audit-log count query was added
+        // with a raw `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR,
+        // e.to_string()))` that undid the #2920 sweep to `db_error`. Every DB
+        // fallible call in this module must route through `db_error` so raw
+        // driver text (table/column names, SQL fragments) never reaches clients.
+        // Guard the whole source file so a future handler can't reintroduce it.
+        let src = include_str!("compliance.rs");
+        let leak = "e.to_string()";
+        for (idx, line) in src.lines().enumerate() {
+            // Ignore comments (including the doc paragraphs above) so only real
+            // code lines are checked.
+            if line.trim_start().starts_with("//") {
+                continue;
+            }
+            let is_map_err_leak = line.contains("map_err")
+                && line.contains(leak)
+                && line.contains("INTERNAL_SERVER_ERROR");
+            assert!(
+                !is_map_err_leak,
+                "line {}: raw DB error leaked to client via map_err — route it \
+                 through db_error() instead: {}",
+                idx + 1,
+                line.trim()
+            );
+        }
     }
 }
