@@ -199,7 +199,7 @@ pub async fn list_inquiries(
     Query(query): Query<InquiriesQuery>,
 ) -> Result<Json<InquiriesResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset_i32(query.offset);
 
     // Run the page query and the matching COUNT in parallel — the count must
     // use the same status filter as the page so clients can compute

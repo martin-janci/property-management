@@ -1558,6 +1558,15 @@
     }
   },
   "settings": {
+    "notifications": {
+      "title": "Nastavení oznámení",
+      "subtitle": "Vyberte si, jak chcete dostávat oznámení.",
+      "loadError": "Nepodařilo se načíst předvolby oznámení. Zkuste to prosím znovu.",
+      "updateError": "Nepodařilo se aktualizovat předvolbu. Zkuste to prosím znovu.",
+      "disableError": "Nepodařilo se vypnout oznámení. Zkuste to prosím znovu.",
+      "dismiss": "Zavřít",
+      "lastUpdated": "Naposledy aktualizováno: {{when}}"
+    },
     "portalWebhooks": {
       "title": "Webhooky portálů",
       "subtitle": "Stav doručení a aktivita z webhooků realitních portálů — zobrazení, poptávky a stav synchronizace podle portálu.",

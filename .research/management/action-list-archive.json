@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-09-01T10:34:26Z",
+  "archived_at": "2026-09-02T00:32:55Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1607,6 +1607,27 @@
       }
     },
     {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs-retry1",
+      "action": "churn hotspot: quiet_hours_drain.rs — high line-count / repeated PR touches [retry 1/2 of failed churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-09-01T08:25:00Z (retry_of=churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs reason=failed-no-pr cooldown_ok newest_failure=2026-08-25T06:43:30Z) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T08:25:00Z",
+      "retry_of": "churn-hotspot-backend/servers/api-server/src/services/quiet_hours_drain.rs",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2912,
+        "merged_at": "2026-09-01T12:27:25Z",
+        "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
       "action": "churn-hotspot: backend/servers/reality-server/src/routes/sso.rs — high churn thi",
       "owner_role": "pm-tech-lead",
@@ -2377,6 +2398,30 @@
       }
     },
     {
+      "id": "code-review-api-core-apns-jwt-per-send-mint",
+      "action": "api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=2 conf=medium vector=perf) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "perf"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
       "id": "code-review-api-core-client-ip-cf-spoof",
       "action": "api-server client-ip resolver trusts CF-Connecting-IP on any private-range peer — CF-only gate missing, reintroduces #2789 spoof class",
       "owner_role": "pm-security",
@@ -2422,6 +2467,54 @@
         "merged_pr": 2885,
         "merged_at": "2026-08-30T04:38:30Z",
         "at": "2026-08-30T06:23:27Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-fcm-legacy-dead-endpoint",
+      "action": "api-server push_fanout: FCM legacy fallback (`https://fcm.googleapis.com/fcm/send`) is Google-decommissioned dead code — send_fcm_legacy can never deliver in production",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-09-02T00:32:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2926,
+        "merged_at": "2026-09-02T00:25:42Z",
+        "at": "2026-09-02T00:32:55Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-fcm-v1-static-oauth-token",
+      "action": "api-server push_fanout: FCM HTTP v1 uses a static FCM_OAUTH_TOKEN loaded once at startup — Google's ~1h token TTL breaks Android push after first hour",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2914,
+        "merged_at": "2026-09-01T18:24:44Z",
+        "at": "2026-09-01T20:38:46Z"
       }
     },
     {
@@ -3220,6 +3313,54 @@
       }
     },
     {
+      "id": "code-review-api-handlers-compliance-raw-db-error-leak",
+      "action": "api-server compliance.rs: sqlx errors bubbled to the client via `e.to_string()` (:272,:322 etc) leak raw DB messages/column names on failure paths",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2920,
+        "merged_at": "2026-09-01T18:32:09Z",
+        "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-compliance-raw-db-leak-regression",
+      "action": "api-server compliance.rs:319 — PR #2915 audit-log count query uses raw e.to_string() map_err, re-introducing DB-error leak that PR #2920 swept",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T20:39:15Z (score=1 conf=high vector=bug) | gc1-reconcile 2026-09-02T00:27:03Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T20:39:15Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2925,
+        "merged_at": "2026-09-01T22:31:49Z",
+        "at": "2026-09-02T00:27:03Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-compliance-superadmin-exact-match",
       "action": "compliance handlers gate on exact SuperAdmin match — locks out PlatformAdmin (breaks platform-tier hierarchy)",
       "owner_role": "pm-backend",
@@ -3241,6 +3382,30 @@
         "merged_pr": 2899,
         "merged_at": "2026-08-30T18:54:49Z",
         "at": "2026-08-30T18:54:59Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-data-export-report-stub",
+      "action": "api-server compliance.rs get_data_export_report returns hardcoded zeros — GDPR data-export report ships as a stub reporting materially false counts to platform admins",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2916,
+        "merged_at": "2026-09-01T18:24:55Z",
+        "at": "2026-09-01T20:38:46Z"
       }
     },
     {
@@ -3520,6 +3685,30 @@
         "merged_pr": 2878,
         "merged_at": "2026-08-30T02:35:22Z",
         "at": "2026-08-30T02:36:47Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-user-audit-logs-total-page-len",
+      "action": "api-server compliance.rs get_user_audit_logs: `total = log_responses.len()` returns the page size, not the true user-audit-log count — UI paginator hides pages 2..N on a compliance surface",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2915,
+        "merged_at": "2026-09-01T18:25:13Z",
+        "at": "2026-09-01T20:38:46Z"
       }
     },
     {
@@ -5395,6 +5584,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
+      "action": "ppt-web-ui EmergencyContactDirectoryPage: 5 error handlers show raw `err.message` (English backend copy) — the t() i18n fallback is dead code on the common failure path",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2913,
+        "merged_at": "2026-09-01T14:34:21Z",
+        "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-facilities-booking-hardcoded-i18n",
       "action": "ppt-web facilities booking pages hardcode English UI strings (titles + empty-state) — no useTranslation on a localized app",
       "owner_role": "pm-backend",
@@ -5462,6 +5675,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-meters-dates-no-locale",
+      "action": "ppt-web-ui meters feature: toLocaleDateString()/toLocaleString() called with NO locale argument across 8 sites — dates follow browser locale, not the user's in-app language",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2917,
+        "merged_at": "2026-09-01T18:32:29Z",
+        "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-moderation-fabricated-context",
       "action": "ppt-web moderation page fabricates context that the moderation API never returns — misleading data",
       "owner_role": "pm-backend",
@@ -5496,6 +5733,30 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-17T10:45:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-notif-settings-hardcoded-errors",
+      "action": "ppt-web-ui NotificationSettingsPage: hardcoded English error toasts ('Failed to update preference. Please try again.') on wired Settings > Notifications surface",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2918,
+        "merged_at": "2026-09-01T18:32:40Z",
+        "at": "2026-09-01T20:38:46Z"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-offline-ind-i18n",
@@ -6103,6 +6364,30 @@
       }
     },
     {
+      "id": "code-review-reality-server-pagination-offset-overflow",
+      "action": "reality-server list endpoints: offset accepts arbitrary large integers — postgres integer offset overflow / no cap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2921,
+        "merged_at": "2026-09-01T18:32:19Z",
+        "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-password-reset-no-transport",
       "action": "reality-server password reset is non-functional in prod — token discarded, no email transport, endpoint claims a link was sent",
       "owner_role": "pm-backend",
@@ -6167,6 +6452,30 @@
         "merged_pr": 2898,
         "merged_at": "2026-08-30T18:32:40Z",
         "at": "2026-08-30T18:54:59Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-saved-search-error-string-status",
+      "action": "reality-server saved-search: error strings compared to derive UI status — string-typed status codes are fragile to backend copy changes",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-09-01T20:38:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T12:29:40Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2922,
+        "merged_at": "2026-09-01T20:37:29Z",
+        "at": "2026-09-01T20:38:46Z"
       }
     },
     {
@@ -15801,6 +16110,60 @@
         "merged_pr": 2911,
         "merged_at": "2026-09-01T02:27:49Z",
         "at": "2026-09-01T02:32:43Z"
+      }
+    },
+    {
+      "id": "gh-issue-2923",
+      "action": "Follow-up: cover the update-error i18n path in EmergencyContactDirectoryPage tests (PR #2913) (Closes #2923)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-09-01T22:26:11Z (#2923) | gc1-reconcile 2026-09-02T00:32:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T22:26:11Z",
+      "issue_ref": {
+        "number": 2923,
+        "url": "https://github.com/martin-janci/property-management/issues/2923",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2927,
+        "merged_at": "2026-09-02T00:32:02Z",
+        "at": "2026-09-02T00:32:55Z"
+      }
+    },
+    {
+      "id": "gh-issue-2924",
+      "action": "Follow-up: make DataExportRepository::report_summary counts + entries a single consistent snapshot (PR #2916) (Closes #2924)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-09-01T22:26:11Z (#2924) | gc1-reconcile 2026-09-02T00:32:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-01T22:26:11Z",
+      "issue_ref": {
+        "number": 2924,
+        "url": "https://github.com/martin-janci/property-management/issues/2924",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2928,
+        "merged_at": "2026-09-02T00:32:05Z",
+        "at": "2026-09-02T00:32:55Z"
       }
     },
     {

@@ -10276,15 +10276,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2914",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)"
       ],
       "evidence": [
         "push_fanout.rs:233 `oauth_token: std::env::var(\"FCM_OAUTH_TOKEN\").ok()` loaded once at FcmConfig::from_env(); reused verbatim as bearer at :330-341 (`.bearer_auth(&bearer)`). FCM HTTP v1 access tokens are OAuth2, ~3600s TTL — no refresh path from a service-account key anywhere in the module.",
         "Wired path: PushFanoutWorker.deliver_job -> CombinedPushAdapter.send -> FcmHttpAdapter.send_fcm_v1. Not dev-gated. Inline comment at :324-329 acknowledges the shortcut ('In production this would come from a service-account key file via google-cloud-auth').",
         "Impact: Android push channel silently 401s ~1h post-boot until process restart. In-app notifications remain the mandatory record, so no data loss, but a shipped delivery channel silently degrades.",
-        "Routine 2026-09-01 verified via grep: `oauth_token: std::env::var(\"FCM_OAUTH_TOKEN\")` at :233, `let bearer = self.fcm_config.oauth_token.clone()` at :330, `.bearer_auth(&bearer)` at :341 — code path confirmed live."
+        "Routine 2026-09-01 verified via grep: `oauth_token: std::env::var(\"FCM_OAUTH_TOKEN\")` at :233, `let bearer = self.fcm_config.oauth_token.clone()` at :330, `.bearer_auth(&bearer)` at :341 — code path confirmed live.",
+        "resolved: PR #2914 merged 2026-09-01 — fix(api-server): auto-refresh FCM HTTP v1 OAuth2 access token. Added FcmTokenProvider with service-account variant that mints RS256 JWT and refreshes before expiry; static FCM_OAUTH_TOKEN retained only as documented legacy fallback (lines 242/553 explicitly comment the deprecation)."
       ],
       "files": [
         "backend/servers/api-server/src/services/push_fanout.rs"
@@ -10299,7 +10301,7 @@
       "vector": "perf",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)"
       ],
@@ -10313,7 +10315,12 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-01T20:38:46Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-api-core-fcm-legacy-dead-endpoint",
@@ -10321,7 +10328,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)"
       ],
@@ -10335,7 +10342,12 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-02T06:27:30Z",
+        "assignment_status": "merged",
+        "pr_number": 2926
+      }
     },
     {
       "id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
@@ -10370,13 +10382,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2917",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui meters)"
       ],
       "evidence": [
         "MeterCard.tsx:104, MeterDetailPage.tsx:307/431/457, MetersPage.tsx:377-378, ReadingValidationCard.tsx:104/112, EditReadingPage.tsx:153 — all call toLocaleDateString()/toLocaleString() without a locale argument. i18n language is sk/cs/de/en but the browser locale (often en-US) governs.",
-        "Fix shape: derive locale from useTranslation().i18n.language (or an i18n helper) and pass as the locale argument; add a shared formatDate util so the choice is consistent across features."
+        "Fix shape: derive locale from useTranslation().i18n.language (or an i18n helper) and pass as the locale argument; add a shared formatDate util so the choice is consistent across features.",
+        "resolved: PR #2917 merged 2026-09-01 — fix(ppt-web): localize meter dates to active i18n language. All 12 date-formatting sites in 8 files now pass i18n.language to toLocaleDateString/toLocaleString; three chart sites previously hard-coded en-US now honor active locale."
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/meters/components/MeterCard.tsx",
@@ -10395,13 +10409,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2918",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui settings/notifications)"
       ],
       "evidence": [
         "NotificationSettingsPage.tsx:40 `setUpdateError('Failed to update preference. Please try again.')` and :55-56 `setUpdateError('Failed to disable notifications. Please try again.')` — user-facing error toasts, no t() wrapping.",
-        "Fix shape: add settings.notifications.errors.updateFailed / disableFailed keys to en/sk/cs/de bundles; wrap both call sites in t()."
+        "Fix shape: add settings.notifications.errors.updateFailed / disableFailed keys to en/sk/cs/de bundles; wrap both call sites in t().",
+        "resolved: PR #2918 merged 2026-09-01 — i18n notification settings strings. Three hardcoded English error strings + page chrome routed through t(settings.notifications.*); notification key group added to all 6 locales (en/sk/cs/de/pl/hu); regression test enforces key-parity + placeholder guard across all bundles."
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/settings/notifications/NotificationSettingsPage.tsx"
@@ -10416,15 +10432,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2916",
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)"
       ],
       "evidence": [
         "get_data_export_report (routes/compliance.rs:365-388, GET /api/v1/compliance/gdpr/data-exports, Epic 9 Story 9.7) discards its filter params (`let _ = params;` at :372, dropping from_date/to_date/org_id), then returns `exports: vec![]` (:382), `completed_count: 0` (:384), `downloaded_count: 0` (:386). Only live query is data_export_repo.get_pending(1000) (:375-379), whose len is reused for total_requests and pending_count.",
         "Consequences on a GDPR compliance report: exports list ALWAYS empty; completed_count and downloaded_count ALWAYS 0; total_requests undercounts (only pending); >1000 pending silently truncated. Inline comment at :371 confirms it's a known stub.",
         "Routine 2026-09-01 verified via direct Read of compliance.rs 230-388 — code path confirmed unchanged from the tier1d report; the platform-admin gate at :370 is intact (endpoint remains reachable to platform admins).",
-        "Fix shape: back the response with real repo queries — count completed/pending/downloaded by status over the requested date range (honouring from_date/to_date/org_id), and populate the exports vec (paginated). IG3: integration test seeding one completed+downloaded export and one pending export asserts completed_count==1, downloaded_count==1, pending_count==1 and non-empty exports."
+        "Fix shape: back the response with real repo queries — count completed/pending/downloaded by status over the requested date range (honouring from_date/to_date/org_id), and populate the exports vec (paginated). IG3: integration test seeding one completed+downloaded export and one pending export asserts completed_count==1, downloaded_count==1, pending_count==1 and non-empty exports.",
+        "resolved: PR #2916 merged 2026-09-01 — fix(api-server): report real GDPR data-export counts instead of stub zeros. Handler now calls DataExportRepository::report_summary(from_date, to_date, limit); returns real total_requests/completed/pending/downloaded plus entries. IG3 tests seed 6 exports across all statuses."
       ],
       "files": [
         "backend/servers/api-server/src/routes/compliance.rs"
@@ -10439,15 +10457,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2915",
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)"
       ],
       "evidence": [
         "get_user_audit_logs (routes/compliance.rs:257-298, GET /api/v1/compliance/audit-logs/user/{user_id}) computes `let total = log_responses.len() as i64;` (:291). The handler fetches ONE page via `get_user_logs(user_id, limit.unwrap_or(100), offset.unwrap_or(0))` (:264-270) and never issues a count query. The response's `total` field ends up equal to the page size (100 on default), so any UI paginator dividing total by limit sees `1 page` and hides pages 2..N.",
         "Distinct from unbounded-pagination-limit (clamp of `limit`, done in #2911) and from superadmin-exact-match. Sibling handler get_audit_logs (:124-179) does it correctly, calling state.audit_log_repo.count(query) for total — the divergence is inside the same module.",
         "Routine 2026-09-01 verified via direct Read of compliance.rs 262-299 — require_super_admin(&user) at :263 gates the endpoint (already tightened by PR #2907); the missing count remains.",
-        "Fix shape: add a repo count method (count_user_logs(user_id)) and use it for `total`, mirroring get_audit_logs. IG3: integration test seeding N>limit user audit logs asserts response.total == N while response.logs.len() == limit."
+        "Fix shape: add a repo count method (count_user_logs(user_id)) and use it for `total`, mirroring get_audit_logs. IG3: integration test seeding N>limit user audit logs asserts response.total == N while response.logs.len() == limit.",
+        "resolved: PR #2915 merged 2026-09-01 — bug(backend): return true user-audit-log count in get_user_audit_logs. total = log_responses.len() replaced with AuditLogRepository::count using user_id filter; regression test asserts total==full_count while page==limit."
       ],
       "files": [
         "backend/servers/api-server/src/routes/compliance.rs"
@@ -10462,13 +10482,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2920",
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)"
       ],
       "evidence": [
         "Multiple `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?` sites in compliance.rs return the raw sqlx::Error rendering to the client — column names, table names, and constraint identifiers reach a compliance response body.",
-        "Fix shape: log via tracing::error and return a generic `\"failed to fetch audit logs\"` string; ties into the existing tracing pattern used by handlers/auth. Companion to `user-audit-logs-total-page-len` — both fixes touch the same file."
+        "Fix shape: log via tracing::error and return a generic `\"failed to fetch audit logs\"` string; ties into the existing tracing pattern used by handlers/auth. Companion to `user-audit-logs-total-page-len` — both fixes touch the same file.",
+        "resolved: PR #2920 merged 2026-09-01 — sanitize DB errors in compliance handlers. Added db_error helper that logs full error via tracing::error! and returns opaque 500 body; replaced all 16 map_err(e.to_string()) sites called out by the review. One new site at compliance.rs:319 was concurrently introduced by PR #2915 audit-log count query — captured as new backlog item code-review-api-handlers-compliance-raw-db-leak-regression for follow-up."
       ],
       "files": [
         "backend/servers/api-server/src/routes/compliance.rs"
@@ -10504,13 +10526,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2921",
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
       ],
       "evidence": [
         "Tier-1d finding (see .research/signals/2026-08-31-reality-server-tier1d.json) — pagination offset parameter uncapped; parallels the api-server clamp_limit sweep landed in PR #2911.",
-        "Fix shape: apply the same `clamp_limit` / `clamp_offset` pattern to reality-server list handlers; IG3: integration test asserting a `?offset=<i32::MAX>` request either returns 400 or an empty page rather than panicking."
+        "Fix shape: apply the same `clamp_limit` / `clamp_offset` pattern to reality-server list handlers; IG3: integration test asserting a `?offset=<i32::MAX>` request either returns 400 or an empty page rather than panicking.",
+        "resolved: PR #2921 merged 2026-09-01 — cap pagination offset. Added MAX_LIST_OFFSET=100_000 with clamp_offset/clamp_offset_i32 helpers in reality-server/src/util/mod.rs; applied to all 9 offset-param list endpoints (portal_listings, saved_searches, reports, agent_reviews, realtors, agencies, articles, favorites, imports); 4 new unit tests cover default/negative/in-bounds/pathological offsets."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs"
@@ -10525,7 +10549,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
       ],
@@ -10538,7 +10562,40 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-01T20:38:46Z",
+        "assignment_status": "merged",
+        "pr_number": 2922
+      }
+    },
+    {
+      "id": "code-review-api-handlers-compliance-raw-db-leak-regression",
+      "title": "api-server compliance.rs:319 — PR #2915 audit-log count query uses raw e.to_string() map_err, re-introducing DB-error leak that PR #2920 swept",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #2915",
+        "PR #2920"
+      ],
+      "evidence": [
+        "compliance.rs:319 `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?` — 1 leak site remains after PR #2920 sanitized 16 sites; this site was introduced by PR #2915 (audit-log count query added to fix total-page-len bug).",
+        "Fix shape: single-line change — swap `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))` for `map_err(db_error)` (helper already exists in the same file, added by #2920). Trivial follow-up.",
+        "Routine 2026-09-01 supplementary: grep at eea7067 confirms the single remaining leak site."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "created_at": "2026-09-01",
+      "updated_at": "2026-09-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-02T00:27:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2925
+      }
     }
   ]
 }

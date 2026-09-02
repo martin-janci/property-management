@@ -57,6 +57,21 @@ fn require_super_admin(user: &AuthUser) -> Result<(), (StatusCode, String)> {
     }
 }
 
+/// Map a data-layer error to a sanitized client response.
+///
+/// Compliance handlers must never surface raw SQLx / DB errors to the caller:
+/// their `Display` output leaks table and column names, SQL fragments, and
+/// connection details. Log the full error server-side (`tracing::error!`) for
+/// operators and return an opaque 500 to the client — mirroring how the other
+/// api-server routes handle DB failures (e.g. `my_units`, `unit_residents`).
+fn db_error(e: impl std::fmt::Display) -> (StatusCode, String) {
+    tracing::error!(error = %e, "compliance report query failed");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Internal server error".to_string(),
+    )
+}
+
 /// Create the compliance router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -164,13 +179,9 @@ async fn get_audit_logs(
         .audit_log_repo
         .query(query.clone())
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
-    let total = state
-        .audit_log_repo
-        .count(query)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let total = state.audit_log_repo.count(query).await.map_err(db_error)?;
 
     let log_responses: Vec<AuditLogResponse> = logs
         .into_iter()
@@ -225,7 +236,7 @@ async fn get_audit_summary(
         .audit_log_repo
         .get_action_counts(params.from_date, params.to_date, params.org_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let total_entries: i64 = action_counts.iter().map(|c| c.count).sum();
 
@@ -269,7 +280,7 @@ async fn get_user_audit_logs(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let log_responses: Vec<AuditLogResponse> = logs
         .into_iter()
@@ -288,7 +299,24 @@ async fn get_user_audit_logs(
         })
         .collect();
 
-    let total = log_responses.len() as i64;
+    // Count the full result set (not just this page) so the paginator can
+    // reach pages 2..N. `get_user_logs` filters purely by user_id, so mirror
+    // that with a user_id-only count query (reuses AuditLogRepository::count).
+    let total = state
+        .audit_log_repo
+        .count(AuditLogQuery {
+            user_id: Some(user_id),
+            action: None,
+            resource_type: None,
+            resource_id: None,
+            org_id: None,
+            from_date: None,
+            to_date: None,
+            limit: None,
+            offset: None,
+        })
+        .await
+        .map_err(db_error)?;
 
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
@@ -319,7 +347,7 @@ async fn verify_audit_integrity(
         .audit_log_repo
         .verify_integrity(Some(entries_to_check))
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
 
     let message = if verified {
         "All audit log entries passed integrity verification".to_string()
@@ -368,22 +396,38 @@ async fn get_data_export_report(
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<DataExportReportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
-    // For now, return a summary (in production, this would query with filters)
-    let _ = params;
 
-    // Get all pending exports to give a count
-    let pending = state
+    // GDPR compliance figures come straight from `data_export_requests` so the
+    // report reflects true platform activity (this endpoint previously returned
+    // an empty list and hard-coded zeros for the completed/downloaded counts).
+    // `org_id` is not applied here — export requests are user-scoped, not
+    // org-scoped; `from_date`/`to_date` bound `created_at`.
+    let summary = state
         .data_export_repo
-        .get_pending(1000)
+        .report_summary(params.from_date, params.to_date, 1000)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(db_error)?;
+
+    let exports = summary
+        .entries
+        .into_iter()
+        .map(|r| DataExportReportEntry {
+            id: r.id,
+            user_id: r.user_id,
+            status: r.status.as_str().to_string(),
+            format: r.format,
+            created_at: r.created_at,
+            completed_at: r.completed_at,
+            downloaded: r.downloaded_at.is_some(),
+        })
+        .collect();
 
     Ok(Json(DataExportReportResponse {
-        exports: vec![],
-        total_requests: pending.len() as i64,
-        completed_count: 0,
-        pending_count: pending.len() as i64,
-        downloaded_count: 0,
+        exports,
+        total_requests: summary.total_requests,
+        completed_count: summary.completed_count,
+        pending_count: summary.pending_count,
+        downloaded_count: summary.downloaded_count,
     }))
 }
 
@@ -421,7 +465,7 @@ async fn get_deletion_requests_report(
     )
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let now = Utc::now();
     let requests: Vec<DeletionRequestReportEntry> = rows
@@ -479,7 +523,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let visibility_distribution: Vec<PrivacySettingsReportEntry> = visibility_rows
         .into_iter()
@@ -495,7 +539,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Get total users
     let (total_users,): (i64,) = sqlx::query_as(
@@ -505,7 +549,7 @@ async fn get_privacy_settings_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(PrivacySettingsReportResponse {
@@ -565,7 +609,7 @@ async fn get_login_activity_report(
     .bind(to_date)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Aggregate by date
     let mut activity_map: std::collections::HashMap<String, (i64, i64)> =
@@ -638,7 +682,7 @@ async fn get_mfa_status_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Count total active users
     let (total_users,): (i64,) = sqlx::query_as(
@@ -648,7 +692,7 @@ async fn get_mfa_status_report(
     )
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let mfa_disabled = total_users - mfa_enabled;
     let adoption_rate = if total_users > 0 {
@@ -711,7 +755,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_all(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     let failed_logins: Vec<FailedLoginEntry> = rows
         .into_iter()
@@ -735,7 +779,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     // Get unique IPs
     let (unique_ips,): (i64,) = sqlx::query_as(
@@ -747,7 +791,7 @@ async fn get_failed_logins_report(
     .bind(from_date)
     .fetch_one(&mut **rls.conn())
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(FailedLoginsReportResponse {
@@ -856,6 +900,51 @@ mod tests {
         ] {
             let err = require_super_admin(&user_with_role(role)).unwrap_err();
             assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
+    }
+
+    #[test]
+    fn db_error_does_not_leak_raw_detail_to_client() {
+        // Regression: compliance handlers previously bubbled `e.to_string()`
+        // straight to the client, leaking table/column names and SQL fragments.
+        // The sanitizer must return an opaque 500 and drop the raw detail.
+        let raw = sqlx::Error::ColumnNotFound("users.scheduled_deletion_at".to_string());
+        let (status, body) = db_error(raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body, "Internal server error");
+        assert!(
+            !body.contains("scheduled_deletion_at") && !body.contains("users"),
+            "sanitized body must not contain DB identifiers, got: {body}"
+        );
+    }
+
+    #[test]
+    fn no_handler_bubbles_raw_db_error_to_client() {
+        // Regression for the #2915 re-leak: the audit-log count query was added
+        // with a raw `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR,
+        // e.to_string()))` that undid the #2920 sweep to `db_error`. Every DB
+        // fallible call in this module must route through `db_error` so raw
+        // driver text (table/column names, SQL fragments) never reaches clients.
+        // Guard the whole source file so a future handler can't reintroduce it.
+        let src = include_str!("compliance.rs");
+        let leak = "e.to_string()";
+        for (idx, line) in src.lines().enumerate() {
+            // Ignore comments (including the doc paragraphs above) so only real
+            // code lines are checked.
+            if line.trim_start().starts_with("//") {
+                continue;
+            }
+            let is_map_err_leak = line.contains("map_err")
+                && line.contains(leak)
+                && line.contains("INTERNAL_SERVER_ERROR");
+            assert!(
+                !is_map_err_leak,
+                "line {}: raw DB error leaked to client via map_err — route it \
+                 through db_error() instead: {}",
+                idx + 1,
+                line.trim()
+            );
         }
     }
 }

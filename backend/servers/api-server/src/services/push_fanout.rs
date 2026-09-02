@@ -29,11 +29,12 @@
 //!
 //! # Configuration (environment variables)
 //!
-//! | Variable                    | Required | Description                                                         |
-//! |-----------------------------|----------|---------------------------------------------------------------------|
-//! | `FCM_PROJECT_ID`            | No       | GCP project ID for FCM HTTP v1 (`projects/{id}/…`)                  |
-//! | `FCM_SERVER_KEY`            | No       | Legacy FCM server key (fall-back if no project ID)                  |
-//! | `FCM_OAUTH_TOKEN`           | No       | OAuth2 bearer token for FCM HTTP v1 (read once at startup)          |
+//! | Variable                     | Required | Description                                                        |
+//! |------------------------------|----------|--------------------------------------------------------------------|
+//! | `FCM_PROJECT_ID`             | No       | GCP project ID for FCM HTTP v1 (`projects/{id}/…`) — required to enable Android push |
+//! | `FCM_SERVICE_ACCOUNT_JSON`   | No       | Inline Google service-account JSON. **Preferred** for HTTP v1: the adapter mints and auto-refreshes an OAuth2 access token before Google's ~1h TTL expiry. |
+//! | `GOOGLE_APPLICATION_CREDENTIALS` | No   | Path to a Google service-account JSON file (same effect as `FCM_SERVICE_ACCOUNT_JSON`, used when the inline var is unset). |
+//! | `FCM_OAUTH_TOKEN`           | No       | **Legacy / deprecated.** A pre-minted OAuth2 bearer token, read once at startup and never refreshed — Android push stops working after Google's ~1h token TTL. Use `FCM_SERVICE_ACCOUNT_JSON` instead; only used as a fall-back when no service account is configured. |
 //! | `APNS_P8_KEY`               | No       | PEM-encoded P8 ECDSA private key for APNs provider auth             |
 //! | `APNS_KEY_ID`               | No       | 10-char Key ID printed on the P8 file in App Store Connect          |
 //! | `APNS_TEAM_ID`              | No       | 10-char Apple Team ID                                               |
@@ -53,7 +54,8 @@ use db::{
     repositories::DevicePushTokenRepository,
     DbPool,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use tokio::sync::Mutex;
 use tokio::time::interval;
 use tracing::Instrument;
 use uuid::Uuid;
@@ -210,17 +212,21 @@ pub struct FcmConfig {
     /// GCP project ID — used to build the FCM HTTP v1 endpoint:
     /// `https://fcm.googleapis.com/v1/projects/{project_id}/messages:send`
     pub project_id: Option<String>,
-    /// Legacy server key (fall-back when `project_id` is absent).
-    pub server_key: Option<String>,
-    /// OAuth2 bearer token for FCM HTTP v1 API.
-    /// Read once at startup so it is not re-read on every send in the hot path.
+    /// **Legacy / deprecated** pre-minted OAuth2 bearer token for FCM HTTP v1.
+    ///
+    /// Read once at startup and never refreshed, so it stops working after
+    /// Google's ~1h access-token TTL — Android push then fails until the
+    /// process is restarted. Prefer a service account (`FCM_SERVICE_ACCOUNT_JSON`
+    /// / `GOOGLE_APPLICATION_CREDENTIALS`), which the adapter mints and refreshes
+    /// automatically via [`FcmTokenProvider`]. This field is used only as a
+    /// fall-back when no service account is configured.
     pub oauth_token: Option<String>,
     /// Base URL override for FCM v1 sends (e.g. a wiremock server in tests).
     ///
     /// When `None`, the production FCM base URL is used:
     /// `https://fcm.googleapis.com`.  Set this to override only in tests — the
-    /// path segments (`/v1/projects/{id}/messages:send` and `/fcm/send`) are
-    /// appended by the adapter regardless.
+    /// path segment (`/v1/projects/{id}/messages:send`) is appended by the
+    /// adapter regardless.
     pub fcm_base_url: Option<String>,
 }
 
@@ -229,15 +235,17 @@ impl FcmConfig {
     pub fn from_env() -> Self {
         Self {
             project_id: std::env::var("FCM_PROJECT_ID").ok(),
-            server_key: std::env::var("FCM_SERVER_KEY").ok(),
             oauth_token: std::env::var("FCM_OAUTH_TOKEN").ok(),
             fcm_base_url: None,
         }
     }
 
-    /// Return `true` when at least one credential is configured.
+    /// Return `true` when FCM HTTP v1 is configured.
+    ///
+    /// A GCP project id is mandatory: it is the only supported FCM transport
+    /// now that Google has decommissioned the legacy `/fcm/send` server-key API.
     pub fn is_configured(&self) -> bool {
-        self.project_id.is_some() || self.server_key.is_some()
+        self.project_id.is_some()
     }
 
     /// Return the effective FCM base URL (production default when unset).
@@ -245,6 +253,323 @@ impl FcmConfig {
         self.fcm_base_url
             .as_deref()
             .unwrap_or("https://fcm.googleapis.com")
+    }
+}
+
+// ============================================================================
+// FCM HTTP v1 OAuth2 access-token provider (auto-refreshing)
+// ============================================================================
+//
+// FCM HTTP v1 requires an OAuth2 access token in the `Authorization: Bearer`
+// header. Google's access tokens expire after ~1 hour, so a token read once at
+// startup (`FCM_OAUTH_TOKEN`) breaks Android push after the first hour.
+//
+// [`FcmTokenProvider`] fixes that: given Google service-account credentials it
+// mints a short-lived assertion JWT (RS256), exchanges it at the OAuth2 token
+// endpoint for an access token, caches the result, and re-mints a fresh token
+// shortly *before* the cached one expires. The legacy static token is kept only
+// as a fall-back for deployments that still set `FCM_OAUTH_TOKEN`.
+
+/// The OAuth2 scope required to send messages via FCM HTTP v1.
+const FCM_OAUTH_SCOPE: &str = "https://www.googleapis.com/auth/firebase.messaging";
+
+/// Default Google OAuth2 token endpoint (used when the service-account JSON
+/// omits `token_uri`).
+const DEFAULT_GOOGLE_TOKEN_URI: &str = "https://oauth2.googleapis.com/token";
+
+/// How long before an access token's real expiry we proactively refresh it.
+///
+/// Google tokens live ~3600 s; refreshing 5 minutes early keeps a comfortable
+/// margin so an in-flight send never races the expiry boundary.
+const FCM_TOKEN_REFRESH_SKEW_SECS: i64 = 300;
+
+/// Google service-account credentials needed for the OAuth2 JWT-bearer flow.
+///
+/// Parsed from the service-account JSON file Google issues (`type`,
+/// `client_email`, `private_key`, `token_uri`, …); only the three fields the
+/// token exchange needs are retained.
+#[derive(Clone, Debug)]
+pub struct FcmServiceAccount {
+    /// Service-account identity (`iss` / `sub` of the assertion JWT).
+    client_email: String,
+    /// PEM-encoded PKCS#8 RSA private key (`private_key` in the JSON).
+    private_key_pem: String,
+    /// OAuth2 token endpoint the assertion is exchanged at.
+    token_uri: String,
+}
+
+/// The subset of the Google service-account JSON we deserialize.
+#[derive(Debug, Deserialize)]
+struct ServiceAccountJson {
+    client_email: String,
+    private_key: String,
+    #[serde(default = "default_token_uri")]
+    token_uri: String,
+}
+
+fn default_token_uri() -> String {
+    DEFAULT_GOOGLE_TOKEN_URI.to_string()
+}
+
+impl FcmServiceAccount {
+    /// Parse a service-account from the raw JSON string Google issues.
+    pub fn from_json(raw: &str) -> Result<Self, String> {
+        let parsed: ServiceAccountJson =
+            serde_json::from_str(raw).map_err(|e| format!("invalid service-account JSON: {e}"))?;
+        if parsed.client_email.trim().is_empty() || parsed.private_key.trim().is_empty() {
+            return Err("service-account JSON missing client_email or private_key".to_string());
+        }
+        Ok(Self {
+            client_email: parsed.client_email,
+            private_key_pem: parsed.private_key,
+            token_uri: parsed.token_uri,
+        })
+    }
+
+    /// Load a service-account from the environment.
+    ///
+    /// Prefers the inline `FCM_SERVICE_ACCOUNT_JSON`; otherwise reads the file
+    /// referenced by `GOOGLE_APPLICATION_CREDENTIALS`. Returns `None` when
+    /// neither is set; logs and returns `None` on a parse / read error (so the
+    /// server still starts — push just degrades to the legacy / no-op path).
+    pub fn from_env() -> Option<Self> {
+        if let Ok(inline) = std::env::var("FCM_SERVICE_ACCOUNT_JSON") {
+            if !inline.trim().is_empty() {
+                return match Self::from_json(&inline) {
+                    Ok(sa) => Some(sa),
+                    Err(e) => {
+                        tracing::error!(error = %e, "[8A-3] FCM: failed to parse FCM_SERVICE_ACCOUNT_JSON");
+                        None
+                    }
+                };
+            }
+        }
+        if let Ok(path) = std::env::var("GOOGLE_APPLICATION_CREDENTIALS") {
+            if !path.trim().is_empty() {
+                return match std::fs::read_to_string(&path) {
+                    Ok(raw) => match Self::from_json(&raw) {
+                        Ok(sa) => Some(sa),
+                        Err(e) => {
+                            tracing::error!(error = %e, path = %path, "[8A-3] FCM: failed to parse service-account file");
+                            None
+                        }
+                    },
+                    Err(e) => {
+                        tracing::error!(error = %e, path = %path, "[8A-3] FCM: failed to read GOOGLE_APPLICATION_CREDENTIALS file");
+                        None
+                    }
+                };
+            }
+        }
+        None
+    }
+}
+
+/// Claims for the Google OAuth2 JWT-bearer assertion.
+#[derive(Debug, Serialize)]
+struct GoogleAssertionClaims<'a> {
+    iss: &'a str,
+    scope: &'a str,
+    aud: &'a str,
+    iat: i64,
+    exp: i64,
+}
+
+/// The token-endpoint response we care about.
+#[derive(Debug, Deserialize)]
+struct GoogleTokenResponse {
+    access_token: String,
+    expires_in: i64,
+}
+
+/// A cached OAuth2 access token plus the instant at which it should be refreshed.
+#[derive(Clone, Debug)]
+struct CachedAccessToken {
+    token: String,
+    /// Refresh once `Utc::now()` reaches this point — set to the real expiry
+    /// minus [`FCM_TOKEN_REFRESH_SKEW_SECS`].
+    refresh_after: chrono::DateTime<chrono::Utc>,
+}
+
+/// Compute the instant at which a freshly-minted token should be refreshed.
+///
+/// `refresh_after = now + max(expires_in - skew, expires_in / 2)` — clamped so a
+/// short-lived token (or a bogus tiny `expires_in`) still gets *some* cache
+/// lifetime rather than refreshing on every single send.
+fn refresh_after_from(
+    now: chrono::DateTime<chrono::Utc>,
+    expires_in_secs: i64,
+    skew_secs: i64,
+) -> chrono::DateTime<chrono::Utc> {
+    let lifetime = (expires_in_secs - skew_secs)
+        .max(expires_in_secs / 2)
+        .max(0);
+    now + chrono::Duration::seconds(lifetime)
+}
+
+/// Returns `true` when the cached token is still safe to use at `now`.
+fn token_is_fresh(cached: &CachedAccessToken, now: chrono::DateTime<chrono::Utc>) -> bool {
+    now < cached.refresh_after
+}
+
+/// A service-account-backed source of auto-refreshed FCM access tokens.
+///
+/// Holds the current token behind an async `Mutex`; the first caller past the
+/// refresh boundary re-mints while others await, so at most one token exchange
+/// is in flight at a time.
+struct ServiceAccountTokenSource {
+    service_account: FcmServiceAccount,
+    http: reqwest::Client,
+    cache: Mutex<Option<CachedAccessToken>>,
+}
+
+impl ServiceAccountTokenSource {
+    fn new(service_account: FcmServiceAccount) -> Self {
+        Self {
+            service_account,
+            http: reqwest::Client::builder()
+                .timeout(Duration::from_secs(10))
+                .build()
+                .expect("reqwest client build should not fail"),
+            cache: Mutex::new(None),
+        }
+    }
+
+    /// Return a valid access token, refreshing it if the cached one is missing
+    /// or within the refresh skew of expiry. Returns `None` if a refresh was
+    /// required but failed (mint or exchange error) and no still-fresh token is
+    /// cached.
+    async fn access_token(&self) -> Option<String> {
+        let mut guard = self.cache.lock().await;
+        let now = chrono::Utc::now();
+        if let Some(cached) = guard.as_ref() {
+            if token_is_fresh(cached, now) {
+                return Some(cached.token.clone());
+            }
+        }
+        match self.refresh(now).await {
+            Ok(fresh) => {
+                let token = fresh.token.clone();
+                *guard = Some(fresh);
+                Some(token)
+            }
+            Err(e) => {
+                tracing::error!(
+                    error = %e,
+                    "[8A-3] FCM: failed to refresh OAuth2 access token; Android push will be skipped this attempt"
+                );
+                // Keep any (stale) cached token in place; a still-usable token
+                // would have short-circuited above, so nothing usable is cached.
+                None
+            }
+        }
+    }
+
+    /// Mint an assertion JWT and exchange it for a fresh access token.
+    async fn refresh(
+        &self,
+        now: chrono::DateTime<chrono::Utc>,
+    ) -> Result<CachedAccessToken, String> {
+        let assertion = self.mint_assertion(now)?;
+        let resp = self
+            .http
+            .post(&self.service_account.token_uri)
+            .form(&[
+                ("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
+                ("assertion", assertion.as_str()),
+            ])
+            .send()
+            .await
+            .map_err(|e| format!("token endpoint request failed: {e}"))?;
+
+        let status = resp.status();
+        if !status.is_success() {
+            let body = resp.text().await.unwrap_or_default();
+            return Err(format!("token endpoint returned {status}: {body}"));
+        }
+        let token_resp: GoogleTokenResponse = resp
+            .json()
+            .await
+            .map_err(|e| format!("failed to parse token endpoint response: {e}"))?;
+
+        Ok(CachedAccessToken {
+            token: token_resp.access_token,
+            refresh_after: refresh_after_from(
+                now,
+                token_resp.expires_in,
+                FCM_TOKEN_REFRESH_SKEW_SECS,
+            ),
+        })
+    }
+
+    /// Build the RS256 assertion JWT for the OAuth2 JWT-bearer grant.
+    fn mint_assertion(&self, now: chrono::DateTime<chrono::Utc>) -> Result<String, String> {
+        let encoding_key =
+            EncodingKey::from_rsa_pem(self.service_account.private_key_pem.as_bytes())
+                .map_err(|e| format!("invalid service-account private key: {e}"))?;
+        let iat = now.timestamp();
+        let claims = GoogleAssertionClaims {
+            iss: &self.service_account.client_email,
+            scope: FCM_OAUTH_SCOPE,
+            aud: &self.service_account.token_uri,
+            iat,
+            // Google caps assertion lifetime at 1 hour.
+            exp: iat + 3600,
+        };
+        jsonwebtoken::encode(&Header::new(Algorithm::RS256), &claims, &encoding_key)
+            .map_err(|e| format!("failed to sign assertion JWT: {e}"))
+    }
+}
+
+/// Source of the OAuth2 bearer token used on the FCM HTTP v1 send path.
+///
+/// Cloneable and cheap to pass around: the refreshing variant shares one
+/// `ServiceAccountTokenSource` (and its token cache) behind an `Arc`.
+#[derive(Clone)]
+enum FcmTokenProvider {
+    /// No OAuth token available — FCM HTTP v1 sends are skipped (there is no
+    /// legacy fallback; Google decommissioned the `/fcm/send` server-key API).
+    None,
+    /// Legacy pre-minted token from `FCM_OAUTH_TOKEN`, never refreshed.
+    Static(String),
+    /// Service-account credentials; mints and auto-refreshes access tokens.
+    ServiceAccount(Arc<ServiceAccountTokenSource>),
+}
+
+impl FcmTokenProvider {
+    /// Build a provider from the environment, preferring a service account over
+    /// a legacy static token.
+    ///
+    /// `static_fallback` is the value of `FcmConfig::oauth_token`
+    /// (`FCM_OAUTH_TOKEN`), used only when no service account is configured.
+    fn from_env(static_fallback: Option<String>) -> Self {
+        if let Some(sa) = FcmServiceAccount::from_env() {
+            tracing::info!("[8A-3] FCM: using auto-refreshing OAuth2 service-account credentials");
+            return FcmTokenProvider::ServiceAccount(Arc::new(ServiceAccountTokenSource::new(sa)));
+        }
+        match static_fallback {
+            Some(t) => {
+                tracing::warn!(
+                    "[8A-3] FCM: using static FCM_OAUTH_TOKEN — it is NOT refreshed and will \
+                     stop working after Google's ~1h token TTL. Set FCM_SERVICE_ACCOUNT_JSON or \
+                     GOOGLE_APPLICATION_CREDENTIALS for auto-refreshed credentials."
+                );
+                FcmTokenProvider::Static(t)
+            }
+            None => FcmTokenProvider::None,
+        }
+    }
+
+    /// Return a valid bearer token, refreshing it if needed.
+    ///
+    /// `None` means "no usable OAuth token right now" — the caller skips the
+    /// FCM HTTP v1 send (there is no legacy fallback).
+    async fn access_token(&self) -> Option<String> {
+        match self {
+            FcmTokenProvider::None => None,
+            FcmTokenProvider::Static(t) => Some(t.clone()),
+            FcmTokenProvider::ServiceAccount(source) => source.access_token().await,
+        }
     }
 }
 
@@ -266,11 +591,32 @@ pub struct FcmHttpAdapter {
     token_repo: DevicePushTokenRepository,
     fcm_config: FcmConfig,
     http: reqwest::Client,
+    /// Source of the OAuth2 bearer token for FCM HTTP v1 sends. Refreshes
+    /// automatically when backed by a service account (see [`FcmTokenProvider`]).
+    token_provider: FcmTokenProvider,
 }
 
 impl FcmHttpAdapter {
     /// Create a new adapter backed by the given pool and FCM config.
+    ///
+    /// The OAuth2 token provider is derived from the environment: a service
+    /// account (`FCM_SERVICE_ACCOUNT_JSON` / `GOOGLE_APPLICATION_CREDENTIALS`)
+    /// yields an auto-refreshing provider; otherwise the legacy
+    /// `FcmConfig::oauth_token` becomes a static (non-refreshing) provider. This
+    /// keeps the FCM base-URL / project-id config explicit (so tests can inject a
+    /// wiremock URL) while the credential lifecycle is owned by the provider.
     pub fn new(pool: DbPool, fcm_config: FcmConfig) -> Self {
+        let token_provider = FcmTokenProvider::from_env(fcm_config.oauth_token.clone());
+        Self::with_token_provider(pool, fcm_config, token_provider)
+    }
+
+    /// Create an adapter with an explicit token provider (used by tests to
+    /// inject a service-account source pointed at a mock token endpoint).
+    fn with_token_provider(
+        pool: DbPool,
+        fcm_config: FcmConfig,
+        token_provider: FcmTokenProvider,
+    ) -> Self {
         Self {
             token_repo: DevicePushTokenRepository::new(pool),
             fcm_config,
@@ -278,6 +624,7 @@ impl FcmHttpAdapter {
                 .timeout(Duration::from_secs(10))
                 .build()
                 .expect("reqwest client build should not fail"),
+            token_provider,
         }
     }
 
@@ -321,17 +668,22 @@ impl FcmHttpAdapter {
             }
         });
 
-        // For FCM HTTP v1 we need an OAuth2 bearer token.  In production this
-        // would come from a service-account key file via `google-cloud-auth`.
-        // We re-use `FCM_SERVER_KEY` as a bearer token here to keep the
-        // dependency footprint minimal (no GCP SDK).  If `FCM_PROJECT_ID` is
-        // set but only a server key is available we fall back to the legacy
-        // send API (see `send_fcm_legacy`).
-        let bearer = match self.fcm_config.oauth_token.clone() {
+        // For FCM HTTP v1 we need an OAuth2 bearer token. The provider mints and
+        // auto-refreshes it from service-account credentials (or yields the
+        // legacy static `FCM_OAUTH_TOKEN`). Crucially this is resolved per send,
+        // so a token that has aged past Google's ~1h TTL is refreshed rather
+        // than reused — the previous implementation read a static token once at
+        // startup and Android push silently died after the first hour. When no
+        // OAuth token is available the send is skipped: Google decommissioned
+        // the legacy `/fcm/send` server-key API, so there is no fallback.
+        let bearer = match self.token_provider.access_token().await {
             Some(t) => t,
             None => {
-                // Fall back to legacy if no OAuth token is available
-                return self.send_fcm_legacy(device_token, notification).await;
+                tracing::warn!(
+                    "[8A-3] FCM HTTP v1 send skipped — no OAuth2 access token available \
+                     (set FCM_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS)"
+                );
+                return (false, false);
             }
         };
 
@@ -386,91 +738,6 @@ impl FcmHttpAdapter {
             }
         }
     }
-
-    /// Legacy FCM send via `https://fcm.googleapis.com/fcm/send` using a
-    /// server key in the `Authorization: key=…` header.
-    ///
-    /// Only called when a `FCM_SERVER_KEY` is available and no OAuth token
-    /// is present.
-    async fn send_fcm_legacy(
-        &self,
-        device_token: &str,
-        notification: &Notification,
-    ) -> (bool, bool) {
-        let server_key = match &self.fcm_config.server_key {
-            Some(k) => k.clone(),
-            None => {
-                tracing::warn!("[8A-3] FCM legacy send attempted but FCM_SERVER_KEY is not set");
-                return (false, false);
-            }
-        };
-
-        let body = serde_json::json!({
-            "to": device_token,
-            "notification": {
-                "title": notification.title,
-                "body": notification.body,
-            },
-            "data": {
-                "notification_id": notification.id.to_string(),
-                "category": notification.category.as_str(),
-            }
-        });
-
-        let legacy_url = format!("{}/fcm/send", self.fcm_config.base_url());
-        let resp = match self
-            .http
-            .post(&legacy_url)
-            .header("Authorization", format!("key={server_key}"))
-            .json(&body)
-            .send()
-            .await
-        {
-            Ok(r) => r,
-            Err(e) => {
-                tracing::warn!(
-                    error = %e,
-                    "[8A-3] FCM legacy request failed (network error)"
-                );
-                return (false, false);
-            }
-        };
-
-        let status = resp.status();
-        // Legacy response: `{"multicast_id":…,"success":1,"failure":0,"results":[{"message_id":"…"}]}`
-        // Or on token error: `{"results":[{"error":"NotRegistered"}]}`
-        match resp.json::<serde_json::Value>().await {
-            Ok(v) => {
-                let success_count = v.get("success").and_then(|n| n.as_i64()).unwrap_or(0);
-                if success_count > 0 {
-                    return (true, false);
-                }
-                // Check for token expiry errors in results array
-                let expired = v
-                    .get("results")
-                    .and_then(|r| r.as_array())
-                    .and_then(|arr| arr.first())
-                    .and_then(|item| item.get("error"))
-                    .and_then(|e| e.as_str())
-                    .map(|e| matches!(e, "NotRegistered" | "InvalidRegistration"))
-                    .unwrap_or(false);
-                tracing::warn!(
-                    http_status = %status,
-                    token_expired = expired,
-                    "[8A-3] FCM legacy send failed"
-                );
-                (false, expired)
-            }
-            Err(e) => {
-                tracing::warn!(
-                    http_status = %status,
-                    error = %e,
-                    "[8A-3] Failed to parse FCM legacy response"
-                );
-                (false, false)
-            }
-        }
-    }
 }
 
 impl FcmHttpAdapter {
@@ -492,7 +759,7 @@ impl FcmHttpAdapter {
             tracing::info!(
                 user_id = %user_id,
                 title = %notification.title,
-                "[8A-3] Push skipped — FCM not configured (set FCM_PROJECT_ID or FCM_SERVER_KEY)"
+                "[8A-3] Push skipped — FCM not configured (set FCM_PROJECT_ID)"
             );
             return ProviderOutcome::NotConfigured;
         }
@@ -515,17 +782,19 @@ impl FcmHttpAdapter {
             return ProviderOutcome::NoTargets;
         }
 
-        let project_id = self.fcm_config.project_id.clone();
+        // `is_configured()` requires a project id, and we returned early above
+        // when it was false, so a project id is guaranteed here. Guard
+        // defensively rather than unwrap/panic on the fanout hot path.
+        let Some(project_id) = self.fcm_config.project_id.clone() else {
+            return ProviderOutcome::NotConfigured;
+        };
         let mut any_sent = false;
         let mut stale_tokens: Vec<(Uuid, String)> = Vec::new();
 
         for target in &targets {
-            let (success, expired) = if let Some(ref pid) = project_id {
-                self.send_fcm_v1(pid, &target.token, notification).await
-            } else {
-                // No project ID — use legacy API
-                self.send_fcm_legacy(&target.token, notification).await
-            };
+            let (success, expired) = self
+                .send_fcm_v1(&project_id, &target.token, notification)
+                .await;
 
             // Store delivery receipt (log + in-memory; DB table in follow-up)
             let receipt = PushDeliveryReceipt {
@@ -1273,9 +1542,7 @@ impl PushFanoutWorker {
         let apns_config = ApnsConfig::from_env();
 
         if !fcm_config.is_configured() {
-            tracing::warn!(
-                "[8A-3] PushFanoutWorker: FCM not configured (FCM_PROJECT_ID / FCM_SERVER_KEY unset)"
-            );
+            tracing::warn!("[8A-3] PushFanoutWorker: FCM not configured (FCM_PROJECT_ID unset)");
         }
         if !apns_config.is_configured() {
             tracing::warn!(
@@ -1593,7 +1860,6 @@ mod tests {
     fn fcm_config_explicit_none_is_unconfigured() {
         let config = FcmConfig {
             project_id: None,
-            server_key: None,
             oauth_token: None,
             fcm_base_url: None,
         };
@@ -1604,29 +1870,6 @@ mod tests {
     fn fcm_config_is_configured_when_project_id_present() {
         let config = FcmConfig {
             project_id: Some("my-gcp-project".to_string()),
-            server_key: None,
-            oauth_token: None,
-            fcm_base_url: None,
-        };
-        assert!(config.is_configured());
-    }
-
-    #[test]
-    fn fcm_config_is_configured_when_server_key_present() {
-        let config = FcmConfig {
-            project_id: None,
-            server_key: Some("AAAA...key".to_string()),
-            oauth_token: None,
-            fcm_base_url: None,
-        };
-        assert!(config.is_configured());
-    }
-
-    #[test]
-    fn fcm_config_is_configured_when_both_present() {
-        let config = FcmConfig {
-            project_id: Some("proj".to_string()),
-            server_key: Some("key".to_string()),
             oauth_token: None,
             fcm_base_url: None,
         };
@@ -1637,7 +1880,6 @@ mod tests {
     fn fcm_config_base_url_defaults_to_google() {
         let config = FcmConfig {
             project_id: None,
-            server_key: None,
             oauth_token: None,
             fcm_base_url: None,
         };
@@ -1648,7 +1890,6 @@ mod tests {
     fn fcm_config_base_url_override() {
         let config = FcmConfig {
             project_id: None,
-            server_key: None,
             oauth_token: None,
             fcm_base_url: Some("http://localhost:9999".to_string()),
         };
@@ -1948,7 +2189,6 @@ mod tests {
         (
             FcmConfig {
                 project_id: Some("test-project".to_string()),
-                server_key: None,
                 oauth_token: None,
                 fcm_base_url: None,
             },
@@ -1969,7 +2209,6 @@ mod tests {
         (
             FcmConfig {
                 project_id: None,
-                server_key: None,
                 oauth_token: None,
                 fcm_base_url: None,
             },
@@ -2120,5 +2359,206 @@ mod tests {
             ),
             Err(NotificationError::PushFailed(_))
         ));
+    }
+
+    // ------------------------------------------------------------------
+    // FCM HTTP v1 OAuth2 access-token provider (auto-refresh)
+    // ------------------------------------------------------------------
+
+    /// A throwaway 2048-bit RSA private key used ONLY to satisfy
+    /// `EncodingKey::from_rsa_pem` in the assertion-minting tests. It is not a
+    /// real credential and grants access to nothing — the mock token endpoint
+    /// never validates the assertion signature.
+    const TEST_RSA_PEM: &str = "-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC/s+Ti7fA564gJ
+XBr7Schx8zydvks/oA8g53tDIR7XZ3vnQrYugzD1ww+L9kmAmWz5H/zOG4c9ZkNq
+Vj5hpl19vGwJ/mcfSbvX8d55m4cM1tQg6XlbodgGz90McNRm6SH1xhDvkHkjaLge
+BI7nbukDZhrfLS4uAndb9ClwxERDFnCAwzSS4jpzLucY+2/lkwxaLGpB8PuWUeRm
+Jmwt5Bv6lMKDqz2vSJP+ij0pyXh53Xw3r8uPc/QrROqNFbmO+oXbtEh/aDQHJojT
+YK4dvs8YVjLYz/s/Tmtd+fhirhh9X21VNhQk7URUIuHyrje9Y2rUkckxHY5SkzOj
+2nYJodltAgMBAAECggEAIG7PTdxbHPV+A7VfRD3oqWyxR+/Su8442QSIzGPtW5yg
+sBDPkUF1VlL8zZ1qtJTghKp2gylRoV/sjnBOaAd1QElRTwSJTlgTbXa4gMMBH3k2
+FOZjN49DZO2kdI8fRFTzf6kVou5CrGyyX7O+OKYBSqeq6rCyZCrbJkXCABfYg6/c
+WujJ4bKPIiF4723Gr4PPh1N2mEPz+aEJH5ikvdFSzOdbki2eut6z8gnMphBBvR8Y
+T5LQuHRoWByyjUS/qUq+x9u54GkLrfx4NIe5mOooAOngo+9fdsN4+Qf29Rw8Pljb
+ZYPINLT1WS8U8WlUMzszW/NLw+1Fakygdw8O+PRU2QKBgQDrRDH5tx7qyWT5ufmg
+j+O4zbQbxm9VAud475SqmtDlAeMMYvD4LTylfv23563hhnhDJjJp7GnFFE6xge1K
+sdZem7YaNvYlHVo8yt3NxiHIaLB2iKM/KXnIefEafGzNf5h7dbO0HDqiRD1YGXhy
+exIFNdFjR18Ri5zzlJqTAp/vZQKBgQDQmN3AC4daqRl1wGye4ehO0XPzT+Kj3eel
+bf9SIIOUA1cSebTahY1Fq1MtAt7UuKCaOg8n2f/FFvjuk/q/i7o3M6bjngTtnPM8
+uENJnHmR3Lx+bzeMWjJ/T6zEUMrtV5+2NaAbq0caR+ZGPVa6E7jHk1ecjX+tvZe/
+nRxdR+n1aQKBgQCbbNIXRwMF2Ub8NADWMjkfPcZfExk58FE7dAujKeQXZse4xySq
+0DfgnaTAei5Fb7DDq9hiYez+ZgwW+N7rGdGlbvk/GFBE9L9Iqj0eVGa9H2x04o/2
+ilAKQYUnGkxG9qSl63xs4LlbuflM2obYGrYs+wD5tYz46mMmCGaV+IXwgQKBgBRF
+lt9P/4J3Botj/Opf5/So9EzECbGFIjr4eqSflknvHSole8b0zarkoHuyWLdxjeIP
+HGPyEqIzvlNpPCgbSyiMM37RX4c8BoNzIM7pjwL24baj1lEkft3Sf2bAt0fjiRjr
+Ezk9JvbN3/oZgfEpc36pugzzz2GyGCo9+YCzOXBpAoGAMpzIMkHEJJL6Vrs4bMC3
+aZJwgYwjbWDgg/JCZIlOqPJHCA8Q7tNIKCUlpW6HkGlwLGuYq0SeSnLv4bJnaH/M
+hbsuc8ONCSkQ+U7GAEGP6ERKl30weXlvVntAs+/lAbFCoEZVmeNMN7+ZgpOJCP+8
+BjoqgEdIaMmiy1bJKyDvIng=
+-----END PRIVATE KEY-----";
+
+    fn test_service_account(token_uri: String) -> FcmServiceAccount {
+        FcmServiceAccount {
+            client_email: "test-sa@proj.iam.gserviceaccount.com".to_string(),
+            private_key_pem: TEST_RSA_PEM.to_string(),
+            token_uri,
+        }
+    }
+
+    #[test]
+    fn refresh_after_subtracts_skew_for_normal_ttl() {
+        let now = chrono::Utc::now();
+        // 3600s token, 300s skew → refresh 3300s out.
+        let ra = refresh_after_from(now, 3600, 300);
+        assert_eq!((ra - now).num_seconds(), 3300);
+    }
+
+    #[test]
+    fn refresh_after_clamps_short_ttl_to_half() {
+        let now = chrono::Utc::now();
+        // A 120s token with a 300s skew must not produce a negative/zero
+        // lifetime (which would refresh on every send) — clamp to expires_in/2.
+        let ra = refresh_after_from(now, 120, 300);
+        assert_eq!((ra - now).num_seconds(), 60);
+    }
+
+    #[test]
+    fn token_is_fresh_before_refresh_point_and_stale_after() {
+        let now = chrono::Utc::now();
+        let fresh = CachedAccessToken {
+            token: "t".into(),
+            refresh_after: now + chrono::Duration::seconds(10),
+        };
+        assert!(token_is_fresh(&fresh, now));
+        let stale = CachedAccessToken {
+            token: "t".into(),
+            refresh_after: now - chrono::Duration::seconds(1),
+        };
+        assert!(!token_is_fresh(&stale, now));
+    }
+
+    #[test]
+    fn service_account_from_json_parses_and_defaults_token_uri() {
+        let raw = serde_json::json!({
+            "type": "service_account",
+            "client_email": "sa@proj.iam.gserviceaccount.com",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----",
+        })
+        .to_string();
+        let sa = FcmServiceAccount::from_json(&raw).expect("valid SA JSON parses");
+        assert_eq!(sa.client_email, "sa@proj.iam.gserviceaccount.com");
+        assert_eq!(sa.token_uri, DEFAULT_GOOGLE_TOKEN_URI);
+    }
+
+    #[test]
+    fn service_account_from_json_rejects_missing_fields() {
+        let raw = serde_json::json!({ "client_email": "x@y.z" }).to_string();
+        assert!(FcmServiceAccount::from_json(&raw).is_err());
+    }
+
+    #[test]
+    fn static_provider_returns_its_token_and_none_provider_yields_none() {
+        // Pure provider behaviour, no async runtime needed for the None arm via
+        // a blocking check is awkward; use a runtime for both.
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let s = FcmTokenProvider::Static("legacy-token".into());
+            assert_eq!(s.access_token().await.as_deref(), Some("legacy-token"));
+            let n = FcmTokenProvider::None;
+            assert!(n.access_token().await.is_none());
+        });
+    }
+
+    /// The token source fetches an access token from the OAuth2 endpoint once
+    /// and then serves subsequent calls from its cache (only ONE exchange for
+    /// two `access_token()` calls inside the TTL).
+    #[tokio::test]
+    async fn service_account_source_fetches_then_caches() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path("/token"))
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "access_token": "tok-A",
+                    "expires_in": 3600,
+                    "token_type": "Bearer"
+                })),
+            )
+            .expect(1) // cached on the second call — exactly one exchange
+            .mount(&server)
+            .await;
+
+        let source =
+            ServiceAccountTokenSource::new(test_service_account(format!("{}/token", server.uri())));
+
+        assert_eq!(source.access_token().await.as_deref(), Some("tok-A"));
+        assert_eq!(
+            source.access_token().await.as_deref(),
+            Some("tok-A"),
+            "second call within TTL must be served from cache"
+        );
+        // wiremock verifies expect(1) on drop.
+    }
+
+    /// Regression guard for the static-token bug: a cached token that has aged
+    /// past its refresh point must trigger a fresh exchange, NOT be reused. The
+    /// previous implementation read `FCM_OAUTH_TOKEN` once at startup and had no
+    /// refresh path at all, so Android push died after Google's ~1h TTL.
+    #[tokio::test]
+    async fn service_account_source_refreshes_stale_token() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path("/token"))
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "access_token": "fresh-tok",
+                    "expires_in": 3600,
+                    "token_type": "Bearer"
+                })),
+            )
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let source =
+            ServiceAccountTokenSource::new(test_service_account(format!("{}/token", server.uri())));
+
+        // Pre-seed the cache with an already-expired token.
+        {
+            let mut guard = source.cache.lock().await;
+            *guard = Some(CachedAccessToken {
+                token: "stale-tok".to_string(),
+                refresh_after: chrono::Utc::now() - chrono::Duration::seconds(10),
+            });
+        }
+
+        let got = source.access_token().await;
+        assert_eq!(
+            got.as_deref(),
+            Some("fresh-tok"),
+            "an expired cached token must be refreshed, not reused"
+        );
+    }
+
+    /// A token-endpoint failure surfaces as `None` (caller falls back / skips)
+    /// rather than handing back a stale/garbage bearer.
+    #[tokio::test]
+    async fn service_account_source_returns_none_on_endpoint_error() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path("/token"))
+            .respond_with(
+                wiremock::ResponseTemplate::new(401).set_body_json(serde_json::json!({
+                    "error": "invalid_grant"
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let source =
+            ServiceAccountTokenSource::new(test_service_account(format!("{}/token", server.uri())));
+
+        assert!(source.access_token().await.is_none());
     }
 }

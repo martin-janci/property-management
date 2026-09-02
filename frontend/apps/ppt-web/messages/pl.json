@@ -1486,6 +1486,15 @@
     }
   },
   "settings": {
+    "notifications": {
+      "title": "Ustawienia powiadomień",
+      "subtitle": "Wybierz, jak chcesz otrzymywać powiadomienia.",
+      "loadError": "Nie udało się załadować preferencji powiadomień. Spróbuj ponownie.",
+      "updateError": "Nie udało się zaktualizować preferencji. Spróbuj ponownie.",
+      "disableError": "Nie udało się wyłączyć powiadomień. Spróbuj ponownie.",
+      "dismiss": "Zamknij",
+      "lastUpdated": "Ostatnia aktualizacja: {{when}}"
+    },
     "portalWebhooks": {
       "title": "Webhooki portali",
       "subtitle": "Status dostarczania i aktywność webhooków portali nieruchomości — wyświetlenia, zapytania i stan synchronizacji dla każdego portalu.",

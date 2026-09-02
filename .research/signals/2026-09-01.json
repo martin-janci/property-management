@@ -1,6 +1,6 @@
 {
   "date": "2026-09-01",
-  "run_kind": "supplementary (buffer-low API fire)",
+  "run_kind": "supplementary (buffer-low fire #2) — resolution wave",
   "auto_fix_actions": [],
   "signals": [
     {
@@ -8,7 +8,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
       "segment": "api-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -19,14 +19,15 @@
         "push_fanout.rs:233 `oauth_token: std::env::var(\"FCM_OAUTH_TOKEN\").ok()` loaded once at FcmConfig::from_env; reused verbatim as bearer at :330-341 (`.bearer_auth(&bearer)`). No refresh path — Google's OAuth2 access tokens have a ~1h TTL.",
         "Routine 2026-09-01 verified via direct grep of push_fanout.rs (2124 lines): line 233 static-load, 330 bearer clone, 341 bearer_auth — all present on dev. Wired path PushFanoutWorker.deliver_job -> CombinedPushAdapter.send -> FcmHttpAdapter.send_fcm_v1 confirmed.",
         "Adopted from .research/signals/2026-09-01-api-core-tier1d.json (dispatcher-generated but not previously ingested into backlog); routine folds as first-time signal."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-api-core-apns-jwt-per-send-mint",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
       "segment": "api-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "perf",
       "expert": "rust",
@@ -36,14 +37,15 @@
       "evidence": [
         "push_fanout.rs:901-909 ApnsHttpAdapter::deliver calls mint_apns_jwt (fn at :699-733) per notification; deliver_job (:1383) is one Notification per queue job. No cache — Apple's provider JWT can be reused up to 60min.",
         "Routine reclassifies candidate_vector from tier1d's `bug` to `perf` — the code is functionally correct, the issue is CPU waste + APNs `TooManyProviderTokenUpdates` risk under load. Adopted from .research/signals/2026-09-01-api-core-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-api-core-fcm-legacy-dead-endpoint",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
       "segment": "api-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -53,14 +55,15 @@
       "evidence": [
         "push_fanout.rs:395-426 send_fcm_legacy POSTs to `{base_url}/fcm/send` with `Authorization: key={FCM_SERVER_KEY}`. Google decommissioned this HTTP API on 2024-06-20 → 404/401 for all real callers.",
         "Adopted from .research/signals/2026-09-01-api-core-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts)",
       "segment": "ppt-web-ui",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -71,14 +74,15 @@
         "EmergencyContactDirectoryPage.tsx :59,92,107,127,158 — five setError sites use `err instanceof Error ? err.message : t('emergency.errors.<key>')`. Api-client rejects with Error on every failure, so err.message (English) always renders; t() fallback is dead code.",
         "Routine 2026-09-01 verified via grep — five matches confirmed at exactly the lines cited in the tier1d finding.",
         "Adopted from .research/signals/2026-09-01-ppt-web-ui-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-ppt-web-ui-meters-dates-no-locale",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui meters)",
       "segment": "ppt-web-ui",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -92,14 +96,15 @@
       "evidence": [
         "8 sites call toLocaleDateString()/toLocaleString() with NO locale argument across the wired meters feature (routes/groups/meters.tsx). i18n language is sk/cs/de/en, but browser locale governs.",
         "Adopted from .research/signals/2026-09-01-ppt-web-ui-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-ppt-web-ui-notif-settings-hardcoded-errors",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui settings/notifications)",
       "segment": "ppt-web-ui",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -109,14 +114,15 @@
       "evidence": [
         "NotificationSettingsPage.tsx:40,55-56 — hardcoded English 'Failed to update preference. Please try again.' and 'Failed to disable notifications. Please try again.' error toasts on Settings > Notifications.",
         "Adopted from .research/signals/2026-09-01-ppt-web-ui-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-api-handlers-data-export-report-stub",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)",
       "segment": "api-handlers",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -127,14 +133,15 @@
         "get_data_export_report at compliance.rs:365-388 discards filter params (`let _ = params;` :372) and hardcodes `exports: vec![]` (:382), `completed_count: 0` (:384), `downloaded_count: 0` (:386). Only live query is data_export_repo.get_pending(1000).",
         "Routine 2026-09-01 verified via direct Read of compliance.rs:230-388 — code path unchanged from tier1d 2026-08-31 report; platform-admin gate at :370 intact.",
         "Adopted from .research/signals/2026-08-31-api-handlers-tier1d.json — dispatcher-generated 2026-08-31, not previously ingested."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-api-handlers-user-audit-logs-total-page-len",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)",
       "segment": "api-handlers",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -146,14 +153,15 @@
         "Routine 2026-09-01 verified via direct Read of compliance.rs:262-299 — require_super_admin (:263) gates the endpoint (already tightened by PR #2907), the missing count remains.",
         "Sibling handler get_audit_logs (:124-179) calls state.audit_log_repo.count(query) correctly — divergence is within the same module.",
         "Adopted from .research/signals/2026-08-31-api-handlers-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-api-handlers-compliance-raw-db-error-leak",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)",
       "segment": "api-handlers",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -164,14 +172,15 @@
         "compliance.rs multiple `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?` sites bubble raw sqlx errors (column/table/constraint names) to the client via 500 response body.",
         "Routine 2026-09-01 verified pattern via Read of compliance.rs:230-388 — at least :272 and :322 confirmed to return `e.to_string()` from sqlx::Error.",
         "Adopted from .research/signals/2026-08-31-api-handlers-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-reality-server-agent-review-self-review",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
       "segment": "reality-server",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -181,14 +190,15 @@
       "evidence": [
         "Tier-1d finding — agent-review self-review gap (missing reviewer_id != subject_id guard).",
         "Adopted from .research/signals/2026-08-31-reality-server-tier1d.json; full re-verification deferred to promotion time."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-reality-server-pagination-offset-overflow",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
       "segment": "reality-server",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -198,14 +208,15 @@
       "evidence": [
         "Tier-1d finding — offset uncapped on reality-server list handlers; parallels api-server clamp_limit sweep landed in PR #2911.",
         "Adopted from .research/signals/2026-08-31-reality-server-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-reality-server-saved-search-error-string-status",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
       "segment": "reality-server",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -215,14 +226,15 @@
       "evidence": [
         "Tier-1d finding — saved-search error strings compared for UI status; brittle contract.",
         "Adopted from .research/signals/2026-08-31-reality-server-tier1d.json."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-notimpl-stub",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
       "segment": "mobile-native-kmp",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "expert": "kotlin",
@@ -232,7 +244,17 @@
       "evidence": [
         "Tier-1d finding — CreateListingScreen composable's onSubmit remains a NotImplementedError stub.",
         "Routine 2026-09-01 stacks onto existing backlog item `code-review-mobile-native-kmp-create-listing-not-wired` (same subject, different id). Item score 2→4, confidence medium→high, updated_at→2026-09-01."
-      ]
+      ],
+      "applied_in": "earlier same-day fire (42e667d)"
+    },
+    {
+      "id": "code-review-api-handlers-compliance-raw-db-leak-regression",
+      "type": "code-review-finding",
+      "source": "routine-resolution-check 2026-09-01 supplementary",
+      "score_delta": 1,
+      "evidence": "compliance.rs:319 `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?` — 1 raw-db-error-leak site remains after PR #2920 sanitized 16; introduced by PR #2915 audit-log count query. One-line fix: swap to `map_err(db_error)` (helper already in-file). Grep-verified at eea7067.",
+      "confidence": "high",
+      "candidate_vector": "bug"
     }
   ],
   "goal_checks": [
@@ -359,6 +381,128 @@
       "goal": "G17",
       "passed": true,
       "command": "no telegram bot token literal in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "rerun_note": "This is the second buffer-low run today; the first (10:50Z) added 12 landable vectors. This run (18:38Z) records 7 resolutions from PRs #2913-#2921 and adds 1 regression backlog item. Signals array retained from first run.",
+  "goal_checks_second_fire": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs && header match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with non-zero delta",
+      "observed": "true (13 inherited signals zeroed with applied_in note)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this fire (0 promotions)",
+      "observed": "n/a",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "paths under .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "stable",
+      "expected": "stable"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no placeholder rot in brief",
+      "observed": "clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan silently deleted",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
+      "observed": "stable",
+      "expected": "stable"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (0 actions)",
+      "observed": "pass (0 actions)",
+      "expected": "<=3 per category"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts (Phase 1.6 skipped)",
+      "observed": "noop",
+      "expected": "noop when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
       "observed": "0",
       "expected": "0"
     }

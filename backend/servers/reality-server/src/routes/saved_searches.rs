@@ -13,6 +13,7 @@ use db::models::{
     CreatePortalSavedSearch, PortalSavedSearch, PublicListingSummary, SavedSearchAlert,
     UpdatePortalSavedSearch,
 };
+use db::repositories::SavedSearchError;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -44,6 +45,32 @@ pub struct SavedSearchesResponse {
 pub struct RunSavedSearchResponse {
     pub count: i64,
     pub listings: Vec<PublicListingSummary>,
+}
+
+/// Map a typed [`SavedSearchError`] to a client-facing `(status, body)`.
+///
+/// The HTTP status is derived from the **enum discriminant**, never from the
+/// error's `Display` text. This is the fix for the "string-typed status codes"
+/// finding: the previous handlers picked 400/404/500 by
+/// `err.to_string().contains("maximum")` / `contains("not found")`, which
+/// silently broke whenever an error message was reworded or the SQLx driver
+/// changed how it renders `RowNotFound`. `Db` errors are scrubbed through
+/// [`crate::util::errors::db_error`] so no raw driver text reaches the client.
+fn saved_search_error_response(
+    ctx: &str,
+    err: SavedSearchError,
+) -> (axum::http::StatusCode, String) {
+    match err {
+        SavedSearchError::LimitReached { .. } => (
+            axum::http::StatusCode::BAD_REQUEST,
+            "Maximum saved searches limit reached".to_string(),
+        ),
+        SavedSearchError::NotFound => (
+            axum::http::StatusCode::NOT_FOUND,
+            "Saved search not found".to_string(),
+        ),
+        SavedSearchError::Db(e) => crate::util::errors::db_error(ctx, e),
+    }
 }
 
 /// List user's saved searches.
@@ -90,17 +117,7 @@ pub async fn create_saved_search(
         .reality_portal_repo
         .create_saved_search(principal.user_id, data)
         .await
-        .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("maximum") || error_str.contains("limit") {
-                (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    "Maximum saved searches limit reached".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("create saved search", e)
-            }
-        })?;
+        .map_err(|e| saved_search_error_response("create saved search", e))?;
 
     Ok(Json(search))
 }
@@ -163,17 +180,7 @@ pub async fn update_saved_search(
         .reality_portal_repo
         .update_saved_search(id, principal.user_id, data)
         .await
-        .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") || error_str.contains("RowNotFound") {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Saved search not found".to_string(),
-                )
-            } else {
-                crate::util::errors::db_error("update saved search", e)
-            }
-        })?;
+        .map_err(|e| saved_search_error_response("update saved search", e))?;
 
     Ok(Json(search))
 }
@@ -318,7 +325,7 @@ pub async fn list_search_alerts(
         .limit
         .unwrap_or(ALERTS_DEFAULT_LIMIT)
         .clamp(1, ALERTS_MAX_LIMIT);
-    let offset = query.offset.unwrap_or(0).max(0);
+    let offset = crate::util::clamp_offset(query.offset);
 
     let (alerts, unread_count) = tokio::try_join!(
         state
@@ -392,4 +399,59 @@ pub async fn mark_all_alerts_read(
         .map_err(|e| crate::util::errors::db_error("mark all alerts read", e))?;
 
     Ok(Json(MarkAllAlertsReadResponse { marked_read }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::StatusCode;
+    use sqlx::Error as SqlxError;
+
+    // These assert the status is a function of the SavedSearchError *variant*,
+    // not of any message text — the regression the "string-typed status codes"
+    // finding was about. Each case rewords the underlying message and still
+    // expects the same status.
+
+    #[test]
+    fn limit_reached_maps_to_400_regardless_of_message() {
+        let (status, body) = saved_search_error_response(
+            "create saved search",
+            SavedSearchError::LimitReached { max: 50 },
+        );
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(body, "Maximum saved searches limit reached");
+    }
+
+    #[test]
+    fn not_found_maps_to_404_regardless_of_message() {
+        let (status, body) =
+            saved_search_error_response("update saved search", SavedSearchError::NotFound);
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body, "Saved search not found");
+    }
+
+    #[test]
+    fn db_error_maps_to_generic_500_and_leaks_nothing() {
+        // A driver error whose text mentions "not found" / "maximum" — the old
+        // string-matching code would have mis-routed this to 404/400. The typed
+        // mapping keeps it a scrubbed 500.
+        let err = SavedSearchError::Db(SqlxError::Protocol(
+            "column \"maximum\" not found in relation portal_saved_searches".to_string(),
+        ));
+        let (status, body) = saved_search_error_response("update saved search", err);
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body, "Internal server error");
+        assert!(!body.contains("maximum"));
+        assert!(!body.contains("not found"));
+    }
+
+    #[test]
+    fn row_not_found_driver_error_is_500_not_404() {
+        // `SavedSearchError::NotFound` is now the *only* path to a 404 — a bare
+        // `RowNotFound` bubbling up as a Db error must NOT be re-interpreted as
+        // 404 by inspecting its text.
+        let err = SavedSearchError::Db(SqlxError::RowNotFound);
+        let (status, _body) = saved_search_error_response("update saved search", err);
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    }
 }

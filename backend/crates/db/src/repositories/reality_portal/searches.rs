@@ -21,6 +21,40 @@ pub enum FavoriteAlertReadOutcome {
     NotFound,
 }
 
+/// Typed failure of the mutating saved-search repository calls
+/// ([`RealityPortalRepository::create_saved_search`],
+/// [`RealityPortalRepository::update_saved_search`]).
+///
+/// The reality-server route layer derives the client HTTP status from the
+/// **discriminant** of this enum, never from the `Display`/`Debug` text of a
+/// `sqlx::Error`. The previous handlers matched `err.to_string().contains(
+/// "maximum")` / `contains("not found")` to pick 400 vs 404 vs 500 — a
+/// string-typed status code that silently broke whenever an error message was
+/// reworded or a driver upgrade changed its rendering. Matching a variant is
+/// stable across copy changes.
+#[derive(Debug, thiserror::Error)]
+pub enum SavedSearchError {
+    /// The user already holds [`MAX_SAVED_SEARCHES_PER_USER`] saved searches.
+    /// Route → `400 Bad Request`.
+    #[error("maximum of {max} saved searches reached")]
+    LimitReached {
+        /// The per-user cap that was hit.
+        max: i64,
+    },
+    /// No saved search with the given id is owned by the user.
+    /// Route → `404 Not Found`.
+    #[error("saved search not found")]
+    NotFound,
+    /// An underlying database / infrastructure error. Route → `500`.
+    #[error(transparent)]
+    Db(#[from] SqlxError),
+}
+
+/// Maximum saved searches a single portal user may hold. Enforced by
+/// [`RealityPortalRepository::create_saved_search`]; exceeding it yields
+/// [`SavedSearchError::LimitReached`] (client `400`).
+pub const MAX_SAVED_SEARCHES_PER_USER: i64 = 50;
+
 impl RealityPortalRepository {
     // ========================================================================
     // Saved-search alert engine (Story 16.3, issue #983)
@@ -846,12 +880,29 @@ impl RealityPortalRepository {
     // ========================================================================
 
     /// Create a saved search.
+    ///
+    /// Enforces the per-user cap ([`MAX_SAVED_SEARCHES_PER_USER`]) and surfaces
+    /// it as the typed [`SavedSearchError::LimitReached`] — the route maps that
+    /// discriminant to `400` without inspecting any error text. (The 400 was
+    /// always documented in the OpenAPI surface; before this it relied on a
+    /// `to_string().contains("maximum")` branch that no query ever triggered.)
     pub async fn create_saved_search(
         &self,
         user_id: Uuid,
         data: CreatePortalSavedSearch,
-    ) -> Result<PortalSavedSearch, SqlxError> {
-        sqlx::query_as::<_, PortalSavedSearch>(
+    ) -> Result<PortalSavedSearch, SavedSearchError> {
+        let (existing,): (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM portal_saved_searches WHERE user_id = $1")
+                .bind(user_id)
+                .fetch_one(&self.pool)
+                .await?;
+        if existing >= MAX_SAVED_SEARCHES_PER_USER {
+            return Err(SavedSearchError::LimitReached {
+                max: MAX_SAVED_SEARCHES_PER_USER,
+            });
+        }
+
+        let search = sqlx::query_as::<_, PortalSavedSearch>(
             r#"
             INSERT INTO portal_saved_searches (user_id, name, criteria, alerts_enabled, alert_frequency)
             VALUES ($1, $2, $3, $4, $5)
@@ -864,7 +915,9 @@ impl RealityPortalRepository {
         .bind(data.alerts_enabled)
         .bind(&data.alert_frequency)
         .fetch_one(&self.pool)
-        .await
+        .await?;
+
+        Ok(search)
     }
 
     /// Get saved searches for a user.
@@ -900,12 +953,18 @@ impl RealityPortalRepository {
     }
 
     /// Update a saved search.
+    ///
+    /// A missing / not-owned row is reported as the typed
+    /// [`SavedSearchError::NotFound`] (via `fetch_optional` → `None`) rather
+    /// than a bare `sqlx::Error::RowNotFound` the route had to recognise by
+    /// `to_string().contains("not found")`. The route maps the discriminant
+    /// straight to `404`.
     pub async fn update_saved_search(
         &self,
         id: Uuid,
         user_id: Uuid,
         data: UpdatePortalSavedSearch,
-    ) -> Result<PortalSavedSearch, SqlxError> {
+    ) -> Result<PortalSavedSearch, SavedSearchError> {
         sqlx::query_as::<_, PortalSavedSearch>(
             r#"
             UPDATE portal_saved_searches SET
@@ -924,8 +983,9 @@ impl RealityPortalRepository {
         .bind(&data.criteria)
         .bind(data.alerts_enabled)
         .bind(&data.alert_frequency)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(SavedSearchError::NotFound)
     }
 
     /// Delete a saved search.

@@ -123,7 +123,7 @@ pub async fn list_import_jobs(
             principal.user_id,
             query.status,
             query.limit.unwrap_or(20),
-            query.offset.unwrap_or(0),
+            crate::util::clamp_offset_i32(query.offset),
         )
         .await
         .map_err(|e| crate::util::errors::db_error("list import jobs", e))?;

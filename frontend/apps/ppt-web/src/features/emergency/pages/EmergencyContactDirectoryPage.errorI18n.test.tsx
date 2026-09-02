@@ -53,10 +53,21 @@ vi.mock('../components', () => ({
       submit
     </button>
   ),
-  EmergencyContactsList: ({ onDelete }: { onDelete: (c: unknown) => void }) => (
-    <button type="button" data-testid="list-delete" onClick={() => onDelete(CONTACT)}>
-      delete
-    </button>
+  EmergencyContactsList: ({
+    onEdit,
+    onDelete,
+  }: {
+    onEdit: (c: unknown) => void;
+    onDelete: (c: unknown) => void;
+  }) => (
+    <>
+      <button type="button" data-testid="list-edit" onClick={() => onEdit(CONTACT)}>
+        edit
+      </button>
+      <button type="button" data-testid="list-delete" onClick={() => onDelete(CONTACT)}>
+        delete
+      </button>
+    </>
   ),
 }));
 
@@ -111,6 +122,22 @@ describe('EmergencyContactDirectoryPage error copy is localized, not raw', () =>
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(errors.failedToCreate);
+    expect(alert).not.toHaveTextContent(RAW);
+  });
+
+  it('update failure shows the translated copy, not err.message', async () => {
+    updateEmergencyContact.mockRejectedValueOnce(new Error(RAW));
+
+    renderPage();
+    // Wait for initial load to settle, then edit an existing contact so the
+    // form's submit is routed to handleUpdate (editingContact is set).
+    await waitFor(() => expect(listEmergencyContacts).toHaveBeenCalled());
+    fireEvent.click(screen.getByTestId('list-edit'));
+    fireEvent.click(screen.getByTestId('form-submit'));
+
+    const alert = await screen.findByRole('alert');
+    expect(updateEmergencyContact).toHaveBeenCalled();
+    expect(alert).toHaveTextContent(errors.failedToUpdate);
     expect(alert).not.toHaveTextContent(RAW);
   });
 
