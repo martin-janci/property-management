@@ -1,9 +1,36 @@
 {
-  "generated": "2026-08-30T20:27:52Z",
+  "generated": "2026-09-02T00:32:14Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-02T00:32:14Z",
+      "prs_scanned": 8,
+      "clean": [
+        2926,
+        2925,
+        2922,
+        2921,
+        2920,
+        2918,
+        2917,
+        2876
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-19), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable in sandbox + git push/fetch proxy-blocked -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no build/DB in cloud runner). Label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-19 -label:post-merge-reviewed -label:no-review-needed) returned 8 net-new never-reviewed PRs (under max_prs=15); all others already carry post-merge-reviewed. Reviewed all 8 by full-diff static analysis against the checklist (correctness/security/perf/tests/regressions/conventions/json-key-case). ALL 8 CLEAN -- every one is a small, well-scoped code-review fast-follow fix with a regression test and good reuse. Notable: #2926 removes the decommissioned FCM legacy /fcm/send server-key path entirely (dead code, Google shut the API; defensive guard replaces unwrap, tests trimmed); #2925 adds a whole-file source-scan regression test blocking any map_err e.to_string() INTERNAL_SERVER_ERROR re-leak after routing the audit-log count through db_error (guards the #2915 re-leak of the #2920 sweep); #2922 replaces string-typed HTTP status (err.to_string().contains) with a typed SavedSearchError enum whose discriminant drives 400/404/500 + variant tests (also newly enforces the 50/user cap that was documented but never triggered; benign COUNT-then-INSERT TOCTOU on a soft UX cap, not worth a follow-up); #2921 introduces shared clamp_offset/clamp_offset_i32 (cap 100k) across 10 reality-server list endpoints + unit tests; #2920 adds a db_error sanitizer across compliance handlers (opaque 500, no table/col leak) + test; #2918 i18n's the notification-settings surface across all 6 locales (en/sk/cs/de/hu/pl) with a lockstep key-presence + {{when}}-placeholder regression test; #2917 localizes meter dates to i18n.language (drops hardcoded en-US/default locale) -- pure display change, no test but low-risk; #2876 routes useBuildingUnits through the axios JWT client instead of raw fetch (was 401ing signed-in users, empty units dropdown) with a recording-adapter test asserting the Bearer header. 0 follow-up issues opened. All 8 PRs labeled post-merge-reviewed to block re-review. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push; untouched assignments.json/action-list.json/archives).",
+      "focus_prs": [
+        2926,
+        2925,
+        2922,
+        2921,
+        2920,
+        2918,
+        2917,
+        2876
+      ]
+    },
     {
       "run_at": "2026-08-30T20:27:52Z",
       "prs_scanned": 15,
@@ -565,40 +592,6 @@
         2765,
         2766,
         2767
-      ]
-    },
-    {
-      "run_at": "2026-08-14T12:32:06Z",
-      "prs_scanned": 8,
-      "clean": [
-        2758,
-        2757,
-        2756,
-        2748,
-        2747,
-        2746,
-        2745
-      ],
-      "with_issues": [
-        {
-          "pr": 2755,
-          "issue": 2759,
-          "findings": 2,
-          "specialist": "mobile-rn",
-          "note": "issue #2753 consolidation shipped INCOMPLETE: #2755 migrated only the ~9 screens already on resolveLocale(); a dozen+ call sites still use bare toLocaleDateString()/toLocaleString()/(undefined,...) (device locale, the #2752 bug class) across FaultCard, MetersScreen, NewsScreen, LeaseSignatureScreen, Leases/LeaseDetail (3 sites), FormsScreen, DocumentPreview/Detail/ShareSheet/Permissions, VoteDetail. The mandated bare-toLocale* guard was never added, so the class recurs. Also 4 screens bypass helpers via inline (i18n.language,...) and MeterDetail (#2756) bypasses via inline resolveLocale()."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1 NET-NEW review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI unavailable -> GitHub MCP for all GH I/O; Task tool unavailable so 8 PRs reviewed inline (no spawned per-PR subagents). Window merged-to-dev 14d (>=2026-07-31), base=dev, max_prs=15. 8 genuinely never-seen merges since prior run (through #2742): 2745,2746,2747,2748,2755,2756,2757,2758 -- dependabot 2675/2674/2581 skipped (still open, no merged_at). 7 clean, all high quality with strong IG3 regression tests: #2758 (SSO backslash /\\evil.com open-redirect fail-closed +test), #2748 (Alexa /verify fail-closed -- old code accepted any non-empty sig as valid, +regression test), #2747 (marketplace award-quote cross-RFQ/cross-tenant IDOR -- handler check + repo defense-in-depth + 3 HTTP-layer tests), #2746 (SSRF redirect policy extracted to testable redirect_hop_allowed + hermetic tests), #2745 (rust-toolchain 1.94.1->1.97.1 across all 9 CI refs + toolchain.toml + newer-clippy needless-borrow fixes + rustfmt import reorder), #2756 (MeterDetail reading dates via resolveLocale() + de-locale regression test -- issue #2752), #2757 (ProtectedRoute defaultValue-guard parity + lockstep bundle test -- issue #2754). 1 issue opened: #2759 against #2755 (incomplete i18n date consolidation + missing bare-toLocale* guard, medium). Labels follow-up,from-merged-review. PR-label post-merge-reviewed still not applied via MCP (no clean additive PR-label op); this JSON run-history is the dedup record.",
-      "focus_prs": [
-        2745,
-        2746,
-        2747,
-        2748,
-        2755,
-        2756,
-        2757,
-        2758
       ]
     }
   ]

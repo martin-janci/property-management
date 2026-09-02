@@ -2499,6 +2499,28 @@
       "merge_attempted_at": "2026-08-30T04:33:36Z"
     },
     {
+      "task_id": "code-review-api-core-fcm-legacy-dead-endpoint",
+      "branch": "auto-impl/code-review-api-core-fcm-legacy-dead-end-441ead3c",
+      "status": "merged",
+      "claimed_at": "2026-09-01T16:28:22Z",
+      "last_updated": "2026-09-02T00:29:23Z",
+      "status_changed_at": "2026-09-02T00:29:23Z",
+      "pr_number": 2926,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2926",
+      "merged_at": "2026-09-02T00:25:42Z",
+      "specialist": "pm-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=dead-code removal complete; all removed symbols excised, no-oauth-token now skips (false,false), v1 path intact, tests pruned; approve posted as comment (self-approval blocked); backend CI still running none red",
+      "last_reviewed_oid": "496f2e0ef61a2a083bc86a4ad05209b6d9e7fe3a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-02T00:29:23Z"
+    },
+    {
       "task_id": "code-review-api-core-fcm-v1-static-oauth-token",
       "branch": "auto-impl/code-review-api-core-fcm-v1-static-oauth-455c7bd8",
       "status": "merged",
@@ -14623,6 +14645,50 @@
       "merge_attempted_at": "2026-09-01T02:32:00Z"
     },
     {
+      "task_id": "gh-issue-2923",
+      "branch": "auto-impl/gh-issue-2923-2597b698",
+      "status": "merged",
+      "claimed_at": "2026-09-01T22:31:49Z",
+      "last_updated": "2026-09-02T00:32:45Z",
+      "status_changed_at": "2026-09-02T00:32:45Z",
+      "pr_number": 2927,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2927",
+      "merged_at": "2026-09-02T00:32:02Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=test-only update-error i18n coverage matches real handleUpdate contract; CI green",
+      "last_reviewed_oid": "ff056d3f3b9e98d7968b8fd8a864fb0594919c19",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-02T00:31:52Z"
+    },
+    {
+      "task_id": "gh-issue-2924",
+      "branch": "auto-impl/gh-issue-2924-0e9034f3",
+      "status": "merged",
+      "claimed_at": "2026-09-01T22:31:49Z",
+      "last_updated": "2026-09-02T00:32:45Z",
+      "status_changed_at": "2026-09-02T00:32:45Z",
+      "pr_number": 2928,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2928",
+      "merged_at": "2026-09-02T00:32:05Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=repeatable-read-snapshot-correct-ci-green",
+      "last_reviewed_oid": "73b40eb2e07d75d34280b6600d21d564979a6dea",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-02T00:31:52Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -17237,5 +17303,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-01T22:32:19Z"
+  "archived_at": "2026-09-02T00:32:55Z"
 }

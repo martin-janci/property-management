@@ -10570,7 +10570,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2915",
         "PR #2920"
@@ -10585,7 +10585,12 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-02T00:27:03Z",
+        "assignment_status": "merged",
+        "pr_number": 2925
+      }
     }
   ]
 }
