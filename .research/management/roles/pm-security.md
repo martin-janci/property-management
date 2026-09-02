@@ -1,62 +1,35 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-09-02
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Rotating role this run (pm_cursor idx 5). Last ran 2026-07-21 — 6 weeks stale; refreshed against current churn. Static read; no compile/run._
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+This window ships **security-hygiene reinforcement** rather than fresh vulnerabilities: #2925 patched a raw-sqlx-error leak class in `compliance.rs` (audit-log count now goes through `db_error`, masking internals in 500 bodies), and #2926 deleted the decommissioned FCM legacy send path (attack-surface reduction). Reviewed `data_export` + `gdpr.rs` while adjacent — GDPR download / status handlers correctly gate on `export_request.user_id != user.user_id`, so no cross-user PII leak on that surface. The **standing gh-issue-2797 (RUSTSEC-2026-0258 h2 empty-DATA-frame DoS)** remains the single biggest security debt — 15+ days unresolved and blocks every backend PR.
 
 ## next_actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- **[high]** Land the h2 bump for RUSTSEC-2026-0258 (gh-issue-2797) — every backend PR runs into it in cargo-deny. Confirm patched h2 version present in `backend/Cargo.lock`; run cargo-deny locally / in CI to green. DoD: cargo-deny advisories clean on `dev` — **owner: pm-security**. dependency: none.
+- **[high]** Grep-sweep for the `#2925` raw-db-leak class across `backend/servers/api-server/src/routes/**`: every secondary DB call (`.count()`, aggregate helpers, `.map_err(...)` that stringifies sqlx) that does NOT go through a `db_error(...)` helper is a candidate. Rank hits, land the top 3 in one code-review PR. DoD: no `.map_err(|e| e.to_string())` or `.map_err(sqlx errors → StatusCode)` idiom left in compliance / reports / audit routes — **owner: pm-backend**. dependency: none.
+- **[high]** Add integration test for the compliance audit-log DB-error path (#2925 regression guard): drop the audit_logs table permission or inject a sqlx failure, assert 500 body contains NO connection-string / SQL fragments. DoD: red-then-green test committed alongside the fix or in a follow-up — **owner: pm-qa**. dependency: pm-backend (test scaffolding).
+- **[medium]** Reality-server saved-search typed-error enum (#2922) sets a good pattern — extend to `inquiries.rs` and `reports.rs` on the same server, which still have unwrap-to-500 error paths. Reduces the chance of leaking domain internals via panic-derived 500 bodies. DoD: 1 more route migrated + regression test — **owner: pm-backend**. dependency: none.
+- **[medium]** Audit the `push_fanout.rs` receipt-processing paths for `user_id` in structured logs (`user_id = %user_id`) — after the #2926 legacy-path deletion, the module still emits `user_id` at info+ level in ~10 sites; verify the log-scrubber policy scrubs UUIDs or acknowledge this as accepted PII exposure. DoD: written policy note in `docs/api/README.md` under "Log scrubbing" OR add a scrubber rule — **owner: pm-devops**. dependency: pm-security (policy call).
+- **[medium]** Close carried risks `risk-layout-webhook-replay-2026-07-23` (#2485) and `risk-mobile-layout-cache-cross-tenant-2026-07-23` (#2486) — both open 6+ weeks, no PR movement. DoD: PR merged for each or explicit "accepted, tracked in Q4" — **owner: pm-security**. dependency: pm-backend / pm-mobile.
 
 ## risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- **Standing h2 DoS (RUSTSEC-2026-0258) (high/high):** every backend PR fails cargo-deny; delivery loop routes around by disabling the gate locally, which erodes the advisory-check discipline. Mitigation: bump h2 crate.
+- **Raw-sqlx-error leak class (medium/high):** #2925 fixed one site in compliance.rs; the same idiom (secondary count/aggregate calls returning `Result<_, sqlx::Error>` mapped ad-hoc to 500 string) very likely repeats across reports / audit / analytics routes — a targeted grep is cheap and finds unknown-count sites. A leaked connection URL or SQL fragment in a 500 body is a real infoleak.
+- **`push_fanout.rs` `user_id` in structured logs (low/medium):** 10+ `user_id = %user_id` sites at info/warn level. If the org's log-shipper doesn't scrub UUIDs, every send/receipt event exports a user identifier to the log store. Mitigation: policy decision + optional scrubber rule.
+- **Aging: layout-webhook-replay (#2485) and mobile-layout-cross-tenant-cache (#2486) (medium/high):** two open post-merge review findings from 2026-07-23, no PR movement in 6 weeks. Mitigation: land or explicitly de-prioritize.
+- **OAuth 10a-* has no e2e security tests (medium/high):** carried from 2026-05-27 run — introspection / refresh-rotation / PKCE-S256 enforcement untested; a refactor could silently reintroduce revoked-token acceptance. Mitigation: dedicated security-test PR (already queued as `pm-qa-oauth-security-tests`).
 
 ## open_questions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Does the org's log-shipper scrub UUID-shaped fields, or do `user_id = %user_id` structured-log sites in `push_fanout.rs` export identifiers verbatim to the log store?
+- Is #2652 (mobile-native/KMP cloud-runner) the reason `pm-mobile-android-sso-csrf-half-wired-2026-07-30` (#2574 — SsoStateStore.mint() has no call site so every reality://sso callback is rejected) hasn't moved? A never-called mint is a **hard availability bug on Android SSO**, not just a security-hardening item.
+- The compliance-tier gate (require_super_admin vs require_platform_admin) is enforced in-handler, not via an axum extractor — is that a deliberate architectural choice, or should we extract a `RequireTier` extractor to prevent an accidentally-unguarded new handler in this file?
 
 ## decisions_needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Adopt or reject a repo-wide "no raw sqlx error text in HTTP bodies" lint / clippy check — owner: pm-tech-lead.
+- Log-scrubbing policy for `user_id` in structured logs — either scrub at shipper OR downgrade info→debug in `push_fanout.rs` — owner: pm-devops (with pm-security concurrence).

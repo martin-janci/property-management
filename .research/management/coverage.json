@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-31T03:10:00Z",
+  "generated": "2026-09-02T00:35:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -495,13 +495,14 @@
         "XcodeGen project.yml deterministically generates iosApp.xcodeproj",
         "RealityPortalApp.swift + Core infra (AuthManager, DependencyContainer, KMPBridge)",
         "Keychain token storage + 6-locale localization scaffold",
-        "Merged PRs: #1123, #501, #1514/#1515"
+        "Merged PRs: #1123, #501, #1514/#1515",
+        "2026-09-02: coverage upkeep \u2014 no PR in 2026-09-01..09-02 window touched mobile-native/SwiftUI code; status held"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-09-02",
       "screen_refs": []
     },
     {
@@ -518,13 +519,14 @@
         "Core/Navigation complete: Route.swift, NavigationCoordinator, DeepLinkHandler, state restoration",
         "Deep-link realityportal:// registered in Info.plist (commit db3ccf1)",
         "Auth guard + navigation state restoration with unit tests",
-        "Merged PRs: #1516, #1256, #1298"
+        "Merged PRs: #1516, #1256, #1298",
+        "2026-09-02: coverage upkeep \u2014 no PR in 2026-09-01..09-02 window touched mobile-native/SwiftUI code; status held"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-09-02",
       "screen_refs": []
     },
     {
@@ -541,13 +543,14 @@
         "HomeView.swift + SearchView.swift with full AC coverage",
         "Debounced search 300ms + infinite-scroll pagination",
         "FilterSheet with CoreLocation near-me radius",
-        "Merged PRs: #533, #1391, #1401, #1357; coverage verified 2026-06-23"
+        "Merged PRs: #533, #1391, #1401, #1357; coverage verified 2026-06-23",
+        "2026-09-02: coverage upkeep \u2014 no PR in 2026-09-01..09-02 window touched mobile-native/SwiftUI code; status held"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-09-02",
       "screen_refs": []
     },
     {
@@ -564,13 +567,14 @@
         "ListingDetailView + FavoritesView + FavoritesService (optimistic updates)",
         "MapKit ListingMapView with Apple Maps hand-off",
         "Full-screen photo gallery with pinch/double-tap zoom",
-        "Merged PRs: #641, #540, #1221, #1541"
+        "Merged PRs: #641, #540, #1221, #1541",
+        "2026-09-02: coverage upkeep \u2014 no PR in 2026-09-01..09-02 window touched mobile-native/SwiftUI code; status held"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-09-02",
       "screen_refs": []
     },
     {
@@ -587,7 +591,8 @@
         "InquiriesView, InquiryDetailView, SendInquiryView, AccountView present",
         "AuthManager + KeychainService + PushNotificationManager wired",
         "Merged PRs: #686, #1126, #705, #1242",
-        "coverage.json done (2026-06-23); screen-maps still show in-progress buildStatus"
+        "coverage.json done (2026-06-23); screen-maps still show in-progress buildStatus",
+        "2026-09-02: coverage upkeep \u2014 no PR in 2026-09-01..09-02 window touched mobile-native/SwiftUI code; status held"
       ],
       "gaps": [
         "screen-map buildStatus not synced: inquiries.md and account.md still in-progress despite code shipped",
@@ -595,7 +600,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-82",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-09-02",
       "screen_refs": []
     },
     {

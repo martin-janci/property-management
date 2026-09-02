@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-31T03:10:00Z",
+  "generated": "2026-09-02T00:35:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -219,6 +219,50 @@
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
       "status": "open"
+    },
+    {
+      "id": "pm-security-h2-rustsec-2026-0258-2026-09-02",
+      "risk": "RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) unresolved 15+ days — every backend PR fails cargo-deny; delivery loop routes around by disabling the gate locally, which erodes the advisory-check discipline",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Land the h2 crate bump (gh-issue-2797)",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-security 2026-09-02"
+    },
+    {
+      "id": "pm-security-raw-db-leak-class-2026-09-02",
+      "risk": "Raw-sqlx-error leak class fixed in PR #2925 (compliance.rs audit-log count) is very likely mirrored across reports/audit/analytics routes — a leaked connection URL or SQL fragment in a 500 body is a real infoleak; unknown count of sibling sites",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Grep-sweep for `.map_err(|e| e.to_string())` and ad-hoc sqlx→StatusCode idioms in api-server routes; land top 3 in one code-review PR",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-security 2026-09-02"
+    },
+    {
+      "id": "pm-security-push-fanout-userid-log-exposure-2026-09-02",
+      "risk": "push_fanout.rs emits `user_id = %user_id` in structured logs at info/warn level in ~10 sites; if the log-shipper doesn't scrub UUIDs, every send/receipt event exports a user identifier to the log store (PII exposure)",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Policy decision: scrub at shipper OR downgrade info→debug locally; document under docs/api/README.md 'Log scrubbing'",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-security 2026-09-02"
+    },
+    {
+      "id": "pm-security-84-x-partials-5-windows-2026-09-02",
+      "risk": "84-1 (direct-to-S3 wiring) + 84-2 (signer page) unchanged for 5 upkeep windows (2026-07-30 / 08-06 / 08-25 / 08-31 / 09-02) — dispatcher will not pick them up on its own; MVP 49/49 blocked purely on stakeholder-visibility",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Direct-promote both from ranked backlog to an implementer-pair window (both frontend-only on shipped APIs)",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-scrum-master 2026-09-02"
     }
   ]
 }

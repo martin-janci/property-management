@@ -162,7 +162,91 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-security-h2-rustsec-2026-0258",
+      "action": "Land the h2 crate bump for RUSTSEC-2026-0258 (empty-DATA-frame DoS; gh-issue-2797) — confirm patched h2 present in backend/Cargo.lock, cargo-deny advisories green on dev",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-02",
+      "first_open_at": "2026-09-02T00:35:00Z"
+    },
+    {
+      "id": "pm-security-raw-db-leak-audit-sibling-sites",
+      "action": "Grep-sweep for the raw-sqlx-error leak class fixed in PR #2925 across backend/servers/api-server/src/routes/** — every secondary DB call (count/aggregate helpers) that stringifies sqlx into a 500 body is a candidate; land the top 3 sites in one code-review PR",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-02",
+      "first_open_at": "2026-09-02T00:35:00Z"
+    },
+    {
+      "id": "pm-security-compliance-db-error-regression-test",
+      "action": "Add integration test for the compliance audit-log DB-error path (#2925 regression guard): inject a sqlx failure, assert 500 body contains NO connection-string or SQL fragments",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-security-raw-db-leak-audit-sibling-sites",
+      "depends_on": ["pm-security-raw-db-leak-audit-sibling-sites"],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-02",
+      "first_open_at": "2026-09-02T00:35:00Z"
+    },
+    {
+      "id": "pm-security-typed-error-enum-extend-inquiries-reports",
+      "action": "Extend the reality-server typed error enum pattern from PR #2922 (saved_searches) to inquiries.rs and reports.rs on the same server — 1 more route migrated + regression test this sprint",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-02",
+      "first_open_at": "2026-09-02T00:35:00Z"
+    },
+    {
+      "id": "pm-security-push-fanout-userid-log-scrubbing-policy",
+      "action": "Audit push_fanout.rs receipt-processing paths for user_id in structured logs (`user_id = %user_id` at info+ level, ~10 sites) — decide policy: scrub at shipper OR downgrade info→debug locally; write it down in docs/api/README.md under 'Log scrubbing'",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "pm-security",
+      "depends_on": ["UNRESOLVED:pm-security policy concurrence on log-scrubbing (no action-list id yet)"],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-02",
+      "first_open_at": "2026-09-02T00:35:00Z"
+    },
+    {
+      "id": "pm-security-close-carried-webhook-cache-risks",
+      "action": "Close carried risks #2485 (layout-webhook replay guard) and #2486 (mobile LAYOUT_CACHE_KEY cross-tenant) — both open 6+ weeks with no PR movement; land PRs or explicitly de-prioritize",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-02",
+      "first_open_at": "2026-09-02T00:35:00Z"
+    },
+    {
+      "id": "pm-scrum-master-promote-84-x-directly",
+      "action": "Promote 84-1 (ppt-web direct-to-S3 upload) and 84-2 (signer-facing document-sign page) directly from ranked backlog to an implementer-pair window — 5 upkeep windows without dispatcher pick-up; both frontend-only on shipped APIs; closes MVP 49/49",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-02",
+      "first_open_at": "2026-09-02T00:35:00Z"
     }
   ],
-  "generated": "2026-08-31T03:10:00Z"
+  "generated": "2026-09-02T00:35:00Z"
 }

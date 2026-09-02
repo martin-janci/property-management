@@ -1,0 +1,195 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-09-01T18:38:58Z \u2192 2026-09-02",
+      "score_delta": 0,
+      "evidence": "PR #2926 refactor removed FCM legacy send path (169 lines changed); prior runs_seen=1 last_seen=2026-05-26 \u2014 cumulative re-emit, no double-score.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=1 \u2192 2",
+      "score_delta": 1,
+      "evidence": "push_fanout.rs churned again this run (169 lines, PR #2926) \u2014 2nd run tracked in hotspot_history (prior last_seen 2026-05-26).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/saved_searches.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2922 (106 lines)",
+      "score_delta": 1,
+      "evidence": "reality-server saved_searches.rs \u2014 106 lines changed in PR #2922 (typed-error-enum status refactor); new hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/push_delivery_receipt_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2926 (99 lines)",
+      "score_delta": 1,
+      "evidence": "push_delivery_receipt_tests.rs \u2014 99 lines changed in PR #2926 (FCM-legacy-removal test cleanup); new hotspot, test file.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-sso-callback-leaks-upstream-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-02 (reality-server segment)",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs:300-305 sso_callback returns SsoError with e.to_string(); :740-741 exchange_code_for_tokens wraps raw upstream text via anyhow!('Token exchange failed: {}', error_text); same at :756-758 get_user_info :310-315. Upstream OAuth error text (invalid_grant, misconfigured client, network strings, internal URLs) is echoed to unauthenticated callers of /api/v1/sso/callback \u2014 should be logged server-side and replaced with a generic client message.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-reality-server-bg-workers-interval-not-floored",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-02 (reality-server segment)",
+      "score_delta": 2,
+      "evidence": "backend/servers/reality-server/src/services/saved_search_alerts.rs:133 uses interval(Duration::from_secs(self.config.poll_interval_secs)) with no floor; SAVED_SEARCH_ALERT_INTERVAL_SECS=0 parses cleanly (:94-97) and tokio::time::interval panics at tick. favorite_alerts.rs:73 same shape (FAVORITE_ALERT_INTERVAL_SECS=0). Sibling search_alert_drainer.rs:286-288 documents the trap and floors via poll_interval() (tested :441-458) \u2014 the other two workers should reuse the same guard.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-02.md && head -1 | grep '^# 2026-09-02$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq (staged state vs HEAD)",
+      "observed": "true (cursors + seen_signals + hotspot_history advanced)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq (signals-vs-seen with cumulative allowlist)",
+      "observed": "true (only cumulative churn-hotspot re-emit; score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "custom python (open items older than 14d decayed \u22121 or dropped)",
+      "observed": "portfolio-analytics-caps-100 1\u21920\u2192dropped; no other qualifying open item",
+      "expected": "all comply"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plan slug + 'adversarial pass:' in brief",
+      "observed": "annotated: passed",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A .research/plans/ | grep -c '.md$'",
+      "observed": "1",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G7-metadata+headings+cap+mode+files",
+      "passed": true,
+      "command": "custom checks",
+      "observed": "all 4 metadata + 11 headings present; cap ticked; Mode: cloud-ok; all 4 Files paths resolve on disk",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached (excluding baseline docs) | grep secrets/hostnames",
+      "observed": "0 after stripping p.rlt.sk URL from copied template boilerplate in the new plan",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q <staged backlog.md> <fresh regen>",
+      "observed": "byte-identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse 'Phases that failed'",
+      "observed": "none",
+      "expected": "consistent with cursors"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs vs (active \u222a archive)",
+      "observed": "24 prior plans all present in active dir",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files .research/plans/_archive/ | wc -l >= HEAD",
+      "observed": "cur=9 head=9",
+      "expected": "cur \u2265 head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q <staged IDEAS_TRIAGE.md> <fresh regen>",
+      "observed": "byte-identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq caps + idempotency-vs-history",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true both"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor GC7",
+      "observed": "action-list + risks parse; project-state non-empty; pm 5\u21926; coverage 7\u21928; GC7 pass",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached | grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate"
+}

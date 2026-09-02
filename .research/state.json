@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
+  "last_run_iso": "2026-09-02T03:16:10Z",
   "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_pr_seen": 2928,
+  "last_issue_seen": 2924,
+  "last_commit_sha": "8c8e128fbe7de4ccb1140493497b59e338102a28",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -63,9 +63,9 @@
       "recent_churn": 869
     },
     "backend/servers/api-server/src/services/push_fanout.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-26",
-      "recent_churn": 689
+      "runs_seen": 2,
+      "last_seen": "2026-09-02",
+      "recent_churn": 169
     },
     "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx": {
       "runs_seen": 1,
@@ -521,6 +521,16 @@
       "runs_seen": 1,
       "last_seen": "2026-08-31",
       "recent_churn": 151
+    },
+    "backend/servers/reality-server/src/routes/saved_searches.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-02",
+      "recent_churn": 106
+    },
+    "backend/servers/api-server/tests/suites/push_delivery_receipt_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-02",
+      "recent_churn": 99
     }
   },
   "seen_signals": [
@@ -1002,13 +1012,18 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/reality-server/src/routes/saved_searches.rs",
+    "churn-hotspot-backend/servers/api-server/tests/suites/push_delivery_receipt_tests.rs",
+    "code-review-reality-server-sso-callback-leaks-upstream-error",
+    "code-review-reality-server-bg-workers-interval-not-floored"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-31",
     "api-core": "2026-09-01",
-    "reality-server": "2026-08-31",
+    "reality-server": "2026-09-02",
     "ppt-web-ui": "2026-08-29",
     "ppt-web-core": "2026-08-29",
     "reality-web": "2026-08-29",
@@ -1016,9 +1031,9 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 374,
+    "plans_created": 30,
     "quiet_days": 3,
     "auto_fix_count": 0
   },
@@ -1033,19 +1048,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-09-02",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }
