@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
+  "last_run_iso": "2026-09-02T12:48:17Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2928,
   "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_commit_sha": "9f46336fa73b4588fb84fee30ed0edf2bce9ad9f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -683,6 +683,7 @@
     "code-review-api-handlers-decide-appeal-unvalidated",
     "code-review-api-handlers-enhanced-chat-stub",
     "code-review-api-handlers-forgot-password-no-rate-limit",
+    "code-review-api-handlers-neighbors-raw-db-error-leak",
     "code-review-api-handlers-ocr-photo-url-silent-loss",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-report-content-unbounded",
@@ -710,6 +711,7 @@
     "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
     "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
     "code-review-mobile-native-kmp-search-stale-response-race",
+    "code-review-mobile-rn-4xx-silent-drop",
     "code-review-mobile-rn-auth-restore-stale-token",
     "code-review-mobile-rn-biometric-prompt-i18n",
     "code-review-mobile-rn-deeplink-init-unhandled",
@@ -719,6 +721,7 @@
     "code-review-mobile-rn-offline-sync-false-complete",
     "code-review-mobile-rn-offline-terminal-drop-dataloss",
     "code-review-mobile-rn-push-debug-console-log",
+    "code-review-mobile-rn-refresh-purges-offline-queue",
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-thread-send-silent-fail",
@@ -735,6 +738,7 @@
     "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-route-error-boundary-gap",
+    "code-review-ppt-web-core-route-groups-no-protectedroute",
     "code-review-ppt-web-core-ws-event-name-mismatch",
     "code-review-ppt-web-core-ws-giveup-no-resume",
     "code-review-ppt-web-core-ws-pong-timeout-drop",
@@ -1012,13 +1016,13 @@
     "ppt-web-ui": "2026-08-29",
     "ppt-web-core": "2026-08-29",
     "reality-web": "2026-08-29",
-    "mobile-rn": "2026-08-29",
+    "mobile-rn": "2026-09-02",
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 376,
+    "plans_created": 31,
     "quiet_days": 3,
     "auto_fix_count": 0
   },
@@ -1033,19 +1037,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-09-02",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }

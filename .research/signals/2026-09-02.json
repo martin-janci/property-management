@@ -1,0 +1,248 @@
+{
+  "run_iso": "2026-09-02T12:48:17Z",
+  "trigger": "buffer-low fire (claimable=8/72 landable=~0 — all 8 open mobile-native-gated). Payload: refill planner with non-mobile-native vectors.",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-refresh-purges-offline-queue",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:206 — refreshToken() catch(any) → await logout() cannot distinguish a real 401 from a rejected fetch (offline / DNS / TLS).",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:326 — cold-start initialize() invokes refreshToken() when access token expired; opening offline past TTL triggers this path.",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:159 — logout() → resetLocalData() purges QUEUE_KEY (ppt_offline_queue); previously queued faults / meters / votes are discarded before retry.",
+        "frontend/apps/mobile/src/test/integration/auth.integration.test.tsx:206-224 — only server-401 branch covered; fetch-rejects (network-unreachable) has no test."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-4xx-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:425 — queued 4xx-terminated action dropped with only console.error; no UI surface for the user to inspect/retry.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:288-294 — isPermanentClientError treats 403/422 as terminal; tenant role change (403) or schema drift (422) silently destroys offline-created content."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-handlers-neighbors-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "pm-security",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/neighbors.rs:138 — get_neighbors: Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) — raw sqlx::Error Display in client body.",
+        "backend/servers/api-server/src/routes/neighbors.rs:149 — count_neighbors: same raw leak.",
+        "backend/servers/api-server/src/routes/neighbors.rs:190 — get_privacy_settings: same raw leak.",
+        "backend/servers/api-server/src/routes/neighbors.rs:229 — update_privacy_settings: same raw leak.",
+        "Pattern PR #2925 just fixed in compliance.rs; 9 other route modules already use a db_error(msg, e) helper."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "type": "code-review-finding",
+      "source": "pm-security",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx — 0 ProtectedRoute occurrences vs. buildings.tsx's 19 (direct grep).",
+        "11 route groups mount pages bare: financial, accounting, faults, community, disputes, iot, messaging, neighbors, outages, announcements, ai-dashboards.",
+        "Money-sensitive surfaces (financial, accounting) in the unguarded set. AppRoutes.tsx has no enclosing global auth-gate — enforcement is purely per-group.",
+        "Bounded blast radius (queries stay enabled:false without user; backend still requires auth) — CWE-284 broken-access-control posture, not a data leak."
+      ],
+      "expert": "security"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — none of the merged-PR signals this run match Phase 5 allowlist (screen-map-drift/orphan, fixme-in-merged-code, dep-update-noise lockfile, stalled-review); the 4 new code-review findings need manual plans, not auto-fixes.",
+  "resolutions": [
+    {
+      "backlog_id": "code-review-reality-server-agent-review-self-review",
+      "action": "status=done",
+      "cause": "PR #2919 merged 2026-09-02 — subject != reviewer guard on POST /api/v1/realtors/{id}/reviews + unit tests"
+    }
+  ],
+  "decay_actions": [
+    {
+      "backlog_id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+      "prev_score": 1,
+      "new_score": 0,
+      "new_status": "dropped",
+      "cause": "no new signals in 14 days (last updated 2026-08-19)"
+    }
+  ],
+  "promoted_plans": [
+    {
+      "backlog_id": "code-review-api-handlers-neighbors-raw-db-error-leak",
+      "plan_path": "plans/code-review-api-handlers-neighbors-raw-db-error-leak.md",
+      "adversarial_pass": "passed"
+    },
+    {
+      "backlog_id": "code-review-mobile-rn-refresh-purges-offline-queue",
+      "plan_path": "plans/code-review-mobile-rn-refresh-purges-offline-queue.md",
+      "adversarial_pass": "passed"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md; head -1 matches # <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup vs prior seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated_at <= today-14 lost >=1 or dropped",
+      "observed": "1 item decayed: portfolio-analytics-caps-100 (1→0 dropped)",
+      "expected": "all qualifying items decayed"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial-pass annotation in brief",
+      "observed": "2 plans, both annotated passed",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "2",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7-metadata+headings",
+      "passed": true,
+      "command": "4 metadata + 11 headings per new plan",
+      "observed": "both plans complete",
+      "expected": "complete"
+    },
+    {
+      "goal": "G7-capability+mode",
+      "passed": true,
+      "command": "≥1 [x] capability + Mode: line",
+      "observed": "both plans C1+C6 ticked, Mode: cloud-ok",
+      "expected": "declared"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "Files section paths resolve on disk",
+      "observed": "5/5 paths resolve",
+      "expected": "all resolve"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged changes only under .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames added",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases + honest brief",
+      "observed": "no phase failed",
+      "expected": "clean"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior-run plan disappeared without archive",
+      "observed": "no plan dropped",
+      "expected": "convergent"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "unchanged",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill switch, caps, idempotency, verify-all gate)",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor advanced",
+      "observed": "pm_cursor.next_index=6 (advanced 5→6), coverage_cursor.next_index=8 (advanced 7→8), 8 < 13 epics",
+      "expected": "valid + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

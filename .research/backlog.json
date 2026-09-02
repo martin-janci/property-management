@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (last updated 2026-08-19)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-02",
       "plan": null
     },
     {
@@ -10505,19 +10506,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2919",
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
       ],
       "evidence": [
         "Tier-1d finding (see .research/signals/2026-08-31-reality-server-tier1d.json) — agent-review self-review gap without a reviewer_id != subject_id guard.",
-        "Routine 2026-09-01 spot-check pending: full file re-verification deferred to Phase-3 promotion (needs local grep). Kept score at tier1d-recorded +2."
+        "Routine 2026-09-01 spot-check pending: full file re-verification deferred to Phase-3 promotion (needs local grep). Kept score at tier1d-recorded +2.",
+        "resolved: PR #2919 merged 2026-09-02 — fix(reality-server): reject self-review on agent review endpoint (subject != reviewer guard + tests)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/reviews.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-02",
       "plan": null
     },
     {
@@ -10596,6 +10599,103 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-mobile-rn-refresh-purges-offline-queue",
+      "title": "mobile-rn: AuthContext.refreshToken() catch-all logout() purges offline queue on transient network failure — silent data loss",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (Phase 1.5 mobile-rn 2026-09-02)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:206 — refreshToken() catch(any) → await logout() cannot distinguish a real 401 from a rejected fetch (offline / DNS / TLS).",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:326 — cold-start initialize() invokes refreshToken() when access token expired; opening offline past TTL triggers this path.",
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:159 — logout() → resetLocalData() purges QUEUE_KEY (ppt_offline_queue); previously queued faults / meters / votes are discarded before retry.",
+        "existing tests (auth.integration.test.tsx:206-224) only cover the server-401 path; the fetch-rejects (network-unreachable) branch has no test — the data-loss regression is uncaptured."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-09-02",
+      "updated_at": "2026-09-02",
+      "plan": "plans/code-review-mobile-rn-refresh-purges-offline-queue.md"
+    },
+    {
+      "id": "code-review-mobile-rn-4xx-silent-drop",
+      "title": "mobile-rn: useOfflineSupport replay drops 4xx-terminated actions with only console.error — user loses offline-created content with no UI feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (Phase 1.5 mobile-rn 2026-09-02)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:425 — queued action returning 400/403/404/409/422 on replay is dropped with only console.error; no toast, no persisted failed_actions bucket the user can inspect or retry.",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:288-294 — isPermanentClientError treats 403/422 as terminal; a tenant role change between enqueue and replay (403), or schema drift (422) silently destroys user content with no user-visible feedback."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-09-02",
+      "updated_at": "2026-09-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-neighbors-raw-db-error-leak",
+      "title": "neighbors.rs: 4 handlers leak raw sqlx::Error to client body via ErrorResponse::new(\"DB_ERROR\", e.to_string()) — same pattern #2925 just fixed in compliance.rs",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "pm-security (Phase 1.6 2026-09-02)",
+        "PR #2925 (regression pattern reference)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/neighbors.rs:138 — get_neighbors list returns Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) with raw sqlx::Error Display.",
+        "backend/servers/api-server/src/routes/neighbors.rs:149 — count_neighbors: same raw leak.",
+        "backend/servers/api-server/src/routes/neighbors.rs:190 — get_privacy_settings: same raw leak.",
+        "backend/servers/api-server/src/routes/neighbors.rs:229 — update_privacy_settings: same raw leak.",
+        "9 other route modules already use a local db_error(msg, e) helper (compliance.rs after #2925, insurance.rs, iot/shared.rs, legal.rs, vendors/shared.rs, admin_tenants.rs, automation.rs, agency_provisioning.rs, platform_admin/settings.rs, subscriptions.rs) that returns a static client message + logs the real error via tracing::error!."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/neighbors.rs",
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "created_at": "2026-09-02",
+      "updated_at": "2026-09-02",
+      "plan": "plans/code-review-api-handlers-neighbors-raw-db-error-leak.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "title": "ppt-web: 11 route groups (financial, accounting, faults, community, disputes, iot, messaging, neighbors, outages, announcements, ai-dashboards) mount pages without ProtectedRoute — anonymous shell instead of /login redirect",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "pm-security (Phase 1.6 2026-09-02 — direct grep verified)",
+        "dispatcher Tier-1d 2026-09-02 ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx — 0 occurrences of ProtectedRoute vs. buildings.tsx which has 19.",
+        "AppRoutes.tsx has no enclosing global auth-gate; auth enforcement is purely per-group.",
+        "11 route groups mount bare: financial, accounting, faults, community, disputes, iot, messaging, neighbors, outages, announcements, ai-dashboards.",
+        "Money-sensitive surfaces (financial, accounting) are in the unguarded set. Bounded blast radius (queries stay enabled:false without user, backend requires auth) — broken-access-control posture (CWE-284), not a data leak."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/buildings.tsx"
+      ],
+      "created_at": "2026-09-02",
+      "updated_at": "2026-09-02",
+      "plan": null
     }
   ]
 }
