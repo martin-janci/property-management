@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-02T06:31:23Z",
+  "generated": "2026-09-02T08:30:46Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-09-02T04:31:47Z",
+      "last_updated": "2026-09-02T08:30:46Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -28,7 +28,7 @@
       "branch": "auto-impl/screen-map-drift-pr-2894-reality-b0a2b158",
       "status": "review",
       "claimed_at": "2026-08-31T06:26:28Z",
-      "last_updated": "2026-09-02T04:31:47Z",
+      "last_updated": "2026-09-02T08:30:46Z",
       "status_changed_at": "2026-08-31T06:38:30Z",
       "pr_number": 2902,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2902",
@@ -50,7 +50,7 @@
       "branch": "auto-impl/code-review-reality-server-agent-review-8b45b8af",
       "status": "review",
       "claimed_at": "2026-09-01T12:32:35Z",
-      "last_updated": "2026-09-02T04:31:47Z",
+      "last_updated": "2026-09-02T08:30:46Z",
       "status_changed_at": "2026-09-01T20:35:15Z",
       "pr_number": 2919,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2919",
