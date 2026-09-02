@@ -117,6 +117,8 @@ pub fn api_router() -> Router<AppState> {
                 )
                 .route("/{id}/items", get(invoices::list_invoice_items))
                 .route("/{id}/issue", post(invoices::issue_invoice))
+                .route("/{id}/send", post(invoices::mark_sent))
+                .route("/{id}/cancel", post(invoices::cancel_invoice))
                 .route("/{id}/exchange-rate", post(invoices::set_exchange_rate))
                 .route("/{id}/credit-note", post(invoices::create_credit_note))
                 .route("/{id}/duplicate", post(invoices::duplicate_invoice))

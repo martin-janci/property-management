@@ -769,7 +769,9 @@ pub async fn create_credit_note(
             StatusCode::INTERNAL_SERVER_ERROR
         })?
         .ok_or(StatusCode::NOT_FOUND)?;
-    if original.status == "draft" {
+    if original.status == "draft" || original.status == "cancelled" {
+        // Drafts have no legal number to correct; cancelled documents carry no
+        // receivable to reverse (UC-ACC-05.17).
         return Err(StatusCode::BAD_REQUEST);
     }
 
@@ -1072,6 +1074,183 @@ pub async fn list_links(
 
     rls.release().await;
     Ok(Json(links))
+}
+
+/// Mark an issued invoice as sent (UC-ACC-05.10 / .17).
+///
+/// Records the delivery step of the lifecycle: only `issued` advances to
+/// `sent`. The guard lives in the UPDATE (`mark_sent_rls`), so a concurrent
+/// transition cannot double-fire. Email transport is the
+/// [`hooks::DocumentMailer`] seam — both that flow and out-of-band delivery
+/// ("I sent it myself") record the transition through this endpoint.
+#[utoipa::path(
+    post,
+    path = "/api/v1/invoices/{id}/send",
+    params(("id" = Uuid, Path, description = "Invoice id")),
+    responses(
+        (status = 200, description = "Marked sent", body = AccInvoiceExt),
+        (status = 400, description = "Not in issued state"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "Invoices"
+)]
+pub async fn mark_sent(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    auth: AuthUser,
+) -> Result<Json<AccInvoiceExt>, StatusCode> {
+    authz::require_role(rls.role(), authz::MUTATE_MIN_ROLE).map_err(|_| StatusCode::FORBIDDEN)?;
+
+    let tenant_id = rls.tenant_id();
+
+    let mut tx = rls.begin().await.map_err(|e| {
+        tracing::error!("Failed to start transaction: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Load first to distinguish 404 (unknown/foreign id) from 400 (wrong state).
+    let existing = state
+        .invoicing_repo
+        .find_invoice_ext_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    if existing.status != "issued" {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let sent = state
+        .invoicing_repo
+        .mark_sent_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to mark invoice {id} sent: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        // None: the issued guard in the UPDATE stopped a concurrent transition.
+        .ok_or(StatusCode::BAD_REQUEST)?;
+
+    let entry = audit::record(
+        tenant_id,
+        Some(auth.user_id),
+        "send",
+        "invoice",
+        Some(id),
+        serde_json::json!({ "number": sent.number, "status": "sent" }),
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    state
+        .platform_repo
+        .record_audit_rls(&mut *tx, entry)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to record audit: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    rls.release().await;
+    Ok(Json(sent))
+}
+
+/// Cancel an unpaid document (UC-ACC-05.17).
+///
+/// Lifecycle rules: drafts are deleted (not cancelled), and once any payment
+/// has landed the correction path is a credit note (UC-ACC-05.7) — so only
+/// `issued`/`sent`/`overdue` documents with `paid_amount = 0` cancel. The
+/// same guard is repeated inside the UPDATE (`cancel_invoice_rls`), so a
+/// payment confirmation committing concurrently can never be swallowed by a
+/// cancellation. The number allocated at issue stays consumed — the document
+/// is retained (gapless numbering, UC-ACC-02.3), only its status changes.
+#[utoipa::path(
+    post,
+    path = "/api/v1/invoices/{id}/cancel",
+    params(("id" = Uuid, Path, description = "Invoice id")),
+    responses(
+        (status = 200, description = "Cancelled", body = AccInvoiceExt),
+        (status = 400, description = "Not cancellable (draft, paid, or already cancelled)"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "Invoices"
+)]
+pub async fn cancel_invoice(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    auth: AuthUser,
+) -> Result<Json<AccInvoiceExt>, StatusCode> {
+    authz::require_role(rls.role(), authz::MUTATE_MIN_ROLE).map_err(|_| StatusCode::FORBIDDEN)?;
+
+    let tenant_id = rls.tenant_id();
+
+    let mut tx = rls.begin().await.map_err(|e| {
+        tracing::error!("Failed to start transaction: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let existing = state
+        .invoicing_repo
+        .find_invoice_ext_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    if !matches!(existing.status.as_str(), "issued" | "sent" | "overdue")
+        || existing.paid_amount != Decimal::ZERO
+    {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let cancelled = state
+        .invoicing_repo
+        .cancel_invoice_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to cancel invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        // None: the UPDATE guard stopped a concurrent payment/transition race.
+        .ok_or(StatusCode::BAD_REQUEST)?;
+
+    let entry = audit::record(
+        tenant_id,
+        Some(auth.user_id),
+        "cancel",
+        "invoice",
+        Some(id),
+        serde_json::json!({ "number": cancelled.number, "status": "cancelled" }),
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    state
+        .platform_repo
+        .record_audit_rls(&mut *tx, entry)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to record audit: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    rls.release().await;
+    Ok(Json(cancelled))
 }
 
 // ---------------------------------------------------------------------------
