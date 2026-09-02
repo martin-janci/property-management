@@ -6057,6 +6057,28 @@
       "merge_attempted_at": "2026-08-09T14:11:09Z"
     },
     {
+      "task_id": "code-review-reality-server-agent-review-self-review",
+      "branch": "auto-impl/code-review-reality-server-agent-review-8b45b8af",
+      "status": "merged",
+      "claimed_at": "2026-09-01T12:32:35Z",
+      "last_updated": "2026-09-02T12:35:10Z",
+      "status_changed_at": "2026-09-02T12:35:10Z",
+      "pr_number": 2919,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2919",
+      "merged_at": "2026-09-02T12:34:22Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=self-review-guard-correct-tests-cover-both-cases-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "f4172b578591474f6514a142a0425c22a4c7eb5d",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-02T12:35:10Z"
+    },
+    {
       "task_id": "code-review-reality-server-alert-drainer-i18n-english-only",
       "branch": "auto-impl/code-review-reality-server-alert-drainer-d6bae979",
       "status": "merged",
@@ -17303,5 +17325,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-02T00:32:55Z"
+  "archived_at": "2026-09-02T12:35:28Z"
 }

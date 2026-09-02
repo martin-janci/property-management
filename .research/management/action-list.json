@@ -145,23 +145,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "code-review-reality-server-agent-review-self-review",
-      "action": "reality-server agent review endpoint allows self-review — an agent can post a review of their own reviews via missing subject != reviewer gate",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-01T12:29:40Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-01T12:29:40Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
     }
   ],
   "generated": "2026-08-31T03:10:00Z"
