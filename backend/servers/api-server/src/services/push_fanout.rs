@@ -31,8 +31,7 @@
 //!
 //! | Variable                     | Required | Description                                                        |
 //! |------------------------------|----------|--------------------------------------------------------------------|
-//! | `FCM_PROJECT_ID`             | No       | GCP project ID for FCM HTTP v1 (`projects/{id}/…`)                 |
-//! | `FCM_SERVER_KEY`            | No       | Legacy FCM server key (fall-back if no project ID)                  |
+//! | `FCM_PROJECT_ID`             | No       | GCP project ID for FCM HTTP v1 (`projects/{id}/…`) — required to enable Android push |
 //! | `FCM_SERVICE_ACCOUNT_JSON`   | No       | Inline Google service-account JSON. **Preferred** for HTTP v1: the adapter mints and auto-refreshes an OAuth2 access token before Google's ~1h TTL expiry. |
 //! | `GOOGLE_APPLICATION_CREDENTIALS` | No   | Path to a Google service-account JSON file (same effect as `FCM_SERVICE_ACCOUNT_JSON`, used when the inline var is unset). |
 //! | `FCM_OAUTH_TOKEN`           | No       | **Legacy / deprecated.** A pre-minted OAuth2 bearer token, read once at startup and never refreshed — Android push stops working after Google's ~1h token TTL. Use `FCM_SERVICE_ACCOUNT_JSON` instead; only used as a fall-back when no service account is configured. |
@@ -213,8 +212,6 @@ pub struct FcmConfig {
     /// GCP project ID — used to build the FCM HTTP v1 endpoint:
     /// `https://fcm.googleapis.com/v1/projects/{project_id}/messages:send`
     pub project_id: Option<String>,
-    /// Legacy server key (fall-back when `project_id` is absent).
-    pub server_key: Option<String>,
     /// **Legacy / deprecated** pre-minted OAuth2 bearer token for FCM HTTP v1.
     ///
     /// Read once at startup and never refreshed, so it stops working after
@@ -228,8 +225,8 @@ pub struct FcmConfig {
     ///
     /// When `None`, the production FCM base URL is used:
     /// `https://fcm.googleapis.com`.  Set this to override only in tests — the
-    /// path segments (`/v1/projects/{id}/messages:send` and `/fcm/send`) are
-    /// appended by the adapter regardless.
+    /// path segment (`/v1/projects/{id}/messages:send`) is appended by the
+    /// adapter regardless.
     pub fcm_base_url: Option<String>,
 }
 
@@ -238,15 +235,17 @@ impl FcmConfig {
     pub fn from_env() -> Self {
         Self {
             project_id: std::env::var("FCM_PROJECT_ID").ok(),
-            server_key: std::env::var("FCM_SERVER_KEY").ok(),
             oauth_token: std::env::var("FCM_OAUTH_TOKEN").ok(),
             fcm_base_url: None,
         }
     }
 
-    /// Return `true` when at least one credential is configured.
+    /// Return `true` when FCM HTTP v1 is configured.
+    ///
+    /// A GCP project id is mandatory: it is the only supported FCM transport
+    /// now that Google has decommissioned the legacy `/fcm/send` server-key API.
     pub fn is_configured(&self) -> bool {
-        self.project_id.is_some() || self.server_key.is_some()
+        self.project_id.is_some()
     }
 
     /// Return the effective FCM base URL (production default when unset).
@@ -528,7 +527,8 @@ impl ServiceAccountTokenSource {
 /// `ServiceAccountTokenSource` (and its token cache) behind an `Arc`.
 #[derive(Clone)]
 enum FcmTokenProvider {
-    /// No OAuth token available — the adapter falls back to the legacy send API.
+    /// No OAuth token available — FCM HTTP v1 sends are skipped (there is no
+    /// legacy fallback; Google decommissioned the `/fcm/send` server-key API).
     None,
     /// Legacy pre-minted token from `FCM_OAUTH_TOKEN`, never refreshed.
     Static(String),
@@ -562,8 +562,8 @@ impl FcmTokenProvider {
 
     /// Return a valid bearer token, refreshing it if needed.
     ///
-    /// `None` means "no usable OAuth token right now" — the caller falls back to
-    /// the legacy send API (or fails if that too is unavailable).
+    /// `None` means "no usable OAuth token right now" — the caller skips the
+    /// FCM HTTP v1 send (there is no legacy fallback).
     async fn access_token(&self) -> Option<String> {
         match self {
             FcmTokenProvider::None => None,
@@ -674,12 +674,16 @@ impl FcmHttpAdapter {
         // so a token that has aged past Google's ~1h TTL is refreshed rather
         // than reused — the previous implementation read a static token once at
         // startup and Android push silently died after the first hour. When no
-        // OAuth token is available we fall back to the legacy send API.
+        // OAuth token is available the send is skipped: Google decommissioned
+        // the legacy `/fcm/send` server-key API, so there is no fallback.
         let bearer = match self.token_provider.access_token().await {
             Some(t) => t,
             None => {
-                // Fall back to legacy if no OAuth token is available
-                return self.send_fcm_legacy(device_token, notification).await;
+                tracing::warn!(
+                    "[8A-3] FCM HTTP v1 send skipped — no OAuth2 access token available \
+                     (set FCM_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS)"
+                );
+                return (false, false);
             }
         };
 
@@ -734,91 +738,6 @@ impl FcmHttpAdapter {
             }
         }
     }
-
-    /// Legacy FCM send via `https://fcm.googleapis.com/fcm/send` using a
-    /// server key in the `Authorization: key=…` header.
-    ///
-    /// Only called when a `FCM_SERVER_KEY` is available and no OAuth token
-    /// is present.
-    async fn send_fcm_legacy(
-        &self,
-        device_token: &str,
-        notification: &Notification,
-    ) -> (bool, bool) {
-        let server_key = match &self.fcm_config.server_key {
-            Some(k) => k.clone(),
-            None => {
-                tracing::warn!("[8A-3] FCM legacy send attempted but FCM_SERVER_KEY is not set");
-                return (false, false);
-            }
-        };
-
-        let body = serde_json::json!({
-            "to": device_token,
-            "notification": {
-                "title": notification.title,
-                "body": notification.body,
-            },
-            "data": {
-                "notification_id": notification.id.to_string(),
-                "category": notification.category.as_str(),
-            }
-        });
-
-        let legacy_url = format!("{}/fcm/send", self.fcm_config.base_url());
-        let resp = match self
-            .http
-            .post(&legacy_url)
-            .header("Authorization", format!("key={server_key}"))
-            .json(&body)
-            .send()
-            .await
-        {
-            Ok(r) => r,
-            Err(e) => {
-                tracing::warn!(
-                    error = %e,
-                    "[8A-3] FCM legacy request failed (network error)"
-                );
-                return (false, false);
-            }
-        };
-
-        let status = resp.status();
-        // Legacy response: `{"multicast_id":…,"success":1,"failure":0,"results":[{"message_id":"…"}]}`
-        // Or on token error: `{"results":[{"error":"NotRegistered"}]}`
-        match resp.json::<serde_json::Value>().await {
-            Ok(v) => {
-                let success_count = v.get("success").and_then(|n| n.as_i64()).unwrap_or(0);
-                if success_count > 0 {
-                    return (true, false);
-                }
-                // Check for token expiry errors in results array
-                let expired = v
-                    .get("results")
-                    .and_then(|r| r.as_array())
-                    .and_then(|arr| arr.first())
-                    .and_then(|item| item.get("error"))
-                    .and_then(|e| e.as_str())
-                    .map(|e| matches!(e, "NotRegistered" | "InvalidRegistration"))
-                    .unwrap_or(false);
-                tracing::warn!(
-                    http_status = %status,
-                    token_expired = expired,
-                    "[8A-3] FCM legacy send failed"
-                );
-                (false, expired)
-            }
-            Err(e) => {
-                tracing::warn!(
-                    http_status = %status,
-                    error = %e,
-                    "[8A-3] Failed to parse FCM legacy response"
-                );
-                (false, false)
-            }
-        }
-    }
 }
 
 impl FcmHttpAdapter {
@@ -840,7 +759,7 @@ impl FcmHttpAdapter {
             tracing::info!(
                 user_id = %user_id,
                 title = %notification.title,
-                "[8A-3] Push skipped — FCM not configured (set FCM_PROJECT_ID or FCM_SERVER_KEY)"
+                "[8A-3] Push skipped — FCM not configured (set FCM_PROJECT_ID)"
             );
             return ProviderOutcome::NotConfigured;
         }
@@ -863,17 +782,19 @@ impl FcmHttpAdapter {
             return ProviderOutcome::NoTargets;
         }
 
-        let project_id = self.fcm_config.project_id.clone();
+        // `is_configured()` requires a project id, and we returned early above
+        // when it was false, so a project id is guaranteed here. Guard
+        // defensively rather than unwrap/panic on the fanout hot path.
+        let Some(project_id) = self.fcm_config.project_id.clone() else {
+            return ProviderOutcome::NotConfigured;
+        };
         let mut any_sent = false;
         let mut stale_tokens: Vec<(Uuid, String)> = Vec::new();
 
         for target in &targets {
-            let (success, expired) = if let Some(ref pid) = project_id {
-                self.send_fcm_v1(pid, &target.token, notification).await
-            } else {
-                // No project ID — use legacy API
-                self.send_fcm_legacy(&target.token, notification).await
-            };
+            let (success, expired) = self
+                .send_fcm_v1(&project_id, &target.token, notification)
+                .await;
 
             // Store delivery receipt (log + in-memory; DB table in follow-up)
             let receipt = PushDeliveryReceipt {
@@ -1621,9 +1542,7 @@ impl PushFanoutWorker {
         let apns_config = ApnsConfig::from_env();
 
         if !fcm_config.is_configured() {
-            tracing::warn!(
-                "[8A-3] PushFanoutWorker: FCM not configured (FCM_PROJECT_ID / FCM_SERVER_KEY unset)"
-            );
+            tracing::warn!("[8A-3] PushFanoutWorker: FCM not configured (FCM_PROJECT_ID unset)");
         }
         if !apns_config.is_configured() {
             tracing::warn!(
@@ -1941,7 +1860,6 @@ mod tests {
     fn fcm_config_explicit_none_is_unconfigured() {
         let config = FcmConfig {
             project_id: None,
-            server_key: None,
             oauth_token: None,
             fcm_base_url: None,
         };
@@ -1952,29 +1870,6 @@ mod tests {
     fn fcm_config_is_configured_when_project_id_present() {
         let config = FcmConfig {
             project_id: Some("my-gcp-project".to_string()),
-            server_key: None,
-            oauth_token: None,
-            fcm_base_url: None,
-        };
-        assert!(config.is_configured());
-    }
-
-    #[test]
-    fn fcm_config_is_configured_when_server_key_present() {
-        let config = FcmConfig {
-            project_id: None,
-            server_key: Some("AAAA...key".to_string()),
-            oauth_token: None,
-            fcm_base_url: None,
-        };
-        assert!(config.is_configured());
-    }
-
-    #[test]
-    fn fcm_config_is_configured_when_both_present() {
-        let config = FcmConfig {
-            project_id: Some("proj".to_string()),
-            server_key: Some("key".to_string()),
             oauth_token: None,
             fcm_base_url: None,
         };
@@ -1985,7 +1880,6 @@ mod tests {
     fn fcm_config_base_url_defaults_to_google() {
         let config = FcmConfig {
             project_id: None,
-            server_key: None,
             oauth_token: None,
             fcm_base_url: None,
         };
@@ -1996,7 +1890,6 @@ mod tests {
     fn fcm_config_base_url_override() {
         let config = FcmConfig {
             project_id: None,
-            server_key: None,
             oauth_token: None,
             fcm_base_url: Some("http://localhost:9999".to_string()),
         };
@@ -2296,7 +2189,6 @@ mod tests {
         (
             FcmConfig {
                 project_id: Some("test-project".to_string()),
-                server_key: None,
                 oauth_token: None,
                 fcm_base_url: None,
             },
@@ -2317,7 +2209,6 @@ mod tests {
         (
             FcmConfig {
                 project_id: None,
-                server_key: None,
                 oauth_token: None,
                 fcm_base_url: None,
             },
