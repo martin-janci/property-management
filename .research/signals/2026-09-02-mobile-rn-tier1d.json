@@ -1,0 +1,70 @@
+{
+  "generated": "2026-09-02T00:00:00Z",
+  "segment": "mobile-rn",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "note": "Dispatcher Tier-1d demand-driven review (buffer starved: 8 claimable all mobile-native/KMP, structurally unlandable per #2652). Static analysis only, no compile/test run. mobile-native-kmp EXCLUDED per Tier-1d intent. Segment root frontend/apps/mobile/src/ (React Native). Selection: mobile-rn is the genuinely oldest-unreviewed LANDABLE segment — its last Tier-1d signal file is 2026-08-29, whereas ppt-web-ui/ppt-web-core/reality-web were all already reviewed today (2026-09-02), api-handlers/reality-server 2026-08-31, api-core 2026-09-01. state.json review_cursor is stale (2026-08-29 for four fe segments) because the dispatcher does not rewrite it; the signals/ history is the real review record. 0 open code-review-findings for mobile-rn (all 3 prior are status:done) so no saturation-skip. Bug hygiene is strong in this segment: JSON.parse sites (useOfflineSupport, AuthContext biometric unlock, NFCCredentialManager, layoutCache) are all wrapped in try/catch or intentionally throw-and-treat-as-corruption; the `as unknown as Blob` cast in DocumentUploadScreen is the documented RN FormData pattern (eslint-disabled, commented); no console.log debug leftovers except two intentional [push] traces; no skipped/only tests. The remaining landable defects are i18n gaps on user-facing surfaces of a 4-locale app (sk/cs/de/en) — the same class that has landed repeatedly for this codebase.",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn person-months i18n)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — 197-line user-facing screen imports NO useTranslation and makes ZERO t() calls (grep useTranslation=0, t(=0), so every string renders English for sk/cs/de/en users. This is a whole-screen gap, not a leak: the mobile app ships react-i18next with locales/ for all four languages and the rest of screens/ is localized.",
+        "Hardcoded UI text: L93 <Text>Person-months</Text> (screen header), L142 'Save', L145 'Cancel', L155 'Edit', L165 'Bulk entry…' (primary action buttons).",
+        "Hardcoded validation Alert: L78 Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.') — the only feedback a user gets on bad input is English-only.",
+        "Fix: add const { t } = useTranslation(); wrap all literals in t('personMonths.*') keys, add the keys to locales/{sk,cs,de,en}. Confidence medium: the gap is certain from static read (0 i18n imports on a rendered screen); severity is Low (i18n) but breadth is a full screen."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn widget-settings i18n)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and makes only 2 t() calls, yet hardcodes most of its user-facing text: the component is partially localized, so the leaks render English on a 4-locale app while the surrounding chrome is translated (a worse look than a fully-untranslated screen).",
+        "Hardcoded section/heading text: L89/L105/L126 <Text>Widget Settings</Text>, L109 'Widgets Not Available', L131 'Available Widgets', L163 'Active Widgets', L194 'How to Add Widgets'.",
+        "Hardcoded Alerts: L66 Alert.alert('Widget Added', `${name} widget has been configured.`) and L79 Alert.alert('Widgets Updated', 'All widgets have been refreshed.').",
+        "Fix: route every literal (headings + both Alert.alert title/body pairs) through the already-imported t() with settings.widgets.* keys and backfill locales/{sk,cs,de,en}. Confidence medium: leaks confirmed by static read; Low severity (i18n)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn alert i18n leaks)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx"
+      ],
+      "evidence": [
+        "Two otherwise heavily-localized screens leak user-facing English through Alert.alert() — the alert copy was missed when the rest of the screen was translated, so on a locale switch (sk/cs/de/en) the dialog appears in English.",
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 — Alert.alert('Could not open document', 'The file viewer is unavailable on this device.') despite the screen using t() (4 t() calls elsewhere).",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — Alert.alert('Diagnostic Report', diagnosticReport) title hardcoded English despite the screen being one of the most localized in the app (25 t() calls).",
+        "Fix: replace the literal title/body args with t('documents.openFailed.*') / t('help.diagnosticReport.title') and add keys to locales/{sk,cs,de,en}. Grep guard for future: `grep -rnE \"Alert\\.alert\\(\\s*['\\\"]\" src` should return 0 hits once fixed (currently 5, the other 3 are covered by the two whole-screen findings above). Confidence medium; Low severity (i18n)."
+      ]
+    }
+  ]
+}
