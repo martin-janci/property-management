@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days; last updated 2026-08-19 (>= 14d ago at 2026-09-02); dropped at score 0 — mobile-native-kmp segment gated in cloud (#2652), can be re-opened when local implementer picks it up"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-02",
       "plan": null
     },
     {
@@ -10328,20 +10329,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2926",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)"
       ],
       "evidence": [
         "push_fanout.rs:330-336 falls back to `send_fcm_legacy` (fn at :395-426) when no FCM_OAUTH_TOKEN is configured; `send_fcm_legacy` POSTs to `{base_url}/fcm/send` (default base_url `https://fcm.googleapis.com`, :247) with `Authorization: key={FCM_SERVER_KEY}`.",
         "Google decommissioned the legacy HTTP API on 2024-06-20 — `POST https://fcm.googleapis.com/fcm/send` returns 404/401 for all callers. The fallback is unreachable except for a mock base_url.",
-        "Fix shape: delete send_fcm_legacy + the FCM_SERVER_KEY branch of send_fcm_v1, and tighten the config so v1 is required (return a startup error when FCM_PROJECT_ID is set without OAuth wiring). Tied to the fcm-v1-static-oauth-token item — both live in the same file and share test scaffolding."
+        "Fix shape: delete send_fcm_legacy + the FCM_SERVER_KEY branch of send_fcm_v1, and tighten the config so v1 is required (return a startup error when FCM_PROJECT_ID is set without OAuth wiring). Tied to the fcm-v1-static-oauth-token item — both live in the same file and share test scaffolding.",
+        "resolved: PR #2926 merged 2026-09-02 — refactor(api-server): remove decommissioned FCM legacy send path — send_fcm_legacy fn, FCM_SERVER_KEY env, and both fallback call sites deleted; grep on push_fanout.rs confirms send_fcm_legacy gone"
       ],
       "files": [
         "backend/servers/api-server/src/services/push_fanout.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-02",
       "plan": null
     },
     {
@@ -10570,21 +10573,91 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2915",
-        "PR #2920"
+        "PR #2920",
+        "PR #2925"
       ],
       "evidence": [
         "compliance.rs:319 `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?` — 1 leak site remains after PR #2920 sanitized 16 sites; this site was introduced by PR #2915 (audit-log count query added to fix total-page-len bug).",
         "Fix shape: single-line change — swap `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))` for `map_err(db_error)` (helper already exists in the same file, added by #2920). Trivial follow-up.",
-        "Routine 2026-09-01 supplementary: grep at eea7067 confirms the single remaining leak site."
+        "Routine 2026-09-01 supplementary: grep at eea7067 confirms the single remaining leak site.",
+        "resolved: PR #2925 merged 2026-09-01 22:30Z — route compliance audit-log count error through db_error; compliance.rs:319 now `map_err(db_error)?`; added source-level regression guard test `no_handler_bubbles_raw_db_error_to_client` that fails on any future map_err(...e.to_string()) with INTERNAL_SERVER_ERROR in this file"
       ],
       "files": [
         "backend/servers/api-server/src/routes/compliance.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-missing-bearer-header",
+      "title": "reality-web lib/realtor-api.ts: request() helper never merges getAuthHeader() — every realtor CRUD write 401s under the form-login/localStorage bearer flow (whole realtor onboarding + listing publish broken)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "reality-web static review 2026-09-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:22-33 — request() sets only `credentials: 'include'` and merges caller headers on top of the default Content-Type; getAuthHeader() from lib/auth-token.ts is never called. Every write path in the module (createListing, updateListing, getMyListing, getMyRealtorProfile, updateMyRealtorProfile, getMyRealtorAnalytics) uses request().",
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:180-189 documents the OAuth/cookie SSO consent UI as unshipped; the actual login path is /[locale]/auth/login which stores a bearer token in localStorage — surfaced by getAuthHeader() at auth-token.ts:84.",
+        "frontend/apps/reality-web/src/lib/auth-api.ts:43 correctly spreads `...getAuthHeader()` into headers in its fetch call — realtor-api.ts should mirror that pattern.",
+        "Consequence: pages under app/[locale]/realtor/** and app/[locale]/account/listings/[id]/edit that hit the realtor endpoints all 401 when the user is signed in via form-login, breaking realtor onboarding + listing publish end-to-end."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "created_at": "2026-09-02",
+      "updated_at": "2026-09-02",
+      "plan": "plans/code-review-reality-web-realtor-api-missing-bearer-header.md"
+    },
+    {
+      "id": "code-review-reality-web-comparebutton-hardcoded-english",
+      "title": "reality-web components/comparison/CompareButton.tsx: 3 hardcoded English strings (Remove/Add to comparison, Comparing/Compare, Maximum 4 properties) — sk/cs/de users see raw English on every listing card",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "reality-web static review 2026-09-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx:47 `title={inComparison ? 'Remove from comparison' : 'Add to comparison'}` — hardcoded English tooltip.",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx:62 `{inComparison ? 'Comparing' : 'Compare'}` — hardcoded English button label.",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx:66 `Maximum 4 properties. Remove one first.` — hardcoded English toast copy.",
+        "File never imports next-intl (`useTranslations` absent). Sibling ComparisonView + PriceAlerts both use useTranslations; comparison keys already exist under the 'comparison' namespace (ComparisonUrlHandler.tsx:21). CompareButton renders on every listing card so every search-results page in sk/cs/de shows raw English."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx"
+      ],
+      "created_at": "2026-09-02",
+      "updated_at": "2026-09-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-no-tests",
+      "title": "reality-web lib/realtor-api.ts wraps 6 mutation endpoints but has no realtor-api.test.ts sibling — a fetch-stub test asserting outgoing headers would have caught the missing-Authorization bug",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "reality-web static review 2026-09-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts wraps 6 mutations hitting reality-server (createListing POST, updateListing PATCH, getMyListing GET, updateMyRealtorProfile PATCH, getMyRealtorProfile GET, getMyRealtorAnalytics GET) with no realtor-api.test.ts sibling.",
+        "A minimal fetch-stub test that asserted the outgoing headers/body of each helper would have caught the missing-Authorization bug flagged by the sibling finding (code-review-reality-web-realtor-api-missing-bearer-header).",
+        "Aligned with recent test-gap plans for the auth-token / auth-api layer; this is the last untested piece of the reality-web mutation surface."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "created_at": "2026-09-02",
+      "updated_at": "2026-09-02",
       "plan": null
     }
   ]

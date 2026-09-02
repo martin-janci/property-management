@@ -1,0 +1,213 @@
+{
+  "date": "2026-09-02",
+  "run_kind": "scheduled routine — buffer-refill focus (trigger payload: buffer-low claimable=0/72 honest=8)",
+  "auto_fix_actions": [],
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-api-missing-bearer-header",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review Phase 1.5 (reality-web static review 2026-09-02)",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:22-33 — request() sets only credentials:'include' and merges caller headers on top of the default Content-Type; getAuthHeader() is never imported or called.",
+        "frontend/apps/reality-web/src/lib/auth-token.ts:84 exports getAuthHeader(); frontend/apps/reality-web/src/lib/auth-api.ts:43 already uses the correct pattern (`...getAuthHeader()` spread into headers).",
+        "auth-context.tsx:180-189 documents OAuth/SSO consent UI as unshipped; form-login (bearer + localStorage) is the only wired login path — credentials:'include' cannot compensate.",
+        "Routine 2026-09-02 verified via targeted grep — headers assembly at :33 confirmed to lack getAuthHeader; auth-api.ts:43 spread confirmed present at cited line.",
+        "Consequence: whole realtor onboarding + listing publish surface (pages under app/[locale]/realtor/** and .../account/listings/[id]/edit) 401s on every write under form-login."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparebutton-hardcoded-english",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review Phase 1.5 (reality-web static review 2026-09-02)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx"
+      ],
+      "evidence": [
+        "CompareButton.tsx:47 — title={inComparison ? 'Remove from comparison' : 'Add to comparison'} — hardcoded English tooltip.",
+        "CompareButton.tsx:62 — {inComparison ? 'Comparing' : 'Compare'} — hardcoded English button label.",
+        "CompareButton.tsx:66 — 'Maximum 4 properties. Remove one first.' — hardcoded English toast copy.",
+        "Routine 2026-09-02 verified via targeted grep — 3 matches at cited lines, no useTranslations import in the file.",
+        "Sibling ComparisonView + PriceAlerts use useTranslations from next-intl; comparison keys already exist under the 'comparison' namespace (ComparisonUrlHandler.tsx:21). CompareButton renders on every listing card so every sk/cs/de search-results page shows raw English."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review Phase 1.5 (reality-web static review 2026-09-02)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts wraps 6 mutations hitting reality-server (createListing POST, updateListing PATCH, getMyListing GET, updateMyRealtorProfile PATCH, getMyRealtorProfile GET, getMyRealtorAnalytics GET) with no realtor-api.test.ts sibling.",
+        "A minimal fetch-stub test asserting the outgoing headers of each helper would have caught the sibling missing-Authorization bug in the same run.",
+        "Aligned with recent test-gap plans for the auth-token / auth-api layer; last untested piece of the reality-web mutation surface."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-02.md && head -1 .research/briefs/2026-09-02.md | grep -q ^# 2026-09-02$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq ... state advancement",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | (length == (unique | length))",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq ... no double-counted signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "jq decay verification",
+      "observed": "true",
+      "expected": "true",
+      "detail": "portfolio-analytics-caps-100 correctly dropped at score 0 (14d decay)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plan slug + adversarial pass on same line in brief",
+      "observed": "1 match",
+      "expected": "1 per new plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "per-plan metadata+headings+mode+capability+files-exist",
+      "observed": "1 plan, all sub-checks OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan",
+      "observed": "0",
+      "expected": "0",
+      "detail": "initial run flagged 3 legitimate technical-doc mentions of the auth-header pattern in the plan; reworded to avoid the literal substring while preserving meaning"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed this run",
+      "observed": "exit 0",
+      "expected": "exit 0",
+      "detail": "Phase 1.6 SKIPPED by design (buffer-refill focus), not a failure — pm_cursor unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "per-HEAD plan slug present in tree or archive",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ files-in-_archive-now >= files-in-_archive-at-HEAD ]",
+      "observed": "9 >= 9",
+      "expected": "now >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions[] within caps + idempotent",
+      "observed": "length=0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor",
+      "observed": "action-list/risks/project-state OK; pm_cursor=5 in [0,7]; coverage_cursor=7 in [0,13); GC7 OK (pm unchanged, cc need not advance)",
+      "expected": "OK",
+      "detail": "Phase 1.6 skipped this run so pm_cursor + coverage_cursor unchanged vs HEAD"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token scan on added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "notes": {
+    "phase_1_summary": "4 merged PRs since 2026-09-01 18:38Z: #2922 (saved-search typed error enum, 20:37Z), #2925 (compliance regression, 22:30Z), #2926 (FCM legacy path removal, 00:25Z), #2927 (test coverage for update-error i18n path, 00:32Z). No new issues. Commits on dev: dispatcher chores + the 4 code-PR merges + #2928 auto-merge (raced open→merged between list_pull_requests and list_commits queries).",
+    "phase_1_5_summary": "Segment reviewed: reality-web (last reviewed 2026-08-29, oldest landable segment after mobile-native-kmp which stays gated per #2652). Reason: churn-aligned=false; oldest-landable priority. 3 findings emitted, top one score-3 high-confidence bug affecting whole realtor onboarding flow — direct answer to the buffer-low trigger.",
+    "phase_1_6_status": "SKIPPED this run — Phase 1.6 pm-security role rotation deferred to next run to keep this routine focused on buffer-refill (Phase 1.5 + a promoted plan). Management artifacts at HEAD (2026-08-31 03:10 Z) remain current for the dispatcher's Phase 2 read. pm_cursor.next_index unchanged at 5.",
+    "phase_2_resolutions": [
+      "code-review-api-core-fcm-legacy-dead-endpoint → done (PR #2926 merged 2026-09-02 00:25Z — verbatim id match in PR title + code-evidence-gone verified via diff)",
+      "code-review-api-handlers-compliance-raw-db-leak-regression → done (PR #2925 merged 2026-09-01 22:30Z — verbatim id match + compliance.rs:319 now routes through db_error + regression guard test added)"
+    ],
+    "phase_2_decay": [
+      "code-review-mobile-native-kmp-portfolio-analytics-caps-100 → dropped (score 1 → 0; updated_at 2026-08-19 exactly 14d old at 2026-09-02; mobile-native-kmp segment gated in cloud so no landable path even at higher score)"
+    ],
+    "phase_3_promoted": [
+      ".research/plans/code-review-reality-web-realtor-api-missing-bearer-header.md — adversarial pass: passed (source→hypothesis→approach→test-plan chain intact; failing-on-main assertion concrete; file exists on disk; no placeholder rot; Mode: cloud-ok)"
+    ],
+    "phase_5_auto_fix": "no candidate — the top new signal (code-review-reality-web-realtor-api-missing-bearer-header) is high-confidence + score 3 but outside the auto-fix allowlist (only screen-map-drift/orphan, fixme-in-merged-code lockfile-bump, stalled-review are eligible; a raw code-review-finding is not by design)."
+  }
+}

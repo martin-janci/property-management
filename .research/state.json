@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
+  "last_run_iso": "2026-09-02T00:41:37Z",
+  "last_run_ms": 90000,
+  "last_pr_seen": 2928,
   "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_commit_sha": "7f9b02c877b932204b0beacf5638ab0b69d0bbe2",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -785,6 +785,7 @@
     "code-review-reality-server-submit-report-no-rate-limit",
     "code-review-reality-web-agency-errorstate-i18n",
     "code-review-reality-web-agency-import-i18n",
+    "code-review-reality-web-comparebutton-hardcoded-english",
     "code-review-reality-web-comparison-share-all-or-nothing",
     "code-review-reality-web-comparison-url-i18n",
     "code-review-reality-web-comparison-view-i18n",
@@ -796,6 +797,8 @@
     "code-review-reality-web-listingform-nan-validation",
     "code-review-reality-web-listingform-no-i18n",
     "code-review-reality-web-protectedroute-i18n",
+    "code-review-reality-web-realtor-api-missing-bearer-header",
+    "code-review-reality-web-realtor-api-no-tests",
     "code-review-reality-web-realtor-mgmt-i18n",
     "code-review-reality-web-realtor-mgmt-silent-error",
     "code-review-reality-web-realtor-mgmt-untranslated",
@@ -1011,14 +1014,14 @@
     "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-08-29",
     "ppt-web-core": "2026-08-29",
-    "reality-web": "2026-08-29",
+    "reality-web": "2026-09-02",
     "mobile-rn": "2026-08-29",
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 375,
+    "plans_created": 30,
     "quiet_days": 3,
     "auto_fix_count": 0
   },
