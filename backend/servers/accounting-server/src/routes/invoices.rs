@@ -1074,6 +1074,130 @@ pub async fn list_links(
     Ok(Json(links))
 }
 
+/// Payment-QR payloads for a document (UC-ACC-05.8).
+///
+/// Both fields are the STRING a QR generator encodes (the frontend renders the
+/// image). `None` when nothing is owed — a settled document carries no QR.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PaymentQrResponse {
+    /// PAY by square (SK banking-app standard, by square PAY v1.2.0).
+    pub pay_by_square: Option<String>,
+    /// SPAYD (CZ "QR platba" convention).
+    pub spayd: Option<String>,
+}
+
+/// Payment QR payloads — PAY by square (SK) + SPAYD (CZ) (UC-ACC-05.8).
+///
+/// Amount due = `total_amount - paid_amount`; when nothing is owed both
+/// payloads are `None` ("omitted when paid"). The IBAN comes from the
+/// document's pinned bank account, falling back to the default/first one
+/// (UC-ACC-02.10); without any bank account there is nothing to encode — 400.
+#[utoipa::path(
+    get,
+    path = "/api/v1/invoices/{id}/qr",
+    params(("id" = Uuid, Path, description = "Invoice id")),
+    responses(
+        (status = 200, description = "QR payload strings", body = PaymentQrResponse),
+        (status = 400, description = "No bank account configured"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "Invoices"
+)]
+pub async fn get_invoice_qr(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+) -> Result<Json<PaymentQrResponse>, StatusCode> {
+    authz::require_role(rls.role(), authz::READ_MIN_ROLE).map_err(|_| StatusCode::FORBIDDEN)?;
+
+    let mut tx = rls.begin().await.map_err(|e| {
+        tracing::error!("Failed to start transaction: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let invoice = state
+        .invoicing_repo
+        .find_invoice_ext_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    let company = state
+        .config_repo
+        .get_company_settings_rls(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load company settings: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    let banks = state
+        .config_repo
+        .list_bank_accounts_rls(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load bank accounts: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    rls.release().await;
+
+    let bank = match invoice.bank_account_id {
+        Some(bid) => banks.iter().find(|b| b.id == bid),
+        None => banks.iter().find(|b| b.is_default).or(banks.first()),
+    }
+    .ok_or(StatusCode::BAD_REQUEST)?;
+
+    let amount_due = invoice.total_amount - invoice.paid_amount;
+
+    // SPAYD (CZ) — existing deterministic hook; None when settled.
+    let spayd = hooks::payment_spayd(
+        &bank.iban,
+        amount_due,
+        &invoice.currency,
+        invoice.variable_symbol.as_deref(),
+    );
+
+    // PAY by square (SK) — beneficiary name is required by spec v1.2.0; the
+    // company's legal name is the payee.
+    let pay_by_square = company
+        .as_ref()
+        .filter(|c| !c.legal_name.trim().is_empty())
+        .and_then(|c| {
+            let data = accounting_core::bysquare::PayBySquare {
+                invoice_id: Some(invoice.number.clone()),
+                amount: amount_due,
+                currency: invoice.currency.clone(),
+                due_date: Some(invoice.due_date),
+                variable_symbol: invoice.variable_symbol.clone(),
+                note: Some(invoice.number.clone()),
+                iban: bank.iban.clone(),
+                bic: bank.swift.clone(),
+                beneficiary_name: c.legal_name.clone(),
+                ..Default::default()
+            };
+            match accounting_core::bysquare::encode(&data) {
+                Ok(qr) => Some(qr),
+                // Settled documents legitimately produce NothingOwed → omit.
+                Err(accounting_core::bysquare::BySquareError::NothingOwed) => None,
+                Err(e) => {
+                    tracing::error!("PAY by square encode for {id} failed: {e}");
+                    None
+                }
+            }
+        });
+
+    Ok(Json(PaymentQrResponse {
+        pay_by_square,
+        spayd,
+    }))
+}
+
 // ---------------------------------------------------------------------------
 // Rendering / delivery / export HOOKS (UC-ACC-05.8/.9/.10/.11/.12)
 // ---------------------------------------------------------------------------

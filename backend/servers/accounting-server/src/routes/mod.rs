@@ -116,6 +116,7 @@ pub fn api_router() -> Router<AppState> {
                         .delete(invoices::delete_invoice),
                 )
                 .route("/{id}/items", get(invoices::list_invoice_items))
+                .route("/{id}/qr", get(invoices::get_invoice_qr))
                 .route("/{id}/issue", post(invoices::issue_invoice))
                 .route("/{id}/exchange-rate", post(invoices::set_exchange_rate))
                 .route("/{id}/credit-note", post(invoices::create_credit_note))
