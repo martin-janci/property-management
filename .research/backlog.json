@@ -10505,7 +10505,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
       ],
@@ -10518,7 +10518,12 @@
       ],
       "created_at": "2026-09-01",
       "updated_at": "2026-09-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-02T18:23:28Z",
+        "assignment_status": "merged",
+        "pr_number": 2919
+      }
     },
     {
       "id": "code-review-reality-server-pagination-offset-overflow",
