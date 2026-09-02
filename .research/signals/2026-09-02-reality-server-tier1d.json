@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-09-02T00:00:00Z",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "Standalone Tier-1d demand-driven run (dispatcher claimable buffer starved of LANDABLE work; mobile-native/KMP findings are structurally unlandable in the cloud runner per issue #2652, so fresh landable NON-mobile-native review vectors were required — mobile-native-kmp excluded despite being the strict cursor-oldest at 2026-08-25). Segment coverage already produced TODAY (2026-09-02) before this run: mobile-rn, ppt-web-core, ppt-web-ui, reality-web (four tier1d signal files present). Among the landable segments NOT yet covered today the candidates were the three Rust segments api-handlers (cursor 2026-08-31), reality-server (cursor 2026-08-31) and api-core (cursor 2026-09-01, freshest). api-handlers and reality-server are tied oldest; api-handlers is reviewed essentially daily and is heavily saturated (its 2026-08-31 run already mined routes/compliance.rs to 3 findings), whereas reality-server is mined less often, so reality-server was selected as the higher-yield oldest-unreviewed pick. Saturation check passed: 0 OPEN code-review-finding rows for reality-server in backlog.json. NOTE on the skill segment map: it lists reality-server root as backend/reality-server/src/, but the real tree is backend/servers/reality-server/src/ (workspace has servers/ and crates/ subdirs) — root used = backend/servers/reality-server/src/. Primary expert = Rust (per segment->expert map; no secondary for reality-server). Static-only: grep sweep for unwrap/expect/todo/unimplemented/panic (all hits were in #[cfg(test)] modules — none in production), dynamic-SQL/format!-injection (none — the two format! SQL sites at listings.rs:700 and the error strings are const-only / AssertSqlSafe over a compile-time constant, all params .bind()-ed), owner/tenant scoping and IDOR on the per-user and per-agency routes (favorites.rs, realtors.rs, agencies.rs, agency_imports.rs, imports.rs — all correctly scope by principal.user_id / check_agency_membership; realtors inquiry IDOR already fixed per #519; favorites fully user-scoped per D1.2). Deliberately avoided the recently-mined files (sso.rs, state.rs, inquiries.rs, articles.rs, agent_reviews.rs, reports.rs, saved_searches.rs, search_alert_drainer.rs, email.rs — covered 2026-08-30/08-31) and focused the read budget on the untouched core public-listings surface routes/listings.rs (994 lines). gh CLI dep-version / dependabot-history checks not applicable (no manifest files touched this run). Both findings below are genuine, distinct, landable, non-mobile-native defects confined to routes/listings.rs, each a self-contained fix, neither overlapping any prior reality-server finding (verified against .research/signals and backlog.json: no prior coverage of label_for_property_type / popular_searches / get_categories / get_suggestions).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "note": "reality-server is a mature, heavily-reviewed segment: no production unwrap/expect/todo/panic, no SQL injection, and the auth/owner-scoping story on the per-user and per-agency routes is solid (favorites user-scoped, agency routes membership-gated, realtor-inquiry IDOR already closed per #519). The two findings that survived the sweep are both server-side localization/region defects on the PUBLIC listings endpoints: the reality-server ships PRE-LOCALIZED, Slovak-only display strings (category labels and popular-search suggestions) and a hardcoded Slovak default city, and serves them identically to every reality-web locale (messages/ ships sk, cs, de, en, hu, pl — SIX locales) and every deployment region (REGION env supports sk/cz/eu). Because these strings are baked server-side rather than returned as i18n keys the client can translate, reality-web cannot localize them — a de/en/cs/hu/pl portal user sees Slovak category names and Slovak popular searches, and a .cz / .eu deployment defaults nearby-city suggestions to a Slovak city. This is the same finding class as the accepted 2026-08-30 alert-drainer-i18n-english-only finding (server-side hardcoded single-language user-facing text), applied to the public listings surface. Neither overlaps the prior listings.rs findings (viewcount-hardcoded-zero, orphan-listinghandler-stub-detail, pagination-offset-overflow) which are all done and touch different handlers.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "get_suggestions (routes/listings.rs:457-480, GET /api/v1/listings/suggestions, public/anonymous search-suggestions endpoint consumed by reality-web) returns a `popular_searches` list that is a hardcoded Slovak-only literal vec (:474-478): `\"2-izbový byt Bratislava\"`, `\"Dom Košice\"`, `\"Pozemok Žilina\"`. These are user-facing suggestion strings rendered verbatim by the client, and they are returned identically regardless of the caller's locale. reality-web ships SIX locale bundles (frontend/apps/reality-web/messages/: sk, cs, de, en, hu, pl), so a de/en/cs/hu/pl portal visitor is shown Slovak search suggestions with no way to localize them — the strings are baked server-side, not returned as translatable keys.",
+        "The same handler hardcodes the nearby-city fallback to a Slovak city: `let city = params.get(\"city\")...unwrap_or(\"Bratislava\")` (:461-464), then feeds it to `get_nearby_cities(city, 10)` (:466-468). reality-server is explicitly multi-region (backend/CLAUDE.md + REGION env supports sk/cz/eu; reality-portal.cz and reality-portal.eu are first-class default CORS origins), so on a Czech (.cz) or EU (.eu) deployment a suggestion request that omits `city` seeds nearby-city suggestions from Bratislava (SK) rather than a region-appropriate default — wrong-country content, not merely untranslated. This is a region-awareness correctness defect on top of the i18n gap.",
+        "Distinct from every prior reality-server finding: the recent i18n finding (alert-drainer-i18n-english-only, 2026-08-30) is in services/search_alert_drainer.rs + email.rs, and the prior listings.rs findings (viewcount-hardcoded-zero, orphan-listinghandler-stub-detail, pagination-offset-overflow — all done) touch different handlers. No prior signal or backlog row references get_suggestions / popular_searches. Fix: return `popular_searches` as translatable keys (or derive them from actual popular queries per region) instead of Slovak literals, and make the default city region-derived (from REGION / host) rather than the constant \"Bratislava\". IG3: a request to /api/v1/listings/suggestions on a non-SK region (or with an Accept-Language other than sk) asserts the suggestions/default-city are not the Slovak Bratislava literals.",
+        "Confidence medium: the hardcoded Slovak literals and the Bratislava default are confirmed by static read of the full handler; severity medium (+2) rather than low because the Bratislava default produces wrong-region content on the cz/eu deployments (a correctness issue), not only an untranslated string — but not high because the endpoint is a non-critical public suggestions helper (no auth, no data loss, no crash)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "get_categories (routes/listings.rs:776-820, GET /api/v1/listings/categories, public/anonymous endpoint) populates each CategoryCount.label via label_for_property_type (:822-837), which is a hardcoded Slovak-only match: apartment->\"Byty\", house->\"Domy\", land->\"Pozemky\", commercial->\"Komerčné priestory\", office->\"Kancelárie\", garage->\"Garáže\", parking->\"Parkovanie\", storage->\"Sklady\". The CategoryCount.label field doc-comment (:569-570) even states 'Localized display label (Slovak — primary market)', confirming this is a known single-locale shortcut. The handler takes only State (:776-778) — no Accept-Language header, no locale query param — so the Slovak labels are returned identically to every caller.",
+        "reality-web renders these labels directly (CategoryCount matches the client's CategoryCount type per :561) and ships six locale bundles (sk, cs, de, en, hu, pl). Because the label is pre-localized to Slovak server-side rather than returned as a translatable key, a cs/de/en/hu/pl portal user sees Slovak category names ('Byty', 'Domy', ...) with no client-side path to translate them. The `icon` field already returns the raw property_type key (:811) — i.e. the untranslated enum key IS available to the client — so the correct shape is to let the client translate the property_type key and drop (or make optional/locale-negotiated) the server-baked Slovak label.",
+        "Distinct from the sibling get_suggestions finding (different handler, different endpoint, different fix) and from all prior reality-server findings (no signal or backlog row references label_for_property_type / get_categories). Fix: either return only the property_type key and let reality-web's next-intl bundles localize it, or negotiate the label off an Accept-Language header instead of hardcoding Slovak. IG3: /api/v1/listings/categories with Accept-Language: en (or de) asserts labels are not the Slovak literals (or that the response exposes the raw property_type key for client-side translation).",
+        "Confidence medium: the Slovak-only match arm and the locale-unaware handler signature are confirmed by static read; severity low (+1) — a pure i18n label gap on a public helper endpoint (no auth, no correctness/region impact beyond display language), lower than the get_suggestions finding which additionally serves wrong-region city data."
+      ]
+    }
+  ]
+}
