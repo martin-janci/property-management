@@ -1,0 +1,61 @@
+{
+  "date": "2026-09-03",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-03",
+      "type": "lag_warning",
+      "source": "routine-observability",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Last routine run: 2026-09-01T18:38:58Z; now 2026-09-03T14:37Z; lag = 43h (>36h threshold)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-hardcoded-en-confirms-silent-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,113,157,170 — pet/vehicle delete + review handlers use hardcoded English window.confirm() prompts and route mutation failures only to console.error; manager sees no toast/inline feedback on failure.",
+        "Same file already imports @ppt/api-client hooks — a useToast() + i18n key lookup is the standard PPT-web pattern (see PendingBookingsPage regression cover)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-book-facility-hardcoded-en-silent-availability",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:35 setError('Failed to load facility details') and :71 'Failed to create booking' are hardcoded English despite t() being imported (line 15).",
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:54 availability fetch failure goes only to console.error — no user feedback when the date-change refetch fails, so the slot list looks empty."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-advanced-notif-settings-hardcoded-en-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx:303 setUpdateError('Failed to update quiet hours. Please try again.') — user-visible English string.",
+        "Same file: line 319 'Failed to update digest preferences. Please try again.' and line 337 'Failed to update grouping settings. Please try again.' — three sibling errors in one page all bypassing i18n.",
+        "Routing through t('settings.notif.errors.*') matches the pattern already used in EmergencyContactDirectoryPage."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": []
+}

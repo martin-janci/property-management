@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (2026-09-03)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-03",
       "plan": null
     },
     {
@@ -10601,6 +10602,70 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-hardcoded-en-confirms-silent-errors",
+      "title": "ppt-web-ui: RegistryPage pet/vehicle delete + review use hardcoded EN window.confirm(); mutation failures only in console.error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,113,157,170 — pet/vehicle delete + review handlers use hardcoded English window.confirm() prompts and route mutation failures only to console.error; manager sees no toast/inline feedback on failure.",
+        "Same file already imports @ppt/api-client hooks — a useToast() + i18n key lookup is the standard PPT-web pattern (see PendingBookingsPage regression cover)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-book-facility-hardcoded-en-silent-availability",
+      "title": "ppt-web-ui: BookFacilityPage hardcodes EN error strings and silently swallows availability-refetch failures",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:35 setError(\"Failed to load facility details\") and :71 \"Failed to create booking\" are hardcoded English despite t() being imported (line 15).",
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:54 availability fetch failure goes only to console.error — no user feedback when the date-change refetch fails, so the slot list looks empty."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-advanced-notif-settings-hardcoded-en-errors",
+      "title": "ppt-web-ui: AdvancedNotificationSettingsPage shows hardcoded EN failure strings for quiet-hours / digest / grouping updates",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx:303 setUpdateError(\"Failed to update quiet hours. Please try again.\") — user-visible English string.",
+        "Same file: line 319 \"Failed to update digest preferences. Please try again.\" and line 337 \"Failed to update grouping settings. Please try again.\" — three sibling errors in one page all bypassing i18n.",
+        "Routing through t(\"settings.notif.errors.*\") matches the pattern already used in EmergencyContactDirectoryPage."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
     }
   ]
 }
