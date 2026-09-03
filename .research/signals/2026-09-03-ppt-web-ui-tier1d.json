@@ -1,0 +1,54 @@
+{
+  "run_iso": "2026-09-03T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven: claimable backlog starved (8 < floor 36), all remaining open items mobile-native/KMP-gated (unlandable in cloud). Need fresh LANDABLE vectors. Rotating static review; oldest-unreviewed was mobile-native-kmp (2026-08-25) but skipped as structurally-unlandable; selected oldest-unreviewed LANDABLE segment ppt-web-ui (2026-08-29, churn-corroborated by disputes/documents hotspots).",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed-landable (mobile-native-kmp skipped: unlandable-in-cloud)",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-slovak-toasts",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "features/documents/hooks/useDocumentDownload.ts:46-49 and features/documents/hooks/useMoveDocumentWithToast.ts:25-38 hardcode Slovak-only toast strings ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo stiahnuť.', 'Dokument presunutý', 'Presun zlyhal', '„...\" bol presunutý do priečinka.') instead of routing through react-i18next t(). App ships sk/cs/de/en — cs/de/en users see Slovak. These are churn-hotspot files (documents feature). Localization defect, not just a gap.",
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-bookings-hardcoded-toasts",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "features/facilities/pages/MyBookingsPage.tsx:45,86 and features/facilities/pages/PendingBookingsPage.tsx:46,71,97 hardcode English toast titles/messages ('Failed to load bookings', 'Failed to cancel booking', 'Failed to approve/reject booking', 'An unexpected error occurred.') despite both pages already importing useTranslation and using t() for other copy (line 18). Inconsistent i18n — error toasts never localized for sk/cs/de.",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-native-confirm-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "expert": "completeness",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "features/accounting/pages/AccountingInvoiceManagementPage.tsx:108 gates a destructive delete behind the native browser confirm('Are you sure you want to delete this invoice?') instead of the shared <ConfirmationDialog> used elsewhere (emergency, oauth-grants), and lines 49,64 hardcode English toast titles ('Failed to create invoice', 'Failed to delete invoice'). Native confirm() is unstyleable, untranslatable, and inconsistent with the app's confirmation UX pattern.",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ]
+    }
+  ]
+}
