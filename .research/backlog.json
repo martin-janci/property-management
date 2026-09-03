@@ -6574,20 +6574,22 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (score 1 -> 0 on 2026-09-03)",
+        "dropped: score reached 0 after decay on 2026-09-03"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-03",
       "plan": null
     },
     {
@@ -10601,6 +10603,449 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "title": "api-handlers/budgets: raw sqlx error string returned to HTTP client — schema/info disclosure",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (api-handlers)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 api-handlers): budgets.rs returns raw `e.to_string()` to the client on internal-error branches; same defect class as compliance.rs #2920 fix."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "title": "api-handlers/oauth: raw sqlx / provider error strings leaked to OAuth client response",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (api-handlers)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 api-handlers): oauth.rs returns raw error strings on OAuth error branches; leaks provider/schema tokens; matches db-error-leak defect class."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "title": "ppt-web: route groups mount authenticated pages without ProtectedRoute wrapper",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (ppt-web-core)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 ppt-web-core): Route-group children rely on outer AuthProvider but skip the ProtectedRoute guard; SSR/deep-link path can render authenticated pages before auth-check completes."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "title": "ppt-web facilities: isManager flag hard-coded to true — non-managers see manager-only actions",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 ppt-web-ui): Facilities MyBookingsPage sets `isManager = true` as stub; renders manager admin controls unconditionally."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "title": "ppt-web registry api-client uses raw fetch, bypasses JWT interceptor — auth headers missing",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 ppt-web-ui): registry/api.ts calls global fetch instead of the shared axios client; requests go out without Authorization header — same pattern PR #2876 fixed for buildings."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/api.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "title": "ppt-web facilities forms: user-facing error copy hard-coded English",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 ppt-web-ui): Facilities form error strings hard-coded in English; drop-through path shows English on SK/CS/DE/PL/HU locales."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/forms/"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "title": "reality-server suggestions endpoint hard-codes Slovak region in query",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (reality-server)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 reality-server): Suggestions endpoint hard-codes `region = 'sk'` in ILIKE search; non-SK realtor accounts receive only Slovak matches."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/suggestions.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only",
+      "title": "reality-server categories response returns Slovak-only labels",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (reality-server)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 reality-server): GET /categories returns `label` field only in Slovak; missing `label_i18n` map for cs/de/en."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/categories.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "title": "reality-web realtor detail modal: mutation errors are silently swallowed",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (reality-web)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 reality-web): Realtor detail modal .catch(() => {}) drops mutation errors; user sees success state on failed save."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/RealtorDetailModal.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "title": "reality-web agency branding save: no error surface on failed upload",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (reality-web)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 reality-web): Agency branding page swallows upload/save errors — no toast, no aria-live; user cannot tell it failed."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/branding/page.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "title": "reality-web agent profile page still renders mock data",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-02 (reality-web)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-02 reality-web): Agent profile page uses hard-coded mock agent object; live API call is TODO."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agent/[id]/page.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voting-cast-no-unit-ownership",
+      "title": "SECURITY: voting cast_vote self-path accepts caller-supplied unit_id without ownership check — ballot stuffing on weighted governance vote",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (api-handlers)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 api-handlers): cast_vote (voting.rs:1067) only re-validates unit ownership on the delegation branch; the self path passes req.unit_id straight to cast_vote_rls which ON CONFLICT (vote_id, unit_id) DO UPDATE overwrites another owner's ballot. delegations.rs already enforces the exact missing check via get_owners_rls — this is an inconsistency, not a design choice. Fix: mirror delegations.rs owner check before constructing CastVote."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voting.rs",
+        "backend/crates/db/src/repositories/vote.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": "plans/code-review-api-handlers-voting-cast-no-unit-ownership.md"
+    },
+    {
+      "id": "code-review-api-handlers-gdpr-raw-db-error-leak",
+      "title": "api-handlers/gdpr: raw sqlx error string returned on ~15 privacy-surface handlers",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (api-handlers)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 api-handlers): gdpr.rs returns `e.to_string()` to client on 15+ handlers (request_data_export, get_export_status, etc); leaks Postgres schema/constraint text on a GDPR surface. Same defect class as compliance/budgets/oauth leaks."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-vote-update-no-tenant-rls",
+      "title": "vote_repo.update() runs on raw pool with no tenant column — latent cross-tenant write",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (api-handlers)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 api-handlers): vote_repo.update (vote.rs:737) executes UPDATE on raw &self.pool with WHERE id=$1 AND status='draft' — no org column, no RLS. Gated today only by the RLS-scoped find_poll_by_id_rls read in update_vote. One refactor away from cross-tenant write."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/vote.rs",
+        "backend/servers/api-server/src/routes/voting.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "title": "ppt-web api.ts default-exports an eagerly-constructed axios instance",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (ppt-web-core)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 ppt-web-core): lib/api.ts constructs the axios client at module-eval time and default-exports it; complicates test-time mocking and prevents lazy env-based rebuild."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
+      "title": "ppt-web websocket client sends bare payload where server expects `{type, payload}` envelope",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (ppt-web-core)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 ppt-web-core): WS client `send()` posts raw payload; server ws_notifications.rs decode expects envelope with `type` discriminator — silent drop on server side."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-slovak-toasts",
+      "title": "ppt-web useDocumentDownload/Upload hooks: toast copy hard-coded Slovak",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 ppt-web-ui): Document download/upload hooks call toast.success('Dokument stiahnutý') and .error(...) with hard-coded SK strings; non-SK locales see Slovak."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentUpload.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-bookings-hardcoded-toasts",
+      "title": "ppt-web facilities MyBookingsPage: cancel/edit toasts hard-coded Slovak",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 ppt-web-ui): MyBookingsPage toast copy hard-coded Slovak for booking cancel + edit paths."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-native-confirm-i18n",
+      "title": "ppt-web accounting invoice mgmt: window.confirm text hard-coded Slovak + native dialog is unstyled",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 ppt-web-ui): Invoice-mgmt uses native window.confirm() with hard-coded Slovak string; native dialog escapes the app locale."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-unwired",
+      "title": "reality-web realtor profile page renders mock realtor; live API call never wired",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (reality-web)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 reality-web): realtor/[id]/page.tsx has const MOCK_REALTOR = {...} and returns it unconditionally; live GET /realtors/{id} call is TODO. Wire useQuery + loading/error UI."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "title": "reality-web /profile page renders mock account instead of live user",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (reality-web)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 reality-web): /profile page uses inline MOCK_USER; live /users/me call missing. User sees another person's placeholder data on the profile screen."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-hardcoded-slovak",
+      "title": "reality-web realtor profile page: labels/headings hard-coded Slovak",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-03 (reality-web)"
+      ],
+      "evidence": [
+        "Rotating expert review (dispatcher Tier-1d 2026-09-03 reality-web): Realtor profile page hard-codes SK strings for section headings; ignores active [locale] segment; German/English users see Slovak."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
     }
   ]
 }

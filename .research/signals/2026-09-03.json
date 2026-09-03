@@ -1,0 +1,556 @@
+{
+  "generator": "research-routine",
+  "generated_at": "2026-09-03T18:35:00Z",
+  "cursor_before": {
+    "last_pr_seen": 2921,
+    "last_issue_seen": 2847,
+    "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84"
+  },
+  "cursor_after": {
+    "last_pr_seen": 2932,
+    "last_issue_seen": 2930,
+    "last_commit_sha": "e09202854faaa4643f27c00967771797325d7fe0"
+  },
+  "signals": [
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 api-handlers) — adopted by routine 2026-09-03",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "budgets.rs returns raw `e.to_string()` to the client on internal-error branches; same defect class as compliance.rs #2920 fix."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 api-handlers) — adopted by routine 2026-09-03",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "oauth.rs returns raw error strings on OAuth error branches; leaks provider/schema tokens; matches db-error-leak defect class."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-core) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "Route-group children rely on outer AuthProvider but skip the ProtectedRoute guard; SSR/deep-link path can render authenticated pages before auth-check completes."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Facilities MyBookingsPage sets `isManager = true` as stub; renders manager admin controls unconditionally."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "registry/api.ts calls global fetch instead of the shared axios client; requests go out without Authorization header — same pattern PR #2876 fixed for buildings."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/api.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Facilities form error strings hard-coded in English; drop-through path shows English on SK/CS/DE/PL/HU locales."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/forms/"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-server) — adopted by routine 2026-09-03",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Suggestions endpoint hard-codes `region = 'sk'` in ILIKE search; non-SK realtor accounts receive only Slovak matches."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/suggestions.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-server) — adopted by routine 2026-09-03",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "GET /categories returns `label` field only in Slovak; missing `label_i18n` map for cs/de/en."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/categories.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-web) — adopted by routine 2026-09-03",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Realtor detail modal .catch(() => {}) drops mutation errors; user sees success state on failed save."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/RealtorDetailModal.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-web) — adopted by routine 2026-09-03",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Agency branding page swallows upload/save errors — no toast, no aria-live; user cannot tell it failed."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/branding/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-web) — adopted by routine 2026-09-03",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Agent profile page uses hard-coded mock agent object; live API call is TODO."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agent/[id]/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voting-cast-no-unit-ownership",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers) — adopted by routine 2026-09-03",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "cast_vote (voting.rs:1067) only re-validates unit ownership on the delegation branch; the self path passes req.unit_id straight to cast_vote_rls which ON CONFLICT (vote_id, unit_id) DO UPDATE overwrites another owner's ballot. delegations.rs already enforces the exact missing check via get_owners_rls — this is an inconsistency, not a design choice. Fix: mirror delegations.rs owner check before constructing CastVote."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voting.rs",
+        "backend/crates/db/src/repositories/vote.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-gdpr-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers) — adopted by routine 2026-09-03",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "gdpr.rs returns `e.to_string()` to client on 15+ handlers (request_data_export, get_export_status, etc); leaks Postgres schema/constraint text on a GDPR surface. Same defect class as compliance/budgets/oauth leaks."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-vote-update-no-tenant-rls",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers) — adopted by routine 2026-09-03",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "vote_repo.update (vote.rs:737) executes UPDATE on raw &self.pool with WHERE id=$1 AND status='draft' — no org column, no RLS. Gated today only by the RLS-scoped find_poll_by_id_rls read in update_vote. One refactor away from cross-tenant write."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/vote.rs",
+        "backend/servers/api-server/src/routes/voting.rs"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "lib/api.ts constructs the axios client at module-eval time and default-exports it; complicates test-time mocking and prevents lazy env-based rebuild."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "WS client `send()` posts raw payload; server ws_notifications.rs decode expects envelope with `type` discriminator — silent drop on server side."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-slovak-toasts",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Document download/upload hooks call toast.success('Dokument stiahnutý') and .error(...) with hard-coded SK strings; non-SK locales see Slovak."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentUpload.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-bookings-hardcoded-toasts",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "MyBookingsPage toast copy hard-coded Slovak for booking cancel + edit paths."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-native-confirm-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui) — adopted by routine 2026-09-03",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Invoice-mgmt uses native window.confirm() with hard-coded Slovak string; native dialog escapes the app locale."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web) — adopted by routine 2026-09-03",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "realtor/[id]/page.tsx has const MOCK_REALTOR = {...} and returns it unconditionally; live GET /realtors/{id} call is TODO. Wire useQuery + loading/error UI."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web) — adopted by routine 2026-09-03",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "/profile page uses inline MOCK_USER; live /users/me call missing. User sees another person's placeholder data on the profile screen."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-hardcoded-slovak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web) — adopted by routine 2026-09-03",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Realtor profile page hard-codes SK strings for section headings; ignores active [locale] segment; German/English users see Slovak."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02/03 mobile-native-kmp | mobile-rn) — adopted by routine 2026-09-03",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "score suppressed to 0: cloud-unlandable segment (mobile-native/KMP — #2652 AGP egress blocker) or mobile-rn nice-to-have i18n that would drown landable focus per this run's buffer-low trigger"
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02/03 mobile-native-kmp | mobile-rn) — adopted by routine 2026-09-03",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "score suppressed to 0: cloud-unlandable segment (mobile-native/KMP — #2652 AGP egress blocker) or mobile-rn nice-to-have i18n that would drown landable focus per this run's buffer-low trigger"
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02/03 mobile-native-kmp | mobile-rn) — adopted by routine 2026-09-03",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "score suppressed to 0: cloud-unlandable segment (mobile-native/KMP — #2652 AGP egress blocker) or mobile-rn nice-to-have i18n that would drown landable focus per this run's buffer-low trigger"
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-mobile-native-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02/03 mobile-native-kmp | mobile-rn) — adopted by routine 2026-09-03",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "score suppressed to 0: cloud-unlandable segment (mobile-native/KMP — #2652 AGP egress blocker) or mobile-rn nice-to-have i18n that would drown landable focus per this run's buffer-low trigger"
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-mobile-native-swallowed-cancellation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02/03 mobile-native-kmp | mobile-rn) — adopted by routine 2026-09-03",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "score suppressed to 0: cloud-unlandable segment (mobile-native/KMP — #2652 AGP egress blocker) or mobile-rn nice-to-have i18n that would drown landable focus per this run's buffer-low trigger"
+      ],
+      "files": []
+    },
+    {
+      "id": "code-review-mobile-native-layout-repo-println",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02/03 mobile-native-kmp | mobile-rn) — adopted by routine 2026-09-03",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "score suppressed to 0: cloud-unlandable segment (mobile-native/KMP — #2652 AGP egress blocker) or mobile-rn nice-to-have i18n that would drown landable focus per this run's buffer-low trigger"
+      ],
+      "files": []
+    },
+    {
+      "id": "lag-warning-2026-09-03",
+      "type": "lag_warning",
+      "source": "routine last_run_iso=2026-09-01T18:38:58Z, this run 2026-09-03T18:35:00Z — ~48h gap (>36h threshold)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "routine has not fired for ~48h; below 3-day stale_routine_alert threshold but above lag_warning threshold"
+      ],
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal met confidence=high + score>=3 + allowlist match; the promoted voting-cast plan is code-review-finding vector which is intentionally outside the auto-fix allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-03.md && head -1 == '# 2026-09-03'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true (last_pr_seen 2921->2932, seen_signals grew, stats.runs incr)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique|length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no seen id re-scored (all fold-ins are new)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <=8 and 14d-old open items decayed",
+      "observed": "cap ok; portfolio-analytics-caps-100 decayed 1->0 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan annotated 'adversarial pass: ...' in brief",
+      "observed": "1 new plan; annotated 'passed'",
+      "expected": "matches"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; 15 sections each; ticked capability; Mode declared; files exist",
+      "observed": "1 new plan; all sections present; C1/C2/C6 ticked; Mode: cloud-ok; 3 file paths verified on disk",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged diff (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to fresh regen",
+      "observed": "diff empty",
+      "expected": "diff empty"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phase / cursor mismatch",
+      "observed": "no phase failures",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or plans/_archive/",
+      "observed": "no plan slugs deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD archive count",
+      "observed": "same 8 archive files",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to fresh regen",
+      "observed": "diff empty",
+      "expected": "diff empty"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill-switch respected, per-run caps, idempotency)",
+      "observed": "auto_fix_actions=[] (no candidate met certainty bar this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — no-op gate",
+      "observed": "pm_cursor unchanged; coverage_cursor unchanged; skill not invoked",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
