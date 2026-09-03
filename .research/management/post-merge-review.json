@@ -1,9 +1,39 @@
 {
-  "generated": "2026-09-02T00:32:14Z",
+  "generated": "2026-09-03T02:28:15Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-03T02:28:15Z",
+      "prs_scanned": 3,
+      "clean": [
+        2927
+      ],
+      "with_issues": [
+        {
+          "pr": 2928,
+          "issue": 2929,
+          "findings": 1,
+          "specialist": "pm-backend",
+          "note": "snapshot-consistency regression test does not fail on pre-fix code (no concurrent writer); add contention-driven sqlx test via a report_summary_in_tx seam"
+        },
+        {
+          "pr": 2919,
+          "issue": 2930,
+          "findings": 1,
+          "specialist": "pm-backend",
+          "note": "self-review guard only unit-tests the pure helper; add DB-backed end-to-end 403 test asserting create_review wiring"
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-20), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable (proxy-403); GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no build/DB in cloud runner). Label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-20 -label:post-merge-reviewed -label:no-review-needed) returned 3 net-new never-reviewed PRs. Reviewed all 3 by full-diff static analysis against the checklist. #2928 (data_export report_summary snapshot consistency via REPEATABLE READ READ ONLY tx): production fix correct, BUT the added test report_summary_counts_agree_with_entries runs one report_summary call with NO concurrent writer, so it passes on the pre-fix two-pool-reads code too (does not fail-on-main) -> opened #2929 (tests, medium): contention-driven sqlx test via a report_summary_in_tx seam. #2919 (reality-server reject self-review on agent-review endpoint): fix correct + well-scoped, but only the pure reject_self_review helper is unit-tested; the create_review wiring (arg order principal.user_id vs realtor_profiles.user_id, guard placement, actual 403) is uncovered -> opened #2930 (tests, low; secondary pm-security): DB-backed end-to-end 403 self-review test + distinct-user-passes companion. #2927 (ppt-web EmergencyContactDirectoryPage update-error i18n test): CLEAN, pure test-coverage addition, no production risk. 2 follow-ups opened (#2929, #2930), both cloud-landable pm-backend test-gap work. All 3 PRs labeled post-merge-reviewed + breadcrumb comments on #2928/#2919. DISPATCHER_OWNED_COMMIT=1: wrote the two artifacts only; deferred commit to orchestrator Phase 6 (no git add/commit).",
+      "focus_prs": [
+        2928,
+        2919,
+        2927
+      ]
+    },
     {
       "run_at": "2026-09-02T00:32:14Z",
       "prs_scanned": 8,
@@ -560,39 +590,6 @@
         2769
       ],
       "with_issues": []
-    },
-    {
-      "run_at": "2026-08-15T10:32:21Z",
-      "prs_scanned": 15,
-      "clean": [
-        2767,
-        2766,
-        2765,
-        2764,
-        2763,
-        2762,
-        2761,
-        2760
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        2758,
-        2757,
-        2756,
-        2755,
-        2748,
-        2747,
-        2746
-      ],
-      "note": "Tier-1d demand-driven post-merge review (claim buffer starved). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI blocked by proxy -> GitHub MCP for all GH I/O; static review only (no checkout/compile). Window merged-to-dev 14d (>=2026-08-01), base=dev, max_prs=15. 15 in-window merges scanned; 8 are genuinely NET-NEW since the prior run (through #2758 @ 2026-08-14T12:32): 2760,2761 (merged 16:46) + today's 6 focus PRs 2762-2767. The other 7 (2746-2758) were already reviewed in the prior run (clean, plus #2755->issue #2759) and are recorded here as skipped_already_reviewed (dedup via this JSON run-history since post-merge-reviewed PR-labels are not applied via MCP). ALL 8 net-new PRs CLEAN, uniformly high quality with strong IG3 regression tests + detailed rationale doc-comments: #2766 (voice OAuth refresh -- add AuthUser + device-owner authz + per-user rate limit; was unauthenticated; 4 auth/rotation tests), #2765 (Google voice webhook JWT verify made fail-CLOSED with real RS256/JWKS + aud/iss/exp; old code fail-open on substring match; 6 unit tests incl forged-sig/wrong-aud/expired/untrusted-iss), #2762 (Alexa cert fetch bounded by shared timeout-limited reqwest client; anti-unbounded-TLS-client; 2 tests), #2764 (workflow api-call redirect pinned same-origin -- credential-leak/SSRF hardening for custom headers reqwest won't strip cross-host; cross-origin/port refused, same-origin allowed; hermetic tests), #2763 (marketplace award-quote IDOR -- adds T4 foreign-RFQ-path-param + T5 nonexistent-quote negative tests atop #2747 fix), #2767 (ProtectedRoute i18n -- key classification integrity + defaultValue<->en parity + real i18next runtime resolution/fallback tests atop #2757), #2760 (WebSocket disconnect() detaches handlers before close via shared detachAndCloseSocket -> late unclean-close inert, no spurious reconnect; 2 lifecycle tests), #2761 (mobile date-formatting consolidation onto format.ts helpers across ~15 screens + tree-wide bare-toLocale* guard test -- this completes/closes the #2759 gap flagged in the prior run). 0 new issues opened (net-new all clean; #2755's finding already tracked by open issue #2759). Existing open from-merged-review issues: #2366, #2759.",
-      "focus_prs": [
-        2762,
-        2763,
-        2764,
-        2765,
-        2766,
-        2767
-      ]
     }
   ]
 }
