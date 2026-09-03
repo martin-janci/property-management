@@ -149,28 +149,41 @@ mod tests {
         );
     }
 
-    /// Issue #2929 (follow-up to #2924): the *snapshot-consistency* guarantee —
-    /// the one `report_summary_counts_agree_with_entries` above documents but
-    /// cannot actually exercise, because with no concurrent writer the pre-fix
-    /// two-`&pool`-reads code and the fixed single-transaction code return
-    /// identical data. This test drives a concurrent commit *between* the two
-    /// internal reads through the `count_summary` / `list_entries` seam and
-    /// contrasts the two wirings:
+    /// Issue #2929 (follow-up to #2924): drive a concurrent commit *into the
+    /// gap between `report_summary`'s two internal reads* and prove that the
+    /// public `report_summary` — not a hand-reconstructed copy of its logic —
+    /// keeps its counts and entries on one snapshot. This test must FAIL on the
+    /// pre-#2924 wiring (two separate `&self.pool` reads) and PASS on the fixed
+    /// single-`REPEATABLE READ`-transaction wiring.
     ///
-    /// * **Shared REPEATABLE READ snapshot (the fix):** both reads run on the
-    ///   same read-only `REPEATABLE READ` transaction. PostgreSQL freezes the
-    ///   snapshot at the first statement, so a row committed by another
-    ///   connection *after* the counts read is invisible to *both* reads —
-    ///   `total_requests` still equals `entries.len()`.
-    /// * **Two pooled connections (the pre-#2924 bug):** the same two statements
-    ///   run on separate connections with a commit in between, so the entries
-    ///   read sees a row the counts read did not — the counts and entries desync.
+    /// The lever is a **single-connection pool** to the same test database.
+    /// With exactly one connection, how `report_summary` uses that connection
+    /// is observable:
     ///
-    /// The second half asserts the desync, so this test fails if the snapshot
-    /// isolation is ever removed (the exact regression #2929 flags): dropping the
-    /// shared transaction makes the two halves observe different row sets.
+    /// * **Fixed (`self.pool.begin()` + `&mut *tx`):** the one connection is
+    ///   held for the *whole* `REPEATABLE READ` transaction — across both the
+    ///   counts read and the entries read — and only returned to the pool at
+    ///   `commit`. A writer sharing this pool therefore cannot run until
+    ///   `report_summary` has finished, so its row lands *after* both reads and
+    ///   both observe the same 3 baseline rows → `total_requests == entries.len()`.
+    /// * **Pre-#2924 (`fetch_one(&self.pool)` then `fetch_all(&self.pool)`):**
+    ///   the connection is returned to the pool *between* the two reads. sqlx
+    ///   hands that freed connection to the FIFO-queued writer, which commits a
+    ///   fourth matching row in the gap; the entries read then re-acquires and
+    ///   sees 4 rows while the counts read saw 3 → `total_requests (3) !=
+    ///   entries.len() (4)` and the assertion below FAILS.
+    ///
+    /// We queue the report task and the writer task on the single connection in
+    /// FIFO order (report first, writer second) by holding the connection while
+    /// both enqueue, then releasing it — so the interleaving is deterministic
+    /// rather than timing-dependent.
     #[sqlx::test(migrator = "crate::MIGRATOR")]
     async fn report_summary_reads_share_one_snapshot_under_contention(pool: sqlx::PgPool) {
+        use sqlx::postgres::PgPoolOptions;
+        use std::sync::Arc;
+        use std::time::Duration;
+        use tokio::sync::Notify;
+
         let user = make_user(&pool, "snapshot@example.com").await;
 
         // Baseline: three committed rows before any read.
@@ -178,73 +191,84 @@ mod tests {
         insert_request(&pool, user, "ready", false).await;
         insert_request(&pool, user, "downloaded", true).await;
 
-        // --- Shared REPEATABLE READ snapshot: the production wiring. ---
-        let mut tx = pool.begin().await.unwrap();
-        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
-            .execute(&mut *tx)
+        // A second pool to the SAME ephemeral test database, capped at one
+        // connection so report_summary's connection lifetime is observable.
+        let capped = PgPoolOptions::new()
+            .max_connections(1)
+            .acquire_timeout(Duration::from_secs(10))
+            .connect_with((*pool.connect_options()).clone())
             .await
-            .unwrap();
+            .expect("single-connection pool to the test database");
 
-        // First read pins the transaction snapshot at the pre-insert state.
-        let (total, _pending, _completed, _downloaded) =
-            DataExportRepository::count_summary(&mut tx, None, None)
-                .await
-                .unwrap();
-        assert_eq!(total, 3, "counts read observes the three baseline rows");
+        let repo = DataExportRepository::new(capped.clone());
 
-        // A concurrent writer commits a fourth matching row on another connection
-        // AFTER the snapshot was pinned but BEFORE the entries read.
-        insert_request(&pool, user, "pending", false).await;
+        // Hold the only connection so BOTH the report task and the writer task
+        // must queue for it. sqlx grants a freed connection to waiters in FIFO
+        // order, so enqueuing the report first and the writer second fixes the
+        // interleaving deterministically.
+        let hold = capped.acquire().await.expect("hold the single connection");
 
-        // Second read on the SAME transaction: the frozen snapshot hides the new
-        // row, so it stays consistent with the counts read.
-        let entries = DataExportRepository::list_entries(&mut tx, None, None, 1000)
-            .await
-            .unwrap();
-        tx.commit().await.unwrap();
+        let report_ready = Arc::new(Notify::new());
+        let writer_gate = Arc::new(Notify::new());
 
+        // Report task — becomes pool waiter #1.
+        let report_task = {
+            let repo = repo.clone();
+            let report_ready = report_ready.clone();
+            tokio::spawn(async move {
+                report_ready.notify_one();
+                repo.report_summary(None, None, 1000)
+                    .await
+                    .expect("report_summary")
+            })
+        };
+        // Let the report task reach (and block on) its first pool acquire before
+        // the writer enqueues, so the report is waiter #1.
+        report_ready.notified().await;
+        for _ in 0..16 {
+            tokio::task::yield_now().await;
+        }
+
+        // Writer task — becomes pool waiter #2. Uses the capped pool, so it
+        // acquires the single connection only when it becomes free, which (on
+        // the pre-fix wiring) is the gap between report_summary's two reads.
+        let writer_task = {
+            let capped = capped.clone();
+            let writer_gate = writer_gate.clone();
+            tokio::spawn(async move {
+                writer_gate.notified().await;
+                insert_request(&capped, user, "pending", false).await;
+            })
+        };
+        writer_gate.notify_one();
+        for _ in 0..16 {
+            tokio::task::yield_now().await;
+        }
+
+        // Release the connection: FIFO hands it to the report task first.
+        drop(hold);
+
+        let summary = report_task.await.expect("join report task");
+        writer_task.await.expect("join writer task");
+
+        // The invariant: with `limit` covering every row, `total_requests` and
+        // `entries` are read from ONE snapshot, so they must agree. On the fixed
+        // code the concurrent insert is invisible to both reads (3 == 3). If the
+        // shared REPEATABLE READ transaction is ever removed, the insert leaks
+        // into the entries read but not the counts read (3 != 4) and this fails —
+        // the exact regression #2929 guards.
         assert_eq!(
-            total as usize,
-            entries.len(),
-            "shared snapshot: the concurrent insert is invisible to both reads, \
-             so counts still agree with entries"
+            summary.total_requests as usize,
+            summary.entries.len(),
+            "report_summary counts and entries must come from one snapshot; a \
+             desync here means the shared REPEATABLE READ transaction was \
+             removed (regression #2929)"
         );
         assert_eq!(
-            entries.len(),
+            summary.entries.len(),
             3,
-            "the row committed after the snapshot was pinned does not leak into entries"
-        );
-
-        // --- Control: two pooled connections (pre-#2924 behaviour). ---
-        // Re-run the same two statements with no shared transaction and a commit
-        // in between; the counts and entries must diverge — this is precisely the
-        // desync the fix eliminates, and asserting it proves the test above would
-        // FAIL if `report_summary` reverted to reading `&self.pool` twice.
-        let mut c1 = pool.acquire().await.unwrap();
-        let (total_unshared, _, _, _) = DataExportRepository::count_summary(&mut c1, None, None)
-            .await
-            .unwrap();
-        drop(c1);
-
-        insert_request(&pool, user, "pending", false).await; // commits between reads
-
-        let mut c2 = pool.acquire().await.unwrap();
-        let entries_unshared = DataExportRepository::list_entries(&mut c2, None, None, 1000)
-            .await
-            .unwrap();
-        drop(c2);
-
-        assert_ne!(
-            total_unshared as usize,
-            entries_unshared.len(),
-            "without the shared snapshot the concurrent commit leaks into the \
-             entries read but not the counts read — the two desync, which is what \
-             report_summary's REPEATABLE READ transaction must prevent"
-        );
-        assert_eq!(
-            entries_unshared.len(),
-            total_unshared as usize + 1,
-            "the entries read sees exactly the one row committed after the counts read"
+            "the row committed after report_summary pinned its snapshot must not \
+             appear in the entries slice"
         );
     }
 
