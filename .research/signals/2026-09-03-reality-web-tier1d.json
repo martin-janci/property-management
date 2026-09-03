@@ -1,0 +1,54 @@
+{
+  "run_iso": "2026-09-03T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven: LANDABLE action-list buffer starved (honest claimable = 0; entire remaining open backlog is mobile-native/KMP work, structurally unlandable in the cloud runner). Need fresh LANDABLE vectors. Rotating static review (static analysis only, no compile/test). Oldest-unreviewed segment overall was mobile-native-kmp (2026-08-25) but skipped as structurally-unlandable (AGP egress proxy-blocked). Among landable segments, ppt-web-ui and ppt-web-core were already reviewed earlier today (2026-09-03 signals on disk), so selected the oldest-unreviewed LANDABLE segment not yet touched today: reality-web (2026-08-29).",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed-landable (mobile-native-kmp skipped: unlandable-in-cloud; ppt-web-ui & ppt-web-core already reviewed 2026-09-03)",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)",
+      "segment": "reality-web",
+      "expert": "completeness",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:16-20 — the public agent-profile route renders MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS imported from ./_mock and NEVER reads the [id] route param nor calls the reality-server API. Every /[locale]/realtor/<any-id> URL renders the same hardcoded mock agent, listings and reviews (147-line _mock.ts). Additionally the contact form's handleSendMessage (page.tsx:22-28, wired to <form onSubmit> at :591) is a no-op that only sets messageSent=true and closes the drawer — it never POSTs the inquiry to any endpoint, so realtor contact requests are silently dropped. Contrast: sibling app/[locale]/listings/[slug]/page.tsx and account/listings/[id]/edit/page.tsx are correctly wired (fetch by slug/id, response.ok checks, notFound(), getMyListing/updateListing from @/lib/realtor-api). Shipped-looking public route backed entirely by mocks with a dead contact action.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)",
+      "segment": "reality-web",
+      "expert": "completeness",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the signed-in user's own profile route renders MOCK_PROFILE / MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS from ./_mock instead of the authenticated user's real data; the file's own header comment (lines 8-11) acknowledges 'when [auth] lands, replace MOCK_* with live data via the SDK'. The page ships showing placeholder identity, listings, activity and reviews to every logged-in user. Completeness stub — should fetch via the reality-api-client once the auth/session wiring is available.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/_mock.ts"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-hardcoded-slovak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx hardcodes Slovak-only UI strings — ':114 \"✓ Overený maklér\" (verified-realtor badge), :227 \"Aktívne ponuky (...)\", :330 \"Hodnotenia (...)\" — bypassing next-intl useTranslations()/getTranslations() despite reality-web shipping sk/cs/de/en (per app CLAUDE.md and messages/*.json). cs/de/en visitors to any agent profile see Slovak. The page carries a data-i18n=\"pages.agent-profile.root\" marker (:32) but the visible copy is never routed through the message catalog. i18n localization defect on a public route.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ]
+    }
+  ]
+}
