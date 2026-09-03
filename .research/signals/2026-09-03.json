@@ -1,0 +1,263 @@
+{
+  "date": "2026-09-03",
+  "run_kind": "incremental",
+  "run_note": "Phase 1.5 adopted dispatcher Tier-1d output (3 findings). Phase 1.6 skipped (dispatcher PM current). Phase 5 auto-fix: no candidate.",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar + allowlist",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "routine 2026-09-03 — PR #2926",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "evidence": [
+        "169 lines added+deleted since 2026-09-01T18:38:58Z across 1 PR(s): PR #2926"
+      ],
+      "re_emit": true
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "routine 2026-09-03 — hotspot_history runs_seen>=2",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "evidence": [
+        "file appeared as hotspot in a prior run (runs_seen=1 → 2); 169 lines this window; instability proxy — consider a refactor cap or test-coverage backfill"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/saved_searches.rs",
+      "type": "churn-hotspot",
+      "source": "routine 2026-09-03 — PR #2922",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/routes/saved_searches.rs"
+      ],
+      "evidence": [
+        "106 lines added+deleted since 2026-09-01T18:38:58Z across 1 PR(s): PR #2922"
+      ],
+      "re_emit": false
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/agent_reviews.rs",
+      "type": "churn-hotspot",
+      "source": "routine 2026-09-03 — PR #2919",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs"
+      ],
+      "evidence": [
+        "77 lines added+deleted since 2026-09-01T18:38:58Z across 1 PR(s): PR #2919"
+      ],
+      "re_emit": false
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [],
+      "evidence": [
+        "PR #2744 open since 2026-08-13 (21 days); labeled needs-human-review; author is the dispatcher (self-PR); no reviewDecision yet.",
+        "Dispatcher runs since 2026-08-13 have surfaced this repeatedly under Hang alerts ALERT (review >7d)."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (adopted from dispatcher Tier-1d 2026-09-02 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "evidence": [
+        "routes/budgets.rs returns raw internal error string in HTTP body on 37 DB-error branches (`Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))`), across create_budget/list_budgets/... — same anti-pattern as PR #2920 swept for compliance.rs. sqlx::Error Display leaks table/column names + SQL fragments.",
+        "Detail is already server-logged via tracing::error!, so the client-body copy is pure over-exposure.",
+        "Adopted from .research/signals/2026-09-02-api-handlers-tier1d.json (dispatcher-generated, not previously ingested)."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (adopted from dispatcher Tier-1d 2026-09-02 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "evidence": [
+        "routes/oauth.rs OAuth-provider client-management endpoints leak raw internal errors: register_client :724 (REGISTRATION_FAILED), update_client :874 (UPDATE_FAILED), revoke_client :954 (REVOKE_FAILED), regenerate_client_secret :1024 (REGENERATE_FAILED).",
+        "Most security-sensitive surface in api-handlers. Same fix pattern as PR #2925 / db_error() helper.",
+        "Adopted from dispatcher Tier-1d 2026-09-02 api-handlers signals."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (adopted from dispatcher Tier-1d 2026-09-02 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "evidence": [
+        "FacilitiesPage.tsx:36-41 — useIsManager() is a placeholder stub returning `true` unconditionally (comment: 'Replace with actual role check when AuthContext is implemented for ppt-web'). Not gated behind a dev-only flag; ships as-is.",
+        "Manager-only facility mutations (create/edit/delete) are therefore visible + click-through for every logged-in user. Backend-side auth still gates the actual request, so this is a UX defect (dead buttons) rather than a security bypass — but it's a stub that the dev comment explicitly asks to remove.",
+        "Adopted from dispatcher Tier-1d 2026-09-02 ppt-web-ui signals."
+      ]
+    }
+  ],
+  "decayed": [
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+      "prev_score": 1,
+      "new_score": "dropped"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f + head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen_signals dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score>8",
+      "observed": "0 items",
+      "expected": "0 items"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "each new plan has adversarial pass annotation (no-op when 0)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v \"^.research/\" | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached grep secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff regen backlog.md",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure check",
+      "observed": "no phase failures",
+      "expected": "documented in brief if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still exist",
+      "observed": "no changes to plans/",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count",
+      "observed": "cur=9 head=9",
+      "expected": "cur >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff regen IDEAS_TRIAGE.md",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty",
+      "observed": "0 actions",
+      "expected": "<=3 (no candidate this run)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (no-op)",
+      "observed": "Phase 1.6 skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

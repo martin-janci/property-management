@@ -6574,14 +6574,15 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "[2026-09-03] decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
@@ -10601,6 +10602,151 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "title": "Repeated churn hotspot: backend/servers/api-server/src/services/push_fanout.rs — runs_seen>=2 (insta",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "routine 2026-09-03 — hotspot_history runs_seen>=2"
+      ],
+      "evidence": [
+        "file appeared as hotspot in a prior run (runs_seen=1 → 2); 169 lines this window; instability proxy — consider a refactor cap or test-coverage backfill"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/saved_searches.rs",
+      "title": "Churn hotspot: backend/servers/reality-server/src/routes/saved_searches.rs — 106 lines added+deleted",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "routine 2026-09-03 — PR #2922"
+      ],
+      "evidence": [
+        "106 lines added+deleted since 2026-09-01T18:38:58Z across 1 PR(s): PR #2922"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/saved_searches.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/agent_reviews.rs",
+      "title": "Churn hotspot: backend/servers/reality-server/src/routes/agent_reviews.rs — 77 lines added+deleted s",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "routine 2026-09-03 — PR #2919"
+      ],
+      "evidence": [
+        "77 lines added+deleted since 2026-09-01T18:38:58Z across 1 PR(s): PR #2919"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "title": "Stalled review: #2744 — dispatcher self-PR, needs-human-review >7d",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "PR #2744 open since 2026-08-13 (21 days); labeled needs-human-review; author is the dispatcher (self-PR); no reviewDecision yet.",
+        "Dispatcher runs since 2026-08-13 have surfaced this repeatedly under Hang alerts ALERT (review >7d)."
+      ],
+      "files": [],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "title": "backend/servers/api-server/src/routes/budgets.rs — routes/budgets.rs returns raw internal error stri",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (adopted from dispatcher Tier-1d 2026-09-02 api-handlers)"
+      ],
+      "evidence": [
+        "routes/budgets.rs returns raw internal error string in HTTP body on 37 DB-error branches (`Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))`), across create_budget/list_budgets/... — same anti-pattern as PR #2920 swept for compliance.rs. sqlx::Error Display leaks table/column names + SQL fragments.",
+        "Detail is already server-logged via tracing::error!, so the client-body copy is pure over-exposure.",
+        "Adopted from .research/signals/2026-09-02-api-handlers-tier1d.json (dispatcher-generated, not previously ingested)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "title": "backend/servers/api-server/src/routes/oauth.rs — routes/oauth.rs OAuth-provider client-management en",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (adopted from dispatcher Tier-1d 2026-09-02 api-handlers)"
+      ],
+      "evidence": [
+        "routes/oauth.rs OAuth-provider client-management endpoints leak raw internal errors: register_client :724 (REGISTRATION_FAILED), update_client :874 (UPDATE_FAILED), revoke_client :954 (REVOKE_FAILED), regenerate_client_secret :1024 (REGENERATE_FAILED).",
+        "Most security-sensitive surface in api-handlers. Same fix pattern as PR #2925 / db_error() helper.",
+        "Adopted from dispatcher Tier-1d 2026-09-02 api-handlers signals."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "title": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx — FacilitiesPage.tsx:36-41 — ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (adopted from dispatcher Tier-1d 2026-09-02 ppt-web-ui)"
+      ],
+      "evidence": [
+        "FacilitiesPage.tsx:36-41 — useIsManager() is a placeholder stub returning `true` unconditionally (comment: 'Replace with actual role check when AuthContext is implemented for ppt-web'). Not gated behind a dev-only flag; ships as-is.",
+        "Manager-only facility mutations (create/edit/delete) are therefore visible + click-through for every logged-in user. Backend-side auth still gates the actual request, so this is a UX defect (dead buttons) rather than a security bypass — but it's a stub that the dev comment explicitly asks to remove.",
+        "Adopted from dispatcher Tier-1d 2026-09-02 ppt-web-ui signals."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
     }
   ]
 }
