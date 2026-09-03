@@ -1,0 +1,49 @@
+{
+  "generated": "2026-09-03T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-03",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed among LANDABLE segments. mobile-native-kmp is the oldest cursor (2026-08-25) but is the parked cloud-build blocker (Gradle/AGP egress 403 -> structurally unlandable), so it was excluded per the Tier-1d landable-only guidance. Of the 2026-08-29 tie (ppt-web-ui, ppt-web-core, reality-web, mobile-rn) ppt-web-core was selected: it carries 0 recorded findings historically (least-explored) and its core surfaces (lib/, hooks/, contexts/, routes/) are squarely frontend-landable. The segment proved very well-maintained (heavy issue-referenced comments from prior review rounds), so findings are low-severity but concrete and landable; duplicates of the 2026-09-02 systemic ProtectedRoute finding were deliberately avoided.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "lib/api.ts:321 `export default getApiClient();` is evaluated at module-import time. getApiClient() (api.ts:273-278) lazily builds the singleton via createAxiosInstance() with NO config, which as a side effect sets the module-level `tokenGetter = undefined` and `onUnauthorizedCallback = undefined` (api.ts:195-196) and pins baseURL to DEFAULT_BASE_URL / timeout to DEFAULT_TIMEOUT. So merely importing this module eagerly instantiates an unconfigured axios instance and mutates module globals before AuthContext ever calls configureApiClient().",
+        "configureApiClient() (api.ts:298-301) reassigns `apiInstance` to a BRAND-NEW instance. The default export binding, however, is frozen to the FIRST (import-time) instance. The two instances only behave identically today because both interceptors read the same module-level `tokenGetter`/`onUnauthorizedCallback` (api.ts:201/219) and AuthContext.configureApiClient (AuthContext.tsx:352-355) passes no baseURL/timeout override. Any future call passing a custom baseURL, timeout, or per-instance interceptor to configureApiClient() would silently NOT apply to default-export consumers, and resetApiClient() (api.ts:307-311, called on AuthProvider unmount, AuthContext.tsx:360) nulls `apiInstance` + clears the globals, orphaning the default export so its interceptors read cleared globals (requests without Authorization).",
+        "Landability confirmed: a repo-wide grep for a default import of lib/api (`import api ...` / `import api, {` from lib/api) returns ZERO consumers — every call site uses the named getApiClient() export. The default export is dead code whose only effect is the import-time instantiation + global mutation. Safe pure-frontend fix: drop `export default getApiClient();` (or export the function `getApiClient` itself, not its invocation) so the singleton is created only when configureApiClient()/getApiClient() is first called. Low severity (+1): no runtime bug is currently reachable, but it is a footgun that defeats the single-source-of-truth intent documented in AuthContext.tsx:337-355. Confidence medium: mechanism verified statically end-to-end (module eval order + interceptor closures over module globals), not runtime-executed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib/websocket)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "evidence": [
+        "Asymmetric wire contract: on RECEIVE, parseServerMessage (websocket.ts:65-82) treats the canonical server frame as `{ event, payload }` and maps `event` -> internal `type`. On SEND, WebSocketService.send (websocket.ts:444-457) does `this.socket.send(JSON.stringify(message))` where `message` is the internal WebSocketMessage shape `{ type, payload, timestamp }` (websocket.ts:38-43) — it is emitted verbatim with a `type` key, never re-mapped back to the server's `{ event, payload }` envelope. A server that parses inbound frames as WsEvent `{ event, payload }` (mirroring ws_notifications.rs) would see `event: undefined` and drop/ignore the frame.",
+        "The send path is fully wired through the public API — WebSocketContext.send (WebSocketContext.tsx:371-378) delegates to service.send, and useWebSocket / its sibling hooks re-export `send` to consumers (hooks/useWebSocket.ts:76/101/130/165/189) — so this is a live, callable surface, not private code.",
+        "Currently LATENT, hence low (+1): a repo-wide grep for `.send(` shows the only call site is WebSocketContext.tsx:377 (the delegation itself); no feature code sends a domain message today because the notifications socket is effectively server->client. But the first consumer to call `send({...})` will hit a silent no-op (frame accepted by the client, ignored by the server) with no error surfaced. Landable pure-frontend fix: have send() serialize the server envelope shape (`{ event: message.type, payload: message.payload }`) to match parseServerMessage's inbound contract, mirroring the documented WsEvent envelope, or narrow the exported API to remove the unsupported send until a client->server protocol exists. Confidence medium: the shape mismatch is code-verified against parseServerMessage + the WebSocketMessage/ServerWsEnvelope interfaces; the server-side reject is inferred from the documented envelope, not runtime-confirmed."
+      ]
+    }
+  ]
+}
