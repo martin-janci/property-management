@@ -145,46 +145,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "gh-issue-2929",
-      "action": "Follow-up: report_summary snapshot-consistency regression test does not fail on pre-fix code (PR #2928) (Closes #2929)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-09-03T02:30:49Z (#2929)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-03T02:30:49Z",
-      "issue_ref": {
-        "number": 2929,
-        "url": "https://github.com/martin-janci/property-management/issues/2929",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-2930",
-      "action": "Follow-up: add end-to-end 403 test for agent-review self-review guard (PR #2919) (Closes #2930)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-09-03T02:30:49Z (#2930)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-03T02:30:49Z",
-      "issue_ref": {
-        "number": 2930,
-        "url": "https://github.com/martin-janci/property-management/issues/2930",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-08-31T03:10:00Z"
