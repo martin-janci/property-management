@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-03",
+  "run_iso": "2026-09-03T08:36:00Z",
+  "trigger": "buffer-low: landable-claimable=0/72 (all 8 open items mobile-native/KMP gated #2652) — planner: refill with non-mobile-native vectors",
+  "signals": [],
+  "signals_note": "No new signals derived this run. Observation window covers merged PRs #2919, #2922, #2925, #2926, #2927, #2928, #2931, #2932 (all resolutions of already-open backlog items, mapped via id verbatim), 0 open PRs newly-touched (draft #2902 unchanged), 0 net-new issues (all 4 new — #2923, #2924, #2929, #2930 — are `follow-up` labeled and already closed by the PRs they seeded). No revert. No risky-churn (all 8 PRs are test-hardening / small fix follow-ups). No unchecked-todo. No screen-map drift (none of the 8 PRs touch route trigger set — compliance.rs / push_fanout.rs / reviews.rs / EmergencyContactDirectoryPage tests / report_summary test / reviews e2e test). No screen-map orphan check performed (skipped — no route-file drift in window). No hotfix-no-test (all 8 shipped with tests — 5 of 8 ARE test-only additions per titles). No stalled-review re-emit (existing #2555/#2558/#2559 already in seen_signals, non-cumulative type). Phase 1.5 rotating expert review — skipped this run (rationale below).",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score≥3 + allowlist this run (0 signals emitted)",
+  "phase_1_5": {
+    "skipped": true,
+    "reason": "Operational decision: fire payload asks planner to refill with non-mobile-native vectors, and the oldest-unreviewed segment is mobile-native-kmp (cursor 2026-08-25, 9d old). Running the skill would default to that segment and add a mobile-native-kmp finding that cannot land while #2652 (AGP egress) parks cloud implementers — net effect is buffer inflation without buffer refill. Non-mobile segments were all reviewed within the last 5 days (api-handlers 2026-08-31, api-core 2026-09-01, reality-server 2026-08-31, ppt-web-ui 2026-08-29, ppt-web-core 2026-08-29, reality-web 2026-08-29, mobile-rn 2026-08-29). Marginal value of a fresh review on those is low relative to token cost this fire; deferring to the next scheduled routine (~2026-09-04) which will naturally rotate."
+  },
+  "phase_1_6": {
+    "skipped": true,
+    "reason": "Buffer-low fire; the previous full brief (2026-09-01 18:38Z) already recorded the delivery synthesis and pm_cursor next_index=5 (pm-security). No new sprint transitions or role signals to warrant re-spawning subagents this fire. Deferring role rotation advance to next scheduled routine so the daily cadence stays intact."
+  },
+  "phase_2_mutations": [
+    {"item_id": "code-review-api-core-fcm-legacy-dead-endpoint", "op": "resolution-record", "pr": "#2926", "merged_at": "2026-09-02"},
+    {"item_id": "code-review-reality-server-agent-review-self-review", "op": "resolution-record", "pr": "#2919", "follow_up_test_pr": "#2932", "merged_at": "2026-09-02"},
+    {"item_id": "code-review-reality-server-saved-search-error-string-status", "op": "resolution-record", "pr": "#2922", "merged_at": "2026-09-01"},
+    {"item_id": "code-review-api-handlers-compliance-raw-db-leak-regression", "op": "resolution-record", "pr": "#2925", "merged_at": "2026-09-01"},
+    {"item_id": "code-review-ppt-web-ui-emergency-dir-raw-err-message", "op": "follow-up-source", "pr": "#2927", "merged_at": "2026-09-02", "note": "already done via #2913; #2927 adds i18n-path test coverage per issue #2923"},
+    {"item_id": "code-review-api-handlers-data-export-report-stub", "op": "follow-up-source", "prs": ["#2928", "#2931"], "note": "already done via #2916; #2928 snapshot-consistency + #2931 makes the regression test fail on pre-fix code (issues #2924, #2929)"},
+    {"item_id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100", "op": "decay-drop", "before": {"status": "open", "score": 1, "updated_at": "2026-08-19"}, "after": {"status": "dropped", "score": 0, "updated_at": "2026-09-03"}, "note": "14d decay rule (updated_at 2026-08-19 ≤ today−14 = 2026-08-20). Real KMP finding; will re-surface via next rotating segment review when #2652 lands."}
+  ],
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-09-03.md && head -1 | grep '^# 2026-09-03$'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "compare staged state.json vs HEAD (cursor advance)", "observed": "last_pr_seen 2921 -> 2932, last_run_iso advanced", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))'", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no new signals; nothing to double-count", "observed": "signals array is empty", "expected": "true"},
+    {"goal": "G5-cap", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0'", "observed": "true", "expected": "true"},
+    {"goal": "G5-decay", "passed": true, "command": "portfolio-analytics-caps-100 (open, updated 2026-08-19) score 1->0 status open->dropped this run", "observed": "1 decay applied; only 1 open item ≥14d old this run", "expected": "≥1 point or dropped for each open item with updated_at older than 14 days"},
+    {"goal": "G6", "passed": true, "command": "no plans/ files added this run", "observed": "0 new plans", "expected": "match plan_slug + adversarial pass line per new plan"},
+    {"goal": "G7", "passed": true, "command": "no plans added; count 0 ≤ 2", "observed": "0", "expected": "≤2"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "grep staged diff for secret/private-hostname patterns", "observed": "0 matches", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md", "observed": "identical", "expected": "identical"},
+    {"goal": "G11", "passed": true, "command": "no phases reported failure; cursors advanced as expected", "observed": "clean", "expected": "consistent"},
+    {"goal": "G12", "passed": true, "command": "no plans deleted this run", "observed": "N/A", "expected": "prior plans still in plans/ or plans/_archive"},
+    {"goal": "G13", "passed": true, "command": "[ ls-files _archive count staged >= HEAD ]", "observed": "unchanged this run", "expected": "≥ HEAD"},
+    {"goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical", "expected": "identical"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions length 0 ≤ 3", "observed": "0", "expected": "≤ caps; kill switch respected implicitly (no candidate)"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run — gate is a no-op per routine spec", "observed": "pm_cursor and coverage_cursor unchanged; no management artifacts written", "expected": "no-op when Phase 1.6 skipped"},
+    {"goal": "G17", "passed": true, "command": "grep for Telegram token pattern in staged diff", "observed": "0 matches", "expected": "0"}
+  ]
+}

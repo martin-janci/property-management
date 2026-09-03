@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (updated_at 2026-08-19 ≤ today−14 = 2026-08-20; score 1 → 0 → dropped). Mobile-native/KMP finding is real; will re-surface via next rotating segment review when #2652 lands."
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-03",
       "plan": null
     },
     {
@@ -10330,18 +10331,20 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
+        "PR #2926"
       ],
       "evidence": [
         "push_fanout.rs:330-336 falls back to `send_fcm_legacy` (fn at :395-426) when no FCM_OAUTH_TOKEN is configured; `send_fcm_legacy` POSTs to `{base_url}/fcm/send` (default base_url `https://fcm.googleapis.com`, :247) with `Authorization: key={FCM_SERVER_KEY}`.",
         "Google decommissioned the legacy HTTP API on 2024-06-20 — `POST https://fcm.googleapis.com/fcm/send` returns 404/401 for all callers. The fallback is unreachable except for a mock base_url.",
-        "Fix shape: delete send_fcm_legacy + the FCM_SERVER_KEY branch of send_fcm_v1, and tighten the config so v1 is required (return a startup error when FCM_PROJECT_ID is set without OAuth wiring). Tied to the fcm-v1-static-oauth-token item — both live in the same file and share test scaffolding."
+        "Fix shape: delete send_fcm_legacy + the FCM_SERVER_KEY branch of send_fcm_v1, and tighten the config so v1 is required (return a startup error when FCM_PROJECT_ID is set without OAuth wiring). Tied to the fcm-v1-static-oauth-token item — both live in the same file and share test scaffolding.",
+        "resolved: PR #2926 merged 2026-09-02 — remove decommissioned FCM legacy send path."
       ],
       "files": [
         "backend/servers/api-server/src/services/push_fanout.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-03",
       "plan": null,
       "reconciled": {
         "at": "2026-09-02T06:27:30Z",
@@ -10357,18 +10360,20 @@
       "score": 2,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts)",
+        "PR #2927"
       ],
       "evidence": [
         "EmergencyContactDirectoryPage.tsx:59,92,107,127,158 — all five setError sites use `err instanceof Error ? err.message : t('emergency.errors.<key>')`. The api-client throws Error on every HTTP/network failure, so err.message (English) always renders; the t() fallback only fires for non-Error throws, which the client never produces.",
         "Impact: user-facing error banner on the wired core emergency-contact directory shows English/raw messages regardless of the selected UI language (sk/cs/de/en).",
-        "Fix shape: replace with `setError(t('emergency.errors.<key>'))` and log `err.message` via console/tracing for debugging. Same pattern as fixed for facilities-booking silent-errors (PR #2884-style)."
+        "Fix shape: replace with `setError(t('emergency.errors.<key>'))` and log `err.message` via console/tracing for debugging. Same pattern as fixed for facilities-booking silent-errors (PR #2884-style).",
+        "follow-up: PR #2927 merged 2026-09-02 — cover update-error i18n path in EmergencyContactDirectoryPage tests (issue #2923)."
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-03",
       "plan": null,
       "reconciled": {
         "at": "2026-09-01T16:24:13Z",
@@ -10435,20 +10440,23 @@
       "status": "done",
       "sources": [
         "PR #2916",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 api-handlers)",
+        "PR #2928",
+        "PR #2931"
       ],
       "evidence": [
         "get_data_export_report (routes/compliance.rs:365-388, GET /api/v1/compliance/gdpr/data-exports, Epic 9 Story 9.7) discards its filter params (`let _ = params;` at :372, dropping from_date/to_date/org_id), then returns `exports: vec![]` (:382), `completed_count: 0` (:384), `downloaded_count: 0` (:386). Only live query is data_export_repo.get_pending(1000) (:375-379), whose len is reused for total_requests and pending_count.",
         "Consequences on a GDPR compliance report: exports list ALWAYS empty; completed_count and downloaded_count ALWAYS 0; total_requests undercounts (only pending); >1000 pending silently truncated. Inline comment at :371 confirms it's a known stub.",
         "Routine 2026-09-01 verified via direct Read of compliance.rs 230-388 — code path confirmed unchanged from the tier1d report; the platform-admin gate at :370 is intact (endpoint remains reachable to platform admins).",
         "Fix shape: back the response with real repo queries — count completed/pending/downloaded by status over the requested date range (honouring from_date/to_date/org_id), and populate the exports vec (paginated). IG3: integration test seeding one completed+downloaded export and one pending export asserts completed_count==1, downloaded_count==1, pending_count==1 and non-empty exports.",
-        "resolved: PR #2916 merged 2026-09-01 — fix(api-server): report real GDPR data-export counts instead of stub zeros. Handler now calls DataExportRepository::report_summary(from_date, to_date, limit); returns real total_requests/completed/pending/downloaded plus entries. IG3 tests seed 6 exports across all statuses."
+        "resolved: PR #2916 merged 2026-09-01 — fix(api-server): report real GDPR data-export counts instead of stub zeros. Handler now calls DataExportRepository::report_summary(from_date, to_date, limit); returns real total_requests/completed/pending/downloaded plus entries. IG3 tests seed 6 exports across all statuses.",
+        "follow-up: PR #2928 merged 2026-09-02 — snapshot-consistent report_summary counts + entries (issue #2924); PR #2931 merged 2026-09-03 makes the regression test fail on pre-fix code (issue #2929)."
       ],
       "files": [
         "backend/servers/api-server/src/routes/compliance.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-03",
       "plan": null
     },
     {
@@ -10507,17 +10515,20 @@
       "score": 2,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
+        "PR #2919",
+        "PR #2932"
       ],
       "evidence": [
         "Tier-1d finding (see .research/signals/2026-08-31-reality-server-tier1d.json) — agent-review self-review gap without a reviewer_id != subject_id guard.",
-        "Routine 2026-09-01 spot-check pending: full file re-verification deferred to Phase-3 promotion (needs local grep). Kept score at tier1d-recorded +2."
+        "Routine 2026-09-01 spot-check pending: full file re-verification deferred to Phase-3 promotion (needs local grep). Kept score at tier1d-recorded +2.",
+        "resolved: PR #2919 merged 2026-09-02 — reject self-review on agent review endpoint; e2e 403 test added by follow-up PR #2932 (issue #2930)."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/reviews.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-03",
       "plan": null,
       "reconciled": {
         "at": "2026-09-02T18:23:28Z",
@@ -10556,17 +10567,19 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
+        "PR #2922"
       ],
       "evidence": [
         "Tier-1d finding (see .research/signals/2026-08-31-reality-server-tier1d.json) — saved-search returns error strings that a client parses for status; brittle contract.",
-        "Fix shape: introduce a typed error-code enum and serialize as `code`/`message` pairs; align with existing api-error-envelope pattern."
+        "Fix shape: introduce a typed error-code enum and serialize as `code`/`message` pairs; align with existing api-error-envelope pattern.",
+        "resolved: PR #2922 merged 2026-09-01 — derive saved-search HTTP status from a typed error enum."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/saved_searches.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-03",
       "plan": null,
       "reconciled": {
         "at": "2026-09-01T20:38:46Z",
@@ -10583,18 +10596,20 @@
       "status": "done",
       "sources": [
         "PR #2915",
-        "PR #2920"
+        "PR #2920",
+        "PR #2925"
       ],
       "evidence": [
         "compliance.rs:319 `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?` — 1 leak site remains after PR #2920 sanitized 16 sites; this site was introduced by PR #2915 (audit-log count query added to fix total-page-len bug).",
         "Fix shape: single-line change — swap `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))` for `map_err(db_error)` (helper already exists in the same file, added by #2920). Trivial follow-up.",
-        "Routine 2026-09-01 supplementary: grep at eea7067 confirms the single remaining leak site."
+        "Routine 2026-09-01 supplementary: grep at eea7067 confirms the single remaining leak site.",
+        "resolved: PR #2925 merged 2026-09-01 — route compliance audit-log count error through db_error."
       ],
       "files": [
         "backend/servers/api-server/src/routes/compliance.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-03",
       "plan": null,
       "reconciled": {
         "at": "2026-09-02T00:27:03Z",
