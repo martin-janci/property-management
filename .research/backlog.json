@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (2026-08-19 → 2026-09-03, score 1→0 → dropped)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-03",
       "plan": null
     },
     {
@@ -10601,6 +10602,319 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "title": "Route budgets.rs 37 raw sqlx-error leak sites through db_error() sanitizer",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "commit db34026e (dispatcher Tier-1d api-handlers static review)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs: 37 occurrences of `Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))` paired with StatusCode::INTERNAL_SERVER_ERROR (verified via grep this run; first at budgets.rs:260 in create_budget)",
+        "sqlx::Error::Database Display leaks table/column/constraint names and SQL fragments to the HTTP caller — an authenticated user tripping a constraint violation can enumerate schema",
+        "Same defect class as PR #2925 (compliance regression) and PR #2920; both used the db_error() helper at routes/compliance.rs:67 as the sanitizer pattern",
+        "tracing::error!(\"Failed to create budget: {:?}\", e) already logs details server-side, so the client-body copy is pure over-exposure"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": "plans/code-review-api-handlers-budgets-raw-db-error-leak.md"
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "title": "Route oauth.rs raw sqlx-error leak sites through db_error() sanitizer",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "commit db34026e (dispatcher Tier-1d api-handlers static review)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/oauth.rs: 4 occurrences of `e.to_string()` on error paths (verified via grep this run) across the register / update / revoke / regenerate OAuth-client handlers",
+        "Each returns raw sqlx::Error text as HTTP body — schema/constraint disclosure",
+        "Same defect class as budgets and compliance; the db_error() helper at routes/compliance.rs:67 is the in-repo sanitizer pattern"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": "plans/code-review-api-handlers-oauth-client-error-leak.md"
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "title": "i18n PersonMonthsScreen labels + error copy",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit dc5b9acb (dispatcher Tier-1d mobile-rn static review)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx renders hardcoded English labels and error strings — no useTranslation() hook"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "title": "i18n WidgetSettingsScreen — replace hardcoded English and raw error copy",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit dc5b9acb (dispatcher Tier-1d mobile-rn static review)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx surfaces raw error copy and hardcoded English labels"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "title": "Route Alert.alert() titles/messages through i18n in mobile screens",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit dc5b9acb (dispatcher Tier-1d mobile-rn static review)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx: Alert.alert() call sites with hardcoded English",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx: same pattern"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "title": "Wrap 11 ppt-web route groups with ProtectedRoute (or a common parent guard)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit c32af92b (dispatcher Tier-1d ppt-web-core static review)"
+      ],
+      "evidence": [
+        "Verified this run: 11 of 15 files under frontend/apps/ppt-web/src/routes/groups/ contain 0 uses of ProtectedRoute (accounting, ai-dashboards, announcements, community, disputes, faults, financial, iot, messaging, neighbors, outages)",
+        "App.tsx and AppRoutes.tsx don't wrap these groups with a parent ProtectedRoute either — direct-URL entry reaches page components without an auth gate",
+        "The 4 groups that do use ProtectedRoute (buildings, core, documents, leases, meters) show the intended in-repo pattern"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "title": "Replace hardcoded isManager=true stub in FacilitiesPage with real role check",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit 8c8e128f (dispatcher Tier-1d ppt-web-ui static review)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx hardcodes isManager = true, so every user sees manager-only actions regardless of role"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "title": "Route registry api-client through the JWT interceptor",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit 8c8e128f (dispatcher Tier-1d ppt-web-ui static review)"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/registry/api.ts uses a raw fetch() with no Authorization header",
+        "Registry / RegistryRules pages call it directly; protected endpoints 401 in production",
+        "Analogous defect to PR #2876 (useBuildingUnits raw fetch → axios JWT client)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx",
+        "frontend/packages/api-client/src/registry/api.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "title": "i18n facility edit/book form error copy",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit 8c8e128f (dispatcher Tier-1d ppt-web-ui static review)"
+      ],
+      "evidence": [
+        "EditFacilityPage.tsx and BookFacilityPage.tsx render hardcoded English error copy"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "title": "Localize reality-server suggestions endpoint (city default + popular_searches)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit ba33f21a (dispatcher Tier-1d reality-server static review)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:464 defaults city to 'Bratislava' regardless of caller region (verified this run)",
+        "lines 474-475 return hardcoded SK popular_searches ('2-izbový byt Bratislava', …) to all 6 reality-web locales",
+        "CZ/DE/EN users see SK-only suggestions on public search"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only",
+      "title": "Localize reality-server category labels by request locale",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit ba33f21a (dispatcher Tier-1d reality-server static review)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs returns SK-only category labels to all 6 reality-web locales"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "title": "Surface swallowed onError in RealtorManagement detail modal",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit 57a6a460 (dispatcher Tier-1d reality-web static review)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx: mutation hooks in reality-api-client/agency/hooks.ts have no onError; failed detail loads render empty state",
+        "Analogous to PR #2890 (mutation onError surfacing)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "title": "Surface swallowed AgencyBranding save error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commit 57a6a460 (dispatcher Tier-1d reality-web static review)"
+      ],
+      "evidence": [
+        "AgencyBranding.tsx save mutation lacks onError — a failed save silently reads as success",
+        "Analogous to PR #2890"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "title": "Wire realtor profile page to /realtors/{id} endpoint (remove _mock.ts)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit 57a6a460 (dispatcher Tier-1d reality-web static review)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx reads from _mock.ts instead of the reality-server /realtors/{id} endpoint",
+        "Placeholder data appears in production for agent profile pages"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
     }
   ]
 }

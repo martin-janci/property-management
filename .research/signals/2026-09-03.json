@@ -1,0 +1,264 @@
+{
+  "run_iso": "2026-09-03T02:30:00Z",
+  "trigger": "buffer-low API fire — claimable=8/72, all open items mobile-native/KMP gated; converting stranded Tier-1d dispatcher findings into backlog rows for cloud-landable refill",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlist eligibility (all 14 new tier-1d code-review-finding signals require manual implementer path per Phase 5 allowlist)",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d api-handlers static review (commit db34026e)",
+      "score_delta": 2,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/routes/budgets.rs: grep -c 'e.to_string()' = 37 hits (verified this run); each paired with StatusCode::INTERNAL_SERVER_ERROR and Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())). sqlx::Error::Database Display leaks table/column/constraint names and SQL fragments to the HTTP caller. Same defect CLASS as PR #2925/#2920 (compliance.rs) which used the db_error() helper in routes/compliance.rs:67. Confidence upgraded medium→high on this run's direct grep verification (37 leak sites, first at budgets.rs:260)."
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d api-handlers static review (commit db34026e)",
+      "score_delta": 2,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/routes/oauth.rs: grep -c 'e.to_string()' = 4 hits (verified this run) across register/update/revoke/regenerate handlers, each returning raw sqlx::Error text as HTTP body. Same pattern as budgets/compliance leak. Confidence upgraded medium→high on direct grep verification."
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d mobile-rn static review (commit dc5b9acb)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx contains hardcoded English strings on user-facing labels and error copy — no useTranslation() hook."
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d mobile-rn static review (commit dc5b9acb)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx surfaces raw error copy and hardcoded English labels."
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d mobile-rn static review (commit dc5b9acb)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "DocumentDetailScreen.tsx and FeedbackScreen.tsx call Alert.alert() with hardcoded English titles/messages instead of routing through i18n."
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d ppt-web-core static review (commit c32af92b)",
+      "score_delta": 2,
+      "candidate_vector": "security",
+      "confidence": "high",
+      "evidence": "Verified this run: 11 of 15 route-group files under frontend/apps/ppt-web/src/routes/groups/ have zero ProtectedRoute usages (accounting, ai-dashboards, announcements, community, disputes, faults, financial, iot, messaging, neighbors, outages). App.tsx/AppRoutes.tsx do not wrap them with a parent ProtectedRoute either — direct-URL entry can bypass authenticated view enforcement. Confidence upgraded medium→high on direct grep verification."
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d ppt-web-ui static review (commit 8c8e128f)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx hardcodes an isManager = true stub in place of a real role check, so non-manager users see manager-only actions."
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d ppt-web-ui static review (commit 8c8e128f)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "frontend/packages/api-client/src/registry/api.ts uses a bare fetch() with no JWT interceptor; Registry / RegistryRules pages call it directly, so requests go out unauthenticated and 401 on any protected endpoint."
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d ppt-web-ui static review (commit 8c8e128f)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "EditFacilityPage.tsx and BookFacilityPage.tsx render hardcoded English error copy instead of using i18n keys."
+    },
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d reality-server static review (commit ba33f21a)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": "Verified this run: backend/servers/reality-server/src/routes/listings.rs:464 defaults city to 'Bratislava' regardless of caller region; lines 474-475 return SK popular_searches ('2-izbový byt Bratislava', ...) to all 6 reality-web locales (sk/cs/de/en/…). CZ/DE users see SK-only suggestions on public search. Confidence upgraded medium→high on direct verification."
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d reality-server static review (commit ba33f21a)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "backend/servers/reality-server/src/routes/listings.rs returns SK-only category labels to all 6 reality-web locales."
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d reality-web static review (commit 57a6a460)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "RealtorManagement.tsx and reality-api-client/agency/hooks.ts: modal mutations swallow onError, so failed detail loads look like empty state and the operator sees no feedback."
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d reality-web static review (commit 57a6a460)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "AgencyBranding.tsx save mutation has no onError handler — a failed save silently succeeds in the UI while the backend rejected it."
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d reality-web static review (commit 57a6a460)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx reads from a static _mock.ts instead of the reality-server /realtors/{id} endpoint, so agent profile pages show placeholder data in production."
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "PR #2744 fix(dispatcher): un-wedge oversize-archive push + close retry-remint cross-id ghost — self-PR labeled needs-human-review, opened 2026-08-13, 21 days idle. Process signal; no backlog row (informational)."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-03.md && head -1 | grep -q ^# YYYY-MM-DD$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursors advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id]|(length==(unique|length))",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id in prev seen with score_delta>0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap ≤8; decay applied to portfolio-analytics-caps-100 → dropped",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans path + adversarial pass in brief",
+      "observed": "2/2",
+      "expected": "2/2"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; metadata + 11 headings + capability + mode + files exist",
+      "observed": "2 plans, all checks pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed check",
+      "observed": "no phases failed",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans not silently deleted",
+      "observed": "0 lost",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows count check",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions ≤3, per-type ≤1",
+      "observed": "0/0/0",
+      "expected": "≤3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run → gate no-op",
+      "observed": "no-op",
+      "expected": "no-op or pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token literal absent from staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
