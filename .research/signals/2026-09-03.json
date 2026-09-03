@@ -1,0 +1,176 @@
+{
+  "date": "2026-09-03",
+  "run": 79,
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-03",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": [
+        "last_run_iso=2026-09-01T18:38:58Z; now=2026-09-03T16:26Z; lag=1d 21h (>36h). Cloud routine cadence slipped one day; not stale (<3d)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": [
+        "dependabot npm-minor-patch group PR #2867 closed unmerged on 2026-09-03 (superseded by a new dependabot PR in same group)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": [
+        "dependabot cargo-minor-patch group PR #2865 closed unmerged on 2026-09-03 (superseded by a new dependabot PR in same group)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": [
+        "dependabot gradle-minor-patch group PR #2749 closed unmerged on 2026-09-03 (superseded by a new dependabot PR in same group)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+      "type": "churn-hotspot",
+      "source": "git diff eea70673..origin/dev -- backend/crates/db/src/repositories/data_export_test.rs",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/crates/db/src/repositories/data_export_test.rs churned 186 lines this run (top-3 hotspot); driven by data-export snapshot-consistency (#2928/#2931), push-fanout auto-refresh FCM (#2914), and saved-search typed-error refactor (#2922)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "git diff eea70673..origin/dev -- backend/servers/api-server/src/services/push_fanout.rs",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs churned 169 lines this run (top-3 hotspot); driven by data-export snapshot-consistency (#2928/#2931), push-fanout auto-refresh FCM (#2914), and saved-search typed-error refactor (#2922)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/saved_searches.rs",
+      "type": "churn-hotspot",
+      "source": "git diff eea70673..origin/dev -- backend/servers/reality-server/src/routes/saved_searches.rs",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/saved_searches.rs churned 106 lines this run (top-3 hotspot); driven by data-export snapshot-consistency (#2928/#2931), push-fanout auto-refresh FCM (#2914), and saved-search typed-error refactor (#2922)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "push_fanout.rs previously hot on 2026-05-26 (churn=689); recurs now (churn=169). runs_seen 1\u21922."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp create-listing stub); routine adopts",
+      "score_delta": 3,
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "evidence": [
+        "mobile-native/androidApp/.../navigation/Navigation.kt:493 production composable(Screen.CreateListing.route) wires `onSubmit = { _ -> Result.failure(NotImplementedError(...)) }` reachable from AgencyHubScreen / MyListingsScreen; UC-51.4 (Realtor: publish new listing) is a no-op in the shipped Android app.",
+        "Backend endpoint POST /api/v1/my/listings already exists (portal_listings.rs:207); PortalListingsRepository lacks a create wrapper. Fix is KMP-only. Adopted from dispatcher Tier-1d generator 2026-09-03."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-swallowed-cancellation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp cancellation swallowing); routine adopts",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "Every suspend function in shared/commonMain repositories wrapping a Ktor call uses `try { ... } catch (e: Exception) { Result.failure(e) }` without first rethrowing CancellationException \u2014 9 repositories \u00d7 57 sites (grep -R 'catch (e: Exception)' mobile-native/shared).",
+        "Only LayoutRepository handles it correctly (covered by test). Adopted from dispatcher Tier-1d generator 2026-09-03."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-layout-repo-println",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp shared println logging); routine adopts",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "medium",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48, 57, 68 \u2014 three raw println(...) calls used for warn/error-path logging in shared/commonMain KMP code (no Kermit/Napier bridging, no iOS os_log). Adopted from dispatcher Tier-1d generator 2026-09-03."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no eligible signal met confidence=high + score>=3 + allowlist match",
+  "goal_checks": [
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "True",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "[]",
+      "expected": "[]"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "observed": "",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "no archive changes",
+      "expected": "count >= HEAD"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped this run \u2014 no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "no auto_fix_actions this run",
+      "expected": "<=3 total; <=1 each type"
+    }
+  ]
+}

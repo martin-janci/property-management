@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-03T16:45:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2932,
+  "last_issue_seen": 2930,
+  "last_commit_sha": "d1f678e22794d69707e978b9a678b0be15cf8278",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -63,9 +63,9 @@
       "recent_churn": 869
     },
     "backend/servers/api-server/src/services/push_fanout.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-26",
-      "recent_churn": 689
+      "runs_seen": 2,
+      "last_seen": "2026-09-03",
+      "recent_churn": 169
     },
     "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx": {
       "runs_seen": 1,
@@ -521,6 +521,16 @@
       "runs_seen": 1,
       "last_seen": "2026-08-31",
       "recent_churn": 151
+    },
+    "backend/crates/db/src/repositories/data_export_test.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-03",
+      "recent_churn": 186
+    },
+    "backend/servers/reality-server/src/routes/saved_searches.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-03",
+      "recent_churn": 106
     }
   },
   "seen_signals": [
@@ -1002,7 +1012,16 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-09-03",
+    "dep-update-noise-pr-2867",
+    "dep-update-noise-pr-2865",
+    "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+    "churn-hotspot-backend/servers/reality-server/src/routes/saved_searches.rs",
+    "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+    "code-review-mobile-native-create-listing-stub",
+    "code-review-mobile-native-swallowed-cancellation",
+    "code-review-mobile-native-layout-repo-println"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1013,12 +1032,12 @@
     "ppt-web-core": "2026-08-29",
     "reality-web": "2026-08-29",
     "mobile-rn": "2026-08-29",
-    "mobile-native-kmp": "2026-08-25"
+    "mobile-native-kmp": "2026-09-03"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 376,
+    "plans_created": 30,
     "quiet_days": 3,
     "auto_fix_count": 0
   },
