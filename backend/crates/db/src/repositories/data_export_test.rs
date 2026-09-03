@@ -149,6 +149,129 @@ mod tests {
         );
     }
 
+    /// Issue #2929 (follow-up to #2924): drive a concurrent commit *into the
+    /// gap between `report_summary`'s two internal reads* and prove that the
+    /// public `report_summary` — not a hand-reconstructed copy of its logic —
+    /// keeps its counts and entries on one snapshot. This test must FAIL on the
+    /// pre-#2924 wiring (two separate `&self.pool` reads) and PASS on the fixed
+    /// single-`REPEATABLE READ`-transaction wiring.
+    ///
+    /// The lever is a **single-connection pool** to the same test database.
+    /// With exactly one connection, how `report_summary` uses that connection
+    /// is observable:
+    ///
+    /// * **Fixed (`self.pool.begin()` + `&mut *tx`):** the one connection is
+    ///   held for the *whole* `REPEATABLE READ` transaction — across both the
+    ///   counts read and the entries read — and only returned to the pool at
+    ///   `commit`. A writer sharing this pool therefore cannot run until
+    ///   `report_summary` has finished, so its row lands *after* both reads and
+    ///   both observe the same 3 baseline rows → `total_requests == entries.len()`.
+    /// * **Pre-#2924 (`fetch_one(&self.pool)` then `fetch_all(&self.pool)`):**
+    ///   the connection is returned to the pool *between* the two reads. sqlx
+    ///   hands that freed connection to the FIFO-queued writer, which commits a
+    ///   fourth matching row in the gap; the entries read then re-acquires and
+    ///   sees 4 rows while the counts read saw 3 → `total_requests (3) !=
+    ///   entries.len() (4)` and the assertion below FAILS.
+    ///
+    /// We queue the report task and the writer task on the single connection in
+    /// FIFO order (report first, writer second) by holding the connection while
+    /// both enqueue, then releasing it — so the interleaving is deterministic
+    /// rather than timing-dependent.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn report_summary_reads_share_one_snapshot_under_contention(pool: sqlx::PgPool) {
+        use sqlx::postgres::PgPoolOptions;
+        use std::sync::Arc;
+        use std::time::Duration;
+        use tokio::sync::Notify;
+
+        let user = make_user(&pool, "snapshot@example.com").await;
+
+        // Baseline: three committed rows before any read.
+        insert_request(&pool, user, "pending", false).await;
+        insert_request(&pool, user, "ready", false).await;
+        insert_request(&pool, user, "downloaded", true).await;
+
+        // A second pool to the SAME ephemeral test database, capped at one
+        // connection so report_summary's connection lifetime is observable.
+        let capped = PgPoolOptions::new()
+            .max_connections(1)
+            .acquire_timeout(Duration::from_secs(10))
+            .connect_with((*pool.connect_options()).clone())
+            .await
+            .expect("single-connection pool to the test database");
+
+        let repo = DataExportRepository::new(capped.clone());
+
+        // Hold the only connection so BOTH the report task and the writer task
+        // must queue for it. sqlx grants a freed connection to waiters in FIFO
+        // order, so enqueuing the report first and the writer second fixes the
+        // interleaving deterministically.
+        let hold = capped.acquire().await.expect("hold the single connection");
+
+        let report_ready = Arc::new(Notify::new());
+        let writer_gate = Arc::new(Notify::new());
+
+        // Report task — becomes pool waiter #1.
+        let report_task = {
+            let repo = repo.clone();
+            let report_ready = report_ready.clone();
+            tokio::spawn(async move {
+                report_ready.notify_one();
+                repo.report_summary(None, None, 1000)
+                    .await
+                    .expect("report_summary")
+            })
+        };
+        // Let the report task reach (and block on) its first pool acquire before
+        // the writer enqueues, so the report is waiter #1.
+        report_ready.notified().await;
+        for _ in 0..16 {
+            tokio::task::yield_now().await;
+        }
+
+        // Writer task — becomes pool waiter #2. Uses the capped pool, so it
+        // acquires the single connection only when it becomes free, which (on
+        // the pre-fix wiring) is the gap between report_summary's two reads.
+        let writer_task = {
+            let capped = capped.clone();
+            let writer_gate = writer_gate.clone();
+            tokio::spawn(async move {
+                writer_gate.notified().await;
+                insert_request(&capped, user, "pending", false).await;
+            })
+        };
+        writer_gate.notify_one();
+        for _ in 0..16 {
+            tokio::task::yield_now().await;
+        }
+
+        // Release the connection: FIFO hands it to the report task first.
+        drop(hold);
+
+        let summary = report_task.await.expect("join report task");
+        writer_task.await.expect("join writer task");
+
+        // The invariant: with `limit` covering every row, `total_requests` and
+        // `entries` are read from ONE snapshot, so they must agree. On the fixed
+        // code the concurrent insert is invisible to both reads (3 == 3). If the
+        // shared REPEATABLE READ transaction is ever removed, the insert leaks
+        // into the entries read but not the counts read (3 != 4) and this fails —
+        // the exact regression #2929 guards.
+        assert_eq!(
+            summary.total_requests as usize,
+            summary.entries.len(),
+            "report_summary counts and entries must come from one snapshot; a \
+             desync here means the shared REPEATABLE READ transaction was \
+             removed (regression #2929)"
+        );
+        assert_eq!(
+            summary.entries.len(),
+            3,
+            "the row committed after report_summary pinned its snapshot must not \
+             appear in the entries slice"
+        );
+    }
+
     /// `limit` bounds only the detail slice; the aggregate counts see all rows.
     #[sqlx::test(migrator = "crate::MIGRATOR")]
     async fn report_summary_limit_bounds_entries_not_counts(pool: sqlx::PgPool) {
