@@ -1,0 +1,77 @@
+{
+  "generated": "2026-09-03T00:00:00Z",
+  "segment": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "note": "Dispatcher Tier-1d demand-driven review (open_claimable_count=9, BUFFER_FLOOR=36; Tier-1b/1c returned no eligible items). Static analysis only, no compile/test run. Segment root mobile-native/ (KMP shared + androidApp + iosApp). Selection: mobile-native-kmp is the oldest-unreviewed segment (review_cursor 2026-08-25) not already covered today (ppt-web-core, ppt-web-ui, reality-web done today). 0 open code-review-findings for mobile-native-kmp in backlog.json (no saturation-skip). Findings across two axes: (1) UC-51.4 (Realtor: publish new listing) is wired to a stub onSubmit in Navigation.kt that always returns NotImplementedError — shipped users see 'publish failed' on every attempt; PortalListingsRepository has no createListing method so backend wiring is missing too. (2) Cross-cutting structured-concurrency bug — 8 of 9 shared repositories use `catch (e: Exception)` around Ktor calls without rethrowing CancellationException, breaking coroutine cancellation. Only LayoutRepository does it right (and has an explicit test). (3) Shared/commonMain LayoutRepository uses raw println for error-path logging (goes to stderr on Android/iOS with no severity/tag).",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp create-listing stub)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — production composable(Screen.CreateListing.route) wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Route is reachable from MyListingsScreen via `onCreateClick = { navController.navigate(Screen.CreateListing.route) }` (Navigation.kt around L487). UC-51.4 (Realtor: publish a new listing) is unusable in the shipped Android app — user fills the form, taps Publish, always sees the 'publish failed' banner via `it.isNetworkError() ? networkErrorMsg : publishFailedMsg` (CreateListingScreen.kt L122-125).",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:22-158 — repository exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics; grep for `createListing|POST.*listings|listings.*POST` in shared/ returns zero hits. The KMP layer has never had a create-listing method, so wiring Navigation.kt requires backend Repository work first.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:40-45 — screen declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>` and the composable is complete (validation, currency, transactionType, publish state). This is a wired-up shipped surface waiting on a missing API, not a WIP page. Docstring at L28-36 explicitly states UC-51.4 intent.",
+        "Fix: (a) add PortalListingsRepository.createListing(input): Result<Unit> that POSTs to /api/v1/portal/listings (or the correct backend route); (b) replace the stub lambda in Navigation.kt:493 with `onSubmit = { input -> repository.createListing(input) }`. Confidence high — verified end-to-end by reading the composable, the navigation wiring, and confirming absent repo method."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-swallowed-cancellation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp cancellation swallowing)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/favorites/FavoritesRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt"
+      ],
+      "evidence": [
+        "Every suspend function in shared/commonMain repositories that wraps a Ktor call uses the pattern `try { ... } catch (e: Exception) { Result.failure(e) }` WITHOUT first rethrowing CancellationException. Grep confirms 57 `catch (e: Exception)` sites across 9 repository files; grep for `CancellationException` across the same tree returns hits ONLY in LayoutRepository.kt (the sole file that does it right).",
+        "Per-file catch counts: ApiClient 6, SsoService 9, ListingRepository 6, InquiryRepository 8, FavoritesRepository 11, NotificationRepository 9, AgencyRepository 4, PortalListingsRepository 2, RealtorRepository 2. Reference correct pattern: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:65-69 — `} catch (e: CancellationException) { throw e } catch (e: Exception) { ... }` with a covering test at commonTest/.../LayoutRepositoryTest.kt:266 asserting cancellation propagates.",
+        "Impact — coroutine cancellation is silently converted to `Result.failure(CancellationException)`. In Compose, LaunchedEffect / rememberCoroutineScope callers that navigate away or key-change during a network fetch will (a) let the network work run to completion instead of being cancelled, (b) still fold the 'failure' branch into `errorMessage = friendlyError(it)`, potentially surfacing a spurious error toast/banner for a screen the user already left, and (c) violate structured concurrency in a way that will surface as flakiness under load / weak-network conditions. This is a canonical KMP anti-pattern (see kotlinx.coroutines Result docs + Ktor error-handling guidance).",
+        "Fix: add the two-catch pattern (`catch (e: CancellationException) { throw e }` before `catch (e: Exception)`) to every listed site; add a shared extension helper `suspend fun <T> runNetworkCatching(block: suspend () -> T): Result<T>` in util/ that encapsulates it, then migrate call sites. Confidence medium — the anti-pattern is confirmed statically for every listed site; the runtime effect (spurious error banners) is highly likely but not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-layout-repo-println",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp shared println logging)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "polish",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48, 57, 68 — three raw `println(...)` calls used for warn/error-path logging in shared/commonMain KMP code. On Android these end up in logcat with no tag/level (indistinguishable from other println noise); on iOS they hit stdout with no OSLog category. Grep for `println` across shared/commonMain returns only these three sites, so there is no established logger abstraction — the pattern is isolated but sets a precedent that will spread.",
+        "Impact is low (dev-experience / log hygiene rather than user-facing behavior). Fix options: (a) introduce a tiny `object Log { fun w(tag: String, msg: String); fun e(tag: String, msg: String, t: Throwable? = null) }` in shared/commonMain with expect/actual for platform-appropriate logging (android.util.Log on androidMain, os_log or NSLog on iosMain); (b) migrate these three sites plus any future ones. Confidence medium — the presence is certain; the value of fixing depends on team's log-hygiene stance."
+      ]
+    }
+  ]
+}
