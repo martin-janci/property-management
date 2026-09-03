@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (updated_at 2026-08-19 > 14d)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-03",
       "plan": null
     },
     {
@@ -10601,6 +10602,54 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-reality-server-imports-raw-err-leak",
+      "title": "reality-server: raw sqlx error text leaked to client via format!(...) on 500 paths in imports.rs + agencies.rs",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-server 2026-09-03"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:223,259,294,417,453 — five map_err sites return `format!(\"Failed to ...: {}\", other)` as the 500 body, bypassing `crate::util::errors::db_error` which exists specifically to scrub sqlx text (constraint/column/DSN detail) from client responses",
+        "backend/servers/reality-server/src/routes/agencies.rs:280 — same pattern on the agencies route",
+        "same shape as previously-flagged `code-review-reality-server-db-error-leak-to-client` (promoted 2026-08-02 via security fast-track for listings.rs/realtors.rs/layout.rs; fixed there but never propagated to imports.rs + agencies.rs)",
+        "classified as security (not bug) on parity with the earlier finding — info disclosure of internal schema/constraint/DSN detail to authenticated realtor clients"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/util/errors.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": "plans/code-review-reality-server-imports-raw-err-leak.md"
+    },
+    {
+      "id": "code-review-reality-server-osrng-expect",
+      "title": "reality-server: SysRng.try_fill_bytes().expect() panics the SSO login and password-reset handlers on OS-RNG failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-09-03"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:708 — `SysRng.try_fill_bytes(...).expect(\"OS rng failed\")` inside `generate_code_verifier`, called from the SSO login request path; OS-RNG failure aborts the handler task instead of returning a 500",
+        "backend/servers/reality-server/src/handlers/users/mod.rs:558 — same anti-pattern in the password-reset request handler",
+        "fix: map the RNG error to db_error/500 to preserve the rest-of-file error contract and keep the server up"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/handlers/users/mod.rs"
+      ],
+      "created_at": "2026-09-03",
+      "updated_at": "2026-09-03",
+      "plan": null
     }
   ]
 }

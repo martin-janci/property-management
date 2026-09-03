@@ -71,3 +71,13 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **`coverage_cursor` advances 6 → 7** (epic-81 → epic-82 next run).
 - **`pm_cursor` advances 4 → 5** (pm-devops → pm-security next run). role_last_run["pm-devops"] = 2026-08-31.
 - **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. **Missing UC links: 3** (UC-33.1/33.2/33.3 already queued). Zero orphan screens, zero validation errors.
+
+## Routine tick — 2026-09-03
+
+_Cursor advances: `pm_cursor.next_index` 5 → 6 (pm-security ran → pm-data next); `coverage_cursor.next_index` 7 → 8 (epic-82 re-checked → epic-83 next)._
+
+- **Shipped since last run (2026-09-01):** 5 PRs — all cloud-landable, no epic-status flips. #2922 typed HTTP-status derivation for reality-server saved-search errors, #2925 compliance audit-log `db_error` regression guard, #2926 removes decommissioned FCM legacy send-path, #2927 covers update-error i18n path on EmergencyContactDirectoryPage, #2928 snapshot-consistent `report_summary` counts + entries.
+- **Auto-fix loop:** 2 post-merge review issues opened within hours (#2929, #2930) — both already have draft PRs (#2931 for #2929, #2932 for #2930). Auto-review pipeline healthy.
+- **Buffer starvation persists.** All 4 open backlog items pre-run were mobile-native/KMP; today's Phase 1.5 review of `reality-server` refills the cloud-landable side with 2 new items (`code-review-reality-server-imports-raw-err-leak` promoted via security fast-track, `code-review-reality-server-osrng-expect` open at score 1). `pm-devops-unblock-mobile-native-cloud-builds` (#2652) still the largest unactioned item.
+- **Risks:** 2 stale entries closed this run per pm-security code-verification — `risk-layout-webhook-replay-2026-07-23` (timestamp+HMAC now on sender + receiver), `risk-dispute-add-evidence-idor-lingers-2026-07-23` (`add_evidence` is org-scoped in `disputes.rs:860-884`). risks.json now shows 18 open / 2 closed.
+- **Stalled non-dependabot PRs (unchanged since last tick):** #2555 / #2558 / #2559 accounting trio ~36 d old, `needs-human-judgement`; #2744 dispatcher fix ~20 d draft.

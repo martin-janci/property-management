@@ -1,0 +1,209 @@
+{
+  "date": "2026-09-03",
+  "generated": "2026-09-03T04:41:16Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-03 (PRs since #2921)",
+      "score_delta": 0,
+      "evidence": [
+        "169 lines churn this run (PR #2926 legacy-FCM removal); re-emit \u2014 cumulative type, prior score not re-applied"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/saved_searches.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-03 (PR #2922)",
+      "score_delta": 1,
+      "evidence": [
+        "106 lines churn this run (PR #2922 typed SavedSearchError mapping)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/push_delivery_receipt_tests.rs",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-03 (PR #2926)",
+      "score_delta": 1,
+      "evidence": [
+        "99 lines churn this run (PR #2926 legacy-FCM test cleanup)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen bumped 1 \u2192 2 on 2026-09-03",
+      "score_delta": 1,
+      "evidence": [
+        "push_fanout.rs seen 2x now (first 2026-05-26 recent_churn=689, again today recent_churn=169); repeated instability proxy"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-imports-raw-err-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:223,259,294,417,453 \u2014 five map_err sites return format!(\"Failed to ...: {}\", other) as the 500 body, bypassing crate::util::errors::db_error; agencies.rs:280 same shape",
+        "reclassified from reviewer's 'bug' \u2192 'security' on parity with prior code-review-reality-server-db-error-leak-to-client (info disclosure of schema/constraint/DSN to authenticated realtor clients)"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-osrng-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs:708 \u2014 SysRng.try_fill_bytes().expect(\"OS rng failed\") in generate_code_verifier on SSO login request path (panics handler, aborts task)",
+        "backend/servers/reality-server/src/handlers/users/mod.rs:558 \u2014 same anti-pattern in password-reset request handler",
+        "fix: map RNG error to db_error/500 to preserve error-contract and keep server up"
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# YYYY-MM-DD'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] | unique length equality",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup gate",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap<=8 + decay on updated_at>14d",
+      "observed": "cap true; portfolio-analytics-caps-100 decayed 1\u21920\u2192dropped",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial pass anchor in brief for each new plan",
+      "observed": "1/1 plan annotated",
+      "expected": "all present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans<=2; 15 required sections + capability tick + Mode + files-exist",
+      "observed": "1 plan; 4 metadata + 11 headings + 2 ticks + Mode: cloud-ok + 3 files exist",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep on staged .research/ minus baseline docs",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff -q against staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed line in brief",
+      "observed": "'none' matches no cursor rollback",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan slug present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count now >= at HEAD",
+      "observed": "9 >= 9",
+      "expected": "non-decreasing"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff -q",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency + kill-switch honored",
+      "observed": "0 actions this run \u2014 no allowlist match",
+      "expected": "pass"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor 0..7 + coverage_cursor bounds + GC7",
+      "observed": "pm 5\u21926, cc 7\u21928, epics=13, all ok",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "meta": {
+    "trigger_payload": "buffer-low: claimable=8/72 \u2014 cloud-landable backlog starved (all open items mobile-native/KMP-gated); refill planner with cloud-landable vectors",
+    "phase_1_5_segment": "reality-server",
+    "phase_1_5_selection_reason": "churn-aligned (saved_searches.rs was top-3 hotspot; reality-server last reviewed 2026-08-31, cloud-landable)",
+    "phase_1_6_role": "pm-security (rotation idx 5 \u2192 6)",
+    "coverage_cursor_advance": "7 \u2192 8 (epic-82 upkeep re-check \u2192 epic-83 next)",
+    "lag_hours": 33
+  }
+}
