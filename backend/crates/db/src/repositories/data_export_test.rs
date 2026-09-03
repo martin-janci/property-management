@@ -149,6 +149,105 @@ mod tests {
         );
     }
 
+    /// Issue #2929 (follow-up to #2924): the *snapshot-consistency* guarantee —
+    /// the one `report_summary_counts_agree_with_entries` above documents but
+    /// cannot actually exercise, because with no concurrent writer the pre-fix
+    /// two-`&pool`-reads code and the fixed single-transaction code return
+    /// identical data. This test drives a concurrent commit *between* the two
+    /// internal reads through the `count_summary` / `list_entries` seam and
+    /// contrasts the two wirings:
+    ///
+    /// * **Shared REPEATABLE READ snapshot (the fix):** both reads run on the
+    ///   same read-only `REPEATABLE READ` transaction. PostgreSQL freezes the
+    ///   snapshot at the first statement, so a row committed by another
+    ///   connection *after* the counts read is invisible to *both* reads —
+    ///   `total_requests` still equals `entries.len()`.
+    /// * **Two pooled connections (the pre-#2924 bug):** the same two statements
+    ///   run on separate connections with a commit in between, so the entries
+    ///   read sees a row the counts read did not — the counts and entries desync.
+    ///
+    /// The second half asserts the desync, so this test fails if the snapshot
+    /// isolation is ever removed (the exact regression #2929 flags): dropping the
+    /// shared transaction makes the two halves observe different row sets.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn report_summary_reads_share_one_snapshot_under_contention(pool: sqlx::PgPool) {
+        let user = make_user(&pool, "snapshot@example.com").await;
+
+        // Baseline: three committed rows before any read.
+        insert_request(&pool, user, "pending", false).await;
+        insert_request(&pool, user, "ready", false).await;
+        insert_request(&pool, user, "downloaded", true).await;
+
+        // --- Shared REPEATABLE READ snapshot: the production wiring. ---
+        let mut tx = pool.begin().await.unwrap();
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+
+        // First read pins the transaction snapshot at the pre-insert state.
+        let (total, _pending, _completed, _downloaded) =
+            DataExportRepository::count_summary(&mut tx, None, None)
+                .await
+                .unwrap();
+        assert_eq!(total, 3, "counts read observes the three baseline rows");
+
+        // A concurrent writer commits a fourth matching row on another connection
+        // AFTER the snapshot was pinned but BEFORE the entries read.
+        insert_request(&pool, user, "pending", false).await;
+
+        // Second read on the SAME transaction: the frozen snapshot hides the new
+        // row, so it stays consistent with the counts read.
+        let entries = DataExportRepository::list_entries(&mut tx, None, None, 1000)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+
+        assert_eq!(
+            total as usize,
+            entries.len(),
+            "shared snapshot: the concurrent insert is invisible to both reads, \
+             so counts still agree with entries"
+        );
+        assert_eq!(
+            entries.len(),
+            3,
+            "the row committed after the snapshot was pinned does not leak into entries"
+        );
+
+        // --- Control: two pooled connections (pre-#2924 behaviour). ---
+        // Re-run the same two statements with no shared transaction and a commit
+        // in between; the counts and entries must diverge — this is precisely the
+        // desync the fix eliminates, and asserting it proves the test above would
+        // FAIL if `report_summary` reverted to reading `&self.pool` twice.
+        let mut c1 = pool.acquire().await.unwrap();
+        let (total_unshared, _, _, _) = DataExportRepository::count_summary(&mut c1, None, None)
+            .await
+            .unwrap();
+        drop(c1);
+
+        insert_request(&pool, user, "pending", false).await; // commits between reads
+
+        let mut c2 = pool.acquire().await.unwrap();
+        let entries_unshared = DataExportRepository::list_entries(&mut c2, None, None, 1000)
+            .await
+            .unwrap();
+        drop(c2);
+
+        assert_ne!(
+            total_unshared as usize,
+            entries_unshared.len(),
+            "without the shared snapshot the concurrent commit leaks into the \
+             entries read but not the counts read — the two desync, which is what \
+             report_summary's REPEATABLE READ transaction must prevent"
+        );
+        assert_eq!(
+            entries_unshared.len(),
+            total_unshared as usize + 1,
+            "the entries read sees exactly the one row committed after the counts read"
+        );
+    }
+
     /// `limit` bounds only the detail slice; the aggregate counts see all rows.
     #[sqlx::test(migrator = "crate::MIGRATOR")]
     async fn report_summary_limit_bounds_entries_not_counts(pool: sqlx::PgPool) {
