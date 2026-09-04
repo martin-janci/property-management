@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-04T16:27:52Z",
+  "generated": "2026-09-04T18:27:13Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-09-04T16:27:52Z",
+      "last_updated": "2026-09-04T18:27:13Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -28,7 +28,7 @@
       "branch": "auto-impl/screen-map-drift-pr-2894-reality-b0a2b158",
       "status": "review",
       "claimed_at": "2026-08-31T06:26:28Z",
-      "last_updated": "2026-09-04T16:27:52Z",
+      "last_updated": "2026-09-04T18:27:13Z",
       "status_changed_at": "2026-08-31T06:38:30Z",
       "pr_number": 2902,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2902",
