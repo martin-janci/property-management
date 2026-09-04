@@ -1,0 +1,50 @@
+{
+  "generated": "2026-09-04T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-04",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "Backlog starved (0 landable claimable; entire open backlog is mobile-native/KMP, structurally unlandable in cloud runner per issue #2652). mobile-native-kmp is the oldest cursor (2026-08-25) but is excluded as unlandable per Tier-1d landable-only guidance. Of the 2026-08-29 landable tie (ppt-web-ui, ppt-web-core, reality-web, mobile-rn), ppt-web-core was selected: it carries the fewest historical findings and its core wiring surfaces (lib/, hooks/, contexts/, routes/) are squarely frontend-landable. It was also reviewed on 2026-09-03, but that run covered lib/api.ts (default-export eager instance) and lib/websocket.ts (send-envelope mismatch); today's two findings are net-new and touch different subsystems (logout cache-purge allowlist, and the errorHandler validation-message i18n gap) with zero overlap. 0 OPEN code-review-findings exist for ppt-web-core in backlog.json (all 18 historical code-review-findings are status=done), so no saturation-skip.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Static analysis only, no compile/test run. Segment root frontend/apps/ppt-web/src (lib/, hooks/, contexts/, routes/). The segment is very well-maintained (dense issue-referenced comments from prior review rounds), so both findings are concrete-but-modest severity. Finding 1 (medium): logout's cache purge iterates a hand-maintained allowlist (AUTHED_QUERY_KEY_ROOTS) whose ad-hoc feature-hook roots are NOT machine-verifiable, and the guard test hardcodes the roots it checks — a drift-prone design that has already leaked per-user/tenant caches across sessions on shared workstations TWICE (queryKeys.ts:352 cites #712 follow-up; queryKeys.ts:388-391 cites the incomplete PR #2650 fix). Finding 2 (low): errorHandler.ts's formatFieldName/formatValidationErrors render validation field labels by Title-casing English snake_case field paths and are NOT routed through i18n, contradicting the module's own i18n contract (errorHandler.ts:7-10) — on sk/cs/de locales validation errors surface English field names.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core queryKeys/AuthContext)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.test.tsx"
+      ],
+      "evidence": [
+        "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (AuthContext.tsx:583-585). AUTHED_QUERY_KEY_ROOTS (queryKeys.ts:354-392) mixes THREE classes of root: (a) the centralized `queryKeys` factory roots, (b) shared @ppt/api-client key-factory roots (meters/reports), and (c) ~13 AD-HOC string roots used directly in feature hooks scattered across the tree (developer, ocr, actionQueue, executionLogs, executionStats, ai-chat, financial, rentals, predictive-maintenance, sentiment, notification-analytics, notification-triggers). Classes (b) and (c) are plain string literals with NO compile-time or lint link back to the query keys actually used at their call sites — nothing forces a new ad-hoc root to be added here.",
+        "This is not hypothetical: the file's own comments document TWO prior cross-session data leaks caused by exactly this drift. queryKeys.ts:352 cites issue #712 (logout's original `queryClient.clear()` was replaced by this scoped list); queryKeys.ts:388-391 states the `notification-triggers` root 'leaked into the next session (PR #2650 fix was incomplete - this root was missed)'. The purge covers 'the most sensitive data in the app' (AuthContext.test.tsx:205-208: invoices, contacts, bank statements, payment matching, AR aging) which 'must never survive logout on a shared workstation' (queryKeys.ts:348-350).",
+        "The regression guard cannot catch future drift for class (b)/(c) roots: AuthContext.test.tsx:188-217 asserts `expect(AUTHED_QUERY_KEY_ROOTS).toContain(root)` over a HARD-CODED literal array of roots (user, faults, ai-chat, developer, financial, ...). A newly added ad-hoc feature-hook root must be manually added to BOTH the source list AND this test's literal array; if a developer forgets both (the exact failure mode of #712/#2650), the test still passes green and the new user-/tenant-scoped cache silently survives logout on a shared workstation. Landable pure-frontend hardening: derive the eviction set from a single machine-checkable source (e.g. mark every auth-scoped key factory and enumerate them, or add a lint/type constraint) so the allowlist cannot drift out of sync with the query keys in use, rather than relying on a hand-maintained list + hardcoded test mirror. Severity medium (+2): reachable data-exposure on shared workstations, but conditioned on a future/omitted root + shared-device usage; confidence medium (mechanism and two prior occurrences verified statically from source comments + the test body, not runtime-reproduced today)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core lib/errorHandler)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "evidence": [
+        "errorHandler.ts documents an i18n contract in its header (errorHandler.ts:7-10): user-facing copy 'is resolved through the shared i18n' and only opaque tokens (requestIds, raw backend messages) pass through untranslated. parseApiError honours this by resolving titles/messages via `i18n.t('errors.catalogue.<code>...')` (errorHandler.ts:103,108-117,133). But formatFieldName (errorHandler.ts:437-447) builds a user-facing field LABEL purely from the English field path: it splits the backend snake_case path on '_' and Title-cases each ASCII word (`word.charAt(0).toUpperCase() + word.slice(1)`), with no i18n lookup. formatValidationErrors (errorHandler.ts:422-428) then renders `${formatFieldName(field)}: ${message}` for display.",
+        "Consequence: the app ships sk/cs/de/en locales (root CLAUDE.md; reality-web messages/), yet inline/summary validation errors surfaced through formatValidationErrors render field labels in English regardless of active locale (e.g. `Street Name: <msg>` on a Slovak form). This directly contradicts the module's stated i18n contract for a class of user-facing text. It is a genuine gap rather than an intentional pass-through: `message` (the backend string) is explicitly called out as untranslated, but the derived field LABEL is generated client-side and could be localized.",
+        "Severity low (+1), landable pure-frontend: route field labels through i18n (e.g. `i18n.t('fields.<path>', { defaultValue: formatFieldName(field) })`) so localized label keys win with the current Title-cased output as the English fallback, keeping backward compatibility for unmapped fields. Confidence medium: the missing i18n call and the English-only Title-case transform are code-verified in errorHandler.ts:422-447; the visible impact assumes formatValidationErrors output is rendered to end users on a non-English locale (the function is an exported public helper), not runtime-confirmed against a specific screen."
+      ]
+    }
+  ]
+}
