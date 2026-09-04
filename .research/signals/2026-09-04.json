@@ -1,0 +1,288 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-04",
+      "type": "lag_warning",
+      "source": "state.json (last_run_iso=2026-09-01T18:38:58Z)",
+      "score_delta": 0,
+      "evidence": [
+        "lag: 63h since last run (>36h threshold) \u2014 routine missed 2 daily slots"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot npm-minor-patch group across 1 directory (40 updates) \u2014 merged 2026-09-04"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot ktor group across 1 directory (7 updates) \u2014 merged 2026-09-04"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot base64 0.22.1\u21920.23.0 (/backend) \u2014 merged 2026-09-04"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot validator 0.20.0\u21920.21.0 (/backend) \u2014 merged 2026-09-04"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot rust_xlsxwriter 0.96.0\u21920.97.0 (/backend) \u2014 merged 2026-09-04"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2934",
+      "type": "dep-update-noise",
+      "source": "PR #2934",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot cargo-minor-patch closed unmerged 2026-09-04 \u2014 superseded by #2936 (newer group scope)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits since last run (PRs #2916 GDPR data-export counts + #2928 snapshot-consistency + #2924 follow-up)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "3 commits since last run (lockstep with data_export.rs \u2014 snapshot-consistency test churn)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.errorI18n.test.tsx",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "2 commits since last run (PRs #2913 i18n + #2927 update-error test cover)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-core-data-export-download-token-reuse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-04 (api-core)",
+      "segment": "api-core",
+      "score_delta": 3,
+      "evidence": [
+        "backend/servers/api-server/src/routes/gdpr.rs:198-201 \u2014 download_export drops the Result of mark_downloaded via `let _ = state.data_export_repo.mark_downloaded(...).await;` after happily streaming the export payload \u2014 a transient DB error there leaves status='ready', so the same download_token stays valid via get_by_token (backend/crates/db/src/repositories/data_export.rs:271-281 filters only `status = 'ready'`) and can be replayed for the full 'ready' window until expires_at. GDPR download tokens are meant to be one-shot; this silently degrades to unlimited replay on any DB blip, and the audit-log call above it just logs an error and moves on. Consequence: bearer-token reuse for personal-data downloads."
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs",
+        "backend/crates/db/src/repositories/data_export.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-data-export-limit1000-truncation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-04 (api-core)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/crates/db/src/repositories/data_export.rs:587-597 \u2014 get_activity_exports hard-caps audit_logs at `LIMIT 1000` with no pagination, no continuation cursor, and no marker in the export payload telling the subject that older rows were dropped.",
+        "backend/crates/db/src/repositories/data_export.rs:692-704 \u2014 get_message_exports applies the same silent `LIMIT 1000` to the user's outbound messages. Both are called from the GDPR download handler (backend/servers/api-server/src/routes/gdpr.rs:209-213 collect_user_data), so any active user with >1000 audit entries or >1000 messages receives an officially-labelled GDPR export that is materially incomplete. Article 15(3) requires a copy of *all* personal data; this is a data-completeness / compliance bug, not a perf knob."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/crates/db/src/repositories/data_export.rs",
+        "backend/servers/api-server/src/routes/gdpr.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-data-export-null-on-serialize-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-04 (api-core)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/gdpr.rs:215 \u2014 `Ok(Json(serde_json::to_value(user_data).unwrap_or_default()))` swallows any serde_json error and returns `Json(Value::Null)` with 200 OK on the GDPR download endpoint. mark_downloaded has already fired above, so a serialization failure leaves the export marked 'downloaded' but the subject receives literal `null` \u2014 silent data loss on a right-of-access endpoint, with no way for the caller to distinguish it from 'no data'. Should map the error to 500 and NOT mark the request downloaded before the body is successfully materialized."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test brief exists + header",
+      "observed": "post-write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursor advanced",
+      "observed": "last_pr_seen 2921\u21922935, last_commit_sha bumped, seen_signals grew",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no seen signal re-scored",
+      "observed": "all new IDs",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8, decay applied",
+      "observed": "portfolio-analytics-caps-100 decayed 1\u21920\u2192dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass annotation",
+      "observed": "both plans annotated in brief",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans, metadata+headings valid",
+      "observed": "2 plans; both pass metadata=4, headings=11, capabilities\u22651, mode declared, files exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "post-stage check",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "post-stage grep",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failed; brief lists none",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "24 \u2192 26 plans (2 new); prior 24 all still on disk",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "8 archived unchanged",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no auto-fix this run)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 gate is no-op",
+      "observed": "no management artifacts touched",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret",
+      "observed": "post-stage grep",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal in allowlist met certainty bar; screen-map-drift/orphan pipeline not triggered this run"
+}

@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days — dropped to 0"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-04",
       "plan": null
     },
     {
@@ -7842,16 +7843,18 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "needs-human-judgement",
+      "status": "done",
       "sources": [
-        "PR #2558"
+        "PR #2558",
+        "PR #2558 (merged)"
       ],
       "evidence": [
-        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559."
+        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559.",
+        "resolved: PR #2558 merged 2026-09-04 — feat(acc): invoice PDF render endpoint (UC-ACC-05.9)"
       ],
       "files": [],
       "created_at": "2026-08-12",
-      "updated_at": "2026-08-12",
+      "updated_at": "2026-09-04",
       "plan": null
     },
     {
@@ -9879,7 +9882,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 4,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
@@ -9888,7 +9891,8 @@
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
         "PortalListingsRepository already calls GET /api/v1/my/listings (listMyListings) but has NO create method; backend endpoint POST /api/v1/my/listings already exists (portal_listings.rs:24 route + :207 create_listing, registered in main.rs:205) — fix is KMP-only",
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
-        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4."
+        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
+        "promoted 2026-09-04: adversarial pass passed; plan written"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9897,7 +9901,8 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-01"
+      "updated_at": "2026-09-04",
+      "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
@@ -10601,6 +10606,135 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "churn-hotspot-data-export-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/data_export.rs — 3 commits in window",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-window-2026-09-04"
+      ],
+      "evidence": [
+        "data_export.rs saw 3 commits since 2026-09-01 (PRs #2916 GDPR data-export counts, #2928 snapshot-consistency, #2924 follow-up) — new hotspot"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/data_export.rs"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-data-export-test-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/data_export_test.rs — 3 commits in window",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-window-2026-09-04"
+      ],
+      "evidence": [
+        "data_export_test.rs saw 3 commits since 2026-09-01 in lockstep with data_export.rs — snapshot-consistency test churn"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/data_export_test.rs"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-emergency-dir-error-i18n-test",
+      "title": "Churn hotspot: EmergencyContactDirectoryPage.errorI18n.test.tsx — 2 commits in window",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-window-2026-09-04"
+      ],
+      "evidence": [
+        "EmergencyContactDirectoryPage.errorI18n.test.tsx saw 2 commits since 2026-09-01 (PRs #2913 i18n + #2927 update-error test cover); underlying page was recently patched twice"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.errorI18n.test.tsx"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-data-export-download-token-reuse",
+      "title": "GDPR download token becomes replayable when mark_downloaded errors are swallowed — one-shot token degrades to unlimited reuse until expires_at",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/gdpr.rs:198-201 — download_export drops the Result of mark_downloaded via `let _ = state.data_export_repo.mark_downloaded(...).await;` after streaming the export payload",
+        "backend/crates/db/src/repositories/data_export.rs:271-281 — get_by_token filters only `status = ready`; if mark_downloaded fails transiently, the same download_token stays valid and can be replayed for the full ready-window until expires_at",
+        "GDPR download tokens are meant to be one-shot; silent degradation to unlimited replay on any DB blip; audit-log call above it also just logs an error and moves on",
+        "promoted 2026-09-04: adversarial pass passed; plan written"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs",
+        "backend/crates/db/src/repositories/data_export.rs"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": "plans/code-review-api-core-data-export-download-token-reuse.md"
+    },
+    {
+      "id": "code-review-api-core-data-export-limit1000-truncation",
+      "title": "GDPR data-export silently truncates audit_logs + messages at LIMIT 1000 — Article 15(3) completeness violation",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (api-core)"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/data_export.rs:587-597 — get_activity_exports hard-caps audit_logs at LIMIT 1000, no pagination, no continuation cursor, no marker in the export payload",
+        "backend/crates/db/src/repositories/data_export.rs:692-704 — get_message_exports applies the same silent LIMIT 1000 to the user outbound messages; both called from GDPR download handler (gdpr.rs:209-213 collect_user_data)",
+        "Any user with >1000 audit entries or >1000 messages receives an officially-labeled GDPR export that is materially incomplete — Article 15(3) requires a copy of all personal data"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/data_export.rs",
+        "backend/servers/api-server/src/routes/gdpr.rs"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-data-export-null-on-serialize-fail",
+      "title": "GDPR download endpoint returns Json(Value::Null) 200 OK on serde_json failure — silent data loss after mark_downloaded already fired",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/gdpr.rs:215 — Ok(Json(serde_json::to_value(user_data).unwrap_or_default())) swallows any serde_json error and returns Json(Value::Null) 200 OK",
+        "mark_downloaded has already fired above (:198-201), so a serialization failure leaves the export marked downloaded but the subject receives literal null — silent data loss on a right-of-access endpoint",
+        "Fix: map the error to 500 and do NOT mark the request downloaded before the body is successfully materialized"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
     }
   ]
 }
