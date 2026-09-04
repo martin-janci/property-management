@@ -1,0 +1,40 @@
+{
+  "run_iso": "2026-09-04T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven: claimable backlog starved (landable claimable ~0, entire open backlog mobile-native/KMP-gated and structurally unlandable in the cloud runner). Need fresh LANDABLE vectors. Rotating static review. Oldest-unreviewed non-mobile segment candidates were all 2026-08-29 (ppt-web-*/reality-web/mobile-rn); reality-server last reviewed 2026-08-31. Selected reality-server as churn-aligned: the most recent churn wave (2026-08-31) touched two reality-server Rust files (routes/sso.rs, services/search_alert_drainer.rs). mobile-native-kmp NOT reviewed this run per dispatcher bias (unlandable in cloud). Backend Rust segment preferred over frontend for landability.",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "churn-aligned (2026-08-31 churn hit backend/servers/reality-server/src/routes/sso.rs + services/search_alert_drainer.rs). Saturation check passed: reality-server has 0 open code-review-finding rows in backlog.json (both prior findings are done). mobile-native-kmp was the oldest-unreviewed (2026-08-25) but skipped: structurally unlandable in cloud runner per dispatcher directive.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-server-saved-search-match-limit-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-server)",
+      "segment": "reality-server",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Saved-search alert matching silently drops matches beyond `config.match_limit` (default 100) in a single cadence window. The worker calls `find_new_match_listing_ids(&query, Some(since), match_limit)` which runs `SELECT l.id ... WHERE l.published_at > $since ORDER BY l.published_at DESC LIMIT $limit` (backend/crates/db/src/repositories/reality_portal/searches.rs:102-121) — returning only the NEWEST `match_limit` matches. It then commits `enqueue_and_advance_saved_search`, whose `mark_saved_search_matched` unconditionally sets `last_matched_at = now()` (searches.rs:185-192). Because the watermark jumps to now() regardless of how many rows the capped query returned, any matching listing ranked 101+ in that window (i.e. published_at between `since` and the 100th-newest match) has published_at <= now() and is excluded from every subsequent run's `published_at > since` filter. Net effect: on a broad saved search over a daily/weekly cadence on an active portal (>100 new matching listings per window is realistic for e.g. 'apartments for rent in Bratislava'), the user is never notified about the older portion of the batch, and `match_count` also undercounts (incremented by the capped listing_ids.len()). Fix options: page the query and advance the watermark only to the oldest UNPROCESSED match's published_at when the cap is hit, or advance last_matched_at to the min(published_at) of the returned rows rather than now() when `rows.len() == match_limit`, so the next run resumes from the truncation boundary instead of skipping past it.",
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-alert-drainer-stub-delivery",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-server)",
+      "segment": "reality-server",
+      "expert": "rust",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "SearchAlertDrainerWorker marks saved-search alerts permanently delivered even when no real notification is sent, creating a silent-loss trap at the transport cutover. The drainer defaults to `LogEmailTransport`/`LogPushTransport` (backend/servers/reality-server/src/services/search_alert_drainer.rs:181-224), whose `send_email`/`send_push` ALWAYS return Ok(()). In `run_once` (lines 358-434) the email stub therefore always sets `any_ok = true`, so every alert row gets `mark_search_alert_notified(alert.id)` (sets notified_at) despite nothing actually leaving the process. This is documented as an intentional first cut, but the forward-looking hazard is NOT addressed: `list_undelivered_search_alerts` filters on notified_at, so when a real SMTP/FCM/APNs adapter is later injected via `with_transports`, every alert queued during the stub period is already notified_at != null and will be skipped forever — those users receive zero first real notification at cutover. Recommend either (a) gate `mark_search_alert_notified` on a transport that reports itself as real (add an `is_real()`/`enabled` seam to the transport traits so the log stubs do NOT advance notified_at), or (b) document a one-time reset of notified_at for the stub-era backlog as part of the real-transport rollout runbook.",
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ]
+    }
+  ]
+}
