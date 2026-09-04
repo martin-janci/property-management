@@ -1,9 +1,24 @@
 {
-  "generated": "2026-09-03T02:28:15Z",
+  "generated": "2026-09-04T06:34:40Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-04T06:34:40Z",
+      "prs_scanned": 2,
+      "clean": [
+        2931,
+        2932
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-21), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable (proxy-403) + git push proxy-blocked -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no build/DB in cloud runner: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres). Label-based enumeration (list_pull_requests closed base=dev updated-desc, filtered merged_at present + no post-merge-reviewed/no-review-needed label) surfaced exactly 2 net-new never-reviewed PRs (#2931, #2932, both merged 2026-09-03 AFTER the prior run's 02:28Z cursor); every other in-window merge already carries post-merge-reviewed. Reviewed both directly (2 PRs < 5-parallel cap, no subagent fan-out). NOTE: both are the auto-impl fixes for the follow-up issues the PRIOR run filed (#2931 makes #2929's test fail-on-main; #2932 implements #2930) -- a follow-up-of-follow-up loop closure. BOTH CLEAN, 0 net-new issues. #2931 (gh-issue-2929, db crate): production refactor splits report_summary's two reads into pub(crate) count_summary/list_entries seams driven on the SAME &mut tx (public sig/behaviour unchanged; &mut tx deref-coerces to &mut PgConnection; cargo clippy -p db clean per PR body). New report_summary_reads_share_one_snapshot_under_contention uses a single-connection capped pool to the same test DB + FIFO waiter ordering (report task waiter #1, writer task waiter #2, connection held then released): on the FIXED wiring the one connection is pinned across the whole REPEATABLE READ tx so the writer's 4th row lands after both reads (total_requests==entries.len()==3); on the pre-#2924 two-&pool-reads wiring the connection frees between reads so the writer commits into the gap and entries(4)!=counts(3) -> assert_eq FAILS. Genuinely discriminates fixed-vs-unfixed via the real public report_summary; resolves #2929's fail-on-main gap. Minor (not filed): the 16x yield_now handshake to place the report task as waiter #1 is a heuristic, but the single-connection FIFO makes the interleaving effectively deterministic. #2932 (gh-issue-2930, reality-server agent_reviews_tests): adds create_review_self_review_returns_403 (user A owns realtor_profile, mints A's token, POSTs review -> 403 FORBIDDEN) + companion create_review_other_user_succeeds_201 (user B reviews A -> 201 CREATED), both #[sqlx::test] driving the real HTTP path through the RequestPrincipal extractor (principal_kind='platform' to resolve without host middleware, mirroring the oversized-body test). Covers exactly the create_review WIRING gap #2930 named (arg order principal.user_id vs realtor_profiles.user_id + guard-fires-not-fallthrough) that the pure reject_self_review unit test could not; the positive+negative pair proves the guard is self-review-specific, not a blanket reject. Status-only asserts -> no JSON-key-case exposure. Minor (not filed): the 403 test does not additionally assert zero review rows persisted, and the 201 path shows the endpoint gates only self-review (any authenticated user may review) -- pre-existing endpoint design, out of scope for a test PR. 0 follow-up issues opened -> no breadcrumb comments. Both PRs labeled post-merge-reviewed via issue_write.update (both carried no pre-existing labels, no clobber) so they will not resurface. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push; untouched assignments.json/action-list.json/archives).",
+      "focus_prs": [
+        2931,
+        2932
+      ]
+    },
     {
       "run_at": "2026-09-03T02:28:15Z",
       "prs_scanned": 3,
@@ -579,17 +594,6 @@
         }
       ],
       "note": "DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static review only (no checkout/compile beyond local key-existence grep). Window merged-to-dev 14d (>=2026-08-03), base=dev, max_prs=15. 132 in-window merges total; 125 unlabeled; reviewed the 15 most-recently-merged unlabeled PRs (2772-2787, minus 2780 which is not a dev-merge). THIS RUN APPLIES post-merge-reviewed PR-labels via MCP issue_write (prior runs did not), so future runs dedup by label as the skill intends -- note #2772 was already reviewed 2026-08-16 (clean) but resurfaced unlabeled; re-confirmed clean and now labeled. 14 CLEAN, 1 ISSUE. Clean highlights, uniformly high quality with IG3 regression tests + rationale doc-comments: #2787 (Google JWKS client build no-panic, mirrors alexa fallback), #2786 (NFC SecureStore 2KB-cap chunking w/ manifest+torn-write detection+legacy read-through; 5 round-trip tests), #2785 (ComparisonView next-intl i18n across 6 locales, stable row ids for keys+highlight, locale-aware Intl price format), #2783 (ppt-web moderation dashboard i18n, react-i18next plural keys), #2782 (payment-matcher counterparty-IBAN tie-breaker w/ canonical IBAN normalise + clamp; VS+amount-tie regression test), #2781 (AgencyErrorStates NoAgencyMessage next-intl), #2779 (ppt-web errorHandler catalogue routed through react-i18next w/ KNOWN_ERROR_CODES set + default fallback; sk/en + rate-limit-interpolation tests), #2778 (CreateFault mock AI gated behind DEV-only VITE_ENABLE_MOCK_AI_TRIAGE + honest 'unavailable' notice -- stops shipping fabricated triage), #2777 (RealtorManagement i18n; verified all newly-referenced keys buttonSending/formLabelTitle/statActiveListings/buttonCancel pre-exist across all 6 locales), #2776 (moderation stop fabricating previous_violations/report_source; age_hours from real reported_at), #2775 (NFC access-log JSON.parse guarded, post-grant safety), #2774 (payment-matcher surfaces only best-scoring tier, ties kept; buries-worse-candidates regression), #2773 (public protected-share password brute-force throttle token:ip reusing shared sliding-window limiter; 4 tests -- NOTE its correctness depends on trustworthy client IP, see the #2784 finding), #2772 (voice /oauth/refresh platform-admin-bypass authz test). 1 ISSUE opened: #2789 on #2784 (spoofable proxy-header client IP -> throttle bypass + audit poisoning). Existing open from-merged-review issues remain: #2366, #2759."
-    },
-    {
-      "run_at": "2026-08-16T12:26:18Z",
-      "prs_scanned": 4,
-      "clean": [
-        2772,
-        2771,
-        2770,
-        2769
-      ],
-      "with_issues": []
     }
   ]
 }
