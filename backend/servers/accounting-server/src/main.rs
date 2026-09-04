@@ -22,6 +22,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 mod observability;
+mod pdf;
 mod routes;
 pub mod state;
 
@@ -171,6 +172,7 @@ fn cors_layer() -> CorsLayer {
         routes::invoices::list_invoices,
         routes::invoices::get_invoice,
         routes::invoices::list_invoice_items,
+        routes::invoices::get_invoice_pdf,
         routes::invoices::create_invoice,
         routes::invoices::update_invoice,
         routes::invoices::delete_invoice,
