@@ -1,0 +1,211 @@
+{
+  "generated": "2026-09-04T08:39:55Z",
+  "run_iso": "2026-09-04T08:39:55Z",
+  "source_run": "routine 2026-09-04",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "type": "code-review-finding",
+      "source": "phase-1.5-ppt-web-core-2026-09-04",
+      "score_delta": 2,
+      "evidence": [
+        "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (AuthContext.tsx:583-585). AUTHED_QUERY_KEY_ROOTS (queryKeys.ts:354-392) mixes THREE classes of root: (a) the centralized `queryKeys` factory roots, (b) shared @ppt/api-client key-factory roots (meters/reports), and (c) ~13 AD-HOC string roots used directly in feature hooks scattered across the tree (developer, ocr, actionQueue, executionLogs, executionStats, ai-chat, financial, rentals, predictive-maintenance, sentiment, notification-analytics, notification-triggers). Classes (b) and (c) are plain string literals with NO compile-time or lint link back to the query keys actually used at their call sites — nothing forces a new ad-hoc root to be added here.",
+        "This is not hypothetical: the file's own comments document TWO prior cross-session data leaks caused by exactly this drift. queryKeys.ts:352 cites issue #712 (logout's original `queryClient.clear()` was replaced by this scoped list); queryKeys.ts:388-391 states the `notification-triggers` root 'leaked into the next session (PR #2650 fix was incomplete - this root was missed)'. The purge covers 'the most sensitive data in the app' (AuthContext.test.tsx:205-208: invoices, contacts, bank statements, payment matching, AR aging) which 'must never survive logout on a shared workstation' (queryKeys.ts:348-350).",
+        "The regression guard cannot catch future drift for class (b)/(c) roots: AuthContext.test.tsx:188-217 asserts `expect(AUTHED_QUERY_KEY_ROOTS).toContain(root)` over a HARD-CODED literal array of roots (user, faults, ai-chat, developer, financial, ...). A newly added ad-hoc feature-hook root must be manually added to BOTH the source list AND this test's literal array; if a developer forgets both (the exact failure mode of #712/#2650), the test still passes green and the new user-/tenant-scoped cache silently survives logout on a shared workstation. Landable pure-frontend hardening: derive the eviction set from a single machine-checkable source (e.g. mark every auth-scoped key factory and enumerate them, or add a lint/type constraint) so the allowlist cannot drift out of sync with the query keys in use, rather than relying on a hand-maintained list + hardcoded test mirror. Severity medium (+2): reachable data-exposure on shared workstations, but conditioned on a future/omitted root + shared-device usage; confidence medium (mechanism and two prior occurrences verified statically from source comments + the test body, not runtime-reproduced today)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "type": "code-review-finding",
+      "source": "phase-1.5-ppt-web-core-2026-09-04",
+      "score_delta": 1,
+      "evidence": [
+        "errorHandler.ts documents an i18n contract in its header (errorHandler.ts:7-10): user-facing copy 'is resolved through the shared i18n' and only opaque tokens (requestIds, raw backend messages) pass through untranslated. parseApiError honours this by resolving titles/messages via `i18n.t('errors.catalogue.<code>...')` (errorHandler.ts:103,108-117,133). But formatFieldName (errorHandler.ts:437-447) builds a user-facing field LABEL purely from the English field path: it splits the backend snake_case path on '_' and Title-cases each ASCII word (`word.charAt(0).toUpperCase() + word.slice(1)`), with no i18n lookup. formatValidationErrors (errorHandler.ts:422-428) then renders `${formatFieldName(field)}: ${message}` for display.",
+        "Consequence: the app ships sk/cs/de/en locales (root CLAUDE.md; reality-web messages/), yet inline/summary validation errors surfaced through formatValidationErrors render field labels in English regardless of active locale (e.g. `Street Name: <msg>` on a Slovak form). This directly contradicts the module's stated i18n contract for a class of user-facing text. It is a genuine gap rather than an intentional pass-through: `message` (the backend string) is explicitly called out as untranslated, but the derived field LABEL is generated client-side and could be localized.",
+        "Severity low (+1), landable pure-frontend: route field labels through i18n (e.g. `i18n.t('fields.<path>', { defaultValue: formatFieldName(field) })`) so localized label keys win with the current Title-cased output as the English fallback, keeping backward compatibility for unmapped fields. Confidence medium: the missing i18n call and the English-only Title-case transform are code-verified in errorHandler.ts:422-447; the visible impact assumes formatValidationErrors output is rendered to end users on a non-English locale (the function is an exported public helper), not runtime-confirmed against a specific screen."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "lag-warning-2026-09-04",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-09-01T18:38:58Z; now=2026-09-04T08:35Z; lag ~62h (>36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-04",
+      "type": "stale-routine-alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "state.last_run_iso ~3 days old — daily cloud cron may have missed 2026-09-02 and 2026-09-03 fires"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "issue-closed-2652-2026-09-04",
+      "type": "issue-close-unblocks",
+      "source": "issue #2652",
+      "score_delta": 0,
+      "evidence": [
+        "issue #2652 (mobile-native AGP egress cloud-unlandable) closed 2026-09-04T04:32:22Z; mobile-native-kmp backlog items become landable in cloud runner"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — score-2 medium-confidence code-review signals not in Phase 5 allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs + head -1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8; decay applied",
+      "observed": "portfolio-analytics-caps-100 decayed 1→0 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plan annotated in brief",
+      "observed": "passed",
+      "expected": "passed"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan; 4 metadata + 11 headings + capability tick + Mode + Files-exist",
+      "observed": "1 plan, all sections present, 2 caps ticked, Mode: cloud-ok, all 5 Files paths resolve",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed cursors respected",
+      "observed": "no phases failed",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still tracked",
+      "observed": "all present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotone",
+      "observed": "cur=9 prev=9",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidate)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor bounds; coverage_cursor 7→8 advanced with pm_cursor 5→6",
+      "observed": "cc=8 in [0,13) advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "decay": [
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
+      "prev": 1,
+      "new": 0,
+      "dropped": true
+    }
+  ],
+  "resolutions": [],
+  "new_or_bumped": [
+    {
+      "kind": "new",
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "score": 2
+    },
+    {
+      "kind": "new",
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "score": 1
+    }
+  ],
+  "verified_at": "2026-09-04T08:43:55Z"
+}

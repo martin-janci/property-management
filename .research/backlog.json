@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-04",
       "plan": null
     },
     {
@@ -9879,16 +9880,18 @@
       "vector": "bug",
       "confidence": "high",
       "score": 4,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "issue #2652 close 2026-09-04"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
         "PortalListingsRepository already calls GET /api/v1/my/listings (listMyListings) but has NO create method; backend endpoint POST /api/v1/my/listings already exists (portal_listings.rs:24 route + :207 create_listing, registered in main.rs:205) — fix is KMP-only",
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
-        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4."
+        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
+        "issue #2652 (AGP egress / mobile-native cloud-unlandable blocker) CLOSED 2026-09-04T04:32:22Z — mobile-native tasks now landable in cloud runner; supersedes earlier 'unlandable' caveats"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9897,7 +9900,8 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-01"
+      "updated_at": "2026-09-04",
+      "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
@@ -10601,6 +10605,51 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "title": "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by i",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-09-04 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (AuthContext.tsx:583-585). AUTHED_QUERY_KEY_ROOTS (queryKeys.ts:354-392) mixes THREE classes of root: (a) the centralized `queryKeys` factory roots, (b) shared @ppt/api-client key-factory roots (meters/reports), and (c) ~13 AD-HOC string roots used directly in feature hooks scattered across the tree (developer, ocr, actionQueue, executionLogs, executionStats, ai-chat, financial, rentals, predictive-maintenance, sentiment, notification-analytics, notification-triggers). Classes (b) and (c) are plain string literals with NO compile-time or lint link back to the query keys actually used at their call sites — nothing forces a new ad-hoc root to be added here.",
+        "This is not hypothetical: the file's own comments document TWO prior cross-session data leaks caused by exactly this drift. queryKeys.ts:352 cites issue #712 (logout's original `queryClient.clear()` was replaced by this scoped list); queryKeys.ts:388-391 states the `notification-triggers` root 'leaked into the next session (PR #2650 fix was incomplete - this root was missed)'. The purge covers 'the most sensitive data in the app' (AuthContext.test.tsx:205-208: invoices, contacts, bank statements, payment matching, AR aging) which 'must never survive logout on a shared workstation' (queryKeys.ts:348-350).",
+        "The regression guard cannot catch future drift for class (b)/(c) roots: AuthContext.test.tsx:188-217 asserts `expect(AUTHED_QUERY_KEY_ROOTS).toContain(root)` over a HARD-CODED literal array of roots (user, faults, ai-chat, developer, financial, ...). A newly added ad-hoc feature-hook root must be manually added to BOTH the source list AND this test's literal array; if a developer forgets both (the exact failure mode of #712/#2650), the test still passes green and the new user-/tenant-scoped cache silently survives logout on a shared workstation. Landable pure-frontend hardening: derive the eviction set from a single machine-checkable source (e.g. mark every auth-scoped key factory and enumerate them, or add a lint/type constraint) so the allowlist cannot drift out of sync with the query keys in use, rather than relying on a hand-maintained list + hardcoded test mirror. Severity medium (+2): reachable data-exposure on shared workstations, but conditioned on a future/omitted root + shared-device usage; confidence medium (mechanism and two prior occurrences verified statically from source comments + the test body, not runtime-reproduced today)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "title": "ppt-web-core errorHandler formatFieldName renders English labels ignoring active i18n locale",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-09-04 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "errorHandler.ts documents an i18n contract in its header (errorHandler.ts:7-10): user-facing copy 'is resolved through the shared i18n' and only opaque tokens (requestIds, raw backend messages) pass through untranslated. parseApiError honours this by resolving titles/messages via `i18n.t('errors.catalogue.<code>...')` (errorHandler.ts:103,108-117,133). But formatFieldName (errorHandler.ts:437-447) builds a user-facing field LABEL purely from the English field path: it splits the backend snake_case path on '_' and Title-cases each ASCII word (`word.charAt(0).toUpperCase() + word.slice(1)`), with no i18n lookup. formatValidationErrors (errorHandler.ts:422-428) then renders `${formatFieldName(field)}: ${message}` for display.",
+        "Consequence: the app ships sk/cs/de/en locales (root CLAUDE.md; reality-web messages/), yet inline/summary validation errors surfaced through formatValidationErrors render field labels in English regardless of active locale (e.g. `Street Name: <msg>` on a Slovak form). This directly contradicts the module's stated i18n contract for a class of user-facing text. It is a genuine gap rather than an intentional pass-through: `message` (the backend string) is explicitly called out as untranslated, but the derived field LABEL is generated client-side and could be localized.",
+        "Severity low (+1), landable pure-frontend: route field labels through i18n (e.g. `i18n.t('fields.<path>', { defaultValue: formatFieldName(field) })`) so localized label keys win with the current Title-cased output as the English fallback, keeping backward compatibility for unmapped fields. Confidence medium: the missing i18n call and the English-only Title-case transform are code-verified in errorHandler.ts:422-447; the visible impact assumes formatValidationErrors output is rendered to end users on a non-English locale (the function is an exported public helper), not runtime-confirmed against a specific screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
     }
   ]
 }
