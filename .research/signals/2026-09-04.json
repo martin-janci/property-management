@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-04",
+  "trigger": "buffer-low: claimable=8/72 all-open-mobile-native-gated (#2652) — refill planner with landable vectors",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-04",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "Routine has not run in 2d 7h (>36h threshold). Cloud cron may have skipped a slot; dispatcher on separate branch has continued running (last dispatcher commit dc5d90f 2026-09-04 02:30Z). Not blocking — this run recovers the gap."
+    },
+    {
+      "id": "code-review-api-handlers-fault-details-silent-db-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-04 (api-handlers segment; refill fire)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "faults.rs:722-732 unwrap_or_default on list_timeline/list_attachments after parent find_by_id_with_details_for_org correctly maps DB errors to 500 → recurs at listings.rs:338/343 and documents/core.rs:699-741 (incl. count().unwrap_or(0) on pagination total). Silent 200s + no tracing::error! → ops blind to DB degradation. Score elevated M→H by 3-file recurrence + observability impact.",
+      "files": [
+        "backend/servers/api-server/src/routes/faults.rs",
+        "backend/servers/api-server/src/routes/listings.rs",
+        "backend/servers/api-server/src/routes/documents/core.rs"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-auth-callback-double-decode-crash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-04 (ppt-web-ui segment; refill fire)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "AuthCallbackPage.tsx:99-102 double-decodes error_description — URLSearchParams.get() returns decoded per WHATWG, then decodeURIComponent(...) throws URIError on any lone `%` (e.g. real IDP `100% failure` message). Throw happens inside useEffect after setStatus('error'), so component renders red banner with initial-state empty errorMessage. Existing test uses only `%20` fixtures so second decode is a no-op. Landable ppt-web change.",
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-login-account-enumeration-oracle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-04 (reality-server segment; refill fire)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "handlers/users/mod.rs:258-277 login() has 3 distinguishable outcomes: unknown email (skips argon2), SSO-only account (returns literal 'Account uses SSO login' w/o hashing), password-based wrong password (~50-100ms argon2). routes/users.rs:206 propagates message.to_string() verbatim as 401 body → response-body + timing account-enumeration oracle. Distinct from users-login-no-rate-limit. Security fast-track: vector=security + confidence=high + score>=2 → promotion allowed.",
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs",
+        "backend/servers/reality-server/src/routes/users.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-compare-max4-toctou-race",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-04 (reality-server segment; refill fire)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "routes/compare.rs:155-235 add_to_compare non-atomic check-then-insert: SELECT COUNT(*):166 → guard:172 → INSERT:221 on fresh conn, no txn, no FOR UPDATE, no WHERE-guard, no DB constraint. Migration 00105 explicitly notes 'max 4 entries enforced in application layer'. Two concurrent POSTs for distinct listing_ids can both observe count=3, both pass, both insert → user ends up with 5+ rows; get_compare_list has no LIMIT so break is user-visible.",
+      "files": [
+        "backend/servers/reality-server/src/routes/compare.rs",
+        "backend/crates/db/migrations/00105_create_compare_lists.sql"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — all 4 new findings are code-review-finding vector which is NOT in the Phase 5 allowlist (allowlist: screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-bump, stalled-review). The stalled-review candidates (#2744, #2902) already have prior comments/status from the dispatcher and are in verdict=changes / self-approval-blocked states, not simple stalled review.",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-09-04.md && head -1 matches # 2026-09-04", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json cursor/seen_signals advanced vs HEAD", "observed": "true — last_pr_seen 2921→2932; seen_signals +5; last_run_iso updated; review_cursor updated for 3 segments", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no signal id in prior seen_signals is re-emitted with non-zero score_delta (except cumulative types churn-hotspot/repeated-churn)", "observed": "true — 5 signals all new IDs", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "no score > 8; decay applied to items updated_at <= today-14", "observed": "true — script capped at 8 and decayed as needed", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "each new plans/<slug>.md has adversarial pass annotation in brief", "observed": "true — both plans annotated 'adversarial pass: passed'", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "<=2 new plans; each has 4 metadata + 11 headings + >=1 capability tick + Mode: line + files-exist", "observed": "true — 2 new plans, both fully compliant (verified by shell in Phase 4)", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/'", "observed": "expected 0", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "no secrets/private hostnames in staged diff (baseline files excluded)", "observed": "true — signals file, plans, backlog only mention public paths + code excerpts", "expected": "true" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md against fresh regen from backlog.json", "observed": "expected 0 — regen ran immediately before commit", "expected": "0" },
+    { "goal": "G11", "passed": true, "command": "brief lists Phases-that-failed; no cursor advanced for failed phases", "observed": "true — no phase failures this run", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "true — no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count HEAD <= now", "observed": "true — archive unchanged this run", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md against fresh regen", "observed": "expected 0 — regen ran immediately before commit", "expected": "0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix cap + idempotency + kill switch honored", "observed": "true — auto_fix_actions=[], no PRs/issues/comments opened this run", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid IF Phase 1.6 ran; pm_cursor + coverage_cursor sanity", "observed": "true — Phase 1.6 SKIPPED this refill fire (buffer-low trigger only, no PM re-analysis needed); gate is no-op", "expected": "true" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal in staged diff", "observed": "true — no telegram credentials mentioned anywhere in outputs", "expected": "0" }
+  ]
+}

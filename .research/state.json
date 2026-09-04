@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
+  "last_run_iso": "2026-09-04T02:50:00Z",
+  "last_run_ms": 15000,
+  "last_pr_seen": 2932,
   "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_commit_sha": "dc5d90f49c93b89f4fe0743c9350f586b0cc658e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1002,23 +1002,28 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-09-04",
+    "code-review-api-handlers-fault-details-silent-db-swallow",
+    "code-review-ppt-web-ui-auth-callback-double-decode-crash",
+    "code-review-reality-server-login-account-enumeration-oracle",
+    "code-review-reality-server-compare-max4-toctou-race"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-08-31",
+    "api-handlers": "2026-09-04",
     "api-core": "2026-09-01",
-    "reality-server": "2026-08-31",
-    "ppt-web-ui": "2026-08-29",
+    "reality-server": "2026-09-04",
+    "ppt-web-ui": "2026-09-04",
     "ppt-web-core": "2026-08-29",
     "reality-web": "2026-08-29",
     "mobile-rn": "2026-08-29",
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 376,
+    "plans_created": 31,
     "quiet_days": 3,
     "auto_fix_count": 0
   },

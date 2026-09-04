@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "[decayed 2026-09-04] no new signals in 14d → dropped"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-04",
       "plan": null
     },
     {
@@ -10330,18 +10331,20 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout)",
+        "PR #2926"
       ],
       "evidence": [
         "push_fanout.rs:330-336 falls back to `send_fcm_legacy` (fn at :395-426) when no FCM_OAUTH_TOKEN is configured; `send_fcm_legacy` POSTs to `{base_url}/fcm/send` (default base_url `https://fcm.googleapis.com`, :247) with `Authorization: key={FCM_SERVER_KEY}`.",
         "Google decommissioned the legacy HTTP API on 2024-06-20 — `POST https://fcm.googleapis.com/fcm/send` returns 404/401 for all callers. The fallback is unreachable except for a mock base_url.",
-        "Fix shape: delete send_fcm_legacy + the FCM_SERVER_KEY branch of send_fcm_v1, and tighten the config so v1 is required (return a startup error when FCM_PROJECT_ID is set without OAuth wiring). Tied to the fcm-v1-static-oauth-token item — both live in the same file and share test scaffolding."
+        "Fix shape: delete send_fcm_legacy + the FCM_SERVER_KEY branch of send_fcm_v1, and tighten the config so v1 is required (return a startup error when FCM_PROJECT_ID is set without OAuth wiring). Tied to the fcm-v1-static-oauth-token item — both live in the same file and share test scaffolding.",
+        "resolved: PR #2926 merged 2026-09-02 — remove decommissioned FCM legacy send path"
       ],
       "files": [
         "backend/servers/api-server/src/services/push_fanout.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-04",
       "plan": null,
       "reconciled": {
         "at": "2026-09-02T06:27:30Z",
@@ -10507,17 +10510,19 @@
       "score": 2,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
+        "PR #2919"
       ],
       "evidence": [
         "Tier-1d finding (see .research/signals/2026-08-31-reality-server-tier1d.json) — agent-review self-review gap without a reviewer_id != subject_id guard.",
-        "Routine 2026-09-01 spot-check pending: full file re-verification deferred to Phase-3 promotion (needs local grep). Kept score at tier1d-recorded +2."
+        "Routine 2026-09-01 spot-check pending: full file re-verification deferred to Phase-3 promotion (needs local grep). Kept score at tier1d-recorded +2.",
+        "resolved: PR #2919 merged 2026-09-02 — reject self-review on agent review endpoint (subject!=reviewer gate added; e2e 403 test in follow-up PR #2932)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/reviews.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-04",
       "plan": null,
       "reconciled": {
         "at": "2026-09-02T18:23:28Z",
@@ -10556,17 +10561,19 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 reality-server)",
+        "PR #2922"
       ],
       "evidence": [
         "Tier-1d finding (see .research/signals/2026-08-31-reality-server-tier1d.json) — saved-search returns error strings that a client parses for status; brittle contract.",
-        "Fix shape: introduce a typed error-code enum and serialize as `code`/`message` pairs; align with existing api-error-envelope pattern."
+        "Fix shape: introduce a typed error-code enum and serialize as `code`/`message` pairs; align with existing api-error-envelope pattern.",
+        "resolved: PR #2922 merged 2026-09-01 — derive saved-search HTTP status from typed error enum"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/saved_searches.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-04",
       "plan": null,
       "reconciled": {
         "at": "2026-09-01T20:38:46Z",
@@ -10583,24 +10590,120 @@
       "status": "done",
       "sources": [
         "PR #2915",
-        "PR #2920"
+        "PR #2920",
+        "PR #2925"
       ],
       "evidence": [
         "compliance.rs:319 `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?` — 1 leak site remains after PR #2920 sanitized 16 sites; this site was introduced by PR #2915 (audit-log count query added to fix total-page-len bug).",
         "Fix shape: single-line change — swap `map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))` for `map_err(db_error)` (helper already exists in the same file, added by #2920). Trivial follow-up.",
-        "Routine 2026-09-01 supplementary: grep at eea7067 confirms the single remaining leak site."
+        "Routine 2026-09-01 supplementary: grep at eea7067 confirms the single remaining leak site.",
+        "resolved: PR #2925 merged 2026-09-01 — route compliance audit-log count error through db_error"
       ],
       "files": [
         "backend/servers/api-server/src/routes/compliance.rs"
       ],
       "created_at": "2026-09-01",
-      "updated_at": "2026-09-01",
+      "updated_at": "2026-09-04",
       "plan": null,
       "reconciled": {
         "at": "2026-09-02T00:27:03Z",
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-api-handlers-fault-details-silent-db-swallow",
+      "title": "api-server get_fault_details silently swallows DB errors on timeline/attachments (unwrap_or_default) — same pattern also at listings.rs get_photos/get_syndications + documents core count",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (api-handlers segment)"
+      ],
+      "evidence": [
+        "faults.rs:722-732 `fault_repo.list_timeline(id,is_manager).await.unwrap_or_default()` + `.list_attachments(id).await.unwrap_or_default()` coalesce every sqlx::Error into an empty Vec after the parent find_by_id_with_details_for_org correctly maps errors to 500 → 200 response with timeline:[] & attachments:[] is indistinguishable from 'no data' and no tracing::error! is emitted",
+        "Same pattern recurs at listings.rs:338 (get_photos), :343 (get_syndications) on the public listing-detail response and at documents/core.rs:699-741 including `count().unwrap_or(0)` on pagination total → silent 0 total",
+        "Score elevated M→H by recurrence across ≥3 hot files + observability harm (ops has zero signal when DB layer degrades)",
+        "[promoted 2026-09-04] plan at plans/code-review-api-handlers-fault-details-silent-db-swallow.md — routine Phase 3, buffer-low refill"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/faults.rs",
+        "backend/servers/api-server/src/routes/listings.rs",
+        "backend/servers/api-server/src/routes/documents/core.rs"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": "plans/code-review-api-handlers-fault-details-silent-db-swallow.md"
+    },
+    {
+      "id": "code-review-ppt-web-ui-auth-callback-double-decode-crash",
+      "title": "ppt-web AuthCallbackPage double-decodes error_description — throws URIError on any lone '%' from real IDP messages, leaves empty error banner",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "AuthCallbackPage.tsx:99-102 calls decodeURIComponent(errorDescription) on a value URLSearchParams.get() already returned decoded per WHATWG spec — any surviving lone `%` (e.g. `100%25%20failure` decodes to `100% failure`) makes decodeURIComponent throw URIError inside useEffect and setErrorMessage never runs → red banner rendered with initial-state empty errorMessage",
+        "Existing test AuthCallbackPage.test.tsx:320 fixture uses only benign `%20` sequences so the second decode is a no-op; real Google/Microsoft/Apple SSO error_description strings frequently contain literal `%` in quoted parameters"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-login-account-enumeration-oracle",
+      "title": "reality-server /users/login leaks account existence via distinct error strings + argon2 timing side channel — SSO-only cohort directly enumerable, password cohort by timing",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (reality-server segment)"
+      ],
+      "evidence": [
+        "handlers/users/mod.rs:258-277 login() has 3 distinguishable outcomes: (a) unknown email returns `Invalid email or password` w/o hashing (~<1ms) (b) known email password_hash=NULL returns `Account uses SSO login` w/o hashing (c) known email + wrong password runs argon2 verify (~50-100ms) returning `Invalid email or password`",
+        "routes/users.rs:206 (line ~242 login route) passes `message.to_string()` verbatim as HTTP 401 body → distinguishable response strings",
+        "Distinct from existing code-review-reality-server-users-login-no-rate-limit (brute-force protection); this is response-distinguishability + timing side channel — classic account-enumeration antipattern the api-server login was previously flagged for on a separate branch (code-review-api-handlers-auth-account-enum-suspended)",
+        "Security fast-track candidate: vector=security + confidence=high + score>=2 → promotion allowed per routine-prompt.md Phase 3",
+        "[promoted 2026-09-04] plan at plans/code-review-reality-server-login-account-enumeration-oracle.md — routine Phase 3, buffer-low refill"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs",
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": "plans/code-review-reality-server-login-account-enumeration-oracle.md"
+    },
+    {
+      "id": "code-review-reality-server-compare-max4-toctou-race",
+      "title": "reality-server add_to_compare non-atomic count-then-insert lets concurrent POSTs bypass MAX_COMPARE_LISTINGS=4",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (reality-server segment)"
+      ],
+      "evidence": [
+        "routes/compare.rs:155-235 enforces the 4-listing cap in 3 non-atomic steps: SELECT COUNT(*) at :166 → `if count>=MAX` guard at :172 → bare INSERT at :221 on a fresh connection with no txn, no SELECT FOR UPDATE, no WHERE-guard, no DB-level count constraint",
+        "Migration 00105_create_compare_lists.sql declares only UNIQUE(user_id,listing_id) and explicitly notes 'max 4 entries enforced in application layer' — two concurrent POSTs for distinct listing_ids can both observe count=3, both pass the guard, both insert → user ends up with 5+ rows",
+        "get_compare_list (:74-138) has no LIMIT and returns every row with a listing join → invariant break is user-visible (>4 compare cards) and consumes O(N) DB work per read"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/compare.rs",
+        "backend/crates/db/migrations/00105_create_compare_lists.sql"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": null
     }
   ]
 }
