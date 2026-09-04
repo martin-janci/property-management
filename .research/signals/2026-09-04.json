@@ -1,0 +1,190 @@
+{
+  "date": "2026-09-04",
+  "generated_at": "2026-09-04T03:09:21Z",
+  "since_iso": "2026-09-01T18:38:58Z",
+  "cursors_at_start": {
+    "last_pr_seen": 2921,
+    "last_issue_seen": 2847,
+    "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84"
+  },
+  "cursors_at_end": {
+    "last_pr_seen": 2932,
+    "last_issue_seen": 2930,
+    "last_commit_sha": "dc5d90f49c93b89f4fe0743c9350f586b0cc658e"
+  },
+  "phases_skipped": {
+    "phase_1_5_rotating_review": "skipped-context-budget",
+    "phase_1_6_pm_analysis": "skipped-context-budget",
+    "phase_5_auto_fix": "no candidate"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-04",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-09-01T18:38:58Z; ~56h ago (2d 8h). LAG_DAYS>=3 threshold NOT crossed (stale_routine_alert not fired).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2933",
+      "type": "dep-update-noise",
+      "source": "PR #2933",
+      "score_delta": 0,
+      "evidence": "dependabot: bump the gradle-minor-patch group across 1 directory with 6 updates (opened 2026-09-03)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2934",
+      "type": "dep-update-noise",
+      "source": "PR #2934",
+      "score_delta": 0,
+      "evidence": "dependabot: bump the cargo-minor-patch group across 1 directory with 12 updates (opened 2026-09-03)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": "dependabot: bump the npm-minor-patch group across 1 directory with 40 updates (opened 2026-09-03)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-push_fanout-rs",
+      "type": "churn-hotspot",
+      "source": "PR #2926",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/services/push_fanout.rs \u2014 169 lines this run (PR #2926 removed decommissioned FCM legacy send path; +30 -139). Companion test file backend/servers/api-server/tests/suites/push_delivery_receipt_tests.rs also churned -99 lines removing legacy tests. Not intrinsically alarming \u2014 clean deletion of dead code \u2014 but a top-3 raw-churn file this window.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-04.md && head -1 grep '# 2026-09-04'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state-advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no double-count non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score<=8; decayed 1 item",
+      "observed": "true; portfolio-analytics 1\u21920\u2192dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 vacuously true",
+      "observed": "0 new",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases; cursors advanced",
+      "observed": "phases: 1 ok, 1.5 skipped-budget, 1.6 skipped-budget, 2 ok, 3 ok(no promotions), 4 ok, 5 no candidate, 6 ok",
+      "expected": "cursors match phase outcomes"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "no plan files removed",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "prev=9 now=9",
+      "expected": "now >= prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap check",
+      "observed": "0 actions (no candidate)",
+      "expected": "\u22643 total, \u22641 each of pr/issue/comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 gate is no-op",
+      "observed": "skipped-context-budget",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
