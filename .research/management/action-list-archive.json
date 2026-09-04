@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-09-02T12:35:40Z",
+  "archived_at": "2026-09-04T12:32:00Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3229,6 +3229,20 @@
         "merged_at": null,
         "at": "2026-08-28T06:23:49Z"
       }
+    },
+    {
+      "id": "code-review-api-handlers-capabilities-list-cross-org-retry1",
+      "action": "[DROPPED: assignment failed — invalid premise, false positive vs accepted decision capability-platform-scope.md; no fix warranted] SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant scoping — cross-tenant read if AuditRead is org-scoped [retry 1/2 of failed code-review-api-handlers-capabilities-list-cross-org]",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-09-04T08:25:49Z (retry_of=code-review-api-handlers-capabilities-list-cross-org reason=failed-no-pr cooldown_ok newest_failure=2026-08-28T04:41:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-04T08:25:49Z",
+      "retry_of": "code-review-api-handlers-capabilities-list-cross-org",
+      "retry_round": 1
     },
     {
       "id": "code-review-api-handlers-community-cross-tenant-idor",

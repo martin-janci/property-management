@@ -145,20 +145,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "code-review-api-handlers-capabilities-list-cross-org-retry1",
-      "action": "SECURITY: admin capabilities.rs list_for_user runs grants.list_for_user(user_id) with no org/tenant scoping — cross-tenant read if AuditRead is org-scoped [retry 1/2 of failed code-review-api-handlers-capabilities-list-cross-org]",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-09-04T08:25:49Z (retry_of=code-review-api-handlers-capabilities-list-cross-org reason=failed-no-pr cooldown_ok newest_failure=2026-08-28T04:41:11Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-04T08:25:49Z",
-      "retry_of": "code-review-api-handlers-capabilities-list-cross-org",
-      "retry_round": 1
     }
   ],
   "generated": "2026-08-31T03:10:00Z"
