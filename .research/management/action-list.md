@@ -1,15 +1,16 @@
-# Action list
+# Action List
 
-_Generated: 2026-08-31T03:10:00Z — regenerated from `action-list.json`._
+_Generated: 2026-09-04T14:30:00Z_
 
-| ID | Priority | Owner | Action |
-|---|---|---|---|
-| `pm-devops-unblock-mobile-native-cloud-builds` | high | pm-devops | Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — currently 7/8 open backlog items are structurally unclaimable in cloud, forcing Tier-1d generator kicks every r |
-| `code-review-mobile-native-kmp-inquiries-response-contract` | medium | pm-backend | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call |
-| `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | low | pm-backend | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios |
-| `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1` | low | pm-backend | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2 of fa |
-| `code-review-mobile-native-kmp-cancellation-swallowed` | low | pm-backend | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors |
-| `code-review-mobile-native-kmp-ssoservice-untested` | low | pm-qa | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests |
-| `code-review-mobile-native-kmp-httpclient-no-timeout` | low | pm-backend | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS |
-| `code-review-mobile-native-kmp-create-listing-not-wired` | low | pm-backend | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded |
-| `code-review-reality-server-sso-per-call-client-no-timeout` | low | pm-backend | SSO exchange/userinfo/introspect create a fresh reqwest::Client per request with no timeout — no pooling, hang risk |
+| ID | Action | Owner | Priority | Status | Source |
+|----|--------|-------|----------|--------|--------|
+| code-review-mobile-native-kmp-cancellation-swallowed | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: | pm-backend | low | open | dispatcher-backlog-refill 2026-08-11T22:04:10Z (score=2 conf=medium vector=bug) |
+| code-review-mobile-native-kmp-create-listing-not-wired | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form da | pm-backend | low | open | dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=2 conf=high vector=bug) |
+| code-review-mobile-native-kmp-httpclient-no-timeout | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend | pm-backend | low | open | dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=2 conf=high vector=bug) |
+| code-review-mobile-native-kmp-inquiries-response-contract | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server | pm-backend | medium | open | dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=3 conf=high vector=bug) |
+| code-review-mobile-native-kmp-portfolio-analytics-caps-100 | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 li | pm-backend | low | open | dispatcher-backlog-refill 2026-08-04T04:05:19Z (score=2 conf=medium vector=bug) |
+| code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1 | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request p | pm-backend | low | open | dispatcher-retry-remint 2026-08-11T06:06:45Z (retry_of=code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout reason=failed-no-pr cooldown_ok newest_failure=2026-08-04T04:14:00Z) |
+| code-review-mobile-native-kmp-ssoservice-untested | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset,  | pm-qa | low | open | dispatcher-backlog-refill 2026-08-11T22:04:10Z (score=1 conf=medium vector=test-gap) |
+| pm-devops-unblock-mobile-native-cloud-builds | Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — currently 7 | pm-devops | high | open | pm-analysis 2026-08-31 |
+| pm-security-reality-web-password-stubs-wire | Wire the 3 reality-web password client stubs (requestPasswordReset/confirmPasswo | pm-security | high | open | pm-security 2026-09-04 |
+| screen-map-drift-pr-2894-reality | screen-map-drift: PR #2894 touched reality-web routes without updating docs/scre | pm-qa | low | open | dispatcher-backlog-refill 2026-08-31T04:25:43Z (score=2 conf=medium vector=test-gap) |

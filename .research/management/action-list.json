@@ -2,6 +2,74 @@
   "version": 1,
   "items": [
     {
+      "id": "code-review-mobile-native-kmp-cancellation-swallowed",
+      "action": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-11T22:04:10Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-11T22:04:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-30T14:23:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-08-16T04:24:32Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md",
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
       "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "owner_role": "pm-backend",
@@ -33,23 +101,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-mobile-native-kmp-cancellation-swallowed",
-      "action": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-11T22:04:10Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-11T22:04:10Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-mobile-native-kmp-ssoservice-untested",
       "action": "mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests",
       "owner_role": "pm-qa",
@@ -67,57 +118,6 @@
       }
     },
     {
-      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-16T04:24:32Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md",
-        "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-16T04:24:32Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-16T04:24:32Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-08-30T14:23:24Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-08-30T14:23:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
       "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — currently 7/8 open backlog items are structurally unclaimable in cloud, forcing Tier-1d generator kicks every run",
       "owner_role": "pm-devops",
@@ -128,6 +128,18 @@
       "deadline": null,
       "source": "pm-analysis 2026-08-31",
       "first_open_at": "2026-08-31T03:10:00Z"
+    },
+    {
+      "id": "pm-security-reality-web-password-stubs-wire",
+      "action": "Wire the 3 reality-web password client stubs (requestPasswordReset/confirmPasswordReset/changePassword) to reality-server endpoints, OR hide the /account/password + /auth/forgot-password + /auth/reset-password entry points behind a feature flag until the server-side lands",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-security 2026-09-04",
+      "first_open_at": "2026-09-04T14:30:00Z"
     },
     {
       "id": "screen-map-drift-pr-2894-reality",
@@ -147,5 +159,5 @@
       }
     }
   ],
-  "generated": "2026-08-31T03:10:00Z"
+  "generated": "2026-09-04T14:30:00Z"
 }

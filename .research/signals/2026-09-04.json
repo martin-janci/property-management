@@ -1,0 +1,227 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-04",
+      "type": "lag_warning",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 2d 19h since 2026-09-01T18:38:58Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-04",
+      "type": "stale_routine_alert",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-09-01T18:38:58Z is nearly 3d old; cloud routine may be paused. Dispatcher (separate branch) still ticking per 2026-09-04 chore commits."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot npm-minor-patch group, 40 updates, merged 2026-09-04T07:18Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot ktor group, 7 updates, merged 2026-09-04T07:15Z (late-merged, PR # < cursor)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot base64 0.22.1 → 0.23.0, merged 2026-09-04T07:14Z (late)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot validator 0.20.0 → 0.21.0, merged 2026-09-04T07:14Z (late)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot rust_xlsxwriter 0.96 → 0.97, merged 2026-09-04T07:13Z (late)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2934",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2934",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot cargo-minor-patch across 12 updates closed 2026-09-04T07:20Z without merge — superseded by re-generated PR #2936. Dependabot rotation; not a code signal."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-reality-web-auth-api-password-stubs-throw-501",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (Phase 1.5)",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts:121-149 — requestPasswordReset/confirmPasswordReset/changePassword all throw AuthApiError(501,'NOT_IMPLEMENTED'). Callers exist: /account/password/page.tsx:48, /auth/reset-password/page.tsx:72, /auth/forgot-password/page.tsx:33 — 3 UI pages ship with a submit path that always fails. Server endpoints /api/v1/users/password-reset[/confirm] and PUT /api/v1/users/me/password are TODO comments in the stubs."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-04.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs current state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen_signals + cumulative allowlist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 && decay applied",
+      "observed": "1 decay applied (portfolio-analytics-caps-100 → dropped)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial pass in brief per new plan",
+      "observed": "1 annotated",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan; meta=4 head=11 cap=2 mode=1",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "scan staged diff for secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse phases-that-failed line",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans preserved (active or archive)",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "9 → 9",
+      "expected": ">= prior"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor liveness",
+      "observed": "epics=13 cc=7→8 pm=5→6",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "scan added lines for telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

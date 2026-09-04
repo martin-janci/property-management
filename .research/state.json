@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
+  "last_run_iso": "2026-09-04T14:38:16Z",
   "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_pr_seen": 2935,
+  "last_issue_seen": 2930,
+  "last_commit_sha": "7ad8c1d4",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -640,6 +640,7 @@
     "closed-not-merged-pr-2387",
     "closed-not-merged-pr-2489",
     "closed-not-merged-pr-2705",
+    "closed-not-merged-pr-2934",
     "closed-not-merged-pr-507",
     "closed-not-merged-pr-512",
     "closed-not-merged-pr-599",
@@ -785,6 +786,7 @@
     "code-review-reality-server-submit-report-no-rate-limit",
     "code-review-reality-web-agency-errorstate-i18n",
     "code-review-reality-web-agency-import-i18n",
+    "code-review-reality-web-auth-api-password-stubs-throw-501",
     "code-review-reality-web-comparison-share-all-or-nothing",
     "code-review-reality-web-comparison-url-i18n",
     "code-review-reality-web-comparison-view-i18n",
@@ -830,11 +832,15 @@
     "dep-update-noise-pr-2476",
     "dep-update-noise-pr-2477",
     "dep-update-noise-pr-2491",
+    "dep-update-noise-pr-2583",
+    "dep-update-noise-pr-2585",
+    "dep-update-noise-pr-2586",
     "dep-update-noise-pr-2625",
     "dep-update-noise-pr-2673",
     "dep-update-noise-pr-2749",
     "dep-update-noise-pr-2750",
     "dep-update-noise-pr-2751",
+    "dep-update-noise-pr-2935",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -885,6 +891,7 @@
     "lag-warning-2026-08-22",
     "lag-warning-2026-08-25",
     "lag-warning-2026-08-28",
+    "lag-warning-2026-09-04",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -931,6 +938,7 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale-routine-alert-2026-09-04",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
@@ -1011,14 +1019,14 @@
     "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-08-29",
     "ppt-web-core": "2026-08-29",
-    "reality-web": "2026-08-29",
+    "reality-web": "2026-09-04",
     "mobile-rn": "2026-08-29",
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 373,
+    "plans_created": 30,
     "quiet_days": 3,
     "auto_fix_count": 0
   },
@@ -1033,19 +1041,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-09-04",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }

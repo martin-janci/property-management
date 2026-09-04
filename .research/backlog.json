@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-04",
       "plan": null
     },
     {
@@ -10601,6 +10602,33 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-reality-web-auth-api-password-stubs-throw-501",
+      "title": "reality-web: 3 self-serve credential UI pages (/account/password, /auth/forgot-password, /auth/reset-password) call auth-api client stubs that unconditionally throw AuthApiError(501, NOT_IMPLEMENTED)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-09-04 (reality-web segment)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts:121-149 — requestPasswordReset/confirmPasswordReset/changePassword throw AuthApiError(501,\"NOT_IMPLEMENTED\")",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx:48 — calls changePassword",
+        "frontend/apps/reality-web/src/app/[locale]/auth/reset-password/page.tsx:72 — calls confirmPasswordReset",
+        "frontend/apps/reality-web/src/app/[locale]/auth/forgot-password/page.tsx:33 — calls requestPasswordReset",
+        "impact: all three self-serve password flows dead-end for real portal users; server endpoints noted as TODO in stubs"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/reset-password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/forgot-password/page.tsx"
+      ],
+      "created_at": "2026-09-04",
+      "updated_at": "2026-09-04",
+      "plan": "plans/code-review-reality-web-auth-api-password-stubs-throw-501.md"
     }
   ]
 }
