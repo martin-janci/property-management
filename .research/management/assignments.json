@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-05T12:30:44Z",
+  "generated": "2026-09-05T14:33:00Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -50,15 +50,15 @@
       "branch": "auto-impl/gh-issue-2937-f4423f84",
       "status": "review",
       "claimed_at": "2026-09-05T10:32:49Z",
-      "last_updated": "2026-09-05T12:30:44Z",
+      "last_updated": "2026-09-05T14:33:00Z",
       "status_changed_at": "2026-09-05T11:01:19Z",
       "pr_number": 2938,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2938",
       "merged_at": null,
       "specialist": "pm-rust-backend",
       "implementer_summary": "pr=2938 status=done specialist=pm-rust-backend scope_drift=false code_reuse_warn=short:duplicated org/user/membership seed helpers inline (api-server tests/common not importable from accounting-server crate) note=6 new tests (3 renderer, 3 handler) all pass; fmt+clippy+test green; incidental 1-line clippy fix in vat_summary; cross-tenant RLS deferred to rls-smoke-test per existing convention",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=self-PR approve posted as issue comment (GitHub blocks self-approve); test-only accounting-server invoice-PDF tests, CI green, code_reuse_warn acceptable (api-server tests/common not cross-crate importable), no JSON-case/scope-drift",
+      "last_reviewed_oid": "786efdfa45127e8aeedf3242cd02832e1ea7756b",
       "scope_drift": false,
       "code_reuse_warn": "duplicated org/user/membership seed helpers inline (api-server tests/common not importable from accounting-server crate)",
       "empty_branch": null,
