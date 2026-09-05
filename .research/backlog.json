@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-05",
       "plan": null
     },
     {
@@ -10601,6 +10602,1287 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-api-core-digest-send-failure-abandoned",
+      "title": "api core digest send failure abandoned",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 api-core notification_digest)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:176-217 — retry_unsent() re-attempts only the digest rows returned by get_unsent_digests(resend_cutoff, ...), and get_unsent_digests (granular_notification.rs:973-1002) filters `d.created_at > $1` where $1 = now - resend_window_hours (default 20h, config at notification_digest.rs:52/63/89-92). A digest row whose email send keeps failing (permanently-invalid recipient address, SMTP hard-reject, provider outage longer than the window) is retried each tick only until its created_at ages past resend_cutoff; after that it is never selected again, so email_sent_at stays NULL forever.",
+        "There is no terminal handling for such a row: no attempt counter, no dead-letter, no error metric, and no alert — the row is simply left email_sent_at = NULL and silently forgotten. The only trace is a per-attempt tracing::warn! at line 212-214 ('will retry next tick'), which stops firing once the row ages out. The user's unread notifications therefore never produce a delivered digest for that window, with no operator signal that a digest was dropped.",
+        "This is the exact failure mode the sibling held-notification drain path was hardened against: quiet_hours_drain.rs:226-279 (record_failure/dead_letter) bumps an attempt counter and dead-letters a permanently-failing row after max_attempts (issue #2823) instead of dropping it. The digest worker adopted that cluster's lifecycle and retry-in-place idea but not its give-up/dead-letter accounting. Severity low (a digest is a redundant convenience — the underlying notifications remain available in-app — and a fresh digest may be generated in a later window once the row ages out), confidence medium (the silent-abandon boundary is confirmed by static read of the worker + the created_at>cutoff query filter; the permanent-failure trigger is inferred, not runtime-confirmed). Fix: track attempts on notification_digests and dead-letter / emit a metric when a digest exhausts its retry budget, mirroring the #2823 held-notification treatment."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs",
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-digest-worker-no-replica-claim",
+      "title": "api core digest worker no replica claim",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 api-core notification_digest)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/notification_digest.rs:130-154 — NotificationDigestWorker::start() spawns the sweep on every process, and its own module doc (lines 6-9) states it 'mirrors the PushFanoutWorker / QuietHoursDrainWorker lifecycle', i.e. it runs on every api-server replica. Unlike the sibling QuietHoursDrainWorker — which delivers each held row exactly once across replicas by *atomically claiming* rows via GranularNotificationRepository::claim_notifications_to_release (FOR UPDATE SKIP LOCKED, issue #2831, drain code at quiet_hours_drain.rs:150-172) — the digest worker fetches rows with plain, unlocked SELECTs and never claims them, so concurrent replicas process the same rows.",
+        "Retry path double-sends: notification_digest.rs:176-217 retry_unsent() calls GranularNotificationRepository::get_unsent_digests (granular_notification.rs:973-1002), which is a plain `SELECT ... WHERE d.email_sent_at IS NULL AND d.created_at > $1 ... LIMIT $2` with no FOR UPDATE / SKIP LOCKED / claim stamp. Two replicas ticking within the same window both fetch the identical set of unsent digest rows and both call email_service.send_digest_email before either calls mark_digest_email_sent (the mark happens only after a successful async send, lines 205-210) — so the same user receives the digest email N times, once per replica.",
+        "New-digest path is a check-then-act (TOCTOU) race: notification_digest.rs:222-300 send_new() relies on the `NOT EXISTS (SELECT 1 FROM notification_digests d WHERE d.user_id = u.id AND d.created_at > $2)` guard inside find_inactive_digest_candidates (granular_notification.rs:908-965) to avoid re-digesting a user within the resend window. That SELECT and the subsequent create_digest INSERT (line 259-272) are not atomic and take no row lock, and create_digest (granular_notification.rs:824+) shows no ON CONFLICT / unique-constraint guard — so two replicas that both evaluate the candidate query before either INSERTs both see NOT EXISTS = true, both persist a digest row, and both email it.",
+        "Impact: under the project's documented multi-replica api-server deployment (the exact scenario #2831 hardened the held-notification drain against) inactive users receive duplicate 24h-inactivity digest emails. Severity medium (annoyance / spam-perception, not data loss; single-replica deploys are unaffected). Confidence medium: the absence of any claim/lock/ON-CONFLICT is confirmed by static read of both the worker and the two repository queries; the duplicate delivery is inferred from concurrent execution, not runtime-confirmed. Fix: give the digest worker the same exactly-once discipline as QuietHoursDrainWorker — claim rows with FOR UPDATE SKIP LOCKED (or an atomic UPDATE ... RETURNING that stamps a claim/sent marker) in get_unsent_digests, and make create_digest idempotent via a unique constraint on (user_id, digest_type, period) + ON CONFLICT DO NOTHING so the send_new race collapses to a single row."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/notification_digest.rs",
+        "backend/crates/db/src/repositories/granular_notification.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-ai-workflows-raw-error-leak",
+      "title": "api handlers ai workflows raw error leak",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 api-handlers ai/workflows)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs:44-48 — `fn internal_error(e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) { (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new(\"INTERNAL_ERROR\", e.to_string()))) }` places the raw error Display string into the JSON error body's message field. It is the module's default 500 mapper and is used 18 times across the workflow/automation handlers in this file.",
+        "The workflow router (ai/workflows.rs `workflow_router`, mounted under the AI surface) serves org-manager automation features to tenant-authenticated users, so DB/repository error strings routed through `internal_error` are disclosed to non-admin callers.",
+        "Impact: information disclosure of internal error detail to authenticated tenants on the automation/workflow endpoints; same class as the esg_reporting and property_valuation instances but distinct module + distinct response shape (JSON ErrorResponse rather than a bare string). Severity medium. Confidence medium (static-confirmed; content runtime-dependent). Fix: keep the ErrorResponse shape but with a fixed opaque message (`ErrorResponse::new(\"INTERNAL_ERROR\", \"Failed to process request\")`) and move `e` into a `tracing::error!(error = %e, ...)` call inside the helper."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/workflows.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-audit-logs-action-filter-dropped",
+      "title": "api handlers audit logs action filter dropped",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)"
+      ],
+      "evidence": [
+        "get_audit_logs (routes/compliance.rs:158-209) parses the client action filter via let action = params.action.and_then(|a| parse_audit_action(&a)); (:164). parse_audit_action (:809-843) returns None for any string not in its match table. Because None means 'no action filter', an UNRECOGNISED action value is silently DROPPED and the query returns audit logs for ALL actions instead of rejecting the request.",
+        "Silent filter-ignored contract violation on an audit-query surface: ?action=loign (typo) or ?action=user_login (wrong token vs accepted login) returns an unfiltered superset with 200 and no indication the filter was ignored -- a foot-gun for compliance tooling that trusts the filter. Same silent-drop applies to get_user_audit_logs (shares AuditLogQueryParams).",
+        "Fix: distinguish 'no action param' from 'action param supplied but unparseable' -- when params.action.is_some() but parse returns None, return 400 (unknown audit action: <value>). IG3: GET /audit-logs?action=not_a_real_action -> 400; ?action=login still returns only login rows.",
+        "Confidence medium; severity low (+1): filter-hygiene / API-contract defect (over-returns within an already platform-admin-gated dataset), not a crash or cross-tenant disclosure."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-audit-summary-integrity-swallow",
+      "title": "api handlers audit summary integrity swallow",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)"
+      ],
+      "evidence": [
+        "get_audit_summary (routes/compliance.rs:229-265) obtains integrity_verified via state.audit_log_repo.verify_integrity(Some(1000)).await.unwrap_or(false) (:252-256). Unlike every other fallible call in this file (which propagate through .map_err(db_error)?), this SWALLOWS any error and coerces it to false.",
+        "Consequence: a false-negative on a security/compliance signal. A transient DB error, lock timeout, or any failure inside verify_integrity is reported as integrity_verified: false -- as if the audit-log hash chain had been TAMPERED with -- when the check merely failed to run. That can trigger incident response for a non-event and masks the real DB error. The dedicated verify_audit_integrity handler (:339-364) correctly propagates with .map_err(db_error)?, so the summary handler is the inconsistent one.",
+        "Fix: propagate the error (.map_err(db_error)?) so a check failure returns 500 rather than masquerading as an integrity violation; or model integrity as tri-state (verified / violated / check-unavailable). IG3: force verify_integrity to error and assert the endpoint does NOT return integrity_verified:false-with-200.",
+        "Confidence medium; severity medium (+2): misreports a security-integrity signal (false tamper alarm) and hides the real error; platform-admin-gated, not a crash or data leak."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-auth-inactive-revoke-swallowed",
+      "title": "api handlers auth inactive revoke swallowed",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 api-handlers auth/mod)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/mod.rs:998-1006 - in the refresh-token handler's inactive-account branch (`if user.status != \"active\"`), the refresh token is revoked fire-and-forget: `let _ = state.session_repo.revoke_token(stored_token.id).await;` before returning 401 ACCOUNT_INACTIVE. The revoke Result is discarded.",
+        "Nine lines below, at auth/mod.rs:1010-1014, the SAME `state.session_repo.revoke_token(stored_token.id)` call on the normal token-rotation path handles its error explicitly: `if let Err(e) = ... { tracing::error!(error = %e, \"Failed to revoke old refresh token\"); }`. The inactive branch is inconsistent - it silently drops a security-relevant revoke failure with no log or metric.",
+        "Impact: for a suspended/deactivated account, if revoke_token fails the stored refresh token remains valid in the session store and the failure is invisible to operators. Practical exposure is bounded because every refresh re-checks user.status and returns 401 for a non-active account, so the un-revoked token cannot mint new access tokens post-deactivation - hence severity low. But it is a security-hygiene + observability gap (stale revocable credential left live; failure unlogged) and diverges from the sibling call's own error handling. Confidence medium (static-confirmed swallow and divergence; no runtime confirmation). Fix: log the revoke failure the same way as line 1010, e.g. `if let Err(e) = state.session_repo.revoke_token(stored_token.id).await { tracing::warn!(error = %e, \"Failed to revoke refresh token for inactive account\"); }`."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth/mod.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "title": "api handlers budgets raw db error leak",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 api-handlers)"
+      ],
+      "evidence": [
+        "routes/budgets.rs returns the raw internal error string to the HTTP client on EVERY database-error branch: `Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))` appears 37 times (first at budgets.rs:260 in create_budget, then repeated across list_budgets/get_budget/update_budget/delete_budget/submit/approve/activate/close/summary/category_variance/variance_alerts/add_item/list_items/update_item/delete_item/record_actual/list_actuals/create_category/list_categories and the rest of the handlers), each paired with `StatusCode::INTERNAL_SERVER_ERROR` (grep counts 37 INTERNAL_SERVER_ERROR sites in the file). The error is ALSO already logged server-side (`tracing::error!(\"Failed to create budget: {:?}\", e)` etc.), so the client-body copy is pure over-exposure.",
+        "The `e` here is the repository error (sqlx-backed budget_repo calls such as create_budget_rls / list_budgets_rls). `sqlx::Error::Database(...).to_string()` renders the Postgres message, which routinely includes table names, column names, constraint names and SQL fragments — returning it verbatim in the response body is a schema/information-disclosure leak to any authenticated caller who can trip a DB error (e.g. a constraint violation), and it diverges from the codebase's own safe pattern (e.g. ai/voice.rs:204-213 deliberately logs the detail but returns a static OAUTH_EXCHANGE_FAILED_MESSAGE to the client).",
+        "Same defect CLASS as the accepted 2026-08-31 finding code-review-api-handlers-compliance-raw-db-error-leak, but a DISTINCT and much larger file: compliance.rs was one file; budgets.rs is the single worst offender with 37 leak sites and was not touched by that run. Fix: replace the `e.to_string()` body with a static message (e.g. `ErrorResponse::new(\"DB_ERROR\", \"Failed to process budget request\")`) and keep the existing `tracing::error!` for the detail. IG3: an integration test that forces a budget repo error (e.g. duplicate/constraint violation on create_budget) asserts the 500 response body does NOT contain SQL/schema tokens (table/column/constraint names).",
+        "Confidence medium: the 37 `e.to_string()` client-body sites and their 500 status are confirmed by static read; reachability to the client is certain (they are in the handler's Err arm returned directly via into_response()). Severity medium (+2) rather than high because it is information disclosure to an authenticated caller (no auth bypass, no data loss, no crash), and the exact sensitivity of the leaked strings depends on which sqlx error is surfaced."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-esg-reporting-raw-sqlx-error-leak",
+      "title": "api handlers esg reporting raw sqlx error leak",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 api-handlers esg_reporting)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/esg_reporting.rs:85-86 — the module's shared error mapper `fn internal_error(e: sqlx::Error) -> (StatusCode, String) { (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()) }` puts the raw `sqlx::Error` Display string directly into the HTTP response body. `sqlx::Error`'s Display commonly includes the failing SQL text, column/constraint/table names and the Postgres server message — internal schema detail that should never cross the API boundary.",
+        "Every handler in the file is tenant-authenticated via `mut rls: RlsConnection` (esg_reporting.rs:95,110,130,146,163,183,206,224,...) and returns `-> Result<..., (StatusCode, String)>`, mapping DB failures through `internal_error`, so the leak is reachable by any regular org user (not admin-gated) on the live ESG endpoints.",
+        "Impact: information disclosure of DB internals to authenticated tenants. Same class as the already-accepted `code-review-api-handlers-gdpr-raw-db-error-leak`, but in a distinct module. Severity medium (info disclosure, not a crash/auth-bypass). Confidence medium: the `sqlx::Error`-typed argument makes the leaked content unambiguous on static read; exact string contents are runtime-dependent. Fix: return a fixed opaque body (e.g. `ErrorResponse::new(\"INTERNAL_ERROR\", \"Failed to process request\")`) and log the real error server-side via `tracing::error!(error = %e, ...)`, mirroring the ErrorResponse+tracing pattern used elsewhere in routes/."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/esg_reporting.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-gdpr-raw-db-error-leak",
+      "title": "api handlers gdpr raw db error leak",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/gdpr.rs returns the raw internal error string to the HTTP client on ~15 handler error branches via `(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())` — confirmed sites at gdpr.rs:63, :82, :121, :161, :213, :301, :358, :385, :425, :460, :475, :542, :601, :628 (spanning request_data_export, get_export_status, download_export, get_export_history, request_data_deletion, get_deletion_status, cancel_deletion_request, get_privacy_settings and update_privacy_settings). The `e` values are sqlx/repository errors (user_repo.find_by_id, the data-export/deletion repos, and a raw `sqlx::query(UPDATE users ...)` at gdpr.rs:619-628).",
+        "`sqlx::Error::Database(..).to_string()` renders the Postgres message, routinely including table names, column names, constraint names and SQL fragments. Returning it verbatim in the response body is a schema/information-disclosure leak to any authenticated caller who can trip a DB error — and it is especially incongruous on the GDPR/privacy surface (data export, right-to-erasure, privacy settings). It also diverges from the codebase's own safe pattern (e.g. routes/ai/voice.rs logs the detail server-side but returns a static OAUTH_EXCHANGE_FAILED_MESSAGE to the client).",
+        "Same defect CLASS as the accepted 2026-08-31 compliance.rs finding and the 2026-09-02 budgets.rs/oauth.rs findings, but a DISTINCT file not touched by any prior run. Fix: return a static generic message to the client (e.g. `(StatusCode::INTERNAL_SERVER_ERROR, \"Failed to process privacy request\")`) and add/keep a server-side `tracing::error!(error = %e, ...)` for the detail (gdpr.rs already logs audit-creation failures this way, so the pattern is present in-file). IG3: a test that forces a repo error on request_data_export / update_privacy_settings asserts the 500 body contains no SQL/schema tokens (table/column/constraint names).",
+        "Confidence medium: the `e.to_string()` client-body sites and their 500 status are confirmed by static read and are returned directly from each handler's Err arm; the exact sensitivity of the leaked string depends on which sqlx error is surfaced. Severity medium (+2): information disclosure to an authenticated caller (no auth bypass, no data loss, no crash)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/gdpr.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-mfa-report-population-mismatch",
+      "title": "api handlers mfa report population mismatch",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)"
+      ],
+      "evidence": [
+        "get_mfa_status_report (routes/compliance.rs:671-711, GDPR/security MFA-adoption report) computes its two aggregates over DIFFERENT populations: mfa_enabled = SELECT COUNT(*) FROM user_2fa WHERE enabled = true (:678-685) counts every 2FA row regardless of the owning user's status, while total_users = SELECT COUNT(*) FROM users WHERE status = 'active' (:688-695) counts only active users. It then derives mfa_disabled = total_users - mfa_enabled (:697) and adoption_rate = mfa_enabled / total_users * 100 (:698-702).",
+        "Because the numerator (all enabled-2FA rows, including suspended / pending / soft-deleted / deactivated users that still have a user_2fa row) is drawn from a superset of the denominator (active users only), the report can produce nonsensical figures: mfa_disabled_count can go NEGATIVE and adoption_rate can exceed 100%. Even short of those extremes the adoption rate is systematically inflated whenever any inactive user retains an enabled 2FA row.",
+        "Odd-one-out within the same file: the sibling get_privacy_settings_report (:509-560) correctly scopes BOTH numerator and denominator to WHERE status = 'active'. Fix: scope the mfa_enabled count to active users too via JOIN users u ON u.id = t.user_id WHERE t.enabled = true AND u.status = 'active'. IG3: seed one active user with 2FA, one SUSPENDED user with 2FA, one active user without 2FA -> expect mfa_enabled_count==1, total_users==2, mfa_disabled_count==1, adoption_rate==50.0 (currently 2/0/100.0).",
+        "Confidence medium; severity medium (+2): corrupts a compliance/security metric (possible negative/over-100% values) rather than crashing or leaking data. Platform-admin-gated."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/compliance.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "title": "api handlers oauth client error leak",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 api-handlers)"
+      ],
+      "evidence": [
+        "routes/oauth.rs leaks the raw internal error string to the client on the OAuth-provider client-management endpoints — the most security-sensitive surface in this segment: register_client (POST /clients) returns `Json(ErrorResponse::new(\"REGISTRATION_FAILED\", e.to_string()))` at oauth.rs:724, update_client (PUT /clients/{id}) at :874 (`UPDATE_FAILED`), revoke_client (DELETE /clients/{id}) at :954 (`REVOKE_FAILED`, HTTP 500), and regenerate_client_secret at :1024 (`REGENERATE_FAILED`, HTTP 500). Each already logs the detail server-side (`tracing::error!(error = %e, \"Failed to register OAuth client\")` etc.), so the client-body copy is redundant exposure.",
+        "These handlers wrap `state.oauth_service` calls (register_client/update_client/revoke_client/regenerate_client_secret), whose errors are sqlx/service errors; `e.to_string()` on them can expose oauth-client table/column/constraint internals to the API caller. Because this is the OAuth authorization-server admin surface (routes confirmed live: `.route(\"/clients\", post(register_client))` at oauth.rs:55, `.route(\"/clients/{id}\", ...)`), leaking backend error internals here is higher-value to an attacker probing the auth subsystem than on an ordinary CRUD route.",
+        "Distinct from the budgets.rs finding (different file, different endpoints, auth-provider surface) and from the accepted 2026-08-31 compliance.rs finding. Part of the broader 24-file `ErrorResponse::new(..., e.to_string())` surface noted in this run's `note`, but called out separately because the OAuth admin endpoints warrant their own fix/priority. Fix: return static messages (REGISTRATION_FAILED / UPDATE_FAILED / REVOKE_FAILED / REGENERATE_FAILED) with the detail kept only in the existing tracing logs. IG3: a test that forces an oauth_service error on register_client asserts the response body carries no SQL/schema tokens.",
+        "Confidence medium: the four `e.to_string()` client-body sites and their status codes are confirmed by static read, and the routes are confirmed reachable via the router builder in the same file. Severity medium (+2): information disclosure on the auth-provider surface (no auth bypass or token leak proven statically — the leaked strings are backend error messages, not credentials — so not high)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-property-valuation-raw-error-leak",
+      "title": "api handlers property valuation raw error leak",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 api-handlers property_valuation)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/property_valuation.rs — ~37 handler sites map DB failures with `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))` and return the tuple as the response (first occurrences at lines 184, 200, 220, 236, 251; the pattern repeats through the file). The `e.to_string()` (a `db`/`sqlx` repository error) becomes the verbatim HTTP body.",
+        "Handlers are tenant-user-facing: they take `auth: AuthUser` (property_valuation.rs:175,190,210,226,242,...) and derive the org via `get_org_id(&auth)` — no `RequireCapability`/admin gate — so the raw error is disclosed to ordinary authenticated callers on the valuation dashboard/models/expiring endpoints (router at property_valuation.rs:99).",
+        "Impact: information disclosure of internal DB/repository error detail to authenticated tenants across the whole valuation surface. Severity medium. Confidence medium (static-confirmed pattern; leaked-string content runtime-dependent). Fix: introduce a single `internal_error` helper that returns a fixed opaque message and logs the underlying error with `tracing::error!(error = %e, ...)`, then replace the ~37 inline `e.to_string()` bodies with it."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/property_valuation.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-tenant-config-rls-clear-swallowed",
+      "title": "api handlers tenant config rls clear swallowed",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 api-handlers tenant_config)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/tenant_config.rs:222-238 - fetch_organization_name() acquires a pooled connection (pool.acquire) and enables SYSTEM RLS context on it via db::tenant_context::set_request_context(&mut *conn, None, None, true) at line 224 (the 4th arg `true` = system/RLS-bypass context, used here to read the organizations table across tenants for an org-name lookup).",
+        "tenant_context.rs:237 - after the query, the reset is fire-and-forget: `let _ = db::tenant_context::clear_request_context(&mut *conn).await;`. The Result is discarded, so a failed clear is neither retried nor logged, and the PoolConnection is then dropped and returned to the pool still carrying the system-context session flag.",
+        "This is the ONLY system-context call site in the crate that swallows the clear. Every sibling logs the failure via `if let Err(e) = clear_request_context(...) { tracing::warn!/error!(...) }`: admin_tenants.rs:243/311/361, agency_provisioning.rs:282, signatures.rs:1145, admin/users.rs:255, caddy_ask.rs:286 (host_in_verifying_state), and the scheduler fallback at services/scheduler/mod.rs:1396. The scheduler comment at services/scheduler/mod.rs:2024 states the clear 'resets the flag before the connection [returns to the pool]', i.e. clearing is the documented contract for not leaking system context into pooled connections.",
+        "Impact: if clear_request_context fails (e.g. a mid-statement DB error on the RESET/set_config), the connection re-enters the pool with system RLS-bypass still active. A later request that reuses that connection before its own middleware re-establishes tenant context would run queries with RLS disabled -> potential cross-tenant read. Severity medium: the leak is likely masked in normal operation by per-request context set-up, but the swallow removes the safety net AND hides the failure (no log/metric), which is exactly the observability the sibling sites keep. Confidence medium: the swallow and the divergence from every other site are confirmed by static read; the cross-tenant exposure is conditional on connection reuse without a context reset and is not runtime-confirmed. Fix: mirror the siblings - `if let Err(e) = db::tenant_context::clear_request_context(&mut *conn).await { tracing::warn!(error = %e, \"tenant-config: failed to clear system RLS context after org-name lookup\"); }` (and consider dropping rather than returning the connection on clear failure)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/tenant_config.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-vote-update-no-tenant-rls",
+      "title": "api handlers vote update no tenant rls",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/vote.rs:737-770 `pub async fn update(&self, id, data)` runs `UPDATE votes SET ... WHERE id = $1 AND status = 'draft'` on `&self.pool` (fetch_one at the bottom). The WHERE clause filters only by primary key + status — there is NO organization_id / tenant column — and the query executes on the raw pool, so it does NOT run under Postgres RLS (unlike the RLS-scoped reads/writes in the same file that take an executor/RlsConnection, e.g. find_poll_by_id_rls and cast_vote_rls).",
+        "backend/servers/api-server/src/routes/voting.rs:334-395 update_vote calls this method: `state.vote_repo.update(id, data)` at voting.rs:382, with the in-file comment `// Note: update() doesn't have an RLS version yet`. Today the preceding RLS-scoped read `find_poll_by_id_rls(&mut **rls.conn(), id)` (voting.rs:342) 404s cross-tenant callers, so the non-RLS write is practically gated by that read. But the write query carries no tenant scoping of its own: any future refactor that removes, reorders, or short-circuits the read gate (or any other caller of vote_repo.update) becomes a direct cross-tenant write to another organization's vote. This matches the Rust-expert checklist item 'SQL queries (sqlx) missing a WHERE clause on tenant/owner/user ID'.",
+        "Fix: give update() an RLS variant that takes the RlsConnection executor (mirroring cast_vote_rls / find_poll_by_id_rls) so the UPDATE runs under RLS and/or add `AND organization_id = $N` to the WHERE clause, then call it from update_vote on rls.conn(); this also lets update_vote drop the separate read-then-write gate. IG3: a test where org A's manager PUTs /voting/{id} for a draft vote owned by org B asserts 404/403 and that org B's row is unchanged (with the read gate temporarily bypassed to prove the write itself is scoped).",
+        "Confidence medium: the missing tenant column and pool (non-RLS) execution are confirmed by static read; exploitation today is blocked by the handler's preceding RLS read, so this is a latent tenant-isolation gap rather than a live cross-tenant write. Severity medium (+2): tenant-isolation defense-in-depth hole on a write path, one refactor away from a cross-tenant data-integrity bug."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/vote.rs",
+        "backend/servers/api-server/src/routes/voting.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voting-cast-no-unit-ownership",
+      "title": "api handlers voting cast no unit ownership",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voting.rs:1067-1180 cast_vote (route wired POST /api/v1/voting/{id}/cast at voting.rs:47) accepts a caller-supplied req.unit_id and only gates it on `existing.is_active()`. It re-validates ownership ONLY when req.delegation_id is Some (the delegations EXISTS query at :1107-1128 binds delegate_user_id + unit_id). On the self path (delegation_id None) it builds `CastVote { vote_id: id, user_id: rls.user_id(), unit_id: req.unit_id, .. }` (voting.rs:1155-1161) with NO check that rls.user_id() owns/occupies req.unit_id.",
+        "backend/crates/db/src/repositories/vote.rs:224-278 cast_vote_rls INSERTs into vote_responses using the caller-supplied unit_id and user_id verbatim, sets `vote_weight = COALESCE((SELECT ownership_share FROM units WHERE id = $3), 1.0)` (so the ballot even takes the TARGET unit's ownership weight), and uses `ON CONFLICT (vote_id, unit_id) DO UPDATE SET user_id = EXCLUDED.user_id, answers = EXCLUDED.answers, ...`. The only isolation is org-level RLS on the vote_responses insert (via rls.conn()); RLS is tenant-scoped, NOT unit-owner-scoped. Consequence: any authenticated member of the tenant can cast a ballot for a unit they do not own, and — via the ON CONFLICT overwrite — silently replace another owner's already-cast ballot for that unit, changing the weighted outcome of a legally-significant owner vote (Slovak building governance). This is ballot stuffing / vote fraud, an authorization bypass on a data-integrity-critical path.",
+        "This is an INCONSISTENCY, not an intended design: backend/servers/api-server/src/routes/delegations.rs:207-233 create_delegation already enforces exactly the missing check — `state.<unit_repo>.get_owners_rls(&mut **rls.conn(), unit_id)` then `let is_owner = owners.iter().any(|o| o.user_id == auth.user_id)` returning 403 'You must be an owner of the unit ...'. The same get_owners_rls / is_owner gate belongs in cast_vote's self path before constructing CastVote. Fix: after loading `existing`, when delegation_id is None, look up owners of req.unit_id on the RLS connection and reject with 403 unless rls.user_id() is an owner (mirror delegations.rs). IG3: an integration test where user A (owner of unit U1) POSTs /voting/{id}/cast with unit_id = U2 (owned by user B) must receive 403 and leave U2's ballot untouched; it fails on main today (the insert succeeds).",
+        "Confidence high: the full call path was traced statically from the mounted route (voting.rs:47) through the handler (voting.rs:1067) into the repository INSERT (vote.rs:224). Severity high (+3): authorization bypass enabling silent tampering with weighted vote results (integrity/data-corruption on a governance surface), reachable by any authenticated tenant member."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voting.rs",
+        "backend/crates/db/src/repositories/vote.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": "plans/code-review-api-handlers-voting-cast-no-unit-ownership.md"
+    },
+    {
+      "id": "code-review-mobile-native-create-listing-stub",
+      "title": "mobile native create listing stub",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp create-listing stub)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — production composable(Screen.CreateListing.route) wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Route is reachable from MyListingsScreen via `onCreateClick = { navController.navigate(Screen.CreateListing.route) }` (Navigation.kt around L487). UC-51.4 (Realtor: publish a new listing) is unusable in the shipped Android app — user fills the form, taps Publish, always sees the 'publish failed' banner via `it.isNetworkError() ? networkErrorMsg : publishFailedMsg` (CreateListingScreen.kt L122-125).",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:22-158 — repository exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics; grep for `createListing|POST.*listings|listings.*POST` in shared/ returns zero hits. The KMP layer has never had a create-listing method, so wiring Navigation.kt requires backend Repository work first.",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:40-45 — screen declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>` and the composable is complete (validation, currency, transactionType, publish state). This is a wired-up shipped surface waiting on a missing API, not a WIP page. Docstring at L28-36 explicitly states UC-51.4 intent.",
+        "Fix: (a) add PortalListingsRepository.createListing(input): Result<Unit> that POSTs to /api/v1/portal/listings (or the correct backend route); (b) replace the stub lambda in Navigation.kt:493 with `onSubmit = { input -> repository.createListing(input) }`. Confidence high — verified end-to-end by reading the composable, the navigation wiring, and confirming absent repo method."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl-stub",
+      "title": "mobile native kmp create listing notimpl stub",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 0,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+      ],
+      "evidence": [
+        "Tier-1d finding — CreateListingScreen composable's onSubmit remains a NotImplementedError stub.",
+        "Routine 2026-09-01 stacks onto existing backlog item `code-review-mobile-native-kmp-create-listing-not-wired` (same subject, different id). Item score 2→4, confidence medium→high, updated_at→2026-09-01."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl",
+      "title": "mobile native kmp createlisting notimpl",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 mobile-native-kmp realtor create-listing wiring)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/.../navigation/Navigation.kt:490-495 — the composable for Screen.CreateListing wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. This is the ONLY (production) wiring of the create-listing submit callback — not a test stub, not a preview.",
+        "The screen is a fully built, reachable feature: MyListingsScreen (Navigation.kt:480-488) exposes `onCreateClick = { navController.navigate(Screen.CreateListing.route) }`, and CreateListingScreen.kt:39-131 is a complete form (title/description/city/price/currency/transactionType) with field validation (titleError/cityError/priceError, CreateListingScreen.kt:96-104), an isSubmitting spinner (CreateListingScreen.kt:105-129, 375), and a real Result.fold handler.",
+        "Because onSubmit ALWAYS returns Result.failure, the fold at CreateListingScreen.kt:120-126 always takes the onFailure branch and renders `publishFailedMsg` (\"publish failed\") — or networkErrorMsg if it.isNetworkError(), which NotImplementedError is not. A realtor who fills the form and taps Publish is guaranteed to see a failure toast every time; the listing is never created.",
+        "Root cause: PortalListingsRepository (shared/.../realtor/PortalListingsRepository.kt) exposes only listMyListings (:40), getListingAnalytics (:74) and getPortfolioAnalytics (:111) — there is NO create/publish method to back the screen. The UI shipped ahead of the repository + API call.",
+        "Fix: add `suspend fun createListing(input: CreateListingInput): Result<Unit>` to PortalListingsRepository (POST to the reality-server realtor listings endpoint via ApiClient, wrapped in the same Result/onFailure convention as the other repo methods), then wire `onSubmit = { input -> portalListingsRepository.createListing(input) }` in Navigation.kt:493. Add a commonTest for the repository path encoding + success/failure mapping (mirrors PortalListingsRepositoryTest). Confidence high: full call path traced entry(MyListings onCreateClick) -> CreateListing route -> onSubmit -> NotImplementedError -> publishFailedMsg, reachable in the shipped android build; no runtime needed to confirm the callback is hardcoded to fail."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listingdetail-oncall-bang",
+      "title": "mobile native kmp listingdetail oncall bang",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 mobile-native-kmp listing-detail deferred !!)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/.../ui/listing/ListingDetailScreen.kt:131-139 — the onCallClick lambda dereferences `state.listing!!.realtor?.phone` with a non-null assertion. Unlike the sibling `!!` sites (L121 errorMessage, L125/149/160 listing) which are guarded by an immediately-enclosing `when { state.listing != null -> ... }` / `if (state.listing != null)` in the SAME scope (safe smart-cast, `!!` is only needed because Kotlin cannot smart-cast a delegated `by collectAsState()` property), onCallClick is a DEFERRED callback: it captures `state` and runs on a later user tap.",
+        "`state` is a `by collectAsState()` delegate, so `state.listing` is re-read from the current StateFlow value at click time. If the ViewModel emits a new state whose listing is null (e.g. a retry/reload transition, or an inquiry-submitted event that resets state) between the phone button becoming visible and the tap, `state.listing!!` throws NullPointerException and crashes the screen.",
+        "Likelihood is low (the button is only composed inside the listing != null branch, so state must flip null after render but before tap), which is why this is scored Low, but it is a genuine crash path rather than a smart-cast nicety.",
+        "Fix: capture the listing into a local val at composition and null-check it, or read `state.listing?.realtor?.phone?.let { ... }` inside the lambda instead of `state.listing!!...`. Confidence medium: the deferred-read crash is confirmed by static read of the delegate + lambda capture; whether a live state transition can actually null the listing while the button is on screen was not runtime-verified."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "title": "mobile native kmp nav onfailure empty swallow",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-01 mobile-native-kmp navigation error-swallow)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/.../navigation/Navigation.kt — four list-loading composables collapse a repository failure into an empty list with no error surface: SavedSearches `.onFailure { searches = emptyList() }` (:380), Inquiries `.onFailure { inquiries = emptyList() }` (:450), MyListings `.onFailure { listings = emptyList() }` (:476), and ListingAnalytics `.onFailure { metrics = emptyList() }` (:541).",
+        "In every case the child screen is then handed the same empty list it would receive when the account genuinely has no data, so a network/auth/5xx failure is rendered as the benign empty-state ('You have no listings yet' / 'No saved searches'). The user is told they have nothing when in fact the load failed, and there is no retry affordance — the LaunchedEffect only runs once per key, so a transient failure is sticky until the screen is left and re-entered.",
+        "This diverges from the pattern the rest of the app uses: ListingDetailScreen distinguishes state.errorMessage != null -> ErrorContent(onRetry = viewModel::retry) (ListingDetailScreen.kt:120-121), and CreateListingScreen shows a distinct networkError vs generic failure. The realtor/saved-search/inquiry list screens should do the same rather than masking failure as emptiness.",
+        "Fix: track a load-error flag alongside the list (e.g. `var loadError by remember { mutableStateOf(false) }`), set it in onFailure instead of overwriting the list, and have each *Screen render an error+retry state when it is set. Add commonTest / UI coverage asserting that a repository Result.failure yields an error state, not an empty list. Confidence medium: the swallow is confirmed by static read; the exact UX impact per screen depends on each *Screen's empty-state copy which was not exhaustively read."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-layout-repo-println",
+      "title": "mobile native layout repo println",
+      "vector": "polish",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp shared println logging)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48, 57, 68 — three raw `println(...)` calls used for warn/error-path logging in shared/commonMain KMP code. On Android these end up in logcat with no tag/level (indistinguishable from other println noise); on iOS they hit stdout with no OSLog category. Grep for `println` across shared/commonMain returns only these three sites, so there is no established logger abstraction — the pattern is isolated but sets a precedent that will spread.",
+        "Impact is low (dev-experience / log hygiene rather than user-facing behavior). Fix options: (a) introduce a tiny `object Log { fun w(tag: String, msg: String); fun e(tag: String, msg: String, t: Throwable? = null) }` in shared/commonMain with expect/actual for platform-appropriate logging (android.util.Log on androidMain, os_log or NSLog on iosMain); (b) migrate these three sites plus any future ones. Confidence medium — the presence is certain; the value of fixing depends on team's log-hygiene stance."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-swallowed-cancellation",
+      "title": "mobile native swallowed cancellation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 mobile-native-kmp cancellation swallowing)"
+      ],
+      "evidence": [
+        "Every suspend function in shared/commonMain repositories that wraps a Ktor call uses the pattern `try { ... } catch (e: Exception) { Result.failure(e) }` WITHOUT first rethrowing CancellationException. Grep confirms 57 `catch (e: Exception)` sites across 9 repository files; grep for `CancellationException` across the same tree returns hits ONLY in LayoutRepository.kt (the sole file that does it right).",
+        "Per-file catch counts: ApiClient 6, SsoService 9, ListingRepository 6, InquiryRepository 8, FavoritesRepository 11, NotificationRepository 9, AgencyRepository 4, PortalListingsRepository 2, RealtorRepository 2. Reference correct pattern: mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:65-69 — `} catch (e: CancellationException) { throw e } catch (e: Exception) { ... }` with a covering test at commonTest/.../LayoutRepositoryTest.kt:266 asserting cancellation propagates.",
+        "Impact — coroutine cancellation is silently converted to `Result.failure(CancellationException)`. In Compose, LaunchedEffect / rememberCoroutineScope callers that navigate away or key-change during a network fetch will (a) let the network work run to completion instead of being cancelled, (b) still fold the 'failure' branch into `errorMessage = friendlyError(it)`, potentially surfacing a spurious error toast/banner for a screen the user already left, and (c) violate structured concurrency in a way that will surface as flakiness under load / weak-network conditions. This is a canonical KMP anti-pattern (see kotlinx.coroutines Result docs + Ktor error-handling guidance).",
+        "Fix: add the two-catch pattern (`catch (e: CancellationException) { throw e }` before `catch (e: Exception)`) to every listed site; add a shared extension helper `suspend fun <T> runNetworkCatching(block: suspend () -> T): Result<T>` in util/ that encapsulates it, then migrate call sites. Confidence medium — the anti-pattern is confirmed statically for every listed site; the runtime effect (spurious error banners) is highly likely but not runtime-confirmed."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/favorites/FavoritesRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "title": "mobile rn alert hardcoded en",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn alert i18n leaks)"
+      ],
+      "evidence": [
+        "Two otherwise heavily-localized screens leak user-facing English through Alert.alert() — the alert copy was missed when the rest of the screen was translated, so on a locale switch (sk/cs/de/en) the dialog appears in English.",
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 — Alert.alert('Could not open document', 'The file viewer is unavailable on this device.') despite the screen using t() (4 t() calls elsewhere).",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — Alert.alert('Diagnostic Report', diagnosticReport) title hardcoded English despite the screen being one of the most localized in the app (25 t() calls).",
+        "Fix: replace the literal title/body args with t('documents.openFailed.*') / t('help.diagnosticReport.title') and add keys to locales/{sk,cs,de,en}. Grep guard for future: `grep -rnE \"Alert\\.alert\\(\\s*['\\\"]\" src` should return 0 hits once fixed (currently 5, the other 3 are covered by the two whole-screen findings above). Confidence medium; Low severity (i18n)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "title": "mobile rn personmonths screen no i18n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn person-months i18n)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — 197-line user-facing screen imports NO useTranslation and makes ZERO t() calls (grep useTranslation=0, t(=0), so every string renders English for sk/cs/de/en users. This is a whole-screen gap, not a leak: the mobile app ships react-i18next with locales/ for all four languages and the rest of screens/ is localized.",
+        "Hardcoded UI text: L93 <Text>Person-months</Text> (screen header), L142 'Save', L145 'Cancel', L155 'Edit', L165 'Bulk entry…' (primary action buttons).",
+        "Hardcoded validation Alert: L78 Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.') — the only feedback a user gets on bad input is English-only.",
+        "Fix: add const { t } = useTranslation(); wrap all literals in t('personMonths.*') keys, add the keys to locales/{sk,cs,de,en}. Confidence medium: the gap is certain from static read (0 i18n imports on a rendered screen); severity is Low (i18n) but breadth is a full screen."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "title": "mobile rn widget settings i18n leak",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn widget-settings i18n)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and makes only 2 t() calls, yet hardcodes most of its user-facing text: the component is partially localized, so the leaks render English on a 4-locale app while the surrounding chrome is translated (a worse look than a fully-untranslated screen).",
+        "Hardcoded section/heading text: L89/L105/L126 <Text>Widget Settings</Text>, L109 'Widgets Not Available', L131 'Available Widgets', L163 'Active Widgets', L194 'How to Add Widgets'.",
+        "Hardcoded Alerts: L66 Alert.alert('Widget Added', `${name} widget has been configured.`) and L79 Alert.alert('Widgets Updated', 'All widgets have been refreshed.').",
+        "Fix: route every literal (headings + both Alert.alert title/body pairs) through the already-imported t() with settings.widgets.* keys and backfill locales/{sk,cs,de,en}. Confidence medium: leaks confirmed by static read; Low severity (i18n)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "title": "ppt web core api default export eager instance",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib)"
+      ],
+      "evidence": [
+        "lib/api.ts:321 `export default getApiClient();` is evaluated at module-import time. getApiClient() (api.ts:273-278) lazily builds the singleton via createAxiosInstance() with NO config, which as a side effect sets the module-level `tokenGetter = undefined` and `onUnauthorizedCallback = undefined` (api.ts:195-196) and pins baseURL to DEFAULT_BASE_URL / timeout to DEFAULT_TIMEOUT. So merely importing this module eagerly instantiates an unconfigured axios instance and mutates module globals before AuthContext ever calls configureApiClient().",
+        "configureApiClient() (api.ts:298-301) reassigns `apiInstance` to a BRAND-NEW instance. The default export binding, however, is frozen to the FIRST (import-time) instance. The two instances only behave identically today because both interceptors read the same module-level `tokenGetter`/`onUnauthorizedCallback` (api.ts:201/219) and AuthContext.configureApiClient (AuthContext.tsx:352-355) passes no baseURL/timeout override. Any future call passing a custom baseURL, timeout, or per-instance interceptor to configureApiClient() would silently NOT apply to default-export consumers, and resetApiClient() (api.ts:307-311, called on AuthProvider unmount, AuthContext.tsx:360) nulls `apiInstance` + clears the globals, orphaning the default export so its interceptors read cleared globals (requests without Authorization).",
+        "Landability confirmed: a repo-wide grep for a default import of lib/api (`import api ...` / `import api, {` from lib/api) returns ZERO consumers — every call site uses the named getApiClient() export. The default export is dead code whose only effect is the import-time instantiation + global mutation. Safe pure-frontend fix: drop `export default getApiClient();` (or export the function `getApiClient` itself, not its invocation) so the singleton is created only when configureApiClient()/getApiClient() is first called. Low severity (+1): no runtime bug is currently reachable, but it is a footgun that defeats the single-source-of-truth intent documented in AuthContext.tsx:337-355. Confidence medium: mechanism verified statically end-to-end (module eval order + interceptor closures over module globals), not runtime-executed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "title": "ppt web core authed query roots drift",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core queryKeys/AuthContext)"
+      ],
+      "evidence": [
+        "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (AuthContext.tsx:583-585). AUTHED_QUERY_KEY_ROOTS (queryKeys.ts:354-392) mixes THREE classes of root: (a) the centralized `queryKeys` factory roots, (b) shared @ppt/api-client key-factory roots (meters/reports), and (c) ~13 AD-HOC string roots used directly in feature hooks scattered across the tree (developer, ocr, actionQueue, executionLogs, executionStats, ai-chat, financial, rentals, predictive-maintenance, sentiment, notification-analytics, notification-triggers). Classes (b) and (c) are plain string literals with NO compile-time or lint link back to the query keys actually used at their call sites — nothing forces a new ad-hoc root to be added here.",
+        "This is not hypothetical: the file's own comments document TWO prior cross-session data leaks caused by exactly this drift. queryKeys.ts:352 cites issue #712 (logout's original `queryClient.clear()` was replaced by this scoped list); queryKeys.ts:388-391 states the `notification-triggers` root 'leaked into the next session (PR #2650 fix was incomplete - this root was missed)'. The purge covers 'the most sensitive data in the app' (AuthContext.test.tsx:205-208: invoices, contacts, bank statements, payment matching, AR aging) which 'must never survive logout on a shared workstation' (queryKeys.ts:348-350).",
+        "The regression guard cannot catch future drift for class (b)/(c) roots: AuthContext.test.tsx:188-217 asserts `expect(AUTHED_QUERY_KEY_ROOTS).toContain(root)` over a HARD-CODED literal array of roots (user, faults, ai-chat, developer, financial, ...). A newly added ad-hoc feature-hook root must be manually added to BOTH the source list AND this test's literal array; if a developer forgets both (the exact failure mode of #712/#2650), the test still passes green and the new user-/tenant-scoped cache silently survives logout on a shared workstation. Landable pure-frontend hardening: derive the eviction set from a single machine-checkable source (e.g. mark every auth-scoped key factory and enumerate them, or add a lint/type constraint) so the allowlist cannot drift out of sync with the query keys in use, rather than relying on a hand-maintained list + hardcoded test mirror. Severity medium (+2): reachable data-exposure on shared workstations, but conditioned on a future/omitted root + shared-device usage; confidence medium (mechanism and two prior occurrences verified statically from source comments + the test body, not runtime-reproduced today)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.test.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-locale-bundles-incomplete",
+      "title": "ppt web core locale bundles incomplete",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core i18n bundles)"
+      ],
+      "evidence": [
+        "Systemic translation-coverage gap: every non-English ppt-web locale bundle is roughly HALF-populated relative to en.json. Measured by flattening each messages/*.json to leaf keys and diffing against en (3750 leaf keys): sk 1863 keys (missing 1895 / 50%), cs 1861 (missing 1897 / 50%), de 1774 (missing 1979 / 52%), pl 1763 (missing 1996 / 53%), hu 1757 (missing 1996 / 53%). Reproduce with a small json-flatten + set-diff over messages/en.json vs messages/{sk,cs,de,pl,hu}.json.",
+        "src/i18n/index.ts:24-40 initializes i18next with `fallbackLng: defaultLocale` ('en', from config.ts:8) and `supportedLngs` = all six locales (config.ts:5 declares ['en','sk','cs','de','pl','hu']). All six bundles are imported and registered, so this is NOT a build break — but any t() key present in en yet absent from the active locale silently falls back to the English string. With ~50% of keys missing, a user on sk/cs/de/pl/hu sees English copy across roughly half the app's translated surfaces.",
+        "Business impact: Slovak (sk) is a primary market for this product (the sibling reality portal ships sk/cs/de/en, CLAUDE.md), yet sk is missing 50% of keys — so the primary non-English market is the most affected alongside the others. This is user-facing untranslated text on live rendered screens, not a dev-only concern.",
+        "Distinct from prior i18n findings, which are all about COMPONENTS that never call useTranslation (e.g. code-review-ppt-web-ui-untranslated-feature-pages 2026-09-04, code-review-ppt-web-ui-buildings-pages-no-i18n) or single hardcoded literals. This finding is the inverse: keys that ARE wired through t() but have no VALUE in the non-en bundles. Fixing the component-level gaps will not populate these bundles, and vice-versa.",
+        "Landable remedy (frontend-only, no backend/KMP): a translation-backfill pass over messages/{sk,cs,de,pl,hu}.json to reach key parity with en.json, prioritizing sk (primary market) and high-traffic namespaces. A CI parity guard (assert each non-en bundle's key set >= en's, or report the delta) would prevent regression. Confidence medium: the 50% key-set delta is concretely measured by static diff, but which specific missing keys are actually rendered on a given screen was not individually traced (no runtime execution)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json",
+        "frontend/apps/ppt-web/messages/cs.json",
+        "frontend/apps/ppt-web/messages/de.json",
+        "frontend/apps/ppt-web/messages/pl.json",
+        "frontend/apps/ppt-web/messages/hu.json",
+        "frontend/apps/ppt-web/src/i18n/index.ts",
+        "frontend/apps/ppt-web/src/i18n/config.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-group-toasts-i18n",
+      "title": "ppt web core route group toasts i18n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core routes)"
+      ],
+      "evidence": [
+        "User-facing success/error toast copy is hardcoded English in several route-group files, bypassing react-i18next even though each of these files already imports useTranslation and localizes other strings (so t() is in scope): iot.tsx (useTranslation present) hardcodes 'Sensor deleted' (line 194), 'Failed to delete sensor' (198), 'Sensor registered' (255), 'Failed to register sensor' (260), 'Sensor updated' (333), 'Failed to update sensor' (338); meters.tsx hardcodes 'Submitted'/'Reading submitted' (243), 'Submit failed' (248), 'Updated' (296), 'Update failed' (303), 'Done'/'Reading validated' (337), 'Validation failed' (341); faults.tsx hardcodes 'Created'/'Fault reported' (368), 'Failed to report fault' (373), 'Updated'/'Fault updated' (505), 'Failed to update fault' (510); community.tsx hardcodes 'Created'/'Group created' (66).",
+        "These strings are not present in ANY locale bundle (including en.json) — they are inline literals passed to showToast({ title, message }) — so unlike the bundle-coverage gap they can never be translated for any locale until moved into t() keys. A non-English user performing IoT/meter/fault/community mutations gets English confirmation and error feedback.",
+        "Scoped to be NON-duplicate: the pre-existing code-review-ppt-web-core-person-months-toast-i18n (2026-08-14) covers ONLY routes/groups/person-months.tsx:373. This finding covers the remaining, previously-unflagged route-group files (iot, meters, faults, community). (routes/groups/leases.tsx, disputes.tsx and outages.tsx also contain some hardcoded showToast literals and should be swept in the same pass.) Grep to reproduce: `grep -n \"showToast(\" src/routes/groups/*.tsx | grep -E \"title: '|message: '\"`, excluding *.test.tsx.",
+        "Landable remedy (frontend-only): replace the literal title/message with t('<domain>.toast.<action>') keys and add the corresponding entries to messages/en.json (plus the other bundles, tying into the parity backfill above). Low severity (i18n gap on feedback copy), high tractability — a mechanical, mutation-path-scoped change. Confidence medium: literals and useTranslation availability are code-verified statically; not runtime-confirmed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "title": "ppt web core route groups no protectedroute",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-core routes)"
+      ],
+      "evidence": [
+        "ppt-web has NO global auth gate: App.tsx:272-275 renders `<RouteErrorBoundary><Suspense><AppRoutes/></Suspense></RouteErrorBoundary>` inside the always-rendered app shell (the shell only toggles header UI on `isAuthenticated`, App.tsx:164/173/183). AppRoutes.tsx:39-67 composes every feature route-group fragment flat under a single `<Routes>` with no enclosing `<Route element={<ProtectedRoute/>}>` parent. So the ONLY auth gate for a feature route is a per-route `<ProtectedRoute>` wrapper inside its group file.",
+        "ProtectedRoute.tsx:92-122 is the gate: when `!isLoading && !isAuthenticated` it stores the return URL and `return <Navigate to={redirectTo} replace/>` (redirect to /login). Groups that wrap each element in it therefore bounce unauthenticated users to login — e.g. buildings.tsx:47-80 wraps every `<Route element={<ProtectedRoute>…</ProtectedRoute>}/>`; same in leases.tsx, meters.tsx, documents.tsx, rentals.tsx (auth guard added by PR #2648), reports.tsx, voting.tsx, person-months.tsx, core.tsx, notifications.tsx.",
+        "11 route groups mount their pages as BARE `<Route element={<…PageRoute/>}/>` with ZERO ProtectedRoute wrapper (grep `ProtectedRoute` count = 0 in each): financial.tsx:466-474 (/financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports), accounting.tsx:9-14 (/accounting/invoices, /accounting/payment-matching), faults.tsx, community.tsx, disputes.tsx, iot.tsx, messaging.tsx, neighbors.tsx, outages.tsx, announcements.tsx, ai-dashboards.tsx. An unauthenticated user navigating directly to e.g. /financial or /accounting/invoices is NOT redirected to login — the authenticated-only page shell renders instead.",
+        "The financial wrappers do not self-guard: FinancialDashboardPageRoute (financial.tsx:66-68) only does `const { user } = useAuth(); const orgId = user?.organizationId ?? ''` and gates its money queries with `enabled: !!orgId` (financial.tsx:73/78/83); InvoiceManagement/PaymentManagement/FinancialReports wrappers (financial.tsx:148/257/384) follow the same read-only `user?.…` pattern with no `if (!isAuthenticated) return <Navigate/>`. There is no internal redirect anywhere in the group.",
+        "Data-leak is BOUNDED, which is why this is scored medium (+2) not high: with no `user` the org-scoped queries stay disabled (`enabled:!!orgId` with orgId='') and the reality-server/api-server require auth (401), so no tenant financial data is actually fetched or shown to an anonymous visitor. The defect is a broken-access-control / missing-redirect posture bug (CWE-284): protected app surfaces are reachable without authentication and render a broken empty shell instead of sending the user to /login (and losing the return-URL capture that ProtectedRoute.tsx:43-49 provides). Money-sensitive surfaces (financial, accounting) are among the unguarded set.",
+        "This is a distinct, systemic, LANDABLE finding — not the same as the done route items (security-role-gate-fail-open = ProtectedRoute's own role check; code-review-ppt-web-ui-protectedroute-i18n = untranslated gate copy; screen-map-drift-pr-2648-ppt = rentals-only mutation guard). Mechanical fix: wrap each `<Route>` element in these 11 group files with `<ProtectedRoute>` (importing from '../../components'), mirroring buildings.tsx:47-80, so the whole app enforces auth uniformly at the routing layer. Confidence medium: the missing-wrapper + no-global-gate mechanism is code-verified end to end (App.tsx -> AppRoutes -> group -> ProtectedRoute), but the exact anonymous-visitor render is not runtime-confirmed (static analysis, no execution)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/buildings.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "title": "ppt web core validation error i18n gap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core lib/errorHandler)"
+      ],
+      "evidence": [
+        "errorHandler.ts documents an i18n contract in its header (errorHandler.ts:7-10): user-facing copy 'is resolved through the shared i18n' and only opaque tokens (requestIds, raw backend messages) pass through untranslated. parseApiError honours this by resolving titles/messages via `i18n.t('errors.catalogue.<code>...')` (errorHandler.ts:103,108-117,133). But formatFieldName (errorHandler.ts:437-447) builds a user-facing field LABEL purely from the English field path: it splits the backend snake_case path on '_' and Title-cases each ASCII word (`word.charAt(0).toUpperCase() + word.slice(1)`), with no i18n lookup. formatValidationErrors (errorHandler.ts:422-428) then renders `${formatFieldName(field)}: ${message}` for display.",
+        "Consequence: the app ships sk/cs/de/en locales (root CLAUDE.md; reality-web messages/), yet inline/summary validation errors surfaced through formatValidationErrors render field labels in English regardless of active locale (e.g. `Street Name: <msg>` on a Slovak form). This directly contradicts the module's stated i18n contract for a class of user-facing text. It is a genuine gap rather than an intentional pass-through: `message` (the backend string) is explicitly called out as untranslated, but the derived field LABEL is generated client-side and could be localized.",
+        "Severity low (+1), landable pure-frontend: route field labels through i18n (e.g. `i18n.t('fields.<path>', { defaultValue: formatFieldName(field) })`) so localized label keys win with the current Title-cased output as the English fallback, keeping backward compatibility for unmapped fields. Confidence medium: the missing i18n call and the English-only Title-case transform are code-verified in errorHandler.ts:422-447; the visible impact assumes formatValidationErrors output is rendered to end users on a non-English locale (the function is an exported public helper), not runtime-confirmed against a specific screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
+      "title": "ppt web core ws send envelope mismatch",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib/websocket)"
+      ],
+      "evidence": [
+        "Asymmetric wire contract: on RECEIVE, parseServerMessage (websocket.ts:65-82) treats the canonical server frame as `{ event, payload }` and maps `event` -> internal `type`. On SEND, WebSocketService.send (websocket.ts:444-457) does `this.socket.send(JSON.stringify(message))` where `message` is the internal WebSocketMessage shape `{ type, payload, timestamp }` (websocket.ts:38-43) — it is emitted verbatim with a `type` key, never re-mapped back to the server's `{ event, payload }` envelope. A server that parses inbound frames as WsEvent `{ event, payload }` (mirroring ws_notifications.rs) would see `event: undefined` and drop/ignore the frame.",
+        "The send path is fully wired through the public API — WebSocketContext.send (WebSocketContext.tsx:371-378) delegates to service.send, and useWebSocket / its sibling hooks re-export `send` to consumers (hooks/useWebSocket.ts:76/101/130/165/189) — so this is a live, callable surface, not private code.",
+        "Currently LATENT, hence low (+1): a repo-wide grep for `.send(` shows the only call site is WebSocketContext.tsx:377 (the delegation itself); no feature code sends a domain message today because the notifications socket is effectively server->client. But the first consumer to call `send({...})` will hit a silent no-op (frame accepted by the client, ignored by the server) with no error surfaced. Landable pure-frontend fix: have send() serialize the server envelope shape (`{ event: message.type, payload: message.payload }`) to match parseServerMessage's inbound contract, mirroring the documented WsEvent envelope, or narrow the exported API to remove the unsupported send until a client->server protocol exists. Confidence medium: the shape mismatch is code-verified against parseServerMessage + the WebSocketMessage/ServerWsEnvelope interfaces; the server-side reject is inferred from the documented envelope, not runtime-confirmed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-native-confirm-i18n",
+      "title": "ppt web ui accounting invoice native confirm i18n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "features/accounting/pages/AccountingInvoiceManagementPage.tsx:108 gates a destructive delete behind the native browser confirm('Are you sure you want to delete this invoice?') instead of the shared <ConfirmationDialog> used elsewhere (emergency, oauth-grants), and lines 49,64 hardcode English toast titles ('Failed to create invoice', 'Failed to delete invoice'). Native confirm() is unstyleable, untranslatable, and inconsistent with the app's confirmation UX pattern."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-contact-labels-in-api-client",
+      "title": "ppt web ui contact labels in api client",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui)"
+      ],
+      "evidence": [
+        "Anti-pattern: user-facing display labels are defined as a hardcoded English string map (CONTACT_TYPE_LABELS) inside the @ppt/api-client package at frontend/packages/api-client/src/emergency/types.ts:77-87, then consumed as visible UI text by ppt-web (EmergencyContactDirectoryPage / EmergencyContactsList). This couples presentation copy to the API-client/transport layer, makes the labels unreachable by react-i18next, and means any i18n fix for the emergency feature (finding code-review-ppt-web-ui-emergency-untranslated-ui) must first move these labels out of the shared client. Recommend the client export only the ContactType enum/values and let ppt-web resolve display strings via its i18n catalog (emergency.contactType.<value>)."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/emergency/types.ts",
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-slovak-toasts",
+      "title": "ppt web ui document hooks hardcoded slovak toasts",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "features/documents/hooks/useDocumentDownload.ts:46-49 and features/documents/hooks/useMoveDocumentWithToast.ts:25-38 hardcode Slovak-only toast strings ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo stiahnuť.', 'Dokument presunutý', 'Presun zlyhal', '„...\" bol presunutý do priečinka.') instead of routing through react-i18next t(). App ships sk/cs/de/en — cs/de/en users see Slovak. These are churn-hotspot files (documents feature). Localization defect, not just a gap."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-emergency-untranslated-ui",
+      "title": "ppt web ui emergency untranslated ui",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui emergency)"
+      ],
+      "evidence": [
+        "Emergency feature (Epic 62) renders user-facing UI text that never routes through react-i18next, despite the page importing useTranslation and localizing everything else. (1) EmergencyContactsList.tsx:30-31 hardcodes the empty-state copy 'No emergency contacts found.' / 'Add your first emergency contact to get started.' as raw literals — an empty-state exists but its text is English-only. (2) The contact-type dropdown in EmergencyContactDirectoryPage.tsx:216-221 and the group headings in EmergencyContactsList.tsx:87 render CONTACT_TYPE_LABELS values ('Fire Department', 'Police', 'Ambulance', ...) directly as visible labels. App ships sk/cs/de/en; cs/de/en/sk users see these strings in English. Fix: wrap the empty-state copy in t() and map contact types to i18n keys instead of the English label map."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/emergency/components/EmergencyContactsList.tsx",
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-bookings-hardcoded-toasts",
+      "title": "ppt web ui facilities bookings hardcoded toasts",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "features/facilities/pages/MyBookingsPage.tsx:45,86 and features/facilities/pages/PendingBookingsPage.tsx:46,71,97 hardcode English toast titles/messages ('Failed to load bookings', 'Failed to cancel booking', 'Failed to approve/reject booking', 'An unexpected error occurred.') despite both pages already importing useTranslation and using t() for other copy (line 18). Inconsistent i18n — error toasts never localized for sk/cs/de."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "title": "ppt web ui facilities forms hardcoded errors",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)"
+      ],
+      "evidence": [
+        "EditFacilityPage.tsx has NO `useTranslation` import at all (checked full file) — every user-facing string is hardcoded English: 'Edit Facility' (line 89 heading), 'Failed to load facility' (line 30, set as the error banner text), 'Failed to update facility' (line 50, mutation-error fallback), 'Facility not found' (line 74), 'Go back' (line 80). This is the sole page under features/facilities/pages that skips i18n entirely — its siblings (BookFacilityPage, FacilitiesPage's FacilityList) at least partially use `t()`.",
+        "BookFacilityPage.tsx does import `useTranslation` and wraps the page title (line 128, `t('facilities.bookings.bookFacility')`), but every error/fallback string is still hardcoded English: 'Failed to load facility details' (line 35), 'Failed to create booking' (line 71, mutation fallback), 'Facility not found' (line 95), 'This facility is not available for booking' (line 112), 'Go back' (lines 101, 118) — i.e. i18n is wired but not applied to the error-path copy on this file specifically.",
+        "Both pages are wired and reachable in production (routes/groups/buildings.tsx + routes/lazyRoutes.tsx, Epic 56 Facility Booking) — an sk/cs/de-locale user who hits any facility-load or booking/update error sees raw English copy on a mounted, everyday manager/resident flow.",
+        "Same defect class as prior ppt-web-ui i18n-gap findings (e.g. 2026-09-01 notif-settings-hardcoded-errors) but a distinct, previously-unreviewed feature area. Fix: add `useTranslation` to EditFacilityPage.tsx and move all listed strings (both files) into an i18n namespace. Confidence medium: hardcoded-string presence confirmed by static read; exact end-user visibility depends on which error path fires at runtime."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "title": "ppt web ui facilities ismanager stub true",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — `useIsManager()` is a hardcoded stub: `// Placeholder: Returns true during development to enable all manager features. // Replace with actual role check when AuthContext is implemented for ppt-web.` and the body is simply `return true;`. It is not gated behind a dev-only flag or feature flag — it ships as-is.",
+        "This page is wired and reachable in production: mounted via routes/groups/buildings.tsx and routes/lazyRoutes.tsx (Epic 56 Facility Booking). `isManager` (line 46) is passed straight into `<FacilityList isManager={isManager} ... onCreate={handleCreate} onEdit={handleEdit} />` (lines 110-124), which — per the sibling component contract used across the app — controls whether manager-only actions (Create Facility, Edit) render for the current viewer.",
+        "Effect: every visitor to /buildings/:buildingId/facilities — resident or manager — sees and can click Create/Edit facility controls. The comment claims 'Backend still enforces authorization - this is for UI display only', so a resident's click likely 403s rather than succeeding, but the UI still exposes manager-only affordances and navigates to /facilities/new or /facilities/:id/edit for a plain resident, producing a confusing broken-looking flow (form opens, submit silently fails) instead of the buttons simply not being there. Not verified at runtime whether every backend facility-mutation endpoint actually enforces the role check (static read only) — confidence medium.",
+        "Fix: wire the real role check (the file's own docstring gives the exact replacement — `const { user } = useAuth(); return user?.role === 'manager' || user?.role === 'admin';`, mirroring frontend/apps/mobile/src/contexts/AuthContext.tsx) instead of the permanent `return true` stub."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "title": "ppt web ui registry api client no auth",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui registry)"
+      ],
+      "evidence": [
+        "RegistryPage.tsx:17-21 and RegistryRulesPage.tsx:16-20 both instantiate `const registryApi = createRegistryApi({ baseUrl: API_BASE_URL, // accessToken and tenantId would come from auth context });` at MODULE scope (evaluated once at import time), with no accessToken or tenantId ever supplied — the comment is a live TODO, not a resolved wiring.",
+        "packages/api-client/src/registry/api.ts:29-33,43-45 — `buildHeaders(config)` builds `Authorization`/`X-Tenant-ID` headers ONLY if `config.accessToken`/`config.tenantId` are truthy, and `createRegistryApi` calls `buildHeaders(config)` exactly once and closes over the resulting static `headers` object for every subsequent pets/vehicles/rules request (list/get/create/update/delete/review). Unlike the rest of the app's api-client modules (e.g. faults/hooks.ts -> faults/api.ts), which resolve auth per-request through a shared client, this factory bakes auth in at construction and never refreshes it.",
+        "Net effect: every request the Building Registries feature (Epic 57 — pet/vehicle registration list, create, update, delete, review, and registry-rules read/update) makes goes out with NO Authorization header and NO tenant header, guaranteed to 401 (or hit the wrong/default tenant scope if the backend doesn't strictly require the header) the moment this feature is routed into the app.",
+        "Currently reduces to a latent landmine rather than a live incident: grepping frontend/apps/ppt-web/src/routes/ and docs/screens/ppt/ turns up no route or screen-map entry for RegistryPage/RegistryRulesPage — the feature is not mounted in the router today, so this specific defect has no current production reachability. Flagging now because it is a real, non-obvious footgun for whoever wires the route next (the module-scope singleton pattern silently swallows the missing token instead of erroring). Fix: build the api instance from a hook/context that supplies a live accessToken/tenantId (matching the pattern other wired features use) rather than a frozen module-level singleton.",
+        "Confidence medium: the missing-auth-header logic is confirmed by static read of buildHeaders/createRegistryApi; actual backend response behavior (hard 401 vs silent wrong-tenant read) is not verified without execution."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx",
+        "frontend/packages/api-client/src/registry/api.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-untranslated-feature-pages",
+      "title": "ppt web ui untranslated feature pages",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui)"
+      ],
+      "evidence": [
+        "Systemic i18n completeness gap: 67 of 196 *Page.tsx / *List.tsx files under frontend/apps/ppt-web/src/features have NO useTranslation import at all — entire feature surfaces are hardcoded English despite the app's sk/cs/de/en requirement. Whole pages affected include community (FeedPage, EventsPage, GroupsPage, GroupDetailPage, CreateGroupPage), workflow-automation (AutomationRulesPage), marketplace (QuoteComparisonPage), financial (FinancialDashboardPage, InvoiceList/OverdueInvoicesList/RecentPaymentsList), buildings (BuildingsPage, BuildingDetailPage, BuildingList), announcements (AnnouncementsPage, Create/EditAnnouncementPage), forms (Available/CreateFormPage, FormList, SubmissionList) and the error pages (NotFound/Forbidden/ServerError/SessionExpired). This is broader than scattered toast literals (see 2026-09-03 pass) — these components localize nothing. Recommend a tracked i18n-backfill sweep, prioritizing high-traffic pages (community feed, financial dashboard, buildings) and the error pages. Grep to reproduce: for each features/**/*Page.tsx|*List.tsx, flag files where `grep -q useTranslation` fails."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/pages/FeedPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/QuoteComparisonPage.tsx",
+        "frontend/apps/ppt-web/src/features/financial/pages/FinancialDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/errors/pages/NotFoundPage.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-alert-drainer-stub-delivery",
+      "title": "reality server alert drainer stub delivery",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-server)"
+      ],
+      "evidence": [
+        "SearchAlertDrainerWorker marks saved-search alerts permanently delivered even when no real notification is sent, creating a silent-loss trap at the transport cutover. The drainer defaults to `LogEmailTransport`/`LogPushTransport` (backend/servers/reality-server/src/services/search_alert_drainer.rs:181-224), whose `send_email`/`send_push` ALWAYS return Ok(()). In `run_once` (lines 358-434) the email stub therefore always sets `any_ok = true`, so every alert row gets `mark_search_alert_notified(alert.id)` (sets notified_at) despite nothing actually leaving the process. This is documented as an intentional first cut, but the forward-looking hazard is NOT addressed: `list_undelivered_search_alerts` filters on notified_at, so when a real SMTP/FCM/APNs adapter is later injected via `with_transports`, every alert queued during the stub period is already notified_at != null and will be skipped forever — those users receive zero first real notification at cutover. Recommend either (a) gate `mark_search_alert_notified` on a transport that reports itself as real (add an `is_real()`/`enabled` seam to the transport traits so the log stubs do NOT advance notified_at), or (b) document a one-time reset of notified_at for the stub-era backlog as part of the real-transport rollout runbook."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only",
+      "title": "reality server categories labels sk only",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-server)"
+      ],
+      "evidence": [
+        "get_categories (routes/listings.rs:776-820, GET /api/v1/listings/categories, public/anonymous endpoint) populates each CategoryCount.label via label_for_property_type (:822-837), which is a hardcoded Slovak-only match: apartment->\"Byty\", house->\"Domy\", land->\"Pozemky\", commercial->\"Komerčné priestory\", office->\"Kancelárie\", garage->\"Garáže\", parking->\"Parkovanie\", storage->\"Sklady\". The CategoryCount.label field doc-comment (:569-570) even states 'Localized display label (Slovak — primary market)', confirming this is a known single-locale shortcut. The handler takes only State (:776-778) — no Accept-Language header, no locale query param — so the Slovak labels are returned identically to every caller.",
+        "reality-web renders these labels directly (CategoryCount matches the client's CategoryCount type per :561) and ships six locale bundles (sk, cs, de, en, hu, pl). Because the label is pre-localized to Slovak server-side rather than returned as a translatable key, a cs/de/en/hu/pl portal user sees Slovak category names ('Byty', 'Domy', ...) with no client-side path to translate them. The `icon` field already returns the raw property_type key (:811) — i.e. the untranslated enum key IS available to the client — so the correct shape is to let the client translate the property_type key and drop (or make optional/locale-negotiated) the server-baked Slovak label.",
+        "Distinct from the sibling get_suggestions finding (different handler, different endpoint, different fix) and from all prior reality-server findings (no signal or backlog row references label_for_property_type / get_categories). Fix: either return only the property_type key and let reality-web's next-intl bundles localize it, or negotiate the label off an Accept-Language header instead of hardcoding Slovak. IG3: /api/v1/listings/categories with Accept-Language: en (or de) asserts labels are not the Slovak literals (or that the response exposes the raw property_type key for client-side translation).",
+        "Confidence medium: the Slovak-only match arm and the locale-unaware handler signature are confirmed by static read; severity low (+1) — a pure i18n label gap on a public helper endpoint (no auth, no correctness/region impact beyond display language), lower than the get_suggestions finding which additionally serves wrong-region city data."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-import-history-limit-100-trunc",
+      "title": "reality server import history limit 100 trunc",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-server)"
+      ],
+      "evidence": [
+        "The agency import-history handler (routes/agency_imports.rs, around :165-190) runs a hand-written query `SELECT ... FROM portal_import_jobs WHERE agency_id = $1 ORDER BY created_at DESC LIMIT 100` (:170-176) and then reports `let total = rows.len() as i64;` (:183) as the response total. There is no offset/limit query param and no count query: the endpoint hard-caps the returned history at 100 rows and sets total = min(actual_rows, 100).",
+        "Consequence: once an agency accumulates more than 100 import jobs, the import-history view silently drops everything older than the 100 most-recent, and `total` misreports the real number of jobs as 100 — there is no pagination affordance and no signal to the client that the list was truncated. For a busy agency running recurring feed imports this hides the bulk of the audit trail. Lower severity than the imports.rs:131 finding because the truncation is a fixed cap (no client-side page-count miscomputation), but it is a distinct handler and a distinct silent-data-loss-on-read defect.",
+        "Fix: either add real pagination (limit+offset params + a COUNT(*) for total, mirroring list_import_jobs once that is corrected) or, at minimum, surface a `truncated`/`has_more` flag and derive total from a COUNT(*) rather than rows.len(). IG3: an integration test seeding >100 portal_import_jobs for one agency asserts the response exposes the true count (or a has_more flag) instead of a flat total==100.",
+        "Confidence medium: the LIMIT 100 literal and total=rows.len() are confirmed by static read; medium severity capped at +1 because the surface is membership-gated (check_agency_membership at :168) and the impact is truncated read visibility rather than a crash or cross-tenant leak."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-total-page-len",
+      "title": "reality server import jobs total page len",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-server)"
+      ],
+      "evidence": [
+        "list_import_jobs (routes/imports.rs:115-135, GET /api/v1/imports/jobs) is a PAGINATED endpoint — it reads query.limit.unwrap_or(20) and clamp_offset_i32(query.offset) (:124-126) and fetches a single page via reality_portal_repo.list_import_jobs(user_id, status, limit, offset). It then computes the pagination total as `let total = jobs.len() as i64;` (:131) and returns ImportJobsResponse { jobs, total } (:133). total therefore equals the size of the CURRENT PAGE (at most `limit`, default 20), NOT the true number of import jobs for the user.",
+        "Consequence: any client that computes page count as ceil(total / limit) sees total==20 on every full page (and total==remainder on the last), concludes there is exactly one page, and never requests offset=20,40,... — silently hiding every import job beyond the first page from the agency/realtor UI. On a user with, say, 55 import jobs the list appears to contain only 20. This is the same class of defect already confirmed in the sibling api-server compliance handler (code-review-api-handlers-user-audit-logs-total-page-len), here on the reality-server imports surface.",
+        "Fix: back total with a real count query (e.g. a reality_portal_repo.count_import_jobs(user_id, status) mirroring the filter), not the page length. IG3: an integration test seeding N>limit import jobs for one user asserts response.total == N while response.jobs.len() == limit. Distinct from the known 2026-08-31 reality-server pagination finding (which was about OFFSET integer overflow / clamping, since fixed via util::clamp_offset_i32 used right here at :126) — this is the response `total` field being wrong, an orthogonal bug.",
+        "Confidence medium: the paginated fetch (limit+offset) and the page-length-as-total computation are confirmed by static read of the full handler; medium (not high) because the surface is auth-gated (PortalPrincipal) and the harm is a corrupted pagination contract / under-exposed list rather than a crash, data loss, or cross-tenant leak."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-saved-search-match-limit-drop",
+      "title": "reality server saved search match limit drop",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-server)"
+      ],
+      "evidence": [
+        "Saved-search alert matching silently drops matches beyond `config.match_limit` (default 100) in a single cadence window. The worker calls `find_new_match_listing_ids(&query, Some(since), match_limit)` which runs `SELECT l.id ... WHERE l.published_at > $since ORDER BY l.published_at DESC LIMIT $limit` (backend/crates/db/src/repositories/reality_portal/searches.rs:102-121) — returning only the NEWEST `match_limit` matches. It then commits `enqueue_and_advance_saved_search`, whose `mark_saved_search_matched` unconditionally sets `last_matched_at = now()` (searches.rs:185-192). Because the watermark jumps to now() regardless of how many rows the capped query returned, any matching listing ranked 101+ in that window (i.e. published_at between `since` and the 100th-newest match) has published_at <= now() and is excluded from every subsequent run's `published_at > since` filter. Net effect: on a broad saved search over a daily/weekly cadence on an active portal (>100 new matching listings per window is realistic for e.g. 'apartments for rent in Bratislava'), the user is never notified about the older portion of the batch, and `match_count` also undercounts (incremented by the capped listing_ids.len()). Fix options: page the query and advance the watermark only to the oldest UNPROCESSED match's published_at when the cap is hit, or advance last_matched_at to the min(published_at) of the returned rows rather than now() when `rows.len() == match_limit`, so the next run resumes from the truncation boundary instead of skipping past it."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/services/saved_search_alerts.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "title": "reality server suggestions hardcoded sk region",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 reality-server)"
+      ],
+      "evidence": [
+        "get_suggestions (routes/listings.rs:457-480, GET /api/v1/listings/suggestions, public/anonymous search-suggestions endpoint consumed by reality-web) returns a `popular_searches` list that is a hardcoded Slovak-only literal vec (:474-478): `\"2-izbový byt Bratislava\"`, `\"Dom Košice\"`, `\"Pozemok Žilina\"`. These are user-facing suggestion strings rendered verbatim by the client, and they are returned identically regardless of the caller's locale. reality-web ships SIX locale bundles (frontend/apps/reality-web/messages/: sk, cs, de, en, hu, pl), so a de/en/cs/hu/pl portal visitor is shown Slovak search suggestions with no way to localize them — the strings are baked server-side, not returned as translatable keys.",
+        "The same handler hardcodes the nearby-city fallback to a Slovak city: `let city = params.get(\"city\")...unwrap_or(\"Bratislava\")` (:461-464), then feeds it to `get_nearby_cities(city, 10)` (:466-468). reality-server is explicitly multi-region (backend/CLAUDE.md + REGION env supports sk/cz/eu; reality-portal.cz and reality-portal.eu are first-class default CORS origins), so on a Czech (.cz) or EU (.eu) deployment a suggestion request that omits `city` seeds nearby-city suggestions from Bratislava (SK) rather than a region-appropriate default — wrong-country content, not merely untranslated. This is a region-awareness correctness defect on top of the i18n gap.",
+        "Distinct from every prior reality-server finding: the recent i18n finding (alert-drainer-i18n-english-only, 2026-08-30) is in services/search_alert_drainer.rs + email.rs, and the prior listings.rs findings (viewcount-hardcoded-zero, orphan-listinghandler-stub-detail, pagination-offset-overflow — all done) touch different handlers. No prior signal or backlog row references get_suggestions / popular_searches. Fix: return `popular_searches` as translatable keys (or derive them from actual popular queries per region) instead of Slovak literals, and make the default city region-derived (from REGION / host) rather than the constant \"Bratislava\". IG3: a request to /api/v1/listings/suggestions on a non-SK region (or with an Accept-Language other than sk) asserts the suggestions/default-city are not the Slovak Bratislava literals.",
+        "Confidence medium: the hardcoded Slovak literals and the Bratislava default are confirmed by static read of the full handler; severity medium (+2) rather than low because the Bratislava default produces wrong-region content on the cz/eu deployments (a correctness issue), not only an untranslated string — but not high because the endpoint is a non-critical public suggestions helper (no auth, no data loss, no crash)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "title": "reality web agency branding save no error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "AgencyBranding.tsx handleSave (L79-95) does `await updateBranding.mutateAsync({ agencyId, data: { logo, coverImage, primaryColor, ... } })` with NO try/catch, then resets hasChanges/logoFile/coverFile.",
+        "updateBranding is consumed only for `.isPending` (button label at L126/128); `updateBranding.error` is NEVER rendered. On a failed branding save the follow-up state resets never run (mutateAsync rejects), the user gets zero feedback, and it is an unhandled promise rejection.",
+        "The backing hook useUpdateBranding (agency/hooks.ts:258) posts multipart FormData (logo/coverImage uploads) and `throw new ApiError(response.status)` on !response.ok (L276-278), with onSuccess-only (no onError) at L282. Image uploads are exactly the path that fails with 413 (payload too large) / 415 / 500, so a silent failure here is likely in practice.",
+        "This file already distinguishes load errors carefully (AgencyLoadError on agencyError, Issue #2343) but the write path has no equivalent handling. Fix: wrap mutateAsync in try/catch, keep hasChanges true on failure, and render an inline error (updateBranding.error / a caught message) near the save button, consistent with the sibling error-state handling in the same component."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "title": "reality web agent profile mock stub",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "realtor/[id]/page.tsx is a PUBLIC, per-agent dynamic route but ignores the [id] param entirely: `const agent = MOCK_AGENT;` (L20), rendering MOCK_AGENT/MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS (imported from ./_mock, L11) regardless of which agent id is requested. Every agent URL renders the same fabricated agent, listings and reviews — a public page serving mock data.",
+        "The contact form on this page is a no-op stub: handleSendMessage (L22-28) only does `setMessageSent(true); setContactOpen(false)` with no API call, so lead-capture messages to the agent are silently discarded.",
+        "The file has NO useTranslations import and hardcodes Slovak user-facing strings directly in JSX: 'Kontaktovať' (L154), 'Aktívne ponuky' (L227), 'Hodnotenia' (L330), 'Odoslať správu' (L530), 'Kontaktovať {agent.name}' (L588), placeholder 'Dobrý deň, mám záujem o Vaše služby...' (L597), aria-label 'Kontaktovať makléra' (L556), 'Odoslať' (L638) — breaking i18n on a locale-prefixed ([locale]) public route.",
+        "Landable in stages: (a) wrap the visible strings in next-intl t() under a pages.agent-profile namespace (the root already carries data-i18n='pages.agent-profile.root'), and (b) replace MOCK_AGENT with a real fetch keyed on the route id + wire the contact form to the inquiry/realtor-message endpoint (mirroring ContactForm.tsx's createInquiry usage). At minimum the mock-data + dead-form state should be tracked so this public route is not shipped as a scaffold."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-unvalidated-listing-cast",
+      "title": "reality web comparison unvalidated listing cast",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-web)"
+      ],
+      "evidence": [
+        "Client-side shared-comparison loader trusts an unvalidated network body across the API boundary, inconsistent with the app's own SSR normalizer discipline. ComparisonUrlHandler.tsx:43-47 (frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx) fetches `${getApiBase()}/api/v1/listings/${id}` and returns `response.json() as Promise<ListingSummary>` — a raw runtime cast with NO shape validation — then pushes each result straight into `addToComparison(listing)` (line 70). The SSR sibling that hits the SAME reality-server listing endpoint deliberately does NOT trust the body: getListing() in app/[locale]/listings/[slug]/page.tsx:88-89 runs `parseListingDetail(body)` precisely because 'A 200 does not guarantee a well-formed body: an upstream/proxy partial response or a malformed listing is truthy but may be missing required nested fields ... Rendering such a body crashes SSR with a 500.' The client comparison path has no equivalent guard, so a malformed/partial 200 (or a shape mismatch — note the endpoint returns a listing DETAIL body but this code casts it to the narrower `ListingSummary`) is accepted as valid and can crash the client comparison view when a comparison card dereferences a missing nested field (e.g. address/photos). Fix: validate/normalize the fetched body through the same parser family (a `parseListingSummary`/`parseListingDetail`-style guard) before `addToComparison`, dropping bodies that fail the shape check exactly as `Promise.allSettled` already drops rejected ids, instead of the bare `as Promise<ListingSummary>` cast."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-price-map-hardcoded-sk-i18n",
+      "title": "reality web price map hardcoded sk i18n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-web)"
+      ],
+      "evidence": [
+        "Price-map page renders hardcoded Slovak user-facing strings on a multi-language (sk/cs/de/en) public portal, bypassing next-intl. In frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx the property-type filter labels are literal Slovak: `PROPERTY_OPTIONS` (lines 29-34) = 'Všetky' / 'Byty' / 'Domy' / 'Pozemky', rendered verbatim as `{opt.label}` at line 189; and the transaction-type toggle at line 161 is `{tx === 'sale' ? 'Predaj' : 'Prenájom'}`. The rest of the same component is correctly localized via `useTranslations('pages.priceMap')` (line 40), so a de/en/cs visitor to /[locale]/price-map sees the page chrome translated but the sale/rent toggle and all four property-type chips stuck in Slovak. This is a genuine i18n coverage gap (not a design-system TODO): move these labels into the `pages.priceMap` message namespace (messages/{en,sk,cs,de}.json) and render them through `t(...)` keyed by the enum value, matching how the surrounding controls already resolve their text."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "title": "reality web profile page mock data",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the signed-in user's own profile route renders MOCK_PROFILE / MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS from ./_mock instead of the authenticated user's real data; the file's own header comment (lines 8-11) acknowledges 'when [auth] lands, replace MOCK_* with live data via the SDK'. The page ships showing placeholder identity, listings, activity and reviews to every logged-in user. Completeness stub — should fetch via the reality-api-client once the auth/session wiring is available."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/_mock.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "title": "reality web realtor detail modal no error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "RealtorManagement.tsx RealtorDetailModal has three destructive/state-changing handlers that await mutateAsync with NO try/catch: handleSave (updateRealtor.mutateAsync, L829-834 then setIsEditing(false)), handleRemove (removeRealtor.mutateAsync, L838-839 then onClose()), handleStatusChange (updateRealtor.mutateAsync, L843-847).",
+        "updateRealtor.error / removeRealtor.error are NEVER read or rendered anywhere in the file (grep for '.error'/'.isError' finds only the mutateAsync call sites). On a failed remove-realtor or status-change the row/modal silently fails to update, the follow-up setState (setIsEditing(false)/onClose) never runs, and mutateAsync (unlike mutate) rejects -> unhandled promise rejection in a React event handler (React does not surface those).",
+        "The backing hooks useUpdateRealtor (agency/hooks.ts:307) and useRemoveRealtor (:333) define onSuccess (invalidateQueries) only, NO onError, so error surfacing is entirely the caller's responsibility.",
+        "The invite modal in the SAME file (handleSubmit, L568-580) already shows the correct pattern: try/catch around inviteRealtor.mutateAsync with setInviteError(t('inviteError')) rendered inline. Fix: mirror that pattern in the DetailModal handlers (try/catch, only run the follow-up setState on success, render an inline error using the existing t('inviteError')/agency namespace). removeRealtor is an irreversible action, so silent failure is the worst case."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-hardcoded-slovak",
+      "title": "reality web realtor profile hardcoded slovak",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx hardcodes Slovak-only UI strings — ':114 \"✓ Overený maklér\" (verified-realtor badge), :227 \"Aktívne ponuky (...)\", :330 \"Hodnotenia (...)\" — bypassing next-intl useTranslations()/getTranslations() despite reality-web shipping sk/cs/de/en (per app CLAUDE.md and messages/*.json). cs/de/en visitors to any agent profile see Slovak. The page carries a data-i18n=\"pages.agent-profile.root\" marker (:32) but the visible copy is never routed through the message catalog. i18n localization defect on a public route."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-unwired",
+      "title": "reality web realtor profile mock unwired",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:16-20 — the public agent-profile route renders MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS imported from ./_mock and NEVER reads the [id] route param nor calls the reality-server API. Every /[locale]/realtor/<any-id> URL renders the same hardcoded mock agent, listings and reviews (147-line _mock.ts). Additionally the contact form's handleSendMessage (page.tsx:22-28, wired to <form onSubmit> at :591) is a no-op that only sets messageSent=true and closes the drawer — it never POSTs the inquiry to any endpoint, so realtor contact requests are silently dropped. Contrast: sibling app/[locale]/listings/[slug]/page.tsx and account/listings/[id]/edit/page.tsx are correctly wired (fetch by slug/id, response.ok checks, notFound(), getMyListing/updateListing from @/lib/realtor-api). Shipped-looking public route backed entirely by mocks with a dead contact action."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
     }
   ]
 }
