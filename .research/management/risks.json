@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-31T03:10:00Z",
+  "generated": "2026-09-05T18:00:00Z",
   "items": [
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
@@ -219,6 +219,17 @@
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
       "status": "open"
+    },
+    {
+      "id": "pm-security-resolution-pr-regression-window-2026-09-05",
+      "risk": "Security-sensitive cleanup PRs (raw-error-leak sweeps, IDOR fixes, CSRF wiring, sanitizer edits) can silently re-introduce the exact anti-pattern the previous PR removed within a merge window shorter than the routine's daily cadence — chain observed this week: #2915 introduced a `map_err(e.to_string())` site → #2920 swept 16 sites but missed the one #2915 introduced → #2925 was needed to catch the residual. Undetected regressions of this class re-open info-leak / IDOR surfaces the org already declared closed.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "After any PR whose title matches `fix|refactor(...): (remove|replace|sanitize|reject) <pattern>` merges to `dev`, spot-grep the pattern across the merged tree within 1h; open a follow-up signal if any remnant found. Target categories: raw-DB-error-to-string, unwrap()/expect() on untrusted input, hardcoded 'localhost'/keys, IDOR handler exemptions, self-review/self-approve guards.",
+      "owner_role": "pm-security",
+      "trigger": "any code-review resolution PR merged without a companion post-merge grep",
+      "status": "open",
+      "source": "pm-security 2026-09-05 (#2915→#2920→#2925 chain)"
     }
   ]
 }

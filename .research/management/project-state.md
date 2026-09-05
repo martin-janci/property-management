@@ -1,18 +1,25 @@
 # PPT Project State
 
-_Generated: 2026-08-31 — routine Phase 1.6 lightweight upkeep (pm-devops rotation slot; 76-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-devops → pm-security next), coverage_cursor idx 6 → 7 (epic-81 re-checked, no material change; advances to epic-82). Sprint window 2026-08-26..08-31 shipped 10 PRs — all code-review batch (#2889-#2899, dispatcher merged in-window)._
+_Generated: 2026-09-05 — routine Phase 1.6 lightweight upkeep (pm-security rotation slot; 46-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep` (not re-scanned this run); pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 7 → 8 (epic-82 next). Sprint window 2026-09-01..09-05 shipped **14 PRs** — 9 code-review/refactor/test fixes + 1 accounting feature + 5 dependabot bumps + 1 closed-unmerged (superseded)._
 
 ## Executive summary
 
-- **Delivery still at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring and 84-2 sign page). No status flips this window. The last window's 10 PRs were exclusively `code-review-*` fixes surfaced by the dev-team static passes:
-  - Backend security/reliability — PR #2893 (SSO introspect negative-cache poisoning fix), PR #2898 (validate reporter_email/reporter_phone on report submit), PR #2899 (compliance guard widening for PlatformAdmin).
-  - Backend correctness — PR #2892 (measure text length by char count not bytes; 8 files), PR #2896 (localize saved-search alert copy by recipient locale).
-  - Frontend correctness — PR #2889 (wire realtime ws events to query invalidation — end-to-end dead sync fix), PR #2890 (surface swallowed mutation errors), PR #2891 (wire onUnauthorized so 401 triggers session recovery).
-  - Frontend i18n — PR #2894 (Saved Searches localization), PR #2895 (Inquiries page localization).
-- **Auto-review loop still working:** all 10 merged PRs were originated by the ppt-dev-review generator over the prior 2 days (dispatcher spawned static passes → landed as `code-review-*` PRs → all merged in the same window). Zero regressions detected on the batch.
-- **Buffer starved (cloud-only):** 7/8 open backlog items are mobile-native/KMP — structurally unclaimable in the cloud dispatcher (AGP/Gradle egress gate, issue #2652). Every dispatcher commit since 2026-08-30 records `GC3-buffer-bounds=FAIL (record-only)`. Tier-1d generator kicks per run just to keep the buffer above floor. **Infra decision surfaced this run (pm-devops).**
-- **One open PR touched this run:** #2897 (`code-review-reality-server-sso-per-call-client-no-timeout`) — approved but had a real merge conflict against #2893 (both touched `introspect_pm_token`); dispatcher Phase 5.6 threaded the pooled `reqwest::Client` through the extracted `introspect_pm_token_inner`, pushed the merge (bca285d..aa5c544). CI red on the resolution attempt (fmt + introspect test-shard). Standing manual-reconciliation request on the PR.
-- **No new blockers.** Standing gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) still holds; owner pm-security.
+- **Delivery still at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring and 84-2 sign page). No status flips this window. UC-ACC-05.9 (invoice PDF) shipped via #2558 — the long-stalled accounting-MVP trio finally cleared its reviewer starvation.
+- **14 merged PRs since 2026-09-01 brief:**
+  - Backend security: **#2919** (reality-server: reject self-review — agent-review self-review guard, IDOR-adjacent), **#2925** (fix compliance raw DB error leak regression introduced by #2915 → then swept by #2920 → residual re-fixed), **#2926** (refactor: remove FCM legacy dead endpoint — attack-surface reduction).
+  - Backend correctness: **#2922** (refactor: saved-search error enum, replaces string-status), **#2928** (fix: report_summary snapshot-consistency).
+  - Test hardening: **#2931** (regression test for #2928), **#2932** (e2e test for agent-review self-review guard around #2919).
+  - Frontend correctness/i18n: **#2927** (test: EmergencyContactDirectoryPage i18n regression).
+  - Accounting feature: **#2558** (feat: invoice PDF render UC-ACC-05.9) — long-stalled MVP trio member, finally landed after 30+ days.
+  - Dependabot bumps: **#2935** (npm-minor), **#2673** (ktor), **#2585** (base64), **#2586** (validator), **#2583** (rust_xlsxwriter).
+  - Closed unmerged: **#2934** (cargo-minor-patch — superseded).
+- **Auto-review loop still working:** the code-review generator continues to bring resolution PRs to green in-window. The #2915 → #2920 → #2925 chain (fix → sweep → regression follow-up) is a recurring pattern worth automating (see risks below).
+- **Buffer starved (cloud-only) — unchanged:** 7/8 open backlog items remain mobile-native/KMP, structurally unclaimable in cloud (issue #2652, AGP/Gradle egress). No dispatcher movement on this since 2026-08-31.
+- **Reviewer-starvation risk cleared for accounting trio** (#2555/#2558/#2559 was 3-item cluster; #2558 landed this window). #2555 and #2559 still open — will follow up next brief.
+
+## Since 2026-09-01
+
+**Shipped 14 PRs / 1 closed:** #2919 self-review guard (security) · #2922 saved-search error enum · #2925 compliance raw-DB leak regression · #2926 FCM legacy endpoint removed · #2927 EmergencyContactDirectoryPage i18n test · #2928 report_summary snapshot-consistency · #2931 regression test for #2928 · #2932 e2e for agent-review self-review guard · **#2558 invoice PDF render UC-ACC-05.9** · dependabot #2935/#2673/#2585/#2586/#2583 · #2934 closed unmerged (superseded).
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
@@ -26,48 +33,37 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 | 10A — OAuth Provider Foundation | done | 3/3 stories done |
 | 10B — Platform Administration | in-progress | 7/7 stories done |
 | 80 — Dispute Resolution | partial | 3/3 stories done in coverage |
-| 81 — Reports | (extended) | 2/2 stories done in coverage; **re-checked this run (idx 6), no material change, last_checked=2026-08-31** |
+| 81 — Reports | (extended) | 2/2 stories done in coverage |
 | 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial (84-1, 84-2) — unchanged |
 | 82 / 83 / 85 / 79 / 7a / 8a / 9 | (extended) | all done in coverage |
-
-## Shipped since last run (10 PRs merged 2026-08-30 within the run window)
-
-- **#2889** — code-review ppt-web-core ws-event-name-mismatch: wire realtime WS events to query invalidation (100% dead sync fix, real event names)
-- **#2890** — code-review reality-web mutation-no-onerror: surface swallowed mutation errors (favorites/saved-searches/inquiries)
-- **#2891** — code-review ppt-web-core api-onunauthorized-unwired: wire onUnauthorized so 401 triggers session recovery
-- **#2892** — code-review reality-server bytelen-charcount-validation: measure text length by character count not bytes (8 files, accented Slovak/Czech/German)
-- **#2893** — code-review reality-server sso-introspect-negcache-poison: don't cache active=false on PM introspection outage
-- **#2894** — code-review reality-web saved-searches-i18n: localize Saved Searches page + card (6 locales)
-- **#2895** — code-review reality-web inquiries-i18n: i18n the Inquiries page (6 locales)
-- **#2896** — code-review reality-server alert-drainer-i18n-english-only: localize saved-search alert copy by recipient locale (sk/cs/de/en with plural buckets)
-- **#2898** — code-review reality-server report-contact-unvalidated: validate reporter_email/reporter_phone on report submit
-- **#2899** — code-review api-handlers compliance-superadmin-exact-match: let PlatformAdmin reach compliance reports
+| Accounting UC-ACC-05.x (extended) | in-progress | UC-ACC-05.9 shipped this window via #2558 |
 
 ## What's next (top 5 actions from ranked backlog)
 
-1. **[high] Unblock mobile-native/KMP builds in the cloud runner (issue #2652)** — 7/8 open backlog items structurally unclaimable — **owner: pm-devops**. New this run — cloud-runner starvation is now chronic; pushing it into the top actions.
-2. **[high] Wire ppt-web direct-to-S3 upload (84-1 partial)** — POST /api/v1/documents/upload-url consumer + regression test — **owner: pm-frontend**. Highest-leverage single move (drops partial count 2 → 1).
+1. **[high] Unblock mobile-native/KMP builds in the cloud runner (issue #2652)** — 7/8 open backlog items structurally unclaimable — **owner: pm-devops**. Chronic since 2026-08-31; buffer still starved.
+2. **[high] Wire ppt-web direct-to-S3 upload (84-1 partial)** — POST /api/v1/documents/upload-url consumer + regression test — **owner: pm-frontend**. Drops partial count 2 → 1.
 3. **[high] Build signer-facing document-sign page (84-2 partial)** — flip screen-map ppt/document-sign buildStatus planned → shipped — **owner: pm-frontend**. Closes 49/49 MVP when paired with #2.
 4. **[high] Resolve gh-issue-2797** — cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) blocks every backend PR — **owner: pm-security**. Standing since 2026-08-18.
-5. **[medium] Resolve #2897 CI red** — PR approved and merge-conflict-resolved (bca285d..aa5c544), but CI shard is red (fmt + introspect test); needs manual reconciliation in a buildable env — **owner: pm-backend**.
+5. **[medium] Follow up on remaining accounting-MVP-trio PRs (#2555, #2559)** — reviewer-starvation was cleared for #2558 this window; extend the reviewer-slot pattern to the other two.
 
 ## Blockers
 
-- **None new this run.** Sprint continues with no red flags; all 10 code-review PRs landed in-window.
+- **None new this run.** 14 merged PRs, no regressions detected in-window (aside from the #2925 catch-up on #2920's earlier residual).
 - **Standing:** gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) blocks every backend PR until landed. Owner: pm-security.
-- **Standing infra:** issue #2652 — mobile-native/KMP builds unlandable in cloud runner. Owner: pm-devops (surfaced as this run's top action).
-- **Aging:** 84-1 + 84-2 partial stories unchanged for 4 upkeep windows. Owner: pm-frontend.
+- **Standing infra:** issue #2652 — mobile-native/KMP builds unlandable in cloud runner. Owner: pm-devops.
+- **Aging:** 84-1 + 84-2 partial stories unchanged for 5 upkeep windows. Owner: pm-frontend.
 
-## Role focus today: **pm-devops** (rotation idx 4; last 2026-06-16, 76d stale) + pm-scrum-master always-on
+## Role focus today: **pm-security** (rotation idx 5; last 2026-07-21, 46d stale) + pm-scrum-master always-on
 
-- **pm-scrum-master** (always-on): the code-review auto-generator + dispatcher merge loop delivered 10 PRs in one window with no regressions detected — the loop is a working delivery mechanism. Delivery blocker is now infrastructural, not code: mobile-native/KMP items can't be picked up in cloud, and the backlog rank is exhausted of landable items (`Buffer starved (claimable=0/floor=36)` on the 2026-08-31T00:35Z commit).
-- **pm-devops** (rotation): flagged the mobile-native/KMP cloud-runner gap (issue #2652) as the top standing infra risk. Also proposed a nightly `verify-all.sh --quick` sweep on `dev` HEAD to surface silent infra regressions, and a dependabot-queue triage (7 open dep PRs, 3d idle). See `roles/pm-devops.md` for the full 4 next-actions and 2 risks.
+- **pm-scrum-master** (always-on): 14 PRs in 4 days is a strong delivery cadence — the code-review + auto-merge loop is compounding. The **#2915 → #2920 → #2925** collision (fix PR introducing regression that a follow-up sweep partially missed, then a second follow-up caught) confirms the open-question from the 09-01 brief: automated post-merge pattern-grep is warranted. Also: **#2558 landing (accounting UC-ACC-05.9)** validates that reviewer-slot rotation unblocks stalled trios — apply the same pattern to #2555/#2559 next.
+- **pm-security** (rotation, first run in 46 days):
+  - **Security wins this window:** #2919 (agent-review self-review guard, IDOR-adjacent), backed by e2e test #2932; #2925 (compliance raw DB error leak fully swept); #2926 (dead FCM legacy endpoint removed — attack-surface reduction).
+  - **New risk surfaced:** **regression-window between resolution PRs** — the #2915 → #2920 → #2925 chain shows security-sensitive cleanup PRs can silently re-introduce the exact anti-pattern the previous PR removed, within a merge window shorter than the routine's daily cadence. Sanitized-output cleanups, IDOR sweeps, and CSRF wiring are the highest-impact categories. Recommend post-merge sanity grep (see risks.json new entry).
+  - Standing security items unchanged: **gh-issue-2797** (cargo-deny RUSTSEC-2026-0258 h2 DoS); layout webhook replay guard (#2485); mobile LAYOUT_CACHE_KEY tenant-scoping (#2486).
 
-## Coverage (upkeep this run — 2026-08-31)
+## Coverage (upkeep this run — 2026-09-05)
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated` bumped to 2026-08-31T03:10:00Z, no re-scan.
-- **Epic re-check: epic-81** — cursor idx 6. Both stories (81-1 report-schedule-editing, 81-2 report-execution-history) still `done`. No PR in the 2026-08-26..08-31 window touched reports schedule routes/screens; evidence entry appended to 81-1 noting the negative check. `last_checked = 2026-08-31` stamped on both stories.
-- **Merged-PR evidence:** none of the 10 merged PRs (all code-review batch) match a coverage story by keyword — all were correctness hardening of already-shipped surfaces. No status flips.
-- **`coverage_cursor` advances 6 → 7** (epic-81 → epic-82 next run).
-- **`pm_cursor` advances 4 → 5** (pm-devops → pm-security next run). role_last_run["pm-devops"] = 2026-08-31.
+- **`coverage.json` not re-scanned this run** — upkeep, no epic re-check triggered by merged PRs. Merged-PR evidence: 14 PRs; none match a coverage story by keyword for a status flip (all correctness/security/refactor/test of already-shipped surfaces, plus one accounting sub-UC #2558 which is not tracked as a coverage story).
+- **`coverage_cursor` advances 7 → 8** (epic-82 → epic-83 next run).
+- **`pm_cursor` advances 5 → 6** (pm-security → pm-data next run). role_last_run["pm-security"] = 2026-09-05.
 - **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. **Missing UC links: 3** (UC-33.1/33.2/33.3 already queued). Zero orphan screens, zero validation errors.

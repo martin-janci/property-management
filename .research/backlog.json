@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days; score 1→0 → dropped 2026-09-05."
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-05",
       "plan": null
     },
     {
@@ -7842,16 +7843,17 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "needs-human-judgement",
+      "status": "done",
       "sources": [
         "PR #2558"
       ],
       "evidence": [
-        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559."
+        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559.",
+        "resolved: PR #2558 merged 2026-09-04T07:13:40Z (feat(acc): invoice PDF render endpoint UC-ACC-05.9); item no longer stalled."
       ],
       "files": [],
       "created_at": "2026-08-12",
-      "updated_at": "2026-08-12",
+      "updated_at": "2026-09-05",
       "plan": null
     },
     {
@@ -10601,6 +10603,153 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-mock-data",
+      "title": "mobile-rn NotificationsScreen shows hard-coded MOCK_NOTIFICATIONS with fake setTimeout onRefresh — real backend never called",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-rn code review 2026-09-05"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx:116 — useState is seeded with MOCK_NOTIFICATIONS; onRefresh (lines 118-122) is a fake setTimeout(600ms); the screen never calls the backend, so users see hard-coded sample data in production instead of their real notifications."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-i18n-gap",
+      "title": "mobile-rn NotificationsScreen has 5 hard-coded English strings — screen cannot be localised into sk/cs/de",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-rn code review 2026-09-05"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx:138,139,166,173,174 — user-facing strings (\"Notifications\", \"{n} unread\", \"Mark all as read\", \"You're all caught up\", \"New notifications will appear here.\") are hard-coded English, not wrapped in t(); rest of the mobile app uses react-i18next (e.g. DocumentsScreen)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-no-flatlist-virtualization",
+      "title": "mobile-rn: ~35 list screens use ScrollView + array.map() instead of FlatList — no virtualization, memory pressure and jank on Android",
+      "vector": "perf",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-rn code review 2026-09-05"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx:357-363 and frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx:177 render potentially unbounded server lists via array.map() inside plain ScrollView; grep for FlatList|SectionList|VirtualizedList across src/ returns exactly 1 file (features/faults/screens/FaultsScreen.tsx), so ~35 list screens skip RN virtualization and mount every row eagerly."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-accounting-server-pdf-rs",
+      "title": "Churn hotspot: backend/servers/accounting-server/src/pdf.rs (380 lines this run; new file introduced by PR #2558)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2558",
+        "hotspot 2026-09-05"
+      ],
+      "evidence": [
+        "backend/servers/accounting-server/src/pdf.rs — 380 lines changed via PR #2558 (invoice PDF render endpoint UC-ACC-05.9). New file; watch subsequent churn to see if the abstraction settles."
+      ],
+      "files": [
+        "backend/servers/accounting-server/src/pdf.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-data-export-test-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/data_export_test.rs (123 lines this run, report_summary snapshot work)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2928",
+        "PR #2931",
+        "hotspot 2026-09-05"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/data_export_test.rs — 123 lines churn tied to report_summary snapshot-consistency work (PRs #2928 + #2931). Test suite for a recently-hardened repository — watch for signal-to-noise in future runs."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/data_export_test.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-accounting-server-invoices-rs",
+      "title": "Churn hotspot: backend/servers/accounting-server/src/routes/invoices.rs (118 lines this run; new route surface)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2558",
+        "hotspot 2026-09-05"
+      ],
+      "evidence": [
+        "backend/servers/accounting-server/src/routes/invoices.rs — 118 lines churn from PR #2558 wiring the invoice PDF endpoint (UC-ACC-05.9). New route surface; expect further churn as PRs #2555 (invoice lifecycle) + #2559 (PAY by square) land."
+      ],
+      "files": [
+        "backend/servers/accounting-server/src/routes/invoices.rs"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-2934",
+      "title": "closed unmerged: PR #2934 dependabot cargo-minor-patch (12 updates) — superseded by PR #2936 (13 updates)",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2934",
+        "PR #2936"
+      ],
+      "evidence": [
+        "dependabot PR #2934 closed unmerged 2026-09-04T07:20:16Z; new PR #2936 (cargo-minor-patch, 13 updates) opened same day and is still open — carries the same group's next roll-up. No action needed until #2936 goes green in CI or requires manual intervention."
+      ],
+      "files": [
+        "backend/Cargo.toml",
+        "backend/Cargo.lock"
+      ],
+      "created_at": "2026-09-05",
+      "updated_at": "2026-09-05",
+      "plan": null
     }
   ]
 }

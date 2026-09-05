@@ -1,0 +1,141 @@
+{
+  "run_iso": "2026-09-05T03:16:42Z",
+  "run_date": "2026-09-05",
+  "trigger_text": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-05",
+      "type": "lag_warning",
+      "source": "routine-cron",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-09-01T18:38:58Z; now 3d 8h ago (LAG_HOURS=80). Cloud cron may have skipped 2 windows. Dispatcher (separate loop) ticks are healthy at 2h cadence.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/accounting-server/src/pdf.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-09-01 on dev",
+      "score_delta": 1,
+      "evidence": "backend/servers/accounting-server/src/pdf.rs — 380 lines changed via PR #2558 (new file introduced by invoice PDF render endpoint UC-ACC-05.9).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "recent_churn": 380
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-09-01 on dev",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/data_export_test.rs — 123 lines changed via PRs #2928 + #2931 (report_summary snapshot-consistency work).",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "recent_churn": 123
+    },
+    {
+      "id": "churn-hotspot-backend/servers/accounting-server/src/routes/invoices.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-09-01 on dev",
+      "score_delta": 1,
+      "evidence": "backend/servers/accounting-server/src/routes/invoices.rs — 118 lines changed via PR #2558 (invoice PDF route wiring).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "recent_churn": 118
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2935 merged 2026-09-04T07:18:10Z — npm-minor-patch group (40 updates).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2673 merged 2026-09-04T07:15:03Z — ktor group (7 updates).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2585 merged 2026-09-04T07:14:41Z — base64 0.22.1→0.23.0 in /backend.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2586 merged 2026-09-04T07:14:20Z — validator 0.20.0→0.21.0 in /backend.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2583 merged 2026-09-04T07:13:24Z — rust_xlsxwriter 0.96.0→0.97.0 in /backend.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2934",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2934",
+      "score_delta": 1,
+      "evidence": "dependabot PR #2934 (cargo-minor-patch group, 12 updates) closed unmerged 2026-09-04T07:20:16Z — superseded by PR #2936 (13 updates, still open).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "fixme-code-pr-2919-inquiries-mod",
+      "type": "fixme-in-merged-code",
+      "source": "PR #2919 / commit fa421c5",
+      "score_delta": 0,
+      "evidence": "backend/servers/reality-server/src/handlers/inquiries/mod.rs:49 — new TODO(code-review-reality-server-inquiry-email-stub) added; documents still-stubbed InquiryNotifier waiting for a real email transport. Backlog item code-review-reality-server-inquiry-email-stub already status=done (marker is architectural, not a bug); score suppressed to 0 to avoid double-counting.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-mock-data",
+      "type": "code-review-finding",
+      "source": "mobile-rn segment review 2026-09-05",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx:116 — useState seeded with MOCK_NOTIFICATIONS; onRefresh (lines 118-122) is a fake setTimeout(600ms); screen never calls backend, so users see hard-coded sample data in production instead of their real notifications.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-i18n-gap",
+      "type": "code-review-finding",
+      "source": "mobile-rn segment review 2026-09-05",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx:138,139,166,173,174 — 5 user-facing strings hard-coded in English, not wrapped in t(); rest of the mobile app uses react-i18next (e.g. DocumentsScreen).",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "mobile-rn"
+    },
+    {
+      "id": "code-review-mobile-rn-no-flatlist-virtualization",
+      "type": "code-review-finding",
+      "source": "mobile-rn segment review 2026-09-05",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx:357-363 and NotificationsScreen.tsx:177 render potentially unbounded server lists via array.map() inside plain ScrollView; grep for FlatList|SectionList|VirtualizedList across src/ returns exactly 1 file (features/faults/screens/FaultsScreen.tsx), so ~35 list screens skip RN virtualization and mount every row eagerly.",
+      "confidence": "high",
+      "candidate_vector": "perf",
+      "segment": "mobile-rn"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": []
+}
