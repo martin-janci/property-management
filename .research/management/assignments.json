@@ -1,1 +1,49 @@
-{"generated":"2026-09-05T18:35:25Z","assignments":[{"task_id":"gh-issue-2743","branch":"auto-impl/gh-issue-2743-66ef5ab8","status":"review","claimed_at":"2026-08-13T04:28:20Z","last_updated":"2026-09-05T18:35:25Z","status_changed_at":"2026-08-13T04:42:22Z","pr_number":2744,"pr_url":"https://github.com/martin-janci/property-management/pull/2744","merged_at":null,"specialist":"pm-tech-lead","implementer_summary":"pr=2744 done: restored #1162 archive-routing (oversize archive -> PUSH_METHOD=git via size-guard exit4) + added already-landed guard in retry-remint.sh; self-test + test-retry-remint + test-mcp-push-size-guard all PASS; durable MCP-only sharding left as follow-up","reviewer_summary":"verdict=approve note=both-fixes-correct-well-tested-scoped-clean-ci-green (posted as comment; formal APPROVE blocked on self-PR)","last_reviewed_oid":"e3a6f01a38dba4a6f31f3235923067aff29004ca","scope_drift":false,"code_reuse_warn":null,"empty_branch":null,"rebase_attempts":0,"reclaim_attempts":0,"fix_rounds":0,"merge_attempted_at":null},{"task_id":"screen-map-drift-pr-2894-reality","branch":"auto-impl/screen-map-drift-pr-2894-reality-b0a2b158","status":"review","claimed_at":"2026-08-31T06:26:28Z","last_updated":"2026-09-05T18:35:25Z","status_changed_at":"2026-08-31T06:38:30Z","pr_number":2902,"pr_url":"https://github.com/martin-janci/property-management/pull/2902","merged_at":null,"specialist":"nextjs-web","implementer_summary":"pr=2902 status=done specialist=nextjs-web docs-only reconcile; HELD: branch CONTAMINATED by prior bad auto-rebase (17 files incl .research/** state, CONFLICTING, non-mechanical); labeled needs-human-review 2026-08-31T22:29Z — operator close+re-cut recommended","reviewer_summary":"verdict=changes note=scope-drift: head reverts .research/management/** state ledger (assignments.json/backlog.json/archives) + unrelated frontend test; branch stale-behind-dev; do-not-merge, needs human reset to docs-only","last_reviewed_oid":"2b7560088500d79e2fecac86ebe9a3e091d1a68a","scope_drift":true,"code_reuse_warn":null,"empty_branch":null,"rebase_attempts":1,"reclaim_attempts":0,"fix_rounds":0,"merge_attempted_at":null}]}
+{
+  "generated": "2026-09-05T20:36:59Z",
+  "assignments": [
+    {
+      "task_id": "gh-issue-2743",
+      "branch": "auto-impl/gh-issue-2743-66ef5ab8",
+      "status": "review",
+      "claimed_at": "2026-08-13T04:28:20Z",
+      "last_updated": "2026-09-05T20:36:59Z",
+      "status_changed_at": "2026-08-13T04:42:22Z",
+      "pr_number": 2744,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
+      "merged_at": null,
+      "specialist": "pm-tech-lead",
+      "implementer_summary": "pr=2744 done: restored #1162 archive-routing (oversize archive -> PUSH_METHOD=git via size-guard exit4) + added already-landed guard in retry-remint.sh; self-test + test-retry-remint + test-mcp-push-size-guard all PASS; durable MCP-only sharding left as follow-up",
+      "reviewer_summary": "verdict=approve note=both-fixes-correct-well-tested-scoped-clean-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "e3a6f01a38dba4a6f31f3235923067aff29004ca",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "screen-map-drift-pr-2894-reality",
+      "branch": "auto-impl/screen-map-drift-pr-2894-reality-b0a2b158",
+      "status": "review",
+      "claimed_at": "2026-08-31T06:26:28Z",
+      "last_updated": "2026-09-05T20:36:59Z",
+      "status_changed_at": "2026-08-31T06:38:30Z",
+      "pr_number": 2902,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2902",
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2902 status=done specialist=nextjs-web docs-only reconcile; HELD: branch CONTAMINATED by prior bad auto-rebase (17 files incl .research/** state, CONFLICTING, non-mechanical); labeled needs-human-review 2026-08-31T22:29Z — operator close+re-cut recommended",
+      "reviewer_summary": "verdict=changes note=scope-drift: head reverts .research/management/** state ledger (assignments.json/backlog.json/archives) + unrelated frontend test; branch stale-behind-dev; do-not-merge, needs human reset to docs-only",
+      "last_reviewed_oid": "2b7560088500d79e2fecac86ebe9a3e091d1a68a",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    }
+  ]
+}

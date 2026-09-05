@@ -1,0 +1,77 @@
+{
+  "run_iso": "2026-09-05T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven vector generation: dispatcher claimable buffer starved (0 claimable; remaining backlog mobile-native/KMP-gated -> unclaimable in the cloud runner). Rotating static-analysis review of ONE non-mobile-native segment to produce fresh, LANDABLE code-review findings. No compilation, no test execution.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned. Recomputed recent churn (git log --since=2026-08-20, .research excluded) since CHURN_FILES was not passed by the dispatcher: ppt-web-ui dominates at 765 file-touches (next: api-core 240, reality-web 221, mobile-rn 205, mobile-native-kmp 185 EXCLUDED as unclaimable, ppt-web-core 92, reality-server 34, api-handlers 9). ppt-web-ui is both the top churn hotspot AND a claimable frontend segment, satisfying the task directive to prefer backend/frontend/reality over KMP. Saturation check passed: 0 OPEN code-review-finding rows for ppt-web-ui in backlog.json (all 18 historical code-review-findings across segments are status=done; skill's >=3-open skip rule not triggered). DEDUP: the workflow-automation feature (top churn subtree) was found already exhaustively mined by prior passes -- code-review-ppt-web-ui-automationrules-mutation-noerr (2026-07-08), -automationrules-mutation-no-catch / -autorules-mutate-unhandled (2026-08-09/08-14), -execmonitor-retry-unhandled (2026-08-14), -workflow-automation-i18n-gap (2026-07-31/08-09), -workflow-pages-i18n-gap (2026-08-14), -workflow-builder-i18n (2026-08-16) -- so all three obvious workflow-automation candidates were DISCARDED as duplicates. Review was redirected to previously-unmined churned subtrees (marketplace, portfolio-performance). All three findings below were cross-checked against every prior *ppt-web-ui*.json signal file and confirmed non-duplicate. Note on codebase quality: auth (TwoFactorAuthPage), voting (VoteDetailPage), news/documents dangerouslySetInnerHTML (DOMPurify allowlist), and all percentage/average divisions (guarded with >0 ternaries) were reviewed and found clean; no target=_blank tabnabbing. Correctness/security defects were scarce, so two of three findings are i18n-coverage gaps on distinct unmined features.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-deadnav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui portfolio dead interaction)",
+      "segment": "ppt-web-ui",
+      "expert": "completeness",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "evidence": [
+        "PortfolioDashboardPage.tsx:266-268 -- every PropertyCard rendered in the portfolio dashboard grid is given an onClick handler whose entire body is a comment: `onClick={() => { // TODO: navigate to property detail route }}`. The cards render as interactive (PropertyCard receives and wires onClick) so a manager clicking a property tile on a SHIPPED dashboard gets zero response -- a dead-end user-facing interaction, not merely a missing feature flag.",
+        "The map at PortfolioDashboardPage.tsx:264-273 wires this no-op onClick onto EVERY property card (`propertyCards.map((property) => <PropertyCard ... onClick={() => { /* TODO */ }} />)`), so the defect affects the whole grid, not a single card. The surrounding query states (isLoading/isError/empty at lines 256-261) are handled, which makes the silent click failure more surprising -- the data loads fine, the tile looks clickable, nothing happens.",
+        "Reproduce: grep -n 'TODO: navigate to property detail' frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx . Non-duplicate: no prior ppt-web-ui signal references portfolio-performance/PortfolioDashboardPage (the only prior portfolio findings, code-review-ppt-web-ui-portfolio-* , concern PortfolioListPage / PortfolioDashboardPage i18n and were not emitted; verified against all *ppt-web-ui*.json).",
+        "Landable remedy (frontend-only, no backend/KMP): wire the onClick to the property-detail route via react-router useNavigate (the sibling detail route/component exists in this feature), or -- if the detail route is genuinely not built yet -- remove the onClick and the interactive affordance so the tile does not present as clickable. Medium severity: broken user-facing interaction on a shipped manager dashboard. Confidence medium: the no-op body is code-verified statically; whether the detail route exists to navigate to was not run-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui marketplace i18n)",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/MarketplacePage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderDetailPage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderProfilePage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/CreateRfqPage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/RfqListPage.tsx"
+      ],
+      "evidence": [
+        "The entire marketplace page set renders hardcoded English with ZERO useTranslation wiring (grep -c useTranslation returns 0 for all five pages), on a manager-facing product that ships react-i18next (root CLAUDE.md; the rest of ppt-web localizes via useTranslation as seen in voting/VoteDetailPage). Any non-English manager sees these screens entirely in English.",
+        "Concrete hardcoded literals: MarketplacePage.tsx:55 '<h1>Service Provider Marketplace</h1>', :133 'No providers found', :168 'Load More Providers'; ProviderDetailPage.tsx:94 'Back to Marketplace', :222 'Contact Information', :262 'Coverage Area'; ProviderProfilePage.tsx:184 'Provider Dashboard', :251 'Average Rating', :255 'Total Reviews'; CreateRfqPage.tsx:69 'Create Request for Quote', :80 'Select Providers', :87 'Create RFQ'; RfqListPage.tsx:66 'Requests for Quote', :203 'Total RFQs'.",
+        "Reproduce: for f in MarketplacePage ProviderDetailPage ProviderProfilePage CreateRfqPage RfqListPage; do echo $f $(grep -c useTranslation frontend/apps/ppt-web/src/features/marketplace/pages/$f.tsx); done (all print 0).",
+        "Non-duplicate: the only prior marketplace signal (code-review-ppt-web-ui-contact-labels-in-api-client, 2026-09-04) concerns emergency-contact label TYPES in the api-client package, and prior i18n findings target the workflow-automation / emergency / community / buildings features -- none touch marketplace page components. Verified against all *ppt-web-ui*.json.",
+        "Landable remedy (frontend-only): wrap the marketplace page literals in t('marketplace.*') keys and add the entries to messages/en.json (+ the other locale bundles). Low severity (i18n gap), high tractability -- a mechanical, feature-scoped pass. Confidence medium: literals and the absence of useTranslation are code-verified statically; not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-perf-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui portfolio-performance i18n)",
+      "segment": "ppt-web-ui",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioListPage.tsx",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/components/PortfolioCard.tsx",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/components/CashFlowChart.tsx"
+      ],
+      "evidence": [
+        "The portfolio-performance feature pages/components render hardcoded English with no useTranslation, including user-facing loading/error/empty states -- PortfolioDashboardPage.tsx:257 'Loading properties…', :259 'Failed to load property performance.', :261 'No properties in this portfolio yet.'; PortfolioListPage.tsx:115 'Total Value', :121 'Total Equity', :125 'Total Properties'; PortfolioCard.tsx:64 'Total Value', :68 'Total Equity'; CashFlowChart.tsx:71 'Total Income', :77 'Total Expenses', :83 'Total NOI'. Error/empty-state copy in particular is exactly the text a non-English manager most needs localized.",
+        "This is a DISTINCT feature and a distinct landable task from the marketplace i18n finding above (separate directory, separate key namespace, separate PR); it is grouped separately so each can be claimed independently.",
+        "Reproduce: grep -rL useTranslation frontend/apps/ppt-web/src/features/portfolio-performance --include='*.tsx' | grep -v .test. lists these files as having no i18n wiring.",
+        "Non-duplicate: no prior *ppt-web-ui*.json signal references portfolio-performance. Verified across the full signal history.",
+        "Landable remedy (frontend-only): introduce t('portfolio.*') keys for the page/component literals (prioritize the loading/error/empty-state strings) and register them in the locale bundles. Low severity, mechanical. Confidence medium: static-only (literals + missing useTranslation code-verified, not runtime-confirmed)."
+      ]
+    }
+  ]
+}
