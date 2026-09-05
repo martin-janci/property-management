@@ -1,9 +1,39 @@
 {
-  "generated": "2026-09-04T06:34:40Z",
+  "generated": "2026-09-05T08:31:50Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-05T08:31:50Z",
+      "prs_scanned": 6,
+      "clean": [
+        2935,
+        2673,
+        2586,
+        2585,
+        2583
+      ],
+      "with_issues": [
+        {
+          "pr": 2558,
+          "issue": 2937,
+          "findings": 2,
+          "specialist": "pm-rust-backend",
+          "note": "invoice PDF render endpoint GET /api/v1/invoices/{id}/pdf (UC-ACC-05.9), new accounting-server/src/pdf.rs. Endpoint itself CORRECT: authz require_role(READ_MIN_ROLE) + all reads via _rls fns inside one RLS tx (tenant isolation -> cross-tenant/unknown id = None -> 404), tx committed before rendering pure loaded data, money taken from STORED rounded row values (#1522), Content-Disposition filename sanitized to alnum+dash (no header injection), draft/cancelled watermarks. Findings: (1) tests(medium) -- the actual work is untested: pdf.rs has 4 unit tests but only on pure helpers (vat_summary/pdf_filename/doc_type_title); render_invoice_pdf itself is never invoked and get_invoice_pdf has NO HTTP test (authz 403 / RLS 404 / 200+application/pdf+Content-Disposition all unexercised). Asymmetry vs the sibling it copied: api-server financial.rs has render_invoice_pdf_produces_a_valid_pdf + _handles_no_line_items that assert real %PDF bytes. Proposed: renderer smoke test (font-guarded like api-server, covering empty-items + non-VAT-payer recap-skip branches) + a #[sqlx::test] HTTP test (IG3). (2) perf(low, class-wide/pre-existing) -- genpdf::fonts::from_files re-parses TTFs from disk per request and the full sync genpdf render runs inline on the async executor (no spawn_blocking); SAME pattern in api-server financial.rs+voting.rs so NOT a regression #2558 introduced, flagged once class-wide. Proposed: cache FontFamily per font_dir (OnceCell) + spawn_blocking, as a shared helper. Filed #2937."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-22), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable (proxy-403) + git push proxy-blocked -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no build/DB in cloud runner: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres). Label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-22 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 6 net-new never-reviewed PRs (total_count=6); every other in-window merge already carries post-merge-reviewed. All 6 are OLD PRs (created Jul-Aug) that only just merged into dev in-window (5 of them merged after the prior 2026-09-04 run's cursor). 6 < 5-parallel-review-cap threshold for real targets, reviewed inline (no subagent fan-out) by full-diff static analysis against the checklist. 5 CLEAN dependabot dependency bumps (manifest+lock ONLY, no source adaptation needed or missed, consistent workspace bumps, all CI-gated green): #2585 base64 0.22->0.23 (workspace Cargo.toml + api-server Cargo.toml both bumped in lock-step, no code touch); #2586 validator 0.20->0.21 (drops transitive once_cell, derive validation still compiles); #2583 rust_xlsxwriter 0.96->0.97 (pulls zip 8.6.0, lock+manifest only); #2673 ktor 3.5.1->3.5.2 (libs.versions.toml patch, mobile-native Gradle-gated); #2935 npm-minor-patch group 40 updates (package.json across all apps/pkgs + pnpm-lock.yaml; incl RN 0.86->0.87, expo ~57.0.8->~57.0.18, next 16.2->16.3, vite 8.1->8.2, biome 2.5.5->2.5.11 -- grouped minor/patch, frontend.yml build+test green). Aside (not filed): CLAUDE.md tech-stack table still says React Native 0.85 / Expo 55 while mobile package.json was already RN 0.86 / Expo 57 BEFORE this bump -- pre-existing doc drift, not #2935's doing. 1 ISSUE opened: #2937 on #2558 (real feature: invoice PDF render endpoint) -- 2 findings (endpoint itself correct: authz+RLS tenant isolation, snapshot tx, stored-value money, sanitized filename): test-gap (renderer+handler untested vs api-server sibling which tests its renderer) [medium] + class-wide sync-render/per-request-font-load perf note [low]. Breadcrumb comment left on #2558 -> #2937. All 6 PRs labeled post-merge-reviewed (dependabot PRs kept their existing dependencies/rust|java|javascript labels, no clobber; #2558 had none) so they will not resurface. DISPATCHER_OWNED_COMMIT=1 semantics per dispatcher instruction: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push; untouched assignments.json/action-list.json/archives).",
+      "focus_prs": [
+        2558,
+        2935,
+        2673,
+        2586,
+        2585,
+        2583
+      ]
+    },
     {
       "run_at": "2026-09-04T06:34:40Z",
       "prs_scanned": 2,
@@ -564,36 +594,6 @@
       ],
       "with_issues": [],
       "note": "DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static diff review only. Window merged-to-dev 14d, base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Label-based enumeration surfaced 15 unlabeled in-window merged PRs (2738-2761 range), but the run-history in THIS file shows all 15 were ALREADY reviewed & found clean by prior runs (2026-08-12/-14/-15) that did not yet apply PR labels -- the same missing-label dedup gap the 2026-08-17 run began closing. Re-confirmed all 15 clean via fresh diff review and APPLIED the missing post-merge-reviewed labels so they will not resurface (2748 keeps its existing 'security' label). 0 new issues opened. Re-review highlights, uniformly high quality with IG3 regression tests + rationale doc-comments: #2761 (mobile date-format consolidation onto i18n/format.ts + tree-wide bare-toLocale* guard test), #2760 (ppt-web WebSocket disconnect() detaches handlers before close via shared detachAndCloseSocket -> no spurious reconnect on logout/token-rotation race; regression tests), #2758 (reality-server SSO backslash-obfuscated open-redirect '/\\evil.com' fails closed + regression), #2757 (ProtectedRoute i18n defaultValue-guard parity + locale-lockstep test), #2756/#2740/#2739 (MeterDetail + broad mobile date/i18n locale fixes), #2748 (Alexa JSON /verify endpoint fails closed -- no longer accepts any non-empty string as a valid Alexa signature; forgery-vector regression), #2747 (marketplace award-quote cross-RFQ/cross-tenant IDOR: handler + repo defense-in-depth reject foreign quote as 404; 3 HTTP-layer tests), #2746 (workflow api_call SSRF redirect re-validation extracted to redirect_hop_allowed + hermetic hop tests), #2745 (rust-toolchain 1.94.1->1.97.1 across CI/deploy + clippy needless-borrow fixes), #2742 (usePerformanceMetrics listener leak: onReport moved to ref, listeners removed on cleanup, deps trimmed), #2741 (logout purge adds notification-triggers query root -> per-user pref cache no longer leaks across sessions on shared workstation), #2738 (offline sync queue retains recoverable 4xx 401/408/429 instead of dropping; permanent-4xx still dropped; 4 tests). Existing open from-merged-review issues remain (e.g. #2743, #2794, #2789, #2759, #2366); none re-opened."
-    },
-    {
-      "run_at": "2026-08-17T14:41:58Z",
-      "prs_scanned": 15,
-      "clean": [
-        2787,
-        2786,
-        2785,
-        2783,
-        2782,
-        2781,
-        2779,
-        2778,
-        2777,
-        2776,
-        2775,
-        2774,
-        2773,
-        2772
-      ],
-      "with_issues": [
-        {
-          "pr": 2784,
-          "issue": 2789,
-          "findings": 1,
-          "specialist": "rust-backend/pm-security",
-          "note": "security(medium): resolve_client_ip() trusts leftmost X-Forwarded-For / CF-Connecting-IP with no trusted-proxy verification. Same value keys the #2773 protected-share brute-force throttle AND the audit log, so a client rotating a spoofed XFF gets a fresh token:ip bucket per request -> defeats #2773's limiter; also poisons access-log source IP. Proposed: gate header trust on socket peer being in a trusted-proxy (Cloudflare CIDR) allowlist, prefer CF-Connecting-IP, take rightmost-untrusted XFF hop; centralise (routes::forms::submissions has the same leftmost-XFF exposure)."
-        }
-      ],
-      "note": "DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static review only (no checkout/compile beyond local key-existence grep). Window merged-to-dev 14d (>=2026-08-03), base=dev, max_prs=15. 132 in-window merges total; 125 unlabeled; reviewed the 15 most-recently-merged unlabeled PRs (2772-2787, minus 2780 which is not a dev-merge). THIS RUN APPLIES post-merge-reviewed PR-labels via MCP issue_write (prior runs did not), so future runs dedup by label as the skill intends -- note #2772 was already reviewed 2026-08-16 (clean) but resurfaced unlabeled; re-confirmed clean and now labeled. 14 CLEAN, 1 ISSUE. Clean highlights, uniformly high quality with IG3 regression tests + rationale doc-comments: #2787 (Google JWKS client build no-panic, mirrors alexa fallback), #2786 (NFC SecureStore 2KB-cap chunking w/ manifest+torn-write detection+legacy read-through; 5 round-trip tests), #2785 (ComparisonView next-intl i18n across 6 locales, stable row ids for keys+highlight, locale-aware Intl price format), #2783 (ppt-web moderation dashboard i18n, react-i18next plural keys), #2782 (payment-matcher counterparty-IBAN tie-breaker w/ canonical IBAN normalise + clamp; VS+amount-tie regression test), #2781 (AgencyErrorStates NoAgencyMessage next-intl), #2779 (ppt-web errorHandler catalogue routed through react-i18next w/ KNOWN_ERROR_CODES set + default fallback; sk/en + rate-limit-interpolation tests), #2778 (CreateFault mock AI gated behind DEV-only VITE_ENABLE_MOCK_AI_TRIAGE + honest 'unavailable' notice -- stops shipping fabricated triage), #2777 (RealtorManagement i18n; verified all newly-referenced keys buttonSending/formLabelTitle/statActiveListings/buttonCancel pre-exist across all 6 locales), #2776 (moderation stop fabricating previous_violations/report_source; age_hours from real reported_at), #2775 (NFC access-log JSON.parse guarded, post-grant safety), #2774 (payment-matcher surfaces only best-scoring tier, ties kept; buries-worse-candidates regression), #2773 (public protected-share password brute-force throttle token:ip reusing shared sliding-window limiter; 4 tests -- NOTE its correctness depends on trustworthy client IP, see the #2784 finding), #2772 (voice /oauth/refresh platform-admin-bypass authz test). 1 ISSUE opened: #2789 on #2784 (spoofable proxy-header client IP -> throttle bypass + audit poisoning). Existing open from-merged-review issues remain: #2366, #2759."
     }
   ]
 }
