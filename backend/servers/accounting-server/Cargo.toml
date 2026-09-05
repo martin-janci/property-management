@@ -50,3 +50,5 @@ sentry = { workspace = true }
 [dev-dependencies]
 tower = { workspace = true, features = ["util"] }
 rust_decimal_macros = { workspace = true }
+# HTTP handler tests mint api-core JWTs to drive the auth/RLS extractors.
+jsonwebtoken = { workspace = true }
