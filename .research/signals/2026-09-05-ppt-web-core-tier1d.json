@@ -1,0 +1,59 @@
+{
+  "run_iso": "2026-09-05T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven vector generation: dispatcher claimable buffer starved (all remaining backlog mobile-native/KMP-gated -> unclaimable in the cloud runner). Rotating static-analysis review of ONE non-mobile-native segment to produce fresh, LANDABLE code-review findings. No compilation, no test execution. CHURN_FILES empty (invoked standalone by dispatcher), so selection fell to oldest-unreviewed by state.review_cursor.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed among CLAIMABLE segments. review_cursor sorted asc: mobile-native-kmp 2026-08-25 (oldest, EXCLUDED: structurally unclaimable in cloud runner per task directive), then a four-way tie at 2026-08-29 (ppt-web-ui, ppt-web-core, reality-web, mobile-rn). Tie broken toward the LEAST-MINED claimable segment to maximize fresh non-duplicate findings: ppt-web-core has the fewest historical code-review-finding rows in backlog.json among the tie (ppt-web-ui=6, reality-web=3, mobile-rn=3). Saturation check passed: 0 OPEN code-review-finding rows for ppt-web-core (skill's >=3-open skip rule not triggered). Dedup performed against prior ppt-web-core passes (2026-09-03: api.ts default-export + ws-send-envelope; 2026-09-02: route-groups-no-ProtectedRoute security) and prior i18n findings (2026-08-14 person-months toast) — both findings below are confirmed non-duplicate.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-locale-bundles-incomplete",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core i18n bundles)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json",
+        "frontend/apps/ppt-web/messages/cs.json",
+        "frontend/apps/ppt-web/messages/de.json",
+        "frontend/apps/ppt-web/messages/pl.json",
+        "frontend/apps/ppt-web/messages/hu.json",
+        "frontend/apps/ppt-web/src/i18n/index.ts",
+        "frontend/apps/ppt-web/src/i18n/config.ts"
+      ],
+      "evidence": [
+        "Systemic translation-coverage gap: every non-English ppt-web locale bundle is roughly HALF-populated relative to en.json. Measured by flattening each messages/*.json to leaf keys and diffing against en (3750 leaf keys): sk 1863 keys (missing 1895 / 50%), cs 1861 (missing 1897 / 50%), de 1774 (missing 1979 / 52%), pl 1763 (missing 1996 / 53%), hu 1757 (missing 1996 / 53%). Reproduce with a small json-flatten + set-diff over messages/en.json vs messages/{sk,cs,de,pl,hu}.json.",
+        "src/i18n/index.ts:24-40 initializes i18next with `fallbackLng: defaultLocale` ('en', from config.ts:8) and `supportedLngs` = all six locales (config.ts:5 declares ['en','sk','cs','de','pl','hu']). All six bundles are imported and registered, so this is NOT a build break — but any t() key present in en yet absent from the active locale silently falls back to the English string. With ~50% of keys missing, a user on sk/cs/de/pl/hu sees English copy across roughly half the app's translated surfaces.",
+        "Business impact: Slovak (sk) is a primary market for this product (the sibling reality portal ships sk/cs/de/en, CLAUDE.md), yet sk is missing 50% of keys — so the primary non-English market is the most affected alongside the others. This is user-facing untranslated text on live rendered screens, not a dev-only concern.",
+        "Distinct from prior i18n findings, which are all about COMPONENTS that never call useTranslation (e.g. code-review-ppt-web-ui-untranslated-feature-pages 2026-09-04, code-review-ppt-web-ui-buildings-pages-no-i18n) or single hardcoded literals. This finding is the inverse: keys that ARE wired through t() but have no VALUE in the non-en bundles. Fixing the component-level gaps will not populate these bundles, and vice-versa.",
+        "Landable remedy (frontend-only, no backend/KMP): a translation-backfill pass over messages/{sk,cs,de,pl,hu}.json to reach key parity with en.json, prioritizing sk (primary market) and high-traffic namespaces. A CI parity guard (assert each non-en bundle's key set >= en's, or report the delta) would prevent regression. Confidence medium: the 50% key-set delta is concretely measured by static diff, but which specific missing keys are actually rendered on a given screen was not individually traced (no runtime execution)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-route-group-toasts-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core routes)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "evidence": [
+        "User-facing success/error toast copy is hardcoded English in several route-group files, bypassing react-i18next even though each of these files already imports useTranslation and localizes other strings (so t() is in scope): iot.tsx (useTranslation present) hardcodes 'Sensor deleted' (line 194), 'Failed to delete sensor' (198), 'Sensor registered' (255), 'Failed to register sensor' (260), 'Sensor updated' (333), 'Failed to update sensor' (338); meters.tsx hardcodes 'Submitted'/'Reading submitted' (243), 'Submit failed' (248), 'Updated' (296), 'Update failed' (303), 'Done'/'Reading validated' (337), 'Validation failed' (341); faults.tsx hardcodes 'Created'/'Fault reported' (368), 'Failed to report fault' (373), 'Updated'/'Fault updated' (505), 'Failed to update fault' (510); community.tsx hardcodes 'Created'/'Group created' (66).",
+        "These strings are not present in ANY locale bundle (including en.json) — they are inline literals passed to showToast({ title, message }) — so unlike the bundle-coverage gap they can never be translated for any locale until moved into t() keys. A non-English user performing IoT/meter/fault/community mutations gets English confirmation and error feedback.",
+        "Scoped to be NON-duplicate: the pre-existing code-review-ppt-web-core-person-months-toast-i18n (2026-08-14) covers ONLY routes/groups/person-months.tsx:373. This finding covers the remaining, previously-unflagged route-group files (iot, meters, faults, community). (routes/groups/leases.tsx, disputes.tsx and outages.tsx also contain some hardcoded showToast literals and should be swept in the same pass.) Grep to reproduce: `grep -n \"showToast(\" src/routes/groups/*.tsx | grep -E \"title: '|message: '\"`, excluding *.test.tsx.",
+        "Landable remedy (frontend-only): replace the literal title/message with t('<domain>.toast.<action>') keys and add the corresponding entries to messages/en.json (plus the other bundles, tying into the parity backfill above). Low severity (i18n gap on feedback copy), high tractability — a mechanical, mutation-path-scoped change. Confidence medium: literals and useTranslation availability are code-verified statically; not runtime-confirmed."
+      ]
+    }
+  ]
+}
