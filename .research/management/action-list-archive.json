@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-09-04T12:32:00Z",
+  "archived_at": "2026-09-05T16:32:40Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -16097,6 +16097,20 @@
       }
     },
     {
+      "id": "gh-issue-2875-retry1",
+      "action": "[GHOST-DROP: already resolved on dev — chacha20 0.10.2 (not yanked) via merged #2874; issue #2875 closed. Re-minted by dev retry-remint.sh lacking the intrinsic already-landed guard from unmerged PR #2744.] [already-resolved: fixed on dev by merged #2874 — chacha20 0.10.2 not yanked; #2875 duplicate] cargo-deny advisories FAILED: yanked chacha20 0.10.0 in backend/Cargo.lock blocks all backend PR merges (Closes #2875) [retry 1/2 of failed gh-issue-2875]",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-09-05T16:26:55Z (retry_of=gh-issue-2875 reason=failed-no-pr cooldown_ok newest_failure=2026-08-28T18:34:23Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-05T16:26:55Z",
+      "retry_of": "gh-issue-2875",
+      "retry_round": 1
+    },
+    {
       "id": "gh-issue-2906",
       "action": "backend CI: api-server audit-log RBAC test failing on dev (test-shard 1) — blocking approved PR merges (Closes #2906)",
       "owner_role": "pm-tech-lead",
@@ -16202,6 +16216,32 @@
         "merged_pr": 2928,
         "merged_at": "2026-09-02T00:32:05Z",
         "at": "2026-09-02T00:32:55Z"
+      }
+    },
+    {
+      "id": "gh-issue-2937",
+      "action": "Follow-up: test coverage for the invoice PDF endpoint + renderer (PR #2558) (Closes #2937)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-09-05T10:25:57Z (#2937) | dev-reconcile 2026-09-05T16:26:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-05T10:25:57Z",
+      "issue_ref": {
+        "number": 2937,
+        "url": "https://github.com/martin-janci/property-management/issues/2937",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "ab92800368a9c542b1e0e204241e8a222bd0b93e",
+        "subject": "gh-issue-2937: add invoice PDF renderer + handler test coverage (#2938)",
+        "at": "2026-09-05T16:26:04Z"
       }
     },
     {

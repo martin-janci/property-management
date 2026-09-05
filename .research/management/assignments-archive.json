@@ -14733,6 +14733,28 @@
       "merge_attempted_at": "2026-09-02T00:31:52Z"
     },
     {
+      "task_id": "gh-issue-2937",
+      "branch": "auto-impl/gh-issue-2937-f4423f84",
+      "status": "merged",
+      "claimed_at": "2026-09-05T10:32:49Z",
+      "last_updated": "2026-09-05T16:25:49Z",
+      "status_changed_at": "2026-09-05T16:25:49Z",
+      "pr_number": 2938,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2938",
+      "merged_at": "2026-09-05T16:23:55Z",
+      "specialist": "pm-rust-backend",
+      "implementer_summary": "pr=2938 status=done specialist=pm-rust-backend scope_drift=false code_reuse_warn=short:duplicated org/user/membership seed helpers inline (api-server tests/common not importable from accounting-server crate) note=6 new tests (3 renderer, 3 handler) all pass; fmt+clippy+test green; incidental 1-line clippy fix in vat_summary; cross-tenant RLS deferred to rls-smoke-test per existing convention",
+      "reviewer_summary": "verdict=approve note=self-PR approve posted as issue comment (GitHub blocks self-approve); test-only accounting-server invoice-PDF tests, CI green, code_reuse_warn acceptable (api-server tests/common not cross-crate importable), no JSON-case/scope-drift | merged PR #2938 -> dev @ 2026-09-05T16:23:55Z; issue #2937 closed",
+      "last_reviewed_oid": "786efdfa45127e8aeedf3242cd02832e1ea7756b",
+      "scope_drift": false,
+      "code_reuse_warn": "duplicated org/user/membership seed helpers inline (api-server tests/common not importable from accounting-server crate)",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-09-05T16:25:49Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -17347,5 +17369,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-04T12:31:59Z"
+  "archived_at": "2026-09-05T16:32:40Z"
 }
