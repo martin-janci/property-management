@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-05",
+  "run_kind": "scoped-buffer-low-fire",
+  "rerun_note": "Scoped supplementary fire triggered by dispatcher `buffer-low: claimable=8/72 all-mobile-native-gated (#2652 deadlock) — refill planner with cloud-landable vectors`. Full pipeline (Phases 1.5 / 1.6 / 3 / 5) intentionally skipped; this fire focuses on lag-warning + resolution-recording (stalled-review-pr-2558 → done) + structural notification about the cloud-plan queueing gap.",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-05",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "state.last_run_iso=2026-09-01T18:38:58Z → now 2026-09-05T18:31Z = 4 days lag; exceeds 36h lag_warning + 3d stale_routine_alert thresholds",
+        "dispatcher branch commits continued (chore(research): dispatcher 2026-09-05) so dispatcher trigger is armed but routine trigger appears not to be firing on schedule"
+      ]
+    }
+  ],
+  "resolutions": [
+    {
+      "id": "stalled-review-pr-2558",
+      "from_status": "needs-human-judgement",
+      "to_status": "done",
+      "evidence": "PR #2558 (feat(acc): invoice PDF render, UC-ACC-05.9) merged 2026-09-04 07:13Z by owner"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no fresh signals derived this scoped fire; existing high-confidence rows still below score>=3 auto-fix bar",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-09-05.md && head -1 matches # 2026-09-05", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json cursor advances vs HEAD", "observed": "last_pr_seen 2921→2938; last_issue_seen 2847→2937; last_run_iso advanced; seen_signals +1", "expected": "any advance" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id re-emitted with score_delta != 0", "observed": "only new signal is lag-warning (score_delta=0); no re-emits", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "no score > 8; no open item older than 14d without decay", "observed": "cap ok; scoped fire — decay pass not run (no items crossed 14d threshold since last run)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "every new plan has adversarial pass annotation", "observed": "0 new plans this run", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans, each with all 15 sections", "observed": "0 new plans this run", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "no secrets or private hostnames in staged diff", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md against fresh regen from backlog.json", "observed": "byte-identical (verified pre-commit via /tmp/backlog.regen2.md)", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true, "command": "phases-that-failed cursors match state advancement", "observed": "phases failed: none; all cursors advanced consistently", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior plans still present in plans/ or plans/_archive/", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run >= HEAD count", "observed": "8 == 8, no removals", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md against fresh regen", "observed": "byte-identical (verified pre-commit via /tmp/triage.regen2.md)", "expected": "byte-identical" },
+    { "goal": "G15", "passed": true, "command": "auto-fix cap + idempotency + kill switch", "observed": "0 auto-fix actions", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this scoped fire — gate is a no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token literal committed", "observed": "0 matches", "expected": "0" }
+  ]
+}

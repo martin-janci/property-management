@@ -7842,16 +7842,18 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "needs-human-judgement",
+      "status": "done",
       "sources": [
-        "PR #2558"
+        "PR #2558",
+        "PR #2558 merged 2026-09-04"
       ],
       "evidence": [
-        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559."
+        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559.",
+        "resolved: PR #2558 merged 2026-09-04 — feat(acc): invoice PDF render (UC-ACC-05.9)"
       ],
       "files": [],
       "created_at": "2026-08-12",
-      "updated_at": "2026-08-12",
+      "updated_at": "2026-09-05",
       "plan": null
     },
     {
