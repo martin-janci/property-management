@@ -69,7 +69,7 @@ pub fn vat_summary(items: &[InvoiceItem]) -> Vec<(Decimal, Decimal, Decimal, Dec
             )),
         }
     }
-    buckets.sort_by(|a, b| a.0.cmp(&b.0));
+    buckets.sort_by_key(|a| a.0);
     buckets
 }
 
@@ -315,8 +315,191 @@ pub fn render_invoice_pdf(ctx: &InvoiceRenderContext<'_>) -> Result<Vec<u8>, Str
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Utc;
     use rust_decimal_macros::dec;
     use uuid::Uuid;
+
+    /// The renderer needs Liberation Sans on disk (`ACC_PDF_FONT_DIR` override /
+    /// container default). CI installs `fonts-liberation`, so the smoke tests
+    /// below run and assert there; on a dev host without the fonts they skip
+    /// rather than fail — the same font strategy `api-server`'s renderer uses.
+    fn fonts_available() -> bool {
+        std::path::Path::new(&font_dir())
+            .join("LiberationSans-Regular.ttf")
+            .exists()
+    }
+
+    fn sample_company(vat_payer: bool) -> AccCompanySettings {
+        let now = Utc::now();
+        AccCompanySettings {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            legal_name: "Supplier s.r.o.".into(),
+            ico: Some("12345678".into()),
+            dic: Some("2020202020".into()),
+            vat_id: if vat_payer {
+                Some("SK2020202020".into())
+            } else {
+                None
+            },
+            address: Some("Main St 1, Bratislava".into()),
+            email: Some("billing@supplier.test".into()),
+            phone: None,
+            web: None,
+            logo_url: None,
+            brand_color: None,
+            tax_mode: "standard".into(),
+            vat_payer,
+            base_currency: "EUR".into(),
+            rounding_mode: "arithmetic".into(),
+            default_payment_terms_days: 14,
+            default_invoice_note: None,
+            default_footer: Some("Thank you for your business".into()),
+            default_language: "sk".into(),
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    fn sample_contact() -> Contact {
+        let now = Utc::now();
+        Contact {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            name: "Customer a.s.".into(),
+            ico: Some("87654321".into()),
+            dic: Some("3030303030".into()),
+            email: Some("ap@customer.test".into()),
+            phone: None,
+            address: Some("Market St 2, Kosice".into()),
+            iban: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    fn sample_bank() -> AccBankAccount {
+        let now = Utc::now();
+        AccBankAccount {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            label: "Primary".into(),
+            iban: "SK3112000000198742637541".into(),
+            swift: Some("SUBASKBX".into()),
+            bank_name: Some("Test Bank".into()),
+            currency: "EUR".into(),
+            is_default: true,
+            is_active: true,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    fn sample_invoice(items: &[InvoiceItem]) -> AccInvoiceExt {
+        let now = Utc::now();
+        let base: Decimal = items.iter().map(|i| i.base_amount).sum();
+        let vat: Decimal = items.iter().map(|i| i.vat_amount).sum();
+        let total: Decimal = items.iter().map(|i| i.total_amount).sum();
+        AccInvoiceExt {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            contact_id: Uuid::new_v4(),
+            number: "2026/001".into(),
+            issue_date: chrono::NaiveDate::from_ymd_opt(2026, 6, 1).unwrap(),
+            due_date: chrono::NaiveDate::from_ymd_opt(2026, 6, 15).unwrap(),
+            taxable_supply_date: Some(chrono::NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()),
+            currency: "EUR".into(),
+            total_amount: total,
+            base_amount: base,
+            vat_amount: vat,
+            variable_symbol: Some("2026001".into()),
+            status: "issued".into(),
+            paid_amount: Decimal::ZERO,
+            created_at: now,
+            updated_at: now,
+            doc_type: "invoice".into(),
+            corrected_invoice_id: None,
+            advance_settlement: Decimal::ZERO,
+            settled_advance_id: None,
+            exchange_rate: None,
+            base_currency_amount: None,
+            numbering_series_id: None,
+            bank_account_id: None,
+        }
+    }
+
+    #[test]
+    fn render_invoice_pdf_produces_a_valid_pdf() {
+        if !fonts_available() {
+            eprintln!("skipping: LiberationSans not found in {}", font_dir());
+            return;
+        }
+        let items = vec![
+            item(dec!(23), dec!(100), dec!(23)),
+            item(dec!(5), dec!(50), dec!(2.50)),
+        ];
+        let invoice = sample_invoice(&items);
+        let company = sample_company(true);
+        let contact = sample_contact();
+        let bank = sample_bank();
+        let ctx = InvoiceRenderContext {
+            invoice: &invoice,
+            items: &items,
+            company: Some(&company),
+            contact: Some(&contact),
+            bank_account: Some(&bank),
+        };
+        let bytes = render_invoice_pdf(&ctx).expect("render invoice PDF");
+        assert!(
+            bytes.len() > 100,
+            "PDF should be non-trivial, got {} bytes",
+            bytes.len()
+        );
+        assert_eq!(&bytes[..5], b"%PDF-", "output must be a PDF");
+    }
+
+    #[test]
+    fn render_invoice_pdf_handles_no_line_items() {
+        if !fonts_available() {
+            eprintln!("skipping: LiberationSans not found in {}", font_dir());
+            return;
+        }
+        let items: Vec<InvoiceItem> = vec![];
+        let invoice = sample_invoice(&items);
+        let company = sample_company(true);
+        let ctx = InvoiceRenderContext {
+            invoice: &invoice,
+            items: &items,
+            company: Some(&company),
+            contact: None,
+            bank_account: None,
+        };
+        let bytes = render_invoice_pdf(&ctx).expect("render empty-items invoice PDF");
+        assert_eq!(&bytes[..5], b"%PDF-");
+    }
+
+    #[test]
+    fn render_invoice_pdf_non_vat_payer_skips_recap() {
+        // A non-VAT-payer supplier: the VAT recap table is skipped entirely
+        // (see the `vat_payer` guard in `render_invoice_pdf`). The document
+        // must still render to a valid PDF.
+        if !fonts_available() {
+            eprintln!("skipping: LiberationSans not found in {}", font_dir());
+            return;
+        }
+        let items = vec![item(dec!(0), dec!(100), dec!(0))];
+        let invoice = sample_invoice(&items);
+        let company = sample_company(false);
+        let ctx = InvoiceRenderContext {
+            invoice: &invoice,
+            items: &items,
+            company: Some(&company),
+            contact: Some(&sample_contact()),
+            bank_account: None,
+        };
+        let bytes = render_invoice_pdf(&ctx).expect("render non-VAT-payer invoice PDF");
+        assert_eq!(&bytes[..5], b"%PDF-");
+    }
 
     fn item(rate: Decimal, base: Decimal, vat: Decimal) -> InvoiceItem {
         InvoiceItem {
