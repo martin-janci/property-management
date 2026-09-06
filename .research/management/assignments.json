@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-06T08:35:42Z",
+  "generated": "2026-09-06T08:38:30Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -48,18 +48,18 @@
     {
       "task_id": "code-review-ppt-web-core-authctx-no-boot-expiry-check",
       "branch": "auto-impl/code-review-ppt-web-core-authctx-no-boot-7149d405",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-06T08:29:03Z",
-      "last_updated": "2026-09-06T08:29:03Z",
-      "status_changed_at": "2026-09-06T08:29:03Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-06T08:38:30Z",
+      "status_changed_at": "2026-09-06T08:38:30Z",
+      "pr_number": 2941,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2941",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2941 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=validate JWT exp at cold boot; 2639 tests green incl 5 new expiry cases",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
