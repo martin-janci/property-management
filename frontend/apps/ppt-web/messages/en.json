@@ -308,6 +308,7 @@
     "create": "Create",
     "submit": "Submit",
     "loading": "Loading...",
+    "processing": "Processing...",
     "error": "Error",
     "success": "Success",
     "confirm": "Confirm",

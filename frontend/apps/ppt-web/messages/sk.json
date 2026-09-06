@@ -308,6 +308,7 @@
     "create": "Vytvoriť",
     "submit": "Odoslať",
     "loading": "Načítava sa...",
+    "processing": "Spracúva sa...",
     "error": "Chyba",
     "success": "Úspech",
     "confirm": "Potvrdiť",

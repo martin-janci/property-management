@@ -308,6 +308,7 @@
     "create": "Erstellen",
     "submit": "Absenden",
     "loading": "Lädt...",
+    "processing": "Wird verarbeitet...",
     "error": "Fehler",
     "success": "Erfolg",
     "confirm": "Bestätigen",

@@ -308,6 +308,7 @@
     "create": "Létrehozás",
     "submit": "Küldés",
     "loading": "Betöltés...",
+    "processing": "Feldolgozás...",
     "error": "Hiba",
     "success": "Sikeres",
     "confirm": "Megerősítés",
