@@ -1,0 +1,74 @@
+{
+  "generated": "2026-09-06T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-06",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "steered (dispatcher Tier-1d LANDABLE-only). Among cloud-landable segments (reality-web, ppt-web-ui, ppt-web-core, reality-server; api-core/api-handlers excluded as api-server cannot build in the cloud runner per dispatcher guidance — utoipa-swagger-ui egress-403; mobile-native-kmp excluded — AGP egress-403), ppt-web-ui is the least-recently reviewed by signal-file recency: last ppt-web-ui signal file is dated 2026-09-05, whereas reality-server, ppt-web-core, and reality-web already carry signal files dated today 2026-09-06 (reality-web has two). state.review_cursor lists ppt-web-ui as 2026-09-06 but no ppt-web-ui signal file exists for today — the cursor is ahead of the actual artifacts, so recency of emitted signals governs. Saturation check passed: 0 open code-review-finding rows for ppt-web-ui in backlog.json (7 exist, all status=done). Scope = frontend/apps/ppt-web/src/features (pages + components). This pass targeted FRESH feature areas not covered by the last five ppt-web-ui runs (which swept emergency, meters, settings, facilities, registry, documents, accounting, community, workflow-automation, marketplace, financial, buildings, errors, portfolio-performance). Reviewed the untouched voting, forms, government-portal, and compliance features. Three genuine net-new findings survived verification; all fixes are pure ppt-web React/i18n/router edits and are cloud-landable (no api-server or KMP build in the fix path).",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "landable_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui voting)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "landable": true,
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VotingPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VotingPage.tsx:8-11 — the voting LIST page imports neither useTranslation nor any i18n helper (only api-client hooks, Spinner, VoteCard, and VOTE_STATUS_LABELS), and every user-facing string is a hardcoded English literal: the <h1> 'Voting' (line 54), the summary line '{n} vote{s} · {open} open · {closed} closed' (55-58), the '+ New vote' button (66), the 'All' filter label (81), the error state 'Failed to load votes: … Unknown error' (94-95), the empty state 'No votes yet.' (100) and 'Create the first vote' CTA (104). None go through t().",
+        "This is a localization REGRESSION, not merely an un-i18n'd new screen: the two sibling pages in the same feature — VoteCreatePage.tsx and VoteDetailPage.tsx — both use useTranslation (2 of 3 voting pages localized), and the feature ships an explicit i18n contract test, frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.i18n.test.tsx. The list page was left out of that contract, so on a portal whose managers can run in sk/cs/de/en the whole voting entry screen renders English regardless of the selected UI language.",
+        "Impact: user-facing untranslated UI on a first-class Epic-5 manager screen (screen id ppt/voting). Severity low (i18n gap — no crash, no data loss), confidence medium (confirmed by static read: no i18n import present and literals are inline JSX; the multi-locale requirement is documented in CLAUDE.md — reality/ppt support sk/cs/de/en). Fix is fully cloud-landable: add useTranslation, move the ~8 literals into the existing ppt-web message catalog under a voting.* namespace (mirroring VoteDetailPage's keys), and route VOTE_STATUS_LABELS through t(). Secondary observation for the fixer (do not file separately): line 30 buildingId = buildingsData?.items?.[0]?.id ?? '' silently pins the vote query to the first building with no building selector — a known ppt-web pattern, note only."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui forms/government-portal)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "landable": true,
+      "files": [
+        "frontend/apps/ppt-web/src/features/forms/pages/AvailableFormsPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/FormsPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/FillFormPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/CreateFormPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/ViewFormPage.tsx",
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx"
+      ],
+      "evidence": [
+        "The entire `forms` feature ships with zero localization: none of its five page files (AvailableFormsPage, FormsPage, FillFormPage, CreateFormPage, ViewFormPage) import useTranslation / react-i18next at all. Confirmed hardcoded English in frontend/apps/ppt-web/src/features/forms/pages/AvailableFormsPage.tsx: <h1>'Available Forms'</h1> (line 63), 'All Categories' option (74), and the empty state 'No forms available' (130). The other four form pages share the same no-i18n-import shape.",
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx has the same defect on a HIGHER-stakes surface: it is the regulatory guest-registration wizard that submits to Slovak government portals (its own copy names 'ÚHÚL/Police', line 222), yet every label is hardcoded English — <h1>'Submit Guest Report' (220), the subtitle (222), the wizard step labels ['Select Options','Preview Data','Submit'] (229), and the section headers 'Select Country' (315), 'Portal Connection' (350), 'Report Template' (396), 'Submission Preview' (514). A compliance flow aimed at Slovak operators rendering only English is a usability/adoption risk beyond a cosmetic gap.",
+        "Impact: a whole feature (forms) plus a regulatory government-portal flow are untranslated on a documented multi-locale (sk/cs/de/en) portal. Severity low per the finding taxonomy (i18n gap, no crash), but breadth is high — 6 pages, one of them regulatory. Confidence medium (confirmed by static read: absent i18n imports + inline English literals; multi-locale requirement per CLAUDE.md). Fully cloud-landable: wire useTranslation into each page and lift the strings into the ppt-web catalog. Recommend splitting the implementation into two plan-sized chunks (forms.* and governmentPortal.*) if a single PR would exceed review size."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui compliance)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "landable": true,
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:203-208 — handleViewContent navigates to an INTERNAL route with a hard document navigation: `window.location.href = `/compliance/moderation/cases/${caseId}``, guarded by its own TODO 'Use React Router's useNavigate for SPA navigation / Phase 1: Full page reload for simplicity'. Every 'view content' click on a moderation case tears down and re-boots the whole React SPA (re-runs bootstrap, re-fetches auth/building context, drops in-memory TanStack Query cache and the moderation list scroll/filter state) instead of a client-side transition — a measurable UX and performance regression on a manager tool with list-of-cases drill-in.",
+        "Same file line 281 — the error-state retry uses `onClick={() => window.location.reload()}`, a full document reload to recover from a query error where a TanStack Query refetch() would suffice; consistent with the same anti-pattern.",
+        "Impact: degraded SPA UX (full reloads on internal navigation), not a crash or security issue. Severity low, confidence medium (confirmed by static read; the route target /compliance/moderation/cases/:caseId is an internal SPA route, so client navigation is the correct mechanism). Fully cloud-landable: replace window.location.href with useNavigate() from react-router-dom (already the app's router) and swap the retry's window.location.reload() for the query's refetch(); removes the acknowledged Phase-1 shortcut."
+      ]
+    }
+  ]
+}
