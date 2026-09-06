@@ -4907,6 +4907,28 @@
       "merge_attempted_at": "2026-07-30T14:25:17Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-api-401-no-request-replay",
+      "branch": "auto-impl/code-review-ppt-web-core-api-401-no-requ-10ba81d2",
+      "status": "merged",
+      "claimed_at": "2026-09-06T08:29:03Z",
+      "last_updated": "2026-09-06T12:25:39Z",
+      "status_changed_at": "2026-09-06T12:25:39Z",
+      "pr_number": 2942,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2942",
+      "merged_at": "2026-09-06T10:34:59Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2942 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=401 interceptor awaits single-flight refresh + replays once; concurrent 401s share one refresh; verify green (2638 tests)",
+      "reviewer_summary": "verdict=approve note=single-flight+once-bounded-replay-correct;CI-green (comment-posted; squash-merged PR#2942 2026-09-06T10:34:59Z; awaiting Phase2 flip — archive-push wedged #2743)",
+      "last_reviewed_oid": "9c1bcca6289b52aa40ad899128dbc5caba9d2f94",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-06T10:45:37Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-api-onunauthorized-unwired",
       "branch": "auto-impl/code-review-ppt-web-core-api-onunauthori-6edac769",
       "status": "merged",
@@ -5061,6 +5083,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-authctx-no-boot-expiry-check",
+      "branch": "auto-impl/code-review-ppt-web-core-authctx-no-boot-7149d405",
+      "status": "merged",
+      "claimed_at": "2026-09-06T08:29:03Z",
+      "last_updated": "2026-09-06T12:25:39Z",
+      "status_changed_at": "2026-09-06T12:25:39Z",
+      "pr_number": 2941,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2941",
+      "merged_at": "2026-09-06T10:32:59Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2941 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=validate JWT exp at cold boot; 2639 tests green incl 5 new expiry cases",
+      "reviewer_summary": "verdict=approve note=hot-path-authctx-exp-check-correct-scoped-tested-ci-green (comment-posted; squash-merged PR#2941 2026-09-06T10:32:59Z; awaiting Phase2 GH-truth flip — archive-push wedged #2743)",
+      "last_reviewed_oid": "a09350fbccf8c892cbcf5d9d929845da31d5a0dc",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-06T10:45:37Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-errorhandler-i18n-gap",
       "branch": "auto-impl/code-review-ppt-web-core-errorhandler-i1-0cf2f586",
       "status": "merged",
@@ -5125,6 +5169,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 1,
       "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-logout-purge-allowlist-fragile",
+      "branch": "auto-impl/code-review-ppt-web-core-logout-purge-al-47b4f1c5",
+      "status": "merged",
+      "claimed_at": "2026-09-06T08:29:03Z",
+      "last_updated": "2026-09-06T12:25:39Z",
+      "status_changed_at": "2026-09-06T12:25:39Z",
+      "pr_number": 2943,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2943",
+      "merged_at": "2026-09-06T10:32:20Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2943 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=test-only; derives factory roots to enforce AUTHED_QUERY_KEY_ROOTS coverage; allowlist already complete; VERIFY OK 2656 tests",
+      "reviewer_summary": "verdict=approve note=test-only;factory-derived-roots;IG3-proof-credible;CI-green (comment-posted; squash-merged PR#2943 2026-09-06T10:32:20Z; awaiting Phase2 flip — archive-push wedged #2743)",
+      "last_reviewed_oid": "e3433c282eaab979e48f9c11bc2d490b0008c6db",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-06T10:45:37Z"
     },
     {
       "task_id": "code-review-ppt-web-core-logout-purge-notif-triggers",
@@ -17391,5 +17457,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-06T06:36:39Z"
+  "archived_at": "2026-09-06T12:30:54Z"
 }

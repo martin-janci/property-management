@@ -147,54 +147,63 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-authctx-no-boot-expiry-check",
-      "action": "ppt-web AuthContext cold-boot initializeAuth marks the session authenticated from stored user+access token without validating the JWT `exp` (comment claims a check that does not exist); expired-but-present access token skips the boot-time silent refresh, causing an authenticated->401->refresh flicker on cold boot",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "rotating-expert-review dispatcher-tier1d 2026-09-06 (segment=ppt-web-core score=2 conf=medium vector=bug)",
+      "id": "gh-issue-2944",
+      "action": "Cross-tenant IDOR: violation comments/evidence/payments read without org scoping (+ internal-notes privilege leak) (Closes #2944)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-09-06T12:26:24Z (#2944)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-09-06T00:00:00Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
+      "first_open_at": "2026-09-06T12:26:24Z",
+      "issue_ref": {
+        "number": 2944,
+        "url": "https://github.com/martin-janci/property-management/issues/2944",
+        "labels": [
+          "bug",
+          "security"
+        ]
       }
     },
     {
-      "id": "code-review-ppt-web-core-api-401-no-request-replay",
-      "action": "ppt-web lib/api.ts axios 401 interceptor never replays the failed request; AuthContext refreshes in the background without awaiting, so the request that hit an expired token always rejects and TanStack Query retries can race/exhaust before the rotated token lands (raw getApiClient() consumers get a hard rejection)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "open",
-      "source": "rotating-expert-review dispatcher-tier1d 2026-09-06 (segment=ppt-web-core score=2 conf=medium vector=bug)",
+      "id": "gh-issue-2945",
+      "action": "Cross-tenant IDOR (read+write): portfolio_properties handlers missing org verification (Closes #2945)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-09-06T12:26:24Z (#2945)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-09-06T00:00:00Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
+      "first_open_at": "2026-09-06T12:26:24Z",
+      "issue_ref": {
+        "number": 2945,
+        "url": "https://github.com/martin-janci/property-management/issues/2945",
+        "labels": [
+          "bug",
+          "security"
+        ]
       }
     },
     {
-      "id": "code-review-ppt-web-core-logout-purge-allowlist-fragile",
-      "action": "ppt-web AUTHED_QUERY_KEY_ROOTS is a hand-maintained logout cache-purge allowlist with no compile/test enforcement; a newly-added query-key root leaks tenant/user data into the next session on shared workstations (history: #712, PR #2650 missed 'notification-triggers'). Add a test asserting every query-key factory root is covered",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "rotating-expert-review dispatcher-tier1d 2026-09-06 (segment=ppt-web-core score=1 conf=medium vector=test-gap)",
+      "id": "gh-issue-2946",
+      "action": "Cross-tenant IDOR (read+write): portfolio_analytics property metrics computed org_id then discarded (Closes #2946)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-09-06T12:26:24Z (#2946)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-09-06T00:00:00Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
+      "first_open_at": "2026-09-06T12:26:24Z",
+      "issue_ref": {
+        "number": 2946,
+        "url": "https://github.com/martin-janci/property-management/issues/2946",
+        "labels": [
+          "bug",
+          "security"
+        ]
       }
     }
   ],
