@@ -10608,7 +10608,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui]"
       ],
@@ -10627,7 +10627,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-09-06T08:24:22Z",
+        "assignment_status": "merged",
+        "pr_number": 2940
+      }
     }
   ]
 }
