@@ -1,0 +1,72 @@
+{
+  "run_iso": "2026-09-06T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven vector generation: dispatcher claimable buffer starved (0 claimable; remaining open backlog is mobile-native/KMP-gated -> unclaimable in the cloud runner). Rotating static-analysis review of ONE non-mobile-native (landable) segment to produce fresh, LANDABLE code-review findings. No compilation, no test execution.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed among LANDABLE segments. No CHURN_FILES were handed to this slice, so churn-alignment did not apply. state.review_cursor is stale (dates 2026-08-25..2026-09-01) and is NOT advanced by the tier1d generator, so real last-reviewed dates were reconstructed from .research/signals/*.json: mobile-rn=2026-09-02, mobile-native-kmp=2026-09-03, api-core=2026-09-04, reality-server=2026-09-04, api-handlers/ppt-web-core/ppt-web-ui/reality-web=2026-09-05. mobile-native-kmp (2026-09-03) is older than mobile-rn but is EXCLUDED as structurally unlandable in the cloud runner (KMP/AGP-gated via .research/mobile-native-gate.sh) -- the exact category the task directive says to avoid. mobile-rn is React Native under frontend/apps/mobile (frontend toolchain, NOT KMP-gated) -> landable, and is the oldest-unreviewed landable segment. Saturation check PASSED: 0 OPEN code-review-finding rows for mobile-rn in backlog.json (skill's >=3-open skip rule not triggered; all historical code-review-findings are status done/dropped). DEDUP DISCIPLINE (mobile-rn has been mined 22 prior times): the two most obvious static defects were DISCARDED as duplicates -- (a) useApi.ts apiRequest lacking 401->refresh->retry is already code-review-mobile-rn-useapi-no-refresh-retry (2026-08-02) AND code-review-mobile-rn-useapi-401-no-refresh (2026-08-14); (b) the offline queue's 4xx/401 classification is already code-review-mobile-offline-4xx-drop (2026-07-22, whose recommended fix -- exclude 401/408/429 from the permanent class -- has since been IMPLEMENTED: useOfflineSupport.ts:34 RETRYABLE_HTTP_STATUSES={401,408,429}) plus offline-sync-false-complete / offline-terminal-drop-dataloss (2026-08-03, both since addressed via the issue #1767/#2637 rewrite). The offline queue and useApi 401 path are therefore CLEAN-or-known and were not re-flagged. Review was redirected to three previously-UNMINED subtrees: the dashboard layout feature (features/layout, never reviewed in any prior *mobile-rn*.json), the deep-link path matcher (prior deeplink findings cover listener-leak and untested parsers, none the URL-decode gap), and the ReportFault caller-side error UX (distinct from the queue-mechanism findings). All three below were cross-checked against every prior *mobile-rn*.json id and evidence body and confirmed non-duplicate.",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-first-visit-default",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn dashboard layout stale-while-revalidate first-paint gap)",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/features/layout/useDashboardLayout.ts"
+      ],
+      "evidence": [
+        "useDashboardLayout.ts:37-58 -- the Phase-2 'background fetch' does `const fresh = await apiRequest<ResolvedScreen>('/api/v1/layout/resolved/${screen}?platform=mobile')` and, on a valid shape, calls `writeCachedLayout(sid, screen, fresh)` ONLY. It NEVER calls `setLayout(fresh)` (the comment at :37 says 'writes cache ONLY (never sets state)'). The rendered layout is set exclusively by Phase-1 cache-read at mount (:32-35) or the `DEFAULT_DASHBOARD_LAYOUT` initial state (:16).",
+        "Consequence on FIRST visit for a user/org: Phase-1 `readCachedLayout(sid, screen)` returns null (no cache yet) so `setLayout` is not called and the screen renders `DEFAULT_DASHBOARD_LAYOUT`. Phase-2 fetches the org's real server-resolved layout and writes it to cache but does not apply it to state -- so a tenant that has configured a CUSTOM dashboard layout server-side sees the DEFAULT layout on first view and their custom layout only appears the NEXT time the screen mounts. The server-resolved layout is silently ignored on first paint.",
+        "Same gap masks server-side CHANGES within a session: after an org admin updates the layout, an existing user renders the STALE cached layout for the whole current mount and the fresh one only takes effect on a later remount -- acceptable as deliberate stale-while-revalidate, but combined with the first-visit-default case above it means a newly provisioned custom layout is effectively invisible until the user navigates away and back.",
+        "Reproduce (static): grep -n 'setLayout' frontend/apps/mobile/src/features/layout/useDashboardLayout.ts shows setLayout is called only in Phase-1 (:34), never in the Phase-2 fetch block (:42-52).",
+        "Non-duplicate: no prior *mobile-rn*.json signal references features/layout or useDashboardLayout (verified across all 22 mobile-rn signal files; prior layout-adjacent code was never reviewed). Landable remedy (frontend-only, no backend/KMP): in Phase-2, after the shape-check, also `if (!cancelled) setLayout(fresh)` (optionally only when the fetched layout differs from what is displayed) so the server-resolved layout is applied on first visit; keep the cache write for cold-start. Confidence medium: the missing setLayout is code-verified statically; the exact first-paint UX was not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-reportfault-perm-4xx-false-saved",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn ReportFault caller-side misleading queued-success on permanent 4xx)",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "evidence": [
+        "ReportFaultScreen.tsx:312-337 -- the online submit path wraps `apiRequest<CreateFaultResult>('/api/v1/faults', ...)` in try/catch and, in the catch (:327-334), unconditionally calls `queueForLater(payload, t('faults.queuedOnErrorMessage'))` for ANY thrown error. queueForLater (:275-283) enqueues via addToQueue and shows an Alert whose body is the 'saved, will sync later' copy -- i.e. the user is told the fault was saved.",
+        "But apiRequest (hooks/useApi.ts:83-92) throws on EVERY non-ok status, so a genuinely PERMANENT 4xx (403 building/permission denied, 409 conflict, 422 server-side validation the client did not pre-catch) also lands in this catch and is queued. On the next processQueue cycle, executeQueuedAction (useOfflineSupport.ts:288-296) classifies any 4xx NOT in RETRYABLE_HTTP_STATUSES={401,408,429} as `permanent`, and processQueue (:422-427) DROPS it with only `console.error('Action permanently failed (4xx), dropping:', action)` -- no user-facing alert. Net effect: the user's fault report is silently and permanently discarded AFTER the UI already promised it was saved and would sync. The idempotency key does not help (the create never succeeded).",
+        "The in-code comment at ReportFaultScreen.tsx:328-332 acknowledges 'a genuine 4xx is dropped by the queue' -- confirming the author knew the queue drops it -- but the caller still shows the success/queued message rather than surfacing the validation/permission failure to the user, so the user has no signal their report was rejected.",
+        "Reproduce (static): trace ReportFaultScreen.tsx:319 throw -> :333 queueForLater(queuedOnErrorMessage) -> useOfflineSupport.ts:288 isPermanentClientError for 403/409/422 -> :422 drop with console.error only.",
+        "Non-duplicate: the only prior queue-4xx finding, code-review-mobile-offline-4xx-drop (2026-07-22), targeted the QUEUE MECHANISM (which statuses to treat as permanent) and its recommended fix -- exclude 401/408/429 -- has since been IMPLEMENTED (RETRYABLE_HTTP_STATUSES). THIS finding is the residual CALLER-side defect: ReportFaultScreen shows a 'saved / will sync' message for statuses the queue still (correctly) drops, so a genuine permission/validation rejection becomes silent data loss with a false-positive success UI. Verified distinct from all *mobile-rn*.json ids. Landable remedy (frontend-only): in ReportFaultScreen's catch, only queue+message when the error is transient/offline (5xx/network); for a permanent 4xx, surface the server error to the user (Alert with the parsed message) instead of the queued-success copy -- optionally have queueForLater consult the same permanent classification. Confidence medium: the code path is statically verified; whether a specific 4xx is emitted by POST /faults in production was not run-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-pathparam-not-decoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn deep-link path param URL-decode gap)",
+      "segment": "mobile-rn",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts"
+      ],
+      "evidence": [
+        "DeepLinkHandler.ts:130-134 -- matchRoute extracts route path parameters by assigning the RAW path segment verbatim: `params[paramName] = pathPart;` with no decodeURIComponent. In contrast, query parameters in parseDeepLink (:80,:88-90) are parsed via `new URLSearchParams(rawQuery)` whose `.forEach` yields ALREADY percent-decoded values. So path params and query params are decoded inconsistently.",
+        "Effect: a deep link whose path segment carries a percent-encoded character (e.g. `ppt://announcements/a%2Fb` or an id containing an encoded space/unicode) delivers the still-encoded literal `a%2Fb` to the target screen as `params.id`, which will not match the intended server resource id (the app forwards it to navigation / an api-server GET whose path expects the decoded value). For plain UUID ids this never bites, which is why it is low severity, but it is a latent correctness gap for any non-UUID or human-authored id and an inconsistency with the query-param path.",
+        "Additional detail: rawPath is `normalized.split('?')[0]` then `.split('/').filter(Boolean).join('/')` (parseDeepLink :78-79) -- purely structural, no decoding anywhere between normalizeLinkUrl and the param assignment, so the raw octets survive end-to-end into params.",
+        "Reproduce (static): grep -n 'decodeURIComponent' frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts returns nothing; the param assignment at :133 uses pathPart directly.",
+        "Non-duplicate: prior deep-link findings are code-review-mobile-rn-deeplink-mgr-untested / -untested-qr-deeplink-parsers (test-coverage) and -deeplink-url-listener-leak (2026-08-29, listener lifecycle) -- none concern URL-decoding of path params. Verified across all *mobile-rn*.json. Landable remedy (frontend-only): decode path params at assignment, `params[paramName] = decodeURIComponent(pathPart)` (guarded in try/catch for malformed sequences), matching URLSearchParams' behaviour for query params. Low severity, mechanical. Confidence medium: static-only."
+      ]
+    }
+  ]
+}
