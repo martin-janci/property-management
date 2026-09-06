@@ -1,0 +1,39 @@
+{
+  "run_iso": "2026-09-06T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven: claim buffer starved (8 open backlog items, all structurally unclaimable in the cloud runner — mobile-native/KMP + api-server cloud-build-blocked). Need fresh CLOUD-LANDABLE vectors. Rotating static review, static-analysis only (no compile/test). Today's churn hotspots are all api-server (integrations.rs, organizations.rs, documents.rs, ai.rs, auth.rs) — excluded as structurally unlandable in cloud. Frontend cloud-landable segments (ppt-web-core, reality-web, mobile-rn) were the oldest-unreviewed (cursor 2026-08-29) but were ALREADY reviewed earlier today (signals 2026-09-06-ppt-web-core-*, -reality-web-*, -mobile-rn-*) — re-reviewing would produce duplicate vectors. reality-server (cursor 2026-08-31) is the oldest cloud-landable Rust segment NOT yet touched today; selected. mobile-native-kmp (oldest overall, 2026-08-25) skipped per dispatcher bias (unlandable in cloud).",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed among cloud-landable segments not already reviewed today (churn all api-server=excluded; frontend cloud-landable segments already reviewed earlier today; mobile-native-kmp skipped as cloud-unlandable). Saturation check passed: reality-server has 0 open code-review-finding rows in backlog.json. Backend Rust segment (reality-server, NOT api-server) preferred for cloud landability.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-outage-401-conflation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 reality-server)",
+      "segment": "reality-server",
+      "expert": "rust",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Mobile SSO entry point conflates a transient PM-side introspection outage with a genuinely invalid token, returning 401. `create_mobile_sso_token` (backend/servers/reality-server/src/routes/sso.rs:450-499) calls `introspect_pm_token(...)` and maps ANY Err to `(StatusCode::UNAUTHORIZED, 'invalid_token')` (sso.rs:456-462). But `introspect_pm_token_inner` (sso.rs:796-857) was DELIBERATELY hardened to return an Err WITHOUT caching on any non-2xx introspection response — a PM 5xx outage, 502/504 gateway error, or transport error — precisely because such a response is 'not a genuine active=false verdict' (per the Epic 104.2 negative-cache-poisoning guard comment). The handler discards that carefully-preserved distinction: during a transient PM introspection outage a mobile client presenting a perfectly valid token receives 401 invalid_token, which signals 'your credentials are bad' and can cause the client to discard/clear otherwise-valid credentials and force a spurious re-login. The transport-layer effort to distinguish outage-from-inactive is negated at the handler boundary. Recommend surfacing PM outage/5xx/transport errors as 502 Bad Gateway or 503 Service Unavailable (retryable) rather than 401, so clients back off and retry instead of treating the token as invalid. The same collapse-to-401 also applies to the `get_user_info` failure branch (sso.rs:472-479) and `refresh_session` (sso.rs:613-626).",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-mark-read-error-swallow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 reality-server)",
+      "segment": "reality-server",
+      "expert": "rust",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "A realtor-facing DB write Result is silently discarded with no logging, so read-state desync is unobservable. In the realtor inquiry-detail path (backend/servers/reality-server/src/routes/inquiries.rs:700-704) the code does `let _ = state.reality_portal_repo.mark_inquiry_read_for_realtor(id, principal.user_id).await;` — the Result of a DB UPDATE that marks the inquiry read is dropped entirely (no `?`, no `map_err`, no `tracing::warn`). Ownership is already verified above so this is not an authz bug, but unlike the truly fire-and-forget analytics call at listings.rs:370 (`track_view`), inquiry read-state is user-visible: if the UPDATE fails (transient DB error, deadlock, connection drop), the inquiry keeps showing as unread on every subsequent load with zero operator visibility into why. Contrast with the deliberate, commented discard in saved_search_alerts.rs:223. Recommend at minimum logging the failure (`if let Err(e) = ... { tracing::warn!(inquiry_id = %id, error = %e, \"failed to mark inquiry read\"); }`) so the desync is diagnosable.",
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ]
+    }
+  ]
+}
