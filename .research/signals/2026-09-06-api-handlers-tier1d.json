@@ -1,0 +1,71 @@
+{
+  "generated": "2026-09-06T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, cloud-implementable-only) 2026-09-06 api-handlers",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "Buffer starved (0 claimable; open backlog is all mobile-native/KMP, unbuildable in cloud runner). Rotation resolution: review_cursor asc = mobile-native-kmp 2026-08-25 (EXCLUDED per task: unclaimable in cloud), then a tie at 2026-08-29 (ppt-web-core, reality-web, mobile-rn). ppt-web-core already has TWO fresh 2026-09-06 signal files (tier1d + tier1d-2) and reality-web was reported hardened by ~9 prior passes in today's ppt-web-core note; mobile-rn is de-prioritised (not in the task's preferred cloud list: backend Rust / ppt-web / reality-web / admin-web / TypeSpec / shared). Churn (hotspot_history) sits squarely in backend/servers/api-server/src/routes/** (integrations, organizations, documents, ai, platform_admin, financial), i.e. the api-handlers segment (backend Rust, cloud-implementable) => churn-aligned pick. Saturation check: 0 OPEN code-review-finding rows for api-handlers in backlog.json (all prior are status=done), so not saturated per the skill rule. Non-duplication: the heavily-mined classes in this segment (raw-db-error-leak, unbounded-pagination-limit, voice/webhook signature) were deliberately avoided; the top-churn files (integrations/webhook.rs, oauth.rs; documents/shares.rs, core.rs; ai/llm.rs) were re-read and found already hardened. This pass instead reports a DISTINCT, previously-unflagged class: cross-tenant IDOR on non-RLS repository read/write paths where the handler extracts the auth principal but discards it (`_user`/`_auth`/`_org_id`) and the repo method scopes only by a client-supplied path/body UUID with NO organization_id filter, on a plain `&self.pool` (non-RLS) connection. Three separate, independently-fixable modules. Confirmed by contrast against sibling modules that DO carry the correct guard (investor_portal.rs verify_portfolio_org; owner_analytics.rs / portfolio_analytics.rs benchmark paths pass org_id).",
+  "experts_used": ["rust", "security"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-violations-comments-cross-tenant-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 api-handlers violations)",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:625 `list_comments` extracts the principal as `_user: AuthUser` (underscore = intentionally discarded), derives NO org_id, and calls `state.violation_repo.list_comments(violation_id, query.include_internal.unwrap_or(false))` (violations.rs:631-633). The repo method (backend/crates/db/src/repositories/violations.rs:901) runs `SELECT * FROM violation_comments WHERE violation_id = $1 ...` on `&self.pool` (a plain, non-RLS PgPool — every other query in this repo explicitly filters `organization_id = $N`, e.g. lines 82, 144, 253, 366, confirming there is no RLS backstop). There is NO organization_id predicate, so any authenticated user of ANY tenant can read the comments of ANY violation UUID belonging to ANY other organization = cross-tenant IDOR.",
+        "Second, privilege-tier leak on the SAME endpoint: `include_internal` is fully client-controlled with no role/manager gate. `list_comments` (repo line 901) returns `is_internal = true` (manager-only enforcement notes) whenever `?include_internal=true`, so even within the caller's own org an ordinary resident/tenant can read internal-only comments. Contrast `add_comment` (repo line 873) which is correctly scoped via `INSERT ... FROM violations v WHERE v.id = $1 AND v.organization_id = $2` (org_id passed from the handler at violations.rs:611).",
+        "Same defect in two sibling read handlers in the same file: `list_evidence` (violations.rs:322, `_user` discarded) -> repo `list_evidence` (repositories/violations.rs:452) `SELECT * FROM violation_evidence WHERE violation_id = $1` (no org filter); and `list_payments` (violations.rs:475, `_user` discarded) -> repo `list_payments` `SELECT * FROM fine_payments WHERE enforcement_action_id = $1` (no org filter). `delete_evidence` in the same file DOES scope (EXISTS ... v.organization_id = $2, repo line 471), proving the omission is a bug not a design choice.",
+        "Impact: HIGH — cross-tenant disclosure of another organization's violation comments (incl. manager-internal notes), evidence, and fine-payment records, reachable by any authenticated user by guessing/enumerating UUIDs. Confidence HIGH: full path traced entry->repo, non-RLS pool confirmed by sibling org-filtered queries, and a correctly-scoped sibling method exists in the same repo. Fix: thread `org_id = user.tenant_id` from each handler into the repo methods and add `AND organization_id = $N` (join through `violations`/`enforcement_actions` where the child table lacks the column); additionally gate `include_internal=true` behind a manager-role check."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-portfolio-perf-property-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 api-handlers portfolio_performance)",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/portfolio_performance.rs",
+        "backend/crates/db/src/repositories/portfolio_performance.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/portfolio_performance.rs — the portfolio_properties CRUD handlers all extract `_auth: AuthUser` (discarded) and operate purely on client path/body UUIDs with NO org check: `list_properties` (line 300) -> `portfolio_performance_repo.list_properties(portfolio_id)`, `get_property` (line 314) -> `get_property(property_id, portfolio_id)`, `add_property` (line 285) -> `add_property(portfolio_id, req)`, plus `update_property`/`delete_property`. The repo (backend/crates/db/src/repositories/portfolio_performance.rs) runs these on a plain `&self.pool` (non-RLS: the parent-table methods explicitly filter `organization_id = $2`, e.g. lines 75, 100, 130, 155).",
+        "The child-table queries scope ONLY by `portfolio_id`/`id` and never verify the parent portfolio belongs to the caller's org: `list_properties` = `SELECT ... FROM portfolio_properties_perf WHERE portfolio_id = $1`; `get_property` = `... WHERE id = $1 AND portfolio_id = $2`. Because the handler never checks that `portfolio_id` is owned by `user.tenant_id`, any authenticated user supplying an arbitrary `portfolio_id` can READ another tenant's property financials (acquisition price, loan balances, current equity, NOI, cap rate) and, via add/update/delete, WRITE into or delete rows from another tenant's portfolio = cross-tenant IDOR (read + write).",
+        "Directly contrasts the sibling module investor_portal.rs, which guards the identical relationship with `verify_portfolio_org(state, portfolio_id, org_id)` (investor_portal.rs:37, comment: 'Verify the portfolio exists and belongs to the caller's organization before ...'). portfolio_performance.rs is missing this guard entirely — the team already knows the correct pattern; this module was not brought in line.",
+        "Impact: HIGH — cross-tenant read AND write of portfolio property financial records. Confidence HIGH: path traced entry->repo, non-RLS pool confirmed, and the corrective pattern exists verbatim in a sibling module. Fix: add a `verify_portfolio_org(portfolio_id, user.tenant_id)` precondition (mirroring investor_portal.rs) to every portfolio_properties_perf handler, and/or add `organization_id` scoping (join through `performance_portfolios`) to the repo queries."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-portfolio-analytics-metrics-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 api-handlers portfolio_analytics)",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/portfolio_analytics.rs",
+        "backend/crates/db/src/repositories/portfolio_analytics.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/portfolio_analytics.rs:308 `get_property_metrics` derives `let _org_id = user.tenant_id...?` and then DISCARDS it (underscore), calling `s.portfolio_analytics_repo.get_property_metrics(building_id, query.period_start, query.period_end)` with a client-supplied `building_id` path param and no org scoping. The repo (backend/crates/db/src/repositories/portfolio_analytics.rs `get_property_metrics`) runs `SELECT ... FROM property_performance_metrics WHERE building_id = $1 AND period_start = $2 AND period_end = $3` on `&self.pool` — the `property_performance_metrics` table has no organization_id column and the query performs no join to buildings, so any authenticated user can read ANY building's performance metrics (revenue, NOI, occupancy, estimated_value, cap_rate) cross-tenant.",
+        "portfolio_analytics.rs:277 `upsert_property_metrics` has the same `let _org_id = ...` discard, then calls `portfolio_analytics_repo.upsert_property_metrics(req)` where `req: CreatePropertyMetrics` carries a client-chosen `building_id`. The repo issues `INSERT INTO property_performance_metrics (building_id, ...) VALUES (...) ON CONFLICT (building_id, period_start, period_end, period_type) DO UPDATE SET ...` with no org verification, so an authenticated user can create or OVERWRITE another tenant's building metrics = cross-tenant IDOR write / data tampering.",
+        "This is not the whole module: the benchmark handlers in the SAME file correctly pass `org_id` (e.g. list_benchmarks/get_benchmark/update_benchmark at lines 124/170/..., all `user.tenant_id` -> repo `(id, org_id)`), which is why the two `_org_id`-discarding metric handlers stand out as the defect rather than a design decision.",
+        "Impact: HIGH — cross-tenant read and write/overwrite of per-building financial performance metrics, reachable by any authenticated user via a guessed/enumerated building_id. Confidence HIGH: entry->repo path traced, org_id demonstrably computed-then-discarded, table has no org column and no scoping join. Fix: verify the `building_id` belongs to `user.tenant_id` (join `buildings` on organization_id) in both the handler and the repo query, and add the org join/filter to `get_property_metrics`/`upsert_property_metrics`; consider adding `organization_id` to `property_performance_metrics` or always resolving it via the building."
+      ]
+    }
+  ]
+}

@@ -1,9 +1,18 @@
 {
-  "generated": "2026-09-05T08:31:50Z",
+  "generated": "2026-09-06T10:30:52Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-06T10:30:52Z",
+      "prs_scanned": 2,
+      "clean": [
+        2940,
+        2938
+      ],
+      "with_issues": []
+    },
     {
       "run_at": "2026-09-05T08:31:50Z",
       "prs_scanned": 6,
@@ -571,29 +580,6 @@
           "note": "h2 RUSTSEC-2026-0258 ignore is a bare advisory-ID (global); scope to h2 0.3.x so a future 0.4.x<0.4.16 regression on the reachable axum/hyper-1 server path still trips cargo-deny"
         }
       ]
-    },
-    {
-      "run_at": "2026-08-18T18:33:38Z",
-      "prs_scanned": 15,
-      "clean": [
-        2760,
-        2761,
-        2758,
-        2757,
-        2756,
-        2755,
-        2748,
-        2747,
-        2746,
-        2745,
-        2742,
-        2741,
-        2740,
-        2739,
-        2738
-      ],
-      "with_issues": [],
-      "note": "DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static diff review only. Window merged-to-dev 14d, base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Label-based enumeration surfaced 15 unlabeled in-window merged PRs (2738-2761 range), but the run-history in THIS file shows all 15 were ALREADY reviewed & found clean by prior runs (2026-08-12/-14/-15) that did not yet apply PR labels -- the same missing-label dedup gap the 2026-08-17 run began closing. Re-confirmed all 15 clean via fresh diff review and APPLIED the missing post-merge-reviewed labels so they will not resurface (2748 keeps its existing 'security' label). 0 new issues opened. Re-review highlights, uniformly high quality with IG3 regression tests + rationale doc-comments: #2761 (mobile date-format consolidation onto i18n/format.ts + tree-wide bare-toLocale* guard test), #2760 (ppt-web WebSocket disconnect() detaches handlers before close via shared detachAndCloseSocket -> no spurious reconnect on logout/token-rotation race; regression tests), #2758 (reality-server SSO backslash-obfuscated open-redirect '/\\evil.com' fails closed + regression), #2757 (ProtectedRoute i18n defaultValue-guard parity + locale-lockstep test), #2756/#2740/#2739 (MeterDetail + broad mobile date/i18n locale fixes), #2748 (Alexa JSON /verify endpoint fails closed -- no longer accepts any non-empty string as a valid Alexa signature; forgery-vector regression), #2747 (marketplace award-quote cross-RFQ/cross-tenant IDOR: handler + repo defense-in-depth reject foreign quote as 404; 3 HTTP-layer tests), #2746 (workflow api_call SSRF redirect re-validation extracted to redirect_hop_allowed + hermetic hop tests), #2745 (rust-toolchain 1.94.1->1.97.1 across CI/deploy + clippy needless-borrow fixes), #2742 (usePerformanceMetrics listener leak: onReport moved to ref, listeners removed on cleanup, deps trimmed), #2741 (logout purge adds notification-triggers query root -> per-user pref cache no longer leaks across sessions on shared workstation), #2738 (offline sync queue retains recoverable 4xx 401/408/429 instead of dropping; permanent-4xx still dropped; 4 tests). Existing open from-merged-review issues remain (e.g. #2743, #2794, #2789, #2759, #2366); none re-opened."
     }
   ]
 }
