@@ -1,0 +1,325 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-06",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z (4 days ago)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine has not run in 4d (last_run_iso=2026-09-01T18:38:58Z, now=2026-09-06); >36h threshold"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-09-06",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-09-01",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "stale_routine_alert: state.json last_run_iso=2026-09-01T18:38:58Z is 4d old; cloud routine may be paused \u2014 dispatcher (separate loop) still ticking"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2935 \u2014 chore(deps): bump the npm-minor-patch group across 1 directory with 40 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2585 \u2014 chore(deps): bump base64 from 0.22.1 to 0.23.0 in /backend"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2586 \u2014 chore(deps): bump validator from 0.20.0 to 0.21.0 in /backend"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2583 \u2014 chore(deps): bump rust_xlsxwriter from 0.96.0 to 0.97.0 in /backend"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "repeated churn \u2014 runs_seen was 2 at last run, now 3"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2749-closed",
+      "type": "dep-update-noise",
+      "source": "PR #2749 closed unmerged",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2749 closed unmerged (superseded dep bump) \u2014 chore(deps): bump the gradle-minor-patch group across 1 directory with 5 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2865-closed",
+      "type": "dep-update-noise",
+      "source": "PR #2865 closed unmerged",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2865 closed unmerged (superseded dep bump) \u2014 chore(deps): bump the cargo-minor-patch group across 1 directory with 10 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2867-closed",
+      "type": "dep-update-noise",
+      "source": "PR #2867 closed unmerged",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2867 closed unmerged (superseded dep bump) \u2014 chore(deps): bump the npm-minor-patch group across 1 directory with 39 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2934-closed",
+      "type": "dep-update-noise",
+      "source": "PR #2934 closed unmerged",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2934 closed unmerged (superseded dep bump) \u2014 chore(deps): bump the cargo-minor-patch group across 1 directory with 12 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2936-closed",
+      "type": "dep-update-noise",
+      "source": "PR #2936 closed unmerged",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2936 closed unmerged (superseded dep bump) \u2014 chore(deps): bump the cargo-minor-patch group across 1 directory with 13 updates"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744 age=23d",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2744 open 23d \u2014 fix(dispatcher): un-wedge oversize-archive push (#1162) + close retry-remint cro"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 churn since 2026-09-01: +3427 lines",
+        "re-emit: seen previously; churn refreshed but score not re-added"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 churn since 2026-09-01: +2999 lines",
+        "re-emit: seen previously; churn refreshed but score not re-added"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=3",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "repeated churn \u2014 runs_seen was 3 at last run, now 4",
+        "re-emit: seen previously; churn refreshed but score not re-added"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "top-3 churn since 2026-09-01: +2799 lines",
+        "re-emit: seen previously; churn refreshed but score not re-added"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-06.md && head -1 matches '# 2026-09-06'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.score>8]",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "prev-open items >14d decayed check",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation on new plans",
+      "observed": "trivially true \u2014 0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "count new .research/plans/*.md",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "paths outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret regex on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures listed + cursors not advanced",
+      "observed": "phase-1.5 + phase-1.6 listed; review_cursor + pm_cursor unchanged",
+      "expected": "listed + cursors static"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "9 >= 9",
+      "expected": "now >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap",
+      "observed": "0",
+      "expected": "<=3, subcaps<=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped; existing management artifacts still valid",
+      "observed": "jq parses; pm_cursor.next_index=7",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token regex on staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met certainty bar (confidence=high + score>=3 + allowlist)"
+}

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-06T03:13:46Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 2939,
+  "last_issue_seen": 2937,
+  "last_commit_sha": "9a9162b6f57d4244b5eae5f5a80c316dc5d3c910",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -153,8 +153,8 @@
       "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-08-22",
+      "runs_seen": 3,
+      "last_seen": "2026-09-06",
       "recent_churn": 2799
     },
     "backend/servers/api-server/src/services/oauth.rs": {
@@ -468,9 +468,9 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-08-22",
-      "recent_churn": 2871
+      "runs_seen": 4,
+      "last_seen": "2026-09-06",
+      "recent_churn": 2999
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
@@ -478,8 +478,8 @@
       "recent_churn": 352
     },
     "backend/servers/api-server/tests/suites/oauth_integration_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-22",
+      "runs_seen": 2,
+      "last_seen": "2026-09-06",
       "recent_churn": 3427
     },
     "backend/servers/api-server/src/services/quiet_hours_drain.rs": {
@@ -830,11 +830,20 @@
     "dep-update-noise-pr-2476",
     "dep-update-noise-pr-2477",
     "dep-update-noise-pr-2491",
+    "dep-update-noise-pr-2583",
+    "dep-update-noise-pr-2585",
+    "dep-update-noise-pr-2586",
     "dep-update-noise-pr-2625",
     "dep-update-noise-pr-2673",
     "dep-update-noise-pr-2749",
+    "dep-update-noise-pr-2749-closed",
     "dep-update-noise-pr-2750",
     "dep-update-noise-pr-2751",
+    "dep-update-noise-pr-2865-closed",
+    "dep-update-noise-pr-2867-closed",
+    "dep-update-noise-pr-2934-closed",
+    "dep-update-noise-pr-2935",
+    "dep-update-noise-pr-2936-closed",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -885,6 +894,7 @@
     "lag-warning-2026-08-22",
     "lag-warning-2026-08-25",
     "lag-warning-2026-08-28",
+    "lag-warning-2026-09-06",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -899,6 +909,7 @@
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
     "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
@@ -931,10 +942,12 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale-routine-alert-2026-09-06",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
     "stalled-review-pr-2559",
+    "stalled-review-pr-2744",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-aml-review-decision-cast",
@@ -1016,7 +1029,7 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
+    "runs": 79,
     "vectors_created": 372,
     "plans_created": 29,
     "quiet_days": 3,
