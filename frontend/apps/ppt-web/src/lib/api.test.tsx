@@ -337,6 +337,138 @@ describe('api client — 401 triggers onUnauthorized (refresh hook)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// 2b. 401 -> single-flight refresh -> replay original request (in-interceptor)
+// ---------------------------------------------------------------------------
+
+describe('api client — 401 awaits refresh and replays the failed request', () => {
+  it('awaits the refresh and replays the original request once with the rotated token', async () => {
+    // Real timers: the 401 replay path has no backoff sleep, so it settles
+    // immediately without the fake-timer fast-forward dance.
+    vi.useRealTimers();
+    const onUnauthorized = vi.fn(async () => 'fresh-token');
+    // No getToken configured, so the first attempt carries no Authorization
+    // header — the replay must carry the token the handler returned.
+    const instance = configureApiClient({ onUnauthorized });
+    const { adapter, attempts, authHeaders } = scriptedAdapter([
+      { kind: 'status', status: 401, data: { error: 'UNAUTHORIZED', message: 'expired' } },
+      { kind: 'ok', data: { user: 'me' } },
+    ]);
+    installAdapter(instance, adapter);
+
+    // The SAME call that hit the 401 resolves — no manual query re-run needed.
+    const res = await getApiClient().get('/me');
+
+    expect(res.data).toEqual({ user: 'me' });
+    // 1 initial (401) + 1 replay (200).
+    expect(attempts()).toBe(2);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    // Attempt 1 had no auth header; the replay carried the rotated token.
+    expect(authHeaders()[0]).toBeUndefined();
+    expect(authHeaders()[1]).toBe('Bearer fresh-token');
+  });
+
+  it('replays at most once — a replay that also 401s rejects instead of looping', async () => {
+    vi.useRealTimers();
+    const onUnauthorized = vi.fn(async () => 'fresh-token');
+    const instance = configureApiClient({ onUnauthorized });
+    // Adapter is always 401 (scriptedAdapter repeats its final step), so the
+    // replay's fresh token is also rejected.
+    const { adapter, attempts } = scriptedAdapter([
+      { kind: 'status', status: 401, data: { error: 'UNAUTHORIZED', message: 'expired' } },
+    ]);
+    installAdapter(instance, adapter);
+
+    await expect(getApiClient().get('/me')).rejects.toMatchObject({ status: 401 });
+    // 1 initial + exactly 1 replay — the __authRetried guard stops a loop.
+    expect(attempts()).toBe(2);
+    // Refresh attempted once; the second 401 does not kick off another refresh.
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects the original request when refresh returns null (no recovery)', async () => {
+    vi.useRealTimers();
+    // Handler could not recover the session (e.g. no refresh token → logout).
+    const onUnauthorized = vi.fn(async () => null);
+    const instance = configureApiClient({ onUnauthorized });
+    const { adapter, attempts } = scriptedAdapter([
+      { kind: 'status', status: 401, data: { error: 'UNAUTHORIZED', message: 'expired' } },
+    ]);
+    installAdapter(instance, adapter);
+
+    await expect(getApiClient().get('/me')).rejects.toMatchObject({ status: 401 });
+    // No replay when there is no rotated token.
+    expect(attempts()).toBe(1);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares a single refresh across concurrent 401s and replays each request', async () => {
+    vi.useRealTimers();
+    // Model AuthContext's single-flight refresh: concurrent callers await one
+    // in-flight promise. A manually-controlled gate holds the refresh open until
+    // all three 401s have queued on it.
+    let refreshRuns = 0;
+    let inFlight: Promise<string> | null = null;
+    let releaseRefresh!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      releaseRefresh = resolve;
+    });
+    const onUnauthorized = vi.fn((): Promise<string> => {
+      if (inFlight) return inFlight;
+      inFlight = (async () => {
+        refreshRuns += 1;
+        await gate;
+        return 'fresh-token';
+      })().finally(() => {
+        inFlight = null;
+      });
+      return inFlight;
+    });
+    const instance = configureApiClient({ onUnauthorized });
+
+    // Adapter returns 200 only when the fresh token is present, else 401.
+    instance.defaults.adapter = (config) => {
+      const auth = AxiosHeaders.from(config.headers).get('Authorization') as string | undefined;
+      if (auth === 'Bearer fresh-token') {
+        return Promise.resolve({
+          data: { ok: true },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        } as AxiosResponse);
+      }
+      const response: AxiosResponse = {
+        data: { error: 'UNAUTHORIZED', message: 'expired' },
+        status: 401,
+        statusText: 'ERR',
+        headers: {},
+        config,
+      };
+      return Promise.reject(
+        new AxiosError('Unauthorized', AxiosError.ERR_BAD_REQUEST, config, {}, response)
+      );
+    };
+
+    const all = Promise.all([
+      getApiClient().get('/a'),
+      getApiClient().get('/b'),
+      getApiClient().get('/c'),
+    ]);
+
+    // Flush microtasks so all three 401s queue on the single in-flight refresh
+    // before it resolves, then release it.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    releaseRefresh();
+
+    const results = await all;
+    expect(results.map((r) => r.status)).toEqual([200, 200, 200]);
+    // Single-flight: three 401s, one actual refresh round-trip.
+    expect(refreshRuns).toBe(1);
+    expect(onUnauthorized).toHaveBeenCalledTimes(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 3. 5xx surfacing
 // ---------------------------------------------------------------------------
 

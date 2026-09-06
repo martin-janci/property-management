@@ -313,7 +313,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // change across renders; routing through a ref avoids re-running the
   // configure effect (which would tear down and recreate the axios instance)
   // on every one of those changes.
-  const onUnauthorizedRef = useRef<() => void>(() => {});
+  const onUnauthorizedRef = useRef<() => Promise<string | null>>(async () => null);
 
   // Derived state
   const isAuthenticated = user !== null;
@@ -600,25 +600,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * access token has expired or been revoked, so every in-flight feature-hook
    * request is failing. Recovery mirrors the intended `onUnauthorized` design:
    *
-   *  - If a refresh token is available, kick off a single silent refresh
-   *    (deduplicated via `refreshToken`'s in-flight guard). On success the
-   *    rotated access token lands in storage and the query layer's next run
-   *    succeeds; on failure `refreshTokenInternal` has already cleared storage
-   *    and de-authenticated the user.
+   *  - If a refresh token is available, perform a single silent refresh
+   *    (deduplicated via `refreshToken`'s in-flight guard, so concurrent 401s
+   *    all await one refresh round-trip) and return the rotated access token.
+   *    The interceptor awaits this and replays the failed request once with the
+   *    new token; on failure `refreshTokenInternal` has already cleared storage
+   *    and de-authenticated the user, and we resolve `null` so the interceptor
+   *    lets the original request reject.
    *  - If there is no refresh token, nothing can recover the session — log out
-   *    so ProtectedRoute redirects to the login screen.
+   *    so ProtectedRoute redirects to the login screen, and resolve `null`.
    *
-   * The interceptor invokes this without awaiting it (a 401 is non-retryable
-   * and surfaces immediately), so recovery happens in the background.
+   * Returns the rotated access token on success, or `null` when the session
+   * could not be recovered.
    */
-  const handleUnauthorized = useCallback((): void => {
+  const handleUnauthorized = useCallback(async (): Promise<string | null> => {
     if (tokenStorage.getRefreshToken()) {
-      void refreshToken().catch(() => {
+      try {
+        // Single-flight: concurrent 401s share the one in-flight refresh.
+        return await refreshToken();
+      } catch {
         // refreshTokenInternal already cleared storage + de-authenticated.
-      });
-      return;
+        return null;
+      }
     }
-    void logout();
+    await logout();
+    return null;
   }, [refreshToken, logout]);
 
   // Keep the ref read by the configureApiClient effect pointed at the current

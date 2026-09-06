@@ -45,13 +45,26 @@ export interface ApiError extends Error {
 export type TokenGetter = () => string | null | Promise<string | null>;
 
 /**
+ * Called from the response interceptor when a request comes back 401.
+ *
+ * The handler is expected to perform a *single-flight* token refresh (so that
+ * many concurrent 401s share one refresh round-trip) and resolve with the
+ * rotated access token. The interceptor awaits it and, when a non-empty token
+ * is returned, replays the original request exactly once with that token before
+ * rejecting. Returning `null`/`undefined` (or throwing) means the session could
+ * not be recovered — the interceptor then rejects the original request and the
+ * handler is responsible for any session teardown (logout / redirect).
+ */
+export type UnauthorizedHandler = () => void | string | null | Promise<string | null | undefined>;
+
+/**
  * API client configuration options.
  */
 export interface ApiClientConfig {
   baseURL?: string;
   timeout?: number;
   getToken?: TokenGetter;
-  onUnauthorized?: () => void;
+  onUnauthorized?: UnauthorizedHandler;
 }
 
 // ============================================================================
@@ -94,6 +107,12 @@ const RETRYABLE_METHODS = ['get', 'head', 'options', 'delete'];
 /** Axios request config extended with our opt-in idempotency flag. */
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   __retryCount?: number;
+  /**
+   * Guard so the 401 refresh-and-replay path fires at most once per request.
+   * Without it, a replay that also 401s (fresh token still rejected) would loop
+   * indefinitely.
+   */
+  __authRetried?: boolean;
   /** Opt-in: mark a non-safe request (e.g. POST/PUT/PATCH) as safe to retry. */
   idempotent?: boolean;
 };
@@ -177,7 +196,7 @@ function transformError(error: AxiosError<ApiErrorResponse>): ApiError {
 let tokenGetter: TokenGetter | undefined;
 
 /** Store for unauthorized callback */
-let onUnauthorizedCallback: (() => void) | undefined;
+let onUnauthorizedCallback: UnauthorizedHandler | undefined;
 
 /**
  * Create and configure the axios instance.
@@ -215,9 +234,39 @@ function createAxiosInstance(config: ApiClientConfig = {}): AxiosInstance {
     async (error: AxiosError<ApiErrorResponse>) => {
       const config = error.config;
 
-      // Handle unauthorized errors
+      // Handle unauthorized errors: await a single-flight token refresh and
+      // replay the original request once with the rotated token.
+      //
+      // The previous behaviour fired `onUnauthorized()` without awaiting it and
+      // let the 401 reject immediately (401 is not in the retryable list). The
+      // refresh happened in the background, so the request that hit the expired
+      // token always failed — TanStack Query retries could race or exhaust
+      // before the rotated token landed, and raw getApiClient() consumers got a
+      // hard rejection. Now we await the refresh and, on success, replay the
+      // failed request exactly once (guarded by `__authRetried`). Concurrent
+      // 401s share a single refresh because `onUnauthorized` (AuthContext) is
+      // single-flight — every caller awaits the same in-flight refresh promise.
       if (error.response?.status === 401 && onUnauthorizedCallback) {
-        onUnauthorizedCallback();
+        const authConfig = config as RetryableRequestConfig | undefined;
+        if (authConfig && !authConfig.__authRetried) {
+          authConfig.__authRetried = true;
+          const rotatedToken = await onUnauthorizedCallback();
+          if (rotatedToken) {
+            // Inject the rotated token and replay the original request once.
+            // The request interceptor also re-reads the (now refreshed) token
+            // from storage, but setting it explicitly keeps the replay correct
+            // for raw consumers configured without a token getter.
+            authConfig.headers.Authorization = `Bearer ${rotatedToken}`;
+            return instance.request(authConfig);
+          }
+          // No rotated token → session could not be recovered; fall through and
+          // reject with the transformed ApiError (teardown handled by the
+          // handler, e.g. logout + redirect).
+        } else if (!authConfig) {
+          // No request config to replay (unusual) — still notify so the
+          // session can tear down.
+          void onUnauthorizedCallback();
+        }
       }
 
       // Check if we should retry.
