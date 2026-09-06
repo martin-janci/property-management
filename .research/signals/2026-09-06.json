@@ -1,0 +1,201 @@
+{
+  "date": "2026-09-06",
+  "run_kind": "routine (buffer-low trigger; slim housekeeping)",
+  "run_id": "routine-2026-09-06T00:33:52Z",
+  "auto_fix_actions": [],
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-06",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "Routine has not run since 2026-09-01T18:38:58Z — 4d 5h lag (>36h threshold). Dispatcher was still running (Tier-1d signals every 2h) so backlog updates continued; only the routine's brief/resolution/decay cadence stalled.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-09-06",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 4d old (2026-09-01T18:38:58Z). The daily cloud routine cron may be paused or the scheduler backed off. Dispatcher state on planning branch is separate and continued ticking.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump rust_xlsxwriter from 0.96.0 to 0.97.0 in /backend — merged 2026-09-04 by dependabot[bot]. Logged as noise per routine rules.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump base64 from 0.22.1 to 0.23.0 in /backend — merged 2026-09-04 by dependabot[bot].",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump validator from 0.20.0 to 0.21.0 in /backend — merged 2026-09-04 by dependabot[bot].",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump the ktor group across 1 directory with 7 updates — merged 2026-09-04 by dependabot[bot].",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump the npm-minor-patch group across 1 directory with 40 updates — merged 2026-09-04 by dependabot[bot].",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "routine-resolution-check-2026-09-06",
+      "type": "resolution-check",
+      "source": "routine 2026-09-06",
+      "score_delta": 0,
+      "evidence": "Resolved 1 open backlog item: stalled-review-pr-2558 → done (PR #2558 merged 2026-09-04, invoice PDF render endpoint UC-ACC-05.9). Decayed 1 open item to dropped: code-review-mobile-native-kmp-portfolio-analytics-caps-100 (1→0, no new signal in 14 days). No PR-body ID matches for other merged PRs — dispatcher pre-marked them done in earlier Tier-1d folds.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-06.md && head -1 matches '# 2026-09-06'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == unique|length'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen_signals dedup + cumulative allowlist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied (1 open dropped via decay)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — no adversarial pass needed",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures to hide",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan thrashing (no plans changed)",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "9>=9",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidates)",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — pm_cursor unchanged",
+      "observed": "n/a",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep on staged",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
