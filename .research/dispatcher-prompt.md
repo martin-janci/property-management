@@ -2263,10 +2263,30 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
 # code). It is now placed here, right after the final `git add`, so the check
 # actually fires. The guard self-skips when PUSH_METHOD != mcp (direct `git push`
 # has no inline-content limit), so it is safe to run unconditionally.
-if ! PUSH_METHOD="${PUSH_METHOD:-mcp}" bash .research/mcp-push-size-guard.sh --staged; then
-  echo "PHASE 6 ABORT: mcp-push-size-guard tripped — a staged file exceeds the MCP inline-push ceiling; refusing to commit/MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
-  exit 0
-fi
+#
+# ARCHIVE-ROUTING (issue #1162 / #2743): the two append-only ledgers
+# (assignments-archive.json, action-list-archive.json) legitimately grow past the
+# ceiling and cannot be shrunk without losing history. When they are the ONLY
+# oversize staged files the guard exits 4 ("route via git push") rather than 3
+# ("abort") — a legit archive append must NEVER fail-close-wedge the whole Phase 6
+# push (that regression is exactly what #2743 hit). We honour the routing here by
+# forcing PUSH_METHOD=git for THIS commit; git push has no inline-content limit so
+# the archive lands intact. An oversize ACTIVE state file (the #1014 corruption
+# class) still exits 3 and aborts — those must be shrunk by the reconcilers, never
+# pushed oversize. PUSH_METHOD_EFF carries the (possibly-overridden) method into
+# the push branch below.
+PUSH_METHOD_EFF="${PUSH_METHOD:-mcp}"
+SIZE_GUARD_RC=0
+PUSH_METHOD="$PUSH_METHOD_EFF" bash .research/mcp-push-size-guard.sh --staged || SIZE_GUARD_RC=$?
+case "$SIZE_GUARD_RC" in
+  0) : ;;  # all staged files inline-safe (or guard skipped under PUSH_METHOD=git)
+  4) echo "PHASE 6: oversize append-only archive staged — routing THIS push via PUSH_METHOD=git (MCP inline-push would truncate it, #1014; git push has no inline limit, #1162/#2743)." >&2
+     PUSH_METHOD_EFF=git ;;
+  3) echo "PHASE 6 ABORT: mcp-push-size-guard tripped — an ACTIVE-state staged file exceeds the MCP inline-push ceiling; refusing to commit/MCP-push (would truncate/corrupt it on dev, #1014). Remediation: re-run the reconcilers to shrink state, or land this run via 'PUSH_METHOD=git' where the proxy allows. Not marking this run successful." >&2
+     exit 0 ;;
+  *) echo "PHASE 6 ABORT: mcp-push-size-guard returned unexpected rc=$SIZE_GUARD_RC — refusing to commit/push. Not marking this run successful." >&2
+     exit 0 ;;
+esac
 
 # Pre-commit self-test gate. Phase 8 finding `self-test-fail-recurs-each-run`:
 # T11 / T4 / T18 / T19 were enforced only by the post-hoc self-test, so every
@@ -2303,7 +2323,12 @@ INTENDED_TREE=$(git rev-parse HEAD^{tree})   # the state tree we MUST land (reba
 # full retry/backoff loop before failing EVERY run (recurred R8). Default to MCP;
 # fall back to git push only when the MCP tool is unavailable. `PUSH_METHOD=git`
 # forces the legacy path for environments where direct push works.
-if [ "${PUSH_METHOD:-mcp}" = "mcp" ]; then
+#
+# PUSH_METHOD_EFF (not the raw PUSH_METHOD) is the effective method for THIS run:
+# the size guard above sets it to `git` when only oversize append-only archives
+# are staged (#1162/#2743 archive-routing), so an oversize archive is pushed via
+# git (no inline limit) instead of wedging the MCP path.
+if [ "${PUSH_METHOD_EFF:-${PUSH_METHOD:-mcp}}" = "mcp" ]; then
   # NOTE (issue #2126): the MCP inline-push size guard already ran BEFORE
   # `git commit` above (right after the final `git add`), where
   # `git diff --cached` still reflected the staged payload. Do NOT re-run it

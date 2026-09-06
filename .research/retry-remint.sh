@@ -46,6 +46,16 @@
 #       landed under a different id, was already satisfied, or is non-completable
 #       — the signal the coverage/dev-log guards (which key on the task's OWN id)
 #       structurally miss. Degrades gracefully when the archive is absent.
+#     - already-landed summary guard (issue #2743 — cross-issue-id ghost, a
+#       recurrence-hardening of #2460): NONE of the stem's failed rows carry an
+#       `implementer_summary` matching an "already-landed" signal — `already
+#       fixed`/`already landed`/`already satisfied`, `empty diff`, or `no PR
+#       needed`. That summary is the escape hatch the ORIGINAL implementer
+#       emits when it finds the work already merged on dev under a DIFFERENT
+#       issue/PR id (e.g. gh-issue-2658/#2660 satisfying a `voice-webhook`
+#       stem). The coverage/dev-log/subject-prefix guards all join on an id and
+#       structurally cannot see a cross-id landing; this intrinsic-row signal
+#       can. Degrades gracefully when the field is absent (no exclusion).
 #
 #   Minted rows carry `retry_of` (the original failed task_id) and
 #   `retry_round`. `retry_of` is the field Phase 3 and backlog-refill.sh use
@@ -201,6 +211,15 @@ CANDIDATES=$(jq -n \
              rounds_used: (length - 1),          # attempts beyond the original
              newest_failure: $newest,
              retryable: (all(.[]; .pr_number == null)),
+             # Already-landed guard (issue #2743): a failed row whose own
+             # implementer_summary reports the work already merged on dev under a
+             # DIFFERENT issue/PR id. An intrinsic-row signal (no id join), so it
+             # catches the cross-issue-id ghost the coverage/dev-log/subject
+             # guards structurally miss.
+             already_landed: (any(.[];
+               ((.implementer_summary // "")
+                | test("already[ ._-]?(fixed|landed|satisfied)|empty[ ._-]?diff|no[ ._-]?pr[ ._-]?needed"; "i"))
+             )),
              original_id: (map(.task_id) | sort | .[0])
            }
        )
@@ -213,6 +232,7 @@ CANDIDATES=$(jq -n \
          and ((.stem | IN($cov_done_stems[])) | not)
          and ((.stem | IN($dev_landed_stems[])) | not)
          and ((.stem | IN($ghost_marked_stems[])) | not)
+         and ((.already_landed) | not)
          and (($now_e - (.newest_failure | epoch)) >= $cooldown_s)
        ))
      | map(. + { mint_id: (.stem + "-retry" + ((.rounds_used + 1) | tostring)) })
