@@ -5525,6 +5525,28 @@
       "merge_attempted_at": "2026-08-03T12:13:50Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-confirm-dialog-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-confirm-dialog-i1-b34929e9",
+      "status": "merged",
+      "claimed_at": "2026-09-06T04:29:19Z",
+      "last_updated": "2026-09-06T06:36:33Z",
+      "status_changed_at": "2026-09-06T06:36:33Z",
+      "pr_number": 2940,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2940",
+      "merged_at": "2026-09-06T06:31:34Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=2940 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=externalized ConfirmationDialog loading label to common.processing (6 locales) + loadingLabel prop; regression test added; verify green (2634 tests); gh absent, PR via MCP",
+      "reviewer_summary": "verdict=approve note=clean-i18n-fix-posted-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "3926ea698a94e06901eafc62a61086d15259f61b",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-09-06T06:29:55Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-content-mod-overdue-noop",
       "branch": "auto-impl/code-review-ppt-web-ui-content-mod-overd-df2d14c3",
       "status": "merged",
@@ -17369,5 +17391,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-05T16:32:40Z"
+  "archived_at": "2026-09-06T06:36:39Z"
 }
