@@ -10601,6 +10601,33 @@
         "assignment_status": "merged",
         "pr_number": 2925
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirm-dialog-i18n",
+      "title": "ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui]"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:138 — confirm button renders `{isLoading ? 'Processing...' : confirmLabel}`; the 'Processing...' string is hardcoded English and, unlike confirmLabel/cancelLabel (props, defaulting L37-38), has NO prop or t() escape hatch, so it always renders English regardless of locale on this shared, app-wide modal",
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx — component imports no useTranslation (grep: 0 hits) even though title/message/labels are all user-facing; the in-flight loading state is the one path a caller cannot localize"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-09-06",
+      "updated_at": "2026-09-06",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "frontend"
     }
   ]
 }
