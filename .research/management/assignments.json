@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-06T08:38:30Z",
+  "generated": "2026-09-06T08:46:40Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -70,18 +70,18 @@
     {
       "task_id": "code-review-ppt-web-core-api-401-no-request-replay",
       "branch": "auto-impl/code-review-ppt-web-core-api-401-no-requ-10ba81d2",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-06T08:29:03Z",
-      "last_updated": "2026-09-06T08:29:03Z",
-      "status_changed_at": "2026-09-06T08:29:03Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-06T08:46:40Z",
+      "status_changed_at": "2026-09-06T08:46:40Z",
+      "pr_number": 2942,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2942",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2942 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=401 interceptor awaits single-flight refresh + replays once; concurrent 401s share one refresh; verify green (2638 tests)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
