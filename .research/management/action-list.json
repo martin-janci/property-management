@@ -145,7 +145,24 @@
         "score": 2,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirm-dialog-i18n",
+      "action": "ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "in-progress",
+      "source": "dispatcher-backlog-refill 2026-09-06T04:26:26Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-06T04:26:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
-  "generated": "2026-08-31T03:10:00Z"
+  "generated": "2026-09-06T04:29:19Z"
 }
