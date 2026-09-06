@@ -211,3 +211,143 @@ describe('AuthContext cold-boot init — role re-derivation (#574 gap)', () => {
     expect(localStorage.getItem(TENANTS_KEY)).toBeNull();
   });
 });
+
+/**
+ * Boot-time access-token expiry check.
+ *
+ * Before the fix, initializeAuth marked the session authenticated whenever a
+ * stored user + access token were present — the comment claimed an `exp` check
+ * that did not exist. An expired-but-present access token therefore skipped the
+ * boot-time silent refresh: the session went authenticated, the first request
+ * 401'd, and only THEN a refresh fired — an authenticated -> 401 -> refresh
+ * flicker on every cold boot with a stale token.
+ *
+ * The fix validates the stored access token's `exp` at cold boot and, when it
+ * is expired (or within the clock-skew buffer), routes through the silent
+ * refresh path instead of trusting the stale token.
+ */
+describe('AuthContext cold-boot init — access-token exp validation', () => {
+  const NOW_SECONDS = Math.floor(Date.now() / 1000);
+
+  beforeEach(() => {
+    refreshTokenSpy.mockReset();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  function seedUser(role = 'manager') {
+    localStorage.setItem(USER_KEY, JSON.stringify({ id: 'u-1', email: 'a@b.c', role }));
+    localStorage.setItem(
+      TENANTS_KEY,
+      JSON.stringify([{ tenantId: 't-1', tenantName: 'Acme', role: 'org_admin' }])
+    );
+  }
+
+  it('routes an expired-but-present access token through the silent refresh (no flicker)', async () => {
+    // Stored access token whose `exp` is well in the past, plus a live refresh
+    // token — the exact expired-but-present cold boot the fix targets.
+    seedUser('manager');
+    localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS - 60 }));
+    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
+    refreshTokenSpy.mockResolvedValue({
+      accessToken: makeJwt({ sub: 'u-1', tenant_id: 't-1', exp: NOW_SECONDS + 3600 }),
+      refreshToken: 'fresh-refresh',
+    });
+
+    const { ctxRef } = renderAuthApp();
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isLoading).toBe(false);
+    });
+
+    // The boot took the silent-refresh path exactly once instead of trusting
+    // the stale token — this is the assertion that fails against the pre-fix
+    // "mark authenticated regardless of exp" behaviour.
+    expect(refreshTokenSpy).toHaveBeenCalledTimes(1);
+    expect(refreshTokenSpy).toHaveBeenCalledWith({ refreshToken: 'cold-refresh' });
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isAuthenticated).toBe(true);
+    });
+    // Role reflects the fresh token's tenant, and rotated tokens are persisted.
+    expect(ctxRef.current?.user?.role).toBe('org_admin');
+    expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('fresh-refresh');
+  });
+
+  it('near-expiry (inside the skew buffer) access token also triggers a refresh', async () => {
+    seedUser('manager');
+    // exp is in the future but within the ~30s skew buffer — treated as stale.
+    localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS + 5 }));
+    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
+    refreshTokenSpy.mockResolvedValue({
+      accessToken: makeJwt({ sub: 'u-1', tenant_id: 't-1', exp: NOW_SECONDS + 3600 }),
+      refreshToken: 'fresh-refresh',
+    });
+
+    const { ctxRef } = renderAuthApp();
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isLoading).toBe(false);
+    });
+
+    expect(refreshTokenSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(ctxRef.current?.isAuthenticated).toBe(true);
+    });
+  });
+
+  it('a still-valid access token marks the session authenticated WITHOUT a refresh', async () => {
+    seedUser('manager');
+    // exp comfortably in the future — no network round-trip should happen.
+    localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS + 3600 }));
+    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
+
+    const { ctxRef } = renderAuthApp();
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isLoading).toBe(false);
+    });
+
+    expect(refreshTokenSpy).not.toHaveBeenCalled();
+    expect(ctxRef.current?.isAuthenticated).toBe(true);
+  });
+
+  it('an expired access token with NO refresh token leaves a clean anonymous session', async () => {
+    seedUser('manager');
+    localStorage.setItem(ACCESS_TOKEN_KEY, makeJwt({ sub: 'u-1', exp: NOW_SECONDS - 60 }));
+    // No refresh token — nothing can recover the session.
+
+    const { ctxRef } = renderAuthApp();
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isLoading).toBe(false);
+    });
+
+    expect(refreshTokenSpy).not.toHaveBeenCalled();
+    expect(ctxRef.current?.isAuthenticated).toBe(false);
+    // Stale tokens are purged rather than left to 401 on the next request.
+    expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
+  });
+
+  it('an opaque (non-JWT) access token is trusted at boot — exp cannot be proven stale', async () => {
+    // Preserves the legacy behaviour for tokens we cannot decode: they are NOT
+    // treated as expired, and the runtime 401 interceptor stays the backstop.
+    seedUser('manager');
+    localStorage.setItem(ACCESS_TOKEN_KEY, 'opaque-access-token');
+    localStorage.setItem(REFRESH_TOKEN_KEY, 'cold-refresh');
+
+    const { ctxRef } = renderAuthApp();
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isLoading).toBe(false);
+    });
+
+    expect(refreshTokenSpy).not.toHaveBeenCalled();
+    expect(ctxRef.current?.isAuthenticated).toBe(true);
+  });
+});

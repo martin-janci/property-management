@@ -233,6 +233,34 @@ function decodeJwtPayload(token: string | null | undefined): Record<string, unkn
 }
 
 /**
+ * Clock-skew / near-expiry buffer (seconds). An access token whose `exp` claim
+ * is within this window of "now" is treated as already expired at cold boot, so
+ * the init path routes through the silent refresh instead of marking the
+ * session authenticated with a token the very next request would 401 on.
+ */
+const TOKEN_EXPIRY_SKEW_SECONDS = 30;
+
+/**
+ * True when the JWT is expired, or within TOKEN_EXPIRY_SKEW_SECONDS of expiring.
+ *
+ * Used at cold boot to decide whether a stored access token can be trusted to
+ * mark the session authenticated, or whether we must route through the silent
+ * refresh path first (avoiding an authenticated -> 401 -> refresh flicker).
+ *
+ * A token we cannot decode, or one that carries no numeric `exp` claim, is
+ * treated as NOT expired here: we can't prove it is stale (it may be an opaque
+ * token), and the runtime 401 interceptor remains the backstop for such cases.
+ */
+function isAccessTokenExpired(token: string | null | undefined): boolean {
+  const claims = decodeJwtPayload(token);
+  if (!claims) return false;
+  const exp = claims.exp;
+  if (typeof exp !== 'number') return false;
+  const nowSeconds = Date.now() / 1000;
+  return exp <= nowSeconds + TOKEN_EXPIRY_SKEW_SECONDS;
+}
+
+/**
  * Pick the membership matching `tenant_id` from the JWT; if that's missing,
  * fall back to the highest-privilege role across all memberships. Returns
  * `undefined` if the user has no memberships.
@@ -427,25 +455,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const accessToken = tokenStorage.getAccessToken();
         const refreshTokenValue = tokenStorage.getRefreshToken();
 
-        if (storedUser && accessToken) {
-          // Validate the token is not expired (basic check)
-          // In production, we might verify with the server
+        if (storedUser && accessToken && !isAccessTokenExpired(accessToken)) {
+          // Stored access token is present AND still valid (its `exp` claim is
+          // in the future, past the clock-skew buffer). Safe to mark the
+          // session authenticated without a network round-trip.
           setUser(storedUser);
         } else if (refreshTokenValue) {
-          // Cold-boot refresh: route through refreshTokenInternal (the SAME
-          // routine used by the runtime silent-refresh path) rather than
-          // calling authApi.refreshToken inline. The inline version persisted
-          // the rotated tokens but re-hydrated `user` straight from storage,
-          // so a server-side role change was NOT picked up on a cold boot —
-          // the user kept a stale role until the next runtime refresh or a
-          // full re-login. refreshTokenInternal re-derives the role from the
-          // fresh access token + persisted tenant memberships (#574) and owns
-          // its own failure cleanup (clear + de-auth + rethrow).
+          // Cold-boot refresh. Two cases funnel here:
+          //   1. No live access token at all (tab closed past its lifetime, or
+          //      the access token was cleared) — the classic cold boot.
+          //   2. A stored access token that is expired or near-expiry — before
+          //      this guard, initializeAuth marked the session authenticated
+          //      from the stale token (the comment claimed an `exp` check that
+          //      did not exist), so the first authenticated request 401'd and
+          //      only THEN triggered a refresh: an authenticated -> 401 ->
+          //      refresh flicker on every cold boot with an expired token.
+          //      Routing through the silent refresh up front avoids it.
+          //
+          // Either way we go through refreshTokenInternal (the SAME routine the
+          // runtime silent-refresh path uses) rather than calling
+          // authApi.refreshToken inline: it re-derives the role from the fresh
+          // access token + persisted tenant memberships (#574) and owns its own
+          // failure cleanup (clear + de-auth + rethrow).
           try {
             await refreshTokenInternal();
           } catch {
             // refreshTokenInternal already cleared storage and reset the user.
           }
+        } else if (accessToken) {
+          // An expired/near-expiry access token with NO refresh token can't be
+          // recovered — leave the session anonymous rather than authenticating
+          // on a token the next request would 401 on. Purge the stale tokens.
+          tokenStorage.clear();
         }
       } catch {
         // Clear any invalid stored data
