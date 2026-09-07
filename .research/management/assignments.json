@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-07T10:29:53Z",
+  "generated": "2026-09-07T12:32:48Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -41,6 +41,28 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-2947",
+      "branch": "auto-impl/gh-issue-2947-b3939d60",
+      "status": "in-progress",
+      "claimed_at": "2026-09-07T12:32:48Z",
+      "last_updated": "2026-09-07T12:32:48Z",
+      "status_changed_at": "2026-09-07T12:32:48Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
