@@ -1,0 +1,71 @@
+{
+  "run_iso": "2026-09-07T00:00:00Z",
+  "trigger_payload": "Tier-1d demand-driven vector generation: research backlog STARVED (honest claimable ~9 < BUFFER_FLOOR 36) and every promotion tier dry (coverage 0 open stories, backlog avail=0, retry-remint avail=0). New LANDABLE work must be produced, not promoted. Rotating static-analysis review of ONE cloud-landable segment. No compilation, no test execution.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed among CLOUD-LANDABLE segments. No CHURN_FILES were handed to this slice, so churn-alignment did not apply. Per the established Tier-1d convention (see 2026-09-06-mobile-rn-tier1d.json), state.review_cursor is stale and is NOT the source of truth (the tier1d generator does not advance it); real last-reviewed dates were reconstructed from .research/signals/*.json filenames: mobile-native-kmp=2026-09-03 (EXCLUDED: structurally unlandable in the cloud runner, KMP/AGP egress-blocked), api-core=2026-09-04 + api-handlers=2026-09-05 (EXCLUDED: both in backend/api-server, which the cloud runner cannot build -- utoipa-swagger-ui build-script egress-blocked, #2949), reality-server=2026-09-06, ppt-web-ui=2026-09-06, reality-web=2026-09-06, mobile-rn=2026-09-06, ppt-web-core=2026-09-07. Among the four landable segments tied for oldest at 2026-09-06, reality-web was chosen: it is definitively cloud-buildable (Next.js/frontend toolchain), and is less-mined (33 prior runs) than reality-server (46) or ppt-web-ui (45), while avoiding re-mining mobile-rn one day after its 2026-09-06 pass -> best expected yield of fresh non-duplicate findings. Saturation check PASSED: 0 OPEN code-review-finding rows for reality-web in backlog.json (skill's >=3-open skip rule not triggered; all 19 historical code-review-findings across all segments are status done). DEDUP DISCIPLINE (reality-web has ~85 prior finding ids across 33 runs): the obvious i18n / no-error-branch / fake-submit / unvalidated-cast / XSS themes are heavily mined. The two most obvious static candidates were DISCARDED as duplicates/handled: (a) layout.tsx tenant-bootstrap inline <script> is already code-review-reality-web-tenant-bootstrap-xss and uses serializeForScript escaping + the color-scheme bootstrap validates its localStorage value -> clean; (b) the /listings page error-state gaps are already listings-no-error-branch / listings-page-no-error-state / listings-page-no-iserror. Review was redirected to a previously-UNMINED subtree: the homepage section components under components/home/ (FeaturedListings, CategoryCards, HeroSearch), which no prior *reality-web*.json id references (verified: no prior id contains 'home', 'featured', 'category', or 'hero'). auth-api.ts, format.ts, favorites/, and the layout-revalidate route handler were also read and confirmed clean-or-mined. All three findings below were cross-checked against every prior *reality-web*.json id and confirmed non-duplicate, and every remedy is frontend-only (reality-web) -> cloud-landable.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-home-sections-null-on-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web homepage primary sections silently return null on fetch error with no error/retry UI)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx"
+      ],
+      "evidence": [
+        "FeaturedListings.tsx:97-99 -- on a failed useFeaturedListings() fetch the component does `if (error || !data) { return null; }`, rendering nothing. There is a well-built loading skeleton (:24-95) and a dedicated empty-state CTA for the all-empty case (:122-181, whose comment at :119-121 explicitly notes 'Without this CTA the homepage was hero -> footer with nothing in between'), but the ERROR branch has the identical hero->footer-gap problem and was given NO error/retry UI -- it silently collapses. A user whose featured-listings request 5xx/network-fails sees a broken-looking homepage (hero, a large blank gap, footer) with zero indication anything went wrong and no way to retry.",
+        "CategoryCards.tsx:181-182 -- SAME pattern on the same page: `if (error || !categories?.length) { return null; }` after useCategoryCounts(). A category-counts fetch failure also renders nothing, no error state, no retry. So the homepage has a SYSTEMATIC error-handling gap: two of its primary above-the-fold content sections both fail silent-and-invisible on backend error.",
+        "Contrast: the app ships reusable state primitives at components/states/ErrorState.tsx (+ StateView.tsx / EmptyState.tsx) that exist precisely for this, but the home section components bypass them on the error branch. The empty branch was handled thoughtfully; the error branch was not.",
+        "Reproduce (static): grep -n 'return null' on both files lands on the `error ||` guard; grep -n 'ErrorState\\|isError\\|retry' returns nothing in either file.",
+        "Non-duplicate: prior reality-web error-branch findings (listings-no-error-branch, listings-no-error-state, listings-page-no-error-state, listings-page-no-iserror, i18n-error-state-gap) all target the /listings search-results page; NONE reference components/home, FeaturedListings, or CategoryCards (verified across all *reality-web*.json ids). Landable remedy (frontend-only): in each component's error branch render an <ErrorState> (or a small inline error card mirroring the existing empty-state CTA) with a retry action wired to the query's refetch, instead of `return null`. Confidence medium: the null-return is code-verified statically; the exact production UX depends on how useFeaturedListings/useCategoryCounts surface transport errors, which was not run-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-herosearch-hardcoded-city-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web homepage hero quick-link city names hardcoded in English, untranslated across sk/cs/de)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/home/HeroSearch.tsx"
+      ],
+      "evidence": [
+        "HeroSearch.tsx:91,:98,:105 -- the hero 'Popular' quick-link buttons render hardcoded English literals `Bratislava`, `Prague`, `Vienna` as their visible label, not wrapped in any t(...) call. They sit directly beside a translated label `{tSearch('popular')}` (:85), so on the sk/cs/de homepages the section header is localized but the city chips stay English (e.g. Prague should localize to Praha in cs / Prag in de; Vienna should localize to Viden/Wien in de and the Slovak/Czech exonyms in sk/cs).",
+        "The intended pattern is proven one file over: PopularNeighbourhoods.tsx:132 renders neighbourhood/city names via `{t(n.nameKey)}` with a dedicated `home.city` namespace (tCity, :96), i.e. the codebase already has the translation scaffolding for city names -- HeroSearch simply doesn't use it.",
+        "Reproduce (static): grep -n 'Bratislava\\|Prague\\|Vienna' HeroSearch.tsx returns the three literals both as button text (:91,:98,:105) AND inside the router.push query values (`?city=Bratislava` etc.). NOTE the query-VALUE literals should stay canonical (they key the backend city filter) -- only the DISPLAY text is the defect; a fix must translate the label while keeping the `city=` param value unchanged.",
+        "Non-duplicate: reality-web has many i18n findings but none reference HeroSearch or the homepage hero (verified across all *reality-web*.json ids; no prior id contains 'hero'). Landable remedy (frontend-only): render each city chip's label via `t('home.city.<key>')` (reusing the existing city namespace) while leaving the `city=<canonical>` query param literal. Low severity (visible-text i18n gap), mechanical. Confidence medium: static-only."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-categorycards-tolocalestring-no-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web CategoryCards count formatted with locale-less toLocaleString, wrong grouping for non-default locales)",
+      "segment": "reality-web",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "evidence": [
+        "CategoryCards.tsx:206 -- the per-category listing count is formatted as `category.count.toLocaleString()` with NO locale argument, then threaded into `t('listingsCount', { count: ... })`. `Number#toLocaleString()` with no locale uses the JS runtime's DEFAULT locale, which on the Next.js SSR Node server is typically en-US -- so the number grouping renders with the wrong separator for sk/cs/de/pl/hu users (e.g. a Slovak visitor sees `1,234` instead of `1 234`).",
+        "This directly violates the codebase's own documented convention: lib/format.ts's header comment (:1-17) says it exists to 'Replace scattered Number#toLocaleString(...) call sites that all hardcoded a single locale and produced visibly wrong output for the other five', and exposes `formatNumber(value, locale, options)` for exactly this. The locale is available in this component (it is a [locale] route and already calls useTranslations); it is simply not passed to the number formatter.",
+        "Reproduce (static): grep -n 'toLocaleString' frontend/apps/reality-web/src/components/home/CategoryCards.tsx -> :206 with empty args; compare to lib/format.ts formatNumber which threads bcp47(locale).",
+        "Non-duplicate: distinct from the missing-string i18n gaps and from price-NaN findings -- this is a number-GROUPING locale bug on a rendered count. No prior *reality-web*.json id references CategoryCards or toLocaleString. Landable remedy (frontend-only): format the count via `formatNumber(category.count, locale)` from lib/format.ts (threading the route locale) instead of bare toLocaleString(). Low severity, mechanical. Confidence medium: static-only; the exact runtime default locale on the deployed SSR node was not run-confirmed."
+      ]
+    }
+  ]
+}

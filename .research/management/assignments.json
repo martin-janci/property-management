@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-07T14:38:29Z",
+  "generated": "2026-09-07T14:42:24Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -70,18 +70,18 @@
     {
       "task_id": "gh-issue-2948",
       "branch": "auto-impl/gh-issue-2948-9c577759",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-07T14:29:43Z",
-      "last_updated": "2026-09-07T14:29:43Z",
-      "status_changed_at": "2026-09-07T14:29:43Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-07T14:42:24Z",
+      "status_changed_at": "2026-09-07T14:42:24Z",
+      "pr_number": 2952,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2952",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2952 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=glob auto-discovers feature-local *Keys factories via import.meta.glob; verify green (2666 tests); api-client roster explicit by design",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
