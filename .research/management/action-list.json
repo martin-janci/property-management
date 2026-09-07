@@ -145,6 +145,27 @@
         "score": 2,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "gh-issue-2947",
+      "action": "mobile-rn: resetLocalData() cross-tenant purge is incomplete — prior tenant's NFC access log + QR scan history survive logout on shared devices (Closes #2947)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-09-07T12:28:37Z (#2947)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T12:28:37Z",
+      "issue_ref": {
+        "number": 2947,
+        "url": "https://github.com/martin-janci/property-management/issues/2947",
+        "labels": [
+          "bug",
+          "security",
+          "follow-up"
+        ]
+      }
     }
   ],
   "generated": "2026-09-06T04:29:19Z"
