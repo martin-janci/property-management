@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-07",
       "plan": null
     },
     {
@@ -10633,6 +10634,1115 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "title": "Two otherwise heavily-localized screens leak user-facing English through Alert.alert() — the alert copy was missed when the rest of the screen was translated, so on a locale switch (sk/cs/de/en) the d",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn alert i18n leaks)"
+      ],
+      "evidence": [
+        "Two otherwise heavily-localized screens leak user-facing English through Alert.alert() — the alert copy was missed when the rest of the screen was translated, so on a locale switch (sk/cs/de/en) the dialog appears in English.",
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 — Alert.alert('Could not open document', 'The file viewer is unavailable on this device.') despite the screen using t() (4 t() calls elsewhere).",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — Alert.alert('Diagnostic Report', diagnosticReport) title hardcoded English despite the screen being one of the most localized in the app (25 t() calls).",
+        "Fix: replace the literal title/body args with t('documents.openFailed.*') / t('help.diagnosticReport.title') and add keys to locales/{sk,cs,de,en}. Grep guard for future: `grep -rnE \"Alert\\.alert\\(\\s*['\\\"]\" src` should return 0 hits once fixed (currently 5, the other 3 are covered by the two whole-screen findings above). Confidence medium; Low severity (i18n)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-first-visit-default",
+      "title": "useDashboardLayout.ts:37-58 -- the Phase-2 'background fetch' does `const fresh = await apiRequest<ResolvedScreen>('/api/v1/layout/resolved/${screen}?platform=mobile')` and, on a valid shape, calls `w",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn dashboard layout stale-while-revalidate first-paint gap)"
+      ],
+      "evidence": [
+        "useDashboardLayout.ts:37-58 -- the Phase-2 'background fetch' does `const fresh = await apiRequest<ResolvedScreen>('/api/v1/layout/resolved/${screen}?platform=mobile')` and, on a valid shape, calls `writeCachedLayout(sid, screen, fresh)` ONLY. It NEVER calls `setLayout(fresh)` (the comment at :37 says 'writes cache ONLY (never sets state)'). The rendered layout is set exclusively by Phase-1 cache-read at mount (:32-35) or the `DEFAULT_DASHBOARD_LAYOUT` initial state (:16).",
+        "Consequence on FIRST visit for a user/org: Phase-1 `readCachedLayout(sid, screen)` returns null (no cache yet) so `setLayout` is not called and the screen renders `DEFAULT_DASHBOARD_LAYOUT`. Phase-2 fetches the org's real server-resolved layout and writes it to cache but does not apply it to state -- so a tenant that has configured a CUSTOM dashboard layout server-side sees the DEFAULT layout on first view and their custom layout only appears the NEXT time the screen mounts. The server-resolved layout is silently ignored on first paint.",
+        "Same gap masks server-side CHANGES within a session: after an org admin updates the layout, an existing user renders the STALE cached layout for the whole current mount and the fresh one only takes effect on a later remount -- acceptable as deliberate stale-while-revalidate, but combined with the first-visit-default case above it means a newly provisioned custom layout is effectively invisible until the user navigates away and back.",
+        "Reproduce (static): grep -n 'setLayout' frontend/apps/mobile/src/features/layout/useDashboardLayout.ts shows setLayout is called only in Phase-1 (:34), never in the Phase-2 fetch block (:42-52).",
+        "Non-duplicate: no prior *mobile-rn*.json signal references features/layout or useDashboardLayout (verified across all 22 mobile-rn signal files; prior layout-adjacent code was never reviewed). Landable remedy (frontend-only, no backend/KMP): in Phase-2, after the shape-check, also `if (!cancelled) setLayout(fresh)` (optionally only when the fetched layout differs from what is displayed) so the server-resolved layout is applied on first visit; keep the cache write for cold-start. Confidence medium: the missing setLayout is code-verified statically; the exact first-paint UX was not runtime-confirmed."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/features/layout/useDashboardLayout.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-pathparam-not-decoded",
+      "title": "DeepLinkHandler.ts:130-134 -- matchRoute extracts route path parameters by assigning the RAW path segment verbatim: `params[paramName] = pathPart;` with no decodeURIComponent. In contrast, query param",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn deep-link path param URL-decode gap)"
+      ],
+      "evidence": [
+        "DeepLinkHandler.ts:130-134 -- matchRoute extracts route path parameters by assigning the RAW path segment verbatim: `params[paramName] = pathPart;` with no decodeURIComponent. In contrast, query parameters in parseDeepLink (:80,:88-90) are parsed via `new URLSearchParams(rawQuery)` whose `.forEach` yields ALREADY percent-decoded values. So path params and query params are decoded inconsistently.",
+        "Effect: a deep link whose path segment carries a percent-encoded character (e.g. `ppt://announcements/a%2Fb` or an id containing an encoded space/unicode) delivers the still-encoded literal `a%2Fb` to the target screen as `params.id`, which will not match the intended server resource id (the app forwards it to navigation / an api-server GET whose path expects the decoded value). For plain UUID ids this never bites, which is why it is low severity, but it is a latent correctness gap for any non-UUID or human-authored id and an inconsistency with the query-param path.",
+        "Additional detail: rawPath is `normalized.split('?')[0]` then `.split('/').filter(Boolean).join('/')` (parseDeepLink :78-79) -- purely structural, no decoding anywhere between normalizeLinkUrl and the param assignment, so the raw octets survive end-to-end into params.",
+        "Reproduce (static): grep -n 'decodeURIComponent' frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts returns nothing; the param assignment at :133 uses pathPart directly.",
+        "Non-duplicate: prior deep-link findings are code-review-mobile-rn-deeplink-mgr-untested / -untested-qr-deeplink-parsers (test-coverage) and -deeplink-url-listener-leak (2026-08-29, listener lifecycle) -- none concern URL-decoding of path params. Verified across all *mobile-rn*.json. Landable remedy (frontend-only): decode path params at assignment, `params[paramName] = decodeURIComponent(pathPart)` (guarded in try/catch for malformed sequences), matching URLSearchParams' behaviour for query params. Low severity, mechanical. Confidence medium: static-only."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/DeepLinkHandler.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "title": "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — 197-line user-facing screen imports NO useTranslation and makes ZERO t() calls (grep useTranslation=0, t(=0), so every string re",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn person-months i18n)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — 197-line user-facing screen imports NO useTranslation and makes ZERO t() calls (grep useTranslation=0, t(=0), so every string renders English for sk/cs/de/en users. This is a whole-screen gap, not a leak: the mobile app ships react-i18next with locales/ for all four languages and the rest of screens/ is localized.",
+        "Hardcoded UI text: L93 <Text>Person-months</Text> (screen header), L142 'Save', L145 'Cancel', L155 'Edit', L165 'Bulk entry…' (primary action buttons).",
+        "Hardcoded validation Alert: L78 Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.') — the only feedback a user gets on bad input is English-only.",
+        "Fix: add const { t } = useTranslation(); wrap all literals in t('personMonths.*') keys, add the keys to locales/{sk,cs,de,en}. Confidence medium: the gap is certain from static read (0 i18n imports on a rendered screen); severity is Low (i18n) but breadth is a full screen."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-reportfault-perm-4xx-false-saved",
+      "title": "ReportFaultScreen.tsx:312-337 -- the online submit path wraps `apiRequest<CreateFaultResult>('/api/v1/faults', ...)` in try/catch and, in the catch (:327-334), unconditionally calls `queueForLater(pay",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn ReportFault caller-side misleading queued-success on permanent 4xx)"
+      ],
+      "evidence": [
+        "ReportFaultScreen.tsx:312-337 -- the online submit path wraps `apiRequest<CreateFaultResult>('/api/v1/faults', ...)` in try/catch and, in the catch (:327-334), unconditionally calls `queueForLater(payload, t('faults.queuedOnErrorMessage'))` for ANY thrown error. queueForLater (:275-283) enqueues via addToQueue and shows an Alert whose body is the 'saved, will sync later' copy -- i.e. the user is told the fault was saved.",
+        "But apiRequest (hooks/useApi.ts:83-92) throws on EVERY non-ok status, so a genuinely PERMANENT 4xx (403 building/permission denied, 409 conflict, 422 server-side validation the client did not pre-catch) also lands in this catch and is queued. On the next processQueue cycle, executeQueuedAction (useOfflineSupport.ts:288-296) classifies any 4xx NOT in RETRYABLE_HTTP_STATUSES={401,408,429} as `permanent`, and processQueue (:422-427) DROPS it with only `console.error('Action permanently failed (4xx), dropping:', action)` -- no user-facing alert. Net effect: the user's fault report is silently and permanently discarded AFTER the UI already promised it was saved and would sync. The idempotency key does not help (the create never succeeded).",
+        "The in-code comment at ReportFaultScreen.tsx:328-332 acknowledges 'a genuine 4xx is dropped by the queue' -- confirming the author knew the queue drops it -- but the caller still shows the success/queued message rather than surfacing the validation/permission failure to the user, so the user has no signal their report was rejected.",
+        "Reproduce (static): trace ReportFaultScreen.tsx:319 throw -> :333 queueForLater(queuedOnErrorMessage) -> useOfflineSupport.ts:288 isPermanentClientError for 403/409/422 -> :422 drop with console.error only.",
+        "Non-duplicate: the only prior queue-4xx finding, code-review-mobile-offline-4xx-drop (2026-07-22), targeted the QUEUE MECHANISM (which statuses to treat as permanent) and its recommended fix -- exclude 401/408/429 -- has since been IMPLEMENTED (RETRYABLE_HTTP_STATUSES). THIS finding is the residual CALLER-side defect: ReportFaultScreen shows a 'saved / will sync' message for statuses the queue still (correctly) drops, so a genuine permission/validation rejection becomes silent data loss with a false-positive success UI. Verified distinct from all *mobile-rn*.json ids. Landable remedy (frontend-only): in ReportFaultScreen's catch, only queue+message when the error is transient/offline (5xx/network); for a permanent 4xx, surface the server error to the user (Alert with the parsed message) instead of the queued-success copy -- optionally have queueForLater consult the same permanent classification. Confidence medium: the code path is statically verified; whether a specific 4xx is emitted by POST /faults in production was not run-confirmed."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "title": "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and makes only 2 t() calls, yet hardcodes most of its user-facing text: the component is partially localized",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn widget-settings i18n)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and makes only 2 t() calls, yet hardcodes most of its user-facing text: the component is partially localized, so the leaks render English on a 4-locale app while the surrounding chrome is translated (a worse look than a fully-untranslated screen).",
+        "Hardcoded section/heading text: L89/L105/L126 <Text>Widget Settings</Text>, L109 'Widgets Not Available', L131 'Available Widgets', L163 'Active Widgets', L194 'How to Add Widgets'.",
+        "Hardcoded Alerts: L66 Alert.alert('Widget Added', `${name} widget has been configured.`) and L79 Alert.alert('Widgets Updated', 'All widgets have been refreshed.').",
+        "Fix: route every literal (headings + both Alert.alert title/body pairs) through the already-imported t() with settings.widgets.* keys and backfill locales/{sk,cs,de,en}. Confidence medium: leaks confirmed by static read; Low severity (i18n)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "title": "lib/api.ts:321 `export default getApiClient();` is evaluated at module-import time. getApiClient() (api.ts:273-278) lazily builds the singleton via createAxiosInstance() with NO config, which as a sid",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib)"
+      ],
+      "evidence": [
+        "lib/api.ts:321 `export default getApiClient();` is evaluated at module-import time. getApiClient() (api.ts:273-278) lazily builds the singleton via createAxiosInstance() with NO config, which as a side effect sets the module-level `tokenGetter = undefined` and `onUnauthorizedCallback = undefined` (api.ts:195-196) and pins baseURL to DEFAULT_BASE_URL / timeout to DEFAULT_TIMEOUT. So merely importing this module eagerly instantiates an unconfigured axios instance and mutates module globals before AuthContext ever calls configureApiClient().",
+        "configureApiClient() (api.ts:298-301) reassigns `apiInstance` to a BRAND-NEW instance. The default export binding, however, is frozen to the FIRST (import-time) instance. The two instances only behave identically today because both interceptors read the same module-level `tokenGetter`/`onUnauthorizedCallback` (api.ts:201/219) and AuthContext.configureApiClient (AuthContext.tsx:352-355) passes no baseURL/timeout override. Any future call passing a custom baseURL, timeout, or per-instance interceptor to configureApiClient() would silently NOT apply to default-export consumers, and resetApiClient() (api.ts:307-311, called on AuthProvider unmount, AuthContext.tsx:360) nulls `apiInstance` + clears the globals, orphaning the default export so its interceptors read cleared globals (requests without Authorization).",
+        "Landability confirmed: a repo-wide grep for a default import of lib/api (`import api ...` / `import api, {` from lib/api) returns ZERO consumers — every call site uses the named getApiClient() export. The default export is dead code whose only effect is the import-time instantiation + global mutation. Safe pure-frontend fix: drop `export default getApiClient();` (or export the function `getApiClient` itself, not its invocation) so the singleton is created only when configureApiClient()/getApiClient() is first called. Low severity (+1): no runtime bug is currently reachable, but it is a footgun that defeats the single-source-of-truth intent documented in AuthContext.tsx:337-355. Confidence medium: mechanism verified statically end-to-end (module eval order + interceptor closures over module globals), not runtime-executed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "title": "frontend/apps/ppt-web/src/lib/api.ts:321 — `export default getApiClient();` is evaluated eagerly at module import. getApiClient() (lines 273-278) lazily creates `apiInstance` via createAxiosInstance()",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core lib/api.ts)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:321 — `export default getApiClient();` is evaluated eagerly at module import. getApiClient() (lines 273-278) lazily creates `apiInstance` via createAxiosInstance() with NO config, so the default-exported instance has `tokenGetter === undefined` and `onUnauthorizedCallback === undefined`. Later, AuthProvider calls configureApiClient() (AuthContext.tsx:352) which does `apiInstance = createAxiosInstance(config)` (api.ts:299) — a BRAND-NEW AxiosInstance. getApiClient() now returns the configured instance, but the default export still references the original, token-less one.",
+        "Consequence: any consumer that does `import api from '../lib/api'` (the natural default import for a file literally named `api`) holds an axios instance whose request interceptor has no token getter (no `authorization bearer` header, api.ts:201-206) and whose response interceptor has no 401 handler (no silent refresh, api.ts:219-221). Its requests go out unauthenticated and 401s are never recovered — diverging from every feature hook that correctly uses getApiClient(). The module's own design (AuthContext.tsx:340-344 warns 'getApiClient() falls back to a default instance with no token getter') documents exactly this hazard, then re-introduces it via the eager default export.",
+        "Currently LATENT: a repo-wide grep found no default-import consumers of lib/api (all callers use the named getApiClient()), so no live request is affected today — hence severity low (+1). But it is a real foot-gun that will silently break auth the moment any future code adds `import api from './lib/api'`. Confidence medium (static-confirmed divergence; impact gated on a future import). Fix: remove the eager `export default getApiClient();` and either drop the default export or make it a lazy getter/proxy that always resolves the current `apiInstance` (e.g. export a Proxy delegating to getApiClient()), so there is a single configured instance."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "title": "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ quer",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core queryKeys/AuthContext)"
+      ],
+      "evidence": [
+        "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (AuthContext.tsx:583-585). AUTHED_QUERY_KEY_ROOTS (queryKeys.ts:354-392) mixes THREE classes of root: (a) the centralized `queryKeys` factory roots, (b) shared @ppt/api-client key-factory roots (meters/reports), and (c) ~13 AD-HOC string roots used directly in feature hooks scattered across the tree (developer, ocr, actionQueue, executionLogs, executionStats, ai-chat, financial, rentals, predictive-maintenance, sentiment, notification-analytics, notification-triggers). Classes (b) and (c) are plain string literals with NO compile-time or lint link back to the query keys actually used at their call sites — nothing forces a new ad-hoc root to be added here.",
+        "This is not hypothetical: the file's own comments document TWO prior cross-session data leaks caused by exactly this drift. queryKeys.ts:352 cites issue #712 (logout's original `queryClient.clear()` was replaced by this scoped list); queryKeys.ts:388-391 states the `notification-triggers` root 'leaked into the next session (PR #2650 fix was incomplete - this root was missed)'. The purge covers 'the most sensitive data in the app' (AuthContext.test.tsx:205-208: invoices, contacts, bank statements, payment matching, AR aging) which 'must never survive logout on a shared workstation' (queryKeys.ts:348-350).",
+        "The regression guard cannot catch future drift for class (b)/(c) roots: AuthContext.test.tsx:188-217 asserts `expect(AUTHED_QUERY_KEY_ROOTS).toContain(root)` over a HARD-CODED literal array of roots (user, faults, ai-chat, developer, financial, ...). A newly added ad-hoc feature-hook root must be manually added to BOTH the source list AND this test's literal array; if a developer forgets both (the exact failure mode of #712/#2650), the test still passes green and the new user-/tenant-scoped cache silently survives logout on a shared workstation. Landable pure-frontend hardening: derive the eviction set from a single machine-checkable source (e.g. mark every auth-scoped key factory and enumerate them, or add a lint/type constraint) so the allowlist cannot drift out of sync with the query keys in use, rather than relying on a hand-maintained list + hardcoded test mirror. Severity medium (+2): reachable data-exposure on shared workstations, but conditioned on a future/omitted root + shared-device usage; confidence medium (mechanism and two prior occurrences verified statically from source comments + the test body, not runtime-reproduced today)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.test.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "title": "frontend/apps/ppt-web/src/lib/errorHandler.ts:271-278 — parseHttpStatusError maps HTTP 403 (Forbidden) to code 'UNAUTHORIZED' with the UNAUTHORIZED copy, while 401 (line 263-270) maps to 'AUTHENTICATI",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core errorHandler)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:271-278 — parseHttpStatusError maps HTTP 403 (Forbidden) to code 'UNAUTHORIZED' with the UNAUTHORIZED copy, while 401 (line 263-270) maps to 'AUTHENTICATION_ERROR'. 403 is an authorization (permission) failure, not an authentication/session failure; labelling it UNAUTHORIZED conflates 'you are not permitted' with 'you are not signed in'.",
+        "Impact: the parsed .code for a 403 is indistinguishable from a genuine auth failure, so any UI/branch that treats UNAUTHORIZED/AUTHENTICATION_ERROR as 'session invalid -> redirect to login / clear session' would wrongly log the user out on a mere permission denial. This fallback path fires whenever a 403 arrives WITHOUT a structured backend ErrorResponse body (the structured-body path at line 164-166 uses the backend's own data.error and is unaffected).",
+        "Severity low (copy/semantic mislabel on a fallback branch; no crash). Confidence medium: the mapping is unambiguous on static read; whether it triggers a logout cascade depends on downstream consumers of .code. Fix: give 403 its own code (e.g. 'FORBIDDEN'/'PERMISSION_DENIED') with a distinct catalogue entry, or at minimum stop reusing the auth-error copy so 403 is not treated as a session-expiry."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "title": "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-136 (FinancialDashboardPageRoute): three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) destructure ONLY isLoading — never",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-136 (FinancialDashboardPageRoute): three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) destructure ONLY isLoading — never isError/error. On any backend failure the values fall back to zeros/empties (totals => {current:0,...,total:0}, invoices => [], overdueInvoices => []) and the page is handed isLoading only, no error prop. Result: if the AR-aging or invoices endpoint 500s, the manager's financial dashboard renders totalOutstanding/totalOverdue/totalBalance = €0 with NO error indication — a load failure is indistinguishable from 'nothing is due', which is a decision-integrity hazard on a financial screen.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:456-459 shows the correct pattern IS known in the same file: FinancialReportsPage receives error={activeQuery.error instanceof Error ? activeQuery.error.message : null}. The dashboard (and the Invoice/Payment list wrappers above it) omit it.",
+        "frontend/apps/ppt-web/src/main.tsx:28-35: the global QueryClient sets only staleTime + retry:1 — there is no QueryCache onError, no throwOnError, and no MutationCache. So swallowed query errors do NOT reach the top-level ErrorBoundary (main.tsx:50) either; the empty/zero fallback is the only thing the user sees. Landable frontend-only remedy: surface isError on the dashboard queries (pass an error prop like the reports route does) and/or add a QueryCache onError to the global QueryClient so read failures render an error/retry state instead of false zeros."
+      ],
+      "files": [],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-locale-bundles-incomplete",
+      "title": "Systemic translation-coverage gap: every non-English ppt-web locale bundle is roughly HALF-populated relative to en.json. Measured by flattening each messages/*.json to leaf keys and diffing against e",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core i18n bundles)"
+      ],
+      "evidence": [
+        "Systemic translation-coverage gap: every non-English ppt-web locale bundle is roughly HALF-populated relative to en.json. Measured by flattening each messages/*.json to leaf keys and diffing against en (3750 leaf keys): sk 1863 keys (missing 1895 / 50%), cs 1861 (missing 1897 / 50%), de 1774 (missing 1979 / 52%), pl 1763 (missing 1996 / 53%), hu 1757 (missing 1996 / 53%). Reproduce with a small json-flatten + set-diff over messages/en.json vs messages/{sk,cs,de,pl,hu}.json.",
+        "src/i18n/index.ts:24-40 initializes i18next with `fallbackLng: defaultLocale` ('en', from config.ts:8) and `supportedLngs` = all six locales (config.ts:5 declares ['en','sk','cs','de','pl','hu']). All six bundles are imported and registered, so this is NOT a build break — but any t() key present in en yet absent from the active locale silently falls back to the English string. With ~50% of keys missing, a user on sk/cs/de/pl/hu sees English copy across roughly half the app's translated surfaces.",
+        "Business impact: Slovak (sk) is a primary market for this product (the sibling reality portal ships sk/cs/de/en, CLAUDE.md), yet sk is missing 50% of keys — so the primary non-English market is the most affected alongside the others. This is user-facing untranslated text on live rendered screens, not a dev-only concern.",
+        "Distinct from prior i18n findings, which are all about COMPONENTS that never call useTranslation (e.g. code-review-ppt-web-ui-untranslated-feature-pages 2026-09-04, code-review-ppt-web-ui-buildings-pages-no-i18n) or single hardcoded literals. This finding is the inverse: keys that ARE wired through t() but have no VALUE in the non-en bundles. Fixing the component-level gaps will not populate these bundles, and vice-versa.",
+        "Landable remedy (frontend-only, no backend/KMP): a translation-backfill pass over messages/{sk,cs,de,pl,hu}.json to reach key parity with en.json, prioritizing sk (primary market) and high-traffic namespaces. A CI parity guard (assert each non-en bundle's key set >= en's, or report the delta) would prevent regression. Confidence medium: the 50% key-set delta is concretely measured by static diff, but which specific missing keys are actually rendered on a given screen was not individually traced (no runtime execution)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json",
+        "frontend/apps/ppt-web/messages/cs.json",
+        "frontend/apps/ppt-web/messages/de.json",
+        "frontend/apps/ppt-web/messages/pl.json",
+        "frontend/apps/ppt-web/messages/hu.json",
+        "frontend/apps/ppt-web/src/i18n/index.ts",
+        "frontend/apps/ppt-web/src/i18n/config.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "title": "frontend/apps/ppt-web/src/App.tsx:72 — MfaWrapper.verify() calls raw `fetch('/api/v1/auth/mfa/verify', ...)` with a HARDCODED root-relative path, bypassing the app's configured API base URL. Every oth",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core App.tsx MfaWrapper)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:72 — MfaWrapper.verify() calls raw `fetch('/api/v1/auth/mfa/verify', ...)` with a HARDCODED root-relative path, bypassing the app's configured API base URL. Every other API call in ppt-web routes through a configured base: lib/api.ts:64 `DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'` (comment: 'In production VITE_API_URL must be set'), and contexts/AuthContext.tsx:97 `API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''` for the generated @ppt/api-client. The MFA verify fetch uses NEITHER env var.",
+        "Impact: in any deployment where the api-server is served from a different origin than the SPA (VITE_API_URL points at e.g. https://api.example.com/api/v1), the MFA challenge verification request is sent to the SPA's own web origin (`/api/v1/auth/mfa/verify`) instead of the api-server, so it 404s and `response.ok` is false — MfaChallengeProvider treats every correct code as a failure and the user can never clear an MFA-gated mutation. MFA (N9) is a security-critical, user-facing auth path. Works only in same-origin/reverse-proxy deploys, silently breaks on split-origin deploys — a latent config-coupling bug and an inconsistency with the rest of the app.",
+        "Confidence medium: the hardcoded relative path is unambiguous on static read; whether it breaks depends on the deployment's VITE_API_URL being cross-origin (runtime/deploy-dependent). Fix: build the URL from the same base the rest of the app uses (VITE_API_URL / getApiClient()), e.g. `fetch(\\`${import.meta.env.VITE_API_URL || '/api/v1'}/auth/mfa/verify\\`, ...)` or route the verify call through getApiClient()/the generated api-client so the Authorization header and base URL come from one source of truth (mirrors the lib/api.ts request interceptor)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "title": "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts:47-49 — getOnlineSnapshot() reads `navigator.onLine` with no `typeof navigator !== 'undefined'` guard, while its two sibling helpers in the same fil",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core useNetworkStatus)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts:47-49 — getOnlineSnapshot() reads `navigator.onLine` with no `typeof navigator !== 'undefined'` guard, while its two sibling helpers in the same file DO guard it: getInitialOnlineStatus (line 27-29) and the exported isOnline() (line 200-202) both return `typeof navigator !== 'undefined' ? navigator.onLine : true`.",
+        "getOnlineSnapshot is the client `getSnapshot` passed to useSyncExternalStore (line 82-86); getServerSnapshot covers SSR, so in a real browser this never throws. But the inconsistency is a latent hazard: any non-DOM execution of the client snapshot (a test/renderer without a `navigator` global, a future non-browser host) throws a ReferenceError where the guarded siblings degrade gracefully to 'online'.",
+        "Severity low (robustness/consistency; practically inert in-browser). Confidence medium. Fix: guard getOnlineSnapshot identically — `return typeof navigator !== 'undefined' ? navigator.onLine : true;` — so all three read paths share one hardened accessor."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "title": "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — the context `value` is rebuilt as a fresh object literal on every render (`user?.organizationId ? { organizationId, organizationName ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core OrganizationProvider)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — the context `value` is rebuilt as a fresh object literal on every render (`user?.organizationId ? { organizationId, organizationName } : null`) with no useMemo. It is passed directly to <OrganizationContext.Provider value={value}>.",
+        "OrganizationProvider re-renders whenever the AuthContext value changes; notably a silent token refresh (contexts/AuthContext.tsx refreshTokenInternal -> setUser(updated), line 433-435) produces a NEW user object even when organizationId is unchanged. Each such render hands useOrganization consumers a new context-value identity, forcing them all to re-render even though organizationId/organizationName did not change.",
+        "Severity low (unnecessary re-renders; no incorrect data). Confidence medium — new object identity every render is unconditional on static read; the consumer re-render fan-out depends on how many components call useOrganization. Fix: wrap in useMemo keyed on [user?.organizationId, user?.organizationName], mirroring the useMemo already used for the AuthContext value (AuthContext.tsx:689-712)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "title": "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:517-521 (GuestRegistrationPageRoute): the route fetches real guest data (rentalsApiListGuests, line 483) and groups it into bookingsWithPendingGuest",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:517-521 (GuestRegistrationPageRoute): the route fetches real guest data (rentalsApiListGuests, line 483) and groups it into bookingsWithPendingGuests, but every action the page exposes is a no-op stub — onRegisterGuest={() => {}}, onRegisterAllGuests={() => {}}, onEditGuest={() => {}}, onAddGuest={() => {}}. The guest-registration screen (its entire reason for existing) renders functional buttons that silently do nothing; no toast, no navigation, no mutation. Unlike RentalsCalendarPageRoute/TaxReportPageRoute these are NOT documented as 'no endpoint yet', so this reads as unfinished wiring, not an intentional stub.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:333-339 (PlatformConnectionsPageRoute): onConnect/onDisconnect/onSettings are all () => {} even though the same component wires working createConnection + syncPlatforms mutations (lines 302-323). A user can create/sync a platform connection but Disconnect and Settings buttons are dead.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:381-383 (BookingsPageRoute): onCancelBooking/onCheckIn/onCheckOut are () => {} despite BookingDetailPageRoute (lines 409-429) already implementing working checkIn/checkOut mutations via rentalsApiCheckIn/rentalsApiCheckOut. Check-in/out from the bookings list is dead while the same action works one screen deeper. Landable frontend-only remedy: wire these handlers to the existing rentals API client mutations (register-guest / check-in / check-out / disconnect) that already back the sibling routes, or hide the affordances until backed."
+      ],
+      "files": [],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-group-toasts-i18n",
+      "title": "User-facing success/error toast copy is hardcoded English in several route-group files, bypassing react-i18next even though each of these files already imports useTranslation and localizes other strin",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core routes)"
+      ],
+      "evidence": [
+        "User-facing success/error toast copy is hardcoded English in several route-group files, bypassing react-i18next even though each of these files already imports useTranslation and localizes other strings (so t() is in scope): iot.tsx (useTranslation present) hardcodes 'Sensor deleted' (line 194), 'Failed to delete sensor' (198), 'Sensor registered' (255), 'Failed to register sensor' (260), 'Sensor updated' (333), 'Failed to update sensor' (338); meters.tsx hardcodes 'Submitted'/'Reading submitted' (243), 'Submit failed' (248), 'Updated' (296), 'Update failed' (303), 'Done'/'Reading validated' (337), 'Validation failed' (341); faults.tsx hardcodes 'Created'/'Fault reported' (368), 'Failed to report fault' (373), 'Updated'/'Fault updated' (505), 'Failed to update fault' (510); community.tsx hardcodes 'Created'/'Group created' (66).",
+        "These strings are not present in ANY locale bundle (including en.json) — they are inline literals passed to showToast({ title, message }) — so unlike the bundle-coverage gap they can never be translated for any locale until moved into t() keys. A non-English user performing IoT/meter/fault/community mutations gets English confirmation and error feedback.",
+        "Scoped to be NON-duplicate: the pre-existing code-review-ppt-web-core-person-months-toast-i18n (2026-08-14) covers ONLY routes/groups/person-months.tsx:373. This finding covers the remaining, previously-unflagged route-group files (iot, meters, faults, community). (routes/groups/leases.tsx, disputes.tsx and outages.tsx also contain some hardcoded showToast literals and should be swept in the same pass.) Grep to reproduce: `grep -n \"showToast(\" src/routes/groups/*.tsx | grep -E \"title: '|message: '\"`, excluding *.test.tsx.",
+        "Landable remedy (frontend-only): replace the literal title/message with t('<domain>.toast.<action>') keys and add the corresponding entries to messages/en.json (plus the other bundles, tying into the parity backfill above). Low severity (i18n gap on feedback copy), high tractability — a mechanical, mutation-path-scoped change. Confidence medium: literals and useTranslation availability are code-verified statically; not runtime-confirmed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "title": "ppt-web has NO global auth gate: App.tsx:272-275 renders `<RouteErrorBoundary><Suspense><AppRoutes/></Suspense></RouteErrorBoundary>` inside the always-rendered app shell (the shell only toggles heade",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-core routes)"
+      ],
+      "evidence": [
+        "ppt-web has NO global auth gate: App.tsx:272-275 renders `<RouteErrorBoundary><Suspense><AppRoutes/></Suspense></RouteErrorBoundary>` inside the always-rendered app shell (the shell only toggles header UI on `isAuthenticated`, App.tsx:164/173/183). AppRoutes.tsx:39-67 composes every feature route-group fragment flat under a single `<Routes>` with no enclosing `<Route element={<ProtectedRoute/>}>` parent. So the ONLY auth gate for a feature route is a per-route `<ProtectedRoute>` wrapper inside its group file.",
+        "ProtectedRoute.tsx:92-122 is the gate: when `!isLoading && !isAuthenticated` it stores the return URL and `return <Navigate to={redirectTo} replace/>` (redirect to /login). Groups that wrap each element in it therefore bounce unauthenticated users to login — e.g. buildings.tsx:47-80 wraps every `<Route element={<ProtectedRoute>…</ProtectedRoute>}/>`; same in leases.tsx, meters.tsx, documents.tsx, rentals.tsx (auth guard added by PR #2648), reports.tsx, voting.tsx, person-months.tsx, core.tsx, notifications.tsx.",
+        "11 route groups mount their pages as BARE `<Route element={<…PageRoute/>}/>` with ZERO ProtectedRoute wrapper (grep `ProtectedRoute` count = 0 in each): financial.tsx:466-474 (/financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports), accounting.tsx:9-14 (/accounting/invoices, /accounting/payment-matching), faults.tsx, community.tsx, disputes.tsx, iot.tsx, messaging.tsx, neighbors.tsx, outages.tsx, announcements.tsx, ai-dashboards.tsx. An unauthenticated user navigating directly to e.g. /financial or /accounting/invoices is NOT redirected to login — the authenticated-only page shell renders instead.",
+        "The financial wrappers do not self-guard: FinancialDashboardPageRoute (financial.tsx:66-68) only does `const { user } = useAuth(); const orgId = user?.organizationId ?? ''` and gates its money queries with `enabled: !!orgId` (financial.tsx:73/78/83); InvoiceManagement/PaymentManagement/FinancialReports wrappers (financial.tsx:148/257/384) follow the same read-only `user?.…` pattern with no `if (!isAuthenticated) return <Navigate/>`. There is no internal redirect anywhere in the group.",
+        "Data-leak is BOUNDED, which is why this is scored medium (+2) not high: with no `user` the org-scoped queries stay disabled (`enabled:!!orgId` with orgId='') and the reality-server/api-server require auth (401), so no tenant financial data is actually fetched or shown to an anonymous visitor. The defect is a broken-access-control / missing-redirect posture bug (CWE-284): protected app surfaces are reachable without authentication and render a broken empty shell instead of sending the user to /login (and losing the return-URL capture that ProtectedRoute.tsx:43-49 provides). Money-sensitive surfaces (financial, accounting) are among the unguarded set.",
+        "This is a distinct, systemic, LANDABLE finding — not the same as the done route items (security-role-gate-fail-open = ProtectedRoute's own role check; code-review-ppt-web-ui-protectedroute-i18n = untranslated gate copy; screen-map-drift-pr-2648-ppt = rentals-only mutation guard). Mechanical fix: wrap each `<Route>` element in these 11 group files with `<ProtectedRoute>` (importing from '../../components'), mirroring buildings.tsx:47-80, so the whole app enforces auth uniformly at the routing layer. Confidence medium: the missing-wrapper + no-global-gate mechanism is code-verified end to end (App.tsx -> AppRoutes -> group -> ProtectedRoute), but the exact anonymous-visitor render is not runtime-confirmed (static analysis, no execution)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/buildings.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "title": "errorHandler.ts documents an i18n contract in its header (errorHandler.ts:7-10): user-facing copy 'is resolved through the shared i18n' and only opaque tokens (requestIds, raw backend messages) pass t",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core lib/errorHandler)"
+      ],
+      "evidence": [
+        "errorHandler.ts documents an i18n contract in its header (errorHandler.ts:7-10): user-facing copy 'is resolved through the shared i18n' and only opaque tokens (requestIds, raw backend messages) pass through untranslated. parseApiError honours this by resolving titles/messages via `i18n.t('errors.catalogue.<code>...')` (errorHandler.ts:103,108-117,133). But formatFieldName (errorHandler.ts:437-447) builds a user-facing field LABEL purely from the English field path: it splits the backend snake_case path on '_' and Title-cases each ASCII word (`word.charAt(0).toUpperCase() + word.slice(1)`), with no i18n lookup. formatValidationErrors (errorHandler.ts:422-428) then renders `${formatFieldName(field)}: ${message}` for display.",
+        "Consequence: the app ships sk/cs/de/en locales (root CLAUDE.md; reality-web messages/), yet inline/summary validation errors surfaced through formatValidationErrors render field labels in English regardless of active locale (e.g. `Street Name: <msg>` on a Slovak form). This directly contradicts the module's stated i18n contract for a class of user-facing text. It is a genuine gap rather than an intentional pass-through: `message` (the backend string) is explicitly called out as untranslated, but the derived field LABEL is generated client-side and could be localized.",
+        "Severity low (+1), landable pure-frontend: route field labels through i18n (e.g. `i18n.t('fields.<path>', { defaultValue: formatFieldName(field) })`) so localized label keys win with the current Title-cased output as the English fallback, keeping backward compatibility for unmapped fields. Confidence medium: the missing i18n call and the English-only Title-case transform are code-verified in errorHandler.ts:422-447; the visible impact assumes formatValidationErrors output is rendered to end users on a non-English locale (the function is an exported public helper), not runtime-confirmed against a specific screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
+      "title": "Asymmetric wire contract: on RECEIVE, parseServerMessage (websocket.ts:65-82) treats the canonical server frame as `{ event, payload }` and maps `event` -> internal `type`. On SEND, WebSocketService.s",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib/websocket)"
+      ],
+      "evidence": [
+        "Asymmetric wire contract: on RECEIVE, parseServerMessage (websocket.ts:65-82) treats the canonical server frame as `{ event, payload }` and maps `event` -> internal `type`. On SEND, WebSocketService.send (websocket.ts:444-457) does `this.socket.send(JSON.stringify(message))` where `message` is the internal WebSocketMessage shape `{ type, payload, timestamp }` (websocket.ts:38-43) — it is emitted verbatim with a `type` key, never re-mapped back to the server's `{ event, payload }` envelope. A server that parses inbound frames as WsEvent `{ event, payload }` (mirroring ws_notifications.rs) would see `event: undefined` and drop/ignore the frame.",
+        "The send path is fully wired through the public API — WebSocketContext.send (WebSocketContext.tsx:371-378) delegates to service.send, and useWebSocket / its sibling hooks re-export `send` to consumers (hooks/useWebSocket.ts:76/101/130/165/189) — so this is a live, callable surface, not private code.",
+        "Currently LATENT, hence low (+1): a repo-wide grep for `.send(` shows the only call site is WebSocketContext.tsx:377 (the delegation itself); no feature code sends a domain message today because the notifications socket is effectively server->client. But the first consumer to call `send({...})` will hit a silent no-op (frame accepted by the client, ignored by the server) with no error surfaced. Landable pure-frontend fix: have send() serialize the server envelope shape (`{ event: message.type, payload: message.payload }`) to match parseServerMessage's inbound contract, mirroring the documented WsEvent envelope, or narrow the exported API to remove the unsupported send until a client->server protocol exists. Confidence medium: the shape mismatch is code-verified against parseServerMessage + the WebSocketMessage/ServerWsEnvelope interfaces; the server-side reject is inferred from the documented envelope, not runtime-confirmed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts",
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-native-confirm-i18n",
+      "title": "features/accounting/pages/AccountingInvoiceManagementPage.tsx:108 gates a destructive delete behind the native browser confirm('Are you sure you want to delete this invoice?') instead of the shared <C",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "features/accounting/pages/AccountingInvoiceManagementPage.tsx:108 gates a destructive delete behind the native browser confirm('Are you sure you want to delete this invoice?') instead of the shared <ConfirmationDialog> used elsewhere (emergency, oauth-grants), and lines 49,64 hardcode English toast titles ('Failed to create invoice', 'Failed to delete invoice'). Native confirm() is unstyleable, untranslatable, and inconsistent with the app's confirmation UX pattern."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-contact-labels-in-api-client",
+      "title": "Anti-pattern: user-facing display labels are defined as a hardcoded English string map (CONTACT_TYPE_LABELS) inside the @ppt/api-client package at frontend/packages/api-client/src/emergency/types.ts:7",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui)"
+      ],
+      "evidence": [
+        "Anti-pattern: user-facing display labels are defined as a hardcoded English string map (CONTACT_TYPE_LABELS) inside the @ppt/api-client package at frontend/packages/api-client/src/emergency/types.ts:77-87, then consumed as visible UI text by ppt-web (EmergencyContactDirectoryPage / EmergencyContactsList). This couples presentation copy to the API-client/transport layer, makes the labels unreachable by react-i18next, and means any i18n fix for the emergency feature (finding code-review-ppt-web-ui-emergency-untranslated-ui) must first move these labels out of the shared client. Recommend the client export only the ContactType enum/values and let ppt-web resolve display strings via its i18n catalog (emergency.contactType.<value>)."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/emergency/types.ts",
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-slovak-toasts",
+      "title": "features/documents/hooks/useDocumentDownload.ts:46-49 and features/documents/hooks/useMoveDocumentWithToast.ts:25-38 hardcode Slovak-only toast strings ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo s",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "features/documents/hooks/useDocumentDownload.ts:46-49 and features/documents/hooks/useMoveDocumentWithToast.ts:25-38 hardcode Slovak-only toast strings ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo stiahnuť.', 'Dokument presunutý', 'Presun zlyhal', '„...\" bol presunutý do priečinka.') instead of routing through react-i18next t(). App ships sk/cs/de/en — cs/de/en users see Slovak. These are churn-hotspot files (documents feature). Localization defect, not just a gap."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-emergency-untranslated-ui",
+      "title": "Emergency feature (Epic 62) renders user-facing UI text that never routes through react-i18next, despite the page importing useTranslation and localizing everything else. (1) EmergencyContactsList.tsx",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui emergency)"
+      ],
+      "evidence": [
+        "Emergency feature (Epic 62) renders user-facing UI text that never routes through react-i18next, despite the page importing useTranslation and localizing everything else. (1) EmergencyContactsList.tsx:30-31 hardcodes the empty-state copy 'No emergency contacts found.' / 'Add your first emergency contact to get started.' as raw literals — an empty-state exists but its text is English-only. (2) The contact-type dropdown in EmergencyContactDirectoryPage.tsx:216-221 and the group headings in EmergencyContactsList.tsx:87 render CONTACT_TYPE_LABELS values ('Fire Department', 'Police', 'Ambulance', ...) directly as visible labels. App ships sk/cs/de/en; cs/de/en/sk users see these strings in English. Fix: wrap the empty-state copy in t() and map contact types to i18n keys instead of the English label map."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/emergency/components/EmergencyContactsList.tsx",
+        "frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-bookings-hardcoded-toasts",
+      "title": "features/facilities/pages/MyBookingsPage.tsx:45,86 and features/facilities/pages/PendingBookingsPage.tsx:46,71,97 hardcode English toast titles/messages ('Failed to load bookings', 'Failed to cancel b",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)"
+      ],
+      "evidence": [
+        "features/facilities/pages/MyBookingsPage.tsx:45,86 and features/facilities/pages/PendingBookingsPage.tsx:46,71,97 hardcode English toast titles/messages ('Failed to load bookings', 'Failed to cancel booking', 'Failed to approve/reject booking', 'An unexpected error occurred.') despite both pages already importing useTranslation and using t() for other copy (line 18). Inconsistent i18n — error toasts never localized for sk/cs/de."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/MyBookingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/PendingBookingsPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "title": "EditFacilityPage.tsx has NO `useTranslation` import at all (checked full file) — every user-facing string is hardcoded English: 'Edit Facility' (line 89 heading), 'Failed to load facility' (line 30, s",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)"
+      ],
+      "evidence": [
+        "EditFacilityPage.tsx has NO `useTranslation` import at all (checked full file) — every user-facing string is hardcoded English: 'Edit Facility' (line 89 heading), 'Failed to load facility' (line 30, set as the error banner text), 'Failed to update facility' (line 50, mutation-error fallback), 'Facility not found' (line 74), 'Go back' (line 80). This is the sole page under features/facilities/pages that skips i18n entirely — its siblings (BookFacilityPage, FacilitiesPage's FacilityList) at least partially use `t()`.",
+        "BookFacilityPage.tsx does import `useTranslation` and wraps the page title (line 128, `t('facilities.bookings.bookFacility')`), but every error/fallback string is still hardcoded English: 'Failed to load facility details' (line 35), 'Failed to create booking' (line 71, mutation fallback), 'Facility not found' (line 95), 'This facility is not available for booking' (line 112), 'Go back' (lines 101, 118) — i.e. i18n is wired but not applied to the error-path copy on this file specifically.",
+        "Both pages are wired and reachable in production (routes/groups/buildings.tsx + routes/lazyRoutes.tsx, Epic 56 Facility Booking) — an sk/cs/de-locale user who hits any facility-load or booking/update error sees raw English copy on a mounted, everyday manager/resident flow.",
+        "Same defect class as prior ppt-web-ui i18n-gap findings (e.g. 2026-09-01 notif-settings-hardcoded-errors) but a distinct, previously-unreviewed feature area. Fix: add `useTranslation` to EditFacilityPage.tsx and move all listed strings (both files) into an i18n namespace. Confidence medium: hardcoded-string presence confirmed by static read; exact end-user visibility depends on which error path fires at runtime."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/EditFacilityPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "title": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — `useIsManager()` is a hardcoded stub: `// Placeholder: Returns true during development to enable all manager features. //",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — `useIsManager()` is a hardcoded stub: `// Placeholder: Returns true during development to enable all manager features. // Replace with actual role check when AuthContext is implemented for ppt-web.` and the body is simply `return true;`. It is not gated behind a dev-only flag or feature flag — it ships as-is.",
+        "This page is wired and reachable in production: mounted via routes/groups/buildings.tsx and routes/lazyRoutes.tsx (Epic 56 Facility Booking). `isManager` (line 46) is passed straight into `<FacilityList isManager={isManager} ... onCreate={handleCreate} onEdit={handleEdit} />` (lines 110-124), which — per the sibling component contract used across the app — controls whether manager-only actions (Create Facility, Edit) render for the current viewer.",
+        "Effect: every visitor to /buildings/:buildingId/facilities — resident or manager — sees and can click Create/Edit facility controls. The comment claims 'Backend still enforces authorization - this is for UI display only', so a resident's click likely 403s rather than succeeding, but the UI still exposes manager-only affordances and navigates to /facilities/new or /facilities/:id/edit for a plain resident, producing a confusing broken-looking flow (form opens, submit silently fails) instead of the buttons simply not being there. Not verified at runtime whether every backend facility-mutation endpoint actually enforces the role check (static read only) — confidence medium.",
+        "Fix: wire the real role check (the file's own docstring gives the exact replacement — `const { user } = useAuth(); return user?.role === 'manager' || user?.role === 'admin';`, mirroring frontend/apps/mobile/src/contexts/AuthContext.tsx) instead of the permanent `return true` stub."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
+      "title": "The entire `forms` feature ships with zero localization: none of its five page files (AvailableFormsPage, FormsPage, FillFormPage, CreateFormPage, ViewFormPage) import useTranslation / react-i18next a",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui forms/government-portal)"
+      ],
+      "evidence": [
+        "The entire `forms` feature ships with zero localization: none of its five page files (AvailableFormsPage, FormsPage, FillFormPage, CreateFormPage, ViewFormPage) import useTranslation / react-i18next at all. Confirmed hardcoded English in frontend/apps/ppt-web/src/features/forms/pages/AvailableFormsPage.tsx: <h1>'Available Forms'</h1> (line 63), 'All Categories' option (74), and the empty state 'No forms available' (130). The other four form pages share the same no-i18n-import shape.",
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx has the same defect on a HIGHER-stakes surface: it is the regulatory guest-registration wizard that submits to Slovak government portals (its own copy names 'ÚHÚL/Police', line 222), yet every label is hardcoded English — <h1>'Submit Guest Report' (220), the subtitle (222), the wizard step labels ['Select Options','Preview Data','Submit'] (229), and the section headers 'Select Country' (315), 'Portal Connection' (350), 'Report Template' (396), 'Submission Preview' (514). A compliance flow aimed at Slovak operators rendering only English is a usability/adoption risk beyond a cosmetic gap.",
+        "Impact: a whole feature (forms) plus a regulatory government-portal flow are untranslated on a documented multi-locale (sk/cs/de/en) portal. Severity low per the finding taxonomy (i18n gap, no crash), but breadth is high — 6 pages, one of them regulatory. Confidence medium (confirmed by static read: absent i18n imports + inline English literals; multi-locale requirement per CLAUDE.md). Fully cloud-landable: wire useTranslation into each page and lift the strings into the ppt-web catalog. Recommend splitting the implementation into two plan-sized chunks (forms.* and governmentPortal.*) if a single PR would exceed review size."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/forms/pages/AvailableFormsPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/FormsPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/FillFormPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/CreateFormPage.tsx",
+        "frontend/apps/ppt-web/src/features/forms/pages/ViewFormPage.tsx",
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-pages-no-i18n",
+      "title": "The entire marketplace page set renders hardcoded English with ZERO useTranslation wiring (grep -c useTranslation returns 0 for all five pages), on a manager-facing product that ships react-i18next (r",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui marketplace i18n)"
+      ],
+      "evidence": [
+        "The entire marketplace page set renders hardcoded English with ZERO useTranslation wiring (grep -c useTranslation returns 0 for all five pages), on a manager-facing product that ships react-i18next (root CLAUDE.md; the rest of ppt-web localizes via useTranslation as seen in voting/VoteDetailPage). Any non-English manager sees these screens entirely in English.",
+        "Concrete hardcoded literals: MarketplacePage.tsx:55 '<h1>Service Provider Marketplace</h1>', :133 'No providers found', :168 'Load More Providers'; ProviderDetailPage.tsx:94 'Back to Marketplace', :222 'Contact Information', :262 'Coverage Area'; ProviderProfilePage.tsx:184 'Provider Dashboard', :251 'Average Rating', :255 'Total Reviews'; CreateRfqPage.tsx:69 'Create Request for Quote', :80 'Select Providers', :87 'Create RFQ'; RfqListPage.tsx:66 'Requests for Quote', :203 'Total RFQs'.",
+        "Reproduce: for f in MarketplacePage ProviderDetailPage ProviderProfilePage CreateRfqPage RfqListPage; do echo $f $(grep -c useTranslation frontend/apps/ppt-web/src/features/marketplace/pages/$f.tsx); done (all print 0).",
+        "Non-duplicate: the only prior marketplace signal (code-review-ppt-web-ui-contact-labels-in-api-client, 2026-09-04) concerns emergency-contact label TYPES in the api-client package, and prior i18n findings target the workflow-automation / emergency / community / buildings features -- none touch marketplace page components. Verified against all *ppt-web-ui*.json.",
+        "Landable remedy (frontend-only): wrap the marketplace page literals in t('marketplace.*') keys and add the entries to messages/en.json (+ the other locale bundles). Low severity (i18n gap), high tractability -- a mechanical, feature-scoped pass. Confidence medium: literals and the absence of useTranslation are code-verified statically; not runtime-confirmed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/pages/MarketplacePage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderDetailPage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/ProviderProfilePage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/CreateRfqPage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/RfqListPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
+      "title": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:203-208 — handleViewContent navigates to an INTERNAL route with a hard document navigation: `window.location.href = `/comp",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui compliance)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:203-208 — handleViewContent navigates to an INTERNAL route with a hard document navigation: `window.location.href = `/compliance/moderation/cases/${caseId}``, guarded by its own TODO 'Use React Router's useNavigate for SPA navigation / Phase 1: Full page reload for simplicity'. Every 'view content' click on a moderation case tears down and re-boots the whole React SPA (re-runs bootstrap, re-fetches auth/building context, drops in-memory TanStack Query cache and the moderation list scroll/filter state) instead of a client-side transition — a measurable UX and performance regression on a manager tool with list-of-cases drill-in.",
+        "Same file line 281 — the error-state retry uses `onClick={() => window.location.reload()}`, a full document reload to recover from a query error where a TanStack Query refetch() would suffice; consistent with the same anti-pattern.",
+        "Impact: degraded SPA UX (full reloads on internal navigation), not a crash or security issue. Severity low, confidence medium (confirmed by static read; the route target /compliance/moderation/cases/:caseId is an internal SPA route, so client navigation is the correct mechanism). Fully cloud-landable: replace window.location.href with useNavigate() from react-router-dom (already the app's router) and swap the retry's window.location.reload() for the query's refetch(); removes the acknowledged Phase-1 shortcut."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-deadnav",
+      "title": "PortfolioDashboardPage.tsx:266-268 -- every PropertyCard rendered in the portfolio dashboard grid is given an onClick handler whose entire body is a comment: `onClick={() => { // TODO: navigate to pro",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui portfolio dead interaction)"
+      ],
+      "evidence": [
+        "PortfolioDashboardPage.tsx:266-268 -- every PropertyCard rendered in the portfolio dashboard grid is given an onClick handler whose entire body is a comment: `onClick={() => { // TODO: navigate to property detail route }}`. The cards render as interactive (PropertyCard receives and wires onClick) so a manager clicking a property tile on a SHIPPED dashboard gets zero response -- a dead-end user-facing interaction, not merely a missing feature flag.",
+        "The map at PortfolioDashboardPage.tsx:264-273 wires this no-op onClick onto EVERY property card (`propertyCards.map((property) => <PropertyCard ... onClick={() => { /* TODO */ }} />)`), so the defect affects the whole grid, not a single card. The surrounding query states (isLoading/isError/empty at lines 256-261) are handled, which makes the silent click failure more surprising -- the data loads fine, the tile looks clickable, nothing happens.",
+        "Reproduce: grep -n 'TODO: navigate to property detail' frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx . Non-duplicate: no prior ppt-web-ui signal references portfolio-performance/PortfolioDashboardPage (the only prior portfolio findings, code-review-ppt-web-ui-portfolio-* , concern PortfolioListPage / PortfolioDashboardPage i18n and were not emitted; verified against all *ppt-web-ui*.json).",
+        "Landable remedy (frontend-only, no backend/KMP): wire the onClick to the property-detail route via react-router useNavigate (the sibling detail route/component exists in this feature), or -- if the detail route is genuinely not built yet -- remove the onClick and the interactive affordance so the tile does not present as clickable. Medium severity: broken user-facing interaction on a shipped manager dashboard. Confidence medium: the no-op body is code-verified statically; whether the detail route exists to navigate to was not run-confirmed."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-perf-no-i18n",
+      "title": "The portfolio-performance feature pages/components render hardcoded English with no useTranslation, including user-facing loading/error/empty states -- PortfolioDashboardPage.tsx:257 'Loading properti",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui portfolio-performance i18n)"
+      ],
+      "evidence": [
+        "The portfolio-performance feature pages/components render hardcoded English with no useTranslation, including user-facing loading/error/empty states -- PortfolioDashboardPage.tsx:257 'Loading properties…', :259 'Failed to load property performance.', :261 'No properties in this portfolio yet.'; PortfolioListPage.tsx:115 'Total Value', :121 'Total Equity', :125 'Total Properties'; PortfolioCard.tsx:64 'Total Value', :68 'Total Equity'; CashFlowChart.tsx:71 'Total Income', :77 'Total Expenses', :83 'Total NOI'. Error/empty-state copy in particular is exactly the text a non-English manager most needs localized.",
+        "This is a DISTINCT feature and a distinct landable task from the marketplace i18n finding above (separate directory, separate key namespace, separate PR); it is grouped separately so each can be claimed independently.",
+        "Reproduce: grep -rL useTranslation frontend/apps/ppt-web/src/features/portfolio-performance --include='*.tsx' | grep -v .test. lists these files as having no i18n wiring.",
+        "Non-duplicate: no prior *ppt-web-ui*.json signal references portfolio-performance. Verified across the full signal history.",
+        "Landable remedy (frontend-only): introduce t('portfolio.*') keys for the page/component literals (prioritize the loading/error/empty-state strings) and register them in the locale bundles. Low severity, mechanical. Confidence medium: static-only (literals + missing useTranslation code-verified, not runtime-confirmed)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioListPage.tsx",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/components/PortfolioCard.tsx",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/components/CashFlowChart.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "title": "RegistryPage.tsx:17-21 and RegistryRulesPage.tsx:16-20 both instantiate `const registryApi = createRegistryApi({ baseUrl: API_BASE_URL, // accessToken and tenantId would come from auth context });` at",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui registry)"
+      ],
+      "evidence": [
+        "RegistryPage.tsx:17-21 and RegistryRulesPage.tsx:16-20 both instantiate `const registryApi = createRegistryApi({ baseUrl: API_BASE_URL, // accessToken and tenantId would come from auth context });` at MODULE scope (evaluated once at import time), with no accessToken or tenantId ever supplied — the comment is a live TODO, not a resolved wiring.",
+        "packages/api-client/src/registry/api.ts:29-33,43-45 — `buildHeaders(config)` builds `Authorization`/`X-Tenant-ID` headers ONLY if `config.accessToken`/`config.tenantId` are truthy, and `createRegistryApi` calls `buildHeaders(config)` exactly once and closes over the resulting static `headers` object for every subsequent pets/vehicles/rules request (list/get/create/update/delete/review). Unlike the rest of the app's api-client modules (e.g. faults/hooks.ts -> faults/api.ts), which resolve auth per-request through a shared client, this factory bakes auth in at construction and never refreshes it.",
+        "Net effect: every request the Building Registries feature (Epic 57 — pet/vehicle registration list, create, update, delete, review, and registry-rules read/update) makes goes out with NO Authorization header and NO tenant header, guaranteed to 401 (or hit the wrong/default tenant scope if the backend doesn't strictly require the header) the moment this feature is routed into the app.",
+        "Currently reduces to a latent landmine rather than a live incident: grepping frontend/apps/ppt-web/src/routes/ and docs/screens/ppt/ turns up no route or screen-map entry for RegistryPage/RegistryRulesPage — the feature is not mounted in the router today, so this specific defect has no current production reachability. Flagging now because it is a real, non-obvious footgun for whoever wires the route next (the module-scope singleton pattern silently swallows the missing token instead of erroring). Fix: build the api instance from a hook/context that supplies a live accessToken/tenantId (matching the pattern other wired features use) rather than a frozen module-level singleton.",
+        "Confidence medium: the missing-auth-header logic is confirmed by static read of buildHeaders/createRegistryApi; actual backend response behavior (hard 401 vs silent wrong-tenant read) is not verified without execution."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx",
+        "frontend/packages/api-client/src/registry/api.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-untranslated-feature-pages",
+      "title": "Systemic i18n completeness gap: 67 of 196 *Page.tsx / *List.tsx files under frontend/apps/ppt-web/src/features have NO useTranslation import at all — entire feature surfaces are hardcoded English desp",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui)"
+      ],
+      "evidence": [
+        "Systemic i18n completeness gap: 67 of 196 *Page.tsx / *List.tsx files under frontend/apps/ppt-web/src/features have NO useTranslation import at all — entire feature surfaces are hardcoded English despite the app's sk/cs/de/en requirement. Whole pages affected include community (FeedPage, EventsPage, GroupsPage, GroupDetailPage, CreateGroupPage), workflow-automation (AutomationRulesPage), marketplace (QuoteComparisonPage), financial (FinancialDashboardPage, InvoiceList/OverdueInvoicesList/RecentPaymentsList), buildings (BuildingsPage, BuildingDetailPage, BuildingList), announcements (AnnouncementsPage, Create/EditAnnouncementPage), forms (Available/CreateFormPage, FormList, SubmissionList) and the error pages (NotFound/Forbidden/ServerError/SessionExpired). This is broader than scattered toast literals (see 2026-09-03 pass) — these components localize nothing. Recommend a tracked i18n-backfill sweep, prioritizing high-traffic pages (community feed, financial dashboard, buildings) and the error pages. Grep to reproduce: for each features/**/*Page.tsx|*List.tsx, flag files where `grep -q useTranslation` fails."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/pages/FeedPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/marketplace/pages/QuoteComparisonPage.tsx",
+        "frontend/apps/ppt-web/src/features/financial/pages/FinancialDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/errors/pages/NotFoundPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n",
+      "title": "frontend/apps/ppt-web/src/features/voting/pages/VotingPage.tsx:8-11 — the voting LIST page imports neither useTranslation nor any i18n helper (only api-client hooks, Spinner, VoteCard, and VOTE_STATUS",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui voting)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VotingPage.tsx:8-11 — the voting LIST page imports neither useTranslation nor any i18n helper (only api-client hooks, Spinner, VoteCard, and VOTE_STATUS_LABELS), and every user-facing string is a hardcoded English literal: the <h1> 'Voting' (line 54), the summary line '{n} vote{s} · {open} open · {closed} closed' (55-58), the '+ New vote' button (66), the 'All' filter label (81), the error state 'Failed to load votes: … Unknown error' (94-95), the empty state 'No votes yet.' (100) and 'Create the first vote' CTA (104). None go through t().",
+        "This is a localization REGRESSION, not merely an un-i18n'd new screen: the two sibling pages in the same feature — VoteCreatePage.tsx and VoteDetailPage.tsx — both use useTranslation (2 of 3 voting pages localized), and the feature ships an explicit i18n contract test, frontend/apps/ppt-web/src/features/voting/pages/VoteDetailPage.i18n.test.tsx. The list page was left out of that contract, so on a portal whose managers can run in sk/cs/de/en the whole voting entry screen renders English regardless of the selected UI language.",
+        "Impact: user-facing untranslated UI on a first-class Epic-5 manager screen (screen id ppt/voting). Severity low (i18n gap — no crash, no data loss), confidence medium (confirmed by static read: no i18n import present and literals are inline JSX; the multi-locale requirement is documented in CLAUDE.md — reality/ppt support sk/cs/de/en). Fix is fully cloud-landable: add useTranslation, move the ~8 literals into the existing ppt-web message catalog under a voting.* namespace (mirroring VoteDetailPage's keys), and route VOTE_STATUS_LABELS through t(). Secondary observation for the fixer (do not file separately): line 30 buildingId = buildingsData?.items?.[0]?.id ?? '' silently pins the vote query to the first building with no building selector — a known ppt-web pattern, note only."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VotingPage.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "title": "AgencyBranding.tsx handleSave (L79-95) does `await updateBranding.mutateAsync({ agencyId, data: { logo, coverImage, primaryColor, ... } })` with NO try/catch, then resets hasChanges/logoFile/coverFile",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "AgencyBranding.tsx handleSave (L79-95) does `await updateBranding.mutateAsync({ agencyId, data: { logo, coverImage, primaryColor, ... } })` with NO try/catch, then resets hasChanges/logoFile/coverFile.",
+        "updateBranding is consumed only for `.isPending` (button label at L126/128); `updateBranding.error` is NEVER rendered. On a failed branding save the follow-up state resets never run (mutateAsync rejects), the user gets zero feedback, and it is an unhandled promise rejection.",
+        "The backing hook useUpdateBranding (agency/hooks.ts:258) posts multipart FormData (logo/coverImage uploads) and `throw new ApiError(response.status)` on !response.ok (L276-278), with onSuccess-only (no onError) at L282. Image uploads are exactly the path that fails with 413 (payload too large) / 415 / 500, so a silent failure here is likely in practice.",
+        "This file already distinguishes load errors carefully (AgencyLoadError on agencyError, Issue #2343) but the write path has no equivalent handling. Fix: wrap mutateAsync in try/catch, keep hasChanges true on failure, and render an inline error (updateBranding.error / a caught message) near the save button, consistent with the sibling error-state handling in the same component."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "title": "realtor/[id]/page.tsx is a PUBLIC, per-agent dynamic route but ignores the [id] param entirely: `const agent = MOCK_AGENT;` (L20), rendering MOCK_AGENT/MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS (imported",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "realtor/[id]/page.tsx is a PUBLIC, per-agent dynamic route but ignores the [id] param entirely: `const agent = MOCK_AGENT;` (L20), rendering MOCK_AGENT/MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS (imported from ./_mock, L11) regardless of which agent id is requested. Every agent URL renders the same fabricated agent, listings and reviews — a public page serving mock data.",
+        "The contact form on this page is a no-op stub: handleSendMessage (L22-28) only does `setMessageSent(true); setContactOpen(false)` with no API call, so lead-capture messages to the agent are silently discarded.",
+        "The file has NO useTranslations import and hardcodes Slovak user-facing strings directly in JSX: 'Kontaktovať' (L154), 'Aktívne ponuky' (L227), 'Hodnotenia' (L330), 'Odoslať správu' (L530), 'Kontaktovať {agent.name}' (L588), placeholder 'Dobrý deň, mám záujem o Vaše služby...' (L597), aria-label 'Kontaktovať makléra' (L556), 'Odoslať' (L638) — breaking i18n on a locale-prefixed ([locale]) public route.",
+        "Landable in stages: (a) wrap the visible strings in next-intl t() under a pages.agent-profile namespace (the root already carries data-i18n='pages.agent-profile.root'), and (b) replace MOCK_AGENT with a real fetch keyed on the route id + wire the contact form to the inquiry/realtor-message endpoint (mirroring ContactForm.tsx's createInquiry usage). At minimum the mock-data + dead-form state should be tracked so this public route is not shipped as a scaffold."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-auth-nav-drops-locale",
+      "title": "The three email/password auth pages do programmatic navigation with the raw, non-locale-aware router from `next/navigation` using unprefixed absolute paths, so the user's active locale (cs/de/en) is d",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 reality-web auth)"
+      ],
+      "evidence": [
+        "The three email/password auth pages do programmatic navigation with the raw, non-locale-aware router from `next/navigation` using unprefixed absolute paths, so the user's active locale (cs/de/en) is dropped on the post-auth hop and next-intl's middleware re-resolves to the DEFAULT locale (sk). register/page.tsx:9,26,81 — `import { useRouter } from 'next/navigation'` then `onClick={() => router.push('/auth/login')}` (no `/[locale]` prefix). reset-password/page.tsx:9,18,90 — same import, `router.replace('/auth/login')`. login/page.tsx:20,31,73 — `router.replace(safe)` where `safe` defaults to bare `'/'` when no redirect param is present.",
+        "This contradicts the app's own stated locale-routing convention: login/page.tsx:16-24 documents 'Internal links use the locale-aware `Link` from `src/i18n/routing`' and imports `Link` from `@/i18n/routing`, and that locale-aware navigation wrapper is used pervasively across the app (components/ui/Header.tsx, Footer.tsx, LanguageSwitcher.tsx, home/*, etc.). next-intl's createNavigation exports a locale-aware `useRouter`/`redirect`, but these auth pages pulled `useRouter` from `next/navigation` instead — so `Link`s stay in-locale while every programmatic `router.push`/`router.replace` silently falls back to sk.",
+        "Impact: a Czech/German/English visitor who registers, resets their password, or logs in without an explicit locale-carrying `redirect` param is bounced onto the Slovak (default-locale) login page or homepage, losing their language mid-flow. Severity low (i18n/UX regression, no data or auth-correctness impact). Confidence medium: the raw-router imports and unprefixed paths are confirmed by static read and contradict the documented convention + the locale-aware wrapper the rest of the app uses; the exact default-locale landing is inferred from next-intl routing behaviour rather than runtime-confirmed. Fix: import `useRouter` (and `redirect`) from the app's `@/i18n/routing` (or `@/i18n/navigation`) locale-aware navigation in all three auth pages so `router.push`/`router.replace` preserve the active locale, matching the `Link` usage already in login/page.tsx."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/register/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/reset-password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-cmp-ls-unchecked",
+      "title": "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — `const parsed = JSON.parse(stored); setListings(parsed);` on mount trusts the localStorage payload's shape. The try/catch only guards m",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — `const parsed = JSON.parse(stored); setListings(parsed);` on mount trusts the localStorage payload's shape. The try/catch only guards malformed JSON, not a wrong-typed-but-valid JSON value (a legacy/corrupted entry that parses to a non-array object). listings is then consumed unguarded by `.some((l)=>l.id===...)` (line 65) and `.map(...)` (line 93/generateShareUrl), which throw TypeError on a non-array, crashing every ComparisonProvider consumer with no recovery. Compare lib/auth-token.ts which validates its parsed session before use. Fix: guard `Array.isArray(parsed)` (and ideally shape) before setListings, else removeItem."
+      ],
+      "files": [],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-unvalidated-listing-cast",
+      "title": "Client-side shared-comparison loader trusts an unvalidated network body across the API boundary, inconsistent with the app's own SSR normalizer discipline. ComparisonUrlHandler.tsx:43-47 (frontend/app",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-web)"
+      ],
+      "evidence": [
+        "Client-side shared-comparison loader trusts an unvalidated network body across the API boundary, inconsistent with the app's own SSR normalizer discipline. ComparisonUrlHandler.tsx:43-47 (frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx) fetches `${getApiBase()}/api/v1/listings/${id}` and returns `response.json() as Promise<ListingSummary>` — a raw runtime cast with NO shape validation — then pushes each result straight into `addToComparison(listing)` (line 70). The SSR sibling that hits the SAME reality-server listing endpoint deliberately does NOT trust the body: getListing() in app/[locale]/listings/[slug]/page.tsx:88-89 runs `parseListingDetail(body)` precisely because 'A 200 does not guarantee a well-formed body: an upstream/proxy partial response or a malformed listing is truthy but may be missing required nested fields ... Rendering such a body crashes SSR with a 500.' The client comparison path has no equivalent guard, so a malformed/partial 200 (or a shape mismatch — note the endpoint returns a listing DETAIL body but this code casts it to the narrower `ListingSummary`) is accepted as valid and can crash the client comparison view when a comparison card dereferences a missing nested field (e.g. address/photos). Fix: validate/normalize the fetched body through the same parser family (a `parseListingSummary`/`parseListingDetail`-style guard) before `addToComparison`, dropping bodies that fail the shape check exactly as `Promise.allSettled` already drops rejected ids, instead of the bare `as Promise<ListingSummary>` cast."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-edit-price-zero",
+      "title": "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:198 — handleSave does `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price <input> w",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:198 — handleSave does `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price <input> writes '' when cleared (line 629: `e.target.value === '' ? '' : Number(...)`), so clearing the field and saving coerces `Number('') || 0` => 0 and silently persists the listing at price 0. handleSave has no price validation (no required / positive / NaN check), unlike the public sell wizard and realtor ListingForm. Data-integrity bug on an owner-facing edit path: an accidental clear publishes a €0 listing with no error surfaced."
+      ],
+      "files": [],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "title": "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:33,72-73 — the login form reads its post-login destination from a user-controlled query param (`const redirectTo = searchParams.get('redi",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-05 reality-web auth)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:33,72-73 — the login form reads its post-login destination from a user-controlled query param (`const redirectTo = searchParams.get('redirect') ?? '/'`) and, after a successful `login()`, navigates to it with `const safe = redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/'; router.replace(safe);`. The guard rejects absolute URLs (`http://…`) and protocol-relative `//evil.com`, but it does NOT reject the backslash-escape form `/\\evil.com`. Browsers normalise `\\` to `/` during URL resolution, so `router.replace('/\\evil.com')` resolves to `//evil.com` → a protocol-relative navigation to an attacker origin. An attacker who gets a victim to open `https://<tenant>/sk/auth/login?redirect=/%5Cevil.example.com` and log in is silently bounced to evil.example.com immediately after authenticating — a classic post-auth open-redirect / phishing primitive.",
+        "The SIBLING callback page proves this is a real, known vector and that the login page simply missed it: frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:116-125 guards the same class of redirect param with THREE conditions — `rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.startsWith('/\\\\')` — and its test file callback/page.test.tsx:122-135 has dedicated cases 'rejects a protocol-relative redirect_uri' AND 'rejects a backslash-escaped redirect_uri (`/%5Cevil.example.com`)'. The login page's guard is the same idea with the third (`/\\`) clause dropped, and no test exercises the login redirect at all.",
+        "Impact: open redirect on the primary email/password login flow across every tenant host. Severity medium (phishing enabler / reputational — requires the victim to follow a crafted link and complete login; no direct data compromise). Confidence high: the full path is traced from the user-controlled `searchParams.get('redirect')` to `router.replace(safe)`, the missing clause is confirmed by direct diff against the tested sibling guard, and reachability is trivial (any anonymous visit to the login URL). Fix: extract the callback's 3-way check into one shared `isSafeInternalRedirect(path)` helper (reject non-`/` prefixes, `//`, and `/\\`, and ideally decode-then-recheck) and use it in BOTH login/page.tsx:72 and callback/page.tsx:122-124; add the `/\\evil.com` rejection test to the login page mirroring callback/page.test.tsx:129.",
+        "re-vectored bug→security: post-auth open-redirect used for phishing; qualifies for security fast-track (high confidence, score 2)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": "plans/code-review-reality-web-login-open-redirect-backslash.md"
+    },
+    {
+      "id": "code-review-reality-web-price-map-hardcoded-sk-i18n",
+      "title": "Price-map page renders hardcoded Slovak user-facing strings on a multi-language (sk/cs/de/en) public portal, bypassing next-intl. In frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx the p",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-web)"
+      ],
+      "evidence": [
+        "Price-map page renders hardcoded Slovak user-facing strings on a multi-language (sk/cs/de/en) public portal, bypassing next-intl. In frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx the property-type filter labels are literal Slovak: `PROPERTY_OPTIONS` (lines 29-34) = 'Všetky' / 'Byty' / 'Domy' / 'Pozemky', rendered verbatim as `{opt.label}` at line 189; and the transaction-type toggle at line 161 is `{tx === 'sale' ? 'Predaj' : 'Prenájom'}`. The rest of the same component is correctly localized via `useTranslations('pages.priceMap')` (line 40), so a de/en/cs visitor to /[locale]/price-map sees the page chrome translated but the sale/rent toggle and all four property-type chips stuck in Slovak. This is a genuine i18n coverage gap (not a design-system TODO): move these labels into the `pages.priceMap` message namespace (messages/{en,sk,cs,de}.json) and render them through `t(...)` keyed by the enum value, matching how the surrounding controls already resolve their text."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "title": "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the signed-in user's own profile route renders MOCK_PROFILE / MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS from ./_mock ",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the signed-in user's own profile route renders MOCK_PROFILE / MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS from ./_mock instead of the authenticated user's real data; the file's own header comment (lines 8-11) acknowledges 'when [auth] lands, replace MOCK_* with live data via the SDK'. The page ships showing placeholder identity, listings, activity and reviews to every logged-in user. Completeness stub — should fetch via the reality-api-client once the auth/session wiring is available."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/_mock.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "title": "RealtorManagement.tsx RealtorDetailModal has three destructive/state-changing handlers that await mutateAsync with NO try/catch: handleSave (updateRealtor.mutateAsync, L829-834 then setIsEditing(false",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "RealtorManagement.tsx RealtorDetailModal has three destructive/state-changing handlers that await mutateAsync with NO try/catch: handleSave (updateRealtor.mutateAsync, L829-834 then setIsEditing(false)), handleRemove (removeRealtor.mutateAsync, L838-839 then onClose()), handleStatusChange (updateRealtor.mutateAsync, L843-847).",
+        "updateRealtor.error / removeRealtor.error are NEVER read or rendered anywhere in the file (grep for '.error'/'.isError' finds only the mutateAsync call sites). On a failed remove-realtor or status-change the row/modal silently fails to update, the follow-up setState (setIsEditing(false)/onClose) never runs, and mutateAsync (unlike mutate) rejects -> unhandled promise rejection in a React event handler (React does not surface those).",
+        "The backing hooks useUpdateRealtor (agency/hooks.ts:307) and useRemoveRealtor (:333) define onSuccess (invalidateQueries) only, NO onError, so error surfacing is entirely the caller's responsibility.",
+        "The invite modal in the SAME file (handleSubmit, L568-580) already shows the correct pattern: try/catch around inviteRealtor.mutateAsync with setInviteError(t('inviteError')) rendered inline. Fix: mirror that pattern in the DetailModal handlers (try/catch, only run the follow-up setState on success, render an inline error using the existing t('inviteError')/agency namespace). removeRealtor is an irreversible action, so silent failure is the worst case."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-hardcoded-slovak",
+      "title": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx hardcodes Slovak-only UI strings — ':114 \"✓ Overený maklér\" (verified-realtor badge), :227 \"Aktívne ponuky (...)\", :330 \"Hodnotenia (..",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx hardcodes Slovak-only UI strings — ':114 \"✓ Overený maklér\" (verified-realtor badge), :227 \"Aktívne ponuky (...)\", :330 \"Hodnotenia (...)\" — bypassing next-intl useTranslations()/getTranslations() despite reality-web shipping sk/cs/de/en (per app CLAUDE.md and messages/*.json). cs/de/en visitors to any agent profile see Slovak. The page carries a data-i18n=\"pages.agent-profile.root\" marker (:32) but the visible copy is never routed through the message catalog. i18n localization defect on a public route."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-unwired",
+      "title": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:16-20 — the public agent-profile route renders MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS imported from ./_mock and NEVER re",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:16-20 — the public agent-profile route renders MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS imported from ./_mock and NEVER reads the [id] route param nor calls the reality-server API. Every /[locale]/realtor/<any-id> URL renders the same hardcoded mock agent, listings and reviews (147-line _mock.ts). Additionally the contact form's handleSendMessage (page.tsx:22-28, wired to <form onSubmit> at :591) is a no-op that only sets messageSent=true and closes the drawer — it never POSTs the inquiry to any endpoint, so realtor contact requests are silently dropped. Contrast: sibling app/[locale]/listings/[slug]/page.tsx and account/listings/[id]/edit/page.tsx are correctly wired (fetch by slug/id, response.ok checks, notFound(), getMyListing/updateListing from @/lib/realtor-api). Shipped-looking public route backed entirely by mocks with a dead contact action."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts"
+      ],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sell-price-nan",
+      "title": "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:127-128 — step-4 price validation is `if (form.price === '' || form.price === null) required; else if (Number(form.price) <= 0) positive;`. It ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:127-128 — step-4 price validation is `if (form.price === '' || form.price === null) required; else if (Number(form.price) <= 0) positive;`. It omits the `Number.isNaN(...)` guard that the area/rooms rules on lines 120-125 include, so a non-finite value (NaN / Infinity from a pathological number-input value) satisfies neither branch (`NaN <= 0` is false) and passes the wizard step. Inconsistent with the sibling numeric validators in the same function; align by adding the isNaN/finite check to price."
+      ],
+      "files": [],
+      "created_at": "2026-09-07",
+      "updated_at": "2026-09-07",
+      "plan": null
     }
   ]
 }

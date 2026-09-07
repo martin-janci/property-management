@@ -145,6 +145,380 @@
         "score": 2,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-first-visit-default",
+      "action": "useDashboardLayout.ts:37-58 -- the Phase-2 'background fetch' does `const fresh = await apiRequest<ResolvedScreen>('/api/v1/layout/resolved/${screen}?platform=mobile')` and, on a valid shape, calls `w",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-reportfault-perm-4xx-false-saved",
+      "action": "ReportFaultScreen.tsx:312-337 -- the online submit path wraps `apiRequest<CreateFaultResult>('/api/v1/faults', ...)` in try/catch and, in the catch (:327-334), unconditionally calls `queueForLater(pay",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "action": "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ quer",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "action": "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-136 (FinancialDashboardPageRoute): three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) destructure ONLY isLoading — never",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-locale-bundles-incomplete",
+      "action": "Systemic translation-coverage gap: every non-English ppt-web locale bundle is roughly HALF-populated relative to en.json. Measured by flattening each messages/*.json to leaf keys and diffing against e",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "action": "frontend/apps/ppt-web/src/App.tsx:72 — MfaWrapper.verify() calls raw `fetch('/api/v1/auth/mfa/verify', ...)` with a HARDCODED root-relative path, bypassing the app's configured API base URL. Every oth",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "action": "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:517-521 (GuestRegistrationPageRoute): the route fetches real guest data (rentalsApiListGuests, line 483) and groups it into bookingsWithPendingGuest",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "action": "ppt-web has NO global auth gate: App.tsx:272-275 renders `<RouteErrorBoundary><Suspense><AppRoutes/></Suspense></RouteErrorBoundary>` inside the always-rendered app shell (the shell only toggles heade",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-slovak-toasts",
+      "action": "features/documents/hooks/useDocumentDownload.ts:46-49 and features/documents/hooks/useMoveDocumentWithToast.ts:25-38 hardcode Slovak-only toast strings ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo s",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "action": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — `useIsManager()` is a hardcoded stub: `// Placeholder: Returns true during development to enable all manager features. //",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-deadnav",
+      "action": "PortfolioDashboardPage.tsx:266-268 -- every PropertyCard rendered in the portfolio dashboard grid is given an onClick handler whose entire body is a comment: `onClick={() => { // TODO: navigate to pro",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "action": "RegistryPage.tsx:17-21 and RegistryRulesPage.tsx:16-20 both instantiate `const registryApi = createRegistryApi({ baseUrl: API_BASE_URL, // accessToken and tenantId would come from auth context });` at",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-untranslated-feature-pages",
+      "action": "Systemic i18n completeness gap: 67 of 196 *Page.tsx / *List.tsx files under frontend/apps/ppt-web/src/features have NO useTranslation import at all — entire feature surfaces are hardcoded English desp",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "action": "AgencyBranding.tsx handleSave (L79-95) does `await updateBranding.mutateAsync({ agencyId, data: { logo, coverImage, primaryColor, ... } })` with NO try/catch, then resets hasChanges/logoFile/coverFile",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-cmp-ls-unchecked",
+      "action": "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — `const parsed = JSON.parse(stored); setListings(parsed);` on mount trusts the localStorage payload's shape. The try/catch only guards m",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-unvalidated-listing-cast",
+      "action": "Client-side shared-comparison loader trusts an unvalidated network body across the API boundary, inconsistent with the app's own SSR normalizer discipline. ComparisonUrlHandler.tsx:43-47 (frontend/app",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-edit-price-zero",
+      "action": "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:198 — handleSave does `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price <input> w",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "action": "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:33,72-73 — the login form reads its post-login destination from a user-controlled query param (`const redirectTo = searchParams.get('redi",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-reality-web-login-open-redirect-backslash.md",
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "action": "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the signed-in user's own profile route renders MOCK_PROFILE / MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS from ./_mock ",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=1 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "action": "RealtorManagement.tsx RealtorDetailModal has three destructive/state-changing handlers that await mutateAsync with NO try/catch: handleSave (updateRealtor.mutateAsync, L829-834 then setIsEditing(false",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-hardcoded-slovak",
+      "action": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx hardcodes Slovak-only UI strings — ':114 \"✓ Overený maklér\" (verified-realtor badge), :227 \"Aktívne ponuky (...)\", :330 \"Hodnotenia (..",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=1 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-unwired",
+      "action": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:16-20 — the public agent-profile route renders MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS imported from ./_mock and NEVER re",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "routine-buffer-refill 2026-09-07T04:34:53Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-07T04:34:53Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-09-06T04:29:19Z"

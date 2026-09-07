@@ -1,0 +1,609 @@
+{
+  "date": "2026-09-07",
+  "routine_run": "2026-09-07 buffer-refill",
+  "trigger": "buffer-low: claimable=8/72 — 31 tier1d frontend signals unpromoted",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn alert i18n leaks)",
+      "score_delta": 1,
+      "evidence": "Two otherwise heavily-localized screens leak user-facing English through Alert.alert() — the alert copy was missed when the rest of the screen was translated, so on a locale switch (sk/cs/de/en) the dialog appears in English.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-first-visit-default",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn dashboard layout stale-while-revalidate first-paint gap)",
+      "score_delta": 2,
+      "evidence": "useDashboardLayout.ts:37-58 -- the Phase-2 'background fetch' does `const fresh = await apiRequest<ResolvedScreen>('/api/v1/layout/resolved/${screen}?platform=mobile')` and, on a valid shape, calls `writeCachedLayout(sid, screen, fresh)` ONLY. It NEVER calls `setLayout(fresh)` (the comment at :37 says 'writes cache ONLY (never sets state)'). The rendered layout is set exclusively by Phase-1 cache-read at mount (:32-35) or the `DEFAULT_DASHBOARD_LAYOUT` initial state (:16).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-pathparam-not-decoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn deep-link path param URL-decode gap)",
+      "score_delta": 1,
+      "evidence": "DeepLinkHandler.ts:130-134 -- matchRoute extracts route path parameters by assigning the RAW path segment verbatim: `params[paramName] = pathPart;` with no decodeURIComponent. In contrast, query parameters in parseDeepLink (:80,:88-90) are parsed via `new URLSearchParams(rawQuery)` whose `.forEach` yields ALREADY percent-decoded values. So path params and query params are decoded inconsistently.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn person-months i18n)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx — 197-line user-facing screen imports NO useTranslation and makes ZERO t() calls (grep useTranslation=0, t(=0), so every string renders English for sk/cs/de/en users. This is a whole-screen gap, not a leak: the mobile app ships react-i18next with locales/ for all four languages and the rest of screens/ is localized.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-mobile-rn-reportfault-perm-4xx-false-saved",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 mobile-rn ReportFault caller-side misleading queued-success on permanent 4xx)",
+      "score_delta": 2,
+      "evidence": "ReportFaultScreen.tsx:312-337 -- the online submit path wraps `apiRequest<CreateFaultResult>('/api/v1/faults', ...)` in try/catch and, in the catch (:327-334), unconditionally calls `queueForLater(payload, t('faults.queuedOnErrorMessage'))` for ANY thrown error. queueForLater (:275-283) enqueues via addToQueue and shows an Alert whose body is the 'saved, will sync later' copy -- i.e. the user is told the fault was saved.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 mobile-rn widget-settings i18n)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx — imports useTranslation and makes only 2 t() calls, yet hardcodes most of its user-facing text: the component is partially localized, so the leaks render English on a 4-locale app while the surrounding chrome is translated (a worse look than a fully-untranslated screen).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-eager-instance",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib)",
+      "score_delta": 1,
+      "evidence": "lib/api.ts:321 `export default getApiClient();` is evaluated at module-import time. getApiClient() (api.ts:273-278) lazily builds the singleton via createAxiosInstance() with NO config, which as a side effect sets the module-level `tokenGetter = undefined` and `onUnauthorizedCallback = undefined` (api.ts:195-196) and pins baseURL to DEFAULT_BASE_URL / timeout to DEFAULT_TIMEOUT. So merely importing this module eagerly instantiates an unconfigured axios instance and mutates module globals before AuthContext ever calls configureApiClient().",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core lib/api.ts)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/lib/api.ts:321 — `export default getApiClient();` is evaluated eagerly at module import. getApiClient() (lines 273-278) lazily creates `apiInstance` via createAxiosInstance() with NO config, so the default-exported instance has `tokenGetter === undefined` and `onUnauthorizedCallback === undefined`. Later, AuthProvider calls configureApiClient() (AuthContext.tsx:352) which does `apiInstance = createAxiosInstance(config)` (api.ts:299) — a BRAND-NEW AxiosInstance. getApiClient() now returns the configured instance, but the default export still references the original, token-less one.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-query-roots-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core queryKeys/AuthContext)",
+      "score_delta": 2,
+      "evidence": "logout() (AuthContext.tsx:573-596) purges user-scoped TanStack Query cache by iterating a hand-maintained string allowlist: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (AuthContext.tsx:583-585). AUTHED_QUERY_KEY_ROOTS (queryKeys.ts:354-392) mixes THREE classes of root: (a) the centralized `queryKeys` factory roots, (b) shared @ppt/api-client key-factory roots (meters/reports), and (c) ~13 AD-HOC string roots used directly in feature hooks scattered across the tree (developer, ocr, actionQueue, executionLogs, executionStats, ai-chat, financial, rentals, predictive-maintenance, sentiment, notification-analytics, notification-triggers). Classes (b) and (c) are plain string literals with NO compile-time or lint link back to the query keys actually used at their call sites — nothing forces a new ad-hoc root to be added here.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core errorHandler)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/lib/errorHandler.ts:271-278 — parseHttpStatusError maps HTTP 403 (Forbidden) to code 'UNAUTHORIZED' with the UNAUTHORIZED copy, while 401 (line 263-270) maps to 'AUTHENTICATION_ERROR'. 403 is an authorization (permission) failure, not an authentication/session failure; labelling it UNAUTHORIZED conflates 'you are not permitted' with 'you are not signed in'.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-136 (FinancialDashboardPageRoute): three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) destructure ONLY isLoading — never isError/error. On any backend failure the values fall back to zeros/empties (totals => {current:0,...,total:0}, invoices => [], overdueInvoices => []) and the page is handed isLoading only, no error prop. Result: if the AR-aging or invoices endpoint 500s, the manager's financial dashboard renders totalOutstanding/totalOverdue/totalBalance = €0 with NO error indication — a load failure is indistinguishable from 'nothing is due', which is a decision-integrity hazard on a financial screen.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-locale-bundles-incomplete",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core i18n bundles)",
+      "score_delta": 2,
+      "evidence": "Systemic translation-coverage gap: every non-English ppt-web locale bundle is roughly HALF-populated relative to en.json. Measured by flattening each messages/*.json to leaf keys and diffing against en (3750 leaf keys): sk 1863 keys (missing 1895 / 50%), cs 1861 (missing 1897 / 50%), de 1774 (missing 1979 / 52%), pl 1763 (missing 1996 / 53%), hu 1757 (missing 1996 / 53%). Reproduce with a small json-flatten + set-diff over messages/en.json vs messages/{sk,cs,de,pl,hu}.json.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-core App.tsx MfaWrapper)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/App.tsx:72 — MfaWrapper.verify() calls raw `fetch('/api/v1/auth/mfa/verify', ...)` with a HARDCODED root-relative path, bypassing the app's configured API base URL. Every other API call in ppt-web routes through a configured base: lib/api.ts:64 `DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'` (comment: 'In production VITE_API_URL must be set'), and contexts/AuthContext.tsx:97 `API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''` for the generated @ppt/api-client. The MFA verify fetch uses NEITHER env var.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core useNetworkStatus)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts:47-49 — getOnlineSnapshot() reads `navigator.onLine` with no `typeof navigator !== 'undefined'` guard, while its two sibling helpers in the same file DO guard it: getInitialOnlineStatus (line 27-29) and the exported isOnline() (line 200-202) both return `typeof navigator !== 'undefined' ? navigator.onLine : true`.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core OrganizationProvider)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — the context `value` is rebuilt as a fresh object literal on every render (`user?.organizationId ? { organizationId, organizationName } : null`) with no useMemo. It is passed directly to <OrganizationContext.Provider value={value}>.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:517-521 (GuestRegistrationPageRoute): the route fetches real guest data (rentalsApiListGuests, line 483) and groups it into bookingsWithPendingGuests, but every action the page exposes is a no-op stub — onRegisterGuest={() => {}}, onRegisterAllGuests={() => {}}, onEditGuest={() => {}}, onAddGuest={() => {}}. The guest-registration screen (its entire reason for existing) renders functional buttons that silently do nothing; no toast, no navigation, no mutation. Unlike RentalsCalendarPageRoute/TaxReportPageRoute these are NOT documented as 'no endpoint yet', so this reads as unfinished wiring, not an intentional stub.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-route-group-toasts-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-core routes)",
+      "score_delta": 1,
+      "evidence": "User-facing success/error toast copy is hardcoded English in several route-group files, bypassing react-i18next even though each of these files already imports useTranslation and localizes other strings (so t() is in scope): iot.tsx (useTranslation present) hardcodes 'Sensor deleted' (line 194), 'Failed to delete sensor' (198), 'Sensor registered' (255), 'Failed to register sensor' (260), 'Sensor updated' (333), 'Failed to update sensor' (338); meters.tsx hardcodes 'Submitted'/'Reading submitted' (243), 'Submit failed' (248), 'Updated' (296), 'Update failed' (303), 'Done'/'Reading validated' (337), 'Validation failed' (341); faults.tsx hardcodes 'Created'/'Fault reported' (368), 'Failed to report fault' (373), 'Updated'/'Fault updated' (505), 'Failed to update fault' (510); community.tsx hardcodes 'Created'/'Group created' (66).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-protectedroute",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-core routes)",
+      "score_delta": 2,
+      "evidence": "ppt-web has NO global auth gate: App.tsx:272-275 renders `<RouteErrorBoundary><Suspense><AppRoutes/></Suspense></RouteErrorBoundary>` inside the always-rendered app shell (the shell only toggles header UI on `isAuthenticated`, App.tsx:164/173/183). AppRoutes.tsx:39-67 composes every feature route-group fragment flat under a single `<Routes>` with no enclosing `<Route element={<ProtectedRoute/>}>` parent. So the ONLY auth gate for a feature route is a per-route `<ProtectedRoute>` wrapper inside its group file.",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-validation-error-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-core lib/errorHandler)",
+      "score_delta": 1,
+      "evidence": "errorHandler.ts documents an i18n contract in its header (errorHandler.ts:7-10): user-facing copy 'is resolved through the shared i18n' and only opaque tokens (requestIds, raw backend messages) pass through untranslated. parseApiError honours this by resolving titles/messages via `i18n.t('errors.catalogue.<code>...')` (errorHandler.ts:103,108-117,133). But formatFieldName (errorHandler.ts:437-447) builds a user-facing field LABEL purely from the English field path: it splits the backend snake_case path on '_' and Title-cases each ASCII word (`word.charAt(0).toUpperCase() + word.slice(1)`), with no i18n lookup. formatValidationErrors (errorHandler.ts:422-428) then renders `${formatFieldName(field)}: ${message}` for display.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-send-envelope-mismatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-core lib/websocket)",
+      "score_delta": 1,
+      "evidence": "Asymmetric wire contract: on RECEIVE, parseServerMessage (websocket.ts:65-82) treats the canonical server frame as `{ event, payload }` and maps `event` -> internal `type`. On SEND, WebSocketService.send (websocket.ts:444-457) does `this.socket.send(JSON.stringify(message))` where `message` is the internal WebSocketMessage shape `{ type, payload, timestamp }` (websocket.ts:38-43) — it is emitted verbatim with a `type` key, never re-mapped back to the server's `{ event, payload }` envelope. A server that parses inbound frames as WsEvent `{ event, payload }` (mirroring ws_notifications.rs) would see `event: undefined` and drop/ignore the frame.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-native-confirm-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)",
+      "score_delta": 1,
+      "evidence": "features/accounting/pages/AccountingInvoiceManagementPage.tsx:108 gates a destructive delete behind the native browser confirm('Are you sure you want to delete this invoice?') instead of the shared <ConfirmationDialog> used elsewhere (emergency, oauth-grants), and lines 49,64 hardcode English toast titles ('Failed to create invoice', 'Failed to delete invoice'). Native confirm() is unstyleable, untranslatable, and inconsistent with the app's confirmation UX pattern.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-contact-labels-in-api-client",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui)",
+      "score_delta": 1,
+      "evidence": "Anti-pattern: user-facing display labels are defined as a hardcoded English string map (CONTACT_TYPE_LABELS) inside the @ppt/api-client package at frontend/packages/api-client/src/emergency/types.ts:77-87, then consumed as visible UI text by ppt-web (EmergencyContactDirectoryPage / EmergencyContactsList). This couples presentation copy to the API-client/transport layer, makes the labels unreachable by react-i18next, and means any i18n fix for the emergency feature (finding code-review-ppt-web-ui-emergency-untranslated-ui) must first move these labels out of the shared client. Recommend the client export only the ContactType enum/values and let ppt-web resolve display strings via its i18n catalog (emergency.contactType.<value>).",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-slovak-toasts",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)",
+      "score_delta": 2,
+      "evidence": "features/documents/hooks/useDocumentDownload.ts:46-49 and features/documents/hooks/useMoveDocumentWithToast.ts:25-38 hardcode Slovak-only toast strings ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo stiahnuť.', 'Dokument presunutý', 'Presun zlyhal', '„...\" bol presunutý do priečinka.') instead of routing through react-i18next t(). App ships sk/cs/de/en — cs/de/en users see Slovak. These are churn-hotspot files (documents feature). Localization defect, not just a gap.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-emergency-untranslated-ui",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui emergency)",
+      "score_delta": 1,
+      "evidence": "Emergency feature (Epic 62) renders user-facing UI text that never routes through react-i18next, despite the page importing useTranslation and localizing everything else. (1) EmergencyContactsList.tsx:30-31 hardcodes the empty-state copy 'No emergency contacts found.' / 'Add your first emergency contact to get started.' as raw literals — an empty-state exists but its text is English-only. (2) The contact-type dropdown in EmergencyContactDirectoryPage.tsx:216-221 and the group headings in EmergencyContactsList.tsx:87 render CONTACT_TYPE_LABELS values ('Fire Department', 'Police', 'Ambulance', ...) directly as visible labels. App ships sk/cs/de/en; cs/de/en/sk users see these strings in English. Fix: wrap the empty-state copy in t() and map contact types to i18n keys instead of the English label map.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-bookings-hardcoded-toasts",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 ppt-web-ui)",
+      "score_delta": 1,
+      "evidence": "features/facilities/pages/MyBookingsPage.tsx:45,86 and features/facilities/pages/PendingBookingsPage.tsx:46,71,97 hardcode English toast titles/messages ('Failed to load bookings', 'Failed to cancel booking', 'Failed to approve/reject booking', 'An unexpected error occurred.') despite both pages already importing useTranslation and using t() for other copy (line 18). Inconsistent i18n — error toasts never localized for sk/cs/de.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-forms-hardcoded-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)",
+      "score_delta": 1,
+      "evidence": "EditFacilityPage.tsx has NO `useTranslation` import at all (checked full file) — every user-facing string is hardcoded English: 'Edit Facility' (line 89 heading), 'Failed to load facility' (line 30, set as the error banner text), 'Failed to update facility' (line 50, mutation-error fallback), 'Facility not found' (line 74), 'Go back' (line 80). This is the sole page under features/facilities/pages that skips i18n entirely — its siblings (BookFacilityPage, FacilitiesPage's FacilityList) at least partially use `t()`.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-stub-true",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui facilities)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:36-41 — `useIsManager()` is a hardcoded stub: `// Placeholder: Returns true during development to enable all manager features. // Replace with actual role check when AuthContext is implemented for ppt-web.` and the body is simply `return true;`. It is not gated behind a dev-only flag or feature flag — it ships as-is.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui forms/government-portal)",
+      "score_delta": 1,
+      "evidence": "The entire `forms` feature ships with zero localization: none of its five page files (AvailableFormsPage, FormsPage, FillFormPage, CreateFormPage, ViewFormPage) import useTranslation / react-i18next at all. Confirmed hardcoded English in frontend/apps/ppt-web/src/features/forms/pages/AvailableFormsPage.tsx: <h1>'Available Forms'</h1> (line 63), 'All Categories' option (74), and the empty state 'No forms available' (130). The other four form pages share the same no-i18n-import shape.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui marketplace i18n)",
+      "score_delta": 1,
+      "evidence": "The entire marketplace page set renders hardcoded English with ZERO useTranslation wiring (grep -c useTranslation returns 0 for all five pages), on a manager-facing product that ships react-i18next (root CLAUDE.md; the rest of ppt-web localizes via useTranslation as seen in voting/VoteDetailPage). Any non-English manager sees these screens entirely in English.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-full-page-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui compliance)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:203-208 — handleViewContent navigates to an INTERNAL route with a hard document navigation: `window.location.href = `/compliance/moderation/cases/${caseId}``, guarded by its own TODO 'Use React Router's useNavigate for SPA navigation / Phase 1: Full page reload for simplicity'. Every 'view content' click on a moderation case tears down and re-boots the whole React SPA (re-runs bootstrap, re-fetches auth/building context, drops in-memory TanStack Query cache and the moderation list scroll/filter state) instead of a client-side transition — a measurable UX and performance regression on a manager tool with list-of-cases drill-in.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-deadnav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui portfolio dead interaction)",
+      "score_delta": 2,
+      "evidence": "PortfolioDashboardPage.tsx:266-268 -- every PropertyCard rendered in the portfolio dashboard grid is given an onClick handler whose entire body is a comment: `onClick={() => { // TODO: navigate to property detail route }}`. The cards render as interactive (PropertyCard receives and wires onClick) so a manager clicking a property tile on a SHIPPED dashboard gets zero response -- a dead-end user-facing interaction, not merely a missing feature flag.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-perf-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 ppt-web-ui portfolio-performance i18n)",
+      "score_delta": 1,
+      "evidence": "The portfolio-performance feature pages/components render hardcoded English with no useTranslation, including user-facing loading/error/empty states -- PortfolioDashboardPage.tsx:257 'Loading properties…', :259 'Failed to load property performance.', :261 'No properties in this portfolio yet.'; PortfolioListPage.tsx:115 'Total Value', :121 'Total Equity', :125 'Total Properties'; PortfolioCard.tsx:64 'Total Value', :68 'Total Equity'; CashFlowChart.tsx:71 'Total Income', :77 'Total Expenses', :83 'Total NOI'. Error/empty-state copy in particular is exactly the text a non-English manager most needs localized.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-02 ppt-web-ui registry)",
+      "score_delta": 2,
+      "evidence": "RegistryPage.tsx:17-21 and RegistryRulesPage.tsx:16-20 both instantiate `const registryApi = createRegistryApi({ baseUrl: API_BASE_URL, // accessToken and tenantId would come from auth context });` at MODULE scope (evaluated once at import time), with no accessToken or tenantId ever supplied — the comment is a live TODO, not a resolved wiring.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-untranslated-feature-pages",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 ppt-web-ui)",
+      "score_delta": 2,
+      "evidence": "Systemic i18n completeness gap: 67 of 196 *Page.tsx / *List.tsx files under frontend/apps/ppt-web/src/features have NO useTranslation import at all — entire feature surfaces are hardcoded English despite the app's sk/cs/de/en requirement. Whole pages affected include community (FeedPage, EventsPage, GroupsPage, GroupDetailPage, CreateGroupPage), workflow-automation (AutomationRulesPage), marketplace (QuoteComparisonPage), financial (FinancialDashboardPage, InvoiceList/OverdueInvoicesList/RecentPaymentsList), buildings (BuildingsPage, BuildingDetailPage, BuildingList), announcements (AnnouncementsPage, Create/EditAnnouncementPage), forms (Available/CreateFormPage, FormList, SubmissionList) and the error pages (NotFound/Forbidden/ServerError/SessionExpired). This is broader than scattered toast literals (see 2026-09-03 pass) — these components localize nothing. Recommend a tracked i18n-backfill sweep, prioritizing high-traffic pages (community feed, financial dashboard, buildings) and the error pages. Grep to reproduce: for each features/**/*Page.tsx|*List.tsx, flag files where `grep -q useTranslation` fails.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-06 ppt-web-ui voting)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/voting/pages/VotingPage.tsx:8-11 — the voting LIST page imports neither useTranslation nor any i18n helper (only api-client hooks, Spinner, VoteCard, and VOTE_STATUS_LABELS), and every user-facing string is a hardcoded English literal: the <h1> 'Voting' (line 54), the summary line '{n} vote{s} · {open} open · {closed} closed' (55-58), the '+ New vote' button (66), the 'All' filter label (81), the error state 'Failed to load votes: … Unknown error' (94-95), the empty state 'No votes yet.' (100) and 'Create the first vote' CTA (104). None go through t().",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "AgencyBranding.tsx handleSave (L79-95) does `await updateBranding.mutateAsync({ agencyId, data: { logo, coverImage, primaryColor, ... } })` with NO try/catch, then resets hasChanges/logoFile/coverFile.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "realtor/[id]/page.tsx is a PUBLIC, per-agent dynamic route but ignores the [id] param entirely: `const agent = MOCK_AGENT;` (L20), rendering MOCK_AGENT/MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS (imported from ./_mock, L11) regardless of which agent id is requested. Every agent URL renders the same fabricated agent, listings and reviews — a public page serving mock data.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-auth-nav-drops-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 reality-web auth)",
+      "score_delta": 1,
+      "evidence": "The three email/password auth pages do programmatic navigation with the raw, non-locale-aware router from `next/navigation` using unprefixed absolute paths, so the user's active locale (cs/de/en) is dropped on the post-auth hop and next-intl's middleware re-resolves to the DEFAULT locale (sk). register/page.tsx:9,26,81 — `import { useRouter } from 'next/navigation'` then `onClick={() => router.push('/auth/login')}` (no `/[locale]` prefix). reset-password/page.tsx:9,18,90 — same import, `router.replace('/auth/login')`. login/page.tsx:20,31,73 — `router.replace(safe)` where `safe` defaults to bare `'/'` when no redirect param is present.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-cmp-ls-unchecked",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — `const parsed = JSON.parse(stored); setListings(parsed);` on mount trusts the localStorage payload's shape. The try/catch only guards malformed JSON, not a wrong-typed-but-valid JSON value (a legacy/corrupted entry that parses to a non-array object). listings is then consumed unguarded by `.some((l)=>l.id===...)` (line 65) and `.map(...)` (line 93/generateShareUrl), which throw TypeError on a non-array, crashing every ComparisonProvider consumer with no recovery. Compare lib/auth-token.ts which validates its parsed session before use. Fix: guard `Array.isArray(parsed)` (and ideally shape) before setListings, else removeItem.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-comparison-unvalidated-listing-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-web)",
+      "score_delta": 2,
+      "evidence": "Client-side shared-comparison loader trusts an unvalidated network body across the API boundary, inconsistent with the app's own SSR normalizer discipline. ComparisonUrlHandler.tsx:43-47 (frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx) fetches `${getApiBase()}/api/v1/listings/${id}` and returns `response.json() as Promise<ListingSummary>` — a raw runtime cast with NO shape validation — then pushes each result straight into `addToComparison(listing)` (line 70). The SSR sibling that hits the SAME reality-server listing endpoint deliberately does NOT trust the body: getListing() in app/[locale]/listings/[slug]/page.tsx:88-89 runs `parseListingDetail(body)` precisely because 'A 200 does not guarantee a well-formed body: an upstream/proxy partial response or a malformed listing is truthy but may be missing required nested fields ... Rendering such a body crashes SSR with a 500.' The client comparison path has no equivalent guard, so a malformed/partial 200 (or a shape mismatch — note the endpoint returns a listing DETAIL body but this code casts it to the narrower `ListingSummary`) is accepted as valid and can crash the client comparison view when a comparison card dereferences a missing nested field (e.g. address/photos). Fix: validate/normalize the fetched body through the same parser family (a `parseListingSummary`/`parseListingDetail`-style guard) before `addToComparison`, dropping bodies that fail the shape check exactly as `Promise.allSettled` already drops rejected ids, instead of the bare `as Promise<ListingSummary>` cast.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-edit-price-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:198 — handleSave does `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price <input> writes '' when cleared (line 629: `e.target.value === '' ? '' : Number(...)`), so clearing the field and saving coerces `Number('') || 0` => 0 and silently persists the listing at price 0. handleSave has no price validation (no required / positive / NaN check), unlike the public sell wizard and realtor ListingForm. Data-integrity bug on an owner-facing edit path: an accidental clear publishes a €0 listing with no error surfaced.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-05 reality-web auth)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:33,72-73 — the login form reads its post-login destination from a user-controlled query param (`const redirectTo = searchParams.get('redirect') ?? '/'`) and, after a successful `login()`, navigates to it with `const safe = redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/'; router.replace(safe);`. The guard rejects absolute URLs (`http://…`) and protocol-relative `//evil.com`, but it does NOT reject the backslash-escape form `/\\evil.com`. Browsers normalise `\\` to `/` during URL resolution, so `router.replace('/\\evil.com')` resolves to `//evil.com` → a protocol-relative navigation to an attacker origin. An attacker who gets a victim to open `https://<tenant>/sk/auth/login?redirect=/%5Cevil.example.com` and log in is silently bounced to evil.example.com immediately after authenticating — a classic post-auth open-redirect / phishing primitive.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-price-map-hardcoded-sk-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-04 reality-web)",
+      "score_delta": 1,
+      "evidence": "Price-map page renders hardcoded Slovak user-facing strings on a multi-language (sk/cs/de/en) public portal, bypassing next-intl. In frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx the property-type filter labels are literal Slovak: `PROPERTY_OPTIONS` (lines 29-34) = 'Všetky' / 'Byty' / 'Domy' / 'Pozemky', rendered verbatim as `{opt.label}` at line 189; and the transaction-type toggle at line 161 is `{tx === 'sale' ? 'Predaj' : 'Prenájom'}`. The rest of the same component is correctly localized via `useTranslations('pages.priceMap')` (line 40), so a de/en/cs visitor to /[locale]/price-map sees the page chrome translated but the sale/rent toggle and all four property-type chips stuck in Slovak. This is a genuine i18n coverage gap (not a design-system TODO): move these labels into the `pages.priceMap` message namespace (messages/{en,sk,cs,de}.json) and render them through `t(...)` keyed by the enum value, matching how the surrounding controls already resolve their text.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-profile-page-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the signed-in user's own profile route renders MOCK_PROFILE / MOCK_LISTINGS / MOCK_ACTIVITY / MOCK_REVIEWS from ./_mock instead of the authenticated user's real data; the file's own header comment (lines 8-11) acknowledges 'when [auth] lands, replace MOCK_* with live data via the SDK'. The page ships showing placeholder identity, listings, activity and reviews to every logged-in user. Completeness stub — should fetch via the reality-api-client once the auth/session wiring is available.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "RealtorManagement.tsx RealtorDetailModal has three destructive/state-changing handlers that await mutateAsync with NO try/catch: handleSave (updateRealtor.mutateAsync, L829-834 then setIsEditing(false)), handleRemove (removeRealtor.mutateAsync, L838-839 then onClose()), handleStatusChange (updateRealtor.mutateAsync, L843-847).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-hardcoded-slovak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx hardcodes Slovak-only UI strings — ':114 \"✓ Overený maklér\" (verified-realtor badge), :227 \"Aktívne ponuky (...)\", :330 \"Hodnotenia (...)\" — bypassing next-intl useTranslations()/getTranslations() despite reality-web shipping sk/cs/de/en (per app CLAUDE.md and messages/*.json). cs/de/en visitors to any agent profile see Slovak. The page carries a data-i18n=\"pages.agent-profile.root\" marker (:32) but the visible copy is never routed through the message catalog. i18n localization defect on a public route.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-realtor-profile-mock-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-03 reality-web)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:16-20 — the public agent-profile route renders MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS imported from ./_mock and NEVER reads the [id] route param nor calls the reality-server API. Every /[locale]/realtor/<any-id> URL renders the same hardcoded mock agent, listings and reviews (147-line _mock.ts). Additionally the contact form's handleSendMessage (page.tsx:22-28, wired to <form onSubmit> at :591) is a no-op that only sets messageSent=true and closes the drawer — it never POSTs the inquiry to any endpoint, so realtor contact requests are silently dropped. Contrast: sibling app/[locale]/listings/[slug]/page.tsx and account/listings/[id]/edit/page.tsx are correctly wired (fetch by slug/id, response.ok checks, notFound(), getMyListing/updateListing from @/lib/realtor-api). Shipped-looking public route backed entirely by mocks with a dead contact action.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    },
+    {
+      "id": "code-review-reality-web-sell-price-nan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:127-128 — step-4 price validation is `if (form.price === '' || form.price === null) required; else if (Number(form.price) <= 0) positive;`. It omits the `Number.isNaN(...)` guard that the area/rooms rules on lines 120-125 include, so a non-finite value (NaN / Infinity from a pathological number-input value) satisfies neither branch (`NaN <= 0` is false) and passes the wizard step. Inconsistent with the sibling numeric validators in the same function; align by adding the isNaN/finite check to price.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "promoted_from": "tier1d-signals-catch-up"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 …",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … cursor+seen advance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq \"[.items[].id] | (length == (unique | length))\" backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no-repeat non-cumulative signal id with nonzero score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq \"[.items[] | select(.score > 8)] | length == 0\"",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan count <= 2, all sections + files present",
+      "observed": "1 new plan; all sections + files present",
+      "expected": "<=2 valid"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v \"^.research/\" | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached … | grep -E \"secret patterns\" | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "staged archive >= head archive",
+      "observed": "9 >= 9",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq \".auto_fix_actions | length\"",
+      "observed": "0",
+      "expected": "<=3 with sub-caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — G16 is no-op",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty: Phase 1.5/1.6 skipped explicitly, cursors not advanced for them",
+      "observed": "review_cursor + pm_cursor unchanged",
+      "expected": "no false advance"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge — 1 new plan added, no plan silently removed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plan has \"adversarial pass:\" annotation in brief",
+      "observed": "brief says adversarial pass: passed",
+      "expected": "annotation present"
+    }
+  ]
+}
