@@ -1,0 +1,185 @@
+{
+  "date": "2026-09-07",
+  "run_iso": "2026-09-07T03:15:00Z",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-07",
+      "type": "lag_warning",
+      "source": "routine cadence",
+      "score_delta": 0,
+      "evidence": [
+        "state.last_run_iso=2026-09-01T18:38:58Z; now=2026-09-07T03:15:00Z; lag=132h (5d 12h) — cloud routine skipped ~5 daily slots"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit; churn since last cursor = 3427 lines (numstat sum) on origin/dev; hotspot_history bumped runs_seen 1 -> 2"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit; churn since last cursor = 2999 lines (numstat sum) on origin/dev; hotspot_history bumped runs_seen 3 -> 4"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit; churn since last cursor = 2799 lines (numstat sum) on origin/dev; hotspot_history bumped runs_seen 2 -> 3"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit; hotspot_history.runs_seen=3 at run start (>=2 threshold), instability proxy still holding"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$TODAY.md && head -1 matches # $TODAY",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id]|(length==(unique|length))",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s cumulative-carveout filter",
+      "observed": "true",
+      "expected": "true",
+      "remediation": "cumulative types (churn-hotspot, repeated-churn) allowed to re-emit with score_delta=0; all re-emits set score_delta=0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial pass annotation for each new plan",
+      "observed": "1/1 plans have annotation",
+      "expected": "1/1"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A -- .research/plans/ | grep -c .md$",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secret patterns in staged diff (excl. baseline docs)",
+      "observed": "0 leaks",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures reported this run",
+      "observed": "no failed phases",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present in plans/ or plans/_archive/",
+      "observed": "all prior slugs present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ ls-files _archive count >= HEAD _archive count ]",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length <= 3 caps",
+      "observed": "0 actions this run",
+      "expected": "<=1 pr, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management-artifact + pm_cursor validity (no-op when pm_cursor did not advance)",
+      "observed": "pm_cursor unchanged this run — GC7 no-op",
+      "expected": "no-op or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram-token patterns in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

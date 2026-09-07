@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (last update 2026-08-19)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-07",
       "plan": null
     },
     {
@@ -9879,7 +9880,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 4,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
         "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
@@ -9897,7 +9898,8 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-01"
+      "updated_at": "2026-09-07",
+      "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
