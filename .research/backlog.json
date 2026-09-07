@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (last update 2026-08-19); score 1 → 0 → dropped on 2026-09-07"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-07",
       "plan": null
     },
     {
@@ -7842,16 +7843,17 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "needs-human-judgement",
+      "status": "done",
       "sources": [
         "PR #2558"
       ],
       "evidence": [
-        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559."
+        "PR #2558 opened 2026-07-28 by martin-janci; last activity 2026-07-30 (13d idle, 15d open). Accounting Phase-A follow-up; sibling of #2555/#2559.",
+        "resolved: PR #2558 merged 2026-09-04 — feat(acc): invoice PDF render endpoint (UC-ACC-05.9)"
       ],
       "files": [],
       "created_at": "2026-08-12",
-      "updated_at": "2026-08-12",
+      "updated_at": "2026-09-07",
       "plan": null
     },
     {

@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-07",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-07",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": "routine last ran 5d 5h ago (last_run_iso 2026-09-01T18:38:58Z; now 2026-09-07T00:37Z). stale_routine_alert also flagged (>=3d threshold). Cloud routine was silent while dispatcher (separate loop) kept ticking.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no allowlist signal type this run; only lag_warning fired, score_delta=0)",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/<today>.md && head -1 matches # <today>",                                      "observed": "exit 0",                 "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "jq compares staged state.json vs HEAD",                                                       "observed": "true",                    "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq unique ids check",                                                                          "observed": "true",                    "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "no non-cumulative signal re-emitted with non-zero delta",                                     "observed": "true",                    "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "no score>8; open items >=14d decayed or dropped",                                             "observed": "cap true; decay verified", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "each new plan has adversarial-pass annotation",                                                "observed": "vacuous (0 new plans)",    "expected": "vacuous or pass" },
+    { "goal": "G7",  "passed": true,  "command": "<= 2 new plans; each meets metadata + heading + capability + mode + files-exist gates",       "observed": "0 new plans",              "expected": "<=2" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",                               "observed": "0",                        "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "no secret / private hostname patterns in staged diff (baseline docs excluded)",               "observed": "0 matches",                "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "diff -q backlog.md /tmp/backlog.regen.md",                                                    "observed": "exit 0",                   "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "brief lists Phases that failed; skipped-cursors not advanced",                                "observed": "phase-1.5-skipped, phase-1.6-skipped listed; review_cursor+pm_cursor+coverage_cursor not advanced", "expected": "consistent" },
+    { "goal": "G12", "passed": true,  "command": "each HEAD plan still in plans/ or _archive/",                                                 "observed": "all present",              "expected": "all present" },
+    { "goal": "G13", "passed": true,  "command": "archive tracked-file count now >= HEAD count",                                                "observed": "9 >= 9",                   "expected": ">= HEAD" },
+    { "goal": "G14", "passed": true,  "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",                                          "observed": "exit 0",                   "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions caps + idempotency + kill-switch honored (nothing fired)",                   "observed": "empty",                    "expected": "true" },
+    { "goal": "G16", "passed": true,  "command": "management artifacts valid — Phase 1.6 skipped this run",                                      "observed": "no-op (Phase 1.6 skipped)", "expected": "no-op or pass" },
+    { "goal": "G17", "passed": true,  "command": "no Telegram bot-token value in staged diff (baseline docs excluded)",                          "observed": "0 matches",                "expected": "0" }
+  ]
+}
