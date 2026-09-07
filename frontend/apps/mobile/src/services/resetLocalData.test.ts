@@ -45,6 +45,12 @@ describe('resetLocalData', () => {
     // regardless of the dynamic scope/screen suffix (issue #2486).
     mockStore.set('ppt_layout_org-a_ppt_dashboard', '{}');
     mockStore.set('ppt_layout_org-b_ppt_dashboard', '{}');
+    // Feature caches that hold tenant-scoped history/queues (issue #2947).
+    mockStore.set('@ppt/access_log', '[]');
+    mockStore.set('@ppt/qr_scan_history', '[]');
+    mockStore.set('@ppt/feedback_drafts', '[]');
+    mockStore.set('@ppt/pending_feedback', '[]');
+    mockStore.set('@ppt/faq_votes', '{}');
     // Keys outside the tenant-cache namespace must survive. `ppt_access_token`
     // starts with `ppt_` but not `ppt_cache_`, so prefix scoping must not
     // over-match it.
@@ -54,6 +60,27 @@ describe('resetLocalData', () => {
     await resetLocalData();
 
     expect(Array.from(mockStore.keys()).sort()).toEqual(['ppt_access_token', 'some_other_key']);
+  });
+
+  // issue #2947 — the purge omitted these tenant-scoped feature caches, so on a
+  // shared device the next tenant saw the prior tenant's NFC access log / QR
+  // scan history, and queued offline feedback flushed under the wrong identity.
+  it.each([
+    '@ppt/access_log',
+    '@ppt/qr_scan_history',
+    '@ppt/feedback_drafts',
+    '@ppt/pending_feedback',
+    '@ppt/faq_votes',
+  ])('purges tenant-scoped feature cache %s on session change (#2947)', async (key) => {
+    mockStore.set(key, '[]');
+    // An unrelated `@ppt/` key that is not tenant-scoped must survive, so the
+    // fix cannot be a blanket `@ppt/` wipe.
+    mockStore.set('@ppt/theme', 'dark');
+
+    await resetLocalData();
+
+    expect(mockStore.has(key)).toBe(false);
+    expect(mockStore.get('@ppt/theme')).toBe('dark');
   });
 
   it('does not call removeMany when nothing matches', async () => {
