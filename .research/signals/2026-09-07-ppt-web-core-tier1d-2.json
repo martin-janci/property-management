@@ -1,0 +1,59 @@
+{
+  "generated": "2026-09-07T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (claim buffer starved honest_claimable=8 < floor=36, cloud-verifiable-only) 2026-09-07",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "churn-aligned + cloud-verifiable frontend. Phase-1 hotspot_history frontend churn sits under frontend/apps/ppt-web/src/ (App.tsx runs_seen=3, disputes/documents feature files); App.tsx maps to the ppt-web-core segment (router/root + lib/ + hooks/ + contexts/). ppt-web-core cursor is 2026-08-29 (oldest-tied). Backend api-server / mobile-native-kmp deliberately avoided per dispatcher note (structurally unlandable in cloud runner: egress-proxy 403s on utoipa-swagger-ui + AGP). Saturation check: 0 OPEN code-review-finding rows for ppt-web-core in backlog.json (skill Step 1 gate passed). A prior 2026-09-07 ppt-web-core pass (…-tier1d.json) covered feature files (rentals no-op handlers, financial-dash false zeros); this -2 pass covers the DISTINCT true-core infra files it did not touch — lib/errorHandler.ts, hooks/useNetworkStatus.ts, contexts/OrganizationProvider.tsx — so no finding collision. Static analysis only: no compilation, no test execution. NOTE: this generator did NOT git add/commit/push; findings written to working tree for the dispatcher Phase-6 fold (DISPATCHER_OWNED_COMMIT=1).",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core errorHandler)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/lib/errorHandler.ts"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:271-278 — parseHttpStatusError maps HTTP 403 (Forbidden) to code 'UNAUTHORIZED' with the UNAUTHORIZED copy, while 401 (line 263-270) maps to 'AUTHENTICATION_ERROR'. 403 is an authorization (permission) failure, not an authentication/session failure; labelling it UNAUTHORIZED conflates 'you are not permitted' with 'you are not signed in'.",
+        "Impact: the parsed .code for a 403 is indistinguishable from a genuine auth failure, so any UI/branch that treats UNAUTHORIZED/AUTHENTICATION_ERROR as 'session invalid -> redirect to login / clear session' would wrongly log the user out on a mere permission denial. This fallback path fires whenever a 403 arrives WITHOUT a structured backend ErrorResponse body (the structured-body path at line 164-166 uses the backend's own data.error and is unaffected).",
+        "Severity low (copy/semantic mislabel on a fallback branch; no crash). Confidence medium: the mapping is unambiguous on static read; whether it triggers a logout cascade depends on downstream consumers of .code. Fix: give 403 its own code (e.g. 'FORBIDDEN'/'PERMISSION_DENIED') with a distinct catalogue entry, or at minimum stop reusing the auth-error copy so 403 is not treated as a session-expiry."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core useNetworkStatus)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts:47-49 — getOnlineSnapshot() reads `navigator.onLine` with no `typeof navigator !== 'undefined'` guard, while its two sibling helpers in the same file DO guard it: getInitialOnlineStatus (line 27-29) and the exported isOnline() (line 200-202) both return `typeof navigator !== 'undefined' ? navigator.onLine : true`.",
+        "getOnlineSnapshot is the client `getSnapshot` passed to useSyncExternalStore (line 82-86); getServerSnapshot covers SSR, so in a real browser this never throws. But the inconsistency is a latent hazard: any non-DOM execution of the client snapshot (a test/renderer without a `navigator` global, a future non-browser host) throws a ReferenceError where the guarded siblings degrade gracefully to 'online'.",
+        "Severity low (robustness/consistency; practically inert in-browser). Confidence medium. Fix: guard getOnlineSnapshot identically — `return typeof navigator !== 'undefined' ? navigator.onLine : true;` — so all three read paths share one hardened accessor."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core OrganizationProvider)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — the context `value` is rebuilt as a fresh object literal on every render (`user?.organizationId ? { organizationId, organizationName } : null`) with no useMemo. It is passed directly to <OrganizationContext.Provider value={value}>.",
+        "OrganizationProvider re-renders whenever the AuthContext value changes; notably a silent token refresh (contexts/AuthContext.tsx refreshTokenInternal -> setUser(updated), line 433-435) produces a NEW user object even when organizationId is unchanged. Each such render hands useOrganization consumers a new context-value identity, forcing them all to re-render even though organizationId/organizationName did not change.",
+        "Severity low (unnecessary re-renders; no incorrect data). Confidence medium — new object identity every render is unconditional on static read; the consumer re-render fan-out depends on how many components call useOrganization. Fix: wrap in useMemo keyed on [user?.organizationId, user?.organizationName], mirroring the useMemo already used for the AuthContext value (AuthContext.tsx:689-712)."
+      ]
+    }
+  ]
+}
