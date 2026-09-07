@@ -36,3 +36,41 @@ export const WIDGET_DATA_KEY = '@ppt/widget_data';
 export const LAYOUT_PREFIX = 'ppt_layout_';
 export const LAYOUT_CACHE_KEY = (scopeId: string, screen: string) =>
   `${LAYOUT_PREFIX}${scopeId}_${screen.replace(/\//g, '_')}`;
+
+// Feature caches that persist tenant-scoped history/queues across restarts and
+// so must also be purged on a session change (issue #2947, follow-up to
+// #2361/#2399). The owning managers (`NFCCredentialManager`, `QRCodeScanner`,
+// `FeedbackManager`, `HelpCenter`) keep the reads/writes behind these keys; the
+// literals are mirrored here so the purge set stays a single registry and a new
+// feature cache is covered by adding it here rather than by editing
+// `resetLocalData`.
+//
+// - `@ppt/access_log`     — NFC building-access log (a prior tenant's physical
+//   access history would otherwise survive a handoff on a shared device).
+// - `@ppt/qr_scan_history`— QR scan history.
+// - `@ppt/feedback_drafts`/`@ppt/pending_feedback` — offline feedback drafts +
+//   the pending-flush queue, which would otherwise replay under the NEXT user's
+//   authenticated token (write under the wrong identity).
+// - `@ppt/faq_votes`      — per-user FAQ vote record.
+export const ACCESS_LOG_KEY = '@ppt/access_log';
+export const QR_SCAN_HISTORY_KEY = '@ppt/qr_scan_history';
+export const FEEDBACK_DRAFTS_KEY = '@ppt/feedback_drafts';
+export const PENDING_FEEDBACK_KEY = '@ppt/pending_feedback';
+export const FAQ_VOTES_KEY = '@ppt/faq_votes';
+
+/**
+ * Every fixed (non-prefix) tenant-scoped key `resetLocalData` deletes by exact
+ * match. Prefix-swept namespaces (`CACHE_PREFIX`, `LAYOUT_PREFIX`) are handled
+ * separately because their concrete keys embed a dynamic suffix.
+ */
+export const TENANT_SCOPED_EXACT_KEYS: readonly string[] = [
+  QUEUE_KEY,
+  LAST_SYNC_KEY,
+  WIDGET_CONFIG_KEY,
+  WIDGET_DATA_KEY,
+  ACCESS_LOG_KEY,
+  QR_SCAN_HISTORY_KEY,
+  FEEDBACK_DRAFTS_KEY,
+  PENDING_FEEDBACK_KEY,
+  FAQ_VOTES_KEY,
+];
