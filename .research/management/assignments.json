@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-07T12:32:48Z",
+  "generated": "2026-09-07T12:47:51Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2947",
       "branch": "auto-impl/gh-issue-2947-b3939d60",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-07T12:32:48Z",
-      "last_updated": "2026-09-07T12:32:48Z",
-      "status_changed_at": "2026-09-07T12:32:48Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-07T12:47:51Z",
+      "status_changed_at": "2026-09-07T12:47:51Z",
+      "pr_number": 2950,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2950",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=2950 status=partial specialist=react-native scope_drift=false code_reuse_warn=none note=fix complete+pushed+IG3-proven; draft PR opened; full mobile jest suite red on pre-existing jest-expo@56/RN0.87 harness rot (see #2951), not the diff",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
