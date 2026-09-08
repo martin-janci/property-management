@@ -20,9 +20,11 @@
  *   - The central {@link queryKeys} factory (`lib/queryKeys.ts`) — derived from
  *     `Object.entries(queryKeys)`.
  *   - The app's feature-local `*Keys` factories — auto-discovered from every
- *     `features/**\/hooks/*.{ts,tsx}` module via `import.meta.glob`, so a new
- *     hook file exporting a `*Keys` factory can't be silently omitted the way a
- *     hand-maintained list would allow (Issue #2948, follow-up to PR #2943).
+ *     `features/**\/hooks/**\/*.{ts,tsx}` module via `import.meta.glob`, so a
+ *     new hook file exporting a `*Keys` factory can't be silently omitted the
+ *     way a hand-maintained list would allow — including one nested in a
+ *     subdirectory under `hooks/` (Issue #2948, follow-up to PR #2943;
+ *     glob-depth widened per Issue #2954).
  *   - The shared `@ppt/api-client` `*Keys` factories consumed by ppt-web for
  *     auth-/tenant-scoped data. These stay an explicit list: the full
  *     api-client roster is used by other apps and is intentionally NOT derived
@@ -63,6 +65,14 @@ const rootOf = (name: string, factory: KeyFactory): string => {
   return factory.all[0];
 };
 
+/**
+ * Best-effort root for the `it.each` case title only — never throws, so a
+ * malformed factory still gets a named, isolated test row (which then fails via
+ * `rootOf` inside the callback) instead of crashing suite collection.
+ */
+const displayRoot = (val: unknown): string =>
+  isKeyFactory(val) && typeof val.all[0] === 'string' ? val.all[0] : '<invalid>';
+
 const allowlist = new Set<string>(AUTHED_QUERY_KEY_ROOTS);
 
 /**
@@ -73,7 +83,7 @@ const allowlist = new Set<string>(AUTHED_QUERY_KEY_ROOTS);
  * excluded so their `describe`/`it` blocks don't execute on import.
  */
 const featureModules = import.meta.glob<Record<string, unknown>>(
-  ['../features/**/hooks/*.{ts,tsx}', '!../features/**/hooks/*.{test,spec}.{ts,tsx}'],
+  ['../features/**/hooks/**/*.{ts,tsx}', '!../features/**/hooks/**/*.{test,spec}.{ts,tsx}'],
   { eager: true }
 );
 
@@ -93,15 +103,17 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
     it.each(
       Object.entries(queryKeys).map(([name, factory]) => [
         name,
-        rootOf(name, factory as KeyFactory),
+        displayRoot(factory),
+        factory as KeyFactory,
       ])
-    )('covers queryKeys.%s (root "%s")', (_name, root) => {
+    )('covers queryKeys.%s (root "%s")', (name, _displayed, factory) => {
+      const root = rootOf(name as string, factory as KeyFactory);
       expect(allowlist).toContain(root);
     });
   });
 
   // Feature-local key factories owned by ppt-web (analytics dashboards, AI chat),
-  // auto-discovered from `features/**/hooks/*` so a new one can't be omitted.
+  // auto-discovered from `features/**/hooks/**/*` so a new one can't be omitted.
   describe('feature-local key factories (auto-discovered)', () => {
     // Guard against a silently-empty glob (e.g. a moved directory or a typo'd
     // pattern) vacuously passing with zero coverage.
@@ -110,9 +122,10 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       expect(Object.keys(featureLocalFactories).length).toBeGreaterThan(0);
     });
 
-    it.each(Object.entries(featureLocalFactories).map(([name, f]) => [name, rootOf(name, f)]))(
+    it.each(Object.entries(featureLocalFactories).map(([name, f]) => [name, displayRoot(f), f]))(
       'covers %s (root "%s")',
-      (_name, root) => {
+      (name, _displayed, f) => {
+        const root = rootOf(name as string, f as KeyFactory);
         expect(allowlist).toContain(root);
       }
     );
@@ -129,12 +142,12 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       reportKeys,
     };
 
-    it.each(Object.entries(consumedApiClientFactories).map(([name, f]) => [name, rootOf(name, f)]))(
-      'covers %s (root "%s")',
-      (_name, root) => {
-        expect(allowlist).toContain(root);
-      }
-    );
+    it.each(
+      Object.entries(consumedApiClientFactories).map(([name, f]) => [name, displayRoot(f), f])
+    )('covers %s (root "%s")', (name, _displayed, f) => {
+      const root = rootOf(name as string, f as KeyFactory);
+      expect(allowlist).toContain(root);
+    });
   });
 
   it('has no duplicate roots', () => {
