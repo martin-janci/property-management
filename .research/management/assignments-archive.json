@@ -15041,6 +15041,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test-retry2",
+      "branch": "auto-impl/pm-qa-aml-dashboard-dialog-state-per-ass-dcbe0250",
+      "status": "failed",
+      "claimed_at": "2026-09-08T14:27:16Z",
+      "last_updated": "2026-09-08T14:35:01Z",
+      "status_changed_at": "2026-09-08T14:35:01Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web note=test already merged in PR #2833 (issue #2832 closed); AmlDashboardPage.test.tsx has the per-assessment reset test, dev diff empty; cross-id ghost retry (final round 2/2), non-implementable",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-qa-booking-connect-non-manager-hijack-regression-test",
       "branch": "auto-impl/pm-qa-booking-connect-non-manager-hijack-dec7b0b3",
       "status": "merged",
@@ -15294,6 +15316,28 @@
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=none status=done specialist=react-web: 84-1 direct-to-S3 upload + 84-2 /sign page ALREADY SHIPPED on dev (empty diff, verified in clean worktree); no code PR warranted. Residual: stale coverage.json 84-1/84-2 partial-to-done (dispatcher-owned .research write; findings.json:778). NOT terminalized this run: archive-write wedge (#2743) blocks archiving terminal rows (both archives over 800KB vs 64KiB MCP ceiling; direct git transport proxy-403).",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish-retry2",
+      "branch": "auto-impl/pm-scrum-master-shepherd-84-1-84-2-front-6bbbc936",
+      "status": "failed",
+      "claimed_at": "2026-09-08T14:27:16Z",
+      "last_updated": "2026-09-08T14:35:01Z",
+      "status_changed_at": "2026-09-08T14:35:01Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web note=already-shipped on dev: 84-1 S3 presigned + 84-2 e-signature/signer page both merged, tested, coverage stories 84-1/84-2 already done; ghost retry (final round 2/2), non-implementable",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": false,
@@ -17567,5 +17611,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-07T16:33:42Z"
+  "archived_at": "2026-09-08T14:37:06Z"
 }

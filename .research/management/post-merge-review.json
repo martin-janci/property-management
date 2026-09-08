@@ -1,9 +1,36 @@
 {
-  "generated": "2026-09-07T12:33:00Z",
+  "generated": "2026-09-08T14:30:38Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-08T14:30:38Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 2950,
+          "issue": 2953,
+          "findings": 1,
+          "specialist": "react-native",
+          "note": "gh-issue-2947 fix purges @ppt/access_log, @ppt/qr_scan_history, @ppt/feedback_drafts, @ppt/pending_feedback, @ppt/faq_votes via new TENANT_SCOPED_EXACT_KEYS registry in resetLocalData() -- correct and well-tested for what it covers. 1 finding, security(high): auditing the same NFCCredentialManager.ts this PR references turned up two still-uncovered, MORE sensitive keys neither resetLocalData() nor AuthContext.login()/logout() touch: (1) LEGACY_CREDENTIALS_KEY='@ppt/nfc_credentials' (raw unencrypted legacy credential blob in AsyncStorage, not in TENANT_SCOPED_EXACT_KEYS) -- if migration hasn't run yet this session, the prior tenant's blob survives resetLocalData() and the next tenant's loadStoredCredentials() silently adopts it as its own; (2) CREDENTIALS_KEY='ppt_nfc_credentials'+chunk slots in expo-secure-store (written by storeCredentials()) are never cleared on session change at all -- resetLocalData() only touches AsyncStorage. Between logout and the next tenant's first fetchCredentials(), the prior tenant's actual NFC building-access credential material (not just the log) remains loadable -- same shared-device leak class this PR fixed for the log, but for the credential itself. Proposed: expose NFCCredentialManager.clearAllLocalCredentials() (wrapping the existing private clearStoredCredentials() + AsyncStorage.removeItem(LEGACY_CREDENTIALS_KEY)) and call it from resetLocalData() or alongside it in AuthContext login/logout; add a regression test mirroring resetLocalData.test.ts's new it.each block. Filed #2953."
+        },
+        {
+          "pr": 2952,
+          "issue": 2954,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "gh-issue-2948 generalizes queryKeys.test.ts to auto-discover feature-local *Keys factories via import.meta.glob('../features/**/hooks/*.{ts,tsx}',{eager:true}) instead of a hand-maintained import list -- correct fix for the 'reviewer must remember' gap, incidentally also now covers messagingKeys which the old hardcoded list missed. 2 low findings: (1) test-gaps -- rootOf(name,factory)'s shape assertions run inside the it.each-table-building .map(), i.e. at describe-evaluation time not inside an it() callback, so a malformed factory would throw during suite collection and abort the WHOLE file's tests instead of failing just its own named row; proposed moving the assertion inside the it.each callback. (2) correctness -- the glob '../features/**/hooks/*.{ts,tsx}' only matches files directly under a hooks/ dir (trailing single '*', not '**'), so a factory in a nested features/<x>/hooks/queries/<y>.ts would silently escape discovery again -- no such nested layout exists today (latent, not live) but is exactly the failure mode this PR closes; proposed widening to 'hooks/**/*.{ts,tsx}'. Filed #2954."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher post-merge review. Window=14d (merged>=2026-08-25), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable (proxy-403) -> GitHub MCP (mcp__github__*) for all GH I/O; full-diff static review only. Label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-25 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 2 net-new never-reviewed PRs (total_count=2) out of 89 total merges in-window; every other in-window merge already carries post-merge-reviewed. Both are follow-up test/fix PRs from the prior run's chain (#2943 -> #2948 -> #2952; #2947 -> #2950). 2 < 5-parallel-cap, reviewed inline (no subagent fan-out). 2 ISSUES opened: #2953 on #2950 (security, high -- NFC credential material itself not purged on session change even though the PR fixed the access-log sibling) and #2954 on #2952 (test-coverage/correctness, both low -- assertion-timing suite-crash risk + glob-depth gap in the new auto-discovery mechanism). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6.",
+      "focus_prs": [
+        2950,
+        2952
+      ]
+    },
     {
       "run_at": "2026-09-07T12:33:00Z",
       "prs_scanned": 3,
@@ -574,22 +601,6 @@
         }
       ],
       "note": "DISPATCHER_OWNED_COMMIT=1 (Tier 1d demand-driven vector gen, buffer starved) -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static diff review only. Window merged-to-dev 14d (>=2026-08-06), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Label-based enumeration surfaced 5 unlabeled in-window merged PRs (2812,2813,2811,2801,2806); dependabot 2751/2750 were closed-unmerged (no merged_at) and skipped; all older in-window PRs already carried post-merge-reviewed. Reviewed all 5 via fresh diff review and applied post-merge-reviewed labels so they will not resurface. 1 new issue opened (#2814 on PR #2812). Per-PR: #2812 (reality-server saved-search: makes enqueue+watermark-advance atomic in one tx via enqueue_and_advance_saved_search, propagates the previously-swallowed advance error, 3 SQLx regression tests incl. rollback-no-duplicate -- CLEAN fix; filed #2814 for the latent int4 match_count overflow edge its own test exercises). #2813 (reality-server inquiry detail: replaces hardcoded messages: vec![] with real list_inquiry_messages ordered created_at ASC; ownership pre-verified by get_inquiry_for_realtor; regression test -- clean). #2811 (api-server ai/voice link path routed through single-writer upsert_active_voice_device to respect the partial-unique active-device index from #2796; access_token now Option<&str> with COALESCE keep-existing + token_expires_at/access_token_hash kept in lock-step with the token via CASE; re-link idempotency test asserts single active row + stable device_id -- clean). #2801 (reality-server list_my_reports: total now a COUNT(*) with WHERE parity to the list query -- verified reporter_user_id + optional status filters match exactly -- instead of reports.len(); regression test -- clean). #2806 (api-server voice webhook HMAC now fails closed on empty VOICE_WEBHOOK_SECRET, not just unset, mirroring sibling PORTAL/AIRBNB/STRIPE receivers; test covers blank secret -- clean security fix). No duplicate issue: searched open issues for match_count/watermark overflow, only a closed unrelated #1627 (pagination truncation)."
-    },
-    {
-      "run_at": "2026-08-20T02:28:41Z",
-      "prs_scanned": 2,
-      "clean": [
-        2795
-      ],
-      "with_issues": [
-        {
-          "pr": 2798,
-          "issue": 2804,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "h2 RUSTSEC-2026-0258 ignore is a bare advisory-ID (global); scope to h2 0.3.x so a future 0.4.x<0.4.16 regression on the reachable axum/hyper-1 server path still trips cargo-deny"
-        }
-      ]
     }
   ]
 }
