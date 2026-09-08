@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-09-08T14:37:06Z",
+  "archived_at": "2026-09-08T20:36:10Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -16444,6 +16444,58 @@
         "merged_pr": 2952,
         "merged_at": "2026-09-07T16:33:31Z",
         "at": "2026-09-07T16:33:42Z"
+      }
+    },
+    {
+      "id": "gh-issue-2953",
+      "action": "Follow-up: resetLocalData() never purges NFC credential material from SecureStore (PR #2950) (Closes #2953)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-09-08T16:20:38Z (#2953) | dev-reconcile 2026-09-08T20:36:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-08T16:20:38Z",
+      "issue_ref": {
+        "number": 2953,
+        "url": "https://github.com/martin-janci/property-management/issues/2953",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "65fe7f1d3aba6ce1666eb80ef2cb7de6f0953dbf",
+        "subject": "gh-issue-2953: purge NFC credential material from SecureStore on session change (#2955)",
+        "at": "2026-09-08T20:36:09Z"
+      }
+    },
+    {
+      "id": "gh-issue-2954",
+      "action": "Follow-up: queryKeys.test.ts auto-discovery has a suite-crash risk and a glob-depth gap (PR #2952) (Closes #2954)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-09-08T16:20:38Z (#2954) | dev-reconcile 2026-09-08T20:36:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-08T16:20:38Z",
+      "issue_ref": {
+        "number": 2954,
+        "url": "https://github.com/martin-janci/property-management/issues/2954",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "db08b233a52a8637c6260f6098b07e75c2e96a55",
+        "subject": "gh-issue-2954: harden queryKeys.test.ts auto-discovery (#2956)",
+        "at": "2026-09-08T20:36:09Z"
       }
     },
     {
