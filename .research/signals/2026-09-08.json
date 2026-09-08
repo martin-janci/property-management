@@ -1,0 +1,262 @@
+{
+  "date": "2026-09-08",
+  "run_kind": "incremental (scheduled routine after 6d11h idle; buffer-low refill fire relayed)",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score>=3 + allowlist match)",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "git log 2026-09-01..2026-09-08 origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "Top-1 raw churn file this run: 3 modifications in the 2026-09-01..2026-09-08 window (touched by PR #2941 validate JWT exp at cold boot, PR #2942 single-flight refresh + replay on 401, PR #2943 logout purge allowlist coverage)."
+      ],
+      "recent_churn": 3,
+      "hotspot_runs_seen": 1
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/api.ts",
+      "type": "churn-hotspot",
+      "source": "git log 2026-09-01..2026-09-08 origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "Top-2 raw churn file this run: 2 modifications in the 2026-09-01..2026-09-08 window (PR #2942 401 refresh interceptor + related test)."
+      ],
+      "recent_churn": 2,
+      "hotspot_runs_seen": 1
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "git log 2026-09-01..2026-09-08 origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ],
+      "evidence": [
+        "Top-3 raw churn file this run: 2 modifications in the 2026-09-01..2026-09-08 window (PR #2950 purge NFC access log / QR scan history / offline feedback on session change; Closes #2947 security)."
+      ],
+      "recent_churn": 2,
+      "hotspot_runs_seen": 1
+    },
+    {
+      "id": "lag-warning-2026-09-08",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [],
+      "evidence": [
+        "Routine last ran 2026-09-01 18:38Z; this run 2026-09-08 06:46Z → 155h / 6d 11h lag (>36h threshold and >=3d stale_routine_alert threshold). Cloud cron appears to have misfired for a week; dispatcher (separate branch) continued running (last commit 818bbe9 at 04:27Z 2026-09-08). No routine-branch commits between 2026-09-01 and 2026-09-08."
+      ]
+    },
+    {
+      "id": "dep-update-noise-batch-2026-09-08",
+      "type": "dep-update-noise",
+      "source": "closed-not-merged dependabot PRs: #2934, #2867, #2865, #2749",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": [],
+      "evidence": [
+        "4 dependabot PRs closed unmerged since last run: #2934 (cargo-minor-patch 12-pkg group superseded by #2939), #2867 (npm-minor-patch 39-pkg group superseded by #2935 merge), #2865 (cargo-minor-patch 10-pkg group superseded), #2749 (gradle-minor-patch 5-pkg group superseded by #2933). Standard dependabot group-rollup regeneration; log only, no score."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-preconfig",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — 'export default getApiClient();' runs at module import, creating the singleton axios instance BEFORE AuthProvider's configureApiClient() can install getToken/onUnauthorized.",
+        "frontend/apps/ppt-web/src/lib/api.ts:347-349 — configureApiClient reassigns the module-level apiInstance, but the default export captured the reference from the FIRST getApiClient() call; 'import api from ../lib/api' returns the ORIGINAL, unconfigured instance forever (no Authorization header, no 401 refresh-and-replay).",
+        "AuthContext.tsx:365-383 comment already flags the failure mode; current call-sites all use named getApiClient(), so no active bug — but the export invites a silent-auth-bypass regression the moment someone adds 'import api from ../lib/api'."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-user-no-shape-check",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:152-158 — tokenStorage.getUser() returns JSON.parse(userJson) cast to AuthUser with no runtime shape validation.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:454-462 — initializeAuth trusts the result: a shape-wrong ppt_user entry (schema drift, another tab overwrite, extension mutation) is accepted as an authenticated session.",
+        "Downstream crash surface: user.role, user.email, user.firstName read across Header/ProtectedRoute/greetings. The try/catch at 491 only catches JSON.parse throw; a parse-succeeds-shape-wrong path is unguarded. Guard with hasKeys(x, ['id','email','role']) (or Zod) before returning."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-login-stale-tenants",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)",
+      "segment": "ppt-web-core",
+      "expert": "frontend",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:543-548 — login() unconditionally overwrites access/refresh tokens and user, but only writes TENANTS_KEY when response.tenants is truthy.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:565-596 — same asymmetric pattern in loginWithSsoCode().",
+        "Account-switch without prior logout: stale ppt_tenants persists. Next refreshTokenInternal calls deriveActiveRole(freshToken, staleTenantsFromOtherUser) (line 427) and may assign a role from the wrong tenant membership."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-08.md && head -1 | grep '# 2026-09-08'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev diff state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s check re-scored non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "manual: 2 items >=14d decayed (portfolio-analytics-caps-100 20d, cancellation-swallowed 14d) → both 1→0→dropped",
+      "observed": "2 dropped",
+      "expected": "all open items >=14d lost >=1 point or moved to dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — trivially passes",
+      "observed": "0 new plans",
+      "expected": "each new plan has adversarial pass annotation"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c '.md$'",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed this run",
+      "observed": "all cursors advanced",
+      "expected": "failed phases match cursor non-advance"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or in _archive",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ staged_arch >= head_arch ]",
+      "observed": "9>=9",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq '.auto_fix_actions | length == 0'",
+      "observed": "[]",
+      "expected": "true (no auto-fix this run)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor 0..7 + GC7 coverage_cursor liveness",
+      "observed": "action-list OK, risks OK, project-state OK, pm_cursor=6, coverage_cursor=8, EPICS=13; both cursors advanced (5→6, 7→8)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

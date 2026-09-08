@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-08",
       "plan": null
     },
     {
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7420,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-08",
       "plan": null
     },
     {
@@ -10633,6 +10635,139 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-contexts-AuthContext.tsx",
+      "title": "churn-hotspot ppt-web AuthContext.tsx — 3 modifications in one week across auth-critical path (PRs #2941 #2942 #2943)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 2026-09-01..2026-09-08 origin/dev",
+        "PR #2941",
+        "PR #2942",
+        "PR #2943"
+      ],
+      "evidence": [
+        "Top-1 raw churn file this run: 3 modifications in the 2026-09-01..2026-09-08 window; touched by PR #2941 (validate JWT exp at cold boot), PR #2942 (single-flight refresh + replay on 401), PR #2943 (logout purge allowlist coverage).",
+        "hotspot_history: first-time observation (runs_seen bumped to 1 this run)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-api.ts",
+      "title": "churn-hotspot ppt-web lib/api.ts — 2 modifications (PR #2942 single-flight refresh interceptor)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 2026-09-01..2026-09-08 origin/dev",
+        "PR #2942"
+      ],
+      "evidence": [
+        "Top-2 raw churn file this run: 2 modifications in the 2026-09-01..2026-09-08 window (PR #2942 401 refresh interceptor + related test).",
+        "Adjacent to code-review-ppt-web-core-api-default-export-preconfig — same file, unrelated defect."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-services-resetLocalData.ts",
+      "title": "churn-hotspot mobile-rn resetLocalData.ts — 2 modifications (PR #2950 NFC/QR/offline-feedback purge on session change)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 2026-09-01..2026-09-08 origin/dev",
+        "PR #2950"
+      ],
+      "evidence": [
+        "Top-3 raw churn file this run: 2 modifications in the 2026-09-01..2026-09-08 window (PR #2950 purge NFC access log, QR scan history & offline feedback on session change; Closes #2947 security)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-preconfig",
+      "title": "ppt-web lib/api.ts default-export captures pre-configure singleton — future `import api from '../lib/api'` bypasses JWT interceptor",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — `export default getApiClient();` runs at module import, creating the singleton axios instance BEFORE AuthProvider's `configureApiClient()` can install `getToken`/`onUnauthorized`.",
+        "frontend/apps/ppt-web/src/lib/api.ts:347-349 — `configureApiClient` reassigns the module-level `apiInstance`, but the default export captured the reference from the FIRST `getApiClient()` call; `import api from '../lib/api'` returns the ORIGINAL, unconfigured instance forever.",
+        "AuthContext.tsx:365-383 comment already flags the failure mode; current call-sites all use named `getApiClient()`, so no active bug — but the export invites a silent-auth-bypass regression the moment someone adds `import api from '../lib/api'`."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-user-no-shape-check",
+      "title": "ppt-web AuthContext tokenStorage.getUser() returns unchecked `AuthUser` — parse-succeeds-shape-wrong path accepts corrupted/tampered session",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:152-158 — `tokenStorage.getUser()` returns `JSON.parse(userJson)` cast to `AuthUser` with no runtime shape validation.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:454-462 — `initializeAuth` trusts the result: a shape-wrong `ppt_user` entry (schema drift, another tab overwrite, extension mutation) is accepted as an authenticated session.",
+        "Downstream crash surface: `user.role`, `user.email`, `user.firstName` read across Header/ProtectedRoute/greetings. The try/catch at 491 only catches `JSON.parse` throw; a parse-succeeds-shape-wrong path is unguarded. Guard with `hasKeys(x, ['id','email','role'])` (or Zod) before returning."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-login-stale-tenants",
+      "title": "ppt-web AuthContext.login() / loginWithSsoCode() leave stale ppt_tenants when response.tenants is falsy — account-switch may compute role from wrong tenant list",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:543-548 — `login()` unconditionally overwrites access/refresh tokens and user, but only writes `TENANTS_KEY` when `response.tenants` is truthy.",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:565-596 — same asymmetric pattern in `loginWithSsoCode()`.",
+        "Account-switch without prior logout (session expired mid-tab, user re-auths as different account, SSO callback returns different subject): stale `ppt_tenants` persists. Next `refreshTokenInternal` calls `deriveActiveRole(freshToken, staleTenantsFromOtherUser)` (line 427) and may assign a role from the wrong tenant membership. Fix: clear TENANTS_KEY before write, or always call `setTenants(response.tenants ?? [])`."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
     }
   ]
 }

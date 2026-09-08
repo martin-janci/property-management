@@ -119,7 +119,7 @@
     },
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — currently 7/8 open backlog items are structurally unclaimable in cloud, forcing Tier-1d generator kicks every run",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — currently 6/9 open action-list items are structurally unclaimable in cloud, forcing Tier-1d generator kicks every run",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -145,7 +145,103 @@
         "score": 2,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build",
+      "action": "Land infra #2949 remediation — vendor swagger-ui as an in-repo asset (UTOIPA_SWAGGER_UI_DOWNLOAD_URL=file://...) so `cargo build -p api-server` succeeds behind the cloud egress proxy. Unblocks the IDOR trio (#2944/#2945/#2946) and every future api-server security patch.",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08",
+      "first_open_at": "2026-09-08T00:00:00Z"
+    },
+    {
+      "id": "pm-security-fix-idor-2946-portfolio-analytics-org-id-discarded",
+      "action": "Fix IDOR #2946 — apply the computed `org_id` as a scope filter in `portfolio_analytics::upsert_property_metrics` (routes/portfolio_analytics.rs:282) and `get_property_metrics` (:314); today both compute `let _org_id = user.tenant_id...` and discard it. Add sqlx cross-tenant regression test asserting Org B caller is 404 on Org A metric row.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build",
+      "depends_on": ["pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build"],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08",
+      "first_open_at": "2026-09-08T00:00:00Z"
+    },
+    {
+      "id": "pm-security-fix-idor-2945-portfolio-properties-missing-org-verification",
+      "action": "Fix IDOR #2945 — verify org ownership of the target property/`building_id` in every portfolio_properties read+write handler before acting; add sqlx cross-tenant regression test.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build",
+      "depends_on": ["pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build"],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08",
+      "first_open_at": "2026-09-08T00:00:00Z"
+    },
+    {
+      "id": "pm-security-fix-idor-2944-violations-subresource-scoping-and-internal-notes-role-gate",
+      "action": "Fix IDOR #2944 — enforce `org_id` scoping on violations comments/evidence/payments read paths AND gate internal-notes visibility behind Manager/Owner role (deny for Tenant). Add sqlx cross-tenant test + role-gate unit test.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build",
+      "depends_on": ["pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build"],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08",
+      "first_open_at": "2026-09-08T00:00:00Z"
+    },
+    {
+      "id": "pm-security-sweep-org-id-compute-then-discard-antipattern",
+      "action": "Sweep for the `_org_id` / `_tenant_id` compute-then-discard anti-pattern across api-server (known sites: routes/portfolio_analytics.rs:282,314; routes/migration.rs:1472; routes/faults.rs:642). Convert each into a real scope check or add a `// SAFETY:` doc explaining the intentional discard; land a `just verify` grep gate against future reintroductions.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08",
+      "first_open_at": "2026-09-08T00:00:00Z"
+    },
+    {
+      "id": "pm-devops-unblock-mobile-jest-suite-issue-2951",
+      "action": "Resolve infra #2951 — align jest-expo with installed react-native@0.87 (or pin RN back to 0.85 per CLAUDE.md) and regenerate the mobile lockfile so the jest suite loads in the cloud runner. PR #2950 merged red-CI because of this; every future mobile-rn security patch will land the same way until fixed.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08",
+      "first_open_at": "2026-09-08T00:00:00Z"
+    },
+    {
+      "id": "pm-qa-shared-device-cache-purge-handoff-regression-test",
+      "action": "Add device-handoff integration test companion to PR #2950 — log in Tenant A, seed each newly-covered namespace (`@ppt/access_log`, `@ppt/qr_scan_history`, `@ppt/feedback_drafts`, `@ppt/pending_feedback`, `@ppt/faq_votes`), log in Tenant B, assert no read-back. Guards against regression when a new tenant-scoped cache is added without updating `TENANT_SCOPED_EXACT_KEYS`.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08",
+      "first_open_at": "2026-09-08T00:00:00Z"
+    },
+    {
+      "id": "pm-security-close-rustsec-2026-0258-h2-dos",
+      "action": "Resolve cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) — watch the h2 release feed and bump to a patched release; remove the waiver in `.cargo-deny.toml`. Standing since 2026-08-18.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-08 (carried from 2026-08-18)",
+      "first_open_at": "2026-08-18T00:00:00Z"
     }
   ],
-  "generated": "2026-09-07T14:38:29Z"
+  "generated": "2026-09-08T00:00:00Z"
 }

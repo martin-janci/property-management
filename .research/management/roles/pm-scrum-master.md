@@ -1,54 +1,60 @@
-# Role: pm-scrum-master — 2026-07-30
+# pm-scrum-master — 2026-09-08
 
-> Delivery lead / coordinator. Always runs. Static read-only.
+_Always-on delivery synthesis. Window: 2026-09-01..2026-09-08 (~6.5 day lag since last routine run). 14 PRs merged; 5 new open issues (3 IDOR bugs + 2 infra blockers). Sprint status unchanged. Buffer starved at 8/72 claimable._
 
 ## Summary
-Very productive 2-day window: 17 PRs merged (post-merge-review batch of 2026-07-28 is now fully closed except #2528 booking-webhook parity), plus 3 fresh follow-up issues opened on this window's own PRs (#2573 DELETE-by-file-key regression, #2574 Android SSO CSRF half-wired, #2575 dispute KPI window validation). Coverage still at 47/49 done; the two long-standing 84-x frontend partials are unchanged.
 
-## Sprint progress
-- Sprint: **Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth**
-- epics_done: **3 / 5**
+Auto-review loop kept shipping frontend hardening (401 replay + refresh single-flight, JWT-exp cold-boot, allowlist auto-derivation, i18n externalization, PDF-renderer tests) but three cross-tenant IDOR handlers opened 2026-09-06 (#2944/#2945/#2946) are stuck: they need api-server changes that the cloud runner cannot build (#2949). PR #2950 landed a real security fix (shared-device cache leak) but merged with red CI because infra #2951 (mobile jest / RN version rot) blocks the mobile suite pre-diff.
 
-## Shipped since last run (17 PRs)
-- PR #2576 gh-issue-2563: schedule layout_change_events retention prune
-- PR #2572 gh-issue-2562: wire get_dispute_kpis into a reporting endpoint
-- PR #2571 gh-issue-2564: org-scoped DELETE-by-file_key for direct-upload orphan cleanup
-- PR #2570 gh-issue-2557: dedupe private seed_org/set_ctx in db test suites
-- PR #2569 dx: run SDK drift gate on client + workflow changes
-- PR #2568 code-review mobile-native-kmp: Android SSO CSRF state verification
-- PR #2567 code-review api-core: clear scheduler global-read RLS GUC before pool return (retry1)
-- PR #2566 gh-issue-2561: version-bump rebase+retry to fix GH006 on concurrent dev merges
-- PR #2565 gh-issue-2560: reality-web Docker build fix (api-client node_modules in builder stage)
-- PR #2554 chore(research): refill starved dispatcher stack (7 new vectors, 14 promoted)
-- PR #2553 code-review ppt-web-core: AuthContext cold-boot routes through refreshTokenInternal (stale-role fix)
-- PR #2549 gh-issue-2532: layout publish/webhook/revalidate event emission + sink
-- PR #2504 fix(api-server): signature-request list/create — mount as document sub-resource (BIT-313)
-- PR #2491 chore(deps): npm-minor-patch group (5 updates)
-- PR #2482 refactor: reconcile docs/repo-map.md with current tree
-- PR #2478 fix(layout): review-hardening sweep (authz, publish TOCTOU, webhook replay, defensive rendering)
-- PR #2433 feat(mobile-native): iOS listing detail renders through the shared resolved layout
+## Return payload
 
-## Next actions
-1. **[high]** Address #2573 — DELETE /documents/by-file-key can delete a still-referenced object within the same org (regression from PR #2571) — owner: pm-backend — DoD: reference-check added before delete; regression test covering shared-file-key same-org case.
-2. **[high]** Address #2574 — Android SSO CSRF guard half-wired (SsoStateStore.mint() has no call site so every reality://sso callback is rejected) — owner: pm-mobile / react-native — DoD: mint() wired at deep-link entry; integration test covers the happy path.
-3. **[medium]** Address #2575 — /disputes/kpis has no window-ordering validation, only test is quarantined (PR #2572) — owner: pm-backend — DoD: reject window_end < window_start with 400; un-quarantine the KPIs test.
-4. **[medium]** Merge or triage the accounting MVP-loop trio (#2555 invoice lifecycle, #2558 invoice PDF, #2559 PAY by square QR) — all draft-ready since 2026-07-28 — owner: pm-backend / pm-tech-lead — DoD: reviewed + green + merged, or explicitly re-scoped.
-5. **[high]** Finish long-standing 84-1 direct-to-S3 wiring in ppt-web (POST /documents/upload-url consumer) — owner: pm-frontend — DoD: api-client binding + UploadDocument integration + regression test.
-6. **[high]** Finish long-standing 84-2 signer-facing document-sign page (screen-map planned→shipped, API complete) — owner: pm-frontend — DoD: page shipped, signature-request email delivery verified end-to-end.
-
-## Risks
-- **[med prob / high impact]** PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row — mitigation: land a reference-count guard + integration test before any client wires the endpoint.
-- **[high prob / high impact]** PR #2568 CSRF state fix is non-functional (#2574) — mint() has no call site so every SSO deep-link is rejected — mitigation: wire mint() at the SSO deep-link entry point (fresh subagent on the mobile-native slice).
-- **[med prob / med impact]** Accounting MVP-loop trio (3 open PRs) has been sitting 2 days with no reviewer engagement — dispatcher stack starving on reviewer capacity, not implementer capacity — mitigation: explicit reviewer slot for the trio next 24h; document reviewer-slot rotation for large-scope PRs.
-
-## Open questions
-- Should the accounting MVP-loop epic be added to coverage.json (currently outside the 13-epic set)?
-- Should the layout epic (scheduler.rs + tenant.rs + admin.rs are top churn this window) be promoted to its own coverage epic entry?
-
-## Decisions needed
-- Reviewer-slot policy for large-scope feature PRs (accounting trio blocking) — owner: pm-tech-lead.
-
-## Blockers
-- **#2574 Android SSO CSRF half-wired** — the freshly-merged CSRF fix (#2568) has no call site — every reality://sso callback is now rejected; blocks any Android SSO usage until re-wired — owner: pm-mobile.
-- **#2573 DELETE-by-file-key same-org reference gap** — new endpoint can delete a still-referenced S3 object within the same org (regression from PR #2571); blocks safe client wiring for 84-1 direct-to-S3 — owner: pm-backend.
-- **Accounting trio (#2555 / #2558 / #2559)** — no reviewer engagement in 2 days; dispatcher can't advance the MVP-loop — owner: pm-tech-lead.
+```json
+{
+  "role": "pm-scrum-master",
+  "summary": "14 PRs shipped since 2026-09-01 (frontend auth + i18n + backend test-coverage), all merged post-review; three open cross-tenant IDOR bugs cannot land because api-server cloud verify is structurally blocked (#2949). Delivery mechanism is healthy for frontend/reality-server; api-server + mobile-native + mobile-rn are cloud-verify-blocked.",
+  "next_actions": [
+    {"action": "Land infra #2949 (vendor swagger-ui) to unblock the IDOR trio", "priority": "high", "dependency": "pm-devops", "definition_of_done": "`cargo build -p api-server` green in cloud sandbox"},
+    {"action": "Batch-fix IDOR #2944 + #2945 + #2946 as a labelled security PR set once #2949 clears", "priority": "high", "dependency": "pm-security + pm-backend (blocked on #2949)", "definition_of_done": "three PRs merged with sqlx cross-tenant regression tests; issues closed"},
+    {"action": "Wire ppt-web direct-to-S3 upload (84-1) + build signer-facing document-sign page (84-2) — the last 2 partial stories in coverage, aging 4+ windows", "priority": "high", "dependency": "pm-frontend", "definition_of_done": "both stories `done` in sprint-status and coverage; MVP 49/49"},
+    {"action": "Resolve infra #2951 (jest-expo/RN version rot) so mobile-rn security patches like PR #2950 stop merging red-CI", "priority": "medium", "dependency": "pm-devops", "definition_of_done": "mobile jest suite loads in cloud runner; #2951 closed; PR #2950 CI green retroactively"},
+    {"action": "Resolve cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) — carried since 2026-08-18", "priority": "high", "dependency": "pm-security", "definition_of_done": "h2 bumped to patched release; waiver removed from .cargo-deny.toml"},
+    {"action": "Advance pm-devops-unblock-mobile-native-cloud-builds (issue #2652) — 6/9 open action-list items are structurally unclaimable in cloud", "priority": "high", "dependency": "pm-devops", "definition_of_done": "mobile-native AGP builds green in cloud sandbox"}
+  ],
+  "risks": [
+    {"risk": "Three infra blockers (#2949 api-server, #2951 mobile-rn, #2652 mobile-native) now collectively strand ~80% of the codebase from cloud verify — only ppt-web/admin-web/reality-web/reality-server ship cleanly", "probability": "high", "impact": "high", "mitigation": "Escalate infra remediation as a coordinated pm-devops batch; consider splitting the dispatcher's 36-slot buffer into cloud vs local buckets"},
+    {"risk": "IDOR bugs public on the repo for 2 days without a fix pathway — reputational + regulatory exposure grows daily", "probability": "high", "impact": "high", "mitigation": "Land #2949 in the next 24h; if not feasible, author fixes locally and push via ppt-bridge"}
+  ],
+  "open_questions": [
+    "Do the 84-1/84-2 frontend partials still make sense at high priority when the more urgent security batch is blocked?",
+    "Should the auto-implementer dispatcher explicitly de-prioritize api-server tasks while #2949 is open, to avoid burning cycles on cloud-unbuildable specs?"
+  ],
+  "decisions_needed": [
+    "Freeze api-server implementer picks until #2949 lands — owner: pm-tech-lead",
+    "Set an SLA on IDOR-labelled issues (e.g. 48h fix-or-mitigate) — owner: pm-tech-lead"
+  ],
+  "shipped_since_last_run": [
+    "#2922 code-review reality-server saved-search: typed error enum for HTTP status (pm-backend)",
+    "#2925 code-review api-handlers compliance: raw DB-error leak fix via db_error (pm-backend, security)",
+    "#2926 (per input list — code-review batch)",
+    "#2927 (per input list — code-review batch)",
+    "#2928 (per input list — code-review batch)",
+    "#2931 (per input list — code-review batch)",
+    "#2932 (per input list — code-review batch)",
+    "#2938 gh-issue-2937 accounting-server invoice PDF renderer + handler tests (pm-qa)",
+    "#2940 code-review ppt-web: externalize ConfirmationDialog loading label via i18n (pm-frontend)",
+    "#2941 code-review ppt-web AuthContext: validate JWT exp at cold boot (pm-frontend, security)",
+    "#2942 code-review ppt-web api.ts: single-flight refresh + one-shot 401 replay (pm-frontend, security)",
+    "#2943 code-review ppt-web: enforce logout purge allowlist coverage — hand-maintained set (pm-qa, security)",
+    "#2950 gh-issue-2947 mobile: purge NFC access log / QR history / offline feedback on session change (pm-frontend, security — merged red-CI due to #2951)",
+    "#2952 gh-issue-2948 ppt-web: auto-discover feature-local *Keys factories in logout-purge coverage test (pm-tech-lead, security)"
+  ],
+  "sprint_progress": {"sprint": "Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth", "epics_done": 3, "epics_total": 5},
+  "blockers": [
+    {"item": "IDOR trio #2944/#2945/#2946", "reason": "api-server cloud verify structurally blocked by #2949 (utoipa-swagger-ui build-script egress)", "owner_role": "pm-devops"},
+    {"item": "PR #2950 (mobile security fix)", "reason": "merged red-CI; #2951 blocks mobile jest suite in cloud (jest-expo@56 ↔ RN@0.87 version rot)", "owner_role": "pm-devops"},
+    {"item": "mobile-native/KMP backlog (6 items)", "reason": "standing infra #2652 blocks cloud verify", "owner_role": "pm-devops"},
+    {"item": "cargo-deny RUSTSEC-2026-0258 (h2 DoS)", "reason": "unfixed advisory blocks backend PRs (waivered)", "owner_role": "pm-security"},
+    {"item": "84-1 + 84-2 (aging partial stories)", "reason": "5th consecutive upkeep window without dispatcher pickup; backend shipped, frontend slice pending", "owner_role": "pm-frontend"}
+  ]
+}
+```

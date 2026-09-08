@@ -1,68 +1,63 @@
-# PPT Roadmap — upkeep 2026-08-25
+# PPT Roadmap — upkeep 2026-09-08
 
-⚠ Buffer below half — consider running `/ppt-project-management scan` to refresh coverage (only 5 gap candidates remain in the ranked pool because 47/49 stories are already `done`; the queue is genuinely draining, not stale).
+⚠ Buffer below half — consider running `/ppt-project-management scan` to refresh coverage (16/36 open; but 47/49 stories already `done` so the queue is genuinely draining, not stale). Note: 4 of the 16 open items are gated on `pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build`, so effective claimable is ~12 until #2949 lands.
 
 ## State of the project
 
-- Stories: **47 done / 2 partial / 0 not-started** of 49 (13 epics). Unchanged since 2026-07-15 deep scan; auto-review loop is closing follow-ups faster than they arrive.
-- Delta vs 2026-08-06 upkeep: **13 PRs merged**, **7 previously-open action-list items resolved** (4 follow-up issues #2822/#2823/#2831/#2832, dispatcher meta #2743, plus 2 code-review items ppt-web-facilities-booking + aml-prompt-alert). Zero new open PRs — dispatcher stack is drained.
-- Remaining gaps (the last 2 partial stories, both frontend slices on shipped APIs):
+- Stories: **47 done / 2 partial / 0 not-started** of 49 (13 epics). Unchanged since 2026-07-15 deep scan; the auto-review loop closes follow-ups faster than they arrive on landable stacks, but three cross-tenant IDOR bugs opened 2026-09-06 cannot land because api-server is cloud-verify-blocked (#2949).
+- Delta vs 2026-08-31 upkeep: **14 PRs merged**, 5 with real security wins on the frontend/reality-server surface (typed error, raw-DB leak fix, single-flight refresh + 401 replay, cold-boot JWT-exp, allowlist auto-derivation, shared-device cache purge). Zero regressions detected.
+- Remaining gaps (unchanged from prior windows):
   1. **84-1** — ppt-web still uploads via server proxy; direct-to-S3 endpoint (#2309) has no frontend consumer.
   2. **84-2** — signer-facing document-sign page not built (screen-map planned, API complete).
-- Screen coverage: 0 orphan screens · 0 validation errors · **1 missing UC link left** (UC-33.3 queued this run; UC-33.1/33.2 were queued earlier). Down from 3.
-- Merged-PR keyword sweep: no coverage story flipped status — the 13 merged PRs were all follow-up hardening (CSV sanitizer, quiet-hours drain, AML dialog, mobile-rn hooks/i18n, voice OAuth encryption, facilities booking UX + i18n, verification-badge i18n, booking-connect authz).
+- **New this window:** 3 open IDOR issues on the repo (#2944/#2945/#2946); 2 new infra blockers (#2949 api-server cloud build, #2951 mobile jest infra).
+- Screen coverage: 0 orphan screens · 0 validation errors · **3 missing UC links** (UC-33.1/33.2/33.3 all still queued). No change from prior window.
+- Merged-PR keyword sweep: no coverage story flipped status — the 14 merged PRs were all follow-up hardening (compliance leak fix, invoice PDF tests, ppt-web auth path, i18n, cache purge, allowlist auto-discovery, typed saved-search error).
 
 ## Ranked plan
 
-### mvp / finish-what's-started (highest score, 8)
+### mvp / security — top priority (score 9-10)
 
-- [high] Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url — api-client binding + UploadDocument integration + regression test (84-1 partial) — owner: pm-frontend
-- [high] Build signer-facing document-sign page in ppt-web against shipped signing API; flip screen-map ppt/document-sign buildStatus planned→shipped; verify signature-request email delivery (84-2 partial) — owner: pm-frontend
-- [high] Shepherd 84-1 + 84-2 to done as a paired implementer window — both frontend-only on shipped APIs; closes 49/49 delivery — owner: pm-frontend / pm-scrum-master
+- [high] Land infra #2949 (vendor swagger-ui offline) so `cargo build -p api-server` succeeds in the cloud sandbox — every other high-priority item is downstream — owner: pm-devops — why: unblocks the IDOR trio and every future api-server security patch
+- [high] Fix IDOR #2946 — apply computed `org_id` as scope filter in portfolio_analytics `upsert_property_metrics` + `get_property_metrics` (routes/portfolio_analytics.rs:282,314) + sqlx cross-tenant regression test — owner: pm-security — why: confirmed by direct code read; public issue; cross-tenant data disclosure
+- [high] Fix IDOR #2945 — verify org ownership of target property/`building_id` in portfolio_properties handlers + sqlx test — owner: pm-security — why: public issue; cross-tenant read+write
+- [high] Fix IDOR #2944 — org-scope violations comments/evidence/payments reads + role-gate internal-notes visibility + tests — owner: pm-security — why: public issue; largest surface of the trio
+- [high] Sweep `_org_id` / `_tenant_id` compute-then-discard antipattern (known: portfolio_analytics.rs:282,314; migration.rs:1472; faults.rs:642) + `just verify` grep gate — owner: pm-security — why: systemic footgun; clippy misses `_`-prefixed names
 
-### post-merge follow-ups from this window (score 6-7, high/medium)
+### mvp / finish-what's-started (score 8)
 
-- [high] Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / closed #2831) — assert at-most-once — owner: pm-qa
-- [high] Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager rejected — owner: pm-qa
-- [medium] Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — owner: pm-qa
-- [medium] Add fuzz/property test for CSV export sanitizer (#2827 / closed #2822) — CR/LF/CRLF + formula-injection prefixes — owner: pm-qa
-- [medium] Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — owner: pm-qa
-- [medium] Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / closed #2832) — owner: pm-qa
-- [low] Add visual-diff / snapshot test for VerificationBadge expiry copy across sk/cs/de/en (#2825) — owner: pm-qa
+- [high] Wire ppt-web direct-to-S3 upload via POST /api/v1/documents/upload-url (84-1 partial) — api-client binding + UploadDocument integration + regression test — owner: pm-frontend — why: aging 5+ windows; backend shipped
+- [high] Build signer-facing document-sign page in ppt-web against shipped signing API (84-2 partial); flip screen-map ppt/document-sign buildStatus planned→shipped — owner: pm-frontend — why: closes 49/49 delivery when paired with #6
 
 ### security / carried (score 7)
 
-- [high] cargo-deny advisories FAILED on dev: RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) — every backend PR blocked (#2797) — owner: pm-security
+- [high] Resolve cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) — every backend PR ships against a waivered advisory — owner: pm-security — why: standing since 2026-08-18; upstream watch
 
-### quality / lint prevention (score 5-6)
+### infra / cloud-verify unblock (score 6-7)
 
-- [medium] Adopt eslint-plugin-react-hooks + no-hardcoded-strings ESLint config in frontend/apps/mobile — 3 mobile-rn PRs this window (#2835/#2836/#2837) all fixed defects a lint would catch — owner: pm-frontend
-- [medium] Draft a refactor plan for backend/servers/api-server/src/routes/voice_webhooks.rs — 3-hotspot-windows-running; PR #2838 chipped at token encryption but scheduler/token-refresh paths still cluster — owner: pm-tech-lead
+- [high] Unblock mobile-native/KMP cloud builds (issue #2652) — 6 of 9 pre-run action-list items structurally unclaimable — owner: pm-devops — why: chronic buffer starvation
+- [medium] Resolve infra #2951 (jest-expo/RN version rot) so mobile jest suite loads in cloud; PR #2950 merged red-CI on this — owner: pm-devops — why: future mobile-rn security patches will land red-CI otherwise
 
-### post-merge follow-ups (carried from prior windows, score 5-6)
+### post-merge follow-ups from this window (score 5-6)
 
-- [medium] Follow-up gh-issue-2794: voice device dedup DB-level (org,user,platform) uniqueness (PR #2793) — owner: pm-tech-lead
-- [medium] Follow-up gh-issue-2816: overflow-hardening left a parallel orphaned `saved_searches` int4 path (PR #2815) — owner: pm-tech-lead
+- [medium] Device-handoff regression test companion to PR #2950 — asserts `TENANT_SCOPED_EXACT_KEYS` covers each new tenant-scoped namespace on session change — owner: pm-qa — why: reviewer-memory gap otherwise
+- [medium] Add authz/rotation test for JWT `exp` cold-boot path in AuthContext (PR #2941) — near-expiry-inside-skew case + opaque-token trust case are worth pinning — owner: pm-qa — why: subtle auth-boot behaviour
 
-### bug / mobile-native-kmp reliability (score 3-4)
+### quality / lint prevention (score 5, carried)
 
-- [medium] mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` (MissingFieldException on every /inquiries + /realtors/inquiries call) — owner: pm-backend
-- [low] mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely — owner: pm-backend
+- [medium] Adopt eslint-plugin-react-hooks + no-hardcoded-strings ESLint config in frontend/apps/mobile — owner: pm-frontend — why: 3 mobile-rn PRs earlier this cycle fixed defects a lint would catch
+
+### bug / mobile-native-kmp reliability (score 3-4, carried; cloud-unclaimable until #2652 lands)
+
+- [medium] mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — owner: pm-backend
+- [low] mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — owner: pm-backend
 - [low] getPortfolioAnalytics() truncates realtor portfolio at 100 listings — owner: pm-backend
 - [low] getPortfolioAnalytics() unbounded fan-out (retry 1/2) — owner: pm-backend
 - [low] Shared repositories swallow CancellationException in catch(e: Exception) — owner: pm-backend
 - [low] SsoService has zero direct tests — owner: pm-qa
+- [low] KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — owner: pm-backend
 
-### reality-web + reality-server bug drift (score 2-3)
+### Screen-map drift (score 2-3, carried)
 
-- [low] Share access log records proxy IP without XFF/CF-Connecting-IP unwind — owner: pm-backend
-- [low] reality-web AgencyErrorState + ComparisonView have no i18n on 4-locale portal — owner: pm-backend
-- [low] reality-server inquiry-detail hardcodes messages: [] — realtors never see persisted inquiry thread — owner: pm-backend
-- [low] reality-server saved-search alert loop swallows watermark-advance error — re-enqueues duplicate alerts — owner: pm-backend
-- [low] NFC credentials stored as one SecureStore value can exceed ~2KB cap — owner: pm-backend
+- [low] screen-map-drift: PR #2894 touched reality-web routes without updating docs/screens — owner: pm-qa
 
-### Screen-map drift (score 3)
-
-- [medium] Link UC-33.3 to a dispute screen-map (last of 3 UC-33.x residual from coverage.screen_gaps) — owner: pm-frontend
-
-Buffer: **17/36 open** · 9 in-progress · 7 items resolved this run · project at 47/49. Auto-review loop is doing its job: every issue closed this run resolved by a merged PR in the same window (#2827→#2822, #2826→#2823, #2833→#2832, #2834→#2831, #2828→facilities-silent-errors, #2829→aml-prompt-alert, dispatcher fix→#2743). Next lever is finishing 84-1/84-2 to close MVP delivery.
+Buffer: **16/36 open** · effective claimable ~12 (4 items gated on `pm-devops-vendor-swagger-ui-unblock-api-server-cloud-build`) · 6 items added this run (IDOR trio + swagger-ui unblock + antipattern sweep + jest infra + handoff test + h2 RUSTSEC re-queue). Project at 47/49 delivery; the near-term lever is unblocking api-server cloud builds so the IDOR trio can ship.
