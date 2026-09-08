@@ -1,0 +1,290 @@
+{
+  "date": "2026-09-08",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-08",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-09-01T18:38:58Z; 7d 08h lag (> 36h threshold)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale_routine_alert-2026-09-08",
+      "type": "stale_routine_alert",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 2026-09-01 is 7d old; cloud routine may have paused. Dispatcher (separate loop on planning branch) continued via .research/management/assignments.json touches through Sept 8.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-contexts-AuthContext-tsx",
+      "type": "churn-hotspot",
+      "source": "git-log since 2026-09-01",
+      "score_delta": 1,
+      "evidence": "3 touches this run (PRs #2941 JWT-exp cold boot, #2942 401-refresh single-flight, #2943 queryKey purge tests). Ranked #1 by raw touch count.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-api-ts",
+      "type": "churn-hotspot",
+      "source": "git-log since 2026-09-01",
+      "score_delta": 1,
+      "evidence": "2 touches this run (PR #2942 single-flight refresh + 401 replay). Ranked #2 in source-file churn.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-components-ConfirmationDialog-tsx",
+      "type": "churn-hotspot",
+      "source": "git-log since 2026-09-01",
+      "score_delta": 1,
+      "evidence": "2 touches this run (PR #2940 externalize loading label i18n). Ranked #3 in source-file churn (ties broken to source files over tests/lockfiles).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "type": "stalled-review",
+      "source": "PR #2902 (open, draft, needs-human-review label)",
+      "score_delta": 1,
+      "evidence": "auto-impl PR screen-map-drift-pr-2894-reality; opened 2026-08-31, 8d idle, no reviewDecision. Draft with `needs-human-review` label — requires human sign-off before it can leave draft.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744 (open, draft, needs-human-review label)",
+      "score_delta": 1,
+      "evidence": "dispatcher un-wedge PR (fix dispatcher oversize-archive push #1162 + retry-remint cross-id ghost #2460); opened 2026-08-13, 26d idle in draft.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2939",
+      "type": "dep-update-noise",
+      "source": "PR #2939 dependabot cargo-minor-patch (14 updates)",
+      "score_delta": 0,
+      "evidence": "opened 2026-09-05, open",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2933",
+      "type": "dep-update-noise",
+      "source": "PR #2933 dependabot gradle-minor-patch (6 updates)",
+      "score_delta": 0,
+      "evidence": "opened 2026-09-03, open",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935 dependabot npm-minor-patch (40 updates)",
+      "score_delta": 0,
+      "evidence": "merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673 dependabot ktor group (7 updates)",
+      "score_delta": 0,
+      "evidence": "merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583 dependabot rust_xlsxwriter 0.96→0.97",
+      "score_delta": 0,
+      "evidence": "merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585 dependabot base64 0.22.1→0.23.0",
+      "score_delta": 0,
+      "evidence": "merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586 dependabot validator 0.20→0.21",
+      "score_delta": 0,
+      "evidence": "merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2934",
+      "type": "dep-update-noise",
+      "source": "PR #2934 dependabot cargo-minor-patch (superseded)",
+      "score_delta": 0,
+      "evidence": "closed unmerged 2026-09-04 (superseded by #2939)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2936",
+      "type": "dep-update-noise",
+      "source": "PR #2936 dependabot cargo-minor-patch (superseded)",
+      "score_delta": 0,
+      "evidence": "closed unmerged 2026-09-05 (superseded by #2939)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-resurrects-tokens-after-logout",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)",
+      "score_delta": 2,
+      "evidence": "AuthContext.tsx:415-416 — refreshTokenInternal unconditionally writes rotated tokens to storage before validating session. Single-flight refresh (PR #2942) widens race: if logout() runs while a 401-triggered refresh is in-flight, tokenStorage.clear() runs first, then the in-flight refresh completes and re-persists a fresh access+refresh pair. On next page reload initializeAuth finds resurrected tokens and silently re-authenticates.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-leaks-form-drafts-across-users",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)",
+      "score_delta": 1,
+      "evidence": "PR #2943 hardened query-cache purge via AUTHED_QUERY_KEY_ROOTS but tokenStorage.clear() removes only 4 keys. Feature-local localStorage like useDraftStorage (DISPUTE_DRAFT_KEY, not user/tenant-namespaced) survives logout. On shared workstation, User B sees User A's unsent legal dispute draft on FileDisputePage.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f && head -1 grep #",
+      "observed": "brief exists, h1=2026-09-08",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev on state cursors",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique length equality on ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq slurpfile prev seen_signals check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no item .score > 8; decay applied",
+      "observed": "true; 2 dropped items via decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plan-path AND 'adversarial pass:' in brief",
+      "observed": "matched",
+      "expected": "matched"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan, all 4 meta + 11 heading + cap tick + Mode + Files exist",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached name-only | grep -v ^\\.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secrets/hostnames grep (with baseline exclusions)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases failed = none; cursors advanced",
+      "observed": "no failed phases, all cursors advanced",
+      "expected": "no failed phases → no cursors held back"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "each prior-run plan slug present in active or archive",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "9 >= 9",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length caps",
+      "observed": "[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor sanity (Phase 1.6 skipped → GC7 no-op)",
+      "observed": "valid; cc within bounds; pm unchanged",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached telegram-token regex",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate — no signal met certainty bar (only 2 eligible stalled-review signals both at score 1 < required 3; both PRs already labelled needs-human-review so a routine ping would be noise)"
+}

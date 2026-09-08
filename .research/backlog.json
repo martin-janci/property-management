@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed 2026-09-08: no new signals in 14+ days (was score 1)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-08",
       "plan": null
     },
     {
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed 2026-09-08: no new signals in 14+ days (was score 1)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7420,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-08",
       "plan": null
     },
     {
@@ -10633,6 +10635,157 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-contexts-AuthContext-tsx",
+      "title": "churn-hotspot: ppt-web AuthContext.tsx changed 3× in 7 days (JWT-exp cold-boot, 401 replay, purge coverage)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2941",
+        "PR #2942",
+        "PR #2943"
+      ],
+      "evidence": [
+        "3 touches this run (PRs #2941 JWT-exp cold-boot validation, #2942 single-flight refresh + 401 replay, #2943 logout purge allowlist coverage).",
+        "auth-context churn is post-fix hardening — worth watching for regressions, not a bug in itself."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-api-ts",
+      "title": "churn-hotspot: ppt-web lib/api.ts changed 2× in 7 days (single-flight refresh + 401 replay)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2942"
+      ],
+      "evidence": [
+        "2 touches this run via PR #2942 (single-flight refresh + replay on 401). Ranks #2 in source-file churn after AuthContext.tsx.",
+        "Auxiliary test churn on api.test.tsx confirms behavioural change verified with tests."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-components-ConfirmationDialog-tsx",
+      "title": "churn-hotspot: ppt-web ConfirmationDialog.tsx + all locale files touched (i18n externalization)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2940"
+      ],
+      "evidence": [
+        "2 touches this run via PR #2940 (externalize ConfirmationDialog loading label via i18n). Also touched all 6 locale files (cs/de/en/hu/pl/sk).",
+        "Ties at 2 touches this run; picked ConfirmationDialog.tsx over test/lockfile ties as top-3 source churn."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "dx-stalled-review-pr-2902",
+      "title": "PR #2902 stalled — screen-map-drift-pr-2894-reality draft; 8d idle, needs-human-review",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2902"
+      ],
+      "evidence": [
+        "Draft PR opened 2026-08-31, `needs-human-review` label. Routine auto-impl screen-map reconciliation; requires human sign-off to leave draft."
+      ],
+      "files": [],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "dx-stalled-review-pr-2744",
+      "title": "PR #2744 stalled — dispatcher un-wedge (fix oversize-archive push #1162 + retry-remint ghost #2460); 26d idle draft",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "Draft PR opened 2026-08-13, `needs-human-review` label. Dispatcher un-wedge work stalled 26 days — blocking two dispatcher bug classes."
+      ],
+      "files": [],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-resurrects-tokens-after-logout",
+      "title": "ppt-web-core: in-flight refresh resurrects tokens after logout — logout() + 401 single-flight refresh race re-persists rotated pair after tokenStorage.clear()",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "AuthContext.tsx:415-416 — refreshTokenInternal unconditionally writes rotated tokens to storage before session validity check.",
+        "Single-flight refresh introduced by PR #2942 widens the race window: logout() runs tokenStorage.clear() first; then in-flight refresh completes and re-persists fresh access+refresh pair.",
+        "storedUser = null after clear so React state stays logged out — but next page reload initializeAuth() finds resurrected tokens and silently re-authenticates.",
+        "401 interceptor also replays the original request with the rotated bearer after logout has already run.",
+        "Fix: refresh must abort (or discard the response) when the session has been torn down mid-flight (e.g. AbortController wired from logout, or check for cleared session on response arrival).",
+        "2026-09-08: promoted to plan via security fast-track (score 2, confidence high) — adversarial pass: passed"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": "plans/code-review-ppt-web-core-refresh-resurrects-tokens-after-logout.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-leaks-form-drafts-across-users",
+      "title": "ppt-web-core: feature-local localStorage drafts (useDraftStorage) survive logout — User B sees User A's unsent dispute draft on shared workstation",
+      "vector": "security",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-09-08 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "PR #2943 hardened query-cache purge via AUTHED_QUERY_KEY_ROOTS allowlist, but tokenStorage.clear() removes only 4 keys (ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY, TENANTS_KEY).",
+        "useDraftStorage:88-89 writes window.localStorage.setItem(key, JSON.stringify(payload)) under static DISPUTE_DRAFT_KEY — not user- or tenant-namespaced.",
+        "On shared workstation: User A drafts a dispute → logs out → User B logs in → FileDisputePage restores User A's unsent legally-meaningful draft.",
+        "Fix: parallel storage-key allowlist for logout purge, OR namespace all draft keys by userId/tenantId."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/hooks/useDraftStorage.ts"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
     }
   ]
 }
