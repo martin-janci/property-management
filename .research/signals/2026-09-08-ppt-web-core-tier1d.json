@@ -1,0 +1,47 @@
+{
+  "generated": "2026-09-08T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (buffer starved, LANDABLE-only) 2026-09-08",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "steered (dispatcher Tier-1d LANDABLE-only). mobile-native-kmp is the oldest by state.review_cursor (2026-08-25) but is structurally UNLANDABLE in the cloud runner (AGP egress-blocked, #2652) and excluded per dispatcher guidance; api-handlers/api-core map to the api-server binary crate, which cannot build in the cloud runner (utoipa-swagger-ui build script egress-blocked, #2949), so findings there are unlandable. Among unambiguously cloud-landable frontend segments, ppt-web-core selected. Saturation check PASSED: 0 open code-review-finding rows for ppt-web-core in backlog.json (all prior ppt-web-core findings status=done). Segment scope per skill map = frontend/apps/ppt-web/src/ core (hooks/, lib/ api client, contexts/ stores, routes/ router) plus the feature data-hooks (features/*/hooks) that own API access. This pass targeted the shared axios/auth plumbing (lib/api.ts 401-replay + retry interceptor, contexts/AuthContext.tsx single-flight refresh, lib/websocket.ts reconnect) — all found well-hardened and heavily documented — then swept the feature data-hooks for consistency with the shared client. A prior 2026-08-29 ppt-web-core run filed code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor for routes/groups/person-months.tsx (raw fetch() with no Bearer token); this pass extends that audit to the AI feature hooks and found TWO net-new files with the same defect that no existing signal covers (grep of the full signals corpus for useOcrMeterReading / useAiChat / ocr/meter-reading / ai-chat hooks returned nothing).",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:30-46 — the module-local apiFetch<T>() helper calls the global fetch() with only `{ 'Content-Type': 'application/json', ...options?.headers }` and never attaches an Authorization header. Every AI-chat query/mutation in the file (useAiChatSessions L49-60, useAiChatSession L63-72, useAiChatMessages L75-88, useCreateSession L91+, and the remaining useMutation hooks) routes through apiFetch to `/api/v1/ai/*`, so all AI-chat requests go out WITHOUT the Bearer token.",
+        "Contrast with the sibling feature hooks that were done correctly: features/sentiment/hooks/useSentiment.ts:7,18 and features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:5,9 both import getApiClient from '../../../lib/api' and carry the explicit comment 'getApiClient() ensures the shared axios interceptors apply: Bearer-token'. useAiChat bypasses that shared client entirely.",
+        "Impact: authenticated AI-chat endpoints receive no Authorization header, so requests 401 (broken feature) — and because the raw fetch never touches the lib/api.ts response interceptor, it also misses the single-flight 401->refresh->replay path (api.ts:249-270) and the transient-error retry/backoff. This is the same defect class already filed for routes/groups/person-months.tsx (code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor, 2026-08-29) but in a previously-unreported file. Confidence medium: the missing header is confirmed by static read; the 401 is inferred from the endpoints being authenticated (not runtime-confirmed). Fix (frontend-only, cloud-landable): replace apiFetch with getApiClient() calls like the sentiment/predictive-maintenance hooks, or inject `Authorization: Bearer ${tokenStorage.getAccessToken()}` and drop the bespoke fetch wrapper."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-35 — the ocrFetch<T>() helper calls global fetch(url, options) and passes options straight through with no default headers at all, so no Authorization header is ever added. useOcrProcessImage (L38-51, POST multipart to /api/v1/ai/ocr/meter-reading) and useOcrCorrection (L54-60, POST /api/v1/ai/ocr/correction) both send through ocrFetch, so the OCR meter-reading requests go out unauthenticated.",
+        "Same root cause as the ai-chat hook and the prior person-months.tsx finding: the hook bypasses the shared axios client (getApiClient(), lib/api.ts) that every correctly-wired feature hook uses to apply the Bearer-token interceptor, the X-Tenant-ID org header (AuthContext setOrgProvider, #1522), and the 401->refresh->replay recovery. A raw fetch to a relative /api path is NOT proxied through those interceptors.",
+        "Impact: OCR meter-reading and OCR-correction submissions are unauthenticated -> 401 -> the Epic 128 OCR-preview flow is broken for real sessions; also no automatic token-refresh replay on an expired access token. Confidence medium (static contrast with sibling hooks + shared-client comment; not runtime-confirmed). Fix (frontend-only, cloud-landable): route ocrFetch through getApiClient() (for multipart, let axios set the multipart boundary and rely on the request interceptor for the Authorization header) or explicitly attach Authorization: Bearer + X-Tenant-ID."
+      ]
+    }
+  ]
+}
