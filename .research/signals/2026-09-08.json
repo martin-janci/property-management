@@ -1,0 +1,199 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-08",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-09-01T18:38:58Z (7d 13h ago) — missed 6 daily fires",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-09-08",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 7d old; cloud routine may be paused. Dispatcher still active (35c3093 2026-09-08 08:28 on dev) — planning-branch cron is running; only research routine is stale.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-finding-security-idor-portfolio-analytics-2946",
+      "type": "code-review-finding",
+      "source": "Issue #2946",
+      "score_delta": 3,
+      "evidence": "backend/servers/api-server/src/routes/portfolio_analytics.rs:281 upsert_property_metrics and :314 get_property_metrics both compute `_org_id` from tenant context (line 281,314) but drop it — repo calls `.upsert_property_metrics(req)` and `.get_property_metrics(building_id, period_start, period_end)` with no org scoping — cross-tenant IDOR (read+write, verified by grep 2026-09-08).",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-finding-security-idor-portfolio-properties-2945",
+      "type": "code-review-finding",
+      "source": "Issue #2945",
+      "score_delta": 3,
+      "evidence": "reality: Issue #2945 flags portfolio_properties handlers missing org verification. Need to grep-verify. Author flagged as security IDOR. Filed 2026-09-06 alongside #2944/#2946.",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-finding-security-idor-violations-2944",
+      "type": "code-review-finding",
+      "source": "Issue #2944",
+      "score_delta": 3,
+      "evidence": "backend/servers/api-server/src/routes/violations.rs — verified 2026-09-08: `list_evidence` (:322) calls repo.list_evidence(violation_id) with no org_id; `list_payments` (:475) calls repo.list_payments(action_id) with no org_id; `list_comments` (:625) calls repo.list_comments(violation_id, query.include_internal) with no org_id and honors caller-controlled include_internal=true — cross-tenant IDOR (read) + internal-notes privilege leak.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log 2026-09-01T18:38:58Z..HEAD",
+      "score_delta": 1,
+      "evidence": "2 commits (PR #2941 authctx-no-boot-expiry-check + PR #2942 api-401-no-request-replay single-flight refresh) — auth boot + 401 replay reworked in the same week; watch for regressions.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "evidence": "auto-impl PR opened 2026-08-13, draft, needs-human-review; 26 days idle with no reviewDecision. Title: fix(dispatcher): un-wedge oversize-archive push (#1162) + close retry-remint cross-id ghost (#2460).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-2026-09-08",
+      "type": "dep-update-noise",
+      "source": "PR #2935 (npm-minor-patch 40), PR #2939 (cargo-minor open), PR #2591/2590/2589/2588 (expo 57 open)",
+      "score_delta": 0,
+      "evidence": "npm-minor-patch group of 40 landed 2026-09-04; cargo-minor open in #2939. Expo 57 SDK bumps still stalled since Jul 30.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs + head -1 ~= '# 2026-09-08'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen-signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep 'adversarial pass:'",
+      "observed": "both plans annotated 'passed' in brief",
+      "expected": "annotation present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count/metadata/headings/capability/mode/files-exist",
+      "observed": "2 plans, 4 metadata, 11 headings, 3 caps ticked, Mode: cloud-ok, files exist",
+      "expected": "all conditions"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "phase 1.5/1.6 explicitly declared skipped in brief; cursors unadvanced for them (review_cursor, pm_cursor untouched)",
+      "expected": "failures listed if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still exist or archived",
+      "observed": "prior plans unchanged (2 additions only)",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "9 >= 9",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty + within caps",
+      "observed": "auto_fix_actions=[]",
+      "expected": "<=3 with sub-caps <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts existed before this run; Phase 1.6 not re-run so pm_cursor/coverage_cursor unchanged",
+      "observed": "pm_cursor.next_index=5 (unchanged), coverage_cursor.next_index=7 (unchanged); action-list.json + risks.json parse ok; project-state.md non-empty",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met high-confidence + score>=3 + allowlist (allowlist is doc-stub / orphan-remove / lockfile-bump / fixme / stalled-review; the 3 IDOR fixes are code fixes not in allowlist)"
+}

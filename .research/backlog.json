@@ -6574,14 +6574,15 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (2026-09-08)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
@@ -10633,6 +10634,120 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "security-idor-portfolio-analytics-2946",
+      "title": "Cross-tenant IDOR (read+write) in portfolio_analytics — `_org_id` computed but discarded in upsert_property_metrics + get_property_metrics",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2946"
+      ],
+      "evidence": [
+        "issue #2946: portfolio_analytics property metrics compute org_id then discard it",
+        "backend/servers/api-server/src/routes/portfolio_analytics.rs:281 (upsert_property_metrics) — `_org_id = user.tenant_id...` then repo.upsert_property_metrics(req) with no org filter",
+        "backend/servers/api-server/src/routes/portfolio_analytics.rs:314 (get_property_metrics) — `_org_id = user.tenant_id...` then repo.get_property_metrics(building_id, ...) with no org filter",
+        "verified by grep 2026-09-08",
+        "promoted plans/security-idor-portfolio-analytics-2946.md 2026-09-08 (adversarial pass: passed)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/portfolio_analytics.rs",
+        "backend/crates/db/src/repositories/portfolio_analytics.rs"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": "plans/security-idor-portfolio-analytics-2946.md"
+    },
+    {
+      "id": "security-idor-portfolio-properties-2945",
+      "title": "Cross-tenant IDOR: portfolio_properties handlers missing org verification (issue #2945)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Issue #2945"
+      ],
+      "evidence": [
+        "issue #2945 (bug+security, OPEN 2026-09-06): portfolio_properties handlers missing org verification",
+        "candidate paths: backend/crates/db/src/repositories/portfolio_performance.rs (grep 2026-09-08 shows portfolio_performance owns properties/metrics)",
+        "needs grep-verify before promotion — deferred to next run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/portfolio_performance.rs",
+        "backend/crates/db/src/repositories/portfolio_performance.rs"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "security-idor-violations-2944",
+      "title": "Cross-tenant IDOR in violations reads (list_evidence, list_payments, list_comments) + internal-notes privilege leak",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #2944"
+      ],
+      "evidence": [
+        "issue #2944: violation comments/evidence/payments read without org scoping + internal-notes leak",
+        "backend/servers/api-server/src/routes/violations.rs:322 list_evidence(violation_id) — no org_id",
+        "backend/servers/api-server/src/routes/violations.rs:475 list_payments(action_id) — no org_id",
+        "backend/servers/api-server/src/routes/violations.rs:625 list_comments(violation_id, query.include_internal.unwrap_or(false)) — no org_id AND caller-controlled include_internal (privilege leak)",
+        "verified by grep 2026-09-08",
+        "promoted plans/security-idor-violations-2944.md 2026-09-08 (adversarial pass: passed)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": "plans/security-idor-violations-2944.md"
+    },
+    {
+      "id": "churn-hotspot-ppt-web-authcontext",
+      "title": "ppt-web AuthContext churn — 2 auth boot/401-replay reworks in one week, watch for regressions",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log 2026-09-01T18:38:58Z..HEAD"
+      ],
+      "evidence": [
+        "churn since 2026-09-01: 2 commits (PR #2941 cold-boot JWT expiry check, PR #2942 single-flight refresh + 401 replay)",
+        "same file also carried PR #2943 logout-purge allowlist tightening (indirect via queryKeys.test.ts sweep)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "title": "PR #2744 draft 26d idle: fix(dispatcher) un-wedge oversize-archive push (#1162) + close retry-remint cross-id ghost (#2460)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "PR #2744 opened 2026-08-13, draft, needs-human-review label, 26 days idle with no reviewDecision",
+        "targets dispatcher plumbing — has ripple risk if abandoned"
+      ],
+      "files": [],
+      "created_at": "2026-09-08",
+      "updated_at": "2026-09-08",
+      "plan": null
     }
   ]
 }
