@@ -406,14 +406,42 @@ export class NFCCredentialManager {
     throw new Error('unrecognized stored credential format');
   }
 
-  /** Delete the manifest and every chunk slot it could have written. */
-  private async clearStoredCredentials(): Promise<void> {
+  /**
+   * Purge every locally persisted copy of NFC credential material on a session
+   * change. Static because the session-change purge (`resetLocalData`) runs
+   * without a live manager instance — it must be callable from the single
+   * purge point rather than requiring an initialized manager.
+   *
+   * Removes BOTH:
+   *  - the encrypted SecureStore blob (manifest at CREDENTIALS_KEY + every
+   *    chunk slot), which `resetLocalData`'s AsyncStorage sweep never touches;
+   *  - the legacy unencrypted AsyncStorage array kept only for one-time
+   *    migration (LEGACY_CREDENTIALS_KEY).
+   *
+   * On a shared device either survivor would otherwise let the NEXT tenant's
+   * `loadStoredCredentials()` adopt the PRIOR tenant's physical building-access
+   * credentials before their own `fetchCredentials()` overwrites them — the
+   * same class of cross-tenant leak #2947 closed for the access *log*, but for
+   * the credential material itself (issue #2953, follow-up to #2947).
+   */
+  static async clearAllLocalCredentials(): Promise<void> {
+    await NFCCredentialManager.deleteStoredCredentials();
+    await AsyncStorage.removeItem(LEGACY_CREDENTIALS_KEY);
+  }
+
+  /** Delete the SecureStore manifest and every chunk slot it could have written. */
+  private static async deleteStoredCredentials(): Promise<void> {
     await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
     // Deleting a non-existent SecureStore key is a no-op, so a bounded sweep is
     // safe even when we don't know the exact prior chunk count.
     for (let i = 0; i < MAX_CREDENTIAL_CHUNKS; i++) {
       await SecureStore.deleteItemAsync(`${CREDENTIALS_CHUNK_PREFIX}${i}`);
     }
+  }
+
+  /** Delete the manifest and every chunk slot it could have written. */
+  private async clearStoredCredentials(): Promise<void> {
+    await NFCCredentialManager.deleteStoredCredentials();
   }
 
   private async storeCredentials(): Promise<void> {

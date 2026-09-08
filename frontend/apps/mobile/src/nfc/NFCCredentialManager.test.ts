@@ -43,6 +43,7 @@ const secureStore = (SecureStore as unknown as { __store: Map<string, string> })
 
 const getItem = AsyncStorage.getItem as jest.Mock;
 const setItem = AsyncStorage.setItem as jest.Mock;
+const removeItem = AsyncStorage.removeItem as jest.Mock;
 
 const secureGet = SecureStore.getItemAsync as jest.Mock;
 const secureSet = SecureStore.setItemAsync as jest.Mock;
@@ -357,5 +358,44 @@ describe('NFCCredentialManager credential storage (SecureStore chunking)', () =>
       expect.stringContaining('credentials corrupted'),
       expect.anything()
     );
+  });
+});
+
+// issue #2953 — the session-change purge (`resetLocalData`) must be able to
+// clear NFC credential material without a live manager instance. The static
+// clearAllLocalCredentials() removes the encrypted SecureStore blob (manifest +
+// every chunk slot) AND the legacy unencrypted AsyncStorage migration blob, so
+// a prior tenant's building-access credentials never survive a handoff on a
+// shared device.
+describe('NFCCredentialManager.clearAllLocalCredentials (#2953)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('deletes the SecureStore manifest + chunk slots and the legacy AsyncStorage key', async () => {
+    const store = installStatefulSecureStore();
+    const manager = new NFCCredentialManager('http://localhost:8080');
+    // Persist a large set so real manifest + multiple chunk slots exist.
+    const persistSpy = jest
+      .spyOn(
+        manager as unknown as { apiRequest: (...a: unknown[]) => Promise<unknown> },
+        'apiRequest'
+      )
+      .mockResolvedValueOnce({
+        credentials: Array.from({ length: 5 }, (_, i) => makeCredential(`c${i}`, 900)),
+      });
+    await manager.fetchCredentials();
+    persistSpy.mockRestore();
+
+    expect([...store.keys()].filter((k) => k.startsWith(CREDENTIALS_KEY)).length).toBeGreaterThan(
+      1
+    );
+
+    await NFCCredentialManager.clearAllLocalCredentials();
+
+    // Every SecureStore key that could hold credential material is gone.
+    expect([...store.keys()].filter((k) => k.startsWith(CREDENTIALS_KEY))).toEqual([]);
+    // The legacy unencrypted AsyncStorage blob is removed too.
+    expect(removeItem).toHaveBeenCalledWith('@ppt/nfc_credentials');
   });
 });
