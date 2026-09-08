@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-08T18:37:53Z",
+  "generated": "2026-09-08T18:38:57Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -48,18 +48,18 @@
     {
       "task_id": "gh-issue-2954",
       "branch": "auto-impl/gh-issue-2954-aa3bd956",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-08T18:27:57Z",
-      "last_updated": "2026-09-08T18:27:57Z",
-      "status_changed_at": "2026-09-08T18:27:57Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-08T18:38:57Z",
+      "status_changed_at": "2026-09-08T18:38:57Z",
+      "pr_number": 2956,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2956",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2956 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=test-only hardening; just verify green (2666 tests); drift is assigned ppt-web file (pm-tech-lead area unmapped); draft PR Closes #2954",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
