@@ -6574,20 +6574,22 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decay-2026-09-09: score 1→0 — no new signals in 14d",
+        "dropped: decayed to 0"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-09",
       "plan": null
     },
     {
@@ -7395,8 +7397,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7406,9 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decay-2026-09-09: score 1→0 — no new signals in 14d",
+        "dropped: decayed to 0"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7422,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-09",
       "plan": null
     },
     {
@@ -10633,6 +10637,390 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "title": "reality-web login page redirect param accepts `/\\evil.com` — post-auth open redirect (missing 3rd guard clause vs sibling callback page)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-05 reality-web auth review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:72-73 — router.replace(safe) with safe = redirectTo.startsWith('/') && !redirectTo.startsWith('//') — missing !startsWith('/\\\\') clause present in callback/page.tsx:116-125 and its test. Backslash normalises to '/' during URL resolution → protocol-relative navigation to attacker origin after login. Post-auth phishing primitive."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": "plans/code-review-reality-web-login-open-redirect-backslash.md"
+    },
+    {
+      "id": "code-review-api-handlers-delegation-null-unit-no-owner-check",
+      "title": "api-handlers create_delegation with null unit_id skips ownership gate; has_delegation treats NULL unit as global wildcard — delegation-model integrity break (potential broken-access-control escalation)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-09 api-handlers delegations review"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/delegations.rs:207-236 — create_delegation only checks unit ownership INSIDE `if let Some(unit_id) = req.unit_id` branch; when omitted the whole gate is skipped, yielding a unit-less delegation with arbitrary scopes.",
+        "backend/crates/db/src/repositories/delegation.rs:277-303 — has_delegation() treats NULL unit_id as a wildcard over every unit and 'all' as a wildcard over every scope; query runs against &self.pool (not RLS), so effectively cross-tenant."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/delegations.rs",
+        "backend/crates/db/src/repositories/delegation.rs"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": "plans/code-review-api-handlers-delegation-null-unit-no-owner-check.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-no-guard",
+      "title": "ppt-web /dashboard/manager and /dashboard/resident have no ProtectedRoute wrapper — comment claims target-page guard exists but it doesn't (defense-in-depth gap)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-09 ppt-web-core routes review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:162-178 dashboardRoutes: /dashboard/manager + /dashboard/resident mount naked, comment claims target-page role check exists.",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx:21-49 — no isAuthenticated/role check; falls back to DEFAULT_DASHBOARD_LAYOUT on error.",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37-68 — no wrapping guard above /dashboard/*."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-home-role-hardcoded",
+      "title": "ppt-web Home 'Open dashboard' CTA uses `role === 'manager'` — ignores org_admin/super_admin/technical_manager/property_manager (misroute to /dashboard/resident)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-09 ppt-web-core routes review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — literal 'manager' comparison. MANAGER_ROLES defined in shared.tsx:36-50 (isManagerRole) is the single source of truth used elsewhere in routes/ but not here."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/shared.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth",
+      "title": "ppt-web useAiChat.ts apiFetch<T> bypasses getApiClient — every /api/v1/ai/* request goes unauthenticated (no Bearer token, no 401→refresh replay)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:30-46 — apiFetch calls global fetch() with only Content-Type; no Authorization header ever attached. Every hook (useAiChatSessions/useAiChatSession/useAiChatMessages/useCreateSession) routes through it. Sibling sentiment/predictive-maintenance hooks correctly use getApiClient()."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "title": "ppt-web useOcrMeterReading.ts ocrFetch<T> bypasses getApiClient — OCR meter-reading + correction submissions unauthenticated (Epic 128 flow broken)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-35 — ocrFetch<T> global fetch with no default headers. useOcrProcessImage (POST /api/v1/ai/ocr/meter-reading) + useOcrCorrection (POST /api/v1/ai/ocr/correction) both send unauthenticated. Missing shared X-Tenant-ID header and 401→refresh replay."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "title": "ppt-web rentals.tsx action handlers are no-op stubs (onRegisterGuest/onEditGuest/onAddGuest/onCheckIn/onCheckOut/onDisconnect/onSettings) — buttons look interactive but do nothing",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 ppt-web-core rentals review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:517-521 GuestRegistrationPageRoute + :333-339 PlatformConnectionsPageRoute + :381-383 BookingsPageRoute — several handlers are () => {}. BookingDetailPageRoute (409-429) shows working checkIn/checkOut mutations that could be reused."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "title": "ppt-web financial.tsx FinancialDashboardPageRoute destructures only isLoading — a query 5xx renders €0 outstanding/overdue with no error indication (decision-integrity hazard)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 ppt-web-core financial review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-136 — three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) never destructure isError/error. Zero-fallback silently indistinguishable from 'nothing due'.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:456-459 shows correct pattern IS known (FinancialReportsPage passes error prop).",
+        "frontend/apps/ppt-web/src/main.tsx:28-35 — global QueryClient has no QueryCache onError/throwOnError, so swallowed query errors bypass ErrorBoundary."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/main.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "title": "ppt-web errorHandler.ts maps 403 to UNAUTHORIZED code — conflates permission-denied with session-invalid (risk of unwanted logout cascade on 403)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 ppt-web-core errorHandler review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:271-278 parseHttpStatusError maps 403→'UNAUTHORIZED' (auth copy) while 401→'AUTHENTICATION_ERROR'. 403 is authorization not authentication; downstream 'clear session' branches may log user out on permission denial."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "title": "ppt-web useNetworkStatus.getOnlineSnapshot reads navigator.onLine without typeof guard — inconsistent with sibling helpers (latent ReferenceError in non-DOM host)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 ppt-web-core useNetworkStatus review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts:47-49 — getOnlineSnapshot() no `typeof navigator !== 'undefined'` guard while getInitialOnlineStatus (:27-29) and isOnline (:200-202) both have it. Robustness/consistency."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "title": "ppt-web OrganizationProvider builds fresh context value object every render — silent token refresh fan-outs re-render every useOrganization consumer",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 ppt-web-core OrganizationProvider review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — value rebuilt on every render, no useMemo. AuthContext.tsx:689-712 uses useMemo correctly. Missing useMemo keyed on [user?.organizationId, user?.organizationName]."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "title": "ppt-web App.tsx MfaWrapper.verify() uses hardcoded '/api/v1/auth/mfa/verify' — bypasses VITE_API_URL, breaks MFA on cross-origin deployments",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-06 ppt-web-core App.tsx MfaWrapper review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:72 — raw fetch('/api/v1/auth/mfa/verify', ...) with hardcoded root-relative path. lib/api.ts and AuthContext.tsx correctly use VITE_API_URL / VITE_API_BASE_URL. On split-origin deploys MFA verify 404s and MfaChallengeProvider treats every correct code as failure."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "title": "ppt-web lib/api.ts eager default export `export default getApiClient()` — configureApiClient() creates fresh instance, default export references the old token-less one (latent auth foot-gun)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-06 ppt-web-core lib/api.ts review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:321 — export default getApiClient(); evaluated eagerly with no config. AuthProvider later reconfigures via configureApiClient() (AuthContext.tsx:352) → api.ts:299 creates new instance. Default-import consumers would hold the token-less/unauthenticated axios instance. Currently latent (no default-import consumers) but real foot-gun."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-home-sections-null-on-error",
+      "title": "reality-web homepage FeaturedListings + CategoryCards return null on fetch error — hero→footer gap with no error/retry UI (silent broken homepage)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 reality-web home sections review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx:97-99 + CategoryCards.tsx:181-182 — `if (error || !data) return null` renders nothing on error, no retry UI. Empty-state CTA exists (FeaturedListings.tsx:122-181 comment explicitly notes 'without CTA homepage was hero→footer with nothing'). components/states/ErrorState.tsx exists but not wired."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx",
+        "frontend/apps/reality-web/src/components/states/ErrorState.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-herosearch-hardcoded-city-i18n",
+      "title": "reality-web HeroSearch quick-link cities (Bratislava/Prague/Vienna) hardcoded in English — not localized to sk/cs/de bundles",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 reality-web homepage review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/HeroSearch.tsx:91,:98,:105 — button labels are raw English while section header uses tSearch('popular'). PopularNeighbourhoods.tsx:132 already uses t(n.nameKey) with home.city namespace. Keep query-param values canonical; only translate display."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/HeroSearch.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-categorycards-tolocalestring-no-locale",
+      "title": "reality-web CategoryCards `category.count.toLocaleString()` with no locale — wrong grouping on sk/cs/de/pl/hu (Slovak sees '1,234' instead of '1 234')",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-07 reality-web CategoryCards review"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx:206 — toLocaleString() with no arg. lib/format.ts formatNumber(value, locale, options) exists precisely for this."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-auth-nav-drops-locale",
+      "title": "reality-web auth pages (login/register/reset-password) use raw useRouter from next/navigation — router.push('/auth/login') drops the active locale on post-auth hop",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-05 reality-web auth nav review"
+      ],
+      "evidence": [
+        "register/page.tsx:9,26,81 + reset-password/page.tsx:9,18,90 + login/page.tsx:20,31,73 — import useRouter from 'next/navigation' (not @/i18n/routing). Unprefixed paths → next-intl middleware resolves to default (sk). Link components correctly use @/i18n/routing.",
+        "Fix: import useRouter from @/i18n/routing (locale-aware wrapper)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/register/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/reset-password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-no-live-session-token-refresh",
+      "title": "mobile-rn has NO live-session access-token refresh — foreground session outliving JWT TTL becomes silently non-functional until cold restart; offline queue stalls forever",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d 2026-09-09 mobile-rn auth/session review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx:174,275,326 — refreshToken() only called from cold-start initialize() and biometric unlock; no AppState/foreground listener, no consumer in screens/hooks.",
+        "frontend/apps/mobile/src/hooks/useApi.ts:60,83-92 apiRequest reads bearer from SecureStore and rejects on non-ok with `throw new Error('HTTP ${status}')` — no 401→refresh→replay (contrast lib/api.ts axios interceptor added by PR #2942).",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:253,285 executeQueuedAction reads token fresh but doesn't refresh; the 401-retention (previous item done) keeps flushed writes retrying against expired bearer forever."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx",
+        "frontend/apps/mobile/src/hooks/useApi.ts",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
     }
   ]
 }

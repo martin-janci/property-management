@@ -1,0 +1,199 @@
+{
+  "generated": "2026-09-09T18:44:00Z",
+  "since_iso": "2026-09-01T18:38:58Z",
+  "last_pr_seen_before": 2921,
+  "last_pr_seen_after": 2956,
+  "lag_hours": 192,
+  "run_notes": [
+    "Routine last committed 2026-09-01. Dispatcher (separate loop) has been very active in the interim — 89 of the 100 commits between last routine-commit and now are dispatcher scheduling, and 17 code PRs (#2922-#2956) merged.",
+    "Trigger payload: buffer-low, claimable=8/72, landable=0. Reason: entire claim pool is infra-blocked — mobile-native AGP egress #2652, api-server utoipa egress #2949, RN jest version-rot #2951. Refill target: LANDABLE frontend/reality-web/ppt-web coverage.",
+    "This run's response: adopt 18 previously-unconsumed tier1d code-review-finding signals produced by the dispatcher since 2026-09-05 into backlog.json as new rows, plus promote 2 security-fast-track plans (one landable reality-web open-redirect, one blocked-in-cloud api-handlers delegation IDOR).",
+    "Phase 1.5 (rotating expert review): skipped for THIS routine commit — the dispatcher already produced tier1d code-review-finding signal files for every landable segment across 2026-09-05..2026-09-09; this run's job is to CONSUME them, not to spawn another review pass.",
+    "Phase 1.6 (project management): skipped this catch-up run — pm_cursor.next_index left at 5 (pm-security). Rerun the routine with `text: \"pm-full\"` after this landing to refresh delivery artifacts."
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-09",
+      "type": "lag_warning",
+      "source": "state.last_run_iso 2026-09-01T18:38:58Z vs today",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["last_run_iso=2026-09-01T18:38:58Z, today=2026-09-09, delta=192h (8 days) > 36h threshold — routine has not fired via the cloud scheduler for 8 days."]
+    },
+    {
+      "id": "stale-routine-alert-2026-09-09",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso vs today",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["state.json last_run_iso is 8d old (>=3d threshold). Cloud research routine may be paused. Dispatcher state (assignments.json on planning branch) is separate and IS ticking; check the two loops independently."]
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-05 reality-web auth (adopted this run)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": ["reality-web login page redirect guard missing 3rd clause (rejects `//` but not `/\\`). Callback page and its test have the full 3-clause guard; login page and its (missing) tests diverged. Post-auth open-redirect / phishing primitive.", "Reclassified from candidate_vector=bug to security given OWASP A01 (broken access) shape.", "Adopted into backlog and PROMOTED via security fast-track (vector=security + confidence=high + score>=2)."]
+    },
+    {
+      "id": "code-review-reality-web-auth-nav-drops-locale",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-05 reality-web auth (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["register/reset-password/login pages import useRouter from next/navigation with unprefixed paths; next-intl middleware drops the active locale on post-auth hop.", "Adopted into backlog as open row; not promoted this run."]
+    },
+    {
+      "id": "code-review-reality-web-home-sections-null-on-error",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 reality-web home sections (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["FeaturedListings + CategoryCards return null on fetch error — hero→footer gap with no error/retry UI. Adopted into backlog as open row."]
+    },
+    {
+      "id": "code-review-reality-web-herosearch-hardcoded-city-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 reality-web homepage (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["HeroSearch quick-link cities (Bratislava/Prague/Vienna) hardcoded English labels. Adopted."]
+    },
+    {
+      "id": "code-review-reality-web-categorycards-tolocalestring-no-locale",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 reality-web CategoryCards (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["CategoryCards `count.toLocaleString()` with no locale — wrong grouping for non-default locales. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-no-guard",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-09 ppt-web-core routes (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["/dashboard/manager + /dashboard/resident routes mount without ProtectedRoute wrapper; comment claims target-page role check exists but it doesn't. Defense-in-depth gap. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-home-role-hardcoded",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-09 ppt-web-core routes (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["Home page 'Open dashboard' CTA uses literal role==='manager' instead of isManagerRole(), misrouting org_admin/super_admin/technical_manager/property_manager. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["useAiChat.ts apiFetch bypasses getApiClient — /api/v1/ai/* all unauthenticated. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["useOcrMeterReading.ts ocrFetch bypasses getApiClient — OCR meter-reading + correction unauthenticated. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 ppt-web-core rentals (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["rentals.tsx guest-registration / bookings / platform-connections action handlers are () => {} — buttons look interactive but do nothing. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 ppt-web-core financial (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["FinancialDashboardPageRoute swallows query errors → renders €0 with no error indication on backend 5xx. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 ppt-web-core errorHandler (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["errorHandler.ts maps 403 → 'UNAUTHORIZED' (auth copy); conflates permission-denied with session-invalid. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 ppt-web-core useNetworkStatus (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["useNetworkStatus.getOnlineSnapshot reads navigator.onLine without typeof guard while sibling helpers do. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-07 ppt-web-core OrganizationProvider (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["OrganizationProvider builds fresh value object every render; silent token refresh cascades re-render every useOrganization consumer. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-path",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-06 ppt-web-core App.tsx MfaWrapper (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["App.tsx MfaWrapper.verify() uses hardcoded '/api/v1/auth/mfa/verify' bypassing VITE_API_URL; breaks MFA on split-origin deploys. Adopted."]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale-instance",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-06 ppt-web-core lib/api.ts (adopted this run)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["lib/api.ts `export default getApiClient()` eagerly evaluated; configureApiClient() later creates a fresh instance. Latent auth foot-gun. Adopted."]
+    },
+    {
+      "id": "code-review-api-handlers-delegation-null-unit-no-owner-check",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-09 api-handlers delegations (adopted this run)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": ["create_delegation skips ownership gate when unit_id is None; has_delegation treats NULL unit as global wildcard on &self.pool. Delegation-model integrity break. Reclassified from bug→security. Adopted and PROMOTED via security fast-track."]
+    },
+    {
+      "id": "code-review-mobile-rn-no-live-session-token-refresh",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d 2026-09-09 mobile-rn auth/session (adopted this run)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["mobile-rn has NO live-session refresh — foreground session outliving JWT TTL becomes silently non-functional until cold restart; offline queue stalls forever. Adopted. (Cloud jest run blocked by #2951 but manual/local verification feasible.)"]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no-eligible-signal — allowlist accepts only screen-map-drift/screen-map-orphan/fixme-in-merged-code/dep-update-lockfile-drift/stalled-review. This run's signals are code-review-finding + lag/stale (not in the allowlist).",
+  "goal_checks": []
+}
