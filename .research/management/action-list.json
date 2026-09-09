@@ -145,20 +145,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "code-review-api-core-apns-jwt-per-send-mint-retry1",
-      "action": "api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min [retry 1/2 of failed code-review-api-core-apns-jwt-per-send-mint]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-09-09T04:25:25Z (retry_of=code-review-api-core-apns-jwt-per-send-mint reason=failed-no-pr cooldown_ok newest_failure=2026-09-01T20:35:15Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-09T04:25:25Z",
-      "retry_of": "code-review-api-core-apns-jwt-per-send-mint",
-      "retry_round": 1
     }
   ],
   "generated": "2026-09-07T14:38:29Z"

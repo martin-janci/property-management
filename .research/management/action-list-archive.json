@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-09-08T20:36:10Z",
+  "archived_at": "2026-09-09T10:29:22Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2419,6 +2419,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-apns-jwt-per-send-mint-retry1",
+      "action": "api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min [retry 1/2 of failed code-review-api-core-apns-jwt-per-send-mint]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-09-09T04:25:25Z (retry_of=code-review-api-core-apns-jwt-per-send-mint reason=failed-no-pr cooldown_ok newest_failure=2026-09-01T20:35:15Z) | gc1-reconcile 2026-09-09T10:24:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-09T04:25:25Z",
+      "retry_of": "code-review-api-core-apns-jwt-per-send-mint",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-09-09T10:24:31Z"
       }
     },
     {
