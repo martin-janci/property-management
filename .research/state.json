@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-09T12:42:04Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2956,
+  "last_issue_seen": 2956,
+  "last_commit_sha": "d7da7615",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1002,7 +1002,23 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-09-09",
+    "code-review-ppt-web-core-rentals-noop-action-handlers",
+    "code-review-ppt-web-core-financial-dash-false-zeros",
+    "code-review-reality-web-home-sections-null-on-error",
+    "code-review-reality-web-herosearch-hardcoded-city-i18n",
+    "code-review-reality-web-categorycards-tolocalestring-no-locale",
+    "code-review-ppt-web-core-errorhandler-403-mislabel",
+    "code-review-ppt-web-core-networkstatus-navigator-guard",
+    "code-review-ppt-web-core-orgprovider-unstable-value",
+    "code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth",
+    "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+    "code-review-ppt-web-core-dashboard-route-no-guard",
+    "code-review-ppt-web-core-home-role-hardcoded",
+    "code-review-api-core-payment-reminders-batch-abort",
+    "code-review-api-core-notify-send-before-stamp-dup",
+    "code-review-api-handlers-delegation-null-unit-no-owner-check"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1016,9 +1032,9 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 385,
+    "plans_created": 31,
     "quiet_days": 3,
     "auto_fix_count": 0
   },

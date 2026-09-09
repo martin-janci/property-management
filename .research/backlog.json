@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days (2026-09-09)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-09",
       "plan": null
     },
     {
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed: no new signals in 14 days (2026-09-09)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7420,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-09",
       "plan": null
     },
     {
@@ -10633,6 +10635,333 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "title": "ppt-web-core rentals: GuestRegistrationPage & BookingsPage action handlers are no-op stubs — check-in/check-out/register-guest silently do nothing while sibling routes wire the same API",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core rentals)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:517-521 GuestRegistrationPageRoute has onRegisterGuest/onRegisterAllGuests/onEditGuest/onAddGuest all () => {}; page fetches real guests but every affordance is dead.",
+        "rentals.tsx:333-339 PlatformConnectionsPageRoute onConnect/onDisconnect/onSettings are () => {} while createConnection + syncPlatforms mutations already work — Disconnect/Settings buttons dead.",
+        "rentals.tsx:381-383 BookingsPageRoute onCancelBooking/onCheckIn/onCheckOut are () => {} while BookingDetailPageRoute:409-429 already implements working checkIn/checkOut via rentalsApiCheckIn/rentalsApiCheckOut — check-in/out from bookings list is dead while the same actions work one screen deeper. Frontend-only, cloud-landable."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "title": "ppt-web-core FinancialDashboardPage: query hooks destructure only isLoading — on backend 500 the dashboard renders €0 totalOutstanding/totalOverdue with NO error indication (decision-integrity hazard)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core financial)"
+      ],
+      "evidence": [
+        "financial.tsx:70-136 FinancialDashboardPageRoute has three useQuery calls (getARAgingReport, getOverdueInvoices, listInvoices) that destructure only isLoading — never isError/error. On failure values fall back to zeros/empties and the page renders with no error prop.",
+        "financial.tsx:456-459 shows the correct pattern IS known in the same file: FinancialReportsPage receives error={activeQuery.error instanceof Error ? activeQuery.error.message : null}. The dashboard omits it.",
+        "main.tsx:28-35 QueryClient has staleTime + retry:1 but no QueryCache onError / throwOnError / MutationCache — swallowed errors never reach the ErrorBoundary. Fix: surface isError in the dashboard queries or add a global QueryCache onError."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/main.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-home-sections-null-on-error",
+      "title": "reality-web home FeaturedListings/CategoryCards render null on fetch error — no error boundary, silent empty page on SSR failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web home-sections)"
+      ],
+      "evidence": [
+        "FeaturedListings.tsx and CategoryCards.tsx render null when queries error rather than surfacing a retry state — public home page appears blank on backend failure.",
+        "Contrast with the listing detail route which uses an error boundary; the public entry point should not fall back to null silently."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-herosearch-hardcoded-city-i18n",
+      "title": "reality-web HeroSearch: city labels hardcoded in English on next-intl-powered surface — bypasses sk/cs/de translations",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web hero-search)"
+      ],
+      "evidence": [
+        "HeroSearch.tsx city dropdown labels ('Bratislava', 'Prague', etc.) rendered as literal English strings; other locales fall back to English.",
+        "reality-web uses next-intl (frontend/apps/reality-web/src/i18n/) — pattern is t('home.cities.<slug>'). Frontend-only cloud-landable fix."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/HeroSearch.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-categorycards-tolocalestring-no-locale",
+      "title": "reality-web CategoryCards: toLocaleString() called without locale argument — counts follow browser locale, not the active next-intl language",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web format)"
+      ],
+      "evidence": [
+        "CategoryCards.tsx renders listing counts via toLocaleString() with no locale argument — the number formatting doesn't match the currently-selected next-intl locale.",
+        "lib/format.ts already exposes a formatNumber(locale, value) helper; call sites bypass it."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "title": "ppt-web-core lib/errorHandler: 403 responses labelled 'Unauthorized' — should be 'Forbidden' (401 vs 403 confusion in surfaced copy)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core errorhandler)"
+      ],
+      "evidence": [
+        "lib/errorHandler.ts maps HTTP 403 to the 'Unauthorized' i18n key intended for 401 — status/copy mismatch confuses users when a manager forbids an operation."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "title": "ppt-web-core useNetworkStatus: reads navigator.onLine without SSR/undefined guard — throws on non-browser context (dev builds, tests, SSR previews)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core network-status)"
+      ],
+      "evidence": [
+        "useNetworkStatus.ts accesses navigator.onLine directly at module init; typeof navigator === 'undefined' path is not guarded — jest/vitest and any SSR preview surface throw."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "title": "ppt-web-core OrganizationProvider: context value object is a fresh {} on every render — every consumer re-renders on every parent update",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core orgprovider)"
+      ],
+      "evidence": [
+        "OrganizationProvider.tsx builds { orgId, setOrgId, ... } inline on every render — no useMemo — so every consumer of useOrganization() re-renders whenever a parent renders."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth",
+      "title": "ppt-web AI-chat useAiChat.ts: apiFetch helper never attaches Authorization header — every AI-chat query/mutation goes out unauthenticated → Epic 127 chat feature 401s in production",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks)",
+        "routine 2026-09-09 verification (direct file read confirms line 30-46)"
+      ],
+      "evidence": [
+        "useAiChat.ts:30-46 apiFetch<T>() calls global fetch() with only Content-Type — no Authorization Bearer token. Verified directly on 2026-09-09: header set is `{'Content-Type':'application/json', ...options?.headers}` with no interceptor path.",
+        "All AI-chat hooks (useAiChatSessions L49, useAiChatSession L63, useAiChatMessages L75, useCreateSession L91+) route through apiFetch to /api/v1/ai/* → every AI-chat request goes out WITHOUT the bearer token → server returns 401 → Epic 127 UI is broken end-to-end for authenticated sessions.",
+        "Sibling hooks features/sentiment/hooks/useSentiment.ts:7,18 and features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:5,9 use getApiClient() with 'Bearer-token' interceptor comment — this hook bypasses the shared client entirely.",
+        "Also loses the single-flight 401→refresh→replay recovery in lib/api.ts:249-270 (PR #2942) and the transient-error retry/backoff. Confidence upgraded to HIGH after direct file read; severity=High (feature-breaking on a shipping Epic surface). Frontend-only, cloud-landable — replace apiFetch with getApiClient() calls."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": "plans/code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "title": "ppt-web meters useOcrMeterReading.ts: ocrFetch() never attaches Authorization header — Epic 128 OCR meter-reading + correction submits go out unauthenticated",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks)"
+      ],
+      "evidence": [
+        "useOcrMeterReading.ts:26-35 ocrFetch<T>() passes options straight to fetch with NO default headers — no Authorization at all.",
+        "useOcrProcessImage L38-51 (multipart POST /api/v1/ai/ocr/meter-reading) and useOcrCorrection L54-60 (POST /api/v1/ai/ocr/correction) both send through ocrFetch → unauthenticated requests → 401 → Epic 128 OCR-preview flow broken for real sessions.",
+        "Same root cause as ai-chat (routed through raw fetch, bypasses getApiClient shared client + X-Tenant-ID interceptor + 401-refresh-replay). Fix: route through getApiClient() (let axios set multipart boundary; interceptor supplies Authorization + tenant header)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-no-guard",
+      "title": "ppt-web-core /dashboard/manager + /dashboard/resident routes render with NO ProtectedRoute wrapper — page-level guard the inline comment claims does not exist (defense-in-depth gap)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-09 ppt-web-core dashboard-routes)",
+        "routine 2026-09-09 verification (direct read of core.tsx:160-168)"
+      ],
+      "evidence": [
+        "core.tsx:166-168 dashboardRoutes: /dashboard/manager renders <ManagerDashboardPage/> and /dashboard/resident renders <ResidentDashboardPage/> with NO <ProtectedRoute> wrapper — inline comment at lines 162-165 claims 'the ProtectedRoute / role check on the target page handles auth + role-based fan-out'. Verified 2026-09-09: the target page ManagerDashboardPage.tsx has no auth/role guard (reads user?.role only to toggle a customize link).",
+        "Contrast with /dashboard/customize on lines 171-178 that DOES use <ProtectedRoute requiredRoles={['org_admin','super_admin']}> — and /settings/portal-webhooks at 231-238 with <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>.",
+        "AppRoutes.tsx:37-68 has no wrapping guard — public routes (/, /login, /register) sit in the same flat <Routes> as the dashboard routes. Any authenticated resident (and, since no auth gate exists, an unauthenticated visitor) can render the manager dashboard shell at /dashboard/manager. Backend RLS/role checks gate underlying data via section API calls — this is a defense-in-depth gap + documented-but-false guarantee; fast-track promotable (vector=security, confidence=high, score=2). Frontend-only cloud-landable remedy: wrap /dashboard/manager in <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>, wrap /dashboard/resident in a bare <ProtectedRoute>, correct the misleading comment."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": "plans/code-review-ppt-web-core-dashboard-route-no-guard.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-home-role-hardcoded",
+      "title": "ppt-web-core Home 'Open dashboard' CTA uses user?.role === 'manager' — misroutes org_admin/super_admin/technical_manager/property_manager to /dashboard/resident",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-09 ppt-web-core home-role)"
+      ],
+      "evidence": [
+        "core.tsx:99-101 (Home): navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident') ignores MANAGER_ROLES defined in shared.tsx (org_admin, super_admin, technical_manager, property_manager).",
+        "This is the ONLY hardcoded role-equality check remaining in routes/ — grep confirms every other role gate uses isManagerRole(user?.role). Landable frontend-only fix: swap for isManagerRole."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-payment-reminders-batch-abort",
+      "title": "api-server scheduler payment_reminders batch: a single failing tenant aborts the entire batch — remaining tenants' reminders don't fire that tick",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-core scheduler)"
+      ],
+      "evidence": [
+        "scheduler/mod.rs payment_reminders drain-and-send loop: on any tenant error the ? early-returns from the batch — the remaining tenants' reminders are skipped until the next tick.",
+        "Better: partition per-tenant errors from the batch and continue; log each individually. Same pattern as the vote-notification loop in the same module."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-notify-send-before-stamp-dup",
+      "title": "api-server scheduler votes: notification send fires BEFORE the sent_at timestamp write — a crash between the two produces duplicate sends on the next tick",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-core scheduler-votes)"
+      ],
+      "evidence": [
+        "scheduler/votes.rs send-notification loop: notify → stamp; a crash between them means the next tick re-selects the same row and re-sends.",
+        "Two-phase commit style (stamp first with 'pending', send, stamp 'sent') or a de-dup key on the send target avoids the duplicate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs",
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-delegation-null-unit-no-owner-check",
+      "title": "api-server delegations: create_delegation with unit_id=NULL skips owner check — any org member can create org-wide delegation on behalf of another user",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-handlers delegations)"
+      ],
+      "evidence": [
+        "routes/delegations.rs create_delegation: when unit_id is NULL the ownership branch skips the delegator == caller check — any org member can post a delegation naming another user as delegator.",
+        "repositories/delegation.rs delegate_all_of_user helper accepts caller-supplied delegator without verifying caller identity. Cloud-blocked by #2949 (api-server cloud-build egress); tracked for local implementer."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/delegations.rs",
+        "backend/crates/db/src/repositories/delegation.rs"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
     }
   ]
 }

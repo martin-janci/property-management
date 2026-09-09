@@ -1,0 +1,369 @@
+{
+  "date": "2026-09-09",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-09",
+      "type": "lag_warning",
+      "source": "routine 2026-09-09 (state.last_run_iso=2026-09-01T18:38:58Z)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine has not run in 8d 18h — well past the 36h lag threshold and the 3d stale_routine_alert threshold. Cloud cron likely paused; dispatcher on planning branch continues independently.",
+        "This routine run is a manual/scheduled catch-up to refill the planner buffer per the buffer-low trigger payload."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-noop-action-handlers",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core rentals)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "evidence": [
+        "rentals.tsx:517-521 GuestRegistrationPageRoute action handlers are () => {} while data is fetched normally."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-dash-false-zeros",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core financial)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "evidence": [
+        "financial.tsx:70-136 dashboard useQueries destructure only isLoading — error paths fall back to €0 with no surfaced error."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-home-sections-null-on-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web home-sections)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx"
+      ],
+      "evidence": [
+        "Home components render null on fetch error — blank public entry point."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-herosearch-hardcoded-city-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web hero-search)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/home/HeroSearch.tsx"
+      ],
+      "evidence": [
+        "HeroSearch city labels hardcoded in English on next-intl surface."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-categorycards-tolocalestring-no-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 reality-web format)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/home/CategoryCards.tsx"
+      ],
+      "evidence": [
+        "toLocaleString() called without locale arg — count format doesn't match next-intl locale."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-403-mislabel",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core errorhandler)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "evidence": [
+        "errorHandler maps HTTP 403 to the 'Unauthorized' key intended for 401."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-networkstatus-navigator-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core network-status)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts"
+      ],
+      "evidence": [
+        "Reads navigator.onLine without SSR/undefined guard."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unstable-value",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-07 ppt-web-core orgprovider)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "evidence": [
+        "Context value is a fresh {} on every render — consumers re-render on every parent update."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-hook-raw-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks) + routine 2026-09-09 verification",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"
+      ],
+      "evidence": [
+        "useAiChat.ts:30-46 apiFetch never attaches Authorization — Epic 127 AI-chat 401s in production. Confidence upgraded to high after direct file read; severity=High (feature-breaking on a shipping Epic surface)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-hook-raw-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-08 ppt-web-core feature-hooks)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts"
+      ],
+      "evidence": [
+        "useOcrMeterReading.ts:26-35 ocrFetch never attaches Authorization — Epic 128 OCR flow 401s. Same pattern as ai-chat."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-route-no-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 ppt-web-core dashboard-routes) + routine 2026-09-09 verification",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ],
+      "evidence": [
+        "core.tsx:166-168 /dashboard/manager + /dashboard/resident render with NO <ProtectedRoute>; inline comment claims page-level guard which does not exist. Verified 2026-09-09 via direct file read. Vector reclassified from bug→security (defense-in-depth gap on manager surface); security fast-track (confidence=high, score=2)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-home-role-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 ppt-web-core home-role)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "evidence": [
+        "core.tsx:99-101 Home CTA uses user?.role === 'manager' — misroutes org_admin/super_admin/technical_manager/property_manager to /dashboard/resident."
+      ]
+    },
+    {
+      "id": "code-review-api-core-payment-reminders-batch-abort",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-core scheduler)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "evidence": [
+        "scheduler payment_reminders batch: one failing tenant aborts the whole batch."
+      ]
+    },
+    {
+      "id": "code-review-api-core-notify-send-before-stamp-dup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-core scheduler-votes)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/votes.rs",
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "evidence": [
+        "scheduler votes: send fires before sent_at stamp — crash between produces duplicate sends on the next tick."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-delegation-null-unit-no-owner-check",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 api-handlers delegations)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/delegations.rs",
+        "backend/crates/db/src/repositories/delegation.rs"
+      ],
+      "evidence": [
+        "delegations create_delegation with unit_id=NULL skips owner check — cross-user org-wide delegation possible. Cloud-blocked by #2949."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-09.md && head -1 matches # 2026-09-09",
+      "observed": "written",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors changed vs HEAD",
+      "observed": "last_pr_seen 2921→2956, last_issue_seen 2847→2956, last_commit_sha eea7067→d7da761, seen_signals +16",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id in seen_signals with score_delta > 0",
+      "observed": "all 16 signals are new — first emission",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item score > 8",
+      "observed": "max=6",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items with updated_at <=2026-08-26 decayed or dropped",
+      "observed": "2 dropped (portfolio-analytics-caps-100, cancellation-swallowed)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has 'adversarial pass:' annotation in brief",
+      "observed": "both plans annotated 'passed'",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "2",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "each plan has 4 metadata + 11 headings + files exist",
+      "observed": "both plans complete; files listed all exist on disk",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths only under .research/",
+      "observed": "checked at stage time",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in diff",
+      "observed": "no matches",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "diff-clean self-check",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed matches cursor non-advance",
+      "observed": "no phase failures",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present (in plans/ or _archive/)",
+      "observed": "no prior plans deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "no _archive deletions",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "diff-clean self-check",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[]",
+      "expected": "≤3 total, ≤1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped this run (mgmt artifacts untouched)",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value committed",
+      "observed": "no matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal met confidence=high + score>=3 + allowlist match"
+}
