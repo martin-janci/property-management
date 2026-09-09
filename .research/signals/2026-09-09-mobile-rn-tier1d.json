@@ -1,0 +1,33 @@
+{
+  "segment": "mobile-rn",
+  "date": "2026-09-09",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "CHURN_FILES empty this run. Landable-tie cursor was ppt-web-core / reality-web / mobile-rn all at 2026-08-29 (0 open code-review findings each). ppt-web-core was already reviewed THIS cycle by a sibling generator (signals/2026-09-09-ppt-web-core-tier1d.json exists, carrying the identical two findings a fresh pass reproduces: dashboard-route-no-guard + home-role-hardcoded), so re-emitting it adds nothing. reality-web yields only a duplicate of an already-done backlog item (code-review-reality-web-realtor-mgmt-i18n: realtor mgmt pages still hardcode English, but that finding is status=done and reality-web i18n is saturated with 10 prior findings). Pivoted within the landable tie to mobile-rn — 0 open findings, no coverage today — to produce a genuinely fresh, non-duplicate, cloud-landable finding. mobile-native-kmp (numerically oldest at 2026-08-25) and api-handlers/api-core were excluded per dispatcher constraints (KMP AGP egress-blocked #2652; api-server crate build egress-blocked #2949).",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "mobile-rn is a React Native (frontend) segment: the fix is a TS/RN change verifiable under jest-expo in the cloud runner. It does NOT require the api-server crate (#2949) or the KMP/AGP toolchain (#2652), so a fix here is buildable and landable in the cloud runner.",
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-no-live-session-token-refresh",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-09 mobile-rn auth/session)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx",
+        "frontend/apps/mobile/src/hooks/useApi.ts",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "evidence": [
+        "The mobile app has NO live-session access-token refresh. `AuthContext.refreshToken()` (contexts/AuthContext.tsx:174) is only ever invoked from two places, both inside AuthContext itself: the cold-start `initialize()` mount effect (AuthContext.tsx:326) and biometric unlock (AuthContext.tsx:275). Confirmed by grep: no screen or hook consumes `auth.refreshToken`, and there is no `AppState`/foreground listener anywhere under frontend/apps/mobile/src that refreshes on resume.",
+        "The live request path never refreshes on 401: `apiRequest()` in hooks/useApi.ts (the fetch helper behind useApiQuery/useApiMutation, and the pattern copied into DocumentUploadScreen.tsx:186 and executeQueuedAction) reads the bearer from SecureStore (useApi.ts:60) and, on a non-ok response, simply `throw new Error(\\`HTTP ${response.status}\\`)` (useApi.ts:83-92). There is no 401 -> refresh -> replay step (contrast ppt-web's lib/api.ts axios interceptor, which added exactly this single-flight refresh-and-replay). So once the short-lived access token expires while the app is foregrounded (AuthContext calls tokens 'short-lived' and uses a 30s TOKEN_REFRESH_SKEW), every query/mutation 401s; TanStack Query surfaces an error, the user is neither refreshed nor logged out, and requests keep failing until the app is cold-restarted (which re-runs init-refresh).",
+        "This also strands the offline queue. useOfflineSupport.executeQueuedAction (hooks/useOfflineSupport.ts:253) reads the token fresh from SecureStore but does not refresh it; the retryable-401 fix (RETRYABLE_HTTP_STATUSES incl. 401, useOfflineSupport.ts:34, from backlog item code-review-mobile-rn-offline-401-dropped, done) keeps a 401'd queued write instead of dropping it and comments that it will be '...re-attempted (401 replays with a refreshed token)' (useOfflineSupport.ts:285) — but nothing produces that refreshed token during a live session, so a queued offline write flushed after the access token expired retries forever against the same expired bearer and never lands until a cold restart.",
+        "Impact: MEDIUM. No data loss (offline writes are retained, not dropped) and RLS still protects the server, but a foreground session outliving the access-token TTL becomes silently non-functional for all reads/writes and stalls offline sync until the app is killed and relaunched. Confidence MEDIUM: all refreshToken() call sites and the absence of an AppState/401 refresh were confirmed statically; the trigger (access-token TTL < a foreground session, per docs/api/README.md token TTLs) is the normal short-lived-JWT case the ppt-web interceptor was built for, but was not runtime-measured here. Fresh vs backlog: the prior done items patched cold-start restore (code-review-mobile-rn-auth-restore-stale-token) and offline-queue 401 retention (code-review-mobile-rn-offline-401-dropped) but never wired an actual live-session refresh; this is the missing systemic piece. Fix (frontend-only, jest-expo verifiable): add a single-flight refresh-and-retry to apiRequest (and executeQueuedAction) on 401 that calls the AuthContext refresh, mirroring ppt-web's onUnauthorized interceptor, then logs out only when the refresh itself fails."
+      ]
+    }
+  ]
+}
