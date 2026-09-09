@@ -1,9 +1,24 @@
 {
-  "generated": "2026-09-08T14:30:38Z",
+  "generated": "2026-09-09T16:29:39Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-09T16:29:39Z",
+      "prs_scanned": 2,
+      "clean": [
+        2955,
+        2956
+      ],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-26), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable / git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Static full-diff review only (api-server + mobile-native egress-blocked per #2949/#2652). Label-based enumeration (search_pull_requests is:merged base:dev merged:>=2026-08-26 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 2 net-new never-reviewed PRs (total_count=2); every other in-window merge already carries post-merge-reviewed. Both are the follow-up PRs the PRIOR run's issues asked for (#2954 -> #2956; #2953 -> #2955), both on landable frontend surfaces. 2 < 5-parallel-cap, reviewed inline (no subagent fan-out). BOTH CLEAN, 0 issues opened. #2956 (react-web, ppt-web, 28/-15, 1 file): precisely closes #2954's two low findings on queryKeys.test.ts -- (a) suite-crash risk fixed by a new non-throwing displayRoot() feeding only the it.each case title while rootOf()'s throwing shape-assertion moved INSIDE each it() callback (a malformed factory now fails its own named row instead of aborting suite collection), applied consistently to all three it.each blocks (central/feature-local/api-client); (b) glob-depth widened '../features/**/hooks/*.{ts,tsx}' -> '**/hooks/**/*' with the {test,spec} exclusion widened in lock-step so a factory nested under hooks/ can't escape discovery. Verify OK (biome+typecheck+136 files/2666 tests green). Minimal, exactly-scoped, no scope drift. #2955 (react-native, mobile, 147/-2, 4 files): precisely closes #2953's high security finding -- resetLocalData() now purges the actual NFC building-access credential material that its AsyncStorage sweep never reached. New static NFCCredentialManager.clearAllLocalCredentials() deletes the encrypted SecureStore manifest+chunk slots (extracted to a shared private static deleteStoredCredentials(), reused by the existing instance clearStoredCredentials() -> no duplication) AND removes the legacy unencrypted AsyncStorage blob (LEGACY_CREDENTIALS_KEY='@ppt/nfc_credentials'); called from resetLocalData() in its OWN best-effort try/catch AFTER the AsyncStorage sweep so a sweep failure can't skip the more sensitive purge. Verified against source: chunk sweep bound MAX_CREDENTIAL_CHUNKS=64 matches the write path (not a new gap); resetLocalData IS the real session-change purge point (wired into AuthContext login L123 + logout L159), so the static purge actually runs on handoff -- both keys the prior review flagged are now covered. Strong regression tests (direct clearAll unit test + two resetLocalData tests: both surfaces purged while unrelated SecureStore auth token survives, and purge still runs when the AsyncStorage sweep throws); biome+typecheck green, jest unrunnable in-runner due to pre-existing jest-expo<->RN0.87 rot (#2951, repo-wide, not this PR). Residual out-of-scope note (NOT filed): a long-lived in-memory NFCCredentialManager instance's this.credentials array is not nulled by the static purge -- but #2953 was scoped to persisted material and the manager is session-scoped, so no live bug. Both PRs labeled post-merge-reviewed via MCP issue_write (both had no prior labels -> no clobber).",
+      "focus_prs": [
+        2955,
+        2956
+      ]
+    },
     {
       "run_at": "2026-09-08T14:30:38Z",
       "prs_scanned": 2,
@@ -581,26 +596,6 @@
           "note": "overflow fix left parallel orphaned saved_searches (int4) path; remove dead cluster or widen class-wide"
         }
       ]
-    },
-    {
-      "run_at": "2026-08-20T18:35:13Z",
-      "prs_scanned": 5,
-      "clean": [
-        2813,
-        2811,
-        2801,
-        2806
-      ],
-      "with_issues": [
-        {
-          "pr": 2812,
-          "issue": 2814,
-          "findings": 1,
-          "specialist": "rust-backend",
-          "note": "correctness(low): portal_saved_searches.match_count is int4 and the watermark advance is `match_count = match_count + N`. PR #2812's own new test (failed_watermark_advance_rolls_back_enqueue) proves the failure mode -- once match_count nears i32::MAX the advance overflows int4, aborts the now-atomic tx, rolls back, and the search wedges permanently: never advances last_matched_at, never sends alerts again, no self-recovery/alerting. Proposed: widen column to bigint (migration + i64), OR saturate via LEAST(match_count + N, 2147483647) so last_matched_at still advances. Latent/pre-existing (fix itself is correct & well-tested); low severity but unbounded+monotonic+silent."
-        }
-      ],
-      "note": "DISPATCHER_OWNED_COMMIT=1 (Tier 1d demand-driven vector gen, buffer starved) -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6. No gh CLI -> GitHub MCP for all GH I/O; static diff review only. Window merged-to-dev 14d (>=2026-08-06), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Label-based enumeration surfaced 5 unlabeled in-window merged PRs (2812,2813,2811,2801,2806); dependabot 2751/2750 were closed-unmerged (no merged_at) and skipped; all older in-window PRs already carried post-merge-reviewed. Reviewed all 5 via fresh diff review and applied post-merge-reviewed labels so they will not resurface. 1 new issue opened (#2814 on PR #2812). Per-PR: #2812 (reality-server saved-search: makes enqueue+watermark-advance atomic in one tx via enqueue_and_advance_saved_search, propagates the previously-swallowed advance error, 3 SQLx regression tests incl. rollback-no-duplicate -- CLEAN fix; filed #2814 for the latent int4 match_count overflow edge its own test exercises). #2813 (reality-server inquiry detail: replaces hardcoded messages: vec![] with real list_inquiry_messages ordered created_at ASC; ownership pre-verified by get_inquiry_for_realtor; regression test -- clean). #2811 (api-server ai/voice link path routed through single-writer upsert_active_voice_device to respect the partial-unique active-device index from #2796; access_token now Option<&str> with COALESCE keep-existing + token_expires_at/access_token_hash kept in lock-step with the token via CASE; re-link idempotency test asserts single active row + stable device_id -- clean). #2801 (reality-server list_my_reports: total now a COUNT(*) with WHERE parity to the list query -- verified reporter_user_id + optional status filters match exactly -- instead of reports.len(); regression test -- clean). #2806 (api-server voice webhook HMAC now fails closed on empty VOICE_WEBHOOK_SECRET, not just unset, mirroring sibling PORTAL/AIRBNB/STRIPE receivers; test covers blank secret -- clean security fix). No duplicate issue: searched open issues for match_count/watermark overflow, only a closed unrelated #1627 (pagination truncation)."
     }
   ]
 }
