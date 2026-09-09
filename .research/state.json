@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-09T08:38:16Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2956,
+  "last_issue_seen": 2954,
+  "last_commit_sha": "26eda79e3f4a93a9a2100254f0da72ef5529fdd5",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -521,6 +521,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-31",
       "recent_churn": 151
+    },
+    "backend/servers/accounting-server/tests/invoice_pdf_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-09",
+      "recent_churn": 252
+    },
+    "frontend/apps/ppt-web/src/lib/queryKeys.test.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-09",
+      "recent_churn": 230
+    },
+    "backend/crates/db/src/repositories/data_export_test.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-09",
+      "recent_churn": 186
     }
   },
   "seen_signals": [
@@ -1002,7 +1017,24 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-09-09",
+    "churn-hotspot-backend/servers/accounting-server/tests/invoice_pdf_tests.rs",
+    "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+    "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+    "dep-update-noise-pr-2935",
+    "dep-update-noise-pr-2939",
+    "dep-update-noise-pr-2591",
+    "dep-update-noise-pr-2590",
+    "dep-update-noise-pr-2589",
+    "dep-update-noise-pr-2588",
+    "dep-update-noise-pr-2584",
+    "dep-update-noise-pr-2933",
+    "dep-update-noise-pr-2808",
+    "dep-update-noise-pr-2936",
+    "dep-update-noise-pr-2934",
+    "dep-update-noise-pr-2867",
+    "dep-update-noise-pr-2865"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1016,8 +1048,8 @@
     "mobile-native-kmp": "2026-08-25"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
+    "runs": 79,
+    "vectors_created": 375,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0

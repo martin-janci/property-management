@@ -1,0 +1,289 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-09",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine has not run in 7d 22h (last_run_iso=2026-09-01T18:38:58Z)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/accounting-server/tests/invoice_pdf_tests.rs",
+      "type": "churn-hotspot",
+      "source": "changed files in merged PRs PR #2938 since 2026-09-01",
+      "score_delta": 1,
+      "evidence": "252 lines (add+del) in merged PRs since 2026-09-01",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "changed files in merged PRs PR #2943, PR #2952, PR #2956 since 2026-09-01",
+      "score_delta": 1,
+      "evidence": "230 lines (add+del) in merged PRs since 2026-09-01",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+      "type": "churn-hotspot",
+      "source": "changed files in merged PRs PR #2928, PR #2931 since 2026-09-01",
+      "score_delta": 1,
+      "evidence": "186 lines (add+del) in merged PRs since 2026-09-01",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": "dependabot merged bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2939",
+      "type": "dep-update-noise",
+      "source": "PR #2939",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2933",
+      "type": "dep-update-noise",
+      "source": "PR #2933",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "evidence": "dependabot open bump; log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2936",
+      "type": "dep-update-noise",
+      "source": "PR #2936",
+      "score_delta": 0,
+      "evidence": "dependabot PR closed unmerged (superseded by newer bump); log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2934",
+      "type": "dep-update-noise",
+      "source": "PR #2934",
+      "score_delta": 0,
+      "evidence": "dependabot PR closed unmerged (superseded by newer bump); log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867",
+      "score_delta": 0,
+      "evidence": "dependabot PR closed unmerged (superseded by newer bump); log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865",
+      "score_delta": 0,
+      "evidence": "dependabot PR closed unmerged (superseded by newer bump); log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "evidence": "dependabot PR closed unmerged (superseded by newer bump); log-only",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief exists with today's H1",
+      "observed": "will verify after write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "cursors bumped",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "418=418",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta!=0",
+      "observed": "no offenders",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap 8 + decay 14d",
+      "observed": "cap ok; 2 decayed",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + readiness gates",
+      "observed": "0 new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached under .research/ only",
+      "observed": "will verify at stage",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "will verify at stage",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed",
+      "observed": "phases 1/2/3/4 ok; 1.5/1.6/5 intentionally skipped",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or archive/",
+      "observed": "plan set unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count \u2265 HEAD",
+      "observed": "8 == 8",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "auto_fix_actions=[]",
+      "expected": "\u22643"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 gate is no-op",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "will verify at stage",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlisted candidate this run (screen-map/orphan/lockfile/stalled-review/fixme none met certainty bar + score\u22653)"
+}
