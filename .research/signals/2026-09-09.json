@@ -1,0 +1,181 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-09",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine has not run in 7d 22h \u2014 last_run_iso=2026-09-01T18:38:58Z; cloud cron may be paused. Dispatcher (separate loop, planning branch) continued firing over the window.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-09-09",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-09-01T18:38:58Z is 7d 22h old \u2014 inspect the cloud routine trigger. Note: dispatcher state lives on the planning branch's .research/management/assignments.json, unaffected.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": "4 touches this window across PRs #2941 (JWT boot expiry), #2942 (401 single-flight refresh + replay), and follow-up review-comment rounds; all landed with matching test files.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": "4 touches this window across PRs #2950 (NFC access log + QR scan history purge, closes #2947) and #2955 (SecureStore NFC credential purge, closes #2953); both landed with matching test files. resetLocalData is now the mobile-side session-purge fanout point.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-2945-portfolio-properties-idor",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #2945",
+      "score_delta": 2,
+      "evidence": "GitHub Issue #2945 (labels bug+security, opened 2026-09-06): portfolio_properties handlers in api-server missing org verification \u2014 read+write cross-tenant IDOR. Companion of #2944 (violation-comments IDOR, already fixed via internal audit); this one was carved out as separate landable and remains open. Related open: #2946 for portfolio_analytics.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-2946-portfolio-analytics-idor",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #2946",
+      "score_delta": 2,
+      "evidence": "GitHub Issue #2946 (labels bug+security, opened 2026-09-06): portfolio_analytics computes org_id then discards it \u2014 read+write cross-tenant IDOR on property metrics. Companion of #2945 (portfolio_properties) and #2944 (violation-comments, closed).",
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-09.md && head -1 | grep -q '^# 2026-09-09$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:.research/state.json) ...",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "prior-seen-signals dedup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay pipeline",
+      "observed": "cap ok; 2 decayed\u2192dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "no new plans (0/2 cap)",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A -- .research/plans/ | grep -c '.md$'",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md <(regen from backlog.json)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases-that-failed vs cursor advances",
+      "observed": "phases 1.5 + 1.6 SKIPPED (not failed); their cursors not advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present",
+      "observed": "25 present + 8 archived",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "now=9 head=9",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md <(regen filtered vector=triage)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2192 no-op",
+      "observed": "skipped; pm_cursor unchanged",
+      "expected": "no-op pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
