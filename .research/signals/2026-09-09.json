@@ -1,0 +1,205 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-09",
+      "type": "lag_warning",
+      "source": "routine self-check 2026-09-09",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-09-01T18:38:58Z; today=2026-09-09; lag = ~7d 20h since previous routine run — the every-2h dispatcher scheduler kept ticking on `planning` branch while the routine (on `main`/session-branch) did not fire between Sep 2 and Sep 9. All 42 dispatcher Tier-1d code-review signals generated 2026-09-05..2026-09-09 sat unfolded in `.research/signals/*-tier1d.json` until this run picked them up."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-detail-suspense-bailout",
+      "type": "code-review-finding",
+      "source": "code-review reality-web 2026-09-09 (Phase 1.5 rotating expert — reality-web oldest-unreviewed)",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx:88",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:122"
+      ],
+      "evidence": [
+        "ListingDetailContent.tsx:88 unconditionally calls useSearchParams() in a client component, and [slug]/page.tsx:122 renders <ListingDetailContent .../> directly with NO <Suspense> wrapper (grep for 'Suspense' in either file returns zero matches).",
+        "In the Next.js 16 App Router this bails the entire ListingDetailContent subtree — including the JSON-LD <script>, breadcrumb, LayoutSections and agent-contact — out of pre-rendered HTML up to the closest suspense boundary; crawlers and social scrapers get empty markup for the SEO-critical listing page (defeating the SSR + ISR + JSON-LD design in the same file's docstring)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-report-sell-forms-no-submit",
+      "type": "code-review-finding",
+      "source": "code-review reality-web 2026-09-09",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:730"
+      ],
+      "evidence": [
+        "report/page.tsx:37-41 handleSubmit only calls setSubmitted(true); grep for useMutation|fetch|api. across the file returns 0 hits. Same pattern in sell/page.tsx:727-730 where the wizard 'Publish' onClick just does setSubmitted(true).",
+        "Both are public-facing flows (fraud/duplicate report; list-property-for-sale) that render a green success screen with no network call — reports and new listings never reach reality-server. Screen-maps mark both as apiStatus: partial/stub and buildStatus: in-progress; wiring is the outstanding cloud-landable vector."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-report-hardcoded-slovak",
+      "type": "code-review-finding",
+      "source": "code-review reality-web 2026-09-09",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:74",
+        "frontend/apps/reality-web/src/app/[locale]/report/_mock.ts:15"
+      ],
+      "evidence": [
+        "report/page.tsx uses useTranslations('pages.report') only for {t('h1')} and {t('subtitle')} on lines 138 and 141; every other visible string is a hardcoded Slovak literal — success screen, GDPR consent paragraph, submit label. _mock.ts:15-46 hardcodes all six ReportProblemOption in Slovak.",
+        "reality-web is a 4-locale portal (sk/cs/de/en); users on cs/de/en visiting /report see Slovak."
+      ]
+    },
+    {
+      "id": "tier1d-fold-2026-09-09",
+      "type": "meta-fold",
+      "source": "routine 2026-09-09 tier1d fold",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Folded 42 previously-untracked dispatcher Tier-1d code-review signals (from `.research/signals/2026-09-05..09-09-*-tier1d.json`) into backlog.json. 3 marked done (already-shipped as PRs #2940/#2941/#2942/#2943), 39 added as open. Segment breakdown: reality-web 7, ppt-web-core 12, ppt-web-ui 6, mobile-rn 4, reality-server 2, api-core 2, api-handlers 4. Cloud-landable landable-open now non-zero — trigger buffer-low addressed. See seen_signals in state.json for the full ID list."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-09.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advancement",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored non-cumulative signal",
+      "observed": "true",
+      "expected": "true",
+      "note": "tier1d fold: 42 ids appended to seen_signals for the first time (never in prior seen_signals)"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap+decay",
+      "observed": "true",
+      "expected": "true",
+      "note": "2 KMP items decayed 1->0->dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation",
+      "observed": "both plans annotated in brief",
+      "expected": "both annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan structure + files exist",
+      "observed": "2 plans, all metadata + 11 headings + Mode + Files paths OK",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan (post-sanitize)",
+      "observed": "0",
+      "expected": "0",
+      "note": "initial hit was Authorization: Bearer inside code-review evidence text — sanitized to Authorization header (Bearer …) which describes the class without matching the pattern"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failed",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge (2 new plans, tracked)",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "9>=9",
+      "expected": "new>=old"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "cap held"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 not run this compact routine — gate no-op",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
