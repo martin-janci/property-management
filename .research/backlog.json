@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-09",
       "plan": null
     },
     {
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7420,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-09",
       "plan": null
     },
     {
@@ -10633,6 +10635,73 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "churn-hotspot-ppt-web-queryKeys-test",
+      "title": "ppt-web queryKeys.test.ts — 3 commits this run (auto-discovery hardening + logout-purge allowlist)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher-hotspot 2026-09-09",
+        "PR #2943",
+        "PR #2952",
+        "PR #2956"
+      ],
+      "evidence": [
+        "Top-1 raw churn since 2026-09-01: 3 commits touched queryKeys.test.ts (PRs #2943 logout-purge allowlist, #2952 auto-discovery, #2956 auto-discovery hardening). Test infra under active iteration — churn signals hardening in progress; watch for stabilisation."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-ppt-web-AuthContext",
+      "title": "ppt-web AuthContext.tsx — 2 commits this run (cold-boot exp check + 401 replay)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher-hotspot 2026-09-09",
+        "PR #2941",
+        "PR #2942"
+      ],
+      "evidence": [
+        "Top-2 raw churn: 2 commits touched AuthContext.tsx (PRs #2941 cold-boot exp validation, #2942 single-flight 401 replay). Auth surface being tightened — new signals in refresh/replay flow warrant a follow-up review pass at Tier-1d rotation."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-mobile-resetLocalData",
+      "title": "mobile-rn resetLocalData.ts — 2 commits this run (NFC log purge + SecureStore credential purge)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher-hotspot 2026-09-09",
+        "PR #2950",
+        "PR #2955"
+      ],
+      "evidence": [
+        "Top-3 raw churn: 2 commits touched resetLocalData.ts (PRs #2950 NFC access log / QR scan / offline feedback, #2955 SecureStore NFC credential material). Cross-tenant purge surface — recent Tier-1d found more gaps; verify allowlist coverage is complete after this run."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ],
+      "created_at": "2026-09-09",
+      "updated_at": "2026-09-09",
+      "plan": null
     }
   ]
 }

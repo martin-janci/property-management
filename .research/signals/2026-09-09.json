@@ -1,0 +1,224 @@
+{
+  "generated_at": "2026-09-09T14:36:00Z",
+  "trigger": "buffer-low: claimable=8/72 — refill planner (pipeline structurally blocked on #2652/#2949 operator infra)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-09.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff HEAD",
+      "observed": "cursors advanced (last_pr_seen 2921->2956, last_issue_seen 2847->2956, last_commit_sha, last_run_iso, seen_signals +8)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == unique | length'",
+      "observed": "418 unique ids of 418 items",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-scored",
+      "observed": "all 8 today's signals are new ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no score > 8; portfolio-analytics-caps-100 + cancellation-swallowed decayed 1->0 dropped (both >14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plan files this run",
+      "observed": "0 new plans",
+      "expected": "true (vacuously)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0 <= 2",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "only .research/ paths staged",
+      "expected": "0 non-.research paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "no matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "regen produced identical output",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "phase 1.5/1.6 skipped intentionally (catch-up run); noted in brief",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present",
+      "observed": "no prior plans silently deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotonic",
+      "observed": "unchanged (no archive movement this run)",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "regen matches staged view",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 auto-fix actions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors",
+      "observed": "phase 1.6 skipped (no changes); pm_cursor.next_index=5 unchanged, coverage_cursor.next_index=7 unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in diff",
+      "observed": "no matches",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-09",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last ran 2026-09-01T18:38:58Z; now 2026-09-09T14:36Z — ~187h (~7d 19h) gap. Well past the 36h threshold; state advanced against the dispatcher's parallel runs, but the daily research brief was silently skipped for a week.",
+        "Dispatcher on `dev` kept ticking (17 code PRs merged, 15 issues moved) — the daily research routine trigger appears wedged. Cron / trigger source needs an operator look."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "git log eea70673..origin/dev --stat",
+      "score_delta": 1,
+      "evidence": [
+        "Top-1 raw churn since 2026-09-01: 3 commits touched frontend/apps/ppt-web/src/lib/queryKeys.test.ts (PRs #2943 logout-purge allowlist, #2952 auto-discovery, #2956 auto-discovery hardening).",
+        "Test infra iterating — third-time-lucky pattern to watch."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "git log eea70673..origin/dev --stat",
+      "score_delta": 1,
+      "evidence": [
+        "Top-2 raw churn: 2 commits touched AuthContext.tsx (PRs #2941 cold-boot exp validation, #2942 single-flight 401 replay). Auth surface being tightened."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "git log eea70673..origin/dev --stat",
+      "score_delta": 1,
+      "evidence": [
+        "Top-3 raw churn: 2 commits touched resetLocalData.ts (PRs #2950 NFC access log / QR scan / offline feedback purge, #2955 SecureStore NFC credential purge).",
+        "Cross-tenant purge surface — recent Tier-1d gaps still being closed; verify allowlist coverage complete."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935 (dependabot npm-minor-patch group, 40 updates)",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2935 merged 2026-09-04 — dependabot npm-minor-patch across 1 directory with 40 updates. Log-only per routine rules."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-2555",
+      "type": "stalled-review",
+      "source": "PR #2555 last updated 2026-07-30T06:19:08Z",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2555 (feat(acc): wire sent/cancelled invoice lifecycle UC-ACC-05.17) — 41d since last update, no reviewDecision.",
+        "Standing UC-ACC-05.x block; already flagged in prior briefs as `needs-human-judgement`.",
+        "already in state.seen_signals; re-noted with score_delta=0 (dedup rule)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-2559",
+      "type": "stalled-review",
+      "source": "PR #2559 last updated 2026-07-30T06:19:43Z",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2559 (feat(acc): PAY by square payment QR endpoint UC-ACC-05.8) — 41d since last update, no reviewDecision. Same UC-ACC-05.x block as #2555.",
+        "already in state.seen_signals; re-noted with score_delta=0 (dedup rule)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": null
+    },
+    {
+      "id": "stalled-review-pr-2866",
+      "type": "stalled-review",
+      "source": "PR #2866 last updated 2026-08-27T10:18:15Z",
+      "score_delta": 1,
+      "evidence": [
+        "PR #2866 (chore(deps): bump actions/setup-java from 5 to 6) — 13d since last update, no reviewDecision.",
+        "Dependabot CI action bump — trivial to review or auto-merge; ping the maintainer."
+      ],
+      "confidence": "medium",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist (churn-hotspots are high-confidence but score 1; stalled-reviews are medium; #2652/#2949 infra blockers are not in the allowlist)"
+}
