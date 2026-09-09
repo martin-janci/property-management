@@ -2455,6 +2455,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-apns-jwt-per-send-mint-retry1",
+      "branch": "auto-impl/code-review-api-core-apns-jwt-per-send-m-27b98b9d",
+      "status": "failed",
+      "claimed_at": "2026-09-09T08:28:40Z",
+      "last_updated": "2026-09-09T08:40:33Z",
+      "status_changed_at": "2026-09-09T08:40:33Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=true code_reuse_warn=none note=verify gate impossible: cargo clippy/test -p api-server fails building utoipa-swagger-ui build.rs (egress-blocked GitHub zip download, InvalidArchive EOCD) — issue #2949; code+tests complete & fmt-clean, not opening PR [structural cloud-runner block, not a code defect]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-client-ip-cf-spoof",
       "branch": "auto-impl/code-review-api-core-client-ip-cf-spoof-07819907",
       "status": "merged",
@@ -17655,5 +17677,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-09-08T20:36:09Z"
+  "archived_at": "2026-09-09T08:40:33Z"
 }
