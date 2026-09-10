@@ -1,0 +1,52 @@
+{
+  "date": "2026-09-10",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": [
+        "3 edits since last run (PRs #2952/#2956) \u2014 logout-purge allowlist auto-discovery hardening"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": [
+        "3 edits since last run (PRs #2950/#2953 NFC access-log/QR-scan purge + #2955 NFC credential purge)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.test.ts",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": [
+        "3 edits since last run \u2014 same PRs as resetLocalData.ts"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "lag-warning-2026-09-10",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-09-01T18:38:58Z vs 2026-09-10",
+      "score_delta": 0,
+      "evidence": [
+        "routine lag = 8d 15h since last committed routine run \u2014 dispatcher (planning branch) continued shipping; routine on dev did not tick"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist match",
+  "goal_checks": []
+}
