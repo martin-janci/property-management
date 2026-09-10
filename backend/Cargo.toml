@@ -57,7 +57,7 @@ rust_decimal_macros = "1.34"
 sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
 
 # Auth
-argon2 = "=0.6.0-rc.8"
+argon2 = "=0.6.0"
 # jsonwebtoken 10 split its crypto backend into a cargo feature; without one it
 # panics at runtime ("Could not determine the CryptoProvider"). `rust_crypto` is
 # the pure-Rust backend (matches the provider jsonwebtoken 9 had built in).
