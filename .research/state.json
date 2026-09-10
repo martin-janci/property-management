@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-10T08:38:24Z",
+  "last_run_ms": 12000,
+  "last_pr_seen": 2956,
+  "last_issue_seen": 2954,
+  "last_commit_sha": "feb8866a1bd96f2771a379cd95312d732d71d9bc",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -524,6 +524,7 @@
     }
   },
   "seen_signals": [
+    "buffer-low-planner-signal-2026-09-10",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -804,12 +805,15 @@
     "code-review-reality-web-realtor-mgmt-untranslated",
     "code-review-reality-web-share-comparison-404",
     "code-review-reality-web-viewsource-untrusted-cast",
+    "decay-mobile-native-kmp-cancellation-swallowed-2026-09-10",
+    "decay-mobile-native-kmp-portfolio-analytics-caps-100-2026-09-10",
     "dep-update-noise-2026-05-20",
     "dep-update-noise-2026-05-23",
     "dep-update-noise-2026-05-28",
     "dep-update-noise-2026-05-29",
     "dep-update-noise-2026-06-05",
     "dep-update-noise-2026-07-30",
+    "dep-update-noise-batch-2026-09-10",
     "dep-update-noise-pr-1333",
     "dep-update-noise-pr-1390",
     "dep-update-noise-pr-1414",
@@ -888,6 +892,7 @@
     "lag-warning-2026-08-22",
     "lag-warning-2026-08-25",
     "lag-warning-2026-08-28",
+    "lag-warning-2026-09-10",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -909,6 +914,7 @@
     "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
     "resolution-check-2026-08-31-drift-2894",
     "resolution-check-2026-08-31-drift-2895",
+    "resolved-stalled-review-pr-2558",
     "risky-churn-pr-963-main-rs",
     "risky-churn-pr-992-app-tsx",
     "screen-map-drift-pr-1033-ppt",
@@ -934,6 +940,7 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale-routine-alert-2026-09-10",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
@@ -1019,7 +1026,7 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 78,
+    "runs": 79,
     "vectors_created": 372,
     "plans_created": 29,
     "quiet_days": 3,

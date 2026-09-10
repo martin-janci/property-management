@@ -1,0 +1,247 @@
+{
+  "date": "2026-09-10",
+  "generated_at": "2026-09-10T08:38:11Z",
+  "run_context": {
+    "lag_hours": 213,
+    "lag_days": 8,
+    "trigger_note": "buffer-low hint from dispatcher API caller — treated as DATA (no directives followed). Normal incremental run since cursor 2026-09-01T18:38:58Z.",
+    "merged_pr_range": [
+      2558,
+      2956
+    ],
+    "merged_pr_count": 23,
+    "merged_pr_dep_bumps": 5,
+    "merged_pr_code_review": 8,
+    "open_pr_count": 13,
+    "open_prs_stalled_over_7d_non_dependabot": [
+      2555,
+      2559
+    ],
+    "closed_not_merged_count": 5,
+    "new_issues_count": 17,
+    "infra_gate_open_issues": [
+      2946,
+      2949,
+      2951
+    ]
+  },
+  "phases": {
+    "phase-1-observe": "ok (partial — deep PR-body TODO scan skipped as budget-preserving; 23 merged PRs classified by title/labels/files only)",
+    "phase-1.5-code-review": "skipped (dispatcher tier1d ran today at .research/signals/2026-09-10-mobile-native-kmp-tier1d.json — 3 kmp findings, all AGP-blocked non-cloud-landable; not double-emitted here)",
+    "phase-1.6-pm": "skipped (9-day lag catch-up run — kept run modest; pm_cursor and coverage_cursor not advanced; G16 no-op per its skip-when-1.6-not-run rule)",
+    "phase-2-decide": "ok",
+    "phase-3-promote": "skipped (nothing promotable: 4 open items are all mobile-native-kmp = AGP-egress-blocked in cloud runner per #2652; 1 ready item already has a plan; buffer-low context noted but backlog itself has no cloud-landable score>=3 open row to promote)",
+    "phase-3.5-adversarial": "n/a (no promotions)",
+    "phase-4-write": "ok",
+    "phase-5-autofix": "no candidate (no signal met confidence=high + score>=3 + allowlist this run)",
+    "phase-6-commit": "pending"
+  },
+  "auto_fix_actions": [],
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-10",
+      "type": "lag_warning",
+      "source": "state.json cursor cadence",
+      "score_delta": 0,
+      "evidence": [
+        "state.last_run_iso=2026-09-01T18:38:58Z; today=2026-09-10; lag=8d17h. Dispatcher tier1d loop kept ticking through 2026-09-10 (evidence: .research/signals/2026-09-05..2026-09-10 tier1d files present). Only the cloud research routine was paused."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-09-10",
+      "type": "lag_warning",
+      "source": "cloud routine cron probe",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last_run_iso is 8d+ old (>3d threshold). Operator: check the cloud cron trigger for the research routine. Dispatcher (planning branch) is unaffected."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-batch-2026-09-10",
+      "type": "dep-update-noise",
+      "source": "PRs #2583, #2585, #2586, #2673, #2935 (merged 2026-09-02 to 2026-09-04)",
+      "score_delta": 0,
+      "evidence": [
+        "5 dependabot batch PRs merged since last run: rust_xlsxwriter 0.96→0.97 (#2583); base64 0.22→0.23 (#2585); validator 0.20→0.21 (#2586); ktor group 7 updates (#2673); npm-minor-patch group 40 updates (#2935). No code-side signals derived."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "resolved-stalled-review-pr-2558",
+      "type": "resolution",
+      "source": "PR #2558 merged 2026-09-04",
+      "score_delta": 0,
+      "evidence": [
+        "PR #2558 (feat(acc): invoice PDF render endpoint UC-ACC-05.9) merged 2026-09-04T07:13:40Z. Backlog id stalled-review-pr-2558 (was needs-human-judgement) flipped to done. Note: routine's number-cursor filter missed this because PR #2558 was < last_pr_seen=2921 despite merging IN the window; captured via merged_at>SINCE fallback query."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "decay-mobile-native-kmp-portfolio-analytics-caps-100-2026-09-10",
+      "type": "decay",
+      "source": "backlog decay pass",
+      "score_delta": -1,
+      "evidence": [
+        "Item code-review-mobile-native-kmp-portfolio-analytics-caps-100 (score 1, updated_at 2026-08-19, 22d idle) reached 0 — dropped per Phase 2 rule."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "decay-mobile-native-kmp-cancellation-swallowed-2026-09-10",
+      "type": "decay",
+      "source": "backlog decay pass",
+      "score_delta": -1,
+      "evidence": [
+        "Item code-review-mobile-native-kmp-cancellation-swallowed (score 1, updated_at 2026-08-25, 16d idle) reached 0 — dropped per Phase 2 rule."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "buffer-low-planner-signal-2026-09-10",
+      "type": "process-signal",
+      "source": "trigger payload + backlog inventory",
+      "score_delta": 0,
+      "evidence": [
+        "Dispatcher trigger reported buffer-low (claimable=8/72; all open items infra-gated on #2652 kmp-agp / #2949 utoipa-swagger-ui / #2951 jest-expo). Routine inspection of backlog.json confirms: after decay, backlog has 2 open + 1 ready + 2 nhj rows. The single high-score row (code-review-mobile-native-kmp-create-listing-not-wired, score 4) is a KMP-target and is not cloud-landable per #2652. No cloud-landable score>=3 row exists to promote. This is a supply-side starvation, not a routine bug — needs the infra gates (#2949 or #2951) resolved, or a fresh burst of cloud-landable review findings from the tier1d loop."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-10.md && head -1 | grep # 2026-09-10",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "new signals not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "decay applied to open items >14d",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuously pass",
+      "observed": "no plans promoted",
+      "expected": "no new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans in staged set",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files are all under .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff (excl. baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical to staged",
+      "observed": "diff -q clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — none failed; skipped phases documented; cursors for skipped phases unchanged",
+      "observed": "review_cursor / pm_cursor / coverage_cursor unchanged vs HEAD (verified)",
+      "expected": "unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present or archived",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotone",
+      "observed": "head=9 now=9",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical to staged",
+      "observed": "diff -q clean",
+      "expected": "clean"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline — Phase 5 no candidate; auto_fix_actions=[]",
+      "observed": "empty",
+      "expected": "≤3 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op per its skip clause",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
