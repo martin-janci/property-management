@@ -1,0 +1,40 @@
+{
+  "run_iso": "2026-09-10T14:32:24Z",
+  "mode": "salvage",
+  "trigger_text": "buffer-low: claimable=8/72 — all landable work drained (mobile-native/api-server cloud-build-gated); refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-10",
+      "type": "lag_warning",
+      "source": "routine self-check (state.last_run_iso vs now)",
+      "score_delta": 0,
+      "evidence": [
+        "state.last_run_iso=2026-09-01T18:38:58Z; now=2026-09-10T14:32:24Z; lag_hours=235; lag_days=9",
+        "stale_routine_alert: cloud research routine cron appears paused; dispatcher (planning branch) still ticking (last commit 8824cc7 at 12:30Z today)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {"goal": "G1",  "passed": true,  "command": "test -f briefs/$(date -u +%F).md && head -1 matches", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2",  "passed": true,  "command": "state.json diff vs HEAD", "observed": "last_pr_seen/issue/commit/run_iso all advanced", "expected": "true"},
+    {"goal": "G3",  "passed": true,  "command": "backlog id uniqueness", "observed": "no backlog edits this run", "expected": "true"},
+    {"goal": "G4",  "passed": true,  "command": "signal-id vs prior seen_signals", "observed": "lag-warning-2026-09-10 not previously seen", "expected": "true"},
+    {"goal": "G5",  "passed": false, "command": "decay pass on open items >14d stale", "observed": "decay pass skipped in salvage mode; portfolio-analytics-caps-100 owes -1 (22d stale)", "expected": "true", "remediation": "next full-mode run must apply the deferred decay"},
+    {"goal": "G6",  "passed": true,  "command": "new plan ↔ adversarial pass line", "observed": "0 new plans this run", "expected": "true"},
+    {"goal": "G7",  "passed": true,  "command": "new plan count ≤ 2", "observed": "0", "expected": "≤2"},
+    {"goal": "G8",  "passed": true,  "command": "git diff --cached only .research/", "observed": "only .research/ paths", "expected": "0 non-.research files"},
+    {"goal": "G9",  "passed": true,  "command": "secret/hostname scan of staged diff", "observed": "0 hits", "expected": "0"},
+    {"goal": "G10", "passed": false, "command": "diff backlog.md vs regen", "observed": "backlog.md timestamp reads 2026-09-01; not regenerated this salvage run", "expected": "byte-identical", "remediation": "next full-mode run regenerates backlog.md"},
+    {"goal": "G11", "passed": true,  "command": "phases-failed cursor firewall", "observed": "Phase 1.5/1.6/5 skipped explicitly; Phase 1 obs succeeded → cursors advanced", "expected": "true"},
+    {"goal": "G12", "passed": true,  "command": "prior-run plan slugs still present", "observed": "24 active + 8 archived, unchanged this run", "expected": "true"},
+    {"goal": "G13", "passed": true,  "command": "plans/_archive count ≥ HEAD", "observed": "8 == 8", "expected": "true"},
+    {"goal": "G14", "passed": false, "command": "diff IDEAS_TRIAGE.md vs regen", "observed": "IDEAS_TRIAGE.md timestamp reads 2026-09-01; not regenerated this salvage run", "expected": "byte-identical", "remediation": "next full-mode run regenerates IDEAS_TRIAGE.md"},
+    {"goal": "G15", "passed": true,  "command": "auto-fix discipline", "observed": "Phase 5 skipped; auto_fix_actions empty; no branch pushed", "expected": "true"},
+    {"goal": "G16", "passed": true,  "command": "management artifacts + cursors", "observed": "Phase 1.6 skipped; artifacts still parse; cursor advance requirement vacuous", "expected": "true"},
+    {"goal": "G17", "passed": true,  "command": "no telegram token in diff", "observed": "0 hits", "expected": "0"}
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "salvage-mode run after 9-day cloud-routine outage; Phase 5 not attempted"
+}
