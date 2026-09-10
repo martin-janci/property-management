@@ -27,7 +27,7 @@
     "@ppt/sitemap": "workspace:*",
     "commander": "^15.0.0",
     "gray-matter": "^4.0.3",
-    "hono": "^4.13.5",
+    "hono": "^4.13.7",
     "yauzl-promise": "^4.0.0",
     "zod": "^3.23.8"
   },
