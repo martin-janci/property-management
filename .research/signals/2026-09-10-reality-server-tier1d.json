@@ -1,0 +1,65 @@
+{
+  "generated": "2026-09-10T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (claim buffer starved: claimable=8 < floor=36) 2026-09-10",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed (corpus-derived). state.json review_cursor is stale (last_run 2026-09-01), so per-segment last-reviewed dates were computed from the .research/signals corpus: reality-server 2026-09-06 (OLDEST), api-handlers/api-core/ppt-web-ui/ppt-web-core/mobile-rn 2026-09-09, reality-web 2026-09-10, mobile-native-kmp 2026-09-10. Two segments were already produced earlier today (2026-09-10-reality-web-tier1d.json, 2026-09-10-mobile-native-kmp-tier1d.json) and are therefore excluded from this rotation. The genuine oldest-unreviewed segment is reality-server, which also satisfies the Tier-1d LANDABLE preference (backend Rust, NOT mobile-native/KMP). Saturation check PASSED: backlog.json holds 0 open code-review-finding rows for reality-server (2 exist, both status=done). Note: reality-server maps to a binary crate that may not COMPILE in the cloud runner (same utoipa-swagger-ui egress class as api-server, #2949), but this pass is static-only (no build) and findings are backlog signals whose landability is resolved at implementer time — the three findings below are all pure-Rust edits with no build-time codegen dependency. Also swept before selecting: api-handlers (churn hotspot per stale hotspot_history) was found freshly-hardened — every unwrap/expect/StatusCode::OK candidate in the integrations/documents/ai churn dirs is a guarded, documented pattern (webhook idempotency acks, preflight-validated ESIGN secret, len-guarded indexing, multipart size+MIME validation); no landable finding there. Segment scope per skill map = backend/servers/reality-server/src/ (43 .rs files). Mechanical passes (unwrap/expect, unsafe, todo/unimplemented, StatusCode::OK on error, sensitive-in-logs, public-listing visibility filtering, SSO introspection cache, saved-search watermark ordering) all came back clean/previously-hardened: the get_listing detail path exposes no owner PII and clears RLS context; the #983 duplicate-alert race is already fixed via an atomic enqueue_and_advance transaction; SSO token-cache (Epic 104.2) correctly avoids negative-cache poisoning on PM outage. The three net-new findings are all LOW-severity i18n/completeness gaps on the PUBLIC 4-locale portal surface (routes/listings.rs), which is exactly the class most impactful for a public real-estate portal and most landable (backend-only). Cap-at-3 honored; nits skipped.",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-reality-server-categories-hardcoded-sk-labels",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-server public-listings)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:826-846 — `get_categories` (drives the reality-web homepage \"Browse by category\" tiles on the sk/cs/de/en portal) maps every `property_type` to a hardcoded SLOVAK label via `label_for_property_type` (listings.rs:823-846): apartment=>\"Byty\", house=>\"Domy\", land=>\"Pozemky\", commercial=>\"Komerčné priestory\", office=>\"Kancelárie\", garage=>\"Garáže\", parking=>\"Parkovanie\", storage=>\"Sklady\", with a `capitalize(other)` fallback for unknown types.",
+        "The doc comment at listings.rs:765-766 claims \"Labels are returned in Slovak (primary market) — the frontend has its own i18n fallback if a label is missing.\" That justification is misleading: `label_for_property_type` NEVER returns an empty/missing label (the `other => capitalize(other)` arm guarantees a non-empty string for every input), so the promised frontend \"missing-label fallback\" can never trigger. A cs/de/en visitor therefore either sees Slovak category names, or the frontend must ignore the server `label` entirely and re-localize from `property_type` — in which case the `label` field is dead weight shipped in every response.",
+        "Impact: LOW (cosmetic i18n leak on a public marketing surface; no data/security impact). Confidence medium: the server behaviour is confirmed by static read; whether cs/de/en users actually SEE the Slovak text depends on whether reality-web renders `CategoryCount.label` or re-keys off `CategoryCount.property_type` (not runtime-confirmed here). Landable backend-only fix (no build-time codegen touched): either (a) drop the `label` field and let the client localize from the stable `property_type` enum (mirrors how the rest of the portal handles enum display), or (b) return a per-locale label keyed off an `Accept-Language`/`locale` query param. Option (a) is the smaller, safer change and removes the misleading comment."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-suggestions-stub-popular",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-server public-listings)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:472-480 — the public `get_suggestions` handler (GET /api/v1/listings/suggestions, autocomplete/search-suggestions surface) returns `popular_searches` as a HARDCODED three-element vec: [\"2-izbový byt Bratislava\", \"Dom Košice\", \"Pozemok Žilina\"]. The `cities` half of the response is real (derived from `portal_repo.get_nearby_cities`), but `popular_searches` is a static stub shipped on a production public endpoint — it is not derived from any search-frequency/analytics data, so it is not actually 'popular', and it never changes regardless of market activity.",
+        "Two problems compound: (1) completeness — the field's name promises data-driven popular searches but delivers a fixed literal, so the feature is effectively unimplemented behind a real-looking API contract; (2) i18n — the three strings are Slovak-only literals on a sk/cs/de/en portal, so a cs/de/en visitor's suggestion box shows Slovak example queries.",
+        "Impact: LOW (a public marketing/UX surface; no data or security impact). Confidence medium (static read is definitive on the stub; user-visible effect depends on whether reality-web renders `popular_searches`). Landable backend-only fix: either wire `popular_searches` to a real source (e.g. a top-N aggregation over recent saved-search / search-event rows, or the existing search-analytics tables), or, if that data is not yet available, drop the field from the response contract rather than shipping a hardcoded Slovak stub. If kept as a placeholder, at minimum localize per request locale."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-listing-slug-is-uuid",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-server public-listings)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:632 — `RichListingSummary.slug` (returned by the public /api/v1/listings/featured endpoint and consumed by the reality-web homepage to build listing URLs) is set to `slug: r.id.to_string()`, i.e. the raw listing UUID. The field is documented at listings.rs:523 (\"URL slug — currently the listing UUID stringified (no slug column yet)\") and listings.rs:629-631 (\"No slug column on listings yet — the frontend treats the path\").",
+        "For a PUBLIC real-estate portal where organic search traffic is a primary acquisition channel, UUID-based canonical URLs (/listings/8f3c...-uuid) are an SEO and shareability liability: no keyword signal in the path, opaque/untrustworthy-looking links in social shares and SERPs, and no human-readable fallback. This is acknowledged tech debt rather than a latent crash, but it is a concrete, business-relevant completeness gap on the public surface and is currently un-tracked as a backlog vector.",
+        "Impact: LOW (SEO/UX, no correctness/security risk). Confidence medium (behaviour confirmed by static read; SEO impact is well-established for real-estate portals but not measured here). Landable but multi-part: (1) add a `slug` column to `listings` (migration) populated from title + city + short-id (e.g. `3-izbovy-byt-bratislava-8f3c`), backfill existing rows, and enforce uniqueness; (2) return that column here instead of `r.id.to_string()`; (3) accept slug OR uuid in `get_listing` for backward-compatible links. Because it spans a migration + query change + generated-response shape, an implementer should scope it as a small story rather than a one-line fix — flagged here so it enters the backlog with the right size estimate."
+      ]
+    }
+  ]
+}
