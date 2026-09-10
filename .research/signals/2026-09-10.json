@@ -1,0 +1,66 @@
+{
+  "date": "2026-09-10",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-10",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z (9 days)",
+      "score_delta": 0,
+      "evidence": "Routine has not produced a brief since 2026-09-01 (9d lag). Dispatcher continued firing every 2h (see chore(research): dispatcher commits 2026-09-02..09) but the daily research routine itself was silent. Backlog + hotspot_history therefore reflect only the 2026-09-01 baseline.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/accounting-server/tests/invoice_pdf_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2938 (invoice PDF renderer + handler test coverage)",
+      "score_delta": 1,
+      "evidence": "252 lines churned this run (single PR — brand-new test file added for the invoice PDF endpoint).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "PRs #2943, #2952, #2956 (logout-purge allowlist coverage + auto-discovery hardening)",
+      "score_delta": 1,
+      "evidence": "230 lines churned across 3 PRs this run — coverage test rewritten to auto-discover feature-local *Keys factories then hardened against suite-crash + glob-depth gaps. Instability signal for the test itself: 3 revisions in a week suggest the design is still settling.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #2928, #2931 (report_summary snapshot-consistency)",
+      "score_delta": 1,
+      "evidence": "186 lines churned across 2 PRs — first PR added the snapshot-consistency test, second PR made the test actually fail on pre-fix code (regression-test-quality signal).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "phase_notes": {
+    "phase_1_5_skipped": "rotating expert review deferred this run — 9-day lag left too little token budget for a full dev-review subagent; next run picks it back up (oldest-unreviewed segment: mobile-native-kmp 2026-08-25 remains, but note it is infra-gated per issue #2652; reality-web / ppt-web-core 2026-08-29 are next-oldest and unblocked)",
+    "phase_1_6_skipped": "PM synthesis deferred — same reason. pm_cursor untouched so next run picks up at pm-security (next_index=5)."
+  },
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-09-10.md && head -1 grep", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json changed vs HEAD", "observed": "last_pr_seen 2921→2956, last_issue_seen 2847→2956, last_commit_sha advanced, seen_signals grew by 4, hotspot_history grew by 3", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no double-count", "observed": "4 new signal ids, none present in previous seen_signals", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap + decay applied", "observed": "no score >8; 2 items decayed from 1→0→dropped this run (portfolio-analytics-caps-100, cancellation-swallowed); httpclient-no-timeout still within 14d, create-listing-not-wired within 14d", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run", "observed": "0 new plans (nothing met readiness bar)", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "at most 2 new plans", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "staged diff .research only", "observed": "will verify at commit", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets", "observed": "no secret patterns in staged diff", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md matches regen", "observed": "renderer wrote same view", "expected": "diff -q exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "phases 1.5 + 1.6 skipped (recorded in phase_notes); cursors NOT advanced for those phases (review_cursor + pm_cursor + coverage_cursor unchanged)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "no plan silently deleted", "observed": "no plan moves this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive only grows", "observed": "archive count unchanged (8)", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "triage matches regen", "observed": "renderer wrote same view", "expected": "diff -q exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline", "observed": "no auto-fix actions this run — Phase 5 evaluated no signal met confidence=high AND score>=3 AND allowlist", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts (skipped Phase 1.6 → no-op gate)", "observed": "Phase 1.6 skipped; state.pm_cursor unchanged; gate is no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no telegram secret", "observed": "no telegram tokens in staged diff", "expected": "0" }
+  ]
+}
