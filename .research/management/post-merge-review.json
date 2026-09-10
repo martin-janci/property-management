@@ -1,9 +1,17 @@
 {
-  "generated": "2026-09-09T16:29:39Z",
+  "generated": "2026-09-10T18:27:07Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-10T18:27:07Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-27), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration: search_pull_requests is:merged base:dev merged:>=2026-08-27 -label:post-merge-reviewed -label:no-review-needed => total_count=0 net-new PRs. Every in-window merge (74 total incl. dependabot, code-review-* follow-ups, gh-issue-* fixes) already carries post-merge-reviewed from prior runs. Nothing to review; no reviewer subagents spawned; no follow-up issues opened."
+    },
     {
       "run_at": "2026-09-09T16:29:39Z",
       "prs_scanned": 2,
@@ -580,20 +588,6 @@
           "findings": 2,
           "specialist": "pm-frontend",
           "note": "i18n(low)+DRY(low): expiry state bug fixed well, but suffixes ' (Expired)'/' (Expiring soon)'/'(Soon)' and config.label are hardcoded English (ppt-web is actively i18n-ing this class, cf #2820/#2737/#2736); and msUntilExpiry/isExpired/30d window logic is duplicated across VerificationBadge + VerificationStatusBadge. Proposed: route suffixes+labels through react-i18next across 6 locales + key-presence test; extract shared getExpiryState() helper."
-        }
-      ]
-    },
-    {
-      "run_at": "2026-08-21T06:31:06Z",
-      "prs_scanned": 1,
-      "clean": [],
-      "with_issues": [
-        {
-          "pr": 2815,
-          "issue": 2816,
-          "findings": 1,
-          "specialist": "pm-rust-backend",
-          "note": "overflow fix left parallel orphaned saved_searches (int4) path; remove dead cluster or widen class-wide"
         }
       ]
     }
