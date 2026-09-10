@@ -1,0 +1,28 @@
+{
+  "generated_by": "dispatcher-tier1d",
+  "generated_at": "2026-09-10T22:35:00Z",
+  "run": "dispatcher 2026-09-10 22:30",
+  "reason": "buffer starved (claimable=8 < floor=36) after Tier 1b/1c avail=0; demand-driven vector generation on a landable (non-mobile-native/non-api-server) segment",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (tied with reality-web at 2026-08-29; picked ppt-web-core, first in skill map order)",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-route-toasts-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:368,371 — showToast title/message hardcoded English ('Created' / 'Failed to report fault') though the file already uses react-i18next t() at :246; not localized",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx:243,248,296,303,341 — hardcoded English toast titles ('Submitted','Submit failed','Updated','Update failed','Validation failed')",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:249,255,305,382 — hardcoded English toast titles ('Saved','Bulk entry failed','Delete failed','Save failed')",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:198,260,338; leases.tsx:628,633,761,766; announcements.tsx; community.tsx — same pattern; ~28 user-facing toast strings across route groups bypass i18n while parseApiError (i18n-aware) is imported for load paths"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
