@@ -1,0 +1,193 @@
+{
+  "generated": "2026-09-10T04:32:54Z",
+  "trigger_text": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-10",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-09-01T18:38:58Z; lag=8d 201h — stale-routine alert threshold (3d) exceeded"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "PRs #2942,#2952,#2956",
+      "score_delta": 1,
+      "evidence": [
+        "3 merged-PR touches in window (queryKeys auto-discovery hardening + logout-purge allowlist enforcement)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2941,#2942",
+      "score_delta": 1,
+      "evidence": [
+        "2 merged-PR touches in window (cold-boot JWT exp validation + single-flight refresh with request replay)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "PRs #2950,#2955",
+      "score_delta": 1,
+      "evidence": [
+        "2 merged-PR touches in window (NFC access log + credential-material purge on session change)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "type": "stalled-review",
+      "source": "PR #2902",
+      "score_delta": 1,
+      "evidence": [
+        "screen-map-drift-pr-2894-reality PR open 7d, draft=true, CONFLICTING per dispatcher note; awaiting operator reset/close"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 briefs/$today.md",
+      "observed": "# $today",
+      "expected": "# $today"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored non-cumulative signals",
+      "observed": "only new + cumulative churn",
+      "expected": "true",
+      "remediation": "stalled-review-pr-2902, lag-warning-$today are fresh; churn-hotspot ids are cumulative-allowlist re-emit with score_delta already-applied only if new"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap/decay",
+      "observed": "cap ok; 2 items decayed 1→0 → dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 promotions",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "0",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "pending stage",
+      "expected": "0 non-.research paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/private hosts",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "phase-1.5 + phase-1.6 skipped listed; cursors unchanged",
+      "expected": "listed and cursors held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present",
+      "observed": "all prior slugs present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "9 ≥ 9",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "0 actions",
+      "expected": "≤1 pr, ≤1 issue, ≤1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursor bounds",
+      "observed": "Phase 1.6 skipped this run — no-op",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
