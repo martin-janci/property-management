@@ -706,10 +706,13 @@
     "code-review-mobile-native-kmp-ios-deeplink-info-plist",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
     "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+    "code-review-mobile-native-kmp-notif-prefs-update-silent-fail",
     "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
     "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
     "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout",
+    "code-review-mobile-native-kmp-saved-searches-load-silent-empty",
     "code-review-mobile-native-kmp-search-stale-response-race",
+    "code-review-mobile-native-kmp-viewings-load-silent-empty",
     "code-review-mobile-rn-auth-restore-stale-token",
     "code-review-mobile-rn-biometric-prompt-i18n",
     "code-review-mobile-rn-deeplink-init-unhandled",
@@ -1013,7 +1016,7 @@
     "ppt-web-core": "2026-08-29",
     "reality-web": "2026-08-29",
     "mobile-rn": "2026-09-09",
-    "mobile-native-kmp": "2026-08-25"
+    "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
     "runs": 78,
