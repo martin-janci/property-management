@@ -1,0 +1,28 @@
+{
+  "generated": "2026-09-10T00:00:00Z",
+  "segment": "mobile-rn",
+  "segment_reviewed": "mobile-rn",
+  "source": "dispatcher-tier1d",
+  "selection_reason": "oldest-unreviewed by the signals-corpus cursor (state.json review_cursor is stale: last_run 2026-09-01). Per-segment last-reviewed from the signals corpus: reality-server 2026-09-10, reality-web 2026-09-10, mobile-native-kmp 2026-09-10 (all already covered today); api-handlers/api-core/ppt-web-ui/ppt-web-core/mobile-rn all tied at 2026-09-09. Among the five tied-oldest, mobile-rn is the least-frequently-reviewed LANDABLE frontend segment in the corpus (3 recent passes vs ppt-web-core's ~10) and best serves rotation breadth. NOTE: mobile-rn is React Native under frontend/apps/mobile (landable in the cloud runner), distinct from the unlandable KMP mobile-native/ segment. Saturation check PASSED: backlog.json holds 0 open code-review-finding rows for mobile-rn. An initial pass was spent confirming ppt-web-core (my first, stale-cursor pick) is clean and heavily over-reviewed before pivoting here.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-imagecompress-width-only-resize",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/mobile/src/utils/imageCompression.ts:171 (compressImagesIfNeeded) — the down-scale pass calls manipulateAsync(uri, [{ resize: { width: maxDimension } }], ...) with ONLY a width bound. expo-image-manipulator's width-only resize sets width to 1920 and scales height by aspect ratio, so for PORTRAIT photos (the dominant phone-camera orientation) it caps the SHORTER edge and leaves the longest edge (height) uncapped — a 3000x4000 shot becomes 1920x2560 (longest edge 2560, not 1920).",
+        "frontend/apps/mobile/src/utils/imageCompression.ts:12-15 and :118 — the doc comment states the strategy is to 'cap the longest edge at MAX_DIMENSION px', which diverges from the width-only implementation: the stated intent is not met for portrait images.",
+        "Consequence: portrait images narrower than 1920px are UPSCALED by the resize op (larger target width => more pixels), which can increase byte size and works against the 10 MB reduction goal of AC 4.1 (Story 4.1 / issue #1767). The correct recipe bounds both edges (e.g. resize by width only when landscape and by height only when portrait, or pass the longest-edge dimension per orientation).",
+        "Reachable in production: compressImagesIfNeeded is the offline fault-report photo path (ReportFaultScreen). Net-new — prior mobile-rn passes (incl. 2026-08-08, which only credited the module with 'having tests') never flagged the resize logic; imageCompression.test.ts:115 pins the shipped call shape as { resize: { width: 1920 } }, so a fix must update that assertion too."
+      ]
+    }
+  ],
+  "note": "Static-only review (no compile/test execution). Segment is a mature, heavily-reviewed churn area at near-clean steady-state. Files inspected this pass that were clean or already-covered: hooks/useOfflineSupport.ts (terminal-vs-transient handling, prior findings), useApi.ts (prior findings), config/api.ts (env single-source-of-truth, guarded http://localhost prod fallback documented per issue #523 — nit, skipped), utils/jwt.ts (padding-tolerant decode, decode-only by design), navigation/authGate.ts (pure guard, well-tested), services/backgroundNotifications.ts (cold-start FCM, clean), utils/imageCompression.ts (the finding above). console.* calls are __DEV__-gated or legitimate catch-block logging; the two `as unknown as` casts are the idiomatic RN FormData-Blob upload workaround and a fixed-bug reference comment. One emit-worthy finding this pass. Also observed but NOT emitted (different segment — belongs to a ppt-web-core pass): frontend/apps/ppt-web/src/lib/api.ts:370 `export default getApiClient()` captures an unconfigured axios instance at import time (no token getter / no 401 handler) — currently a latent footgun with no consumers (all imports use getApiClient()/named exports), so low value and out of this segment's scope."
+}
