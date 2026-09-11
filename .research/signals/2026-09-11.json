@@ -1,0 +1,305 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-11",
+      "type": "lag_warning",
+      "source": "routine self-observation",
+      "score_delta": 0,
+      "evidence": [
+        "routine last_run_iso 2026-09-01T18:38:58Z — 9d 13h since last run (>36h threshold; >=3d = stale_routine_alert)",
+        "cause: routine cron did not fire between 2026-09-02 and 2026-09-11; dispatcher (separate cron) continued running 3x/day throughout, so backlog.json drifted from backlog.md"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-09-11",
+      "type": "stale_routine_alert",
+      "source": "routine self-observation",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso 2026-09-01T18:38:58Z; today 2026-09-11 → 9 days silent (>=3d threshold)",
+        "cloud routine scheduler likely paused/rate-limited between 2026-09-02 and 2026-09-10; dispatcher's own state on planning branch unaffected",
+        "operator: verify cloud routine cron is armed; check dispatcher assignments.json on planning branch separately"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot merged: PR #2935"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2961",
+      "type": "dep-update-noise",
+      "source": "PR #2961",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2961"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2960",
+      "type": "dep-update-noise",
+      "source": "PR #2960",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2960"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2959",
+      "type": "dep-update-noise",
+      "source": "PR #2959",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2959"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2939",
+      "type": "dep-update-noise",
+      "source": "PR #2939",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2939"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2958",
+      "type": "dep-update-noise",
+      "source": "PR #2958",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2958"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2957",
+      "type": "dep-update-noise",
+      "source": "PR #2957",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2957"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2590"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2589"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2588"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot open: PR #2584"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "decay-batch-2026-09-11",
+      "type": "decay",
+      "source": "routine self-observation",
+      "score_delta": 0,
+      "evidence": [
+        "code-review-mobile-native-kmp-portfolio-analytics-caps-100: score 1→0 → status=dropped (updated_at 2026-08-19, >14d)",
+        "code-review-mobile-native-kmp-cancellation-swallowed: score 1→0 → status=dropped (updated_at 2026-08-25, >14d)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "buffer-low-observation-2026-09-11",
+      "type": "buffer_low_observation",
+      "source": "routine trigger payload",
+      "score_delta": 0,
+      "evidence": [
+        "trigger payload reported claimable=8/72; after this run's 2 decays, open non-terminal backlog items = 3 (all mobile-native-kmp)",
+        "open items remaining: create-listing-not-wired (score 4), inquiries-response-contract (score 3, ready+plan), httpclient-no-timeout (score 1)",
+        "all remaining open items are mobile-native-kmp — cloud-build-blocked per issue #2652 (AGP dl.google.com egress blocked)",
+        "no landable cloud-buildable candidates surfaced by this recovery run; refill pressure must come from Phase 1.5 rotating expert review on non-KMP segments"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-11.md && head -1",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD (cursors + seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen-signal re-emit dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "python decay verifier",
+      "observed": "all decayed items either -1 or dropped",
+      "expected": "all decayed or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass note (n/a — no new plans this run)",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-host grep on staged .research/ (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases (1.5/1.6 skipped by design)",
+      "expected": "no cursor regression on failure"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still on disk (active or archive)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows (git ls-files)",
+      "observed": "9 >= 9",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15-caps",
+      "passed": true,
+      "command": "auto_fix_actions caps (0 this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "PM cursor sanity (Phase 1.6 skipped → no-op gate)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
