@@ -1,0 +1,33 @@
+{
+  "segment": "reality-server",
+  "date": "2026-09-11",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "CHURN_FILES empty this run. REVIEW_CURSOR landable-tie oldest was ppt-web-core AND reality-web, both at 2026-08-29. Both were ALREADY covered THIS run by sibling Tier-1d generators (signals/2026-09-11-ppt-web-core-tier1d.json and signals/2026-09-11-reality-web-tier1d.json both exist), and a fresh ppt-web-core pass only reproduces already-known findings (authed-query-roots-drift #2026-09-04, logout-cache-purge-gap #2026-08-03, api-eager-default-export #2026-07-10, ws-query-invalidation-dead #2026-08-26 — all confirmed still-present but duplicative). Pivoted to the next-oldest LANDABLE segment: reality-server (cursor 2026-08-31), which had NO sibling coverage today and 0 open code-review findings in backlog.json (not saturated). mobile-native-kmp (numerically older) and api-handlers/api-core were excluded per dispatcher constraints: KMP AGP egress-blocked, api-server crate build (utoipa-swagger-ui build script) egress-blocked. reality-server is a plain Rust axum crate that builds in the cloud runner.",
+  "experts_used": ["rust"],
+  "landable_in_cloud": true,
+  "landability_note": "reality-server is a standalone Rust/axum crate (backend/servers/reality-server). It does NOT pull utoipa-swagger-ui's egress-blocked build script the way api-server does, and it is not the KMP/AGP toolchain. `cargo build -p reality-server` / `cargo test -p reality-server` run in the cloud runner, so a fix + unit test for this finding is buildable and landable here.",
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-reality-server-portal-listing-no-price-field-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-server portal-listings input validation)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/portal_listings.rs",
+        "backend/crates/db/migrations/00049_create_listings.sql"
+      ],
+      "evidence": [
+        "The portal-owner listing WRITE path validates ONLY its enum-like string fields and leaves every numeric and required-text field unvalidated. `create_listing` (routes/portal_listings.rs:207) calls `validate_enum` for propertyType/transactionType/currency and nothing else; `update_listing` (routes/portal_listings.rs:317) adds `validate_enum(\"status\", ...)` but likewise validates no numeric/text field. `price: Decimal` (CreatePortalListingRequest:106, UpdatePortalListingRequest:126) is passed straight into `create_portal_listing`/`update_portal_listing` (portal_listings.rs:239 / :344) with no lower-bound check, so a negative or zero price is accepted.",
+        "There is NO database backstop: migration 00049_create_listings.sql:39 declares `price DECIMAL(15, 2) NOT NULL` with NO CHECK constraint (grep for a `price >= 0` / `CHECK (price` on listings returns nothing; the only price-related CHECK in the tree is 00194's `alert_type` enum). The price-change trigger in 00063_reality_portal_professional.sql:100 even guards `CASE WHEN OLD.price > 0 ... ELSE 0`, implicitly acknowledging non-positive prices can exist. So a portal owner (authenticated PortalPrincipal — realtor / FSBO) can POST /api/v1/my/listings or PATCH /api/v1/my/listings/{id} with `price: -1` (or 0) and it is stored and then rendered on the PUBLIC reality-web portal. The reality-web price-display findings (code-review-reality-web-edit-price-zero #2026-09-06, sell-price-nan) are downstream symptoms of exactly this missing server-side guard — the backend is the correct place to reject it.",
+        "The same handler also skips emptiness/length validation on the REQUIRED text fields `title`, `street`, `city`, `postal_code` (all non-Option `String`, portal_listings.rs:104-112) and lower-bound validation on `size_sqm`/`rooms`/`floor`/`total_floors` — a whitespace-only title or a negative `size_sqm` is accepted (and `size_sqm` feeds the €/m² aggregation in routes/price_map.rs:164, `AVG(CASE WHEN size_sqm > 0 THEN price / size_sqm END)`, so a negative size silently drops the listing from the price map rather than erroring).",
+        "This is a genuine inconsistency, not a stylistic nit: the sibling public write paths in the SAME server validate their inputs thoroughly — the anonymous inquiry/contact path (handlers/inquiries/mod.rs:156 validate_contact: name 2-100 chars, email format, phone format, message 10-2000 chars) and the article-comment path (routes/articles.rs:450 empty + MAX_COMMENT_BODY_LEN). The portal-listing write path is the outlier that trusts the client.",
+        "Impact: MEDIUM. No auth bypass and no crash (Decimal arithmetic tolerates negatives), and ownership/RLS scoping is correct (create/update are gated on portal_owner_id/created_by). But an authenticated portal owner can persist semantically-invalid listing data (negative/zero price, empty title) that is served on the public portal and skews the public price-map aggregation. Confidence MEDIUM: the full path was traced statically (handler -> request struct -> repo call -> DB column) and the absence of a DB CHECK was confirmed against migration 00049; not runtime-exercised. Fresh vs backlog: no prior reality-server finding covers portal-listing input validation (prior ones: categories/suggestions i18n+stubs, slug-is-uuid, sso 401 conflation, mark-read swallow, saved-search/import limits, alert-drainer stub, inquiry-detail, watermark). Fix (reality-server-only, cargo-test verifiable): add a small `validate_listing_fields` guard in portal_listings.rs (reject price <= 0, size_sqm <= 0 when present, rooms/floors < 0, and trim-empty/over-length title/street/city/postal_code) called at the top of both create_listing and update_listing, mirroring InquiriesHandler::validate_contact; optionally also add a `CHECK (price > 0)` in a follow-up migration as defence-in-depth."
+      ]
+    }
+  ]
+}
