@@ -1,0 +1,162 @@
+{
+  "date": "2026-09-11",
+  "run_iso": "2026-09-11T03:04:00Z",
+  "trigger_text": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-11",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-09-01T18:38:58Z, ~9d ago; catch-up run — cursors advanced to reflect intermediate GitHub activity",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale_routine_alert-2026-09-11",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 9d old; cloud research routine appears paused while the dispatcher/planner loop keeps running (see many dispatcher-* commits on dev). Dispatcher assignments live on the planning branch — check separately.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "catch-up run; Phase 5 not applicable to any active signal (no allowlisted signal type produced)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == \"# <today>\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD (cursors + seen_signals + stats)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] length == unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-emitted with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[] | select(.score > 8)] | length == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "python3 check: for each prior open item with updated_at <= today-14, cur is dropped or score decreased by >= 1",
+      "observed": "0 violations",
+      "expected": "0 violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plan count",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "staged diff secret grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep for \"Phases that failed: none\" in brief",
+      "observed": "present",
+      "expected": "present"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count only grows",
+      "observed": "9 >= 9",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions count caps",
+      "observed": "0 actions",
+      "expected": "caps respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor in 0..7 (Phase 1.6 skipped this run)",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "GATE11-placeholder-rot",
+      "passed": true,
+      "command": "grep for TBD/TODO/FIXME/XXX/etc. placeholders in brief and new plans",
+      "observed": "none",
+      "expected": "none"
+    }
+  ]
+}

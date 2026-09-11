@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-11T03:04:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2956,
+  "last_issue_seen": 2954,
+  "last_commit_sha": "d9635e34ff7e24e7dbde067873e1b6ebf00e8ab3",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -888,6 +888,7 @@
     "lag-warning-2026-08-22",
     "lag-warning-2026-08-25",
     "lag-warning-2026-08-28",
+    "lag-warning-2026-09-11",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -934,6 +935,7 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale_routine_alert-2026-09-11",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
@@ -1019,10 +1021,10 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 78,
+    "runs": 79,
     "vectors_created": 372,
     "plans_created": 29,
-    "quiet_days": 3,
+    "quiet_days": 4,
     "auto_fix_count": 0
   },
   "pm_cursor": {
