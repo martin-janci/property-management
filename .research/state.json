@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-11T12:30:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2961,
+  "last_issue_seen": 2954,
+  "last_commit_sha": "7c5894ed53fc7065981f9a333a71e66232aa309e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -521,6 +521,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-31",
       "recent_churn": 151
+    },
+    "frontend/apps/ppt-web/src/lib/queryKeys.test.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-11",
+      "recent_churn": 3
+    },
+    "frontend/apps/ppt-web/src/contexts/AuthContext.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-11",
+      "recent_churn": 2
+    },
+    "frontend/apps/mobile/src/services/resetLocalData.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-11",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -612,10 +627,12 @@
     "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/messages/ThreadDetailScreen.tsx",
+    "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
     "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
     "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.api-client-unauthorized.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/AmlDashboardPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx",
@@ -626,6 +643,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
+    "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
@@ -729,7 +747,9 @@
     "code-review-mobile-rn-vote-xform-untested",
     "code-review-ppt-web-core-api-onunauthorized-unwired",
     "code-review-ppt-web-core-authctx-init-stale-role",
+    "code-review-ppt-web-core-community-route-fully-stubbed",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
+    "code-review-ppt-web-core-faults-url-param-unvalidated-cast",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
     "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
     "code-review-ppt-web-core-logout-cache-purge-gap",
@@ -737,6 +757,7 @@
     "code-review-ppt-web-core-notfound-i18n-gap",
     "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
+    "code-review-ppt-web-core-reports-route-stub-analytics",
     "code-review-ppt-web-core-route-error-boundary-gap",
     "code-review-ppt-web-core-ws-event-name-mismatch",
     "code-review-ppt-web-core-ws-giveup-no-resume",
@@ -754,6 +775,7 @@
     "code-review-ppt-web-ui-dispute-list-no-i18n",
     "code-review-ppt-web-ui-dsa-reports-no-i18n",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
+    "code-review-ppt-web-ui-editfaultpage-no-i18n",
     "code-review-ppt-web-ui-emergency-dir-raw-err-message",
     "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
@@ -766,6 +788,7 @@
     "code-review-ppt-web-ui-role-gate-fail-open",
     "code-review-ppt-web-ui-savedirty-stale-closure",
     "code-review-ppt-web-ui-sessions-double-cast",
+    "code-review-ppt-web-ui-signature-modal-raw-err",
     "code-review-ppt-web-ui-untranslated-strings",
     "code-review-reality-server-agency-members-unauth-idor",
     "code-review-reality-server-agent-review-self-review",
@@ -810,6 +833,7 @@
     "dep-update-noise-2026-05-29",
     "dep-update-noise-2026-06-05",
     "dep-update-noise-2026-07-30",
+    "dep-update-noise-2026-09-11-batch",
     "dep-update-noise-pr-1333",
     "dep-update-noise-pr-1390",
     "dep-update-noise-pr-1414",
@@ -888,6 +912,7 @@
     "lag-warning-2026-08-22",
     "lag-warning-2026-08-25",
     "lag-warning-2026-08-28",
+    "lag-warning-2026-09-11",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -934,6 +959,7 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale-routine-alert-2026-09-11",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
@@ -1019,9 +1045,9 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
-    "plans_created": 29,
+    "runs": 79,
+    "vectors_created": 380,
+    "plans_created": 30,
     "quiet_days": 3,
     "auto_fix_count": 0
   },

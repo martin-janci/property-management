@@ -1,0 +1,126 @@
+{
+  "run_iso": "2026-09-11T12:30:00Z",
+  "since_iso": "2026-09-01T18:38:58Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-11",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": ["last_run_iso=2026-09-01T18:38:58Z; ~9d 17h since last run — cloud routine cadence broke (see brief Since last run)"]
+    },
+    {
+      "id": "stale-routine-alert-2026-09-11",
+      "type": "stale_routine_alert",
+      "source": "routine-self",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": ["state.json last_run_iso=2026-09-01T18:38:58Z is 9 days old; dispatcher (separate loop) still ticking on planning branch — this routine's cron is the one that broke"]
+    },
+    {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-core groups/community)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": ["frontend/apps/ppt-web/src/routes/groups/community.tsx:26-40 — FeedPageRoute renders <FeedPage posts={[]} total={0} ...> with EVERY action handler a no-op (onCreatePost/onLikePost/onCommentPost/onSharePost/onEditPost/onDeletePost/onLoadMore all () => {}); no useQuery/useMutation, no API wiring — the community feed is permanently empty in production and all interactions silently do nothing"]
+    },
+    {
+      "id": "code-review-ppt-web-core-reports-route-stub-analytics",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-core groups/reports)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["frontend/apps/ppt-web/src/routes/groups/reports.tsx:177-206 — ReportsPage fed hardcoded stub datasets: dataSources={[]}, reports={[]}, kpis={[]}, buildings={[]}, trendLines={[]}, plus zeroed trendAnalysis/periodComparison structs cast to TrendAnalysis/PeriodComparison — the entire reports UI is a fabricated shell in production"]
+    },
+    {
+      "id": "code-review-ppt-web-core-faults-url-param-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-core groups/faults)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["frontend/apps/ppt-web/src/routes/groups/faults.tsx:233-235 — untrusted URL query params (status/category/priority) are cast straight to FaultListQuery enum unions and used as the initial list query without validation"]
+    },
+    {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui faults)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["EditFaultPage.tsx renders three hardcoded English strings (button, h1, body) on a react-i18next multi-locale app; file contains ZERO useTranslation()/t() calls (grep count 0)"]
+    },
+    {
+      "id": "code-review-ppt-web-ui-signature-modal-raw-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui leases)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": ["RequestSignatureModal.tsx:214-221 — the e-sign request error alert renders the RAW error message for any Error instance (ApiError extends Error, so common failure case shows raw untranslated server text on a sk/cs/de/en app); only the non-Error branch is localized"]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["3 substantive commits since 2026-09-01 (PRs #2943, #2952, #2956)"]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["2 substantive commits since 2026-09-01 (PRs #2941, #2942)"]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-11",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": ["2 substantive commits since 2026-09-01 (PRs #2950, #2955)"]
+    },
+    {
+      "id": "dep-update-noise-2026-09-11-batch",
+      "type": "dep-update-noise",
+      "source": "PR #2935 (npm-minor-patch 40 updates), PR #2957 (tower-http), PR #2958 (gradle-minor-patch), PR #2959 (npm-minor-patch 19 updates), PR #2960 (expo-secure-store), PR #2961 (kotlin group)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": ["6 dependabot PRs in window; #2935 merged; #2957-#2961 open. No consumer manifests appear to have drifted from lockfiles (no matching signals raised)."]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — all code-review-findings are outside allowlist (allowlist covers screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise/lockfile-drift, stalled-review only)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-09-11.md && head -1 == '# 2026-09-11'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json cursors advanced vs HEAD", "observed": "last_pr_seen 2921→2961, last_issue_seen 2847→2961, seen_signals +11", "expected": "at least one changed" },
+    { "goal": "G3", "passed": true,  "command": "backlog id uniqueness", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id was re-scored", "observed": "all new signal ids", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "score cap ≤8 + decay applied to open items >14d", "observed": "cap true; 2 decayed (both to 0/dropped)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "brief annotates each new plan with adversarial pass", "observed": "1 new plan, adversarial pass: passed", "expected": "true per new plan" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 4 metadata + 11 headings + Mode + capability tick + Files-on-disk", "observed": "1 new plan; all checks pass", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "staged diff only under .research/", "observed": "only .research/ paths staged", "expected": "0 non-.research paths" },
+    { "goal": "G9", "passed": true,  "command": "no secrets/private hostnames in staged diff (excluding baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identical to fresh regen from backlog.json", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "any failed phase cursor unmoved", "observed": "no phase failed", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "all prior-run plans still in plans/ or plans/_archive/", "observed": "true (no plan deleted this run)", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "plans/_archive count ≥ HEAD count", "observed": "9 == 9", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to fresh regen", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix caps + idempotency", "observed": "auto_fix_actions=[] (no eligible candidate)", "expected": "≤ caps" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 was skipped this run — gate is no-op", "observed": "Phase 1.6 skipped (heavy cloud cost after 10d lag; run standalone on next day)", "expected": "true if skipped" },
+    { "goal": "G17", "passed": true, "command": "no telegram token literal in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}

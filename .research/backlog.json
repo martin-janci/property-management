@@ -6574,14 +6574,15 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -10633,6 +10635,167 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "title": "ppt-web /groups/community: FeedPageRoute renders empty stubs — no queries, all handlers no-op",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-core groups/community)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:26-40 — FeedPageRoute renders <FeedPage posts={[]} total={0} ...> with EVERY action handler a no-op (onCreatePost/onLikePost/onCommentPost/onSharePost/onEditPost/onDeletePost/onLoadMore all () => {}); no useQuery/useMutation, no API wiring — the community feed is permanently empty in production and all interactions silently do nothing"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": "plans/code-review-ppt-web-core-community-route-fully-stubbed.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-reports-route-stub-analytics",
+      "title": "ppt-web /groups/reports: ReportsPage fed hardcoded empty datasets + zeroed casts",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-core groups/reports)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx:177-206 — ReportsPage is fed hardcoded stub datasets: dataSources={[]}, reports={[]}, kpis={[]}, buildings={[]}, trendLines={[]}, and a zeroed trendAnalysis (metric:'', current_value:0, previous_value:0, change:0, change_percentage:0, trend:'stable', anomalies:[]) cast `as TrendAnalysis`, plus a zeroed periodComparison (difference:0, difference_percentage:0, periods:[]) cast `as PeriodComparison`"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-faults-url-param-unvalidated-cast",
+      "title": "ppt-web /groups/faults: untrusted URL query params cast straight to API enum unions",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-core groups/faults)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:233-235 — untrusted URL query params are cast straight to API enum unions and used as the initial list query: status/category/priority = searchParams.get(...) as FaultListQuery['status'|'category'|'priority']"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "title": "ppt-web EditFaultPage hardcodes English strings — zero useTranslation() on multi-locale app",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui faults)"
+      ],
+      "evidence": [
+        "EditFaultPage.tsx renders three hardcoded English strings ('← Back to Fault', <h1>Edit Fault</h1>, 'Update the fault details. Note: editing is only available before the fault is triaged.') on a react-i18next multi-locale app; file contains ZERO useTranslation()/t() calls (grep count 0)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/pages/EditFaultPage.tsx"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-signature-modal-raw-err",
+      "title": "RequestSignatureModal shows raw ApiError.message — non-localized on multi-locale app",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui leases)"
+      ],
+      "evidence": [
+        "RequestSignatureModal.tsx:214-221 — the e-sign request error alert renders the RAW error message for any Error instance (createRequest.error instanceof Error ? createRequest.error.message : t('common.unknownError', ...)); only the non-Error branch is localized. The common case (ApiError extends Error) shows raw untranslated .message directly to the user on a sk/cs/de/en app"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/leases/components/RequestSignatureModal.tsx"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/lib/queryKeys.test.ts (3 substantive commits in 2026-09-01→11)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-09-11"
+      ],
+      "evidence": [
+        "3 commits since 2026-09-01 (PRs #2943, #2952, #2956) — logout-purge allowlist coverage test evolving as feature-local *Keys factories are added"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.tsx (2 commits in 2026-09-01→11)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-09-11"
+      ],
+      "evidence": [
+        "2 commits since 2026-09-01 (PRs #2941, #2942) — cold-boot JWT exp check + single-flight refresh with 401 replay landed sequentially"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "title": "Churn hotspot: frontend/apps/mobile/src/services/resetLocalData.ts (2 commits in 2026-09-01→11)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-09-11"
+      ],
+      "evidence": [
+        "2 commits since 2026-09-01 (PRs #2950, #2955) — NFC access log + QR history + offline feedback + NFC SecureStore credential purge on session change"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ],
+      "created_at": "2026-09-11",
+      "updated_at": "2026-09-11",
+      "plan": null
     }
-  ]
+  ],
+  "updated_at": "2026-09-11"
 }
