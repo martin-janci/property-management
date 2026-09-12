@@ -1,0 +1,82 @@
+{
+  "generated": "2026-09-12T03:04:20Z",
+  "since_iso": "2026-09-01T18:38:58Z",
+  "trigger_text": "",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-12",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine has not run in 10d 8h; last_run_iso=2026-09-01T18:38:58Z, now=2026-09-12T03:04:20Z",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-12",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "LAG_DAYS=10 exceeds the 3-day stale-routine threshold; dispatcher continues writing to .research/management/ on planning branch but the research routine's own cron appears paused",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": "dependabot npm-minor-patch group across 1 directory with 40 updates — merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "merged PRs #2952 + #2956 + #2941 (queryKeys.test.ts touched 3x)",
+      "score_delta": 0,
+      "evidence": "3 touches across the 10d catch-up window; first-observation entry recorded in hotspot_history (score_delta=0 while Phase 2 is deferred)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PRs #2941 + #2942 (AuthContext.tsx touched 2x)",
+      "score_delta": 0,
+      "evidence": "2 touches (JWT boot-expiry check + 401 refresh-and-replay); first-observation entry recorded in hotspot_history (score_delta=0 while Phase 2 is deferred)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "merged PRs #2950 + #2955 (resetLocalData.ts touched 2x)",
+      "score_delta": 0,
+      "evidence": "2 touches (NFC access log purge + NFC credential purge); first-observation entry recorded in hotspot_history (score_delta=0 while Phase 2 is deferred)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — Phase 5 evaluated only against score=0 log-only signals",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-09-12.md && head -1 == '# 2026-09-12'", "observed": "exists, header matches", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "state.json vs HEAD cursor/seen-signal comparison", "observed": "last_pr_seen 2921→2956, last_issue_seen 2847→2954, last_commit_sha advanced, seen_signals +6", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | length == (unique | length)' backlog.json", "observed": "true (unchanged from HEAD)", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no cumulative-type score_delta re-applied; every non-cumulative id absent from prior seen_signals", "observed": "all 6 new signal ids absent from prior seen_signals; churn-hotspot ids first-observation with score_delta=0", "expected": "true" },
+    { "goal": "G5", "passed": false, "command": "for open items updated_at <= 2026-08-29: score-1 or dropped", "observed": "2 items unchanged (Phase 2 deferred): portfolio-analytics-caps-100 (24d), cancellation-swallowed (18d)", "expected": "each lost >=1 point or moved to dropped", "remediation": "next routine run applies decay + regenerates backlog.md in the same commit" },
+    { "goal": "G6", "passed": true,  "command": "no new plans this run", "observed": "0 files added under plans/", "expected": "exit 0" },
+    { "goal": "G7", "passed": true,  "command": "count new plans and headings", "observed": "0 new plans this run (well under 2)", "expected": "<=2 new plans" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l", "observed": "0 (verified pre-commit)", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "no secrets in staged diff (excluding baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "backlog.json + backlog.md both unchanged from HEAD — byte-identity preserved trivially", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief lists failed phases + cursors held", "observed": "no phases failed; skipped phases documented; cursors advanced only for phases that ran", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still under plans/ or plans/_archive/", "observed": "no plans touched this run", "expected": "exit 0" },
+    { "goal": "G13", "passed": true, "command": "_archive count this run >= HEAD count", "observed": "no plans_archive changes this run", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "backlog.json + IDEAS_TRIAGE.md both unchanged from HEAD — byte-identity preserved trivially", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency + kill-switch", "observed": "auto_fix_actions=[]; nothing pushed; no branches created", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this run — gate is no-op; pm_cursor.next_index=5 (in 0..7); coverage_cursor.next_index=7 (in 0..13)", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}
