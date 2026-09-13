@@ -145,7 +145,24 @@
         "score": 2,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "security-portfolio-analytics-idor",
+      "action": "reality-server: cross-tenant IDOR in portfolio_analytics endpoint — last open surface in the IDOR sweep after #2944 (violation comments/evidence/payments) and #2945 (portfolio_properties) landed",
+      "owner_role": null,
+      "priority": "high",
+      "status": "open",
+      "source": "#2946",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-13T00:00:00Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": null,
+        "vector": "security"
+      }
     }
   ],
-  "generated": "2026-09-07T14:38:29Z"
+  "generated": "2026-09-13T00:00:00Z"
 }

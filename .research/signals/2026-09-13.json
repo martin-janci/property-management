@@ -1,0 +1,250 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-13",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.last_run_iso=2026-09-01T18:38:58Z; today=2026-09-13; lag=11d 8h — routine missed the daily schedule (cloud cron likely paused). Dispatcher on planning branch has continued to tick."
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-09-13",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.json last_run_iso=2026-09-01 is 11d old (>=3d); cloud routine trigger is stale. Dispatcher state on planning branch has kept ticking — check /research trigger."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-09-01..2026-09-11 dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ],
+      "evidence": [
+        "2 commits touched resetLocalData.ts in the 11-day window (PR #2950 NFC/QR log purge; PR #2955 SecureStore NFC credentials purge). Logout-purge coverage still expanding — related test file also churning."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-09-01..2026-09-11 dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "evidence": [
+        "2 commits touched NFCCredentialManager.ts (PR #2950, PR #2955) as part of cross-tenant NFC purge hardening; tests added inline — no correctness follow-up needed."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-09-01..2026-09-11 dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ],
+      "evidence": [
+        "2 commits touched queryKeys.test.ts (PR #2952 feature-local *Keys auto-discovery; PR #2956 harden suite-crash + glob-depth). Logout-purge allowlist coverage still being firmed up."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot: chore(deps): bump the npm-minor-patch group across 1 directory with 40 updates — merged 2026-09-04."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-init-refresh-skips-setuser",
+      "type": "code-review-finding",
+      "source": "ppt-web-core review 2026-09-13",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "AuthContext.tsx:424-436 refreshTokenInternal reads `const storedUser = tokenStorage.getUser()` and only calls setUser inside `if (storedUser)` — cold-boot init routes through this path (line 481 `await refreshTokenInternal()`) so if USER_KEY was cleared/corrupted (getUser returns null on JSON.parse throw, line 152-159) but the refresh token is valid, the API refresh succeeds, new tokens are written to storage, but React `user` state stays null → isAuthenticated=false and the user is stuck on /login with freshly-rotated tokens (silently invalidating whatever session the next login creates)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-ignores-retry-after",
+      "type": "code-review-finding",
+      "source": "ppt-web-core review 2026-09-13",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "lib/api.ts:89 lists 429 in RETRYABLE_STATUS_CODES and the response-interceptor retry loop (lib/api.ts:276-300) computes delay via `calculateRetryDelay(retryCount)` (1s/2s/4s + jitter) with zero reference to `Retry-After` — grep for 'retry-after' in api.ts returns no matches. On a 429 the server's back-pressure hint (e.g. `Retry-After: 60`) is discarded and the client hammers the endpoint ~3 times in <10s; errorHandler.ts:335 already has a `parseRetryAfter` helper the retry loop doesn't consult."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-default-export-stale-apiclient",
+      "type": "code-review-finding",
+      "source": "ppt-web-core review 2026-09-13",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "lib/api.ts:370 `export default getApiClient();` is evaluated at module import time, before AuthProvider's effect calls `configureApiClient({ getToken, onUnauthorized })` (AuthContext.tsx:380-383). That initial call creates an unconfigured axios instance (no token getter, no 401 handler) and freezes it as the module default; a later `configureApiClient` replaces the module-level `apiInstance` but the default export still references the original. Today no importer uses the default (grep confirms only named `getApiClient`/`configureApiClient` are used), but the export is a live footgun — any future `import api from '../lib/api'` will silently send requests without Authorization and never trigger silent refresh on 401."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq comparing staged state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative-exempt signal dedup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied to open items with updated_at older than 14d",
+      "observed": "true (3 decayed to dropped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — check trivially holds",
+      "observed": "0 new plans",
+      "expected": "≤2 new plans, adversarial pass recorded"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive/ | grep -c '.md$'",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret + private-hostname grep against staged diff (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen-backlog.sh (same TS as file's <sub> line) | diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed: none' — no cursor rollback needed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "for each HEAD plans/<slug>.md, check present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files _archive count >= git ls-tree HEAD _archive count",
+      "observed": "true (no archive changes this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen-triage.sh (same TS) | diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency + kill-switch honored (no Phase-5 actions this run)",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor in 0..7 + coverage_cursor GC7 advance",
+      "observed": "EPICS=13 CC 7→8 PM 5→6",
+      "expected": "GC7 advance when PM advances"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token literal scan on staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}

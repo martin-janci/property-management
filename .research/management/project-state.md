@@ -1,73 +1,64 @@
 # PPT Project State
 
-_Generated: 2026-08-31 — routine Phase 1.6 lightweight upkeep (pm-devops rotation slot; 76-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-devops → pm-security next), coverage_cursor idx 6 → 7 (epic-81 re-checked, no material change; advances to epic-82). Sprint window 2026-08-26..08-31 shipped 10 PRs — all code-review batch (#2889-#2899, dispatcher merged in-window)._
+_Generated: 2026-09-13 — routine Phase 1.6 lightweight upkeep (pm-security rotation slot; last 2026-07-21, 54d stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 7 → 8 (epic-82 re-checked, no material change)._
 
 ## Executive summary
 
-- **Delivery still at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring and 84-2 sign page). No status flips this window. The last window's 10 PRs were exclusively `code-review-*` fixes surfaced by the dev-team static passes:
-  - Backend security/reliability — PR #2893 (SSO introspect negative-cache poisoning fix), PR #2898 (validate reporter_email/reporter_phone on report submit), PR #2899 (compliance guard widening for PlatformAdmin).
-  - Backend correctness — PR #2892 (measure text length by char count not bytes; 8 files), PR #2896 (localize saved-search alert copy by recipient locale).
-  - Frontend correctness — PR #2889 (wire realtime ws events to query invalidation — end-to-end dead sync fix), PR #2890 (surface swallowed mutation errors), PR #2891 (wire onUnauthorized so 401 triggers session recovery).
-  - Frontend i18n — PR #2894 (Saved Searches localization), PR #2895 (Inquiries page localization).
-- **Auto-review loop still working:** all 10 merged PRs were originated by the ppt-dev-review generator over the prior 2 days (dispatcher spawned static passes → landed as `code-review-*` PRs → all merged in the same window). Zero regressions detected on the batch.
-- **Buffer starved (cloud-only):** 7/8 open backlog items are mobile-native/KMP — structurally unclaimable in the cloud dispatcher (AGP/Gradle egress gate, issue #2652). Every dispatcher commit since 2026-08-30 records `GC3-buffer-bounds=FAIL (record-only)`. Tier-1d generator kicks per run just to keep the buffer above floor. **Infra decision surfaced this run (pm-devops).**
-- **One open PR touched this run:** #2897 (`code-review-reality-server-sso-per-call-client-no-timeout`) — approved but had a real merge conflict against #2893 (both touched `introspect_pm_token`); dispatcher Phase 5.6 threaded the pooled `reqwest::Client` through the extracted `introspect_pm_token_inner`, pushed the merge (bca285d..aa5c544). CI red on the resolution attempt (fmt + introspect test-shard). Standing manual-reconciliation request on the PR.
-- **No new blockers.** Standing gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) still holds; owner pm-security.
+- **Delivery unchanged at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring; 84-2 signer page). No status flips. Since 2026-09-01 the loop shipped **10 code-review fixes + 4 auth/mobile security PRs** (17 merges) across api-server, reality-server, ppt-web, and RN mobile:
+  - Security — PR #2941 (JWT exp validation at cold boot), #2942 (single-flight refresh + 401 replay), #2943 (logout purge allowlist coverage), #2950 (mobile NFC/QR credential purge, closes #2947), #2955 (SecureStore NFC credential purge, closes #2953).
+  - Correctness — #2922 (saved-search error enum), #2925 (compliance raw-db-leak fix), #2928 (report_summary snapshot consistency), #2931 (test-fails-on-pre-fix regression), #2938 (invoice PDF renderer + tests, UC-ACC-05.9), #2940 (ConfirmationDialog i18n).
+  - Test hygiene — #2932 (e2e 403 test agent self-review), #2952 (auto-discover feature-local queryKeys), #2956 (harden queryKeys.test auto-discovery).
+  - Housekeeping — #2926 (remove decommissioned FCM legacy), #2927 (EmergencyContact i18n test), #2935 (npm-minor bump).
+- **One open cross-tenant security gap:** issue **#2946 — portfolio_analytics IDOR** still open. Sibling fixes #2944 (violation comments/evidence/payments) and #2945 (portfolio_properties) landed clean; analytics is the last open surface in the sweep. Owner: null (unclaimed, top action).
+- **Two open infra blockers hurting cloud runners:**
+  - **#2949** — `utoipa-swagger-ui` build script blocked in cloud sandbox → blocks every backend security PR from the cloud implementer path.
+  - **#2951** — RN `jest-expo` ↔ `react-native` version rot → blocks mobile jest in cloud; RN test PRs currently must land via local implementer.
+- **Draft stalled 9d:** PR **#2902** (screen-map drift reconcile) has a dirty base; needs rebase against dev. Owner: martin-janci.
+- **Churn cluster** this window: `frontend/apps/mobile/src/services/resetLocalData.ts`, `NFCCredentialManager.ts`, `frontend/apps/ppt-web/src/lib/queryKeys.test.ts` — all part of the cross-tenant-purge hardening train. No structural refactor needed yet; will re-evaluate next hotspot window.
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged this run. Extended-scope epics (10B, 80, 81, 82, 83, 84, 85, 79, 8A, 9) folded into `coverage.json` and largely done.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged.
 
 | Epic | Sprint status | Coverage status (13 epics) |
 |---|---|---|
-| 6 — Announcements & Communication | in-progress | 6/6 stories done in coverage |
-| 7A — Basic Document Management | in-progress | 5/5 stories done in coverage |
+| 6 — Announcements & Communication | in-progress | 6/6 stories done |
+| 7A — Basic Document Management | in-progress | 5/5 stories done |
 | 8A — Basic Notification Preferences | done | 3/3 stories done |
 | 10A — OAuth Provider Foundation | done | 3/3 stories done |
 | 10B — Platform Administration | in-progress | 7/7 stories done |
-| 80 — Dispute Resolution | partial | 3/3 stories done in coverage |
-| 81 — Reports | (extended) | 2/2 stories done in coverage; **re-checked this run (idx 6), no material change, last_checked=2026-08-31** |
+| 80 — Dispute Resolution | partial | 3/3 stories done |
+| 82 — (extended) | (extended) | done in coverage; **re-checked this run (idx 7), no material change, last_checked=2026-09-13** |
 | 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial (84-1, 84-2) — unchanged |
-| 82 / 83 / 85 / 79 / 7a / 8a / 9 | (extended) | all done in coverage |
+| 81 / 83 / 85 / 79 / 7a / 8a / 9 | (extended) | all done in coverage |
 
-## Shipped since last run (10 PRs merged 2026-08-30 within the run window)
+## Shipped since last run (17 merges 2026-09-01 → 2026-09-13)
 
-- **#2889** — code-review ppt-web-core ws-event-name-mismatch: wire realtime WS events to query invalidation (100% dead sync fix, real event names)
-- **#2890** — code-review reality-web mutation-no-onerror: surface swallowed mutation errors (favorites/saved-searches/inquiries)
-- **#2891** — code-review ppt-web-core api-onunauthorized-unwired: wire onUnauthorized so 401 triggers session recovery
-- **#2892** — code-review reality-server bytelen-charcount-validation: measure text length by character count not bytes (8 files, accented Slovak/Czech/German)
-- **#2893** — code-review reality-server sso-introspect-negcache-poison: don't cache active=false on PM introspection outage
-- **#2894** — code-review reality-web saved-searches-i18n: localize Saved Searches page + card (6 locales)
-- **#2895** — code-review reality-web inquiries-i18n: i18n the Inquiries page (6 locales)
-- **#2896** — code-review reality-server alert-drainer-i18n-english-only: localize saved-search alert copy by recipient locale (sk/cs/de/en with plural buckets)
-- **#2898** — code-review reality-server report-contact-unvalidated: validate reporter_email/reporter_phone on report submit
-- **#2899** — code-review api-handlers compliance-superadmin-exact-match: let PlatformAdmin reach compliance reports
+- **#2922** reality-server saved-search error enum · **#2925** api-handlers compliance raw-db-leak fix · **#2926** remove decommissioned FCM legacy · **#2927** EmergencyContact i18n test · **#2928** report_summary snapshot consistency · **#2931** test-fails-on-pre-fix regression · **#2932** reality-server e2e 403 test (agent self-review) · **#2935** npm-minor bump · **#2938** ppt-web accounting invoice PDF renderer (UC-ACC-05.9) · **#2940** ConfirmationDialog i18n · **#2941** JWT exp validation at cold boot · **#2942** single-flight refresh + replay on 401 · **#2943** logout purge allowlist coverage · **#2950** mobile NFC access-log purge (closes #2947) · **#2952** auto-discover feature-local queryKeys · **#2955** SecureStore NFC credential purge (closes #2953) · **#2956** harden queryKeys.test auto-discovery.
 
-## What's next (top 5 actions from ranked backlog)
+## What's next (top 5 actions)
 
-1. **[high] Unblock mobile-native/KMP builds in the cloud runner (issue #2652)** — 7/8 open backlog items structurally unclaimable — **owner: pm-devops**. New this run — cloud-runner starvation is now chronic; pushing it into the top actions.
-2. **[high] Wire ppt-web direct-to-S3 upload (84-1 partial)** — POST /api/v1/documents/upload-url consumer + regression test — **owner: pm-frontend**. Highest-leverage single move (drops partial count 2 → 1).
-3. **[high] Build signer-facing document-sign page (84-2 partial)** — flip screen-map ppt/document-sign buildStatus planned → shipped — **owner: pm-frontend**. Closes 49/49 MVP when paired with #2.
-4. **[high] Resolve gh-issue-2797** — cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) blocks every backend PR — **owner: pm-security**. Standing since 2026-08-18.
-5. **[medium] Resolve #2897 CI red** — PR approved and merge-conflict-resolved (bca285d..aa5c544), but CI shard is red (fmt + introspect test); needs manual reconciliation in a buildable env — **owner: pm-backend**.
+1. **[high] Close cross-tenant IDOR in portfolio_analytics (#2946)** — sibling fixes (#2944, #2945) shipped; analytics is the last open surface — **owner: null** (needs claim).
+2. **[high] Rebase & land PR #2902 (screen-map drift reconcile)** — draft stalled 9d, dirty base — **owner: martin-janci**.
+3. **[high] Unblock utoipa-swagger-ui build in cloud runner (#2949)** — every backend security PR blocked from cloud path — **owner: devops / pm-devops**.
+4. **[high] Unblock RN jest-expo↔react-native version rot (#2951)** — blocks mobile jest in cloud — **owner: devops / pm-devops**.
+5. **[high] Wire ppt-web direct-to-S3 upload (84-1) + signer page (84-2)** — MVP 49/49 gated; standing 4+ upkeep windows — **owner: pm-frontend**.
 
 ## Blockers
 
-- **None new this run.** Sprint continues with no red flags; all 10 code-review PRs landed in-window.
-- **Standing:** gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) blocks every backend PR until landed. Owner: pm-security.
-- **Standing infra:** issue #2652 — mobile-native/KMP builds unlandable in cloud runner. Owner: pm-devops (surfaced as this run's top action).
-- **Aging:** 84-1 + 84-2 partial stories unchanged for 4 upkeep windows. Owner: pm-frontend.
+- **#2949** — `utoipa-swagger-ui` build blocked in cloud runner (backend security PRs must go local).
+- **#2951** — RN `jest-expo` ↔ RN version rot blocks mobile jest in cloud.
+- **Standing:** #2652 (mobile-native/KMP cloud-runner egress) still open; drives buffer starvation.
 
-## Role focus today: **pm-devops** (rotation idx 4; last 2026-06-16, 76d stale) + pm-scrum-master always-on
+## Role focus today: **pm-security** (rotation idx 5; last 2026-07-21, 54d stale) + pm-scrum-master always-on
 
-- **pm-scrum-master** (always-on): the code-review auto-generator + dispatcher merge loop delivered 10 PRs in one window with no regressions detected — the loop is a working delivery mechanism. Delivery blocker is now infrastructural, not code: mobile-native/KMP items can't be picked up in cloud, and the backlog rank is exhausted of landable items (`Buffer starved (claimable=0/floor=36)` on the 2026-08-31T00:35Z commit).
-- **pm-devops** (rotation): flagged the mobile-native/KMP cloud-runner gap (issue #2652) as the top standing infra risk. Also proposed a nightly `verify-all.sh --quick` sweep on `dev` HEAD to surface silent infra regressions, and a dependabot-queue triage (7 open dep PRs, 3d idle). See `roles/pm-devops.md` for the full 4 next-actions and 2 risks.
+- **pm-scrum-master** (always-on): the code-review + security-fix loop is delivering — 17 merges in 12 days with no in-window regressions detected. Delivery-side risk is entirely infra: cloud-runner egress (#2949, #2951, #2652) is now the dominant loss mode, not implementer capacity.
+- **pm-security** (rotation, 54d stale): cross-tenant IDOR sweep landed 2/3 sibling fixes (#2944, #2945); #2946 (portfolio_analytics) remains the sole open cross-tenant gap and is promoted to the top of the action list. Mobile-side credential-purge track also landed clean (#2950, #2955). New risk logged: `cloud-runner-egress-blocks-security-fixes` — until #2949 is resolved, every backend security PR needs the local implementer path.
 
-## Coverage (upkeep this run — 2026-08-31)
+## Coverage (upkeep this run — 2026-09-13)
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated` bumped to 2026-08-31T03:10:00Z, no re-scan.
-- **Epic re-check: epic-81** — cursor idx 6. Both stories (81-1 report-schedule-editing, 81-2 report-execution-history) still `done`. No PR in the 2026-08-26..08-31 window touched reports schedule routes/screens; evidence entry appended to 81-1 noting the negative check. `last_checked = 2026-08-31` stamped on both stories.
-- **Merged-PR evidence:** none of the 10 merged PRs (all code-review batch) match a coverage story by keyword — all were correctness hardening of already-shipped surfaces. No status flips.
-- **`coverage_cursor` advances 6 → 7** (epic-81 → epic-82 next run).
-- **`pm_cursor` advances 4 → 5** (pm-devops → pm-security next run). role_last_run["pm-devops"] = 2026-08-31.
-- **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. **Missing UC links: 3** (UC-33.1/33.2/33.3 already queued). Zero orphan screens, zero validation errors.
+- **`coverage.json` untouched** — `scan_kind=upkeep`, no re-scan (routine's own Phase 1.6 advances the cursor in `state.json`).
+- **Epic re-check: epic-82** — cursor idx 7. All stories still `done`. No PR in the 2026-09-01..09-13 window materially touched epic-82 surfaces beyond routine correctness fixes. `last_checked = 2026-09-13`.
+- **`coverage_cursor` advances 7 → 8**.
+- **`pm_cursor` advances 5 → 6** (pm-security → pm-data next run). `role_last_run["pm-security"] = 2026-09-13`.
+- **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. Zero orphan screens, zero validation errors.

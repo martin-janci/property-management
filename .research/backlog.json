@@ -6574,20 +6574,22 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decay -1 (updated_at 2026-08-19 older than 14 days as of 2026-09-13)",
+        "dropped: decayed to 0 — no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-13",
       "plan": null
     },
     {
@@ -7395,8 +7397,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7406,9 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decay -1 (updated_at 2026-08-25 older than 14 days as of 2026-09-13)",
+        "dropped: decayed to 0 — no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7422,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-13",
       "plan": null
     },
     {
@@ -8313,8 +8317,8 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8322,13 +8326,15 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
         "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
-        "decayed 2026-08-30: -1 (no new signal in 14 days)"
+        "decayed 2026-08-30: -1 (no new signal in 14 days)",
+        "decay -1 (updated_at 2026-08-30 older than 14 days as of 2026-09-13)",
+        "dropped: decayed to 0 — no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-30",
+      "updated_at": "2026-09-13",
       "plan": null
     },
     {
@@ -10633,6 +10639,144 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-init-refresh-skips-setuser",
+      "title": "ppt-web AuthContext cold-boot refresh silently drops React user state when USER_KEY is missing/corrupted — leaves valid session on /login",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-core review 2026-09-13"
+      ],
+      "evidence": [
+        "AuthContext.tsx:424-436 refreshTokenInternal reads `const storedUser = tokenStorage.getUser()` and only calls setUser inside `if (storedUser)` — cold-boot init routes through this path (line 481 `await refreshTokenInternal()`) so if USER_KEY was cleared/corrupted (getUser returns null on JSON.parse throw, line 152-159) but the refresh token is valid, the API refresh succeeds, new tokens are written to storage, but React `user` state stays null → isAuthenticated=false and the user is stuck on /login with freshly-rotated tokens (silently invalidating whatever session the next login creates)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-13",
+      "updated_at": "2026-09-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-ignores-retry-after",
+      "title": "ppt-web api-client 429 retry loop ignores Retry-After header — hammers throttled endpoint ~3× in <10s despite an existing parseRetryAfter helper",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-core review 2026-09-13"
+      ],
+      "evidence": [
+        "lib/api.ts:89 lists 429 in RETRYABLE_STATUS_CODES and the response-interceptor retry loop (lib/api.ts:276-300) computes delay via `calculateRetryDelay(retryCount)` (1s/2s/4s + jitter) with zero reference to `Retry-After` — grep for 'retry-after' in api.ts returns no matches. On a 429 the server's back-pressure hint (e.g. `Retry-After: 60`) is discarded and the client hammers the endpoint ~3 times in <10s; errorHandler.ts:335 already has a `parseRetryAfter` helper the retry loop doesn't consult."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-13",
+      "updated_at": "2026-09-13",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-default-export-stale-apiclient",
+      "title": "ppt-web lib/api.ts default export freezes an unconfigured axios instance at import time — silent footgun for future importers",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-core review 2026-09-13"
+      ],
+      "evidence": [
+        "lib/api.ts:370 `export default getApiClient();` is evaluated at module import time, before AuthProvider's effect calls `configureApiClient({ getToken, onUnauthorized })` (AuthContext.tsx:380-383). That initial call creates an unconfigured axios instance (no token getter, no 401 handler) and freezes it as the module default; a later `configureApiClient` replaces the module-level `apiInstance` but the default export still references the original. Today no importer uses the default (grep confirms only named `getApiClient`/`configureApiClient` are used), but the export is a live footgun — any future `import api from '../lib/api'` will silently send requests without Authorization and never trigger silent refresh on 401."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-13",
+      "updated_at": "2026-09-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-services-resetLocalData-ts",
+      "title": "Churn hotspot: frontend/apps/mobile/src/services/resetLocalData.ts (2 changes in 11d, cross-tenant purge hardening — #2950, #2955)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan 2026-09-01..2026-09-11 dev"
+      ],
+      "evidence": [
+        "2 commits touched resetLocalData.ts in the 11-day window (PR #2950 NFC/QR log purge; PR #2955 SecureStore NFC credentials purge). Logout-purge coverage still expanding; keep an eye on any drift from the queryKeys/logout-purge allowlist test."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ],
+      "created_at": "2026-09-13",
+      "updated_at": "2026-09-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-nfc-NFCCredentialManager-ts",
+      "title": "Churn hotspot: frontend/apps/mobile/src/nfc/NFCCredentialManager.ts (2 changes in 11d, NFC purge hardening — #2950, #2955)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan 2026-09-01..2026-09-11 dev"
+      ],
+      "evidence": [
+        "2 commits touched NFCCredentialManager.ts (PR #2950, PR #2955) as part of cross-tenant NFC purge hardening; tests added inline — no correctness follow-up needed."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts"
+      ],
+      "created_at": "2026-09-13",
+      "updated_at": "2026-09-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-queryKeys-test-ts",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/lib/queryKeys.test.ts (2 changes in 11d, logout-purge allowlist coverage — #2952, #2956)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan 2026-09-01..2026-09-11 dev"
+      ],
+      "evidence": [
+        "2 commits touched queryKeys.test.ts (PR #2952 feature-local *Keys auto-discovery; PR #2956 harden suite-crash + glob-depth). Logout-purge allowlist coverage still being firmed up."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ],
+      "created_at": "2026-09-13",
+      "updated_at": "2026-09-13",
+      "plan": null
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "title": "PR #2935 dependabot: chore(deps): bump the npm-minor-patch group across 1 directory with 40 updates (merged)",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 0,
+      "status": "dropped",
+      "sources": [
+        "PR #2935"
+      ],
+      "evidence": [
+        "dependabot merged 2026-09-04. Logged for audit only — never promoted."
+      ],
+      "files": [],
+      "created_at": "2026-09-13",
+      "updated_at": "2026-09-13",
+      "plan": null
     }
   ]
 }

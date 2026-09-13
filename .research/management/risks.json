@@ -219,6 +219,17 @@
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
       "status": "open"
+    },
+    {
+      "id": "cloud-runner-egress-blocks-security-fixes",
+      "risk": "utoipa-swagger-ui build script blocked in the cloud runner sandbox (#2949) — rust cargo cannot build in cloud, so every backend security PR must currently be routed through the local implementer path only",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Route security PRs through local implementer only until proxy allowlists dl.google.com / utoipa build-script host; escalate to devops to unblock cloud-runner egress",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-security 2026-09-13 (#2949)"
     }
   ]
 }
