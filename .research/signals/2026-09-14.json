@@ -1,0 +1,281 @@
+{
+  "date": "2026-09-14",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-14",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "Last routine run 2026-09-01T18:38:58Z; 12d16h since last run — cloud routine likely paused/misconfigured. Dispatcher (separate loop) has continued through 2026-09-11 but is now also quiet.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-14",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 12+ days old; cloud research routine may be broken. Dispatcher last tick 2026-09-11, also 3+ days ago. Investigate cloud schedule.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "type": "stalled-review",
+      "source": "PR #2902",
+      "score_delta": 1,
+      "evidence": "PR #2902 (screen-map-drift-pr-2894-reality) draft, mergeable_state=dirty, open since 2026-08-31 (14d), no reviewDecision. Auto-fix branch stale.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-09-01 on dev",
+      "score_delta": 0,
+      "evidence": "top-3 churn: backend/servers/api-server/src/services/push_fanout.rs (746 lines changed this window)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/accounting-server/src/pdf.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-09-01 on dev",
+      "score_delta": 1,
+      "evidence": "top-3 churn: backend/servers/accounting-server/src/pdf.rs (565 lines changed this window)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-09-01 on dev",
+      "score_delta": 1,
+      "evidence": "top-3 churn: backend/crates/db/src/repositories/data_export_test.rs (297 lines changed this window)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-pr-2591",
+      "type": "dep-update-noise",
+      "source": "PR #2591",
+      "score_delta": 0,
+      "evidence": "PR #2591 (chore(deps): bump expo-secure-store (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2933",
+      "type": "dep-update-noise",
+      "source": "PR #2933",
+      "score_delta": 0,
+      "evidence": "PR #2933 (chore(deps): bump gradle-minor-patch (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2808",
+      "type": "dep-update-noise",
+      "source": "PR #2808",
+      "score_delta": 0,
+      "evidence": "PR #2808 (chore(deps): bump compose-bom (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2936",
+      "type": "dep-update-noise",
+      "source": "PR #2936",
+      "score_delta": 0,
+      "evidence": "PR #2936 (chore(deps): bump cargo-minor-patch (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2934",
+      "type": "dep-update-noise",
+      "source": "PR #2934",
+      "score_delta": 0,
+      "evidence": "PR #2934 (chore(deps): bump cargo-minor-patch (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2867",
+      "type": "dep-update-noise",
+      "source": "PR #2867",
+      "score_delta": 0,
+      "evidence": "PR #2867 (chore(deps): bump npm-minor-patch (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2865",
+      "type": "dep-update-noise",
+      "source": "PR #2865",
+      "score_delta": 0,
+      "evidence": "PR #2865 (chore(deps): bump cargo-minor-patch (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2749",
+      "type": "dep-update-noise",
+      "source": "PR #2749",
+      "score_delta": 0,
+      "evidence": "PR #2749 (chore(deps): bump gradle-minor-patch (superseded)) closed unmerged — dependabot supersession",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "reminder-open-security-issue-2946",
+      "type": "reminder",
+      "source": "Issue #2946",
+      "score_delta": 0,
+      "evidence": "Cross-tenant IDOR in portfolio_analytics (labels bug,security) — still open 8d after issue creation. #2944/#2945 have merged fixes; #2946 remains.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "reminder-blocked-infra-2949",
+      "type": "reminder",
+      "source": "Issue #2949",
+      "score_delta": 0,
+      "evidence": "Cloud runner cannot build api-server crate: utoipa-swagger-ui build-script egress-blocked. Strands backend security fixes.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "reminder-blocked-infra-2951",
+      "type": "reminder",
+      "source": "Issue #2951",
+      "score_delta": 0,
+      "evidence": "Cloud runner cannot run mobile RN jest: jest-expo@56 ↔ react-native@0.87 version rot.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md and H1 matches",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no unique-signal double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "no new plans",
+      "expected": "no new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; readiness gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0 non-.research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no placeholder rot",
+      "observed": "no matches",
+      "expected": "no matches"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no new plans",
+      "expected": "no new plans"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "9>=9",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "PM artifacts (no-op — Phase 1.6 skipped)",
+      "observed": "skipped",
+      "expected": "skipped is no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (high confidence + score>=3 + allowlist signal type) this run"
+}
