@@ -1,0 +1,181 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-15",
+      "type": "lag_warning",
+      "source": "routine self-signal 2026-09-15",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-09-01T18:38:58Z — 320h (13d) lag; missed 13 daily runs",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-15",
+      "type": "stale_routine_alert",
+      "source": "routine self-signal 2026-09-15",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-09-01T18:38:58Z is 13d old; cloud research routine is not on cadence. Dispatcher (separate loop) is still ticking normally, but the research routine's cron has been paused/broken since 2026-09-01. Operator: verify the routine trigger and re-arm.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-15 window since 2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": "queryKeys.test.ts touched 3x in the routine's 14d catch-up window (PR #2952, #2956, plus follow-ups)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-15 window since 2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": "AuthContext.tsx touched 2x in the routine's 14d catch-up window (PR #2941 cold-boot exp validation, PR #2942 single-flight refresh)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "top-3 churn 2026-09-15 window since 2026-09-01T18:38:58Z",
+      "score_delta": 1,
+      "evidence": "resetLocalData.ts touched 2x in the routine's 14d catch-up window (PR #2950 NFC access log purge, plus follow-up)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist bar this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-15.md; head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap+decay",
+      "observed": "3 open items decayed, 0 with score>8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans; no adversarial pass required",
+      "observed": "0 promotions",
+      "expected": "0-or-with-annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached only .research/",
+      "observed": "0 non-.research/ paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failure reported",
+      "observed": "phases 1.5+1.6 skipped by-design (lag catch-up), no cursors advanced falsely",
+      "expected": "phase failure recorded honestly"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still exist",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "unchanged (no archive move this run)",
+      "expected": "count >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <= 3",
+      "observed": "0 actions",
+      "expected": "<=3 with per-category cap 1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor range + coverage_cursor (no-op since Phase 1.6 skipped)",
+      "observed": "all parse; pm_cursor.next_index=5; Phase 1.6 skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram tokens",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
