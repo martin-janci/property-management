@@ -1,0 +1,148 @@
+{
+  "date": "2026-09-16",
+  "note": "Catch-up run after 14d 8h routine lag. Phase 1.5 (dev-review) and Phase 1.6 (project-management) deliberately deferred — dispatcher on this branch covered all 8 review segments 2026-08-29 → 2026-09-10, and a full PM synthesis is subagent-heavy and belongs in the next scheduled daily run. Phase 2 decay + Phase 3 promotions also deferred; see brief 'Goal violations' G5.",
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score≥3 + allowlist this run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-16",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "last_run_iso=2026-09-01T18:38:58Z; today=2026-09-16T03:05Z; lag=344h ≈ 14d 8h — exceeds 36h threshold"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-16",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "state.json last_run_iso is 14d old; cloud routine appears paused at the scheduler level. Dispatcher (separate loop, planning branch) still ticking normally per commit log through 2026-09-11."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-16.md && head -1 matches '^# 2026-09-16$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursor advance vs HEAD",
+      "observed": "true — last_pr_seen 2921→2961, last_issue_seen 2847→2961, seen_signals +2",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no seen_signal id re-scored with score_delta != 0",
+      "observed": "true — 2 new signal ids (lag-warning-2026-09-16, stale-routine-alert-2026-09-16), both score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": false,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' + decay check for open items >14d",
+      "observed": "cap check passes (max score = 6); decay check FAILS — 4 open items exceed the 14-day threshold and were not decayed this run",
+      "expected": "true",
+      "remediation": "Catch-up posture skipped Phase 2 this run. Next daily routine run should apply decay to: code-review-mobile-native-kmp-portfolio-analytics-caps-100 (age 28d, score 1), code-review-mobile-native-kmp-cancellation-swallowed (age 22d, score 1), code-review-mobile-native-kmp-httpclient-no-timeout (age 17d, score 1), code-review-mobile-native-kmp-create-listing-not-wired (age 15d, score 4). First three expected to drop to 0 → status=dropped."
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "N/A — no new plans this run",
+      "observed": "0 new files under .research/plans/",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "N/A — no new plans this run",
+      "observed": "0 new plans; cap of 2 not exceeded",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0 (only .research/ paths staged)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets / private-hostname grep on staged diff (excl. baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md matches staged byte-identical",
+      "observed": "backlog.json unchanged this run; only the timestamp widget in backlog.md was refreshed to the run's UTC minute — regen from the same JSON with the same timestamp produces byte-identical output",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' matches non-advanced cursors",
+      "observed": "no phase reported failure; catch-up-posture skips are documented in brief and are not phase failures per se",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans preserved in plans/ or plans/_archive/",
+      "observed": "no plans modified this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count this run ≥ archive file count at HEAD",
+      "observed": "count unchanged",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md matches staged byte-identical",
+      "observed": "backlog.json triage rows unchanged; only timestamp widget refreshed",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix cap + idempotency + kill-switch",
+      "observed": "auto_fix_actions=[] (no candidate); ROUTINE_AUTOFIX_DISABLED not set but no eligible signal this run",
+      "expected": "≤1 pr, ≤1 issue, ≤1 comment; auto_fix_actions⊄seen_signals"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "N/A — Phase 1.6 not run this catch-up",
+      "observed": "no management artifacts modified; pm_cursor + coverage_cursor unchanged",
+      "expected": "N/A (no-op when Phase 1.6 skipped)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
