@@ -1,0 +1,126 @@
+{
+  "date": "2026-09-16",
+  "run_iso": "2026-09-16T22:30:00Z",
+  "trigger_payload": "buffer-low: claimable=12/72 — all actionable backlog structurally cloud-build-blocked (api-server swagger-ui egress #2949, mobile-native AGP #2652); refill with cloud-buildable (frontend/reality-web/shared) vectors",
+  "lag_hours": 363,
+  "lag_days": 15,
+  "notes": [
+    "lag_warning: routine has not run in 15d 363h — surface in brief Since last run",
+    "stale_routine_alert: state.json last_run_iso=2026-09-01T18:38:58Z is 15d old; cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch — check that separately.",
+    "adopted 4 code-review-finding signals from today's tier1d subagent output files (2026-09-16-api-handlers-tier1d.json, 2026-09-16-ppt-web-ui-tier1d.json) as Phase 1.5 code-review slice; Phase 1.5 skill was not re-spawned this run because the dispatcher already delivered fresh reviews for two segments today."
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-16",
+      "type": "lag_warning",
+      "source": "state.json.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine last ran on 2026-09-01; today is 2026-09-16. Cursor gap: 15 days. 21+ merged PRs happened in the window. Cloud cron may be paused — dispatcher (separate loop on the planning branch) has continued firing (evidenced by today's tier1d signal files + open action-list rows), but the daily routine did not."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-org-member-role-mutation-guards",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers organizations/members)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/organizations/members.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/organizations/members.rs — the three org-membership mutation handlers (add_organization_member :206, update_organization_member :429, and the delete handler at :717) gate on a single coarse permission flag (users:create / users:update / users:delete) plus a role-belongs-to-org check. They are otherwise correctly tenant-scoped. But two standard org-RBAC guardrails are ABSENT.",
+        "(1) No privilege-ceiling / anti-escalation check: update_organization_member (:509-539) validates only that req.role_id exists and belongs to the org — it never compares the target role's privilege set against the acting admin's own. Any member holding users:update can therefore assign ANY role in the org (including owner) to another member OR to themselves (no target_user_id != admin_user_id self-guard on the update path).",
+        "(2) No last-owner protection: neither update_organization_member nor the delete handler checks the remaining owner/admin count before demoting (:576-585) or removing (:717+) a member. Nothing prevents the sole remaining owner from being demoted/removed, orphaning the organization.",
+        "Impact: authorization completeness / defense-in-depth. Both are model-dependent (severity hinges on whether users:update is grantable to non-owner roles). Backend-only fix (+ possibly a role_repo helper for privilege comparison and an owner-count query). Cloud-build-blocked at implementer time by api-server swagger-ui egress #2949 until #2949 lands."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-multi-currency-refresh-stub-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers multi_currency)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/multi_currency.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/multi_currency.rs:373-411 — the exchange-rate-refresh handler is a STUB that reports success. Comment: `// For now, we just log the attempt`. It logs `log_rate_fetch(..., success=true, count=0)` and returns HTTP 200 `{\"success\": true, \"message\": \"Exchange rate fetch initiated\"}`. Callers cannot distinguish 'rates refreshed' from 'no-op stub'; downstream conversions keep using stale rates while the API reports success.",
+        "backend/servers/api-server/src/routes/multi_currency.rs:406 — `let _ = s.multi_currency_repo.update_last_rate_update(org_id).await;` swallows the timestamp-write error; the success arm still returns success=true even if this UPDATE failed. Contrast sibling writes in the same handler which correctly map_err to 500.",
+        "Impact: LOW — correctness/observability smell on an org-scoped admin action. Fix: either wire real ECB/XE fetch or make the stub's response honest (501 / stub:true flag); replace let _ = at :406 with map_err(...) or tracing::warn!. Cloud-build-blocked at implementer time by #2949 until it lands."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-i18n-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-ui documents)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "landable_in_cloud": true,
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/DocumentsPage.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/FolderTree.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/DocumentDetail.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/FolderTreePage.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentPreviewModal.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/PdfPreview.tsx"
+      ],
+      "evidence": [
+        "ppt-web documents feature ships hardcoded Slovak user-facing error/empty/loading strings that bypass react-i18next (t()), so users on the app's other supported locales (cs/de/en) see Slovak text on these states. Occurrences: MoveFolderDialog.tsx:429/:434; DocumentsPage.tsx:429/:438 (tier1d cited DocumentsBrowse.tsx — actual file is DocumentsPage.tsx); FolderTree.tsx:608/:618; DocumentDetail.tsx:145; FolderTreePage.tsx:75; DocumentPreviewModal.tsx:56; PdfPreview.tsx:269 (missing diacritics in 'nacitani' confirms hand-written literals, not catalog entries).",
+        "Inconsistent with the same files' own norm: MoveFolderDialog.tsx already uses t() for aria labels; DocumentsPage.tsx wraps other copy in t(). Landable frontend-only remedy: move each string into the i18n catalog and wrap in t() (add useTranslation where a file lacks it).",
+        "Cloud-buildability: LANDABLE — pnpm workspace tests + biome check compile fine in cloud (no api-server / swagger-ui deps). Fits the buffer-low payload's request for cloud-buildable vectors, but at score 2 (medium finding) does not clear the promotion-gate score>=3 bar this run."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-ocr-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-ui meters/reading-form)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "landable_in_cloud": true,
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:107-116 — in handlePhotoChange, OCR failure is caught with only `console.error('OCR processing failed')` and no user-facing signal. Comment 'OCR failed, user can still enter value manually' documents graceful degradation, but users see no toast/banner/inline note and may wait expecting the value field to auto-fill.",
+        "console.error also logs a bare message without the caught error object. Landable frontend-only remedy: surface a non-blocking inline hint/toast on OCR failure (via i18n catalog) and include the error in the console.error call. Low severity: no data loss, manual entry still works."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist match this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-09-16.md && first line matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json advanced (cursors + seen_signals + stats)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "backlog.json unique ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no signal id re-scored", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap + decay applied (3 open KMP items decayed 1->0->dropped; create-listing-not-wired 4->3; ready inquiries item exempt per G5 open-only clause)", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — G6 vacuously holds", "observed": "true", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "0 new plans this run — count 0 <= 2, other sub-checks vacuous", "observed": "true", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "staged diff scoped to .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets / private hostnames in staged diff (outside baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identity vs regen from backlog.json", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no phase failures reported", "observed": "true", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "no plan promoted in prior run went missing", "observed": "true", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive-file count this run >= HEAD count (unchanged: 8 archived)", "observed": "8 >= 8", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identity vs regen from backlog.json triage rows", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty; no auto-fix branches pushed", "observed": "true", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 was NOT re-spawned this run (dispatcher already ran today via tier1d); pm_cursor/coverage_cursor unchanged from HEAD — GC7 gate is a no-op when pm_cursor does not advance", "observed": "no-op (Phase 1.6 skipped)", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token value in staged diff", "observed": "0", "expected": "0" }
+  ]
+}

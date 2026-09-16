@@ -6574,20 +6574,22 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed 2026-09-16: no new signals in 14 days (1 -> 0)",
+        "dropped 2026-09-16: score decayed to 0 — no signal in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-16",
       "plan": null
     },
     {
@@ -7395,8 +7397,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7406,9 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed 2026-09-16: no new signals in 14 days (1 -> 0)",
+        "dropped 2026-09-16: score decayed to 0 — no signal in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7422,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-16",
       "plan": null
     },
     {
@@ -8313,8 +8317,8 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8322,13 +8326,15 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
         "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
-        "decayed 2026-08-30: -1 (no new signal in 14 days)"
+        "decayed 2026-08-30: -1 (no new signal in 14 days)",
+        "decayed 2026-09-16: no new signals in 14 days (1 -> 0)",
+        "dropped 2026-09-16: score decayed to 0 — no signal in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-30",
+      "updated_at": "2026-09-16",
       "plan": null
     },
     {
@@ -9878,7 +9884,7 @@
       "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "vector": "bug",
       "confidence": "high",
-      "score": 4,
+      "score": 3,
       "status": "open",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
@@ -9888,7 +9894,8 @@
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
         "PortalListingsRepository already calls GET /api/v1/my/listings (listMyListings) but has NO create method; backend endpoint POST /api/v1/my/listings already exists (portal_listings.rs:24 route + :207 create_listing, registered in main.rs:205) — fix is KMP-only",
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
-        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4."
+        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
+        "decayed 2026-09-16: no new signals in 14 days (4 -> 3)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9897,7 +9904,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-01"
+      "updated_at": "2026-09-16"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
@@ -10633,6 +10640,99 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-api-handlers-org-member-role-mutation-guards",
+      "title": "api-handlers organizations/members: update_organization_member has no privilege-ceiling or last-owner protection — in-org vertical priv-esc + orphan-org risk",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers organizations/members)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/organizations/members.rs — the three org-membership mutation handlers (add_organization_member :206, update_organization_member :429, and the delete handler at :717) gate on `users:create` / `users:update` / `users:delete` + role-belongs-to-org check but lack a privilege-ceiling / anti-escalation check and a last-owner protection.",
+        "(1) update_organization_member (:509-539) validates only that req.role_id exists and belongs to the org — never compares the target role's privilege set against the acting admin's own; any member with users:update can assign ANY role in the org (including a full owner) to another member or themselves.",
+        "(2) Neither update_organization_member nor the delete handler checks the remaining owner/admin count before demoting (:576-585) or removing (:717+); nothing prevents the sole remaining owner from being demoted/removed, orphaning the org.",
+        "Impact: authorization completeness / defense-in-depth. Backend-only fix in members.rs (+ possibly a role_repo helper for privilege comparison and an owner-count query). Model-dependent severity (hinges on whether users:update is grantable to non-owner roles)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/organizations/members.rs"
+      ],
+      "created_at": "2026-09-16",
+      "updated_at": "2026-09-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-multi-currency-refresh-stub-success",
+      "title": "api-handlers multi_currency: exchange-rate-refresh handler is a stub that hard-codes success — clients see 200/success while rates stay stale, and last_rate_update write error is swallowed",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers multi_currency)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/multi_currency.rs:373-411 — the `Trigger exchange rate fetch from external source` handler is a STUB (comment: `// For now, we just log the attempt`); grep for ECB/XE/reqwest/http_client returns only the comment. It logs `log_rate_fetch(Some(org_id), config.exchange_rate_source, true, 0, None)` — hardcoding success=true, count=0 — then returns HTTP 200 `{\"success\": true, \"message\": \"Exchange rate fetch initiated\"}`.",
+        "backend/servers/api-server/src/routes/multi_currency.rs:406 — `let _ = s.multi_currency_repo.update_last_rate_update(org_id).await;` swallows the timestamp-write error entirely; the success arm still returns success=true even if this UPDATE failed, so last_rate_update can silently fail to advance (feeding an incorrect staleness signal).",
+        "Impact: LOW — correctness/observability smell on an org-scoped admin action. Two-part fix: (a) either wire the real ECB/XE fetch or make the stub's response honest (e.g. 501 or a `stub: true` flag); (b) replace `let _ =` at :406 with `.map_err(...)` or at minimum a `tracing::warn!` on Err."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/multi_currency.rs"
+      ],
+      "created_at": "2026-09-16",
+      "updated_at": "2026-09-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-i18n-hardcoded",
+      "title": "ppt-web documents feature ships hardcoded Slovak error/empty/loading strings (7 files) — bypasses react-i18next; cs/de/en users see Slovak on these states",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-ui documents)"
+      ],
+      "evidence": [
+        "MoveFolderDialog.tsx:429 'Priečinky sa nepodarilo načítať.', :434 'Žiadne priečinky'; DocumentsBrowse.tsx:429 'Dokumenty sa nepodarilo načítať.', :438 'Žiadne dokumenty nezodpovedajú zvoleným filtrom.'; FolderTree.tsx:608 'Priečinky sa nepodarilo načítať.', :618 'Žiadne priečinky'; DocumentDetail.tsx:145 'Detail dokumentu sa nepodarilo načítať.'; FolderTreePage.tsx:75 'Dokumenty sa nepodarilo načítať.'; DocumentPreviewModal.tsx:56 'Načítavanie náhľadu…'; PdfPreview.tsx:269 'Chyba pri nacitani PDF: {docError}' (missing diacritics — confirms hand-written literals).",
+        "Same files' own norm uses t() for aria labels (e.g. MoveFolderDialog.tsx :146/:323/:333) and other copy — the raw strings are an oversight, not intentional. Scope contained to the documents feature (7 files). Landable frontend-only remedy: move each string into the i18n catalog and wrap in t()."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/DocumentsPage.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/FolderTree.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/DocumentDetail.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/FolderTreePage.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentPreviewModal.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/PdfPreview.tsx"
+      ],
+      "created_at": "2026-09-16",
+      "updated_at": "2026-09-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-ocr-silent-fail",
+      "title": "ppt-web ReadingForm OCR failure is silent — no toast/inline hint on catch; console.error message lacks the caught error object",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-ui meters/reading-form)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:107-116 — in handlePhotoChange, OCR failure is caught with only `console.error('OCR processing failed')` and no user-facing signal. The comment 'OCR failed, user can still enter value manually' documents graceful degradation, but after taking a photo with OCR on the user sees no toast/banner/inline note and may wait expecting an auto-fill.",
+        "console.error also logs the bare message without the caught error object, making diagnosis harder. Landable frontend-only remedy: surface a non-blocking inline hint/toast on OCR failure (via i18n catalog) and include the error in the console.error call."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx"
+      ],
+      "created_at": "2026-09-16",
+      "updated_at": "2026-09-16",
+      "plan": null
     }
   ]
 }
