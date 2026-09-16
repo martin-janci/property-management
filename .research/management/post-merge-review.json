@@ -1,9 +1,17 @@
 {
-  "generated": "2026-09-10T18:27:07Z",
+  "generated": "2026-09-16T14:26:42Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-16T14:26:42Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-02), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration via search_pull_requests 'is:merged base:dev merged:>=2026-09-02 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new PRs. Cross-checked list_pull_requests (closed, base=dev, sorted updated desc): all 21 in-window merges (2955,2956,2950,2952,2941,2942,2943,2938,2940,2583,2585,2586,2673,2935,2558,2932,2931,2919,2928,2927,2926) already carry post-merge-reviewed from prior runs; top-of-list dependabot PRs (2591,2933,2808,2936,2934,2867,2865,2749) were closed unmerged (no merged_at). Nothing to review; no reviewer subagents spawned; no follow-up issues opened."
+    },
     {
       "run_at": "2026-09-10T18:27:07Z",
       "prs_scanned": 0,
@@ -547,47 +555,6 @@
           "findings": 1,
           "specialist": "ppt-frontend",
           "note": "correctness(medium): AML EDD/Review dialogs stay mounted (return null when closed) so reason/notes/decision/showError state leaks across assessments -> wrong justification can be submitted on a compliance audit surface; fix: key/conditionally-mount dialogs"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-08-22T06:31:34Z",
-      "prs_scanned": 15,
-      "clean": [
-        2820,
-        2818,
-        2817,
-        2737,
-        2736,
-        2735,
-        2734,
-        2733,
-        2732,
-        2730,
-        2728,
-        2727
-      ],
-      "with_issues": [
-        {
-          "pr": 2731,
-          "issue": 2822,
-          "findings": 1,
-          "specialist": "pm-rust-backend",
-          "note": "security/correctness(low): shared sanitize_csv_cell + voting_csv_row neutralize leading formula triggers and commas but NOT embedded CR/LF; hand-rolled unquoted export means a vote title with \\n injects fabricated CSV rows (row-injection/report tampering). Same helper backs admin audit export. Proposed: strip/escape CR/LF in sanitize_csv_cell (or switch to csv crate Writer) + regression test."
-        },
-        {
-          "pr": 2729,
-          "issue": 2823,
-          "findings": 1,
-          "specialist": "pm-rust-backend",
-          "note": "correctness/reliability(medium): #2729 correctly stops dropping held notifications on transient failure, but retry is row-granular while deliver_held re-fires EVERY channel each tick -> duplicate delivery of already-sent channels on partial failure, and no attempt cap/dead-letter -> a permanently-failing row loops forever re-delivering healthy channels. Proposed: per-channel success bookkeeping (delivered_channels[] or one row per channel) + bounded attempts/dead-letter + tests."
-        },
-        {
-          "pr": 2819,
-          "issue": 2824,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "i18n(low)+DRY(low): expiry state bug fixed well, but suffixes ' (Expired)'/' (Expiring soon)'/'(Soon)' and config.label are hardcoded English (ppt-web is actively i18n-ing this class, cf #2820/#2737/#2736); and msUntilExpiry/isExpired/30d window logic is duplicated across VerificationBadge + VerificationStatusBadge. Proposed: route suffixes+labels through react-i18next across 6 locales + key-presence test; extract shared getExpiryState() helper."
         }
       ]
     }

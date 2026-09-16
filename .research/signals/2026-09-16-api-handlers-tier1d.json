@@ -1,0 +1,48 @@
+{
+  "generated": "2026-09-16T00:00:00Z",
+  "source_run": "dispatcher Phase 2.6 Tier-1d demand-driven (claim buffer starved, honest claimable ~0 < floor 36) 2026-09-16",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "CHURN-ALIGNED. state.json hotspot_history (the only churn input available; entries dated 2026-05, review_cursor stale vs signals corpus) is dominated by api-handlers files: integrations.rs (churn 4327), organizations.rs (4018), documents.rs (3553), reports.rs (3329), ai.rs (3142), auth.rs (2950) — all under backend/servers/api-server/src/routes/, which maps to the api-handlers segment. Per skill Step 1, churn-alignment takes priority over oldest-unreviewed (oldest by signals corpus would be api-core @2026-09-09). SATURATION CHECK PASSED: backlog.json holds 0 open code-review-finding rows for api-handlers (all prior api-handlers findings are done/dropped/reconciled), so the <3-open saturation rule does not skip it. Note: api-handlers is the most heavily-reviewed segment (near-daily passes through 2026-09-11; a 5-day gap since), so it is picked-over — the standard grep hit-lists came back essentially clean in production code. This pass swept the top-churn UNREVIEWED files (organizations/members.rs, multi_currency.rs, integrations/oauth_state.rs, listings.rs, reports/schedule_cadence.rs) rather than re-treading previously-flagged files. Static-only (no build/test): the cloud runner cannot compile the api-server binary crate anyway (utoipa-swagger-ui build-script egress blocked, #2949); findings are backlog signals whose landability resolves at implementer time. DEDUP: one strong candidate was DROPPED as a duplicate — listings.rs:338/343 get_photos/get_syndications `.unwrap_or_default()` error-swallow is already filed as code-review-api-handlers-listings-detail-photos-swallow (2026-08-09, score 2, still unfixed in tree) — not re-emitted. Also verified clean/not-findings: integrations/oauth_state.rs `.expect(\"...mutex poisoned\")` is a #[cfg-doc'd] TEST-ONLY in-memory store (None in production, never touched by real traffic); reports/schedule_cadence.rs fields[0..4] indexing is length-guarded (len()!=5 -> None/false at :192 and :277); ai/workflows.rs StatusCode::OK is on the Ok arm only; no raw secrets in tracing calls (password_reset/registration log user_id + error object, not token/password values); no CORS AllowAny in routes; no format!-built SQL (sqlx macros throughout); organizations/members.rs add/update handlers are well-hardened (users:create/users:update permission gates + role.organization_id==org belongs-to-org checks at :305 and :531). Cap-at-3 honored; 2 net-new LOW/MED findings below; nits skipped.",
+  "experts_used": ["rust", "security"],
+  "findings_count": 2,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-org-member-role-mutation-guards",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers organizations/members)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/organizations/members.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/organizations/members.rs — the three org-membership mutation handlers (add_organization_member :206, update_organization_member :429, and the delete handler at :717) gate on a single coarse permission flag (`users:create` :275 / `users:update` :499 / `users:delete` :717) plus a role-belongs-to-org check (`r.organization_id == id` :305, `new_role.organization_id != org_id` :531). They are otherwise correctly tenant-scoped. But two standard org-RBAC guardrails are ABSENT.",
+        "(1) No privilege-ceiling / anti-escalation check: update_organization_member (:509-539) validates only that `req.role_id` exists and belongs to the org — it never compares the target role's privilege set against the acting admin's own. Any member holding `users:update` can therefore assign ANY role in the org, including one strictly more privileged than their own (e.g. a full owner/admin role), to another member OR to themselves (there is no `target_user_id != admin_user_id` self-guard on the update path, unlike the delete path at :717). If `users:update` is ever granted to a non-owner role, this is an in-org vertical privilege escalation. Fix: require the acting role's permission set to be a superset of the role being granted (grant-only-what-you-hold), and reject self-escalation.",
+        "(2) No last-owner protection: neither update_organization_member nor the delete handler checks the remaining owner/admin count before demoting (:576-585) or removing (:717+) a member. Nothing prevents the sole remaining owner from being demoted to a member role or removed, orphaning the organization with no one holding owner-tier permissions (no recoverable admin path). grep for `owner_count`/`last.owner`/`remaining` across members.rs returns 0 hits. Fix: before a demotion or removal that would drop the org's owner-tier membership count to zero, reject with 409 (e.g. LAST_OWNER).",
+        "Impact: authorization-completeness / defense-in-depth. Both are model-dependent (severity hinges on whether `users:update` is grantable to non-owner roles in the seeded role catalogue — confirm against the roles seed / role_repo before implementing); filed at MEDIUM confidence because the missing guards are confirmed by static read of the handler but the exploitability of (1) depends on the permission model, and (2) is a clear data-integrity gap regardless. Backend-only fix in members.rs (+ possibly a role_repo helper for privilege comparison and an owner-count query)."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-multi-currency-refresh-stub-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers multi_currency)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/multi_currency.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/multi_currency.rs:373-411 — the `Trigger exchange rate fetch from external source` handler is a STUB that reports success as if rates were fetched. Line 397-398 comment: `// In a real implementation, this would call external APIs (ECB, XE) / For now, we just log the attempt`; grep for ECB/XE/reqwest/http_client/fetch_rate/external in the file returns only the comment — there is no rate-provider call. The handler calls `log_rate_fetch(Some(org_id), config.exchange_rate_source, true, 0, None)` (:399-402) — hardcoding success=true, rate_count=0 — then returns HTTP 200 `{ \"success\": true, \"message\": \"Exchange rate fetch initiated\" }` (:407-411). A client (or the scheduler) cannot distinguish 'rates refreshed' from 'no-op stub'; downstream conversions keep using stale rates while the API reports a successful refresh.",
+        "backend/servers/api-server/src/routes/multi_currency.rs:406 — `let _ = s.multi_currency_repo.update_last_rate_update(org_id).await;` swallows the timestamp-write error entirely. On the success arm the handler still returns `success: true` even if this UPDATE failed, so `last_rate_update` can silently fail to advance (feeding an incorrect staleness signal to any cadence/staleness logic) with no error surfaced to the caller or logs. Contrast the sibling writes in the same handler (get_or_create_currency_config :390-395, log_rate_fetch :399/:413) which correctly `.map_err(...)` to 500.",
+        "Impact: LOW — correctness/observability smell on an org-scoped admin action. Two-part fix: (a) either wire the real ECB/XE fetch or make the stub's response honest (e.g. 501 NOT_IMPLEMENTED / a `stub: true` flag) so callers don't treat it as a real refresh; (b) replace the `let _ =` at :406 with a `.map_err(...)` (or at minimum a `tracing::warn!` on Err) so a failed watermark write is surfaced. Confidence medium: stub behaviour and the swallow are confirmed by static read; whether any consumer actually relies on last_rate_update for staleness is inferred, not runtime-confirmed."
+      ]
+    }
+  ]
+}
