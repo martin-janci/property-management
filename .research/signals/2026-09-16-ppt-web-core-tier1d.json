@@ -1,0 +1,67 @@
+{
+  "generated": "2026-09-16T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved, existing backlog structurally blocked on cloud-build infra; fresh cloud-buildable vectors needed) 2026-09-16",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "OLDEST-UNREVIEWED, CLOUD-BUILDABLE. Task constraint: prefer a cloud-buildable segment (frontend/ppt-web, reality-web, shared, or backend crates that build without the api-server utoipa-swagger-ui egress dep) and AVOID api-handlers/api-core (api-server binary, swagger-ui egress-403) and mobile-native-kmp (AGP dl.google.com egress-403). state.json review_cursor is stale vs the signals corpus (cursor claimed ppt-web-core@2026-08-29), so selection used the signals-corpus latest-review dates instead: the true oldest-unreviewed CLOUD-BUILDABLE segments are tied at 2026-09-11 (ppt-web-core, reality-server, reality-web); api-core is older (2026-09-09) but is avoid-listed (api-server binary). Picked ppt-web-core among the tie (Frontend expert, single primary per skill Step 2; zero prior findings ever recorded for this segment in backlog.json vs reality-web's 3-done). SATURATION CHECK PASSED: backlog.json holds 0 open code-review-finding rows for ppt-web-core (0 ever), so the <3-open saturation rule does not skip it. SCOPE: ppt-web-core = frontend/apps/ppt-web/src excluding pages/+components/ (hooks/, lib/ [api client, websocket, errorHandler, analytics, storage], contexts/ [Auth, WebSocket, Organization], routes/ [router + groups] + App.tsx). Static-only (no build/test) per skill. The lib/hooks/contexts layer is exceptionally well-maintained (extensively commented, all console.* calls DEV-gated in api.ts/websocket.ts/usePerformanceMetrics.ts, localStorage access try/catch-wrapped in AuthContext+storage.ts, analytics sinks swallow-guarded, single-flight token refresh + 401 replay guarded, RouteErrorBoundary+Suspense wrap AppRoutes) — the standard Frontend grep hit-lists (as any / as unknown as, ungated console, missing useMutation onError) came back essentially clean. Findings concentrate in the ROUTER group (routes/groups/core.tsx) and App shell. VERIFIED-CLEAN / NOT-FINDINGS (avoided false positives): routes/groups/core.tsx auth+profile pages (/settings/password, /settings/two-factor, /settings/profile) are registered WITHOUT ProtectedRoute but each page SELF-GUARDS with `if (!isAuthenticated) return <Navigate to=\"/login\" replace/>` (ProfileEditPage:92, ChangePasswordPage:94, TwoFactorAuthPage:225) — confirmed by reading the feature pages, so NOT an auth gap; rentals/financial/person-months route groups all pair useQuery/useMutation with isError/isPending/onError handling; no format-string or SQL concerns (frontend). Cap-at-3 honored; 3 net-new findings (2 MED, 1 LOW) below; nits skipped.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-home-dashboard-role-route",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-core routes/groups/core)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — the Home page 'Open dashboard' button routes with an exact-equality role check: `navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')`. This sends EVERY manager-equivalent role other than the bare 'manager' string — `org_admin`, `super_admin`, `technical_manager`, `property_manager` — to the RESIDENT dashboard instead of the manager dashboard.",
+        "The repo already has the single-source-of-truth helper `isManagerRole(role)` in routes/shared.tsx:48 (backed by `MANAGER_ROLES = ['manager','org_admin','super_admin','technical_manager','property_manager']`), and it is used elsewhere precisely to avoid this drift: App.tsx:127 `const isOperator = isManagerRole(user?.role)` gates the operator nav links, and the detail/workspace route wrappers gate on it too. Home's hand-rolled `=== 'manager'` is the outlier and contradicts that helper — an org_admin sees operator-only nav links (App.tsx) but the Home CTA drops them onto the resident dashboard.",
+        "Impact: MEDIUM — role-based mis-routing / UX-correctness for all non-'manager' operator roles (the most common operator role in a seeded org is typically org_admin, so this likely mis-routes the majority of operators). Fix: `navigate(isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident')`, importing `isManagerRole` from '../shared' (already imported in this module's sibling files). Confidence medium: the wrong branch is confirmed by static read; the resident dashboard is still a reachable page so this is a correctness/UX defect rather than a crash."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-manager-dashboard-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-core routes/groups/core + features/dashboard)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:166-168 — the dashboard routes register `/dashboard/manager` -> <ManagerDashboardPage/> and `/dashboard/resident` -> <ResidentDashboardPage/> with NO <ProtectedRoute> wrapper, and :166 redirects bare `/dashboard` -> `/dashboard/manager` for everyone. Contrast the immediately-following `/dashboard/customize` route (:171-178) which IS wrapped `<ProtectedRoute requiredRoles={['org_admin','super_admin']}>`, and every /settings/* route in settingsRoutes() which is wrapped in <ProtectedRoute>.",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx:21-49 — the page does NOT self-guard: it has no `if (!isAuthenticated) return <Navigate to=\"/login\"/>` (unlike the auth/profile pages ProfileEditPage/ChangePasswordPage/TwoFactorAuthPage which do), and its only role use is `canCustomize` (:27-28, gating a customize LINK for org_admin/super_admin). Per its own header doc it 'never gates on layout fetch — falls back to DEFAULT_DASHBOARD_LAYOUT on error or while loading' (:3-5, :43), so the manager dashboard shell renders even with no/failed data.",
+        "Consequence: (a) an UNAUTHENTICATED visitor hitting /dashboard or /dashboard/manager by URL renders the full manager dashboard shell (nav + default layout) instead of being bounced to /login — a broken-access-control / info-disclosure smell for the operator surface; (b) any RESIDENT is actively redirected by :166 (/dashboard -> /dashboard/manager) into the manager dashboard. The underlying API data is backend-RLS-protected (queries will 403/empty), so this leaks the manager UI shell/structure rather than tenant data — but it is inconsistent with the app's own ProtectedRoute convention and the self-guard pattern used by every other auth-sensitive page.",
+        "Impact: MEDIUM — authorization-completeness / access-control consistency. Fix: wrap `/dashboard/manager` (and `/dashboard/resident`) in <ProtectedRoute> (manager route additionally `requiredRoles={[...MANAGER_ROLES]}` so residents land on the resident dashboard, aligning with finding code-review-ppt-web-core-home-dashboard-role-route), OR add an isAuthenticated/role self-guard to ManagerDashboardPage mirroring the auth pages. Confidence medium: missing wrappers + missing self-guard confirmed by static read; the practical severity is bounded by backend RLS on the data, hence not HIGH."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-nav-aria-label-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-core App shell)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:135 — the primary navigation landmark uses a HARDCODED English accessibility label: `<nav className=\"app-nav\" aria-label=\"Main navigation\">`. This is a user-facing (screen-reader) string not wrapped in `t()`, so it stays English for all locales (the app ships sk/cs/de/en per root CLAUDE.md and this SPA uses react-i18next).",
+        "It is inconsistent with the sibling aria-labels in the very same component that ARE localized: App.tsx:178 `aria-label={t('auth.signOut', { defaultValue: 'Sign out' })}`. Every visible nav link in AppNavigation is already routed through `t(...)` (:136-190); only the landmark's aria-label was missed.",
+        "Impact: LOW — i18n/a11y gap on a single landmark label (screen-reader users on non-English locales hear an English region name). Fix: `aria-label={t('nav.mainNavigation', { defaultValue: 'Main navigation' })}` and add the key to the i18n bundles. Confidence medium: the hardcoded literal is confirmed by static read; classified LOW per the skill's i18n-gap tier."
+      ]
+    }
+  ]
+}
