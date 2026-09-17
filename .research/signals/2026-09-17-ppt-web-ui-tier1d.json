@@ -1,0 +1,68 @@
+{
+  "generated": "2026-09-17T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved, honest actionable claimable ~= 0; fresh cloud-buildable/landable vectors needed) 2026-09-17",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "OLDEST-UNREVIEWED among LANDABLE segments. Landability constraint dominates rotation this run: backend api-server (api-handlers/api-core) AND reality-server both embed utoipa-swagger-ui (reality-server/src/main.rs:521, Cargo.toml:33 = same swagger-ui egress-403 build block as api-server in this cloud runner), and mobile-native-kmp is AGP dl.google.com egress-403 -> all four are structurally UNLANDABLE, so avoided. The backend workspace build pulls those binaries in, so backend crate-only changes are blocked too. That leaves the 4 frontend segments as the only landable set. reality-web + mobile-rn were already reviewed TODAY (2026-09-17 signals). ppt-web-core is saturated (6 findings across 09-11 + 09-16; its lib/hooks/contexts layer was declared exceptionally clean, findings now concentrated in router/App shell which are covered). ppt-web-ui (last touched 09-16) is the freshest-yield landable pick: ~50 feature areas of which prior runs (09-11, 09-16) touched only documents/faults/leases/disputes -> vast uncovered surface. SATURATION CHECK PASSED: backlog.json holds 0 open code-review-finding rows for ppt-web-ui. state.json review_cursor is stale (last_run 2026-09-01) vs the signals corpus, so selection used signals-corpus latest-review dates. SCOPE: ppt-web-ui = frontend/apps/ppt-web/src/features/** + components/** (pages/). Static-only (no build/test) per skill. Experts: Frontend (primary) + Completeness (secondary). Targeted uncovered features (facilities, meters, compliance, emergency, registry) via the Frontend grep hit-lists. VERIFIED-CLEAN / NOT-FINDINGS (false positives avoided): compliance flows (useAmlDashboard.ts submitEdd/submitReview, DsaReportsPage generate/publish/download) pair every console.error with an i18n'd showToast on both success+error branches -> correct, not swallowed; iot/hooks/useIotWebSocket.ts:32 `window as unknown as Record<...>` is a benign SSR-guard cast, not an API-boundary cast; the community/*Form.tsx `return true` hits are validation-predicate returns, not manager placeholders; meters/pages/MetersPage.tsx:55 `return true` is a filter predicate. Cap-at-3 honored; 3 net-new findings (2 MED, 1 LOW) below; nits skipped.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "static_only": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-hardcoded-true",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-ui features/facilities)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/components/FacilityList.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/components/FacilityCard.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:35-41 — the module-local `useIsManager()` hook is a hardcoded placeholder that unconditionally `return true;` (line 40). Its own doc-comment (:15-40) admits it: 'Placeholder: Returns true during development to enable all manager features. Replace with actual role check when AuthContext is implemented for ppt-web.' FacilitiesPage.tsx:46 consumes it (`const isManager = useIsManager()`) and passes it to FacilityList at :116 (`isManager={isManager}`).",
+        "The stale 'when AuthContext is implemented' premise is FALSE: AuthContext + useAuth are fully implemented and in use across ppt-web — `export function useAuth()` at frontend/apps/ppt-web/src/contexts/AuthContext.tsx:742, consumed e.g. by contexts/OrganizationProvider.tsx:6 and App.tsx, and the canonical role helper `isManagerRole(role)` (backed by MANAGER_ROLES) already exists at routes/shared.tsx and is used in App.tsx to gate operator nav. FacilitiesPage simply never got wired to it.",
+        "Effect: `isManager=true` for EVERY user (residents included) flows into the UI's manager-only affordances — FacilityList.tsx:82 and :141 render the 'Create facility' button `{isManager && onCreate && ...}`, and FacilityList passes isManager to FacilityCard (:160) whose :151 renders the per-facility 'Edit' control `{isManager && ...}`. So a resident viewing /buildings/:buildingId/facilities sees Create + Edit manager controls. This is the outlier: sibling pages set the flag by route intent (MyBookingsPage.tsx:106 `isManager={false}`, PendingBookingsPage.tsx:117 `isManager={true}`), but FacilitiesPage serves all roles and must derive it from the real user.",
+        "Impact: MEDIUM — broken-access-control / authorization-completeness smell in the UI. Bounded to UI exposure (backend RLS still rejects the underlying create/update mutations, so no data breach), hence MEDIUM not HIGH. Fix: replace the placeholder with `const { user } = useAuth(); const isManager = isManagerRole(user?.role);` (import useAuth from '../../../contexts' and isManagerRole from routes/shared), deleting useIsManager. Confidence medium: the hardcoded `return true` and its propagation to Create/Edit gates are confirmed by static read."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-page-swallows-load-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-ui features/facilities)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:63-74 — the `listFacilities` fetch runs in a useEffect; on failure the catch (:68-70) does ONLY `console.error('Failed to fetch facilities:', error)` with no error state, and the finally (:71-73) sets `isLoading=false`. There is no `error` state variable at all (:47-51 declares facilities/total/page/isLoading/filters only), so on a failed load `facilities` stays `[]` and the page renders the normal empty 'no facilities' UI — a load FAILURE is visually indistinguishable from an empty building, with no message and no retry.",
+        "This is the outlier within the very same feature folder — every sibling facilities page surfaces load/action errors to the user: EditFacilityPage.tsx sets `setError('Failed to load facility')` (:30) and renders `{error && ...}` (:91); BookFacilityPage.tsx sets error (:35) and renders `{error && ...}` (:131); MyBookingsPage.tsx (:45) and PendingBookingsPage.tsx (:46) raise showToast on 'Failed to load...'. FacilitiesPage — the primary list entry point for the whole facilities feature (Epic 56) — is the one page that silently swallows the load error.",
+        "Impact: MEDIUM — unhandled error on a user-facing data path (missing error-state UI / completeness). A transient 500 or network drop presents as 'this building has no facilities', misleading managers and residents. Fix: add an `error` state, set it in the catch, and render an error/retry block (mirroring EditFacilityPage/BookFacilityPage), or migrate the effect to a useQuery with an isError branch. Confidence medium: the swallow + missing error state confirmed by full static read of the file."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-reading-form-number-coerce-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-ui features/meters)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:85-90 — the shared numeric change handler coerces with `type === 'number' ? Number.parseFloat(value) || 0 : value`. Because `Number.parseFloat('')` is NaN and `NaN || 0` is 0, clearing a numeric input (or typing a partial/invalid entry) silently rewrites the field to 0 instead of leaving it empty or flagging validation — the user cannot present an empty numeric field, and a fat-fingered entry becomes a real 0 reading.",
+        "For a meter READING form this is a correctness/data-entry hazard: a submitted 0 reading is a valid-looking value that can corrupt consumption deltas, and the `|| 0` masks the difference between 'unset' and 'zero'. The OCR-accept path (handleOcrAccept, :138) sets a real number directly, so this only bites manual entry — but manual entry is the primary path when OCR is disabled or fails (the catch at :113-116 falls back to manual entry).",
+        "Impact: LOW — input-coercion correctness on a single form field. Fix: keep the raw string in state and validate/parse on submit (or use `value === '' ? '' : Number.parseFloat(value)` and reject NaN in the existing `errors` validation) rather than collapsing to 0. Confidence medium: the coercion is confirmed by static read; classified LOW as it is a manual-entry edge case guarded by downstream submit validation."
+      ]
+    }
+  ]
+}

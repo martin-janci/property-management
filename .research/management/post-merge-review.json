@@ -1,9 +1,18 @@
 {
-  "generated": "2026-09-16T14:26:42Z",
+  "generated": "2026-09-17T16:27:41Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-17T16:27:41Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-03), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration via search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-03 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new PRs. Cross-checked list_pull_requests (closed, base=dev, sorted updated desc, perPage=40): all 17 in-window merges (2955,2956,2950,2952,2941,2942,2943,2938,2940,2583,2585,2586,2673,2935,2558,2932,2931) already carry post-merge-reviewed from prior runs; top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2936,2934,2867,2865,2749) were closed unmerged (no merged_at). Nothing to review; no reviewer subagents spawned; no follow-up issues opened. No-op pass.",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-09-16T14:26:42Z",
       "prs_scanned": 0,
@@ -529,33 +538,6 @@
         2836,
         2837,
         2838
-      ]
-    },
-    {
-      "run_at": "2026-08-22T18:31:02Z",
-      "prs_scanned": 7,
-      "clean": [
-        2830,
-        2828,
-        2827,
-        2825,
-        2821
-      ],
-      "with_issues": [
-        {
-          "pr": 2826,
-          "issue": 2831,
-          "findings": 1,
-          "specialist": "ppt-rust-backend",
-          "note": "perf/correctness(medium): drain worker started on every api-server replica with plain SELECT (no FOR UPDATE SKIP LOCKED / leader lock) -> concurrent workers double-deliver held notifications; per-channel dedup only covers sequential retries"
-        },
-        {
-          "pr": 2829,
-          "issue": 2832,
-          "findings": 1,
-          "specialist": "ppt-frontend",
-          "note": "correctness(medium): AML EDD/Review dialogs stay mounted (return null when closed) so reason/notes/decision/showError state leaks across assessments -> wrong justification can be submitted on a compliance audit surface; fix: key/conditionally-mount dialogs"
-        }
       ]
     }
   ]
