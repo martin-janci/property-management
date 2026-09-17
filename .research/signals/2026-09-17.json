@@ -1,0 +1,143 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-17",
+      "type": "lag_warning",
+      "source": "routine state.json last_run_iso",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-09-01T18:38:58Z — 16 days stale as of 2026-09-17T02:30Z",
+        "cloud routine cron likely paused/broken; dispatcher (separate branch) still running per HEAD commit trail"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "catch-up run after 16d lag; Phase 5 skipped to keep recovery lean",
+  "phase_skips": {
+    "phase_1_5_dev_review": "skipped: 16d catch-up run; expert-review agents deferred to next run",
+    "phase_1_6_pm_management": "skipped: 16d catch-up run; role rotation deferred to next run"
+  },
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-17.md && head -1 briefs/2026-09-17.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff vs HEAD",
+      "observed": "cursors + seen_signals + stats.runs advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap<=8 + decay applied to open items updated_at<=2026-09-03",
+      "observed": "decay applied to 4 items, 3 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans; 0 promoted this run",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed: Phase 1.5 + Phase 1.6 skipped (documented in brief); no cursor for skipped phases advanced beyond what Phase 1 changed",
+      "observed": "documented",
+      "expected": "documented"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans deleted; no plans promoted this run",
+      "observed": "no plan-tree changes",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count unchanged (no changes to _archive/ this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions this run (Phase 5 skipped)",
+      "observed": "auto_fix_actions == []",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run (catch-up); coverage_cursor unchanged",
+      "observed": "no-op",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
