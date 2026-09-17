@@ -1,0 +1,54 @@
+{
+  "segment": "reality-web",
+  "date": "2026-09-17",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "No CHURN_FILES were passed to this Tier 1d run, so priority-1 (churn-aligned) does not apply. REVIEW_CURSOR oldest dates are a tie at 2026-08-29 between ppt-web-core and reality-web. ppt-web-core was already reviewed today's-1 (2026-09-16 signal file present) and is in the dispatcher's saturated set (api-handlers, ppt-web-core, ppt-web-ui all generated 2026-09-16), so it is saturation-skipped. That leaves reality-web as the oldest-unreviewed segment, and it is a landable frontend segment in this cloud runner (unlike backend/** blocked by #2949 and mobile-native/** blocked by #2652), so it is preferred per the dispatcher's cloud-landability guidance. Backlog saturation check: 0 open code-review-finding items for reality-web in backlog.json, so no backlog saturation-skip. Segment root resolved to frontend/apps/reality-web/src (the skill's literal frontend/reality-web/src predates the apps/ workspace layout); 221 source files. Static analysis only — no compile/test executed; no gh dependabot/PR-history checks needed (no manifest-version findings emitted).",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "reality-web is a landable frontend segment in this cloud runner (Next.js/TypeScript only — no Rust/KMP compile, no api-server swagger-ui build). All three findings are frontend-only i18n remedies in reality-web TSX plus the next-intl message catalogs (messages/{en,sk,cs,de}.json) and land without any backend change. Static analysis only.",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-price-map-i18n-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx — the price-map page declares useTranslations('pages.priceMap') but only ever calls t() for the single h1 (t('h1') at :138). Effectively every other user-facing string on this public, 4-locale (sk/cs/de/en) page is a hardcoded Slovak literal that bypasses next-intl, so cs/de/en visitors see Slovak. Occurrences: PROPERTY_OPTIONS labels :30-34 'Všetky'/'Byty'/'Domy'/'Pozemky'; transaction toggle :161 'Predaj'/'Prenájom'; map loading :209 'Načítavam dáta…'; map error :213 'Dáta o cenách sa nepodarilo načítať.'; no-geometry empty state :224 'Pre vybrané lokality zatiaľ nie je dostupný mapový podklad. Štatistiky nájdete v zozname vpravo.'; SVG aria-label :231 'Mapa cien podľa lokality'; legend :272 'Cena / m²' and :275-278 range labels; back link :322 '← Späť na prehľad'; detail rows :337-348 'Priem. cena / m²'/'Trend (medzikvartálne)'/'Aktívne inzeráty'; CTA :392 'Zobraziť inzeráty v tejto lokalite'; right-panel :405 'Prehľad lokalít', :414 'Kliknite na lokalitu pre detailné štatistiky.', :426 'Pre zvolené filtre nie sú dostupné žiadne dáta.'; insights labels :77/:82/:87/:95 'Priemerná cena / m²'/'Najdrahšia lokalita'/'Najväčší rast'/'Aktívne inzeráty' and trend suffixes :79/:97 'lokalít', :91 '% QoQ'.",
+        "The page's own data-i18n=\"pages.price-map.root\" marker (:106) and its use of the pages.priceMap namespace for the h1 show localization was intended but left unfinished. Landable frontend-only remedy: move each literal into the messages/{en,sk,cs,de}.json catalogs under pages.priceMap and wrap with t() (using t.rich / interpolation for the trend + count suffixes). Verifiable in cloud via pnpm --filter @ppt/reality-web typecheck/test."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx — the SSO callback screen localizes its error/title/return-home copy via useTranslations('auth.callback') (:132-135), but the two loading messages shown during the (common) success path are hardcoded English: :67 'Loading...' in LoadingSpinner and :146 'Completing login...' in SsoCallbackContent. On a 4-locale (sk/cs/de/en) portal, sk/cs/de users completing SSO see English strings on the auth flow.",
+        "Landable frontend-only remedy: add auth.callback.loading / auth.callback.completing keys to messages/{en,sk,cs,de}.json and replace the two literals with t() (LoadingSpinner would need the translations passed in or its own hook). Low severity — transient state, no functional break. Verifiable via pnpm --filter @ppt/reality-web typecheck."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-journal-card-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:96 — ArticleCard renders reading time as `{article.author} · {article.readMin} min čítania`, a hardcoded Slovak suffix, while the same page's Most-Read sidebar correctly renders the identical concept via t('readingTime', { min: article.readMin }) at :327. The inconsistency proves the card should reuse the existing pages.journal.readingTime catalog entry; as written, cs/de/en journal readers see 'min čítania' on every article card.",
+        "Landable frontend-only remedy: replace the inline suffix with the existing t('readingTime', { min: article.readMin }) (ArticleCard already renders within the JournalPage tree; pass t down or call useTranslations in ArticleCard). Low severity, single string, but a concrete i18n regression against the page's own established pattern."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
