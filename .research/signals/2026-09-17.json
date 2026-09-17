@@ -1,0 +1,169 @@
+{
+  "generated": "2026-09-17T00:00:00Z",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/…",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json diff HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "grep sections + files exist",
+      "observed": "1 plan, all 15 sections, all files resolve",
+      "expected": "≤2 plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached non-.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap",
+      "observed": "0",
+      "expected": "≤3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped",
+      "observed": "no-op",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-17",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-09-01T18:38:58Z — 15d 20h gap; cloud cron likely broken",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-09-17",
+      "type": "stale_routine_alert",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso=2026-09-01T18:38:58Z — 15d old; dispatcher still ticking on planning branch (see git log) but the research routine cron on the routine loop is stalled",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "PRs #2943 #2952 #2956",
+      "score_delta": 1,
+      "evidence": "queryKeys.test.ts touched by 3 merged PRs in this window — allowlist auto-discovery hardening + logout purge coverage churn",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2941 #2942",
+      "score_delta": 1,
+      "evidence": "AuthContext.tsx touched by 2 merged PRs in this window — boot expiry validation + 401 replay refresh",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "PRs #2950 #2955",
+      "score_delta": 1,
+      "evidence": "resetLocalData.ts touched by 2 merged PRs in this window — NFC purge + SecureStore purge (tenant switch)",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": "dependabot npm-minor-patch group bump (40 updates) merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": []
+}
