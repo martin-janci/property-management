@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days; auto-dropped 2026-09-18 by routine (score reached 0)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-18",
       "plan": null
     },
     {
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed: no new signals in 14 days; auto-dropped 2026-09-18 by routine (score reached 0)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7420,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-18",
       "plan": null
     },
     {
@@ -8313,8 +8315,8 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8322,13 +8324,14 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
         "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
-        "decayed 2026-08-30: -1 (no new signal in 14 days)"
+        "decayed 2026-08-30: -1 (no new signal in 14 days)",
+        "decayed: no new signals in 14 days; auto-dropped 2026-09-18 by routine (score reached 0)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-30",
+      "updated_at": "2026-09-18",
       "plan": null
     },
     {
@@ -9878,7 +9881,7 @@
       "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "vector": "bug",
       "confidence": "high",
-      "score": 4,
+      "score": 3,
       "status": "open",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
@@ -9888,7 +9891,8 @@
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
         "PortalListingsRepository already calls GET /api/v1/my/listings (listMyListings) but has NO create method; backend endpoint POST /api/v1/my/listings already exists (portal_listings.rs:24 route + :207 create_listing, registered in main.rs:205) — fix is KMP-only",
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
-        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4."
+        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
+        "decayed: -1 point on 2026-09-18 (14+ days without new signals)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9897,7 +9901,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-01"
+      "updated_at": "2026-09-18"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
@@ -10633,6 +10637,375 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-missing-disputes-leases-iot",
+      "title": "ppt-web logout AUTHED_QUERY_KEY_ROOTS is stale — omits disputes/leases/iot query roots (PR #2650 fix inversion)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 — AUTHED_QUERY_KEY_ROOTS is the explicit allow-list that logout() iterates (contexts/AuthContext.ts) to purge cached authenticated data. Multiple recently-added query root families are absent: disputes, leases, iot-*. On logout these caches survive; the next user in the same browser tab sees the prior user's cached rows until React Query TTL expires — cross-user data leak in a shared/kiosk browser. Same failure class as PR #2650 (notification-triggers root), regressed by not centralising the allow-list. Fix: extend the allow-list AND add a lint/test to fail CI whenever a new use\\* hook creates a root not registered in AUTHED_QUERY_KEY_ROOTS."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-unconfigured",
+      "title": "ppt-web lib/api.ts default export is captured pre-configure — any `import api from '@/lib/api'` bypasses auth interceptors + 401 refresh",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — `export default getApiClient()` is evaluated at MODULE-LOAD time, before AuthProvider ever calls configureApiClient(). getApiClient() then constructs an UNCONFIGURED axios instance (no getToken request interceptor => no Authorization header; no onUnauthorized handler => no single-flight 401 refresh-and-replay) and binds it as the default export. configureApiClient() later reassigns the internal `apiInstance` singleton, but the already-evaluated default export keeps its reference to the pre-config instance forever. Latent today (all current consumers use the named getApiClient()), but the first `import api from '@/lib/api'` silently breaks auth. Fix: remove the default export, or replace it with a lazy getter / Proxy that forwards to the live getApiClient() singleton."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+      "title": "ppt-web OCR meter-reading hooks bypass configured axios client — window.fetch without Authorization header",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-51,54-72 — the OCR hooks call the app's OWN api-server endpoints (`POST /api/v1/meters/ocr/extract` and `POST /api/v1/meters/ocr/photos`) but use bare `fetch()` instead of the configured axios client. No Authorization header is attached and no 401 refresh interceptor runs — every OCR request is anonymous and rejects on any auth-required deployment. Fix: route through getApiClient() so the auth interceptor + refresh path apply uniformly."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-needing-maint-key",
+      "title": "ppt-web usePredictiveMaintenance: useNeedingMaintenance daysAhead not in query key — cache collision across 30/60/90 day windows",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:59-70 — `useNeedingMaintenance(daysAhead = 30)` feeds `daysAhead` to the fetcher but the query key is a static tuple that ignores it. Switching windows (30->60->90 days) reads the FIRST cached response for whichever daysAhead was hit first this session. Fix: include daysAhead in the query key so React Query dedupes per window."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-no-backoff",
+      "title": "ppt-web IoT sensor WebSocket reconnect uses a fixed 5s interval — no exponential backoff, no cap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:26,84-95 — the IoT sensor WebSocket reconnect loop uses a FIXED 5s interval (`WS_RECONNECT_INTERVAL_MS = 5_000`) with no exponential backoff and no attempt cap. When the WS server is down or the ingress is misconfigured the client hammers reconnect every 5 seconds forever. Fix: adopt the same backoff schedule as the main notifications WebSocket (backend 1s / 2s / 5s / 10s / 30s / 60s ceiling)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-routes-unlocalized",
+      "title": "reality-web realtor routes (6 pages) render user-facing copy but do NOT import next-intl useTranslations",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/ — all 6 route pages render user-facing copy but NONE import next-intl useTranslations: realtor/page.tsx, realtor/dashboard/page.tsx, realtor/listings/page.tsx, realtor/inquiries/page.tsx, realtor/leads/page.tsx, realtor/analytics/page.tsx. UI strings ship Slovak-only or English-only regardless of the [locale] segment. Fix: replace hardcoded strings with useTranslations('realtor.*') and add matching keys to messages/{sk,cs,de,en}.json."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/dashboard/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/inquiries/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/leads/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-account-routes-unlocalized",
+      "title": "reality-web account routes (4 pages) render user-facing copy but do NOT import next-intl useTranslations",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/ — all 4 route pages render user-facing copy but NONE import next-intl useTranslations: account/page.tsx, account/settings/page.tsx, account/favorites/page.tsx, account/inquiries/page.tsx. Fix: introduce t = useTranslations('account.*') and populate all four locale message files."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/settings/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/favorites/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/inquiries/page.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-fallback",
+      "title": "reality-web listing edit page load-error fallback is hardcoded Slovak — leaks through when i18n resolution fails",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-18 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 — load-error fallback hardcoded in Slovak: `setLoadError(err instanceof Error ? err.message : 'Chyba pri načítaní inzerátu')`. Users on cs/de/en locales see a Slovak error string. Fix: use t('listing.edit.load_error_fallback') and add the key across all locales."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-auth-guard",
+      "title": "ppt-web route groups path has no auth guard — anonymous group navigation renders empty API errors on protected data",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (ppt-web-core)"
+      ],
+      "evidence": [
+        "ppt-web-core segment review 2026-09-17 flagged the route-groups path as lacking a PrivateRoute wrapper. Anonymous users navigating directly to a group URL receive backend 401s instead of a proper login redirect; UI leaks partial state before the error surface. Fix: wrap group routes in the existing PrivateRoute guard and add a redirect-back-to-target flow."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-query-silent-error",
+      "title": "ppt-web financial query hook swallows errors — dashboards render zero-state instead of surfacing the failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (ppt-web-core)"
+      ],
+      "evidence": [
+        "ppt-web-core segment review 2026-09-17: a financial query hook catches errors and returns default zero values without setting an error state or logging. Consumers show the empty dashboard as a success case — a real backend outage looks like `no data yet`. Fix: propagate the error to React Query's error boundary and surface a retryable error UI."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/financial"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-hardcoded-true",
+      "title": "ppt-web FacilitiesPage isManager is hardcoded true — non-managers can trigger manager-only mutations from the UI",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "ppt-web-ui segment review 2026-09-17: FacilitiesPage passes `isManager={true}` to child components rather than deriving from AuthContext. The backend still blocks non-manager writes with 403, but the UI exposes buttons and menus users cannot use, producing broken flows. Fix: read the role from the auth context and gate the props off it."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-page-swallows-load-error",
+      "title": "ppt-web FacilitiesPage swallows load error — page mounts empty when the initial fetch 5xxs",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "ppt-web-ui segment review 2026-09-17: FacilitiesPage load hook catches errors and sets an empty items list without exposing an error state. On backend 5xx the user sees `no facilities yet` and clicks the empty-state CTA instead of retrying. Fix: return the error to the component and render a retry surface."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-reading-form-number-coerce-zero",
+      "title": "ppt-web meter-reading form coerces blank input to 0 on submit — accidental zero readings are indistinguishable from real zeros",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (ppt-web-ui)"
+      ],
+      "evidence": [
+        "ppt-web-ui segment review 2026-09-17: the reading form parses input via Number('') === 0 and submits without validation. A user tabbing past the field posts a valid-looking 0 reading which the backend accepts. Fix: keep input as string until validation, disable submit when empty, and treat 0 vs empty as distinct in schema."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-price-map-i18n-hardcoded",
+      "title": "reality-web price-map UI has hardcoded English strings — Slovak/Czech/German locales see raw en fallback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (reality-web)"
+      ],
+      "evidence": [
+        "reality-web segment review 2026-09-17: price-map component ships English string literals (labels, tooltips) with no next-intl integration. Fix: convert to useTranslations('price_map.*') and add keys across all four locale message files."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/price-map"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "title": "reality-web SSO callback page hardcoded English — error surface bypasses the app locale",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (reality-web)"
+      ],
+      "evidence": [
+        "reality-web segment review 2026-09-17: SSO callback page renders English error copy on failure regardless of [locale] segment. Fix: use useTranslations('sso.callback.*') and add locale keys."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sso/callback"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-journal-card-i18n",
+      "title": "reality-web journal card component hardcoded strings — Slovak/Czech/German locales see raw fallback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (reality-web)"
+      ],
+      "evidence": [
+        "reality-web segment review 2026-09-17: journal card component ships hardcoded strings for status labels and CTAs. Fix: wire through next-intl and populate the four locale files."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/journal"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-fetch-never-applied",
+      "title": "mobile-rn dashboard layout fetch response is discarded — user layout customisations never render",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (mobile-rn)"
+      ],
+      "evidence": [
+        "mobile-rn segment review 2026-09-17: dashboard layout fetch hook receives the response payload but never assigns it to component state — layout render still uses the default hardcoded arrangement. Fix: setLayout(response.data) inside the .then() branch and re-run in effect on identity change."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/dashboard"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-bridge-auth-token-never-set",
+      "title": "mobile-rn widget bridge never receives the auth token — home-screen widgets show `not signed in` after every launch",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier1d review 2026-09-17 (mobile-rn)"
+      ],
+      "evidence": [
+        "mobile-rn segment review 2026-09-17: the WidgetBridge module exposes setAuthToken() but no call site invokes it after login or on token refresh. Home-screen widgets read an empty token and render the signed-out placeholder even for actively signed-in users. Fix: call WidgetBridge.setAuthToken(token) on session establish + token refresh."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/widgetBridge.ts"
+      ],
+      "created_at": "2026-09-17",
+      "updated_at": "2026-09-17",
+      "plan": null
     }
   ]
 }

@@ -1,13 +1,36 @@
 {
   "date": "2026-09-18",
-  "run_mode": "incremental",
-  "generated": "2026-09-18T08:30:00Z",
-  "run_note": "Tier 1d demand-driven review-vector generation (claim buffer starved: claimable=12 < floor=36). ppt-dev-review static-analysis slice ONLY (no compile, no tests, no dev-stack). Segment selection: no explicit CHURN_FILES passed to this generator; state.review_cursor oldest-unreviewed pair tied at 2026-08-29 between ppt-web-core and reality-web. Chose ppt-web-core (stable cursor insertion-order tiebreak; frontend => cloud-landable, preferred over infra-blocked mobile-native/KMP + api-server-swagger). Saturation check: 0 open code-review-finding items for any segment in backlog.json, so no saturation-skip. Frontend expert reviewed lib/ (api.ts, errorHandler.ts, websocket.ts, storage.ts), hooks/ (useWebSocket, useNetworkStatus, useOrganization, usePerformanceMetrics), contexts/ (AuthContext, WebSocketContext), routes/. Segment is mature and well-documented: all console.* calls are import.meta.env.DEV-gated (no committed logging), no `as any` casts, single-flight token refresh is race-free, timers/listeners all clean up, WS service reads token live via ref (no stale-service leak), token-in-WS-URL is the documented browser workaround with short-lived access token. One genuine latent finding emitted (default-export footgun in lib/api.ts). Cap of 3 not reached; stopped early rather than padding with nits.",
+  "run_mode": "incremental-lag-recovery",
+  "generated": "2026-09-18T22:40:00Z",
+  "run_note": "Routine wake-up after ~17d gap (state.last_run_iso=2026-09-01T18:38:58Z). Buffer starvation payload delivered: claimable=12/72 structurally stalled (13 open items all infra-blocked on mobile-native AGP egress #2652 + backend swagger-ui egress #2949/#2966). Response — fold ALL pending unincorporated tier1d frontend + mobile-rn signals from the last two days (2026-09-17 + 2026-09-18 files) into today's backlog to unstick the dispatcher supply. Frontend + mobile-rn only; mobile-native-kmp intentionally not folded (that pipeline is the infra-blocked one). Full Phase 1 GitHub polling skipped this run (running on session branch under proxy; cursor bump limited to last_run_iso only — last_pr_seen/last_issue_seen/last_commit_sha NOT advanced so a follow-up healthy run will backfill honestly).",
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "generator run — auto-fix is the dispatcher's decision, not this subagent's (single-writer rule; DISPATCHER_OWNED_COMMIT=1). Only candidate is score_delta=1 (below the score>=3 auto-fix threshold) anyway.",
+  "auto_fix_skipped_reason": "no eligible candidate this run (allowlist requires screen-map-drift / screen-map-orphan / fixme-in-merged-code / lockfile-drift / stalled-review — none present in today's incremental fold).",
   "signals": [
     {
-      "id": "code-review-ppt-web-core-api-default-export-stale",
+      "id": "lag-warning-2026-09-18",
+      "type": "lag_warning",
+      "source": "routine-selfcheck",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.last_run_iso=2026-09-01T18:38:58Z; today=2026-09-18 (~17 days / ~408h since last routine commit). Stale-routine alert (P4) also fires. Cloud cron likely paused; dispatcher supply degraded to 'structurally stalled' per fire payload."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 — AUTHED_QUERY_KEY_ROOTS allow-list omits disputes/leases/iot query roots; logout cache purge leaves cross-user data readable until React Query TTL. Same failure class as PR #2650 (notification-triggers)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-unconfigured",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
@@ -15,9 +38,333 @@
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/ppt-web/src/lib/api.ts:371 — `export default getApiClient()` is evaluated at module-load time, before AuthProvider runs configureApiClient(). At that point apiInstance is null, so getApiClient() builds an UNCONFIGURED axios instance (no getToken request interceptor => no Authorization header; no onUnauthorized handler => no single-flight 401 refresh-and-replay) and binds it as the default export. configureApiClient() later reassigns the `apiInstance` singleton, but the already-evaluated default export keeps its reference to the pre-config instance forever. Consequence: any consumer that does `import api from '@/lib/api'` (default import) gets a client that sends no auth header and never refreshes tokens — silent auth failure. Latent today (all current consumers use the named getApiClient(): features/predictive-maintenance, features/sentiment, routes/groups/person-months.tsx), so severity=low, but it is a footgun that will silently break auth the first time someone default-imports. Fix: remove the default export, or replace it with a lazy getter / Proxy that forwards to the live getApiClient() singleton."
-      ],
-      "expert": "frontend"
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — `export default getApiClient()` evaluated at module-load, before AuthProvider runs configureApiClient(). Default-import consumers get an unconfigured axios (no auth header, no 401 refresh)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Duplicate of code-review-ppt-web-core-api-default-export-unconfigured (same finding, alternate id from a parallel subagent run). Score suppressed to avoid double-counting; backlog item lives under the -unconfigured id."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-51 — OCR hooks use bare fetch() to call own api-server; no Authorization header, no 401 refresh."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-needing-maint-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:59-70 — `useNeedingMaintenance(daysAhead)` fetcher receives the parameter but query key ignores it; 30/60/90 day windows collide in cache."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-no-backoff",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:26,84-95 — WS_RECONNECT_INTERVAL_MS = 5_000 fixed reconnect; no backoff, no attempt cap."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-routes-unlocalized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/ — 6 route pages render user-facing copy but do NOT import next-intl useTranslations."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-account-routes-unlocalized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/ — 4 route pages render user-facing copy but do NOT import next-intl useTranslations."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 — load-error fallback hardcoded Slovak string 'Chyba pri načítaní inzerátu'."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-auth-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (ppt-web-core) — group routes lack PrivateRoute guard."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-query-silent-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (ppt-web-core) — financial hook swallows errors."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-hardcoded-true",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (ppt-web-ui) — FacilitiesPage isManager hardcoded true."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-page-swallows-load-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (ppt-web-ui) — FacilitiesPage swallows load error."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-reading-form-number-coerce-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (ppt-web-ui) — reading form coerces blank input to 0 on submit."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-price-map-i18n-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (reality-web) — price-map UI hardcoded English strings."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (reality-web) — SSO callback English fallback bypasses locale."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-journal-card-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (reality-web) — journal card hardcoded strings."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-fetch-never-applied",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (mobile-rn) — dashboard layout fetch response discarded; user customisations never applied."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-widget-bridge-auth-token-never-set",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review-2026-09-17-lag-fold",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Folded from unincorporated 2026-09-17 tier1d file (mobile-rn) — WidgetBridge.setAuthToken() never called after login/refresh; home-screen widgets show signed-out placeholder."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-18.md && H1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced (seen_signals +20, last_run_iso bumped)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id]|unique length",
+      "observed": "433==433",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emit of prior seen_signal ids (all 20 today ids fresh)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "decay applied to 4 open items >14d; 3 dropped at floor, 1 dec to 3; no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans <= 2 cap",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — brief lists skipped phases; cursors NOT advanced (last_pr_seen/last_issue_seen/last_commit_sha unchanged)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan promotion changes this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive ls-files count HEAD == staged",
+      "observed": "OK",
+      "expected": "OK"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty; no PR/issue/comment opened",
+      "observed": "[]",
+      "expected": "len<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is a no-op",
+      "observed": "n/a",
+      "expected": "n/a (skip)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0",
+      "expected": "0"
     }
   ]
 }
