@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-18",
       "plan": null
     },
     {
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7420,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-18",
       "plan": null
     },
     {
@@ -8313,8 +8315,8 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8322,13 +8324,14 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
         "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
-        "decayed 2026-08-30: -1 (no new signal in 14 days)"
+        "decayed 2026-08-30: -1 (no new signal in 14 days)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-30",
+      "updated_at": "2026-09-18",
       "plan": null
     },
     {
@@ -9878,7 +9881,7 @@
       "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "vector": "bug",
       "confidence": "high",
-      "score": 4,
+      "score": 3,
       "status": "open",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
@@ -9888,7 +9891,8 @@
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
         "PortalListingsRepository already calls GET /api/v1/my/listings (listMyListings) but has NO create method; backend endpoint POST /api/v1/my/listings already exists (portal_listings.rs:24 route + :207 create_listing, registered in main.rs:205) — fix is KMP-only",
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
-        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4."
+        "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
+        "decayed: -1 (no new signals in 14 days)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9897,7 +9901,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-01"
+      "updated_at": "2026-09-18"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
@@ -10633,6 +10637,260 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-stale",
+      "title": "ppt-web-core lib/api.ts default export is captured at module-load before configureApiClient() — silent auth failure for any default-import consumer",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-18 ppt-web-core api/hooks/contexts)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:371 — the default export evaluates at module-load time before AuthProvider runs configureApiClient(). The default export captures an UNCONFIGURED axios instance (no getToken interceptor, no onUnauthorized handler); configureApiClient() reassigns the singleton later but the default export keeps the pre-config reference. Latent today (current consumers all use the named getApiClient()), but a future default-import silently breaks auth."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-price-map-i18n-hardcoded",
+      "title": "reality-web price-map page: only h1 uses next-intl — every other user-facing string is a hardcoded Slovak literal on a 4-locale public page",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-17 reality-web price-map)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx — useTranslations(\"pages.priceMap\") but only h1 (:138) uses t(). ~40 hardcoded Slovak literals across PROPERTY_OPTIONS labels :30-34, transaction toggle :161, map loading :209, empty state :224, SVG aria-label :231, legend :272-278, back link :322, detail rows :337-348, CTA :392, right-panel :405-426, insights labels :77-97. cs/de/en visitors see Slovak. Landable frontend-only remedy: move each literal into messages/{en,sk,cs,de}.json under pages.priceMap and wrap with t()."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "title": "reality-web SSO callback: two loading messages in the (common) success path are hardcoded English on a 4-locale portal",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-17 reality-web sso-callback)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx — localizes error/title/return-home copy via useTranslations(\"auth.callback\") (:132-135), but two loading messages during the success path are hardcoded English: :67 \"Loading...\" in LoadingSpinner, :146 \"Completing login...\" in SsoCallbackContent. Landable frontend-only remedy: add auth.callback.loading/completing keys to messages/{en,sk,cs,de}.json and replace the two literals with t()."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-journal-card-i18n",
+      "title": "reality-web journal ArticleCard: hardcoded Slovak reading-time suffix while same-page sidebar uses t(readingTime) — cs/de/en journal readers see Slovak on every card",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-17 reality-web journal)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:96 — ArticleCard renders reading time as a hardcoded Slovak suffix. The same page's Most-Read sidebar correctly uses t(\"readingTime\", { min: article.readMin }) at :327. Landable frontend-only remedy: replace inline suffix with the existing t(\"readingTime\") call — same catalog key already exists."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "title": "ppt-web logout cache purge misses disputes/leases/violations/iot/my-units/templates roots — cross-user tenant/PII leak on shared workstations (recurring defect class)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-18 ppt-web-core queryKeys/AuthContext logout purge)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 AUTHED_QUERY_KEY_ROOTS is the allow-list AuthContext.tsx:624-626 iterates on logout; logout does NOT call queryClient.clear(). Any authed TanStack Query root missing from this list survives logout and is served to the NEXT user until refetch — cross-user tenant-data leak on shared/kiosk workstations.",
+        "RECURRING BUG CLASS: same defect as code-review-ppt-web-core-logout-cache-purge-gap (done) and code-review-ppt-web-core-logout-purge-notif-triggers (done). Each fix patched only the roots then known; NEW features have since added query hooks under STILL-MISSING roots.",
+        "STILL-MISSING roots (each confirmed used by a routed authed ppt-web page via a @ppt/api-client query hook): disputes (features/disputes/pages/MediationWorkspacePage.tsx, api-client all:[\"disputes\"] disputes/hooks.ts:29) — leaks PRIVATE mediation notes + dispute detail; leases + violations (routes/groups/leases.tsx; api-client leases/hooks.ts:23,39) — tenant PII / lease financials; iot (routes/groups/iot.tsx, features/iot/pages/IotAlertsPage.tsx; api-client iot/hooks.ts:42); my-units (features/my-unit/pages/MyUnitPage.tsx; api-client my-units/hooks.ts:9); templates (features/document-templates/pages/DocumentTemplatesPage.tsx; api-client templates/hooks.ts:16).",
+        "Fix (cloud-landable, single-file first pass): add the 6 missing roots to AUTHED_QUERY_KEY_ROOTS. STRUCTURAL to end recurrence: derive the purge set from every registered key factory across queryKeys + consumed @ppt/api-client factories, or invert to a small non-session DENY-list."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": "plans/code-review-ppt-web-core-logout-purge-disputes-leases-iot.md"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/lib/queryKeys.test.ts touched by 3 merged PRs since 2026-09-01 — logout-purge coverage plumbing",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-09-01"
+      ],
+      "evidence": [
+        "3 merged PRs since 2026-09-01 touched this file: PR #2943 (enforce logout purge allowlist coverage), PR #2952 (auto-discover feature-local *Keys factories), PR #2956 (harden queryKeys.test.ts auto-discovery: suite-crash risk + glob-depth gap)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/contexts/AuthContext.tsx touched by 2 merged PRs since 2026-09-01 — JWT boot-check + 401 replay",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-09-01"
+      ],
+      "evidence": [
+        "2 merged PRs since 2026-09-01 touched this file: PR #2941 (validate JWT exp at cold boot), PR #2942 (single-flight refresh + replay on 401)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "title": "Churn hotspot: frontend/apps/mobile/src/services/resetLocalData.ts touched by 2 merged PRs since 2026-09-01 — NFC credential + access-log purge on session change",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-09-01"
+      ],
+      "evidence": [
+        "2 merged PRs since 2026-09-01 touched this file: PR #2950 (purge NFC access log/QR/offline feedback on session change), PR #2955 (purge NFC credential material from SecureStore on session change)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2960",
+      "title": "Stalled review: PR #2960 (dependabot: bump expo-secure-store 56→57 in /frontend) — 8 days idle, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2960"
+      ],
+      "evidence": [
+        "PR #2960 opened 2026-09-10T10:24:37Z by dependabot[bot], no reviewDecision as of 2026-09-18, mobile-egress blocked CI (#2951)."
+      ],
+      "files": [],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2590",
+      "title": "Stalled review: PR #2590 (dependabot: bump expo-device 56→57 in /frontend) — 14 days idle, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2590"
+      ],
+      "evidence": [
+        "PR #2590 stalled since 2026-09-04T07:19:15Z, dependabot[bot], mobile-egress CI blocker (#2951)."
+      ],
+      "files": [],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2589",
+      "title": "Stalled review: PR #2589 (dependabot: bump @testing-library/react-native 13→14 in /frontend) — 14 days idle, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2589"
+      ],
+      "evidence": [
+        "PR #2589 stalled since 2026-09-04T07:19:14Z, dependabot[bot], mobile-egress CI blocker (#2951)."
+      ],
+      "files": [],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2588",
+      "title": "Stalled review: PR #2588 (dependabot: bump expo-status-bar 56→57 in /frontend) — 14 days idle, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2588"
+      ],
+      "evidence": [
+        "PR #2588 stalled since 2026-09-04T07:19:13Z, dependabot[bot], mobile-egress CI blocker (#2951)."
+      ],
+      "files": [],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2584",
+      "title": "Stalled review: PR #2584 (dependabot: bump sentry 0.48→0.49 in /backend) — 14 days idle, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2584"
+      ],
+      "evidence": [
+        "PR #2584 stalled since 2026-09-04T07:14:28Z, dependabot[bot], api-server-egress CI blocker (#2966)."
+      ],
+      "files": [],
+      "created_at": "2026-09-18",
+      "updated_at": "2026-09-18",
+      "plan": null
     }
   ]
 }

@@ -1,11 +1,20 @@
 {
   "date": "2026-09-18",
+  "generated": "2026-09-18T12:46:51Z",
   "run_mode": "incremental",
-  "generated": "2026-09-18T08:30:00Z",
-  "run_note": "Tier 1d demand-driven review-vector generation (claim buffer starved: claimable=12 < floor=36). ppt-dev-review static-analysis slice ONLY (no compile, no tests, no dev-stack). Segment selection: no explicit CHURN_FILES passed to this generator; state.review_cursor oldest-unreviewed pair tied at 2026-08-29 between ppt-web-core and reality-web. Chose ppt-web-core (stable cursor insertion-order tiebreak; frontend => cloud-landable, preferred over infra-blocked mobile-native/KMP + api-server-swagger). Saturation check: 0 open code-review-finding items for any segment in backlog.json, so no saturation-skip. Frontend expert reviewed lib/ (api.ts, errorHandler.ts, websocket.ts, storage.ts), hooks/ (useWebSocket, useNetworkStatus, useOrganization, usePerformanceMetrics), contexts/ (AuthContext, WebSocketContext), routes/. Segment is mature and well-documented: all console.* calls are import.meta.env.DEV-gated (no committed logging), no `as any` casts, single-flight token refresh is race-free, timers/listeners all clean up, WS service reads token live via ref (no stale-service leak), token-in-WS-URL is the documented browser workaround with short-lived access token. One genuine latent finding emitted (default-export footgun in lib/api.ts). Cap of 3 not reached; stopped early rather than padding with nits.",
-  "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "generator run — auto-fix is the dispatcher's decision, not this subagent's (single-writer rule; DISPATCHER_OWNED_COMMIT=1). Only candidate is score_delta=1 (below the score>=3 auto-fix threshold) anyway.",
+  "run_note": "Routine run after 16-day lag (last_run_iso=2026-09-01). Trigger payload signals buffer-low with all 12 open items infra-gated (#2966 api-server egress, #2951/#2652 mobile egress); this run refills the planner with cloud-landable frontend/reality-web vectors — folds the ppt-web-core + reality-web tier1d code-review-findings (previously staged in tier1d/*.json sidecars) into the daily aggregate, adds 3 churn hotspots from 17 merged PRs, records 5 stalled dependabot PRs, and promotes ONE plan (code-review-ppt-web-core-logout-purge-disputes-leases-iot — security/high/score-3, single-file ppt-web change). Phase 1.5 rotating-expert review SKIPPED: 6 tier1d code-review-findings are already unprocessed, so the review-cursor gains no new information from running the skill this pass; cursor stays untouched. Phase 1.6 PM synthesis SKIPPED: catch-up run with token budget dedicated to consolidation; pm_cursor + coverage_cursor untouched. Phase 5 auto-fix: no allowlist candidate met the certainty bar (the security promotion is a code change, not on the allowlist).",
   "signals": [
+    {
+      "id": "lag-warning-2026-09-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine last ran 2026-09-01T18:38:58Z — 16d 17h ago (LAG_HOURS>36 trigger). Also >= 3d stale-routine threshold. Cloud cron may be delayed or paused; dispatcher on planning branch still ticks (see .research/signals/2026-09-17-reality-web-tier1d.json and 2026-09-18-ppt-web-core-tier1d-2.json)."
+      ]
+    },
     {
       "id": "code-review-ppt-web-core-api-default-export-stale",
       "type": "code-review-finding",
@@ -14,10 +23,357 @@
       "score_delta": 1,
       "confidence": "medium",
       "candidate_vector": "bug",
-      "evidence": [
-        "frontend/apps/ppt-web/src/lib/api.ts:371 — `export default getApiClient()` is evaluated at module-load time, before AuthProvider runs configureApiClient(). At that point apiInstance is null, so getApiClient() builds an UNCONFIGURED axios instance (no getToken request interceptor => no Authorization header; no onUnauthorized handler => no single-flight 401 refresh-and-replay) and binds it as the default export. configureApiClient() later reassigns the `apiInstance` singleton, but the already-evaluated default export keeps its reference to the pre-config instance forever. Consequence: any consumer that does `import api from '@/lib/api'` (default import) gets a client that sends no auth header and never refreshes tokens — silent auth failure. Latent today (all current consumers use the named getApiClient(): features/predictive-maintenance, features/sentiment, routes/groups/person-months.tsx), so severity=low, but it is a footgun that will silently break auth the first time someone default-imports. Fix: remove the default export, or replace it with a lazy getter / Proxy that forwards to the live getApiClient() singleton."
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
       ],
-      "expert": "frontend"
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:371 default export evaluates at module-load time before AuthProvider runs configureApiClient(). Captures an UNCONFIGURED axios instance (no getToken interceptor, no onUnauthorized handler); configureApiClient() reassigns the singleton later but the default export keeps the pre-config reference. Latent today (current consumers use the named getApiClient()); a future default-import silently breaks auth."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-price-map-i18n-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx — useTranslations(pages.priceMap) but only h1 (:138) uses t(). ~40 hardcoded Slovak literals across PROPERTY_OPTIONS labels :30-34, transaction toggle :161, map loading :209, empty state :224, SVG aria-label :231, legend :272-278, back link :322, detail rows :337-348, CTA :392, right-panel :405-426, insights labels :77-97. cs/de/en visitors see Slovak on a 4-locale public page. Landable frontend-only remedy."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx :67 Loading... and :146 Completing login... are hardcoded English on the SSO success path of a 4-locale portal, while error/title/return-home already use useTranslations(auth.callback). Landable single-file frontend-only remedy: add auth.callback.loading/completing keys."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-journal-card-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:96 ArticleCard reading-time suffix is a hardcoded Slovak literal; the same page's Most-Read sidebar at :327 correctly uses t(readingTime, { min }) — pattern already exists in messages/*.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 AUTHED_QUERY_KEY_ROOTS allow-list iterated by AuthContext.tsx:624-626 on logout — no queryClient.clear(). Six routed authed roots missing: disputes, leases, violations, iot, my-units, templates. Cross-user PII leak on shared workstations. Recurring defect class (2 prior fixes: code-review-ppt-web-core-logout-cache-purge-gap done, code-review-ppt-web-core-logout-purge-notif-triggers done). Confidence HIGH — full static trace routed page → @ppt/api-client hook → key-factory root → confirmed absence from allow-list → logout confirmed to purge only listed roots."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-09-01",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts touched by 3 merged PRs since 2026-09-01 (#2943 #2952 #2956 — all logout-purge coverage plumbing)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-09-01",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx touched by 2 merged PRs since 2026-09-01 (#2941 boot JWT exp validation, #2942 single-flight refresh + replay on 401)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-09-01",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts touched by 2 merged PRs since 2026-09-01 (#2950 NFC access log/QR purge, #2955 NFC credential SecureStore purge)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/services/resetLocalData.ts"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2960",
+      "type": "stalled-review",
+      "source": "PR #2960",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2960 (dependabot: bump expo-secure-store 56→57 in /frontend) — opened 2026-09-10T10:24:37Z, no reviewDecision as of 2026-09-18 (8 days). Likely mobile-egress CI blocker (#2951)."
+      ],
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-2590",
+      "type": "stalled-review",
+      "source": "PR #2590",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2590 (dependabot: bump expo-device 56→57 in /frontend) — 14+ days idle since 2026-09-04, no reviewDecision."
+      ],
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-2589",
+      "type": "stalled-review",
+      "source": "PR #2589",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2589 (dependabot-dev: bump @testing-library/react-native 13→14) — 14+ days idle since 2026-09-04, no reviewDecision."
+      ],
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-2588",
+      "type": "stalled-review",
+      "source": "PR #2588",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2588 (dependabot: bump expo-status-bar 56→57) — 14+ days idle since 2026-09-04, no reviewDecision."
+      ],
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-2584",
+      "type": "stalled-review",
+      "source": "PR #2584",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2584 (dependabot: bump sentry 0.48→0.49 in /backend) — 14+ days idle since 2026-09-04, no reviewDecision. Likely api-server-egress CI blocker (#2966)."
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Merged 2026-09-04: chore(deps): bump the npm-minor-patch group across 1 directory with 40 updates. Not scored."
+      ],
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the highest-scoring cloud-landable finding this run (code-review-ppt-web-core-logout-purge-disputes-leases-iot, score 3, security, high) is a multi-line code change (allow-list append + coverage test extension) outside the Phase 5 allowlist. The allowlist covers doc-stub creation, orphan-doc removal, lockfile-spec alignment, fixme issue-only filing, stalled-review comments — none of these fits the queryKeys.ts append. Left for the manual implementer path.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-18.md && head -1 matches # 2026-09-18",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emitted non-cumulative signal ids with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "each open item >14d lost >=1 pt or moved to dropped",
+      "observed": "3 decayed to dropped, 1 decayed 4->3 (create-listing) — all open items >14d handled",
+      "expected": "each open >14d has (prev.score - 1) <= curr.score < prev.score OR dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial pass annotation in brief",
+      "observed": "1/1 plans annotated",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "4 metadata fields present",
+      "observed": "4/4",
+      "expected": "4"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "11 headings present",
+      "observed": "11/11",
+      "expected": "11"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "at least one capability ticked",
+      "observed": "3 ticked (C1,C6,C7)",
+      "expected": ">=1"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "Mode: local-only|cloud-ok declared",
+      "observed": "Mode: cloud-ok",
+      "expected": "matches"
+    },
+    {
+      "goal": "G7-files",
+      "passed": true,
+      "command": "each Files: bullet resolves on disk",
+      "observed": "3/3 exist",
+      "expected": "all exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen from backlog.json",
+      "observed": "diff -q empty",
+      "expected": "empty"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — no failed phases this run",
+      "observed": "none failed (1.5 and 1.6 intentionally skipped, not failed)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or in _archive",
+      "observed": "no plans removed since prior HEAD",
+      "expected": "each present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count non-decreasing",
+      "observed": "unchanged",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q empty",
+      "expected": "empty"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no PR/issue/comment opened; kill-switch not set, allowlist not met)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management-artifacts + pm_cursor + coverage_cursor (Phase 1.6 skipped => no-op)",
+      "observed": "pm_cursor.next_index unchanged, gate skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
     }
   ]
 }
