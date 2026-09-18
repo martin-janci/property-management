@@ -1,0 +1,59 @@
+{
+  "segment": "reality-web",
+  "date": "2026-09-18",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (ppt-dev-review, one static-analysis slice). Backlog is starved of CLOUD-LANDABLE work: mobile-native/KMP is AGP-egress-blocked (#2652), api-server is utoipa-swagger-ui-egress-blocked (#2966), mobile RN jest is rotted (#2951) — so backend/KMP/RN findings are un-landable this cycle. This run produces fresh cloud-LANDABLE frontend-web (Next.js) findings.",
+  "selection_reason": "oldest-unreviewed",
+  "selection_detail": "No CHURN_FILES passed to this Tier-1d run, so priority-1 (churn-aligned) does not apply. state.json review_cursor ties ppt-web-core (2026-08-29) and reality-web (2026-08-29) as oldest. ppt-web-core was already reviewed twice earlier today (2026-09-18-ppt-web-core-tier1d.json + -tier1d-2.json), so this run takes the other tied-oldest segment, reality-web, to avoid a third same-day pass on ppt-web-core. reality-web is a cloud-LANDABLE frontend segment (React/Next.js, Node/Vitest/Biome) preferred over the egress-blocked backend/mobile-native segments per the dispatcher's cloud-landability guidance. Backlog saturation check: 0 open code-review-finding rows for reality-web in backlog.json (only 4 open rows exist, all mobile-native-kmp), so the >=3-open skip rule does not trigger. Segment root resolved to frontend/apps/reality-web/src (the skill's literal frontend/reality-web/src predates the apps/ workspace layout); 217 source files. Static analysis only — no compile/test executed. DEDUP: the prior reality-web pass (2026-09-17-reality-web-tier1d.json) emitted 3 i18n findings on PUBLIC pages (price-map, sso-callback, journal-card); this pass covers the AUTHENTICATED realtor/* + account/* route groups, which are a distinct, non-overlapping set of files.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-routes-unlocalized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/ — all 6 route pages render user-facing copy but NONE import next-intl useTranslations: realtor/page.tsx, realtor/[id]/page.tsx, realtor/profile/page.tsx, realtor/listings/new/page.tsx, realtor/listings/[id]/edit/page.tsx, realtor/analytics/page.tsx (grep -L useTranslations over find realtor -name page.tsx)",
+        "realtor/profile/page.tsx — hardcoded English throughout: 'Loading profile…' (JSX), 'Name is required' (validation), 'Could not load profile.'/'Could not save profile.' (error states); no t() calls, no next-intl import",
+        "realtor/analytics/page.tsx:15-18 — period picker labels hardcoded 'Last 7 days'/'Last 30 days'/'Last 90 days'/'Last year'; :54 error fallback 'Could not load analytics.'; :68 <h1>Analytics</h1>",
+        "These pages live under the [locale] segment (sk|cs|de|en) and the rest of reality-web (public pages) is fully localized via next-intl, so a cs/de/en user — and even the sk-default primary audience — sees fixed English UI on every authenticated realtor screen. i18n defect on user-facing paths; landable in the cloud runner (Node/Vitest/Biome). Traced statically across the whole route group."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-account-routes-unlocalized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/ — all 4 route pages render user-facing copy but NONE import next-intl useTranslations: account/page.tsx, account/profile/page.tsx, account/listings/[id]/edit/page.tsx, account/password/page.tsx (grep -L useTranslations)",
+        "account/password/page.tsx (security-sensitive change-password flow) — hardcoded English validation + error copy: 'Current password is required', 'New password must differ from the current password', 'Passwords do not match', 'Current password is incorrect.', 'Could not change password. Please try again.', <h1>Change password</h1>, <span>Current password</span>",
+        "account/profile/page.tsx — 'Display name is required', 'Could not save profile.', <h1>Edit profile</h1>, 'Saving…'/'Save changes' — all hardcoded English, no t()",
+        "Same [locale] routing as the localized public pages, so cs/de/en (and sk-default) users get fixed English on all authenticated account screens including the password-change security flow. i18n defect on user-facing paths; landable in the cloud runner. Distinct file set from the public-page i18n findings in 2026-09-17-reality-web-tier1d.json."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 — load-error fallback hardcoded in Slovak: setLoadError(err instanceof RealtorApiError ? err.message : 'Načítanie inzerátu zlyhalo.')",
+        "same file :213 — save-error fallback hardcoded Slovak: 'Uloženie zlyhalo, skúste znova.'",
+        "INCONSISTENCY: the listings-edit pages hardcode Slovak fallbacks while the sibling account/profile + account/password + realtor/* pages hardcode English (e.g. 'Could not save profile.') — the authenticated route groups have no consistent i18n baseline at all; each page's non-t() fallback language is arbitrary",
+        "Under [locale] routing these Slovak strings render verbatim for cs/de/en users. Low-severity i18n/consistency defect; the durable fix is to route all authenticated-route copy through next-intl (paired with the realtor-routes + account-routes findings above), landable in the cloud runner."
+      ]
+    }
+  ]
+}
