@@ -1,0 +1,42 @@
+{
+  "generated": "2026-09-19T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: honest_claimable=12 < BUFFER_FLOOR=36). Static single-segment code review, no compilation / no test execution. This run produces a fresh CLOUD-LANDABLE frontend backlog vector.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (by state.json review_cursor) + cloud-landable preference. review_cursor ties reality-web (2026-08-29) and ppt-web-core (2026-08-29) as the two oldest segments; both are cloud-landable frontend (dispatcher-preferred over the egress-blocked api-server / mobile-native-KMP segments). reality-web already received today's Tier-1d pass (.research/signals/2026-09-19-reality-web-tier1d.json), so the tie resolves to ppt-web-core to avoid a same-day duplicate slice. No CHURN_FILES were handed to this slice, so churn-alignment did not apply. SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for ppt-web-core (the only 4 OPEN code-review rows are all mobile-native-kmp), so the >=3-open skip rule does not trigger. DEDUP: recent ppt-web-core passes (2026-09-16 .. 2026-09-18) covered route-group auth guards (core.tsx/financial.tsx), silent financial query errors, queryKeys logout purge, api.ts default-export config, and the ocr/predictive-maintenance/iot hooks. This pass reviewed the previously-UNCOVERED lib/hooks core (errorHandler.ts, websocket.ts, analytics.ts, storage.ts, useOrganization.ts, useWebSocket.ts, useNetworkStatus.ts, usePerformanceMetrics.ts) and returns 1 net-new, non-duplicate finding.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "lib/websocket.ts (JSON.parse of frames is try/catch-guarded at handleMessage; exponential backoff with [0.5,1.0) jitter + max-attempts cap + max-retries-exceeded event; token-rotation detection tears down a socket opened with a stale JWT before reconnect — exemplary)",
+    "lib/storage.ts (isLocalStorageAvailable fully try/catch + SSR-guarded)",
+    "lib/analytics.ts (trackEvent wraps dataLayer.push and every sink in try/catch so a throwing sink can never bubble into a React handler)",
+    "hooks/useOrganization.ts (throws a clear developer error outside provider; no silent-null path)",
+    "hooks/useWebSocket.ts (handler stored in ref to avoid re-subscribe churn; unsubscribe returned from every effect; multi-sub cleanup loop correct)",
+    "hooks/usePerformanceMetrics.ts (logPerformanceMetrics console.* output is gated behind import.meta.env.DEV — not shipped to prod console)",
+    "lib/errorHandler.ts parseRetryAfter (handles numeric seconds AND HTTP-date form, clamps to >=0) and parseHttpStatusError (maps every status class to a localized catalogue copy)"
+  ],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-backend-message-passthrough",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 ppt-web-core errorHandler backend-message passthrough)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:221 (`message: data.message || errorInfo.message`) renders the RAW backend `ErrorResponse.message` verbatim as the user-facing error message for EVERY structured error response, regardless of HTTP status class. There is no status-based scrubbing: a 5xx (INTERNAL_ERROR / SERVICE_UNAVAILABLE) that arrives with a structured body takes the `data.message` branch and shows the backend string directly, instead of falling back to the localized generic `errors.catalogue.INTERNAL_ERROR.message` copy. The file header (lines 6-10) documents this as intentional (\"raw backend `message`s are passed through untranslated\"), but the design trusts the backend to never place internal detail (SQL text, panic strings, internal identifiers, upstream stack fragments) in `message` on server-class errors — a fragile invariant for an info-disclosure surface.",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:194 (`message: error.message || copy.message`) is the same pattern for the plain `Error` branch: an arbitrary thrown JS Error's `.message` (e.g. a `TypeError: Cannot read properties of undefined`) is surfaced verbatim to the user rather than the generic localized copy — a UX/quality gap in addition to the info-disclosure angle.",
+        "Impact: MEDIUM — information disclosure / poor error UX, gated on the backend actually emitting internal detail in `ErrorResponse.message` for 5xx (or an unhandled JS Error reaching parseApiError). Confidence MEDIUM (static-only): the passthrough sinks are confirmed by direct read; NOT confirmed here (no build/test, api-server not compiled in this cloud runner) is whether the Rust api-server already scrubs `message` to a safe string for 5xx. If it does, this is a defense-in-depth gap; if it does not, raw server internals reach the end user's screen.",
+        "Fix (cloud-landable, single-file frontend edit): in parseErrorResponse, prefer the localized catalogue copy over `data.message` for server-class statuses (statusCode >= 500) and for unknown/absent error codes — e.g. `const isServerClass = (statusCode ?? 0) >= 500; message: (!isServerClass && data.message) ? data.message : errorInfo.message`. Keep `data.message` for 4xx validation/business errors where it is user-actionable. Apply the same generic-copy fallback to the plain-Error branch (line 194). Verifies cleanly in the cloud runner (single-package ppt-web change, no backend/build coupling); errorHandler.test.ts already exists as the natural home for the new cases."
+      ]
+    }
+  ]
+}
