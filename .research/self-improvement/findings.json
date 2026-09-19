@@ -1,8 +1,29 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-28T06:38:55Z",
-  "generated_by": "1b52746b28b14c2dd33abdc35d5cb77594723be4",
+  "generated_at": "2026-09-19T04:39:54Z",
+  "generated_by": "41c905b77a63cd10097730fcecd6de27c83e7e05",
   "findings": [
+    {
+      "finding_id": "mcp-push-cannot-inline-large-archive",
+      "first_seen": "2026-06-03T15:48:48Z",
+      "last_seen": "2026-08-27T08:34:00Z",
+      "recurrence": 18,
+      "severity": "high",
+      "category": "infra",
+      "symptom": "Phase 6 archive-move produced a 198KB assignments-archive.json; mcp__github__push_files cannot inline a file that large (and git push is proxy-403'd), so the archive could not be pushed. The merged PR#1019 row was dropped from active (T19-clean) but its archive record was not persisted — Merged-total understated by 1.",
+      "evidence": [
+        "c801b17 (2026-08-03 02:14 run): action-list-archive.json now 503KiB > 64KiB MCP inline ceiling -- mcp-push-size-guard would have FAIL-CLOSED had MCP push been attempted; state landed via direct git push (no size limit) instead.",
+        "4699a32bdcbe516741fa55a1be21fcbef14a9a07: backlog.json 374,395 B (~365 KiB) far over the 64 KiB MCP inline ceiling — MCP push_files would have been unsafe this run; the direct git transport carried it.",
+        "640e9ec (2026-08-24 16:25 run): action-list-archive.json = 704 KB > 64 KiB MCP inline ceiling; Phase 6 fell back to direct git push (PR #2744 size-guard fix still unmerged).",
+        "6d09871 (2026-08-26 06:31 run): gh CLI unavailable, Phase 0.5/6 used git-push fallback (github_io_fallback=push); MCP inline path still cannot carry the oversize archive and PR #2744's size-guard fix remains unmerged.",
+        "227d979: archives 786KB/736KB exceed MCP inline ceiling -> git push fallback"
+      ],
+      "root_cause": "assignments-archive.json grows unbounded (175 rows, ~1.1KB/row) while the only working push path in this env (MCP push_files) requires the full file content inline. The existing 'git-push-blocked-by-proxy' finding forces MCP-only; this finding is the collision of that constraint with an ever-growing archive.",
+      "proposed_fix": "PROVEN WORKAROUND this run: push the dispatcher state commit to a NEW branch (new-branch push is NOT proxy-blocked), open a PR via mcp__github__create_pull_request, then land it with mcp__github__merge_pull_request (squash). The server-side merge carries files of ANY size, bypassing both the dev-push-403 and the MCP push_files 64KB inline limit — lands the full assignments-archive.json with archived terminal rows. Phase 6 should adopt this PR+API-merge path as the primary push mechanism in this env (replacing PUSH_METHOD=mcp push_files for the large archive). Landed PR #1163 (sha 08ab915) this way; T19 now green on dev.",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
+    },
     {
       "finding_id": "mcp-primary-push-default-obsolete-direct-git-push-works",
       "title": "The whole MCP-primary push contract + the 64KiB mcp-push-size-guard are founded on a proxy-403 assumption that is FALSE in this env — direct `git push origin dev` works, so the guard false-positives on the 333KB assignments-archive.json",
@@ -23,27 +44,6 @@
       "proposed_fix": "Replace the hard-coded proxy-403 assumption with a runtime probe at Phase 1: (1) ensure the commit author email is <user>@users.noreply.github.com (avoids GH007); (2) attempt a lightweight `git push` capability check (dry-run, or push the state branch) and set PUSH_METHOD=git on success, falling back to MCP push_files only on an actual 403; (3) when PUSH_METHOD=git, BYPASS the 64KiB mcp-push-size-guard entirely (git carries arbitrary sizes), so the 333KB archive lands directly instead of via the PR+API-merge workaround. This supersedes the premise of git-push-blocked-by-proxy and resolves mcp-push-cannot-inline-large-archive in envs where push works. Files: .research/dispatcher-prompt.md (Phase 1 push-capability probe + commit-email guard; Phase 6 push step + size-guard gate).",
       "effort": "medium",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 push-capability probe + Phase 6 push step / mcp-push-size-guard)",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
-      "finding_id": "mcp-push-cannot-inline-large-archive",
-      "first_seen": "2026-06-03T15:48:48Z",
-      "last_seen": "2026-08-27T08:34:00Z",
-      "recurrence": 18,
-      "severity": "high",
-      "category": "infra",
-      "symptom": "Phase 6 archive-move produced a 198KB assignments-archive.json; mcp__github__push_files cannot inline a file that large (and git push is proxy-403'd), so the archive could not be pushed. The merged PR#1019 row was dropped from active (T19-clean) but its archive record was not persisted — Merged-total understated by 1.",
-      "evidence": [
-        "c801b17 (2026-08-03 02:14 run): action-list-archive.json now 503KiB > 64KiB MCP inline ceiling -- mcp-push-size-guard would have FAIL-CLOSED had MCP push been attempted; state landed via direct git push (no size limit) instead.",
-        "4699a32bdcbe516741fa55a1be21fcbef14a9a07: backlog.json 374,395 B (~365 KiB) far over the 64 KiB MCP inline ceiling — MCP push_files would have been unsafe this run; the direct git transport carried it.",
-        "640e9ec (2026-08-24 16:25 run): action-list-archive.json = 704 KB > 64 KiB MCP inline ceiling; Phase 6 fell back to direct git push (PR #2744 size-guard fix still unmerged).",
-        "6d09871 (2026-08-26 06:31 run): gh CLI unavailable, Phase 0.5/6 used git-push fallback (github_io_fallback=push); MCP inline path still cannot carry the oversize archive and PR #2744's size-guard fix remains unmerged.",
-        "227d979: archives 786KB/736KB exceed MCP inline ceiling -> git push fallback"
-      ],
-      "root_cause": "assignments-archive.json grows unbounded (175 rows, ~1.1KB/row) while the only working push path in this env (MCP push_files) requires the full file content inline. The existing 'git-push-blocked-by-proxy' finding forces MCP-only; this finding is the collision of that constraint with an ever-growing archive.",
-      "proposed_fix": "PROVEN WORKAROUND this run: push the dispatcher state commit to a NEW branch (new-branch push is NOT proxy-blocked), open a PR via mcp__github__create_pull_request, then land it with mcp__github__merge_pull_request (squash). The server-side merge carries files of ANY size, bypassing both the dev-push-403 and the MCP push_files 64KB inline limit — lands the full assignments-archive.json with archived terminal rows. Phase 6 should adopt this PR+API-merge path as the primary push mechanism in this env (replacing PUSH_METHOD=mcp push_files for the large archive). Landed PR #1163 (sha 08ab915) this way; T19 now green on dev.",
-      "effort": "medium",
       "status": "open",
       "operator_notes": ""
     },
@@ -113,17 +113,17 @@
       "finding_id": "remediation-fixes-trapped-in-unmergeable-self-pr",
       "title": "Multiple root-cause fixes for recurring self-review findings are batched into a single self-authored PR (#2744) that is unmergeable on the needs-human-review gate, so every defect they fix keeps recurring while the fix sits written-but-unlandable",
       "first_seen": "2026-08-24T16:31:37Z",
-      "last_seen": "2026-08-28T06:38:55Z",
-      "recurrence": 4,
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 5,
       "severity": "high",
       "category": "merge",
       "symptom": "PR #2744 carries fixes for TWO recurring defects -- the >64KiB archive push-guard regression that forces every Phase 6 to fall back to git push, and the retry-remint 'no actionable work' ghost-retry -- yet has sat ~11d unmergeable on the needs-human-review self-PR gate, so both defects keep recurring run-over-run.",
       "evidence": [
-        "640e9ec (2026-08-24 16:25 run): THIS run's Phase 6 was forced to land via direct git push because action-list-archive.json (704 KB) exceeds the 64 KiB MCP inline ceiling -- the exact size-guard regression whose fix is blocked in PR #2744.",
         "f3ac28c (2026-08-24 12:35 run): retry-remint root-cause fix (intrinsic no-PR-needed summary guard) reported 'sitting UNMERGED in PR #2744'; the same PR also carries the size-guard fix -- one human-gated self-PR blocks multiple unrelated root-cause remediations.",
         "6d09871 (2026-08-26 06:31 run): PR #2744 still unmerged ~13d; it batches the >64KiB archive push-guard fix + retry-remint fix, so both defects keep recurring (Phase 6 again forced onto git-push fallback github_io_fallback=push).",
         "d5fb3e5: gh-issue-2743 exit-4 routing fix in self-PR #2744 still human-gated, parked ~14d",
-        "1b52746 (2026-08-28 06:36 run): PR #2744 (gh-issue-2743) remains a review-hang ALERT >7d (age ~361h), human-gated self-PR still batching size-guard + retry-remint fixes."
+        "1b52746 (2026-08-28 06:36 run): PR #2744 (gh-issue-2743) remains a review-hang ALERT >7d (age ~361h), human-gated self-PR still batching size-guard + retry-remint fixes.",
+        "41c905b (2026-09-19 04:29 run): PR #2744 still human-gated (~887h); batched dispatcher fixes remain unlanded; both open auto-impl PRs (#2744, #2902) human-gated."
       ],
       "root_cause": "The dispatcher's own remediation PRs are self-authored and land in needs-human-review, which the shared bot account cannot formally approve or merge (see self-pr-approve-blocked-shared-bot-review-account). As fixes accumulate into one stuck PR, every defect they address keeps recurring, and the self-review re-logs findings whose fix is already written -- a fix-starvation feedback loop.",
       "proposed_fix": "Operator: merge/un-draft PR #2744 to release the batched size-guard + retry-remint fixes. Systemically: (a) split dispatcher self-remediation into one-fix-per-PR so a single human-gated PR cannot block multiple unrelated fixes; (b) provision a second review identity so bot-authored fix PRs can receive a formal approval; (c) surface a distinct Phase 7 'remediation-blocked' line listing recurring findings whose proposed_fix is already staged in an unmerged PR. Files: .research/dispatcher-prompt.md (Phase 2 self-PR routing + Phase 7 line).",
@@ -234,6 +234,23 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
+      "finding_id": "orphaned-prs-reconciliation-noise",
+      "title": "Fire-and-forget implementer spawns lose the row<->PR link, leaving orphaned PRs back-filled in Phase 2",
+      "severity": "high",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T12:28:33Z",
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
+      "evidence": [
+        "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
+        "Reconciliation/orphan noise present in 2 of the 3 visible runs",
+        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
+      ],
+      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
+      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
+      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
       "finding_id": "dup-suffix-variant-dodges-dedup",
       "title": "Suffix-variant task_ids (-impl/-fix/-v2) bypass the dedup gate and open a second PR for the same gap",
       "severity": "high",
@@ -251,21 +268,46 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
-      "finding_id": "orphaned-prs-reconciliation-noise",
-      "title": "Fire-and-forget implementer spawns lose the row<->PR link, leaving orphaned PRs back-filled in Phase 2",
+      "finding_id": "api-server-cloud-build-egress-no-coded-claim-gate",
+      "title": "api-server tasks are structurally unbuildable in the cloud runner (utoipa-swagger-ui GitHub-zip egress-403, #2966) but -- unlike the mobile-native block -- there is NO coded claim-gate, so 3 HIGH cross-tenant IDOR security retries are parked by ad-hoc judgment every run with no deterministic gate or Phase 7 surfacing",
+      "first_seen": "2026-09-19T04:39:54Z",
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 1,
       "severity": "high",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T14:42:00Z",
-      "recurrence": 2,
+      "category": "claim",
+      "symptom": "3 HIGH-severity cross-tenant IDOR security retries (gh-issue-2944/2945/2946-retry1) plus an apns-fanout retry are stamped [CLOUD-BUILD-BLOCKED] because api-server cannot build in the cloud runner (utoipa-swagger-ui build-script GitHub-zip download egress-403, #2966). Unlike mobile-native (mobile-native-gate.sh + a Phase 7 gated line + self-test T32), the api-server block has no coded gate -- each run parks these by judgment, risking a wasted implementer spawn or silent rot of HIGH security fixes.",
       "evidence": [
-        "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
-        "Reconciliation/orphan noise present in 2 of the 3 visible runs",
-        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
+        "41c905b (2026-09-19 04:29 run): gh-issue-2944/2945/2946-retry1 [CLOUD-BUILD-BLOCKED], parked by judgment (no coded gate); api-server swagger-ui egress-403 (#2966).",
+        "fe9b912 (2026-09-18 18:30 run): 'Backend cloud-build-gated (4, no coded claim-gate yet -- parked by judgment per #2966): gh-issue-2944/2945/2946-retry1, code-review-api-core-apns-jwt-per-send-mint-retry2 (all api-server; utoipa-swagger-ui build-script egress 403).'",
+        "e0c7068 (2026-09-18 16:29 run): '4 api-server/api-core retries infra-gated (utoipa-swagger-ui egress, #2966 open)'.",
+        "d577cb2 (2026-09-18 12:30 run): '4 backend/api-core (utoipa-swagger-ui build egress-blocked, #2966)'."
       ],
-      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
-      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "root_cause": "The cloud runner blocks the GitHub-hosted zip that utoipa-swagger-ui's build script fetches, so every api-server build (hence `just verify`) fails (#2966, operator-only fix). The dispatcher recognises this only by ad-hoc judgment -- there is no api-server equivalent of mobile-native-gate.sh -- so parking is non-deterministic, unsurfaced in a structured Phase 7 line, and unprotected by a self-test. Same egress root cause as implementer-verify-env-blocked-github-egress-blocks-pr; the systemic gap here is the MISSING coded gate.",
+      "proposed_fix": "Two tracks. (operator) Resolve #2966: vendor/cache the swagger-ui asset or allow-list the egress so api-server builds in the cloud runner -- this also unblocks the 3 HIGH IDOR fixes. (dispatcher) Add a coded cloud-build gate mirroring mobile-native-gate.sh: a .research/api-server-cloud-build-gate.sh predicate that gates api-server task_ids while #2966 is open, wired into Phase 3 candidate exclusion + a Phase 7 'API-server cloud-build gated (N)' line + self-test coverage; auto-lift when #2966 closes. Files: new .research/api-server-cloud-build-gate.sh + .research/dispatcher-prompt.md (Phase 3/7) + .research/dispatcher-self-test.sh.",
+      "effort": "medium",
+      "affected_artifact": "new .research/api-server-cloud-build-gate.sh + .research/dispatcher-prompt.md (Phase 3/7) + GitHub issue #2966",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "mobile-native-gate-false-positive-blocks-devops-unblock-task",
+      "title": "The mobile-native claim-gate matches on a naive 'mobile-native' id substring, so it gates pm-devops-unblock-mobile-native-cloud-builds -- the keystone task meant to REMOVE the gate can never be claimed (catch-22)",
+      "first_seen": "2026-09-19T04:39:54Z",
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 1,
+      "severity": "high",
+      "category": "claim",
+      "symptom": "The keystone task pm-devops-unblock-mobile-native-cloud-builds (high, pm-devops) is excluded from claim candidates by the mobile-native claim-gate because its id contains the 'mobile-native' token. The one task that would unblock the AGP-egress class is permanently un-claimable by the same gate it exists to remove.",
+      "evidence": [
+        "41c905b (2026-09-19 04:29 run): pm-devops-unblock-mobile-native-cloud-builds excluded by the mobile-native claim gate via naive id-token match -- keystone unblock task un-claimable; flagged this run as a gate false-positive.",
+        "fe9b912 (2026-09-18 18:30 run): Phase 3 body 'pm-devops-unblock-mobile-native-cloud-builds (NOTE: the unblock task itself is gated by naive `mobile-native` id-token match -- catch-22)'."
+      ],
+      "root_cause": "mobile-native-gate.sh gates any task_id containing the substring 'mobile-native'. pm-devops-unblock-mobile-native-cloud-builds is a pm-devops infra task (it removes the cloud-build egress block), not a KMP build, but its id contains the token, so the predicate falsely gates it -- the gate prevents its own removal.",
+      "proposed_fix": "Exempt the unblock/devops keystone from the gate: in .research/mobile-native-gate.sh, do not gate ids matching '^pm-devops-' or containing 'unblock' (or gate on stack/specialist metadata rather than an id substring). Extend dispatcher-self-test.sh T32 with an assertion that the predicate does NOT gate 'pm-devops-unblock-mobile-native-cloud-builds'. Files: .research/mobile-native-gate.sh + .research/dispatcher-self-test.sh (T32).",
+      "effort": "small",
+      "affected_artifact": ".research/mobile-native-gate.sh + .research/dispatcher-self-test.sh (T32)",
+      "status": "open",
+      "operator_notes": ""
     },
     {
       "finding_id": "base-cargo-deny-advisories-red-blocks-all-merges",
@@ -326,28 +368,6 @@
       "operator_notes": "Fixed inline this run. Add T21 self-test: verify ALL_ARCHIVE_IDS includes failed rows."
     },
     {
-      "finding_id": "goal-check-gc1-orphan-action-list-items",
-      "title": "goal-check GC1 referential-integrity FAILs with 105 orphan action-list items referencing nonexistent coverage entries",
-      "severity": "high",
-      "category": "goal-check",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T15:22:00Z",
-      "last_seen": "2026-05-28T15:22:00Z",
-      "recurrence": 1,
-      "symptom": "goal-check.sh GC1-referential-integrity FAIL — observed orphans=105, done_with_open_gap=10 (expected 0/0). First run where goal-check.sh actually executes (prior run it was SKIP/not-found), immediately red.",
-      "evidence": [
-        "bash .research/goal-check.sh: 'FAIL GC1-referential-integrity — observed=orphans=105 done_with_open_gap=10 expected=orphans=0 done_with_open_gap=0'",
-        "b8bf30ad Phase 7: 'goal-check: GC1-referential-integrity=FAIL'",
-        "Prior run 6bf8e883: 'goal-check: SKIP (goal-check.sh not found)' — the gate was effectively absent until this run, so accumulated coverage/action-list drift went unmeasured",
-        "done_with_open_gap=10 overlaps the reclaim-of-already-merged-task-id root cause (merged gaps still flagged open)"
-      ],
-      "root_cause": "action-list.json carries 105 items whose coverage reference no longer exists in coverage.json (coverage entries removed/renamed without cascading to action-list), plus 10 coverage gaps marked done while still open. The newly-added goal-check.sh exposes a backlog of referential drift that was never enforced before.",
-      "proposed_fix": "Add a Phase 2.6 cascade step that prunes/relinks orphan action-list items when coverage entries change, and reconciles coverage done-state against archive merges. Make goal-check.sh GC1 a Phase 6 gate (record-only first, enforcing once the 105-item backlog is drained). Triage the existing 105 orphans into prune-vs-relink as a one-time cleanup.",
-      "effort": "medium",
-      "affected_artifact": ".research/management/action-list.json + .research/management/coverage.json + .research/dispatcher-prompt.md (Phase 2.6 cascade)",
-      "operator_notes": "REFRAMED + drafted on fix/dispatcher-gc1-referential-integrity. The 105 orphans were mostly a GC1 MEASUREMENT BUG: GC1 prefix-matched the full coverage slug, but action-list gap ids carry a different slug than coverage ids for the same story (gap-10b-3-admin-health-ui vs coverage 10b-3-platform-health-monitoring). Matching on the <epic>-<story> numeric stem instead drops false orphans 105->10. The 10 true orphans (82-6..82-9, 85-3, 9-2, 10a-4) are real roadmap stories MISSING from coverage.json -> author them (relink), never prune live work (13 were in-progress). Separately, the real integrity leak is 46 OPEN gap items whose exact task_id is already merged/done in the archive (shipped-but-never-closed; same as reclaim-of-already-merged-task-id). Fix: (a) goal-check.sh GC1 now stem-matches + replaces the story-level done check (which false-alarmed on 25 legit follow-ups) with a precise per-task archive-terminal leak check; (b) new idempotent .research/gc1-reconcile.sh auto-closes the 46 leaks (stamps merged PR+date) and emits the 10 orphans to gc1-orphan-triage.md; (c) Phase 2.6 runs the reconcile every cycle BEFORE computing the claimable pool (also shrinks GC3 overshoot). Did NOT commit a mutated action-list.json (volatile state); the cascade drains it on the next run. Enforce GC1 as a Phase 6 gate once the orphan-triage backlog hits 0. Landed as commit 17463444 on fix/dispatcher-postmerge-cadence-clone-mtime."
-    },
-    {
       "finding_id": "goal-check-gc3-buffer-overshoot",
       "title": "goal-check GC3 buffer-bounds FAILs — claimable=117 is ~2x the upper bound of 60 after a +30 Phase 2.6 refill",
       "severity": "high",
@@ -368,6 +388,28 @@
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill) + .research/goal-check.sh (shared bounds)",
       "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap. goal-check.sh now owns BUFFER_FLOOR/TARGET/CEIL (18/36/60, env-overridable) as the single source of truth; GC3 reads them. Phase 2.6 mirrors them via read_bound() and adds Tier 0 (overflow drain): when claimable>CEIL, defer the lowest-scored excess back to backlog (logged, never silent) until claimable==CEIL; Tier 1 refill capped at min(TARGET,CEIL). Does NOT auto-drain the existing 112->60 backlog in one shot — it converges over runs as Tier 0 fires. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
+    },
+    {
+      "finding_id": "goal-check-gc1-orphan-action-list-items",
+      "title": "goal-check GC1 referential-integrity FAILs with 105 orphan action-list items referencing nonexistent coverage entries",
+      "severity": "high",
+      "category": "goal-check",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T15:22:00Z",
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 1,
+      "symptom": "goal-check.sh GC1-referential-integrity FAIL — observed orphans=105, done_with_open_gap=10 (expected 0/0). First run where goal-check.sh actually executes (prior run it was SKIP/not-found), immediately red.",
+      "evidence": [
+        "bash .research/goal-check.sh: 'FAIL GC1-referential-integrity — observed=orphans=105 done_with_open_gap=10 expected=orphans=0 done_with_open_gap=0'",
+        "b8bf30ad Phase 7: 'goal-check: GC1-referential-integrity=FAIL'",
+        "Prior run 6bf8e883: 'goal-check: SKIP (goal-check.sh not found)' — the gate was effectively absent until this run, so accumulated coverage/action-list drift went unmeasured",
+        "done_with_open_gap=10 overlaps the reclaim-of-already-merged-task-id root cause (merged gaps still flagged open)"
+      ],
+      "root_cause": "action-list.json carries 105 items whose coverage reference no longer exists in coverage.json (coverage entries removed/renamed without cascading to action-list), plus 10 coverage gaps marked done while still open. The newly-added goal-check.sh exposes a backlog of referential drift that was never enforced before.",
+      "proposed_fix": "Add a Phase 2.6 cascade step that prunes/relinks orphan action-list items when coverage entries change, and reconciles coverage done-state against archive merges. Make goal-check.sh GC1 a Phase 6 gate (record-only first, enforcing once the 105-item backlog is drained). Triage the existing 105 orphans into prune-vs-relink as a one-time cleanup.",
+      "effort": "medium",
+      "affected_artifact": ".research/management/action-list.json + .research/management/coverage.json + .research/dispatcher-prompt.md (Phase 2.6 cascade)",
+      "operator_notes": "REFRAMED + drafted on fix/dispatcher-gc1-referential-integrity. The 105 orphans were mostly a GC1 MEASUREMENT BUG: GC1 prefix-matched the full coverage slug, but action-list gap ids carry a different slug than coverage ids for the same story (gap-10b-3-admin-health-ui vs coverage 10b-3-platform-health-monitoring). Matching on the <epic>-<story> numeric stem instead drops false orphans 105->10. The 10 true orphans (82-6..82-9, 85-3, 9-2, 10a-4) are real roadmap stories MISSING from coverage.json -> author them (relink), never prune live work (13 were in-progress). Separately, the real integrity leak is 46 OPEN gap items whose exact task_id is already merged/done in the archive (shipped-but-never-closed; same as reclaim-of-already-merged-task-id). Fix: (a) goal-check.sh GC1 now stem-matches + replaces the story-level done check (which false-alarmed on 25 legit follow-ups) with a precise per-task archive-terminal leak check; (b) new idempotent .research/gc1-reconcile.sh auto-closes the 46 leaks (stamps merged PR+date) and emits the 10 orphans to gc1-orphan-triage.md; (c) Phase 2.6 runs the reconcile every cycle BEFORE computing the claimable pool (also shrinks GC3 overshoot). Did NOT commit a mutated action-list.json (volatile state); the cascade drains it on the next run. Enforce GC1 as a Phase 6 gate once the orphan-triage backlog hits 0. Landed as commit 17463444 on fix/dispatcher-postmerge-cadence-clone-mtime."
     },
     {
       "finding_id": "archive-append-not-idempotent-duplicate-rows",
@@ -410,17 +452,17 @@
       "finding_id": "buffer-starved-below-floor-no-refill-path",
       "title": "Claimable buffer sits chronically below floor (GC3 FAIL) with no working refill path: Tier-1b finds 0 upstream candidates and Tier-2 emergency refill is gated at floor/2, leaving a dead-zone",
       "first_seen": "2026-07-11T22:32:37Z",
-      "last_seen": "2026-08-28T06:38:55Z",
-      "recurrence": 32,
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 33,
       "severity": "medium",
       "category": "claim",
       "symptom": "GC3-buffer-bounds=FAIL recurs: claimable 24/72 vs floor 36 (starved). Tier-1b backlog-refill found 0 candidates (avail=0, upstream drained) and Tier-2 did NOT fire because 24 > floor/2=18 -- so claimable in the (floor/2, floor) band has no mechanism to refill it.",
       "evidence": [
-        "ad050f5 (2026-08-16 12:33): claimable=6/72 vs floor=36 (starved); all 6 open items mobile-native/KMP gated per #2652 -> effective claimable=0; Tier-1b/1c avail=0, Tier-2 planner kicked http=200, Tier-1d reality-web 3 findings -- no path lifted the buffer.",
         "640e9ec (2026-08-24 16:25 run): claimable=6/6 < floor=36 (starved); Tier-1b/1c found 0 fresh candidates, Tier-2 planner kick fired http=200; all 6 open items mobile-native/KMP gated -> effective claimable=0, no path lifted the buffer.",
         "6d09871 (2026-08-26 06:31 run): claimable=6/6 < floor=36 (starved); coverage 49/49 done, Tier-1b backlog-refill avail=0, Tier-1c retry avail=0; all 6 open items mobile-native/KMP gated -> effective claimable=0; Tier-1d mobile-rn fired 3 i18n findings but opened no claimable rows.",
         "d5fb3e5: buffer starved claimable=6/6 all mobile-native-KMP gated; Tier-1b/1c yielded 0",
-        "1b52746 (2026-08-28 06:36 run): claimable=6/6 all mobile-native-KMP gated -> effective claimable=0; Tier-1b/1c empty; Tier-1d wrote 2 findings but opened no claimable row."
+        "1b52746 (2026-08-28 06:36 run): claimable=6/6 all mobile-native-KMP gated -> effective claimable=0; Tier-1b/1c empty; Tier-1d wrote 2 findings but opened no claimable row.",
+        "41c905b (2026-09-19 04:29 run): claimable=12 < floor=36 (starved); Tier-1b/1c refills avail=0; entire claimable pool infra-gated (7 mobile-native #2652 + 3 api-server IDOR retries #2966) -> effective claimable=0; GC3 FAIL record-only."
       ],
       "root_cause": "Two-sided supply gap. Tier-1b backlog-refill can only promote candidates already present in the upstream backlog; when that is drained (avail=0) it refills nothing. Tier-2 emergency planner-kick is gated at claimable<=floor/2 (18), so a buffer between floor/2 and floor (18<claimable<36) is below the GC3 floor yet above the Tier-2 trigger -- a dead-zone where GC3 reports FAIL but no refill actuates. Distinct from buffer-metric-blind-to-archived-open-items (metric overcount) and tier2-kick-payload-rejected-400 (Tier-2 payload bug): here Tier-2 is simply never invoked.",
       "proposed_fix": "Close the dead-zone: raise the Tier-2 emergency-kick trigger from floor/2 to floor (fire whenever claimable<floor AND Tier-1b found 0 candidates), OR have Tier-1b escalate to a Tier-2 planner kick when avail=0 and claimable<floor. Ensure the upstream planner actually supplies new backlog rows on kick (see tier2-kick-payload-rejected-400 for the correct {text:...}+anthropic-version payload). dispatcher-prompt.md Phase 2.6 refill tiers + .research/goal-check.sh shared bounds.",
@@ -433,17 +475,17 @@
       "finding_id": "gc3-buffer-bounds-fails-on-legitimate-backlog-exhaustion",
       "title": "goal-check GC3 has no convergence exemption -- it reports the same hard FAIL when the backlog is LEGITIMATELY exhausted (coverage 47 done/2 partial/0 not-started, backlog empty) as it does for a genuine refill-path bug, so a converged system is indistinguishable from a starvation defect",
       "first_seen": "2026-07-31T12:24:18Z",
-      "last_seen": "2026-08-28T06:38:55Z",
-      "recurrence": 17,
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 18,
       "severity": "medium",
       "category": "goal-check",
       "symptom": "GC3-buffer-bounds=FAIL fired again (claimable=1/72 vs floor=36) while coverage.json is exhausted (47 done / 2 partial / 0 not-started), backlog.json is empty and no failed task is retryable. The refill machinery is HEALTHY this run (Tier-1d added 2 findings, Tier-2 kick http=200) -- there is simply no more coverage work, yet GC3 emits the identical hard FAIL it would for a broken refill path.",
       "evidence": [
-        "ad050f5 (2026-08-16 12:33): GC3-buffer-bounds=FAIL record-only while backlog empty + all 6 residual opens gated mobile-native/KMP (real-claimable approx 0); GC1/GC2 ok, reconcilers clean -- same hard FAIL as a genuine refill defect.",
         "640e9ec (2026-08-24 16:25 run): GC3-buffer-bounds=FAIL (record-only) while all 6 residual opens are gated mobile-native/KMP (#2652) and Tier-1b/1c had 0 fresh candidates -- legitimate gated-exhaustion emits the same hard FAIL as a refill defect; GC1/GC2 ok.",
         "6d09871 (2026-08-26 06:31 run): GC3-buffer-bounds=FAIL again with coverage 49/49 legitimately done and all remaining opens mobile-native-gated -- a converged pipeline still reports the same hard FAIL as a genuine starvation defect.",
         "d5fb3e5: GC3-buffer-bounds=FAIL (record-only) on legit backlog exhaustion",
-        "1b52746 (2026-08-28 06:36 run): GC3-buffer-bounds=FAIL (record-only) on legitimate gated-exhaustion; GC1/GC2 ok."
+        "1b52746 (2026-08-28 06:36 run): GC3-buffer-bounds=FAIL (record-only) on legitimate gated-exhaustion; GC1/GC2 ok.",
+        "41c905b (2026-09-19 04:29 run): GC3-buffer-bounds=FAIL (record-only) while every open item is infra-gated (mobile-native AGP #2652 + api-server swagger-ui #2966); GC1/GC2 ok, reconcilers clean -- same hard FAIL as a genuine refill defect."
       ],
       "root_cause": "goal-check.sh GC3 enforces a fixed claimable floor (36) with no exemption for legitimate backlog exhaustion. When coverage.json has 0 not-started stories AND backlog.json is empty AND no retry is eligible, a starved buffer is the CORRECT converged terminal state, but GC3 still reports FAIL. A real refill-path defect (buffer-starved-below-floor-no-refill-path) and a healthy converged system therefore emit the identical GC3=FAIL, desensitising the operator to a permanently-red gate.",
       "proposed_fix": "Add a convergence branch to goal-check.sh GC3: when coverage.json not-started==0 AND backlog.json has no claimable source AND retry-remint has 0 eligible, report GC3=CONVERGED (pass/neutral) instead of FAIL and surface a distinct Phase-7 'converged' state, so legitimate completion is distinguishable from a starvation bug. Files: .research/goal-check.sh (GC3 bounds check + convergence branch) + .research/dispatcher-prompt.md (Phase 6 goal-check interpretation + Phase 7 converged state).",
@@ -455,17 +497,17 @@
       "finding_id": "temp-phase-8-past-documented-removal-deadline",
       "title": "The TEMP_PHASE_8 self-review phase (this phase) is 18 days past its own documented hard removal deadline (REMOVE BY 2026-06-30); it is still running and producing findings, so the deadline is stale rather than the phase obsolete",
       "first_seen": "2026-07-18T12:19:52Z",
-      "last_seen": "2026-08-28T06:38:55Z",
-      "recurrence": 16,
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 17,
       "severity": "medium",
       "category": "spec",
       "symptom": "dispatcher-prompt.md:2382 '<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS UNDERSTOOD -->' and :2521 'This phase is temporary — remove by 2026-06-30'. Today is 2026-07-18 → 18 days overdue. Phase 8 still runs every eligible cycle (DISPATCHER_SELF_REVIEW!=0) and still emits actionable findings, so the prompt now carries a self-contradicting 'temporary, remove by <past-date>' instruction.",
       "evidence": [
-        "cd17177 (2026-08-14 12:34): TEMP_PHASE_8 self-review still executing 45d past the documented 2026-06-30 sunset.",
         "ad050f5 (2026-08-16 12:33): Phase 8 (TEMP_PHASE_8) self-review still executing via reviewer-prompt.md, 47d past the documented 2026-06-30 sunset; dispatcher-prompt.md removal markers unchanged in last 8 commits.",
         "640e9ec (2026-08-24 16:25 run): Phase 8 (TEMP_PHASE_8) self-review still executing via reviewer-prompt.md, 55d past the documented 2026-06-30 sunset; removal markers in dispatcher-prompt.md unchanged.",
         "d5fb3e5: self-review still runs via TEMP_PHASE_8 (reviewer-prompt.md) past removal deadline",
-        "1b52746 (2026-08-28 06:36 run): Phase 8 (TEMP_PHASE_8) self-review still executing via reviewer-prompt.md, 59d past the documented 2026-06-30 sunset."
+        "1b52746 (2026-08-28 06:36 run): Phase 8 (TEMP_PHASE_8) self-review still executing via reviewer-prompt.md, 59d past the documented 2026-06-30 sunset.",
+        "41c905b (2026-09-19 04:29 run): TEMP_PHASE_8 dispatcher self-review still spawned (this run), past its documented removal deadline."
       ],
       "root_cause": "Phase 8 was introduced as an explicitly temporary baseline-understanding aid with a 2026-06-30 sunset, but has become a de-facto permanent part of the routine (still generating value). No one has either removed the phase or revised/removed the deadline marker, leaving a stale contradictory directive in the prompt.",
       "proposed_fix": "Operator decision then a one-line prompt edit: EITHER (a) promote to permanent — delete the 'TEMPORARY/REMOVE BY' markers (dispatcher-prompt.md ~L2382-2383, 2478, 2521) and rename TEMP_PHASE_8->PHASE_8, keeping the DISPATCHER_SELF_REVIEW=0 off-switch and the Opus cost note; OR (b) if the baseline is understood, actually retire it (drop the Phase 8 spawn + reviewer-prompt.md). Either way remove the stale 2026-06-30 marker. Files: .research/dispatcher-prompt.md (~L2382-2383, 2391, 2468, 2478, 2521).",
@@ -477,17 +519,17 @@
     {
       "finding_id": "mobile-native-kmp-items-starve-claim-pool-in-cloud",
       "first_seen": "2026-08-11T16:16:13Z",
-      "last_seen": "2026-08-28T06:38:55Z",
-      "recurrence": 11,
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 12,
       "severity": "medium",
       "category": "claim",
       "symptom": "Claim pool structurally empty: only claimable action-list items are 2 mobile-native-kmp rows (issue #2652) that pass the gate but are unclaimable in cloud env (no ADB/local Docker), plus 1 quarantined-dup — buffer stuck at claimable=2/72 below floor=36.",
       "evidence": [
-        "ad050f5 (2026-08-16 12:33): all 6 open action-list items are mobile-native/KMP code-review-* findings, structurally unlandable in cloud (AGP egress-block #2652) -> gated out of claims; buffer has read ~4-9 claimable with 0 claims for many consecutive runs (dominant recurring pattern).",
         "640e9ec (2026-08-24 16:25 run): all 6 open action-list items are code-review-mobile-native-kmp-* -- structurally cloud-unlandable (issue #2652, AGP egress-blocked); effective claimable=0 despite buffer showing 6/6.",
         "6d09871 (2026-08-26 06:31 run): all 6 claimable open items are mobile-native/KMP, cloud-unlandable (AGP egress-403), so effective claimable=0 while the buffer metric reads 6/6; Phase 3 mobile-native gate excluded them.",
         "d5fb3e5: all 6 open buffer items mobile-native-KMP gated, unlandable in cloud; 0 claimed",
-        "1b52746 (2026-08-28 06:36 run): all 6 open action-list items mobile-native/KMP, cloud-unlandable (AGP egress-403); effective claimable=0 while buffer reads 6/6."
+        "1b52746 (2026-08-28 06:36 run): all 6 open action-list items mobile-native/KMP, cloud-unlandable (AGP egress-403); effective claimable=0 while buffer reads 6/6.",
+        "41c905b (2026-09-19 04:29 run): 7 mobile-native/KMP items claim-gated (AGP dl.google.com egress-403, #2652); they dominate the claimable pool -> 0 claims."
       ],
       "root_cause": "mobile-native-gate.sh (or Phase 3 candidate filter) does not exclude mobile-native-kmp action-list items that structurally require a local env (ADB / local Docker) when the dispatcher runs in cloud mode. They pass the gate ('cloud-ungated', tracked by issue #2652) and permanently occupy the claim pool, so the buffer cannot refill and every run reports GC3 FAIL / buffer starved.",
       "proposed_fix": "Extend mobile-native-gate.sh predicate (and the Phase 3 candidate exclusion) to gate mobile-native-kmp ids when running cloud-mode (no ADB/local Docker), routing them to a parked/deferred lane tracked by issue #2652 instead of leaving them in the claimable pool. Add self-test T33 asserting cloud-mode gate excludes kmp-env-required ids while still allowing mobile-rn.",
@@ -498,17 +540,17 @@
     {
       "finding_id": "self-pr-approve-blocked-shared-bot-review-account",
       "first_seen": "2026-08-02T10:25:16Z",
-      "last_seen": "2026-08-28T06:38:55Z",
-      "recurrence": 7,
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 8,
       "severity": "medium",
       "category": "review",
       "symptom": "Dispatcher-authored recovery PRs cannot receive a formal GitHub APPROVE because the per-PR reviewer bot shares the same GitHub account as the PR author; GitHub blocks self-approval, so approval must ride on the auto-approve workflow plus a draft->ready promotion instead of a real review verdict.",
       "evidence": [
-        "cd17177 (2026-08-14 12:34): PR #2744 approved but human-gated (needs-human-review + self-PR); dispatcher cannot self-approve/merge, parked for operator.",
         "640e9ec (2026-08-24 16:25 run): PR #2744 (gh-issue-2743) verdict=approve + CI green but held ~11d (age 275h, ALERT hang) on the needs-human-review self-PR gate the bot cannot clear; it carries the size-guard + retry-remint root-cause fixes.",
         "6d09871 (2026-08-26 06:31 run): PR #2744 (gh-issue-2743) approved but carries needs-human-review; sole active review row stuck 313h (~13d, hang ALERT >7d), merge skipped/not retried -- shared bot account cannot self-approve its own remediation PR.",
         "d5fb3e5: gh-issue-2743 (PR #2744) stays review, needs-human-review, parked ~339h",
-        "1b52746 (2026-08-28 06:36 run): PR #2744 (gh-issue-2743) approved+CI but parked ~361h (hang ALERT >7d); shared bot account cannot self-approve its own remediation PR."
+        "1b52746 (2026-08-28 06:36 run): PR #2744 (gh-issue-2743) approved+CI but parked ~361h (hang ALERT >7d); shared bot account cannot self-approve its own remediation PR.",
+        "41c905b (2026-09-19 04:29 run): PR #2744 (self-PR, verdict=approve) needs-human-review ~887h -- shared bot account cannot formally approve/merge its own PR."
       ],
       "root_cause": "The per-PR reviewer and the implementer/dispatcher that authors the PR run under a single GitHub identity. GitHub disallows approving your own PR, so the formal APPROVE state is unreachable for dispatcher-authored PRs; the workflow compensates with auto-approve + draft->ready promotion, which hides genuine review signal and is fragile if auto-approve.yml changes.",
       "proposed_fix": "Operator: provision a distinct review-bot GitHub identity (separate token) for the per-PR reviewer so it can post a real APPROVE on dispatcher-authored PRs; OR formally document the draft->ready + auto-approve.yml path as the sanctioned approval mechanism in dispatcher-prompt.md Phase 5/5.5 and add a self-test asserting every merged dispatcher PR carried either a real APPROVE or a recorded auto-approve run. Files: operator secret (review-bot token) + .research/dispatcher-prompt.md (Phase 5/5.5 approval contract).",
@@ -686,6 +728,25 @@
       "operator_notes": ""
     },
     {
+      "finding_id": "implementer-verify-env-blocked-github-egress-blocks-pr",
+      "first_seen": "2026-08-02T10:25:16Z",
+      "last_seen": "2026-09-19T04:39:54Z",
+      "recurrence": 2,
+      "severity": "medium",
+      "category": "infra",
+      "symptom": "An implementer pushed its branch but api-server local `just verify` could not complete because the backend build needs GitHub egress (utoipa-swagger-ui fetch) which the sandbox blocks; the verify-gated PR-create step was skipped, so the implementer opened NO PR and the dispatcher had to run a recovery to open a draft PR.",
+      "evidence": [
+        "549a2a4 (2026-08-02 10:20 run): ssrf-validator-drift reclaimed (reclaim_attempts->1); implementer pushed the branch but api-server local verify was env-blocked (utoipa-swagger-ui needs GitHub egress) so it opened no PR -> dispatcher recovery opened draft PR #2627, row->review.",
+        "Root: ppt-pr-create is gated behind `just verify` / scripts/verify-impact.sh; when the backend build cannot reach GitHub to resolve utoipa-swagger-ui, verify never greens and the PR-open step is skipped even though the branch is already on origin.",
+        "41c905b (2026-09-19 04:29 run): api-server cloud build still egress-blocked (utoipa-swagger-ui GitHub-zip fetch 403, #2966); 3 HIGH cross-tenant IDOR retries (gh-issue-2944/2945/2946-retry1) stamped [CLOUD-BUILD-BLOCKED], unclaimable."
+      ],
+      "root_cause": "The api-server verify path (scripts/verify-impact.sh -> cargo build) depends on fetching utoipa-swagger-ui assets from GitHub, but the implementer sandbox has no GitHub egress for that fetch. Verify fails on an environmental egress gap unrelated to the change, so the verify-gated PR-create never fires and a pushed branch strands until dispatcher recovery.",
+      "proposed_fix": "Either (a) vendor/cache the utoipa-swagger-ui asset so api-server verify does not require live GitHub egress in the sandbox, or (b) let ppt-pr-create open a DRAFT PR when verify is env-blocked (distinguish an env-egress failure from a real verify failure) so a pushed branch is never stranded and CI runs the real gate. Files: scripts/verify-impact.sh (env-egress detection) + ppt-pr-create skill (draft-on-env-block path).",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
+    },
+    {
       "finding_id": "tier1d-generator-not-gate-aware-wastes-cycles-on-gated-stack",
       "first_seen": "2026-08-11T18:17:41Z",
       "last_seen": "2026-08-11T20:13:23Z",
@@ -840,20 +901,19 @@
       "operator_notes": ""
     },
     {
-      "finding_id": "implementer-verify-env-blocked-github-egress-blocks-pr",
-      "first_seen": "2026-08-02T10:25:16Z",
-      "last_seen": "2026-08-02T10:25:16Z",
+      "finding_id": "finish-first-singleton-epic-throttles-retry-ids",
+      "first_seen": "2026-07-31T14:24:38Z",
+      "last_seen": "2026-07-31T14:24:38Z",
       "recurrence": 1,
       "severity": "medium",
-      "category": "infra",
-      "symptom": "An implementer pushed its branch but api-server local `just verify` could not complete because the backend build needs GitHub egress (utoipa-swagger-ui fetch) which the sandbox blocks; the verify-gated PR-create step was skipped, so the implementer opened NO PR and the dispatcher had to run a recovery to open a draft PR.",
+      "category": "claim",
+      "symptom": "Phase 3 finish-first claimed only 1 task despite WIP 2/8 and free_slots=6, because the candidate ids were retry ids with no gap-/pm- epic prefix and finish-first's singleton-epic grouping capped the effective claim to 1/run.",
       "evidence": [
-        "549a2a4 (2026-08-02 10:20 run): ssrf-validator-drift reclaimed (reclaim_attempts->1); implementer pushed the branch but api-server local verify was env-blocked (utoipa-swagger-ui needs GitHub egress) so it opened no PR -> dispatcher recovery opened draft PR #2627, row->review.",
-        "Root: ppt-pr-create is gated behind `just verify` / scripts/verify-impact.sh; when the backend build cannot reach GitHub to resolve utoipa-swagger-ui, verify never greens and the PR-open step is skipped even though the branch is already on origin."
+        "d08a8d0: 'WIP 2/8 free_slots=6 but finish-first singleton-epic capped effective claim to 1'",
+        "d08a8d0: claimed only data-audit-...-retry1 while 5 more open slots and open candidates existed (chore-triage retry1, sec-layout retry1)"
       ],
-      "root_cause": "The api-server verify path (scripts/verify-impact.sh -> cargo build) depends on fetching utoipa-swagger-ui assets from GitHub, but the implementer sandbox has no GitHub egress for that fetch. Verify fails on an environmental egress gap unrelated to the change, so the verify-gated PR-create never fires and a pushed branch strands until dispatcher recovery.",
-      "proposed_fix": "Either (a) vendor/cache the utoipa-swagger-ui asset so api-server verify does not require live GitHub egress in the sandbox, or (b) let ppt-pr-create open a DRAFT PR when verify is env-blocked (distinguish an env-egress failure from a real verify failure) so a pushed branch is never stranded and CI runs the real gate. Files: scripts/verify-impact.sh (env-egress detection) + ppt-pr-create skill (draft-on-env-block path).",
-      "effort": "medium",
+      "root_cause": "finish-first derives an epic key from an id prefix (gap-/pm-/epic-N); ids lacking a recognized prefix (retry re-mints, bare data-*/sec-* ids) all collapse into one synthetic singleton epic, so the 'one epic in flight at a time' rule throttles claims to 1/run regardless of free_slots.",
+      "proposed_fix": "Give unprefixed/retry ids a distinct epic key (e.g. hash of stem, or treat retry_of parent's epic) so finish-first can claim across them up to free_slots; OR exempt retry re-mints from the singleton-epic cap. Add a self-test asserting that with free_slots>1 and >=2 distinct-stem open candidates, finish-first claims >1.",
       "status": "open",
       "operator_notes": ""
     },
@@ -876,19 +936,20 @@
       "operator_notes": ""
     },
     {
-      "finding_id": "finish-first-singleton-epic-throttles-retry-ids",
-      "first_seen": "2026-07-31T14:24:38Z",
-      "last_seen": "2026-07-31T14:24:38Z",
+      "finding_id": "reviewer-subagent-misfires-zero-tooluse-first-spawn",
+      "first_seen": "2026-07-16T20:30:08Z",
+      "last_seen": "2026-07-16T20:30:08Z",
       "recurrence": 1,
       "severity": "medium",
-      "category": "claim",
-      "symptom": "Phase 3 finish-first claimed only 1 task despite WIP 2/8 and free_slots=6, because the candidate ids were retry ids with no gap-/pm- epic prefix and finish-first's singleton-epic grouping capped the effective claim to 1/run.",
+      "category": "review",
+      "symptom": "2 of 4 per-PR reviewer subagents (#2397, #2398) returned 0 tool uses and no verdict on first spawn; both needed a re-spawn before producing an approve verdict.",
       "evidence": [
-        "d08a8d0: 'WIP 2/8 free_slots=6 but finish-first singleton-epic capped effective claim to 1'",
-        "d08a8d0: claimed only data-audit-...-retry1 while 5 more open slots and open candidates existed (chore-triage retry1, sec-layout retry1)"
+        "f3f1b79 (this run): reviewer subagents for #2397 (deterministic sitemap.json) and #2398 (Booking.com push sync) misfired on first spawn — 0 tool uses, no verdict emitted — re-spawned, then both approved.",
+        "Same run reviewed 4 PRs, so misfire rate was 50% of reviewer spawns this run."
       ],
-      "root_cause": "finish-first derives an epic key from an id prefix (gap-/pm-/epic-N); ids lacking a recognized prefix (retry re-mints, bare data-*/sec-* ids) all collapse into one synthetic singleton epic, so the 'one epic in flight at a time' rule throttles claims to 1/run regardless of free_slots.",
-      "proposed_fix": "Give unprefixed/retry ids a distinct epic key (e.g. hash of stem, or treat retry_of parent's epic) so finish-first can claim across them up to free_slots; OR exempt retry re-mints from the singleton-epic cap. Add a self-test asserting that with free_slots>1 and >=2 distinct-stem open candidates, finish-first claims >1.",
+      "root_cause": "Per-PR reviewer subagent intermittently returns immediately with no tool calls / no structured verdict (harness spawn flake), silently wasting a merge-path cycle until the dispatcher notices the missing verdict and re-spawns.",
+      "proposed_fix": "Phase 5 guard: treat a reviewer subagent result with 0 tool uses OR no parseable verdict as a transient failure; auto-retry once (bounded) and emit a 'reviewer-misfire' Phase 7 counter for recurrence tracking. Optionally a self-test asserting the reviewer prompt requires an explicit verdict token.",
+      "effort": "medium",
       "status": "open",
       "operator_notes": ""
     },
@@ -906,24 +967,6 @@
       ],
       "root_cause": "The action-list.json / action-list-archive.json split does not enforce stem mutual-exclusion; retry re-mint (and archive append) can leave a stem in both files, and reconcile hard-aborts instead of self-healing, requiring manual cleanup each run.",
       "proposed_fix": "Make action-list-reconcile idempotent: when a stem is in both files, keep the archive (terminal) copy and drop the active one automatically instead of aborting. Add self-test T<N>: assert (stems in action-list.json) ∩ (stems in action-list-archive.json) == ∅.",
-      "effort": "medium",
-      "status": "open",
-      "operator_notes": ""
-    },
-    {
-      "finding_id": "reviewer-subagent-misfires-zero-tooluse-first-spawn",
-      "first_seen": "2026-07-16T20:30:08Z",
-      "last_seen": "2026-07-16T20:30:08Z",
-      "recurrence": 1,
-      "severity": "medium",
-      "category": "review",
-      "symptom": "2 of 4 per-PR reviewer subagents (#2397, #2398) returned 0 tool uses and no verdict on first spawn; both needed a re-spawn before producing an approve verdict.",
-      "evidence": [
-        "f3f1b79 (this run): reviewer subagents for #2397 (deterministic sitemap.json) and #2398 (Booking.com push sync) misfired on first spawn — 0 tool uses, no verdict emitted — re-spawned, then both approved.",
-        "Same run reviewed 4 PRs, so misfire rate was 50% of reviewer spawns this run."
-      ],
-      "root_cause": "Per-PR reviewer subagent intermittently returns immediately with no tool calls / no structured verdict (harness spawn flake), silently wasting a merge-path cycle until the dispatcher notices the missing verdict and re-spawns.",
-      "proposed_fix": "Phase 5 guard: treat a reviewer subagent result with 0 tool uses OR no parseable verdict as a transient failure; auto-retry once (bounded) and emit a 'reviewer-misfire' Phase 7 counter for recurrence tracking. Optionally a self-test asserting the reviewer prompt requires an explicit verdict token.",
       "effort": "medium",
       "status": "open",
       "operator_notes": ""
@@ -1116,6 +1159,22 @@
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
+      "finding_id": "subagent-race-on-dev-push",
+      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
+      "severity": "critical",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T13:41:00Z",
+      "last_seen": "2026-05-28T13:41:00Z",
+      "recurrence": 1,
+      "evidence": [
+        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
+        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
+      ],
+      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
+      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
+      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
+    },
+    {
       "finding_id": "subagent-workspace-contamination",
       "title": "Subagents run git ops in the dispatcher working tree instead of a dedicated worktree, leaving local commits ahead of remote",
       "severity": "critical",
@@ -1132,22 +1191,6 @@
       "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
       "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
-      "finding_id": "subagent-race-on-dev-push",
-      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
-      "severity": "critical",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
-      "evidence": [
-        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
-        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
-      ],
-      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
-      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
-      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
     }
   ]
 }
