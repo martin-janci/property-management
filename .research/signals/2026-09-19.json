@@ -1,0 +1,176 @@
+{
+  "run": "2026-09-19",
+  "generated": "2026-09-19T03:09:37Z",
+  "lag_hours": 428,
+  "lag_days": 17,
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-19",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run in ~17d 20h; last run was 2026-09-01, restarting incremental catch-up now (17 merged PRs on dev since last cursor).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "PR #2943, #2952, #2956",
+      "score_delta": 1,
+      "evidence": "queryKeys.test.ts touched in 3 merged PRs (2026-09-05..09-08) — logout-purge coverage iteration",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2928, #2931",
+      "score_delta": 1,
+      "evidence": "data_export.rs touched in 2 merged PRs (2026-09-02, 09-03) — report_summary snapshot consistency work",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
+      "type": "churn-hotspot",
+      "source": "PR #2928, #2931",
+      "score_delta": 1,
+      "evidence": "data_export_test.rs touched in 2 merged PRs (2026-09-02, 09-03) — regression coverage for report_summary snapshot",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stale_routine_alert-2026-09-19",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 17d old; cloud routine has been paused/broken. Dispatcher continued to run on planning branch; ordinary routine catch-up in progress.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-19.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "cap holds; decay applied to 4 stale open items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass on new plans",
+      "observed": "n/a — 0 new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans",
+      "observed": "0 new plans",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-.research/ paths staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regeneration",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — Phase 1.5/1.6 skipped, brief lists them under Phases that failed; cursors did not advance",
+      "observed": "pm_cursor.next_index=5 unchanged; review_cursor unchanged",
+      "expected": "cursors unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge (no thrashing)",
+      "observed": "no plans changed this run",
+      "expected": "no removals"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "prev=9 current=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regeneration",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no auto-fix this run)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped — no-op)",
+      "observed": "pm_cursor.next_index=5 unchanged",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token committed",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run"
+}

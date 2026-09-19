@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
+  "last_run_iso": "2026-09-19T03:09:51Z",
   "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_pr_seen": 2956,
+  "last_issue_seen": 2966,
+  "last_commit_sha": "d9560258b9a742f2c464dd2e78609cb3865466b0",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -521,6 +521,21 @@
       "runs_seen": 1,
       "last_seen": "2026-08-31",
       "recent_churn": 151
+    },
+    "frontend/apps/ppt-web/src/lib/queryKeys.test.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-19",
+      "recent_churn": 3
+    },
+    "backend/crates/db/src/repositories/data_export.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-19",
+      "recent_churn": 2
+    },
+    "backend/crates/db/src/repositories/data_export_test.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-19",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -552,6 +567,8 @@
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
     "churn-hotspot-backend/Cargo.toml",
+    "churn-hotspot-backend/crates/db/src/repositories/data_export.rs",
+    "churn-hotspot-backend/crates/db/src/repositories/data_export_test.rs",
     "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
     "churn-hotspot-backend/crates/integrations/src/booking/mod.rs",
     "churn-hotspot-backend/servers/api-server/src/main.rs",
@@ -626,6 +643,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
+    "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
@@ -888,6 +906,7 @@
     "lag-warning-2026-08-22",
     "lag-warning-2026-08-25",
     "lag-warning-2026-08-28",
+    "lag-warning-2026-09-19",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -934,6 +953,7 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale_routine_alert-2026-09-19",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
@@ -1019,8 +1039,8 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
+    "runs": 79,
+    "vectors_created": 375,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
