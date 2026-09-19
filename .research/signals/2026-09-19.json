@@ -1,0 +1,752 @@
+{
+  "date": "2026-09-19",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-19",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine has not run in 18d \u2014 last_run_iso=2026-09-01T18:38:58Z; cloud cron/scheduler may be paused. Dispatcher continued (planning branch, separate loop).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-09-19",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso=2026-09-01T18:38:58Z is 18d old; check .research/management/assignments.json on the planning branch separately (dispatcher IS running).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "buffer-low-2026-09-19",
+      "type": "operational",
+      "source": "dispatcher payload",
+      "score_delta": 0,
+      "evidence": "buffer-low: honest-landable-claimable=0/72 \u2014 ALL 12 open backlog items structurally unlandable in cloud runner (8 mobile-native AGP-egress-gated + 4 backend api-server swagger-ui-egress-403). Refill planner with LANDABLE frontend/reality-web/docs work; prioritize infra unblock #2966 backend, #2952/#2951 mobile.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-mobile-rn-imagecompress-width-only-resize",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/utils/imageCompression.ts:171 (compressImagesIfNeeded) \u2014 the down-scale pass calls manipulateAsync(uri, [{ resize: { width: maxDimension } }], ...) with ONLY a width bound. expo-image-manipulator's width-only resize sets width to 1920 and scales height by aspect ratio, so for PORTRAIT photos (the dominant phone-camera orientation) it caps the SHORTER edge and leaves the longest edge (height) uncapped \u2014 a 3000x4000 shot becomes 1920x2560 (longest edge 2560, not 1920).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-toasts-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/faults.tsx:368,371 \u2014 showToast title/message hardcoded English ('Created' / 'Failed to report fault') though the file already uses react-i18next t() at :246; not localized",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-server-categories-hardcoded-sk-labels",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-server public-listings)",
+      "score_delta": 1,
+      "evidence": "backend/servers/reality-server/src/routes/listings.rs:826-846 \u2014 `get_categories` (drives the reality-web homepage \"Browse by category\" tiles on the sk/cs/de/en portal) maps every `property_type` to a hardcoded SLOVAK label via `label_for_property_type` (listings.rs:823-846): apartment=>\"Byty\", house=>\"Domy\", land=>\"Pozemky\", commercial=>\"Komer\u010dn\u00e9 priestory\", office=>\"Kancel\u00e1rie\", garage=>\"Gar\u00e1\u017ee\", parking=>\"Parkovanie\", storage=>\"Sklady\", with a `capitalize(other)` fallback for unknown types.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-server-suggestions-stub-popular",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-server public-listings)",
+      "score_delta": 1,
+      "evidence": "backend/servers/reality-server/src/routes/listings.rs:472-480 \u2014 the public `get_suggestions` handler (GET /api/v1/listings/suggestions, autocomplete/search-suggestions surface) returns `popular_searches` as a HARDCODED three-element vec: [\"2-izbov\u00fd byt Bratislava\", \"Dom Ko\u0161ice\", \"Pozemok \u017dilina\"]. The `cities` half of the response is real (derived from `portal_repo.get_nearby_cities`), but `popular_searches` is a static stub shipped on a production public endpoint \u2014 it is not derived from any search-frequency/analytics data, so it is not actually 'popular', and it never changes regardless of market activity.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-server-listing-slug-is-uuid",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-server public-listings)",
+      "score_delta": 1,
+      "evidence": "backend/servers/reality-server/src/routes/listings.rs:632 \u2014 `RichListingSummary.slug` (returned by the public /api/v1/listings/featured endpoint and consumed by the reality-web homepage to build listing URLs) is set to `slug: r.id.to_string()`, i.e. the raw listing UUID. The field is documented at listings.rs:523 (\"URL slug \u2014 currently the listing UUID stringified (no slug column yet)\") and listings.rs:629-631 (\"No slug column on listings yet \u2014 the frontend treats the path\").",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-additionalinfo-hardcoded-en-us-price",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-web listing-detail AdditionalInfo section formats prices with a locally-redefined formatPrice hardcoded to en-US, wrong for every sk/cs/de/pl/hu visitor)",
+      "score_delta": 2,
+      "evidence": "AdditionalInfo.tsx:8-16 -- the section defines its OWN module-local `formatPrice(price, currency)` that calls `new Intl.NumberFormat('en-US', ...)` on BOTH branches (the no-currency fallback at :11 and the currency branch at :12-15). The locale is hardcoded to 'en-US' regardless of the visitor's route locale, so on the public, SEO-indexed listing-detail page a Slovak/Czech/German buyer sees US-formatted money (comma thousands + '.' decimals + '$'-style symbol placement) instead of `1 234 \u20ac` / `1.234 \u20ac`. This is a customer-facing correctness defect on the money field of the primary listing page.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-agency-period-chart-unwired",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-web AgencyDashboard period selector drives the stat cards but the performance chart granularity is hardcoded and ignores the selected period)",
+      "score_delta": 2,
+      "evidence": "AgencyDashboard.tsx:30 declares `const [period, setPeriod] = useState<PeriodType>('30d')` and the header renders a 4-button period selector (7d / 30d / 90d / 12m, :79-95) whose onClick calls `setPeriod(p)`. The stats query correctly threads it: `useAgencyStats(agency?.id || '', period)` (:42). But the performance chart query does NOT: `useAgencyPerformance(agency?.id || '', undefined, undefined, 'week')` (:43-48) passes a hardcoded literal `'week'` as its granularity arg and never references `period`.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyDashboard.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-agency-dashboard-local-formatnumber",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-10 reality-web AgencyDashboard defines a local locale-less formatNumber with hardcoded English K/M magnitude suffixes, shadowing the shared locale-aware helper)",
+      "score_delta": 1,
+      "evidence": "AgencyDashboard.tsx:889-893 defines a module-local `function formatNumber(num: number): string` that returns `${(num/1000000).toFixed(1)}M` / `${(num/1000).toFixed(1)}K` / `num.toString()`. It (a) hardcodes English magnitude suffixes 'K'/'M' -- a German/Slovak agency owner sees English abbreviations; (b) uses toFixed which forces a '.' decimal separator regardless of locale (de/sk use ','); (c) for values < 1000 emits bare `num.toString()` with no locale grouping. It is used for the stat cards at :402 `value: formatNumber(stats.totalViews)` (called with ONE arg, so it resolves to this local fn, NOT the shared one).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyDashboard.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-mobile-rn-wallet-passtype-namespace",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 mobile-rn NFCAccessController.addToWallet builds the Apple Wallet pass with a SCRAMBLED reverse-DNS passTypeIdentifier \u2014 'pass.bit.two.three.ppt.access' \u2014 that does not match the project namespace three.two.bit.ppt, so it cannot match the Apple Developer Portal pass-type registration / provisioning profile the code's own comment requires)",
+      "score_delta": 2,
+      "evidence": "NFCAccessController.ts:383 sets `passTypeIdentifier: 'pass.bit.two.three.ppt.access'` when constructing the WalletPass for `addToWallet(credentialId)` (the iOS Apple-Wallet building-access credential path, method at :358-391). The reverse-DNS body is SCRAMBLED: it reads `bit.two.three` where the project's canonical namespace is `three.two.bit`. Per root CLAUDE.md the package namespace is `three.two.bit.ppt` and the iOS bundle is `three.two.bit.ppt.management`; app.config.ts confirms this at :250 (`bundleIdentifier: 'three.two.bit.ppt.management'`) and :318 (`package: 'three.two.bit.ppt.management'`). A correct Wallet pass type identifier would be `pass.three.two.bit.ppt.access` (or `pass.three.two.bit.ppt.management.access`), NOT `pass.bit.two.three.ppt.access`.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts",
+        "frontend/apps/mobile/app.config.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/community.tsx:26-40 \u2014 FeedPageRoute renders <FeedPage posts={[]} total={0} ...> with EVERY action handler a no-op (onCreatePost/onLikePost/onCommentPost/onSharePost/onEditPost/onDeletePost/onLoadMore all () => {}); no useQuery/useMutation, no API wiring \u2014 the community feed is permanently empty in production and all interactions silently do nothing",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-reports-route-stub-analytics",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/reports.tsx:177-206 \u2014 ReportsPage is fed hardcoded stub datasets: dataSources={[]}, reports={[]}, kpis={[]}, buildings={[]}, trendLines={[]}, and a zeroed trendAnalysis (metric:'', current_value:0, previous_value:0, change:0, change_percentage:0, trend:'stable', anomalies:[]) cast `as TrendAnalysis`, plus a zeroed periodComparison (difference:0, difference_percentage:0, periods:[]) cast `as PeriodComparison`",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-faults-url-param-unvalidated-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/faults.tsx:233-235 \u2014 untrusted URL query params are cast straight to API enum unions and used as the initial list query: status: (searchParams.get('status') as FaultListQuery['status']), category: (... as FaultListQuery['category']), priority: (... as FaultListQuery['priority'])",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui faults)",
+      "score_delta": 1,
+      "evidence": "EditFaultPage.tsx renders three hardcoded English strings with NO i18n on a react-i18next multi-locale app: line 35 '\u2190 Back to Fault' (button), line 37 <h1>Edit Fault</h1>, lines 38-40 'Update the fault details. Note: editing is only available before the fault is triaged.' The file contains ZERO useTranslation()/t() calls (grep count 0).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/pages/EditFaultPage.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-signature-modal-raw-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 ppt-web-ui leases)",
+      "score_delta": 1,
+      "evidence": "RequestSignatureModal.tsx:214-221 \u2014 the e-sign request error alert renders the RAW error message for any Error instance: `{createRequest.error instanceof Error ? createRequest.error.message : t('common.unknownError', 'An error occurred. Please try again.')}`. Only the non-Error branch is localized; the common case (an ApiError from the createRequest mutation extends Error) shows its raw, untranslated .message (e.g. 'Request failed with status 400' / a server-supplied English string) directly to the user on a multi-locale (sk/cs/de/en) app.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/leases/components/RequestSignatureModal.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-server-portal-listing-no-price-field-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-server portal-listings input validation)",
+      "score_delta": 2,
+      "evidence": "The portal-owner listing WRITE path validates ONLY its enum-like string fields and leaves every numeric and required-text field unvalidated. `create_listing` (routes/portal_listings.rs:207) calls `validate_enum` for propertyType/transactionType/currency and nothing else; `update_listing` (routes/portal_listings.rs:317) adds `validate_enum(\"status\", ...)` but likewise validates no numeric/text field. `price: Decimal` (CreatePortalListingRequest:106, UpdatePortalListingRequest:126) is passed straight into `create_portal_listing`/`update_portal_listing` (portal_listings.rs:239 / :344) with no lower-bound check, so a negative or zero price is accepted.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/portal_listings.rs",
+        "backend/crates/db/migrations/00049_create_listings.sql"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-listingheader-en-us-price",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-web listing-detail ListingHeader formats the PRIMARY headline price with a locally-redefined formatPrice hardcoded to en-US, wrong for every sk/cs/de/pl/hu visitor)",
+      "score_delta": 2,
+      "evidence": "ListingHeader.tsx:6-16 defines a module-local `formatPrice(price, currency)` that calls `new Intl.NumberFormat('en-US', ...)` on BOTH branches (the no-currency fallback at :9 and the currency branch at :11-14). The locale is hardcoded to 'en-US' regardless of the visitor's route locale. This formatter renders the listing-detail HEADLINE price at :50 (`<span className=\"price\">{formatPrice(listing.price, listing.currency)}`) and the price-per-sqm at :54, so on the public, SEO-indexed listing-detail page a Slovak/Czech/German buyer sees US-formatted money (',' thousands, '.' decimals, '$'-style symbol placement) instead of `1 234 \u20ac` / `1.234 \u20ac`. This is the single most prominent money field on the page.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-photogallery-index-oob",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-web PhotoGallery never resets selectedIndex when the photos prop changes; a stale index dereferences an out-of-bounds photo -> mainPhoto.url TypeError)",
+      "score_delta": 1,
+      "evidence": "PhotoGallery.tsx:18 holds `const [selectedIndex, setSelectedIndex] = useState(0)` but NOTHING resets or clamps it when the `photos` prop changes \u2014 there is no `useEffect([photos])` and no bounds guard. After the empty-array early return (:54), the code does `const mainPhoto = photos[selectedIndex]` (:89) and immediately dereferences `mainPhoto.url` (:100) and `mainPhoto.caption` (:100). The lightbox path is identical: `photos[selectedIndex].url` (:187) and `photos[selectedIndex].caption` (:190/:194). If a mounted instance ever receives a SHORTER `photos` array while `selectedIndex` points past its new end, `photos[selectedIndex]` is `undefined` and `.url` throws `TypeError: Cannot read properties of undefined` -> the whole client subtree of the listing-detail page crashes.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/PhotoGallery.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-agencylistings-en-us-price",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-11 reality-web AgencyListings table defines a local formatPrice hardcoded to en-US, wrong for sk/cs/de/pl/hu agency users)",
+      "score_delta": 1,
+      "evidence": "AgencyListings.tsx:373-378 defines a component-local `formatPrice = (price, currency) => new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(price)` and renders it in the listings table price cell at :397 (`<td className=\"price-cell\">{formatPrice(listing.price, listing.currency)}</td>`). Locale is hardcoded 'en-US', so every sk/cs/de/pl/hu agency user sees US-formatted money in their own listing-management table.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx",
+        "frontend/apps/reality-web/src/lib/format.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-api-handlers-org-member-role-mutation-guards",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers organizations/members)",
+      "score_delta": 2,
+      "evidence": "backend/servers/api-server/src/routes/organizations/members.rs \u2014 the three org-membership mutation handlers (add_organization_member :206, update_organization_member :429, and the delete handler at :717) gate on a single coarse permission flag (`users:create` :275 / `users:update` :499 / `users:delete` :717) plus a role-belongs-to-org check (`r.organization_id == id` :305, `new_role.organization_id != org_id` :531). They are otherwise correctly tenant-scoped. But two standard org-RBAC guardrails are ABSENT.",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/organizations/members.rs"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-api-handlers-multi-currency-refresh-stub-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 api-handlers multi_currency)",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/multi_currency.rs:373-411 \u2014 the `Trigger exchange rate fetch from external source` handler is a STUB that reports success as if rates were fetched. Line 397-398 comment: `// In a real implementation, this would call external APIs (ECB, XE) / For now, we just log the attempt`; grep for ECB/XE/reqwest/http_client/fetch_rate/external in the file returns only the comment \u2014 there is no rate-provider call. The handler calls `log_rate_fetch(Some(org_id), config.exchange_rate_source, true, 0, None)` (:399-402) \u2014 hardcoding success=true, rate_count=0 \u2014 then returns HTTP 200 `{ \"success\": true, \"message\": \"Exchange rate fetch initiated\" }` (:407-411). A client (or the scheduler) cannot distinguish 'rates refreshed' from 'no-op stub'; downstream conversions keep using stale rates while the API reports a successful refresh.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/multi_currency.rs"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-home-dashboard-role-route",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-core routes/groups/core)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 \u2014 the Home page 'Open dashboard' button routes with an exact-equality role check: `navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')`. This sends EVERY manager-equivalent role other than the bare 'manager' string \u2014 `org_admin`, `super_admin`, `technical_manager`, `property_manager` \u2014 to the RESIDENT dashboard instead of the manager dashboard.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-manager-dashboard-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-core routes/groups/core + features/dashboard)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/core.tsx:166-168 \u2014 the dashboard routes register `/dashboard/manager` -> <ManagerDashboardPage/> and `/dashboard/resident` -> <ResidentDashboardPage/> with NO <ProtectedRoute> wrapper, and :166 redirects bare `/dashboard` -> `/dashboard/manager` for everyone. Contrast the immediately-following `/dashboard/customize` route (:171-178) which IS wrapped `<ProtectedRoute requiredRoles={['org_admin','super_admin']}>`, and every /settings/* route in settingsRoutes() which is wrapped in <ProtectedRoute>.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-nav-aria-label-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-16 ppt-web-core App shell)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/App.tsx:135 \u2014 the primary navigation landmark uses a HARDCODED English accessibility label: `<nav className=\"app-nav\" aria-label=\"Main navigation\">`. This is a user-facing (screen-reader) string not wrapped in `t()`, so it stays English for all locales (the app ships sk/cs/de/en per root CLAUDE.md and this SPA uses react-i18next).",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-i18n-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/documents \u2014 the documents feature ships hardcoded Slovak user-facing error/empty/loading strings that bypass react-i18next (t()), so users on the app's other supported locales (cs/de/en) see Slovak text on these states. Occurrences: MoveFolderDialog.tsx:429 'Prie\u010dinky sa nepodarilo na\u010d\u00edta\u0165.' (error), :434 '\u017diadne prie\u010dinky' (empty); DocumentsBrowse.tsx:429 'Dokumenty sa nepodarilo na\u010d\u00edta\u0165.' (error), :438 '\u017diadne dokumenty nezodpovedaj\u00fa zvolen\u00fdm filtrom.' (empty-filter); FolderTree.tsx:608 'Prie\u010dinky sa nepodarilo na\u010d\u00edta\u0165.', :618 '\u017diadne prie\u010dinky'; DocumentDetail.tsx:145 'Detail dokumentu sa nepodarilo na\u010d\u00edta\u0165.'; FolderTreePage.tsx:75 'Dokumenty sa nepodarilo na\u010d\u00edta\u0165.'; DocumentPreviewModal.tsx:56 'Na\u010d\u00edtavanie n\u00e1h\u013eadu\u2026' (loading); PdfPreview.tsx:269 'Chyba pri nacitani PDF: {docError}' (error \u2014 note the missing diacritics 'nacitani', confirming these are hand-written literals, not catalog entries).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-ocr-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:107-116 \u2014 in handlePhotoChange, when OCR is enabled the code does `const result = await processOcr(file); ...; setShowOcrPreview(true);` inside a try, but the catch swallows the failure with only `console.error('OCR processing failed')` and no user-facing signal. The comment 'OCR failed, user can still enter value manually' documents graceful degradation, but the user gets zero feedback that OCR was attempted and failed \u2014 after taking a photo with OCR on, they see no toast, banner, or inline note and may wait expecting the value field to auto-fill.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-mobile-rn-dashboard-layout-fetch-never-applied",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 mobile-rn features/layout)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/features/layout/useDashboardLayout.ts:30-58 \u2014 `activate()` has two phases: Phase 1 reads the tenant-scoped AsyncStorage cache and calls `setLayout(cached)` if present; Phase 2 does a live `apiRequest('/api/v1/layout/resolved/{screen}?platform=mobile')` and, per the code's OWN comment at :37 ('background fetch \u2014 writes cache ONLY (never sets state)'), only calls `writeCachedLayout(...)` on success \u2014 it never calls `setLayout` with the freshly-fetched result.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/features/layout/useDashboardLayout.ts",
+        "frontend/apps/mobile/src/screens/dashboard/DashboardScreen.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-bridge-auth-token-never-set",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 mobile-rn widgets/)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:26,354-361 \u2014 `apiRequest()` only adds the `Authorization: <bearer>` header `if (this.authToken)`; `authToken` starts `null` and is set solely via the public `setAuthToken(token)` method (WidgetBridge.ts:40-42 delegates to the same method on its `dataProvider`).",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-auth-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-core routes/groups)",
+      "score_delta": 2,
+      "evidence": "ppt-web has NO global auth boundary: App.tsx mounts <AppRoutes /> directly (App.tsx:274) and authentication is enforced purely per-route by wrapping a page in <ProtectedRoute> (components/ProtectedRoute.tsx:121 redirects unauthenticated users to /login via <Navigate replace/>, and its requiredRoles gate at :128-143 is the only RBAC check). There is no top-level RequireAuth/layout route around the table.",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-query-silent-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-core financial route wrappers)",
+      "score_delta": 2,
+      "evidence": "The financial route wrappers issue TanStack useQuery calls but destructure only `{ data, isLoading }` \u2014 they never read `isError`/`error` and never surface a fetch failure to the user. FinancialDashboardPageRoute (financial.tsx:70-84) runs getARAgingReport, getOverdueInvoices and listInvoices; on any of these failing it falls back to zeros (`totals` default :88-94, `invoices = invoicesData?.invoices ?? []` :95) and renders the dashboard with totalOutstanding/totalOverdue = 0 and empty invoice counts \u2014 i.e. a FAILED load is indistinguishable from a legitimately-zero financial position. Same pattern in InvoiceManagementPageRoute (:157-167, `data?.invoices ?? []`) and PaymentManagementPageRoute (:265-284, payments/unallocated/invoices all `?? []`).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-ismanager-hardcoded-true",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-ui features/facilities)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:35-41 \u2014 the module-local `useIsManager()` hook is a hardcoded placeholder that unconditionally `return true;` (line 40). Its own doc-comment (:15-40) admits it: 'Placeholder: Returns true during development to enable all manager features. Replace with actual role check when AuthContext is implemented for ppt-web.' FacilitiesPage.tsx:46 consumes it (`const isManager = useIsManager()`) and passes it to FacilityList at :116 (`isManager={isManager}`).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/components/FacilityList.tsx",
+        "frontend/apps/ppt-web/src/features/facilities/components/FacilityCard.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-page-swallows-load-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-ui features/facilities)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:63-74 \u2014 the `listFacilities` fetch runs in a useEffect; on failure the catch (:68-70) does ONLY `console.error('Failed to fetch facilities:', error)` with no error state, and the finally (:71-73) sets `isLoading=false`. There is no `error` state variable at all (:47-51 declares facilities/total/page/isLoading/filters only), so on a failed load `facilities` stays `[]` and the page renders the normal empty 'no facilities' UI \u2014 a load FAILURE is visually indistinguishable from an empty building, with no message and no retry.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-reading-form-number-coerce-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-17 ppt-web-ui features/meters)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx:85-90 \u2014 the shared numeric change handler coerces with `type === 'number' ? Number.parseFloat(value) || 0 : value`. Because `Number.parseFloat('')` is NaN and `NaN || 0` is 0, clearing a numeric input (or typing a partial/invalid entry) silently rewrites the field to 0 instead of leaving it empty or flagging validation \u2014 the user cannot present an empty numeric field, and a fat-fingered entry becomes a real 0 reading.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/components/ReadingForm.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-price-map-i18n-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx \u2014 the price-map page declares useTranslations('pages.priceMap') but only ever calls t() for the single h1 (t('h1') at :138). Effectively every other user-facing string on this public, 4-locale (sk/cs/de/en) page is a hardcoded Slovak literal that bypasses next-intl, so cs/de/en visitors see Slovak. Occurrences: PROPERTY_OPTIONS labels :30-34 'V\u0161etky'/'Byty'/'Domy'/'Pozemky'; transaction toggle :161 'Predaj'/'Pren\u00e1jom'; map loading :209 'Na\u010d\u00edtavam d\u00e1ta\u2026'; map error :213 'D\u00e1ta o cen\u00e1ch sa nepodarilo na\u010d\u00edta\u0165.'; no-geometry empty state :224 'Pre vybran\u00e9 lokality zatia\u013e nie je dostupn\u00fd mapov\u00fd podklad. \u0160tatistiky n\u00e1jdete v zozname vpravo.'; SVG aria-label :231 'Mapa cien pod\u013ea lokality'; legend :272 'Cena / m\u00b2' and :275-278 range labels; back link :322 '\u2190 Sp\u00e4\u0165 na preh\u013ead'; detail rows :337-348 'Priem. cena / m\u00b2'/'Trend (medzikvart\u00e1lne)'/'Akt\u00edvne inzer\u00e1ty'; CTA :392 'Zobrazi\u0165 inzer\u00e1ty v tejto lokalite'; right-panel :405 'Preh\u013ead lokal\u00edt', :414 'Kliknite na lokalitu pre detailn\u00e9 \u0161tatistiky.', :426 'Pre zvolen\u00e9 filtre nie s\u00fa dostupn\u00e9 \u017eiadne d\u00e1ta.'; insights labels :77/:82/:87/:95 'Priemern\u00e1 cena / m\u00b2'/'Najdrah\u0161ia lokalita'/'Najv\u00e4\u010d\u0161\u00ed rast'/'Akt\u00edvne inzer\u00e1ty' and trend suffixes :79/:97 'lokal\u00edt', :91 '% QoQ'.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-sso-callback-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx \u2014 the SSO callback screen localizes its error/title/return-home copy via useTranslations('auth.callback') (:132-135), but the two loading messages shown during the (common) success path are hardcoded English: :67 'Loading...' in LoadingSpinner and :146 'Completing login...' in SsoCallbackContent. On a 4-locale (sk/cs/de/en) portal, sk/cs/de users completing SSO see English strings on the auth flow.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-journal-card-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx:96 \u2014 ArticleCard renders reading time as `{article.author} \u00b7 {article.readMin} min \u010d\u00edtania`, a hardcoded Slovak suffix, while the same page's Most-Read sidebar correctly renders the identical concept via t('readingTime', { min: article.readMin }) at :327. The inconsistency proves the card should reuse the existing pages.journal.readingTime catalog entry; as written, cs/de/en journal readers see 'min \u010d\u00edtania' on every article card.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-18 ppt-web-core queryKeys/AuthContext logout purge)",
+      "score_delta": 3,
+      "evidence": "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 \u2014 AUTHED_QUERY_KEY_ROOTS is the explicit allow-list that logout() iterates (contexts/AuthContext.tsx:624-626: `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })`). logout() does NOT call queryClient.clear() (issue #712 replaced clear() with this scoped removal), so ANY authed TanStack Query root not present in this list survives logout and is served to the NEXT user who logs in on the same browser until a refetch \u2014 a cross-user tenant-data leak on shared/kiosk workstations, exactly the risk the queryKeys.ts:331-352 doc-comment warns about.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-unconfigured",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-18 ppt-web-core lib/api.ts default export)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/lib/api.ts:370 \u2014 `export default getApiClient()` is evaluated at MODULE-LOAD time. getApiClient() (:322-327) lazily creates the singleton via createAxiosInstance() with NO config, so the default-exported instance has tokenGetter=undefined and onUnauthorizedCallback=undefined. configureApiClient() (:347-350) \u2014 the only thing that wires getToken + onUnauthorized, called once from contexts/AuthContext.tsx:380 \u2014 runs LATER (inside a React effect), and rebinds the module-level `apiInstance` but cannot retroactively fix the value already captured by the default export.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "evidence": "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-51,54-72 \u2014 the OCR hooks call the app's OWN api-server endpoints (`POST /api/v1/ai/ocr/meter-reading` :45 and `POST /api/v1/ai/ocr/correction` :59) through a bare `ocrFetch()` (:26 `const response = await fetch(url, options)`) that never attaches an Authorization header. The image request (:44-49) passes only a FormData body with no `headers` at all; the correction request (:59-71) sets only `Content-Type: application/json`. ppt-web authenticates with a localStorage Bearer JWT injected by the axios interceptor / setTokenProvider (contexts/AuthContext.tsx:361-390, lib/api.ts:217-229) \u2014 there is no cookie session and no global fetch monkey-patch (confirmed: no window.fetch/globalThis.fetch override in src). So both OCR calls go out UNAUTHENTICATED and will 401, and they also omit the `X-Tenant-ID` tenant header, so even if a request landed it would not be org-scoped. Net effect: Epic-128 OCR meter-reading preview and its correction-feedback training loop are broken against a real backend.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-needing-maint-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:59-70 \u2014 `useNeedingMaintenance(daysAhead = 30)` feeds `daysAhead` into the request URL (:64 `...?days_ahead=${daysAhead}`) but its TanStack Query key is the constant `predictiveKeys.needingMaintenance()` (:61 \u2192 :18 `[...all, 'needing-maintenance']`), which does NOT include `daysAhead`. So two callers requesting different horizons (e.g. 30 vs 90 days) collide on one cache entry: the second caller is served the first caller's cached data, and changing the `daysAhead` prop on a mounted component will not trigger a refetch. This contradicts the other two hooks in the same file, which correctly thread their query object into the key: useEquipmentList (:30-31 `predictiveKeys.equipment(query)`) and useMaintenancePredictions (:47-48 `predictiveKeys.predictions(query)`).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-no-backoff",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:26,84-95 \u2014 the IoT sensor WebSocket reconnect loop uses a FIXED 5s interval (`WS_RECONNECT_MS = 5_000` :26) with NO exponential backoff, NO jitter, and NO maximum-attempt cap: `ws.onerror` closes the socket (:84-86), `ws.onclose` unconditionally re-arms `setTimeout(connect, WS_RECONNECT_MS)` (:88-95), and connect() re-reads getToken() each cycle. On a persistent outage \u2014 server down, Redis unconfigured, or an expired/revoked token repeatedly rejected at the WS upgrade before AuthContext refreshes \u2014 the client hammers `/api/v1/iot/sensors/ws` forever every 5s across every mounted telemetry chart (thundering herd, server-log spam, needless battery/CPU/socket churn).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-routes-unlocalized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/ \u2014 all 6 route pages render user-facing copy but NONE import next-intl useTranslations: realtor/page.tsx, realtor/[id]/page.tsx, realtor/profile/page.tsx, realtor/listings/new/page.tsx, realtor/listings/[id]/edit/page.tsx, realtor/analytics/page.tsx (grep -L useTranslations over find realtor -name page.tsx)",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-account-routes-unlocalized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/account/ \u2014 all 4 route pages render user-facing copy but NONE import next-intl useTranslations: account/page.tsx, account/profile/page.tsx, account/listings/[id]/edit/page.tsx, account/password/page.tsx (grep -L useTranslations)",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:166 \u2014 load-error fallback hardcoded in Slovak: setLoadError(err instanceof RealtorApiError ? err.message : 'Na\u010d\u00edtanie inzer\u00e1tu zlyhalo.')",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [],
+      "title": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-backend-message-passthrough",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 ppt-web-core errorHandler backend-message passthrough)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/lib/errorHandler.ts:221 (`message: data.message || errorInfo.message`) renders the RAW backend `ErrorResponse.message` verbatim as the user-facing error message for EVERY structured error response, regardless of HTTP status class. There is no status-based scrubbing: a 5xx (INTERNAL_ERROR / SERVICE_UNAVAILABLE) that arrives with a structured body takes the `data.message` branch and shows the backend string directly, instead of falling back to the localized generic `errors.catalogue.INTERNAL_ERROR.message` copy. The file header (lines 6-10) documents this as intentional (\"raw backend `message`s are passed through untranslated\"), but the design trusts the backend to never place internal detail (SQL text, panic strings, internal identifiers, upstream stack fragments) in `message` on server-class errors \u2014 a fragile invariant for an info-disclosure surface.",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "title": null
+    },
+    {
+      "id": "code-review-reality-web-unvalidated-href-url-scheme",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 reality-web href url-scheme sink)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx:17 (`href={listing.virtualTourUrl}`) and :39 (`href={listing.floorPlanUrl}`) interpolate agent/agency-authored URL fields straight into an anchor href with NO scheme allow-list. These render on the PUBLIC, SEO-indexed listing detail page. A listing whose virtualTourUrl/floorPlanUrl is set to `javascript:...` (or `data:text/html,...`) becomes a stored-XSS-on-click sink: React 19 does NOT strip `javascript:` hrefs at runtime (it only emits a dev-only warning), so the scheme executes in the visitor's browser on the reality-web origin when they click the 'Virtual tour' / 'Floor plan' link. rel=\"noopener noreferrer\" is present (tabnabbing is covered) but rel does nothing against a `javascript:`-scheme href.",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "title": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# 2026-09-19'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq staged vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "remediation": null
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5a",
+      "passed": true,
+      "command": "jq [items|score>8] len==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5b",
+      "passed": true,
+      "command": "python: prev vs cur decay",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep new-plan slug + 'adversarial pass:' in brief",
+      "observed": "2/2 PASS",
+      "expected": "all PASS"
+    },
+    {
+      "goal": "G7a",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "2",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7b-d",
+      "passed": true,
+      "command": "4 meta + 11 headings + capability tick",
+      "observed": "2/2 PASS",
+      "expected": "all PASS"
+    },
+    {
+      "goal": "G7e",
+      "passed": true,
+      "command": "Files paths exist on disk",
+      "observed": "3/3 files exist",
+      "expected": "all exist"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hostnames in staged (with baseline-doc exclusions)",
+      "observed": "0 (after neutralizing 'Authorization: Bearer' -> 'Authorization: <bearer>' in 2 signal-evidence strings)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen(backlog.json)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep placeholder rot in new plans + brief",
+      "observed": "0 violations",
+      "expected": "0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans converge",
+      "observed": "all HEAD plan slugs still in plans/ or plans/_archive/",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "9 now >= 9 head",
+      "expected": ">=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap/idempotency/kill switch",
+      "observed": "0 auto_fix_actions (no candidate)",
+      "expected": "<=3 and idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run",
+      "observed": "no-op (skipped)",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
