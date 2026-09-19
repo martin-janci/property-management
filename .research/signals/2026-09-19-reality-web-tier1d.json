@@ -1,0 +1,44 @@
+{
+  "generated": "2026-09-19T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=12 < floor=36). Static single-segment code review, no compilation / no test execution. This run produces fresh CLOUD-LANDABLE frontend backlog vectors.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed + cloud-landable preference. state.json review_cursor ties reality-web (2026-08-29) and ppt-web-core (2026-08-29) as the two oldest segments; both are cloud-landable frontend (dispatcher-preferred over the egress-blocked mobile-native/KMP and api-server segments). Tie broken toward reality-web because ppt-web-core received TWO Tier-1d passes yesterday (2026-09-18-ppt-web-core-tier1d.json + -tier1d-2.json) whereas reality-web received one, and its cursor is only stale because dispatcher Tier-1d passes do not advance state.json's review_cursor (routine-owned file). No CHURN_FILES were handed to this slice, so churn-alignment did not apply. SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for reality-web (only 4 OPEN rows exist, all mobile-native-kmp), so the >=3-open skip rule does not trigger. DEDUP: prior reality-web passes concentrated almost entirely on i18n/localization (unlocalized routes, hardcoded sk/en-US strings, Slovak fallbacks) plus one PhotoGallery index-OOB; this pass deliberately reviews the NON-i18n angle (data-flow / injection sinks / error handling) and returns 1 net-new, non-duplicate finding after explicitly clearing it against 2026-07 through 2026-09 reality-web signals and backlog.json. Static-only (no build/test): the Next.js app is not compiled here; the finding is a backlog signal, cloud-landable (single-file frontend edits under frontend/apps/reality-web/src/).",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "lib/auth-token.ts (getSession JSON.parse is try/catch-guarded + expiry sanity check)",
+    "lib/comparison-context.tsx (localStorage JSON.parse try/catch-guarded, clears on corruption)",
+    "app/api/layout-revalidate/route.ts (HMAC timingSafeEqual with length-guard, body JSON.parse try/catch -> 422, shape validation)",
+    "app/[locale]/listings/[slug]/page.tsx getListing (response.ok null-check + parseListingDetail shape validation + soft-404 avoidance via notFound())",
+    "middleware.ts fetchKillSwitch (try/catch with safe defaults, never breaks routing on api failure)",
+    "components/listings/ContactForm.tsx (createInquiry.error surfaced via t('failedToSend'))",
+    "components/listings/sections/Resources.tsx external <a> carry rel=\"noopener noreferrer\" (tabnabbing covered; scheme is the remaining gap — see finding)",
+    "app/[locale]/agency/[slug]/page.tsx agency.website <a> carries rel=\"noreferrer\" (tabnabbing covered)",
+    "agency/[slug]/page.tsx hardcoded sk strings (Kontakt / Navštíviť web / Kancelária sa nenašla) already flagged 2026-08-24 as code-review-reality-web-agency-slug-i18n — NOT re-emitted"
+  ],
+  "signals": [
+    {
+      "id": "code-review-reality-web-unvalidated-href-url-scheme",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 reality-web href url-scheme sink)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx:17 (`href={listing.virtualTourUrl}`) and :39 (`href={listing.floorPlanUrl}`) interpolate agent/agency-authored URL fields straight into an anchor href with NO scheme allow-list. These render on the PUBLIC, SEO-indexed listing detail page. A listing whose virtualTourUrl/floorPlanUrl is set to `javascript:...` (or `data:text/html,...`) becomes a stored-XSS-on-click sink: React 19 does NOT strip `javascript:` hrefs at runtime (it only emits a dev-only warning), so the scheme executes in the visitor's browser on the reality-web origin when they click the 'Virtual tour' / 'Floor plan' link. rel=\"noopener noreferrer\" is present (tabnabbing is covered) but rel does nothing against a `javascript:`-scheme href.",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:297 (`href={agency.website}`) is the same sink for the agency-controlled `website` field on the public agency profile page — a malicious or compromised agency account can plant a `javascript:` URL that fires for any visitor who clicks the '🌐 Navštíviť web' link.",
+        "The codebase already recognises `javascript:` / `data:` URL injection as a threat in the adjacent CSS-vars path: lib/tenant-config.ts:243 `sanitizeCssValue()` denylists `javascript:`, `data:`, `url(`, `expression(` for branding css_vars. That helper is CSS-only; there is NO analogous scheme allow-list applied to anchor hrefs. A grep of frontend/apps/reality-web/src (non-test) confirms no safeUrl/sanitizeUrl/isSafeUrl/href-scheme helper exists.",
+        "Impact: MEDIUM — stored XSS but gated on (a) a semi-trusted content author (agent/agency) planting the payload and (b) a victim click. Confidence MEDIUM (static-only): the render sinks and the absence of any client-side scheme guard are confirmed by direct read; NOT confirmed is whether the api-server / reality-server validates the URL scheme server-side on write. If the backend already rejects non-http(s) schemes this degrades to a defense-in-depth gap; if it does not, it is a live stored-XSS. Either way the render sink should not trust the field.",
+        "Fix (cloud-landable, small frontend-only edit): add a shared `safeExternalHref(url): string | undefined` helper in reality-web/src/lib that returns the URL only when `new URL(url).protocol` is `http:` or `https:` (drop the attribute / render as plain text otherwise), and route listing.virtualTourUrl, listing.floorPlanUrl and agency.website through it. Mirrors the existing sanitizeCssValue defense-in-depth posture. Verifies cleanly in the cloud runner (single-package frontend change, no backend/build coupling)."
+      ]
+    }
+  ]
+}
