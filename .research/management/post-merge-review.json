@@ -1,9 +1,28 @@
 {
-  "generated": "2026-09-17T16:27:41Z",
+  "generated": "2026-09-19T04:23:50Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-19T04:23:50Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [
+        2955,
+        2956,
+        2950,
+        2952,
+        2941,
+        2942,
+        2943,
+        2940,
+        2938
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-05), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable proxy-403; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration via list_pull_requests (state=closed, base=dev, sort=updated desc, perPage=50). All 9 in-window merges (merged_at>=2026-09-05: 2955,2956,2950,2952,2941,2942,2943,2940,2938) already carry post-merge-reviewed from prior runs; earliest in-window merge #2938 @2026-09-05T16:23:55Z, everything below out of window. Top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2934,2867,2865,2749) were closed unmerged (no merged_at). Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened. No-op pass.",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-09-17T16:27:41Z",
       "prs_scanned": 0,
@@ -516,29 +535,6 @@
       "with_issues": [],
       "skipped_already_reviewed": [],
       "note": "Dispatcher Phase 2.5 post-merge review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to the orchestrator's Phase 6. gh CLI proxy-blocked -> GitHub MCP (mcp__github__*) for all GH I/O; static enumeration only. Window merged-to-dev 14d (>=2026-08-10), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run reviewed through #2838 (2026-08-23T14:30Z). Label-based enumeration of closed PRs into dev (sorted updated desc, 40 rows): EVERY in-window merged PR (merged_at present) already carries post-merge-reviewed -- newest merges #2833-#2838 were labeled by the prior run and nothing has merged into dev since. Dependabot #2750/#2751 skipped (closed-unmerged, no merged_at). 0 net-new never-reviewed PRs -> 0 reviewed, 0 issues opened, 0 labels applied. No open from-merged-review issues re-touched. Clean no-op pass."
-    },
-    {
-      "run_at": "2026-08-23T14:30:40Z",
-      "prs_scanned": 6,
-      "clean": [
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven post-merge review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI NOT installed -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, 6 PR diffs reviewed inline (static diff review only). Window merged-to-dev 14d (>=2026-08-09), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run reviewed through #2830 (2026-08-22T18:31Z). Label-based enumeration surfaced exactly 6 unlabeled net-new in-window merged PRs (#2833-#2838); all older in-window PRs already carried post-merge-reviewed; dependabot #2750/#2751 skipped (closed-unmerged, no merged_at). THIS RUN APPLIED post-merge-reviewed labels to all 6 via issue_write.update (they carried no pre-existing labels, so no clobber). No open from-merged-review issues existed to dedup against (searched). ALL 6 CLEAN, 0 net-new issues -- another strong auto-impl batch, each a code-review correctness/security/i18n fix shipped WITH a targeted regression test + rationale doc-comments. Details: #2838 (api-server voice_webhooks: extracts shared encrypt_voice_token_pair choke point used by all 4 exchange/refresh call sites -- keeps #765 fail-closed encryption + #2662 indexed access_token_hash in lock-step so real and simulated branches cannot silently diverge; behavior-preserving refactor, simulated-exchange refresh now via encrypt_optional_required(Some) == prior mandatory encrypt; +fail-closed-without-crypto unit test). #2834 (db: replaces plain-SELECT get_notifications_to_release with atomic claim_notifications_to_release -- UPDATE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED LIMIT $) RETURNING * stamps claimed_at, so the quiet-hours drain running in every api-server replica delivers each held row at-most-once (issue #2831, closes the cross-replica double-delivery the per-channel dedup #2823 could not); self-healing claim lease (QUIET_HOURS_DRAIN_CLAIM_LEASE_SECS default 300 > poll 60) re-claims crashed-worker rows; record_held_attempt clears claimed_at for prompt partial-failure retry; migration 00235 additive column reuses 00234 partial index; 2 real-Postgres sqlx regression tests (at-most-one-replica + clear-on-partial-retry) + lease>poll config test). #2833 (ppt-web AmlDashboardPage: keys the InitiateEdd/ReviewAssessment dialogs on assessmentId ?? '<x>-closed' so React remounts a fresh instance per assessment and across close->reopen -- fixes #2832 stale reason/notes/decision leaking across assessments on a compliance surface; 2 regression tests for review + edd reset). #2835 (mobile VoteDetailScreen: moves the voteId-missing early return BELOW every hook and gates the 3 queries on enabled:!!voteId -- fixes a Rules-of-Hooks violation (different hook count between renders -> 'Rendered more hooks' crash on missing->present voteId); 3 tests incl. rerender-no-throw + enabled:false + missing-id error state). #2836 (mobile ThreadDetailScreen: localizes 7 hardcoded EN literals -- backToList/threadTitleFallback/composerPlaceholder/syncing/send + author You/Participant -- via messages.* across 6 locales; pure toUiMessages mapper stays translation-agnostic by taking injected AuthorLabels; render + resource-coverage tests, sibling send.test updated). #2837 (mobile VoiceCommands.executeVoiceCommand: moves 9 confirmation strings + unknownCommand error off hardcoded EN onto voice.* i18n keys read from the i18next singleton (mirrors i18n/format.ts module-fn convention), interpolating {{category}}/{{query}}; behavior + resource-coverage tests across 6 locales). Considered-but-not-filed: (a) #2837's COMMAND_PATTERNS parsing regex stays English-only and the localized unknownCommand hint quotes English phrases -- pre-existing, plausibly by design for the ASR locale, out of scope for this i18n-of-output PR. (b) #2834's 300s lease vs batch_limit=500 could in principle be tight under a very slow push provider (~0.6s/row), but is documented, self-healing, and tested (lease>poll) -- config tradeoff, not a code-shape defect. NET-NEW actionable issues: 0. Every PR labeled post-merge-reviewed so it will not resurface.",
-      "focus_prs": [
-        2833,
-        2834,
-        2835,
-        2836,
-        2837,
-        2838
-      ]
     }
   ]
 }
