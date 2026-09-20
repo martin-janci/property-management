@@ -1,0 +1,310 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-20",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-09-01T18:38:58Z; ~19 days ago (>36h threshold)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-20",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso 19d old; cloud routine schedule likely paused between 09-02 and 09-19",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "evidence": "dependabot bumped npm-minor-patch group (40 updates) merged 2026-09-04",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2957",
+      "type": "dep-update-noise",
+      "source": "PR #2957",
+      "score_delta": 0,
+      "evidence": "dependabot open: tower-http axum",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2960",
+      "type": "dep-update-noise",
+      "source": "PR #2960",
+      "score_delta": 0,
+      "evidence": "dependabot open: expo-secure-store",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2961",
+      "type": "dep-update-noise",
+      "source": "PR #2961",
+      "score_delta": 0,
+      "evidence": "dependabot open: kotlin",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2962",
+      "type": "dep-update-noise",
+      "source": "PR #2962",
+      "score_delta": 0,
+      "evidence": "dependabot open: compose-bom",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2963",
+      "type": "dep-update-noise",
+      "source": "PR #2963",
+      "score_delta": 0,
+      "evidence": "dependabot open: gradle-minor-patch",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2964",
+      "type": "dep-update-noise",
+      "source": "PR #2964",
+      "score_delta": 0,
+      "evidence": "dependabot open: cargo-minor-patch",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2965",
+      "type": "dep-update-noise",
+      "source": "PR #2965",
+      "score_delta": 0,
+      "evidence": "dependabot open: npm-minor-patch (24 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": "dependabot open: expo-status-bar",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": "dependabot open: @testing-library/react-native",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": "dependabot open: expo-device",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "evidence": "dependabot open: actions/setup-java v5\u2192v6",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": "dependabot open: sentry 0.48.5\u21920.49.0",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/lib/queryKeys.test.ts",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-09-20",
+      "score_delta": 1,
+      "evidence": "3 PRs since last run \u2014 PRs #2943, #2952, #2956 all touched queryKeys.test.ts \u2014 logout-purge coverage evolving",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-09-20",
+      "score_delta": 1,
+      "evidence": "2 PRs since last run \u2014 PRs #2941, #2942 both touched AuthContext.tsx \u2014 JWT boot expiry + 401 replay",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/services/resetLocalData.ts",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-09-20",
+      "score_delta": 1,
+      "evidence": "2 PRs since last run \u2014 PRs #2950, #2955 both touched resetLocalData.ts \u2014 NFC + queryKeys purge",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-web-password-reset-frontend-not-wired",
+      "type": "code-review-finding",
+      "source": "manual mini-review reality-web auth-api.ts 2026-09-20",
+      "score_delta": 3,
+      "evidence": "reality-web auth-api.ts:121-128,130-137 requestPasswordReset/confirmPasswordReset throw NOT_IMPLEMENTED even though reality-server routes/users.rs:48-49 wires POST /api/v1/users/password-reset + /confirm \u2014 portal users literally cannot reset password despite backend being live",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "segment": "reality-web"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-view-todo-noop",
+      "type": "code-review-finding",
+      "source": "manual mini-review ppt-web accounting 2026-09-20",
+      "score_delta": 2,
+      "evidence": "ppt-web AccountingInvoiceManagementPage.tsx:103 onViewInvoice is a comment-only no-op \u2014 InvoiceDetail component already exists at features/financial/components/InvoiceDetail.tsx but is not routed; users click 'view' and nothing happens",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "segment": "ppt-web-ui"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f + head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurp on state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit score_delta check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief adversarial-pass annotation",
+      "observed": "brief contains adversarial pass: passed for the promoted plan",
+      "expected": "present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan structure (4 meta + 11 headings + capability + mode + files exist)",
+      "observed": "all sections present, cloud-ok mode, 2 files resolved",
+      "expected": "all present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged only .research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff regen vs backlog.md",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failed",
+      "expected": "no phase failed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan slugs preserved from HEAD",
+      "observed": "all existing plans still present",
+      "expected": "preserved"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged>=head",
+      "observed": "9>=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff regen vs IDEAS_TRIAGE.md",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 no-op",
+      "observed": "no-op (skipped)",
+      "expected": "no-op when skipped",
+      "remediation": "next run should invoke ppt-project-management skill; pm_cursor still at 5"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token literal scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal met certainty bar this run"
+}
