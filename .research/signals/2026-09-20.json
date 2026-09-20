@@ -1,0 +1,170 @@
+{
+  "date": "2026-09-20",
+  "run_iso": "2026-09-20T06:33:00Z",
+  "run_kind": "lag-marker",
+  "phases_run": ["phase-4-write", "phase-6-commit"],
+  "phases_skipped": ["phase-1-observe", "phase-1.5-review", "phase-1.6-pm", "phase-2-decide", "phase-3-promote", "phase-3.5-adversarial", "phase-5-auto-fix"],
+  "phases_skip_reason": "cloud routine has not written a brief since 2026-09-01 (lag 19d 12h); this run is a minimal lag-marker that establishes today's brief + signals + state cursor bump under a tightened token budget. Full Phase-1..3 walk (~34+ merged PRs since #2921, decay of 4 open items, promotion evaluation of `create-listing-not-wired`) deferred to next `deep` run.",
+  "fire_payload_context": "buffer-low: claimable=12/72 all-candidates-infra-blocked (api-server swagger-ui egress + mobile-native AGP egress) — refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-20",
+      "type": "lag_warning",
+      "source": "routine self-observation",
+      "score_delta": 0,
+      "evidence": [
+        "state.last_run_iso=2026-09-01T18:38:58Z, wall clock 2026-09-20T06:33:00Z → lag 19d 12h, well past the 36h threshold in Phase 1.",
+        "Dispatcher (planning branch) has continued to run in the same window and emit tier-1d code-review signals under .research/signals/2026-09-{17,18,19,20}-*.json — pipeline gap is on the daily-cron path, not the shared state files."
+      ],
+      "confidence": "high",
+      "candidate_vector": null,
+      "notes": "informational, no backlog impact — dropped from Phase 2 by the lag_warning row of the signal table (Δ0)"
+    },
+    {
+      "id": "stale-routine-2026-09-20",
+      "type": "stale_routine_alert",
+      "source": "routine self-observation",
+      "score_delta": 0,
+      "evidence": [
+        "LAG_DAYS=19 ≥ 3 — Phase 1 command-block emits the stale_routine_alert message. The daily cloud routine is functionally paused (state.paused is still false; the pause is at the trigger layer, not the runtime flag).",
+        "Dispatcher state on .research/management/assignments.json (planning branch) shows continued activity, so the two loops have diverged."
+      ],
+      "confidence": "high",
+      "candidate_vector": null,
+      "notes": "operator-facing alert; no backlog row created"
+    }
+  ],
+  "deferred_signals": [
+    {
+      "reason": "Emitted by dispatcher Tier-1d api-core review on 2026-09-20 into .research/signals/2026-09-20-api-core-tier1d.json; NOT folded into today's backlog under the lag-marker budget. Intentionally NOT added to state.seen_signals this run so the next full routine run picks them up.",
+      "ids": [
+        "code-review-api-core-statement-upload-not-atomic",
+        "code-review-api-core-statement-account-iban-hardcoded"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — Phase 5 requires a signal-allowlist match (screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise / stalled-review) with confidence=high and item score≥3. Phase 1 was skipped this run so no such signal was derived.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-20.md && head -1 .research/briefs/2026-09-20.md | grep -q '^# 2026-09-20$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … '(seen_signals.length changed) or (stats.quiet_days changed)' .research/state.json",
+      "observed": "seen_signals length 482→484 AND stats.quiet_days 3→4 AND stats.runs 78→79 — state advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true (backlog.json untouched this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "check that any signal id in signals/2026-09-20.json already in prior state.seen_signals is either a cumulative type OR score_delta==0",
+      "observed": "lag-warning-2026-09-20 and stale-routine-2026-09-20 were NOT in prior seen_signals; both score_delta=0 anyway",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": false,
+      "command": "jq (cap check) and jq (decay check on rows with updated_at ≤ today-14)",
+      "observed": "cap OK (no score > 8); DECAY VIOLATED — 4 open rows > 14d old did not lose a point this run",
+      "expected": "true",
+      "remediation": "Deferred to next run — under this lag-marker's budget the backlog.json/backlog.md pair is left untouched (protects G10/G14 byte-identity). Next full run applies decay: 4→3 (still eligible), 1→0 dropped, 1→0 dropped, 1→0 dropped."
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "for each new plan file in this run, brief has an 'adversarial pass:' annotation on its line",
+      "observed": "no new plans this run — trivially passes",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans this run; each has 4 metadata fields + 11 headings + capability tick + Mode declared + Files paths resolve on disk",
+      "observed": "0 new plans this run — trivially passes",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0 (only briefs/2026-09-20.md, signals/2026-09-20.json, state.json staged — all under .research/)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep the staged diff (excluding the four baseline docs) for the G9 forbidden-substring set — see routine-prompt.md",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md from backlog.json and diff -q against the staged view",
+      "observed": "backlog.md and backlog.json both untouched this run — trivially byte-identical to HEAD",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "for each failed phase in brief 'Phases that failed' line, verify the corresponding cursor in state.json equals HEAD's value",
+      "observed": "last_pr_seen, last_issue_seen, last_commit_sha unchanged from HEAD (2921 / 2847 / eea70673...). pm_cursor unchanged. review_cursor unchanged.",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-HEAD plan slug is in the working tree as plans/<slug>.md OR plans/_archive/<slug>.md",
+      "observed": "plans/ untouched this run — trivially passes",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files -- .research/plans/_archive/ | wc -l ≥ git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l",
+      "observed": "_archive untouched (8 files) — count unchanged",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md from triage rows in backlog.json and diff -q against the staged view",
+      "observed": "IDEAS_TRIAGE.md and backlog.json both untouched this run — trivially byte-identical to HEAD",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length ≤3 with ≤1 pr/issue/comment each; every signal_id absent from state.auto_fix_history",
+      "observed": "auto_fix_actions=[]; nothing to audit",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor liveness (GC7)",
+      "observed": "Phase 1.6 not run this run (pm_cursor.next_index unchanged from HEAD) — gate is a no-op",
+      "expected": "exit 0 (no-op)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached | grep for Telegram bot-token URL or bare token pattern in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
