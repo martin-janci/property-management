@@ -1,0 +1,152 @@
+{
+  "date": "2026-09-20",
+  "run_type": "catch-up (19d lag)",
+  "phases_failed": [
+    "phase-1-full-signal-derivation-partial",
+    "phase-1.5-rotating-expert-review-skipped",
+    "phase-1.6-project-management-skipped"
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "Routine has not run since 2026-09-01T18:38:58Z (19d gap). Cloud cron was paused or failed; running catch-up now.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "resolution-stalled-review-pr-2558-2026-09-20",
+      "type": "resolution",
+      "source": "PR #2558 merge",
+      "score_delta": 0,
+      "evidence": "stalled-review-pr-2558 resolved: PR #2558 merged 2026-09-04. Backlog item flipped to status=done.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-20.md && head -1 grep '^# 2026-09-20$'",
+      "observed": "exit 0 (post-write)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … staged state.json",
+      "observed": "seen_signals length increased; cursors advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal-id vs prev seen_signals with score_delta guard",
+      "observed": "no offenders",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "cap_ok=True decay_ok=True",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "vacuous",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0 ≤ 2",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "pending stage",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "pending stage",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram tokens in staged diff",
+      "observed": "pending stage",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen(backlog.json)",
+      "observed": "byte-identical (same regen script)",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "cursor invariants for failed phases",
+      "observed": "review_cursor + pm_cursor + coverage_cursor unchanged vs HEAD",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans present at HEAD still present or archived",
+      "observed": "no plan changes this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "unchanged (8 files)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen(backlog.json)",
+      "observed": "byte-identical (same regen script)",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty",
+      "observed": "no auto-fix candidates met bar",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped ⇒ no-op",
+      "observed": "skipped",
+      "expected": "true (no-op)"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar this run (catch-up run; conservative)"
+}
