@@ -1,0 +1,393 @@
+{
+  "date": "2026-09-20",
+  "run_kind": "normal incremental (trigger: buffer-low payload biasing toward cloud-landable frontend/reality-web)",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the 10 tier1d code-review-finding signals are not on the Phase-5 allowlist (allowlist: screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift, stalled-review); Phase-1 emitted no allowlisted signals this run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z → 19 days ago",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Routine has not run in 19d 18h (last_run_iso=2026-09-01T18:38:58Z, now=2026-09-20T12:40Z). Well past the 36h lag threshold; cloud routine cron may be paused. Dispatcher is still active (planning-branch commits daily, most recent 2026-09-20 10:34)."
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-09-20",
+      "type": "stale_routine_alert",
+      "source": "P4 rule — last_run_iso 19d old (>= 3d threshold)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "state.json last_run_iso=2026-09-01T18:38:58Z is 19d old; cloud routine likely paused. Dispatcher state (assignments.json on planning) still ticks."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat origin/dev 2026-09-01..2026-09-20",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3427 +/- lines across the 19-day window; top-1 non-lockfile code churn file. hotspot_history.runs_seen 1 → 2."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat origin/dev 2026-09-01..2026-09-20",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2999 +/- lines across the 19-day window; top-2 non-lockfile code churn. hotspot_history.runs_seen 3 → 4."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat origin/dev 2026-09-01..2026-09-20",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2799 +/- lines across the 19-day window; top-3 non-lockfile code churn. hotspot_history.runs_seen 2 → 3."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=3 (voice_webhooks.rs) + fresh 2999 churn this window",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen crosses from 3 → 4 with 2999 fresh churn — instability proxy."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2 (integrations/webhook.rs) + fresh 2799 churn this window",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen crosses from 2 → 3 with 2799 fresh churn."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-unvalidated-href-url-scheme",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 reality-web href url-scheme sink)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "Resources.tsx:17,39 interpolate agent/agency-authored virtualTourUrl / floorPlanUrl into <a href> with no scheme allow-list; React 19 does not strip javascript: at runtime.",
+        "agency/[slug]/page.tsx:297 same sink for agency.website. Fix: add safeExternalHref helper filtered to http(s)."
+      ],
+      "adopted_from": ".research/signals/2026-09-19-reality-web-tier1d.json"
+    },
+    {
+      "id": "code-review-reality-web-csv-import-filepick-no-type-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 reality-web csv-import)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx"
+      ],
+      "evidence": [
+        "CsvImport.tsx:58-64 handleFileSelect accepts any file (accept=.csv is advisory only) while handleDrop at :47-56 has type-guard. Extract isCsvFile(file) helper for both paths."
+      ],
+      "adopted_from": ".research/signals/2026-09-19-reality-web-tier1d-2.json"
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-id-unencoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-19 reality-web comparison share-id encoding)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "evidence": [
+        "ComparisonUrlHandler.tsx:38-43 maps ?compare= ids into fetch path without encodeURIComponent. Distinct from 2026-08-18 response-side cast finding."
+      ],
+      "adopted_from": ".research/signals/2026-09-19-reality-web-tier1d-2.json"
+    },
+    {
+      "id": "code-review-api-core-statement-upload-not-atomic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 api-core accounting service)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs",
+        "backend/servers/api-server/src/routes/accounting/statements.rs"
+      ],
+      "evidence": [
+        "process_statement_upload (accounting.rs:49-107) autocommits header + line loop + matcher over RlsConnection (not a Transaction). Partial-import on mid-loop error; double-count on retry. Correct pattern in invoices.rs:241 rls.begin(). Fix: wrap in one tx + add dedup key."
+      ],
+      "adopted_from": ".research/signals/2026-09-20-api-core-tier1d.json"
+    },
+    {
+      "id": "code-review-api-core-statement-account-iban-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 api-core accounting service)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "evidence": [
+        "accounting.rs:68 always writes placeholder CZ00…00 for account_iban; CSV account IBAN never parsed. Matcher keys off counterparty_iban so it's a data-traceability gap, not a matching bug."
+      ],
+      "adopted_from": ".research/signals/2026-09-20-api-core-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-core-routes-missing-auth-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "evidence": [
+        "AppRoutes.tsx:37 mounts feature groups directly, no top-level auth guard. faults.tsx:564 + 5 sibling groups lack <ProtectedRoute>; sibling groups DO wrap. Unauthenticated deep-links neither redirect to /login nor set the return URL — inconsistent with documents/voting/core/meters/reports groups."
+      ],
+      "adopted_from": ".research/signals/2026-09-20-ppt-web-core-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-message",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "evidence": [
+        "errorHandler.ts:194 surfaces raw Error.message; :221 passes backend data.message through; the module elsewhere resolves user copy from the i18n catalogue via errorCopy()/i18n.t()."
+      ],
+      "adopted_from": ".research/signals/2026-09-20-ppt-web-core-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx"
+      ],
+      "evidence": [
+        "BudgetForm.tsx:127-160 uses key={index} on removable controlled inputs. Classic React index-key data-integrity bug — deleting middle rows shifts subsequent inputs' values. Fix: stable UUID id assigned at add-time."
+      ],
+      "adopted_from": ".research/signals/2026-09-20-ppt-web-ui-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-ui-hardcoded-en-us-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/components/KPICard.tsx",
+        "frontend/apps/ppt-web/src/features/financial/components/RecentPaymentsList.tsx",
+        "frontend/apps/ppt-web/src/features/insurance/components/PolicyCard.tsx"
+      ],
+      "evidence": [
+        "46 files under features/** hardcode 'en-US' in Intl.NumberFormat / toLocaleDateString / toLocaleString. Currency renders 'US grouping + leading symbol' under en-US even when currency='EUR' (e.g. KPICard.tsx:18). Fix: shared formatter helpers reading i18n.resolvedLanguage."
+      ],
+      "adopted_from": ".research/signals/2026-09-20-ppt-web-ui-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-full-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "evidence": [
+        "RegistryPage.tsx lines 91,95,129,148,152,186 use window.location.href for 6 internal /registry/* navigations. Swap for useNavigate; the ContentModerationPage.tsx:205-207 TODO already flags the same anti-pattern."
+      ],
+      "adopted_from": ".research/signals/2026-09-20-ppt-web-ui-tier1d.json"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-20.md && head -1 matches # 2026-09-20",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev … .research/state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq --slurpfile prev … signals/2026-09-20.json (non-cumulative dedup)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "4/4 open items with updated_at ≤ 2026-09-06 either dropped or (prev.score-1) equals current.score",
+      "observed": "4/4 correctly decayed",
+      "expected": "all correctly decayed"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans added this run → trivially passed",
+      "observed": "0 new plans",
+      "expected": "adversarial pass annotation for each new plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v /_archive/ | grep -c .md$",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached (excl. baseline docs) | grep -E secrets/hosts | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' line == 'none'; no cursor left at prev value",
+      "observed": "no failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior-run plan slugs missing from plans/ or plans/_archive/",
+      "observed": "converged",
+      "expected": "converged"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files _archive/ count >= HEAD archive count",
+      "observed": "9 >= 9",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq caps + idempotency on auto_fix_actions[]",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor∈[0,7] + coverage_cursor∈[0,13) + both advanced this run",
+      "observed": "epics=13 CC 7→8 PM 5→6",
+      "expected": "all valid + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached added lines | grep telegram-token pattern | wc -l",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

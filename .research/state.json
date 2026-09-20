@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-01T18:38:58Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2921,
-  "last_issue_seen": 2847,
-  "last_commit_sha": "eea70673122e0171f0e19eb9425a28af8f3f9c84",
+  "last_run_iso": "2026-09-20T12:40:31Z",
+  "last_run_ms": 12000,
+  "last_pr_seen": 2956,
+  "last_issue_seen": 2966,
+  "last_commit_sha": "e67b2e8ddc4cb3bc624b381146580cf5c9afb56e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -153,8 +153,8 @@
       "recent_churn": 2950
     },
     "backend/servers/api-server/src/routes/integrations/webhook.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-08-22",
+      "runs_seen": 3,
+      "last_seen": "2026-09-20",
       "recent_churn": 2799
     },
     "backend/servers/api-server/src/services/oauth.rs": {
@@ -468,9 +468,9 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-08-22",
-      "recent_churn": 2871
+      "runs_seen": 4,
+      "last_seen": "2026-09-20",
+      "recent_churn": 2999
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
@@ -478,8 +478,8 @@
       "recent_churn": 352
     },
     "backend/servers/api-server/tests/suites/oauth_integration_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-22",
+      "runs_seen": 2,
+      "last_seen": "2026-09-20",
       "recent_churn": 3427
     },
     "backend/servers/api-server/src/services/quiet_hours_drain.rs": {
@@ -1005,7 +1005,24 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-09-20",
+    "stale-routine-alert-2026-09-20",
+    "churn-hotspot-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-integrations-webhook-rs",
+    "code-review-reality-web-unvalidated-href-url-scheme",
+    "code-review-reality-web-csv-import-filepick-no-type-guard",
+    "code-review-reality-web-comparison-share-id-unencoded",
+    "code-review-api-core-statement-upload-not-atomic",
+    "code-review-api-core-statement-account-iban-hardcoded",
+    "code-review-ppt-web-core-routes-missing-auth-guard",
+    "code-review-ppt-web-core-errorhandler-raw-message",
+    "code-review-ppt-web-ui-budgetform-index-key",
+    "code-review-ppt-web-ui-hardcoded-en-us-locale",
+    "code-review-ppt-web-ui-registry-full-reload-nav"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1019,8 +1036,8 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 78,
-    "vectors_created": 372,
+    "runs": 79,
+    "vectors_created": 385,
     "plans_created": 29,
     "quiet_days": 3,
     "auto_fix_count": 0
@@ -1036,19 +1053,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-09-20",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }

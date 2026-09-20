@@ -6574,20 +6574,21 @@
       "title": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-04 (mobile-native-kmp)"
       ],
       "evidence": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-154 calls listMyListings(limit=100) then aggregates ONLY over the returned page; MyListingsResponse.total (line 47) is ignored so totalListings=listings.size undercounts, and every downstream aggregate (views/inquiries/favorites, trend series) omits listings past the first 100. No offset paging loop.",
-        "decay -1 (updated_at older than 14d as of 2026-08-19)"
+        "decay -1 (updated_at older than 14d as of 2026-08-19)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
       ],
       "created_at": "2026-08-04",
-      "updated_at": "2026-08-19",
+      "updated_at": "2026-09-20",
       "plan": null
     },
     {
@@ -7395,8 +7396,8 @@
       "title": "mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "Tier1d review 2026-08-11 (mobile-native-kmp)"
       ],
@@ -7404,7 +7405,8 @@
         "9 of 10 shared network repos + SsoService + ApiClient use `catch (e: Exception)` which also catches kotlinx.coroutines.CancellationException and maps it to Result.failure, so coroutine cancellation is swallowed instead of propagated (grep: catch(e: Exception) x6 ListingRepository, x9 SsoService/NotificationRepository, x11 FavoritesRepository, x8 InquiryRepository, x2/x4 Realtor/Agency/PortalListings, x6 ApiClient).",
         "LayoutRepository.kt:65-70 is the ONLY file that does it correctly (`catch (e: CancellationException) { throw e }` before the generic catch) — proving the intended in-repo pattern the others diverge from.",
         "Impact: ListingDetailViewModel.loadListing()/onFavoriteToggle() and PriceTrackingViewModel.load() launch on a rememberCoroutineScope; when the screen leaves composition (or a load is superseded) the in-flight Ktor suspend throws CancellationException, these blocks turn it into Result.failure, and fold(onFailure = errorMapper(e)) renders a bogus error message for a normal cancellation — and structured concurrency is undermined.",
-        "decay-2026-08-25: score 2→1 — no new signals in 14d"
+        "decay-2026-08-25: score 2→1 — no new signals in 14d",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
@@ -7418,7 +7420,7 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt"
       ],
       "created_at": "2026-08-11",
-      "updated_at": "2026-08-25",
+      "updated_at": "2026-09-20",
       "plan": null
     },
     {
@@ -8313,8 +8315,8 @@
       "title": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-08-16"
       ],
@@ -8322,13 +8324,14 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 — `HttpClient` only installs `ContentNegotiation` and `Logging (level = LogLevel.NONE)`; no `HttpTimeout` plugin, so Ktor applies no request / connect / socket timeout.",
         "grep across mobile-native for `HttpTimeout|requestTimeout|connectTimeout|socketTimeout` returns zero hits — absence confirmed.",
         "Every repository (SsoService, ListingRepository, InquiryRepository, ApiClient, …) reuses `HttpClientProvider.client`, so an unresponsive reality-server hangs any suspend call forever on both Android and iOS.",
-        "decayed 2026-08-30: -1 (no new signal in 14 days)"
+        "decayed 2026-08-30: -1 (no new signal in 14 days)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-08-16",
-      "updated_at": "2026-08-30",
+      "updated_at": "2026-09-20",
       "plan": null
     },
     {
@@ -9878,7 +9881,7 @@
       "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "vector": "bug",
       "confidence": "high",
-      "score": 4,
+      "score": 3,
       "status": "open",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
@@ -9897,7 +9900,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-01"
+      "updated_at": "2026-09-20"
     },
     {
       "id": "code-review-ppt-web-core-ws-event-name-mismatch",
@@ -10633,6 +10636,280 @@
         "assignment_status": "merged",
         "pr_number": 2940
       }
+    },
+    {
+      "id": "code-review-reality-web-unvalidated-href-url-scheme",
+      "title": "reality-web unvalidated URL scheme in anchor hrefs (virtualTourUrl / floorPlanUrl / agency.website) — stored XSS on click",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "reality-web tier1d review 2026-09-19 (href url-scheme sink)"
+      ],
+      "evidence": [
+        "Resources.tsx:17,39 interpolate listing.virtualTourUrl / floorPlanUrl into <a href> with no scheme allow-list; React 19 does not strip `javascript:` at runtime.",
+        "agency/[slug]/page.tsx:297 same sink for agency.website. Fix: add safeExternalHref helper filtered to http(s)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-csv-import-filepick-no-type-guard",
+      "title": "reality-web CsvImport.tsx: handleFileSelect path skips CSV type-guard that handleDrop applies — non-CSV round-trips to server",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "reality-web tier1d review 2026-09-19 (csv-import file-type guard)"
+      ],
+      "evidence": [
+        "CsvImport.tsx:58-64 handleFileSelect accepts any selected file (`<input accept=\".csv\">` is advisory only); handleDrop at :47-56 has type/extension guard. Extract isCsvFile(file) helper and apply on both entry points."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-share-id-unencoded",
+      "title": "reality-web ComparisonUrlHandler: sharedIds interpolated into fetch path without encodeURIComponent — malformed request on reserved chars",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "reality-web tier1d review 2026-09-19 (comparison share-id url encoding)"
+      ],
+      "evidence": [
+        "ComparisonUrlHandler.tsx:38-43 maps ?compare= id values into `${API}/api/v1/listings/${id}` without encodeURIComponent. Distinct from the 2026-08-18 response-side unvalidated-cast finding. Fix: wrap id in encodeURIComponent."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-statement-upload-not-atomic",
+      "title": "api-core process_statement_upload not atomic — partial-import + double-count on retry (bank statement CSV import)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "api-core tier1d review 2026-09-20 (accounting service)"
+      ],
+      "evidence": [
+        "process_statement_upload (accounting.rs:49-107) writes header + per-row lines + matcher independently on an RlsConnection (not a Transaction). Mid-loop error orphans committed rows; re-upload after failure creates duplicates. Fix: wrap in one tx + add (tenant_id, filename, content-hash) dedup.",
+        "Correct pattern already exists in routes/accounting/invoices.rs (rls.begin() / tx.commit())."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs",
+        "backend/servers/api-server/src/routes/accounting/statements.rs"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-statement-account-iban-hardcoded",
+      "title": "api-core accounting.rs stores placeholder IBAN CZ00…00 for every uploaded statement — audit-trail data-integrity gap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "api-core tier1d review 2026-09-20 (accounting service)"
+      ],
+      "evidence": [
+        "accounting.rs:68 always writes placeholder account_iban `CZ0000000000000000000000` — CSV account IBAN is never parsed. Matcher keys off counterparty_iban so integrity gap, not matching bug. Fix: parse account IBAN from statement header, canonicalise via helper at :17-20."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-routes-missing-auth-guard",
+      "title": "ppt-web 6 route groups (faults/announcements/disputes/messaging/neighbors/community) mount authed pages without <ProtectedRoute>",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-core tier1d review 2026-09-20"
+      ],
+      "evidence": [
+        "AppRoutes.tsx:37 mounts feature groups directly; no top-level auth guard. faults.tsx:564 + 5 sibling groups lack <ProtectedRoute>; sibling groups (documents/voting/core/meters/reports) DO wrap it. Unauthenticated deep-links neither redirect to /login nor set the return URL."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-message",
+      "title": "ppt-web errorHandler leaks raw JS Error / backend message strings — bypasses i18n error catalogue",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-core tier1d review 2026-09-20"
+      ],
+      "evidence": [
+        "errorHandler.ts:194 (`error.message || copy.message` on the Error branch) and :221 (parseErrorResponse via `data.message`) render technical/English strings in a 4-locale app (sk/cs/de/en). Fix: route through errorCopy()/i18n.t()."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key",
+      "title": "ppt-web BudgetForm.tsx uses array index as key on removable controlled-input list — inputs shift after row removal",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d review 2026-09-20"
+      ],
+      "evidence": [
+        "BudgetForm.tsx:127-160 renders categories with `key={index}`; addCategory/removeCategory mutate mid-list. Classic React index-key bug on financial form corrupts totalBudget + submitted payload. Fix: crypto.randomUUID() stable id at add-time, key by id."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/financial/components/BudgetForm.tsx"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-hardcoded-en-us-locale",
+      "title": "ppt-web: 46 UI files hardcode 'en-US' locale in Intl.NumberFormat/toLocaleDateString/toLocaleString — money/date rendering ignores selected language",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d review 2026-09-20"
+      ],
+      "evidence": [
+        "grep -rn \"'en-US'\" frontend/apps/ppt-web/src/features → 46 hits across financial/insurance/accounting/facilities/reports. EUR under en-US renders `€1,234.56` instead of sk-SK `1 234,56 €`. Fix: shared formatCurrency/formatDate/formatNumber reading i18n.resolvedLanguage."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/components/KPICard.tsx",
+        "frontend/apps/ppt-web/src/features/financial/components/RecentPaymentsList.tsx",
+        "frontend/apps/ppt-web/src/features/insurance/components/PolicyCard.tsx"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-full-reload-nav",
+      "title": "ppt-web RegistryPage uses window.location.href for 6 internal navigations — full-reload UX/perf regression vs react-router useNavigate",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "ppt-web-ui tier1d review 2026-09-20"
+      ],
+      "evidence": [
+        "RegistryPage.tsx lines 91,95,129,148,152,186 assign window.location.href for internal /registry/* routes. Bundle re-download + cache discard + white-flash reload on every 'view/edit/new' action. Fix: swap for useNavigate; also clear ContentModerationPage.tsx:205-207 TODO."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+      "title": "Churn hotspot: backend/servers/api-server/tests/suites/oauth_integration_tests.rs — 3427 lines churned since 2026-09-01",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat 2026-09-01..2026-09-20 (top-1 code churn file this window)"
+      ],
+      "evidence": [
+        "3427 +/- across the 19-day window; runs_seen 1→2 in state.hotspot_history."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/voice_webhooks.rs — 2999 lines churned since 2026-09-01, runs_seen=3→4",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "local git numstat 2026-09-01..2026-09-20",
+        "repeated-churn (runs_seen=3 in state.json)"
+      ],
+      "evidence": [
+        "2999 +/- lines across the 19-day window; runs_seen 3→4 in state.hotspot_history (repeats-since 2026-05-25)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-integrations-webhook-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/integrations/webhook.rs — 2799 lines churned since 2026-09-01, runs_seen=2→3",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "local git numstat 2026-09-01..2026-09-20",
+        "repeated-churn (runs_seen=2 in state.json)"
+      ],
+      "evidence": [
+        "2799 +/- lines across the 19-day window; runs_seen 2→3 in state.hotspot_history."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-09-20",
+      "updated_at": "2026-09-20",
+      "plan": null
     }
   ]
 }

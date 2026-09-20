@@ -1,6 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-08-31 — routine Phase 1.6 lightweight upkeep (pm-devops rotation slot; 76-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-devops → pm-security next), coverage_cursor idx 6 → 7 (epic-81 re-checked, no material change; advances to epic-82). Sprint window 2026-08-26..08-31 shipped 10 PRs — all code-review batch (#2889-#2899, dispatcher merged in-window)._
+_Generated: 2026-09-20 — routine Phase 1.6 lightweight upkeep (pm-security rotation slot; skill fallback / minimal update because Phase-1 emitted lag_warning=19d and full skill run was budget-heavy). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 7 → 8 (epic-82 re-checked, no material change; advances to epic-83). Sprint window 2026-09-01..2026-09-20 shipped 17 PRs on `dev` (range #2922–#2956, per merged-list snapshot). Prior generated stamp 2026-08-31 remains authoritative for narrative body below — refresh will follow next full skill run._
 
 ## Executive summary
 
