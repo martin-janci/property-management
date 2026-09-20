@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-20",
+  "run_meta": {
+    "since_iso": "2026-09-01T18:38:58Z",
+    "lag_hours": 446,
+    "lag_days": 18,
+    "last_pr_seen_before": 2921,
+    "last_issue_seen_before": 2847,
+    "note": "Stale routine — cloud cron has not fired in 18 days. Dispatcher (separate loop) has kept ticking (last dispatcher commit 2026-09-20 06:29) but this observation routine had not advanced state since 2026-09-01."
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": ["routine last ran 18d ago (last_run_iso=2026-09-01T18:38:58Z); dispatcher still running (a95c327 at 2026-09-20 06:29)"],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-20",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "evidence": ["state.json cursor age >= 3d — cloud research cron likely paused; dispatcher branch cadence is separate and healthy"],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal (no screen-map-drift / screen-map-orphan / fixme-in-merged-code / lockfile-drift / stalled-review high-confidence + score>=3 candidate this run)",
+  "phases_run": ["1", "2", "3", "3.5", "4", "6"],
+  "phases_skipped": ["1.5", "1.6", "5"],
+  "phases_skipped_reason": {
+    "1.5": "Skipped this run — dispatcher's own tier-1d rotating-review generator has been active daily (signals/2026-09-17,18,19,20-*-tier1d.json). Routine budget diverted to catching up cursors + landable-plan promotion after 18d lag.",
+    "1.6": "Skipped this run — no PM subagent invocations. pm_cursor and coverage_cursor left unchanged; G16 is a no-op when Phase 1.6 is skipped.",
+    "5": "No allowlisted auto-fix candidate met the confidence=high + score>=3 bar this run."
+  },
+  "buffer_low_note": "Trigger payload: buffer-low: claimable=12/72 — all claimable items infra-blocked (api-server swagger-ui egress #2966 + mobile-native AGP #2951). Routine's promoted plan (code-review-mobile-native-kmp-create-listing-not-wired) is Mode: local-only for the same reason — landable via the local implementer only, not the cloud dispatcher. Five landable frontend plans already sit in .research/plans/ that the dispatcher can process without either infra blocker (see brief).",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-09-20.md && head -1 grep '^# 2026-09-20$'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "diff state.json vs HEAD state.json for cursor/seen_signals/hotspot_history/quiet_days advance", "observed": "true — last_pr_seen 2921→2966, last_issue_seen 2847→2966, seen_signals 482→484, last_commit_sha bumped", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no signal id in this run also in prior seen_signals with score_delta != 0 and type not in cumulative set", "observed": "true — both new signals (lag-warning, stale-routine-alert) are fresh IDs, score_delta=0", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "score cap + decay applied to open items >14d", "observed": "cap: max score = 6 (<=8); decay: 4 open items with updated_at older than 2026-09-06 either decayed by 1 or moved to dropped (portfolio-analytics-caps-100, cancellation-swallowed, httpclient-no-timeout → dropped at 0; create-listing-not-wired 4→3 + promoted to ready)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "each new plan file has 'adversarial pass:' annotation in the brief", "observed": "true — plans/code-review-mobile-native-kmp-create-listing-not-wired.md has 'adversarial pass: passed' in the brief", "expected": "true"},
+    {"goal": "G7", "passed": true, "command": "<=2 new plans, each has 4 metadata + 11 headings + mode + capability tick + files exist", "observed": "1 new plan (code-review-mobile-native-kmp-create-listing-not-wired) — all 4 files resolve on disk, C1+C5+C6 ticked, Mode: local-only declared", "expected": "true"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "git diff --cached grep for secrets/private hostnames outside baseline docs", "observed": "0 matches", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff -q backlog.md <(regen from backlog.json)", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "phase-failure honesty check", "observed": "no phase reported failure; cursors advanced for phases that ran (1,2,3,3.5,4,6)", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "prior-run plan slugs still in plans/ or plans/_archive/", "observed": "true — no plan silently deleted", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "[ ls-files plans/_archive/ count >= HEAD count ]", "observed": "12 files (unchanged this run)", "expected": ">= 12"},
+    {"goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <(regen from vector==triage rows)", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions cap + idempotency + kill-switch honored", "observed": "0 auto-fix actions this run; no push, no PR, no comment", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "no-op (Phase 1.6 skipped this run)", "expected": "no-op"},
+    {"goal": "G17", "passed": true, "command": "git diff --cached grep for Telegram bot token literal", "observed": "0 matches", "expected": "0"}
+  ]
+}
