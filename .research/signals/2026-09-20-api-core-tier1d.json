@@ -1,0 +1,50 @@
+{
+  "generated": "2026-09-20T02:28:42Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: 12 < floor 36, all open items infra-blocked) 2026-09-20",
+  "segment_reviewed": "api-core",
+  "selection_reason": "OLDEST-UNREVIEWED by the signals-corpus cursor (authoritative; state.json review_cursor was stale). Per-segment last review: ppt-web-core 2026-09-19, reality-web 2026-09-19, ppt-web-ui 2026-09-17, mobile-rn 2026-09-17, api-handlers 2026-09-16, reality-server 2026-09-11, mobile-native-kmp 2026-09-10, api-core 2026-09-09 (OLDEST). Static-only pass, so cloud buildability is irrelevant to segment choice. Saturation check passed: 0 open code-review-finding rows for api-core in backlog.json (only 4 open code-review rows, all mobile-native-kmp). Both findings dedup-checked against the api-core corpus and previously unflagged.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Dispatcher-condensed record of the Tier-1d generator handback (full verbose evidence in the run transcript). Both findings are backend/api-server, so landing is gated on infra #2966 (cloud build) until unblocked.",
+  "signals": [
+    {
+      "id": "code-review-api-core-statement-upload-not-atomic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 api-core accounting service)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs",
+        "backend/servers/api-server/src/routes/accounting/statements.rs"
+      ],
+      "evidence": [
+        "process_statement_upload (accounting.rs:49-107) imports a whole bank statement as independently-autocommitting writes over an RlsConnection (NOT a sqlx Transaction; handler is upload_statement(mut rls: RlsConnection) at routes/accounting/statements.rs:16-17, call at :51). No begin()/commit() on the path: header insert (create_bank_statement_rls, :61-71), per-row line-insert loop (:96-99), matcher (run_payment_matcher, :103) each autocommit separately.",
+        "Consequence 1 (partial import): a mid-loop CSV parse error (:74-81 returns AppError::BadRequest) leaves the already-committed header + rows 1..N-1 orphaned as an unmatched half-statement; handler returns 400 but nothing rolls back.",
+        "Consequence 2 (double-count on retry): no (tenant_id, filename, content-hash) idempotency key, so re-upload after a partial failure creates a second statement, re-inserts lines, and re-runs the matcher -> duplicate PaymentMatch suggestions / double-applied AR amounts. Money-facing integrity hazard.",
+        "Same root-cause CLASS as the 2026-08-14 finding code-review-api-core-accounting-confirm-no-tx (confirm_match/reject_match) but a DISTINCT, unflagged code path (CSV import + matcher). Correct pattern already exists in the module family: routes/accounting/invoices.rs:241 rls.begin() / :269 tx.commit(). Fix: wrap upload_statement in one transaction threaded through header + line loop + matcher, commit once; optionally add the dedup guard. Confidence medium (static read; partial-commit behavior inferred from sqlx autocommit semantics)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-statement-account-iban-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-20 api-core accounting service)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "evidence": [
+        "accounting.rs:68 always stores the placeholder account IBAN CZ0000000000000000000000 (inline comment says default-if-not-in-CSV, but the CSV account IBAN is never parsed, so the constant is the only value ever stored) for every upload across all tenants.",
+        "Effect: every bank_statement row shares an identical meaningless account_iban, defeating audit/reconciliation that keys on which org account a statement belongs to. The matcher keys off per-line counterparty_iban (:90), not this field, so it is a data-traceability/integrity gap, not a matching-correctness bug -> low severity.",
+        "Fix: parse the statement account IBAN from the CSV header/first line (normalise via the canonicalisation helper at accounting.rs:17-20) and store the real value; keep the placeholder only as a genuine last-resort fallback. Confidence medium (static read)."
+      ]
+    }
+  ]
+}
