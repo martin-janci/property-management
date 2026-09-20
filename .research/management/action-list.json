@@ -225,6 +225,414 @@
       "first_open_at": "2026-09-16T14:26:47Z",
       "retry_of": "code-review-api-core-apns-jwt-per-send-mint",
       "retry_round": 2
+    },
+    {
+      "id": "code-review-api-handlers-voting-cast-no-unit-ownership",
+      "action": "api-handlers: voting cast no unit ownership",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=3 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-create-listing-stub",
+      "action": "mobile-native-kmp: create listing stub",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-notimpl",
+      "action": "mobile-native-kmp: kmp createlisting notimpl",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "action": "ppt-web-core: core community route fully stubbed",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "action": "ppt-web-core: core logout purge disputes leases iot",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=3 conf=high vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+      "action": "ppt-web-core: core ocr fetch no auth",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=3 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-admin-web-impersonation-stop-swallows-failure",
+      "action": "admin-web: impersonation stop swallows failure",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-admin-web-raw-fetch-bypasses-api-client",
+      "action": "admin-web: raw fetch bypasses api client",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-api-core-digest-worker-no-replica-claim",
+      "action": "api-core: digest worker no replica claim",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-statement-upload-not-atomic",
+      "action": "api-core: statement upload not atomic",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-ai-workflows-raw-error-leak",
+      "action": "api-handlers: ai workflows raw error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-audit-summary-integrity-swallow",
+      "action": "api-handlers: audit summary integrity swallow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-error-leak",
+      "action": "api-handlers: budgets raw db error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-delegation-null-unit-no-owner-check",
+      "action": "api-handlers: delegation null unit no owner check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-esg-reporting-raw-sqlx-error-leak",
+      "action": "api-handlers: esg reporting raw sqlx error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-gdpr-raw-db-error-leak",
+      "action": "api-handlers: gdpr raw db error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-mfa-report-population-mismatch",
+      "action": "api-handlers: mfa report population mismatch",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "action": "api-handlers: oauth client error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-org-member-role-mutation-guards",
+      "action": "api-handlers: org member role mutation guards",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-property-valuation-raw-error-leak",
+      "action": "api-handlers: property valuation raw error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-tenant-config-rls-clear-swallowed",
+      "action": "api-handlers: tenant config rls clear swallowed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-vote-update-no-tenant-rls",
+      "action": "api-handlers: vote update no tenant rls",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-onfailure-empty-swallow",
+      "action": "mobile-native-kmp: kmp nav onfailure empty swallow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-swallowed-cancellation",
+      "action": "mobile-native-kmp: swallowed cancellation",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T14:39:06Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T14:39:06Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-09-07T14:38:29Z"
