@@ -1,0 +1,234 @@
+{
+  "date": "2026-09-20",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score>=3 + allowlist match) this run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "routine has not run in 19d 0h since 2026-09-01T18:38:58Z; also fires stale_routine_alert (P4) since lag>=3d — cloud routine may be paused; dispatcher branch has kept ticking (last dispatcher commit 2026-09-20T16:29Z) so the outage is routine-only, not planning-wide"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --numstat --since=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2999 additions+deletions in the 19d window; cumulative re-emit (already in seen_signals) — runs_seen 3 → 4"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --numstat --since=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2799 additions+deletions in the 19d window; cumulative re-emit (already in seen_signals) — runs_seen 2 → 3"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --numstat --since=2026-09-01T18:38:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2564 additions+deletions in the 19d window; cumulative re-emit (already in seen_signals) — runs_seen 1 → 2"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=3 (before this run)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "cumulative re-emit (already in seen_signals) — score_delta suppressed per G4 exception; runs_seen advances 3 → 4"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2 (before this run) advances to 3",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "new repeated-churn (runs_seen crosses 2→3 with this window's 2799 churn); creates backlog row refactor-repeated-churn-integrations-webhook"
+    },
+    {
+      "id": "dep-update-noise-pr-2583",
+      "type": "dep-update-noise",
+      "source": "PR #2583",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot: bump rust_xlsxwriter 0.96.0 → 0.97.0 (backend)"
+    },
+    {
+      "id": "dep-update-noise-pr-2585",
+      "type": "dep-update-noise",
+      "source": "PR #2585",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot: bump base64 0.22.1 → 0.23.0 (backend)"
+    },
+    {
+      "id": "dep-update-noise-pr-2586",
+      "type": "dep-update-noise",
+      "source": "PR #2586",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot: bump validator 0.20.0 → 0.21.0 (backend)"
+    },
+    {
+      "id": "dep-update-noise-pr-2673",
+      "type": "dep-update-noise",
+      "source": "PR #2673",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot: bump ktor group across 1 directory with 7 updates"
+    },
+    {
+      "id": "dep-update-noise-pr-2935",
+      "type": "dep-update-noise",
+      "source": "PR #2935",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "dependabot: bump npm-minor-patch group across 1 directory with 40 updates"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 | grep '^# 2026-09-20$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal ids not double-scored",
+      "observed": "all new-id signals are net-new; cumulative churn re-emits have score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated_at <=2026-09-06 decayed or dropped",
+      "observed": "4 eligible; 3 dropped, 1 decayed 4→3",
+      "expected": "all decay/drop"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial-pass annotation in brief",
+      "observed": "1 new plan; brief line 'adversarial pass: passed' present on same line as plan path",
+      "expected": "1 annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all 15 sections + capability + mode + files exist",
+      "observed": "1 new plan; all sections + Mode: local-only + 4 file bullets resolve",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty (Phase 1.5/1.6 skipped)",
+      "observed": "skip declared in brief; review_cursor / pm_cursor / coverage_cursor unchanged",
+      "expected": "cursors match HEAD"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still resolvable",
+      "observed": "all HEAD plans still present",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive/ count >= HEAD",
+      "observed": "9 >= 9",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "auto_fix_actions=[]; no auto-fix this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped: no-op)",
+      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor 0..7; coverage_cursor 0..13; pm_cursor unchanged (Phase 1.6 skipped)",
+      "expected": "no-op or all conditions"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
