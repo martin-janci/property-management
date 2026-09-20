@@ -225,6 +225,23 @@
       "first_open_at": "2026-09-16T14:26:47Z",
       "retry_of": "code-review-api-core-apns-jwt-per-send-mint",
       "retry_round": 2
+    },
+    {
+      "id": "refactor-repeated-churn-integrations-webhook",
+      "action": "backend api-server routes/integrations/webhook.rs — repeated-churn (runs_seen=3, 2799 lines this window)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-20T20:28:29Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-20T20:28:29Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-09-07T14:38:29Z"
