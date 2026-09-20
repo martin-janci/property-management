@@ -1,0 +1,51 @@
+{
+  "generated": "2026-09-20",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (cursor 2026-08-29; tie with reality-web broken toward ppt-web-core — 0 prior findings, sorts first; no open code-review-finding items in backlog, so no saturation-skip)",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-routes-missing-auth-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37 — AppRoutes mounts every feature group directly; there is NO top-level auth guard, so authentication is enforced per-route by <ProtectedRoute> inside each group.",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:564 faultRoutes() — 5 routes (/faults, /faults/new, /faults/reports, /faults/:faultId, /faults/:faultId/edit) mounted with NO <ProtectedRoute> wrapper (file does not import ProtectedRoute); same gap in announcements.tsx, disputes.tsx, messaging.tsx, neighbors.tsx, community.tsx (grep: 0 ProtectedRoute, 0 isAuthenticated/Navigate-to-login/setReturnUrl in all six).",
+        "frontend/apps/ppt-web/src/routes/groups/documents.tsx + voting.tsx + core.tsx + meters.tsx + reports.tsx — sibling groups DO wrap their routes in <ProtectedRoute>, confirming the pattern the six unguarded groups deviate from.",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:1 — ProtectedRoute is what redirects unauthenticated users to /login and calls setReturnUrl(); routes not wrapped in it neither redirect nor store the return URL."
+      ],
+      "failure_scenario": "A logged-out user deep-links to /disputes (or /faults, /messages, /neighbors, /community, /announcements). Because these route groups are not wrapped in <ProtectedRoute>, the app does not redirect to /login and does not store the return URL. The protected page mounts, its API calls 401, and the 401 interceptor's logout() clears state without navigating — leaving the user on a broken/empty page instead of the login screen, and breaking the post-login return-to-page flow that guarded routes (documents, voting, settings) provide. Data is still protected by the backend, so this is a client-side auth-guard consistency + UX defect, not a data-leak bypass.",
+      "summary": "Six ppt-web route groups (faults, announcements, disputes, messaging, neighbors, community) mount authenticated pages without <ProtectedRoute>, so unauthenticated deep-links neither redirect to /login nor store a return URL — inconsistent with sibling groups that do.",
+      "short_summary": "6 route groups mount authed pages without ProtectedRoute",
+      "file": "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+      "line": 564,
+      "category": "correctness"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-message",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:194 — `message: error.message || copy.message` for the generic `error instanceof Error` branch surfaces the raw JS Error message straight to the user.",
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:221 — parseErrorResponse uses `data.message || errorInfo.message`, passing the backend's raw message through; every other code path in this file resolves user copy from the i18n catalogue via errorCopy()/i18n.t()."
+      ],
+      "failure_scenario": "An uncaught runtime/typing error (e.g. \"Cannot read properties of undefined (reading 'x')\") reaches parseApiError; its raw English technical message is rendered to the end user of a 4-locale app (sk/cs/de/en), bypassing the i18n error catalogue and potentially disclosing internal details in the UI.",
+      "summary": "errorHandler surfaces raw JS Error / backend `message` strings directly to users, bypassing the i18n error catalogue used elsewhere in the same module.",
+      "short_summary": "errorHandler leaks raw untranslated error.message to users",
+      "file": "frontend/apps/ppt-web/src/lib/errorHandler.ts",
+      "line": 194,
+      "category": "i18n"
+    }
+  ]
+}
