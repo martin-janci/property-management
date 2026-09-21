@@ -1,0 +1,160 @@
+{
+  "date": "2026-09-21",
+  "generated_at": "2026-09-21T03:05:00Z",
+  "since_iso": "2026-09-20T18:38:00Z",
+  "cursors": {
+    "prev": {
+      "last_pr_seen": 2956,
+      "last_issue_seen": 2966,
+      "last_commit_sha": "5d4560aa69adc28d3226510bbca6575c00f4c7a2"
+    },
+    "next": {
+      "last_pr_seen": 2956,
+      "last_issue_seen": 2966,
+      "last_commit_sha": "6affccba5a389c4bad725e44c77604c4d739f044"
+    }
+  },
+  "observations": {
+    "merged_prs_since_last_run": 0,
+    "open_prs_touched_since_last_run": 0,
+    "closed_unmerged_prs_since_last_run": 0,
+    "issues_created_or_updated_since_last_run": 0,
+    "commits_on_dev_since_last_run": 4,
+    "commits_are_research_only": true,
+    "commits_summary": "3 dispatcher .research/ commits (6affccba, 12928150, cf413e44) plus routine's own 2026-09-20 brief commit (9e1ffa75). All .research/-only."
+  },
+  "phase_status": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "skipped: 0 code signals from Phase 1, review_cursor already at 2026-09-06+ across the 8 segments — no incremental churn to review",
+    "phase_1_6_pm": "skipped: 0 code activity since 2026-09-20 18:38Z; dispatcher branch runs on hourly cadence and already covers PM signals for the window (last dispatcher commit 6affccba at 2026-09-21T02:29Z)",
+    "phase_2_decide": "ok: no signals, no backlog mutations; only timestamp regen of backlog.md + IDEAS_TRIAGE.md",
+    "phase_3_promote": "ok: 0 promotions (no open items became newly ready)",
+    "phase_4_write": "ok",
+    "phase_5_auto_fix": "no candidate: no signal met the confidence=high + score>=3 + allowlist bar (0 signals this run)",
+    "phase_6_commit": "pending"
+  },
+  "lag_hours_since_last_run": 8,
+  "signals": [],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-21.md && head -1 == '# 2026-09-21'",
+      "observed": "present",
+      "expected": "present"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare .research/state.json vs HEAD",
+      "observed": "last_commit_sha changed (5d4560aa -> 6affccba) AND stats.quiet_days changed (3 -> 4)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no new signal IDs this run",
+      "observed": "signals[] is empty; no double-count possible",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq cap + decay eligibility check",
+      "observed": "max item score = 8 (cap intact); the single open item (refactor-repeated-churn-integrations-webhook, updated 2026-09-20) is only 1d old so decay does not apply",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep new plans for adversarial pass annotation",
+      "observed": "no new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
+      "observed": "0 new plans",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/'",
+      "observed": "0 non-.research/ paths staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan on staged diff (baseline docs excluded)",
+      "observed": "no matches for the G9 forbidden-patterns set (API-key prefix, bearer-header literal, private hostnames, RFC1918 IP fragments, htpasswd salt)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md vs regeneration from backlog.json (timestamp regen only)",
+      "observed": "identical (only Last regenerated line advanced; body unchanged since backlog.json was not mutated)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' line vs cursor advancement",
+      "observed": "no phases failed; observation cursors match staged state.json",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug still present in plans/ or plans/_archive/",
+      "observed": "no plan files added or removed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files _archive/ >= git ls-tree HEAD _archive/",
+      "observed": "8 tracked archive plan files; equal to HEAD",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff .research/IDEAS_TRIAGE.md vs regeneration from backlog.json (triage rows only)",
+      "observed": "identical (timestamp-only regen; triage row set unchanged since backlog.json was not mutated)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions cap + idempotency + kill-switch checks",
+      "observed": "auto_fix_actions=[]; ROUTINE_AUTOFIX_DISABLED not set but no candidate met bar",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped -> gate is a no-op",
+      "observed": "pm_cursor.next_index unchanged (5); coverage_cursor.next_index unchanged (7). Both indices remain in valid range (0..7 for pm, 0..13 for coverage).",
+      "expected": "no-op or exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "scan staged diff for Telegram bot-token literal (URL and bare forms)",
+      "observed": "no matches (only cursor/counter fields, timestamp widget, brief prose)",
+      "expected": "0"
+    }
+  ]
+}
