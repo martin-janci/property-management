@@ -1061,6 +1061,7 @@
       "cancel": "Abbrechen",
       "saving": "Speichern...",
       "saveChanges": "Änderungen speichern",
+      "saveError": "Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
       "status": "Status",
       "enabled": "Aktiviert",
       "disabled": "Deaktiviert",

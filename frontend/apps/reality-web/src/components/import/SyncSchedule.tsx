@@ -54,13 +54,17 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
   const [enabled, setEnabled] = useState(schedule?.enabled ?? true);
 
   const handleSave = async () => {
-    await updateMutation.mutateAsync({
-      frequency,
-      preferredTime: frequency === 'daily' || frequency === 'weekly' ? preferredTime : undefined,
-      preferredDay: frequency === 'weekly' ? preferredDay : undefined,
-      enabled,
-    });
-    setIsEditing(false);
+    try {
+      await updateMutation.mutateAsync({
+        frequency,
+        preferredTime: frequency === 'daily' || frequency === 'weekly' ? preferredTime : undefined,
+        preferredDay: frequency === 'weekly' ? preferredDay : undefined,
+        enabled,
+      });
+      setIsEditing(false);
+    } catch {
+      // Keep the form open; the error surfaces via updateMutation.error below.
+    }
   };
 
   if (isLoading) {
@@ -146,6 +150,12 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {updateMutation.isError && (
+              <div className="error-message" role="alert">
+                {t('saveError')}
               </div>
             )}
 
@@ -370,6 +380,14 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
           border-radius: 8px;
           font-size: 14px;
           width: 200px;
+        }
+
+        .error-message {
+          padding: 12px 16px;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
+          border-radius: 8px;
+          font-size: 14px;
         }
 
         .form-actions {

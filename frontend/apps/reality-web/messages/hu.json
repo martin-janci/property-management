@@ -1054,6 +1054,7 @@
       "cancel": "Mégse",
       "saving": "Mentés...",
       "saveChanges": "Változtatások mentése",
+      "saveError": "A módosításokat nem sikerült menteni. Kérjük, próbálja újra.",
       "status": "Állapot",
       "enabled": "Engedélyezve",
       "disabled": "Letiltva",
