@@ -145,59 +145,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "gh-issue-2946-retry1",
-      "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_analytics property metrics computed org_id then discarded (Closes #2946) [retry 1/2 of failed gh-issue-2946]",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-09-16T14:26:47Z (retry_of=gh-issue-2946 reason=failed-no-pr cooldown_ok newest_failure=2026-09-06T12:49:38Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-16T14:26:47Z",
-      "retry_of": "gh-issue-2946",
-      "retry_round": 1,
-      "issue_ref": {
-        "number": 2946,
-        "url": "https://github.com/martin-janci/property-management/issues/2946",
-        "labels": [
-          "bug",
-          "security"
-        ]
-      }
-    },
-    {
-      "id": "code-review-api-core-apns-jwt-per-send-mint-retry2",
-      "action": "api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min [retry 2/2 of failed code-review-api-core-apns-jwt-per-send-mint]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-09-16T14:26:47Z (retry_of=code-review-api-core-apns-jwt-per-send-mint reason=failed-no-pr cooldown_ok newest_failure=2026-09-09T08:40:33Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-16T14:26:47Z",
-      "retry_of": "code-review-api-core-apns-jwt-per-send-mint",
-      "retry_round": 2
-    },
-    {
-      "id": "refactor-repeated-churn-integrations-webhook",
-      "action": "backend api-server routes/integrations/webhook.rs — repeated-churn (runs_seen=3, 2799 lines this window)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-backlog-refill 2026-09-20T20:28:29Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-20T20:28:29Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
     }
   ],
   "generated": "2026-09-07T14:38:29Z"
