@@ -1019,6 +1019,8 @@
       "feedName": "Feed neve (opcionális)",
       "feedNamePlaceholder": "Az én ingatlan-feedem",
       "fetchError": "Nem sikerült lekérni a feedet. Ellenőrizze az URL-t, és próbálja újra.",
+      "updateError": "Nem sikerült frissíteni a feedet. Próbálja újra.",
+      "removeError": "Nem sikerült eltávolítani a feedet. Próbálja újra.",
       "format": "Formátum",
       "itemsFound": "Talált elemek",
       "availableFields": "Elérhető mezők",
