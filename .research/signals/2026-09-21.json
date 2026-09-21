@@ -1,0 +1,68 @@
+{
+  "date": "2026-09-21",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score>=3 + allowlist match) this run; code-review-finding is not in the Phase 5 allowlist",
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-unhandled-mutations",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:828 — RealtorDetailModal.handleSave awaits updateRealtor.mutateAsync with no try/catch; a rejected mutation halts execution before setIsEditing(false), leaving the modal open, showing no error, and swallowing the failure.",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:837 — handleRemove awaits removeRealtor.mutateAsync then unconditionally calls onClose(); a rejection short-circuits before onClose and no error surfaces to the caller (agency owners see nothing on remove-failure).",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:842 — handleStatusChange has the same shape; toggling active/inactive/suspended silently no-ops on API error. Sibling InviteRealtorModal (line 568) shows the correct try/catch + setInviteError(t('inviteError')) pattern — the fix is a per-handler mirror of that."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-silent-save",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:78 — handleSave awaits updateBranding.mutateAsync without try/catch and the component renders no isError branch; on failure hasChanges/logoFile/coverFile state is not reset (the setters after the await are skipped by the throw), so the branding form appears to hang after Save. Add a try/catch around the mutateAsync, surface the error via a form-level state, and reset dirty state only on success."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx:23 — '{count}/4 properties to compare' and 'Clear all' (line 25), 'Compare … (need at least 2) … properties' (line 68) are hardcoded English in a component mounted globally in the app layout; Reality Portal ships sk/cs/de/en (Slovak primary), so Slovak users see English here.",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx:47 — title 'Remove/Add from/to comparison', label 'Comparing/Compare' (line 62) and aria-live 'Maximum 4 properties. Remove one first.' (line 66) are hardcoded English; sibling ComparisonView.tsx already uses useTranslations('comparison'), so the messages namespace exists and the fix is wiring these two files through the same hook."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-09-21.md && head -1 == '# 2026-09-21'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "compare staged state.json vs HEAD (last_commit_sha, seen_signals, review_cursor)", "observed": "true (last_commit_sha 5d4560aa->0edfb5f5, seen_signals +3, review_cursor.reality-web 2026-08-29->2026-09-21)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "verify no non-cumulative signal id in seen_signals has score_delta != 0 on re-emit", "observed": "3 new signal ids (none in prior seen_signals)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0' && decay applied to open items with updated_at <= today-14", "observed": "0 items over cap; only open item (refactor-repeated-churn-integrations-webhook) updated 2026-09-20 = 1d old, no decay due yet", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "for each new plans/*.md, brief has adversarial-pass line", "observed": "0 new plans this run (all new items scored ≤2, below promotion threshold of 3)", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "count of new plans <= 2 and each meets readiness gates", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/hostnames in staged diff (excluding baseline doc files)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md <(regenerate from backlog.json)", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' matches cursor non-advancement", "observed": "no phase failures; only Phase 1.6 skipped by choice (documented in brief)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs present in plans/ or plans/_archive/", "observed": "25 plans on disk + 1 archive; none removed vs HEAD", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive file count staged >= archive file count at HEAD", "observed": "1 == 1", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md <(regenerate from vector==triage rows)", "observed": "exit 0 (only timestamp changed vs HEAD, matches regen)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency", "observed": "auto_fix_actions=[]; no PR/issue/comment opened", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management-artifacts validity + GC7", "observed": "Phase 1.6 skipped this run — gate is a no-op; pm_cursor.next_index=5 unchanged, coverage_cursor.next_index=7 unchanged", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep telegram token pattern in staged diff (excluding baseline doc files)", "observed": "0 matches", "expected": "0" }
+  ]
+}

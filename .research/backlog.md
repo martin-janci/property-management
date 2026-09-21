@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-09-20 18:38 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-21 16:38 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -39,6 +39,8 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | reality-web RealtorDetailModal.handleSave/handleRemove/handleStatusChange await mutations with no try/catch — silent failures on agency-owner edits | `frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx` | rotating-expert-review 2026-09-21 (reality-web) | 2026-09-21 | open | — |
+| 2 | bug | reality-web AgencyBranding.handleSave awaits mutateAsync without try/catch — save appears to hang on API error | `frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx` | rotating-expert-review 2026-09-21 (reality-web) | 2026-09-21 | open | — |
 | 2 | bug | api-server push_fanout: FCM HTTP v1 uses a static FCM_OAUTH_TOKEN loaded once at startup — Google's ~1h token TTL breaks Android push after first hour | `backend/servers/api-server/src/services/push_fanout.rs` | PR #2914 (+1) | 2026-09-01 | done | — |
 | 2 | perf | api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout) | 2026-09-01 | dropped | — |
 | 2 | bug | ppt-web-ui EmergencyContactDirectoryPage: 5 error handlers show raw `err.message` (English backend copy) — the t() i18n fallback is dead code on the common failure path | `frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts) | 2026-09-01 | done | — |
@@ -174,6 +176,7 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | reality-web ComparisonTray/CompareButton hardcoded English strings — global comparison tray unlocalized while portal ships sk/cs/de/en | `frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx (+1)` | rotating-expert-review 2026-09-21 (reality-web) | 2026-09-21 | open | — |
 | 1 | dx | stalled review: PR #2558 feat(acc) UC-ACC-05.9 invoice PDF render endpoint (15d open, 13d idle) | — | PR #2558 | 2026-09-20 | done | — |
 | 1 | refactor | backend api-server routes/integrations/webhook.rs — repeated-churn (runs_seen=3, 2799 lines this window) | `backend/servers/api-server/src/routes/integrations/webhook.rs` | churn 2026-09-20 (routine catch-up 19d) | 2026-09-20 | open | — |
 | 1 | bug | ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch | `frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx` | rotating-expert-review [ppt-web-ui] | 2026-09-06 | done | — |

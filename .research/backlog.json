@@ -10661,6 +10661,70 @@
       "created_at": "2026-09-20",
       "updated_at": "2026-09-20",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-unhandled-mutations",
+      "title": "reality-web RealtorDetailModal.handleSave/handleRemove/handleStatusChange await mutations with no try/catch — silent failures on agency-owner edits",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-21 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:828 — handleSave awaits updateRealtor.mutateAsync with no try/catch; a rejection halts execution before setIsEditing(false), leaving the modal open with no error surfaced",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:837 — handleRemove awaits removeRealtor.mutateAsync then unconditionally calls onClose(); rejection short-circuits before onClose and no error surfaces",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:842 — handleStatusChange has the same shape; toggling active/inactive/suspended silently no-ops on API error. Sibling InviteRealtorModal:568 shows the correct try/catch + setInviteError(t(...)) pattern"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-09-21",
+      "updated_at": "2026-09-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-silent-save",
+      "title": "reality-web AgencyBranding.handleSave awaits mutateAsync without try/catch — save appears to hang on API error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-21 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:78 — handleSave awaits updateBranding.mutateAsync without try/catch and no isError branch is rendered; on failure hasChanges/logoFile/coverFile state is not reset (setters after await are skipped by the throw), so the form appears to hang. Fix: try/catch around mutateAsync, surface error via form-level state, reset dirty state only on success"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-09-21",
+      "updated_at": "2026-09-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-hardcoded-strings",
+      "title": "reality-web ComparisonTray/CompareButton hardcoded English strings — global comparison tray unlocalized while portal ships sk/cs/de/en",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-21 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx:23 — hardcoded '{count}/4 properties to compare', 'Clear all', 'Compare ... properties' in a component mounted globally in the layout",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx:47 — hardcoded title/label/aria-live English strings; sibling ComparisonView.tsx already uses useTranslations('comparison') so the messages namespace exists and the fix is wiring these two files through the same hook"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonTray.tsx",
+        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx"
+      ],
+      "created_at": "2026-09-21",
+      "updated_at": "2026-09-21",
+      "plan": null
     }
   ]
 }
