@@ -1,0 +1,66 @@
+{
+  "generated": "2026-09-21T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=13 < floor=36). Static single-segment code review, no compilation / no test execution. This run produces fresh CLOUD-LANDABLE frontend backlog vectors.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed + cloud-landable preference. state.json review_cursor ties reality-web (2026-08-29) and ppt-web-core (2026-08-29) as the two oldest segments; both are cloud-landable frontend and therefore dispatcher-preferred over the egress-blocked api-server (utoipa-swagger-ui build-script 403, issues #2966/#2949) and mobile-native/KMP (AGP dl.google.com 403, issue #2652) segments. Tie broken toward reality-web because ppt-web-core received a Tier-1d pass most recently (2026-09-20-ppt-web-core-tier1d.json) whereas reality-web's last pass was 2026-09-19; the cursor is only stale because dispatcher Tier-1d passes do not advance state.json's review_cursor (routine-owned file). No CHURN_FILES were handed to this slice (recent git churn is all .research/management/* orchestration files), so churn-alignment did not apply. SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for reality-web, so the >=3-open skip rule does not trigger. DEDUP: prior reality-web passes concentrated on i18n/localization, one PhotoGallery index-OOB, an href url-scheme XSS sink (2026-09-19), and CSV filepick/comparison share-id encoding (2026-09-19-2). This pass deliberately reviews the price/currency formatting data-flow and returns 2 net-new, non-duplicate findings after clearing them against 2026-07 through 2026-09-20 reality-web signals and backlog.json. Static-only (no build/test): the Next.js app is not compiled here; findings are backlog signals, cloud-landable (single-file frontend edits under frontend/apps/reality-web/src/, verifiable with pnpm --filter @ppt/reality-web typecheck/test + biome).",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "lib/serialize-script.ts (XSS-hardened <script> inlining: escapes < > & U+2028 U+2029 to \\uXXXX; used by layout tenant bootstrap, /env.js, JSON-LD — safe)",
+    "app/env.js/route.ts (allowlists only NEXT_PUBLIC_API_URL / NEXT_PUBLIC_SITE_URL; no secret leak; routed through serializeForScript)",
+    "app/[locale]/listings/[slug]/page.tsx getListing (response.ok null-check + parseListingDetail shape validation + real 404 via notFound(); resolveApiBase host-inference cannot be pointed off-topology by attacker Host header)",
+    "lib/auth-token.ts getSession (JSON.parse inside try/catch, hasStorage() guard, expiry sanity via Number.isFinite)",
+    "lib/format.ts formatPrice (safe: hardcoded currency:'EUR' default) — NOTE the crash only appears where callers OVERRIDE that default with raw listing.currency (see finding-1)",
+    "components/agency/RealtorManagement.tsx handleSubmit invite (mutateAsync wrapped in try/catch, surfaces t('inviteError'))",
+    "app/[locale]/realtor/listings/page.tsx formatPrice (CORRECT pattern: Intl.NumberFormat currency wrapped in try/catch with `${value} ${currency}` fallback — this is the reference the other sites should copy)",
+    "components/import/CsvImport.tsx file-type guard asymmetry (handleDrop validates .csv, handleFileSelect does not) — NOT re-emitted, overlaps 2026-09-19-2 code-review-reality-web-csv-import-filepick-no-type-guard"
+  ],
+  "signals": [
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-21 reality-web currency-format crash sink)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/format.ts",
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx"
+      ],
+      "evidence": [
+        "`new Intl.NumberFormat(locale, { style: 'currency', currency }).format(v)` throws `RangeError: Invalid currency code` whenever `currency` is a non-empty but malformed ISO-4217 code (wrong length or non-alpha: '', already handled elsewhere, but also 'US', 'EURO', '€', '12', 'eu'). The `currency` value flows straight from listing/API data (`listing.currency`) with no validation and no try/catch, so a single malformed listing crashes the React render subtree.",
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx:106 — `{formatPrice(listing.price, locale, { currency: listing.currency })}` OVERRIDES format.ts's safe `currency:'EUR'` default (lib/format.ts:48-59 has no try/catch) with the raw per-listing currency. ListingCard renders in the PUBLIC search/results grid, so one bad listing throws and takes down the whole grid page.",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx:37-41 — formatPrice useMemo does `currency = listing?.currency ?? 'EUR'` then `Intl.NumberFormat({style:'currency',currency}).format(Number(value))` with NO try/catch. The `??` only guards null/undefined, not a malformed non-empty string; a listing loaded via the shared-comparison URL handler (?ids=... -> API fetch) with a bad currency crashes the comparison view. (`Number(value)` on a non-numeric price additionally renders the literal 'NaN', a lesser cosmetic bug.)",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:372-377 — same unguarded `Intl.NumberFormat({style:'currency',currency})` on the agency listings table.",
+        "Reference for the correct fix already exists in-repo: frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx:16-22 wraps the identical call in try/catch and falls back to `${value} ${currency}`. Confidence MEDIUM (static-only): the throw semantics of Intl.NumberFormat on a bad currency code and the absence of any guard at these sites are confirmed by direct read; NOT confirmed is whether reality-server guarantees a valid ISO-4217 currency on every listing row (if it does, this degrades to defense-in-depth; if a legacy/imported/CSV-onboarded listing can carry a bad code, it is a live crash).",
+        "Fix (cloud-landable, frontend-only): add a shared `formatCurrency(value, locale, currency)` helper (or extend lib/format.ts formatPrice) that try/catches the currency path and falls back to a plain grouped number + code, then route ListingCard, ComparisonView and AgencyListings through it. Single-package change under frontend/apps/reality-web/src/, verifies with pnpm --filter @ppt/reality-web typecheck/test + biome; no backend/build coupling."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-sections-currency-ssr-500",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-21 reality-web SSR listing-section currency guard gap)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx:6-16 and AdditionalInfo.tsx:6-16 both guard the currency path with only `if (typeof currency !== 'string' || currency.length === 0)`. That check catches empty/null but NOT a non-empty malformed code: 'US' (2 chars), 'EURO' (4 chars), '€', or digits all pass `length === 0` yet still make `new Intl.NumberFormat('en-US', { style:'currency', currency }).format(value)` throw `RangeError: Invalid currency code`. The empty-string guard gives a false sense of safety.",
+        "These two components are section renderers on the PUBLIC listing detail page (app/[locale]/listings/[slug]/page.tsx, SSR/ISR). A throw here happens during server render, so a single listing with a malformed non-empty currency yields an HTTP 500 on an SEO-indexed public URL (worse than the client-only crash in finding-1). getListing()'s parseListingDetail normalizer validates shape but does NOT normalize/validate the currency code against ISO-4217, so a bad code survives into these renderers.",
+        "Distinct from finding-1 (different files, and here a guard EXISTS but is insufficient — the fix is to widen the guard, not add one from scratch) and distinct from the SSR-hardening already credited on getListing. Confidence MEDIUM (static-only): the incomplete guard and the SSR render path are confirmed by direct read; the live-500 depends on whether a wrong-length/non-alpha currency can reach the row (see finding-1 caveat).",
+        "Fix (cloud-landable, frontend-only): replace the `length === 0` check with a try/catch around the currency Intl.NumberFormat (mirroring app/[locale]/realtor/listings/page.tsx:16-22) or a strict `/^[A-Za-z]{3}$/` validation before formatting, in both section files. Single-package reality-web edit, verifies with typecheck/test + biome."
+      ]
+    }
+  ]
+}
