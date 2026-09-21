@@ -10661,6 +10661,72 @@
       "created_at": "2026-09-20",
       "updated_at": "2026-09-20",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-import-create-mutation-silent-fail",
+      "title": "CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-09-21"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:389-404 — handleCreate does `await createMutation.mutateAsync({...}); onClose();` with no try/catch; createMutation.error is never read or rendered anywhere in the file (only createMutation.isPending is, at lines 557/559), so a failed CRM connection create (bad apiKey, network error, duplicate) just re-enables the Create button with no explanation",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:480-489 — AddFeedModal.handleCreate has the identical shape: `await createMutation.mutateAsync(...); onClose();` with no try/catch; createMutation.error is never rendered (only previewMutation.error is, at FeedImport.tsx:554)",
+        "frontend/apps/reality-web/src/lib/query-provider.tsx has no MutationCache onError / global toast fallback, so nothing else catches these — this is the same bug class already fixed for favorites/saved-searches/inquiries in PR #2890 (see code-review-reality-web-mutation-no-onerror), recurring here because the import/ CRM+Feed wizards were built without the same onError/isError treatment"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx"
+      ],
+      "created_at": "2026-09-21",
+      "updated_at": "2026-09-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-feedcard-mutation-silent-fail",
+      "title": "FeedCard pause-toggle and delete actions swallow mutation errors — a failed feed removal looks identical to success",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-09-21"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:154-158 — handleTogglePause does `await updateMutation.mutateAsync({...})` with no try/catch and no error rendering; a failed pause/resume silently no-ops with the toggle appearing unchanged",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:160-164 — handleDelete does `await deleteMutation.mutateAsync(feed.id)` behind only a `window.confirm()`; if the delete request fails (403/network error) there is no follow-up error state — the confirm dialog already closed, so the user believes the feed source was removed when it was not",
+        "grep confirms deleteMutation.error / updateMutation.error are never read anywhere in FeedImport.tsx — only their .isPending flags gate the disabled state (lines 216, 231)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx"
+      ],
+      "created_at": "2026-09-21",
+      "updated_at": "2026-09-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-syncschedule-save-silent-fail",
+      "title": "SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-09-21"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave does `await updateMutation.mutateAsync({...}); setIsEditing(false);` with no try/catch; on failure the mutateAsync rejection propagates as an unhandled promise rejection and setIsEditing(false) never runs, but nothing tells the user why the form didn't close",
+        "Only updateMutation.isPending is consumed in the file (SyncSchedule.tsx:161/163, disables the Save button + shows 'saving'); there is no isError/error branch anywhere — same silent-failure shape as the already-fixed code-review-reality-web-mutation-no-onerror (PR #2890), recurring in the import/schedule feature"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx"
+      ],
+      "created_at": "2026-09-21",
+      "updated_at": "2026-09-21",
+      "plan": null
     }
   ]
 }
