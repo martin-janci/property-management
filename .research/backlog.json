@@ -10732,6 +10732,78 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agencybranding-save-silent-fail",
+      "title": "AgencyBranding.handleSave swallows updateBranding.mutateAsync errors — save can fail with no feedback and post-save state resets are skipped",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 reality-web segment review 2026-09-22"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:81-94 awaits updateBranding.mutateAsync with no try/catch and no read of updateBranding.error/isError; on failure setHasChanges(false)/setLogoFile(null)/setCoverFile(null) skipped, promise rejection unhandled",
+        "same shape as PRs #2967 / #2968 / #2969 but distinct component"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-silent-fail",
+      "title": "RealtorDetailModal handleSave/handleRemove/handleStatusChange swallow mutation errors — modal closes silently on failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 reality-web segment review 2026-09-22"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:828 handleSave awaits updateRealtor.mutateAsync then setIsEditing(false); no try/catch",
+        "same file :837 handleRemove awaits removeRealtor.mutateAsync then onClose(); no try/catch",
+        "same file :842 handleStatusChange awaits updateRealtor.mutateAsync with status; no try/catch",
+        "grep updateRealtor.(error|isError)/removeRealtor.(error|isError) → 0 hits; contrast with InviteRealtorModal in same file which uses inviteError + role=\"alert\""
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-routes-hardcoded-english",
+      "title": "reality-web [locale]/realtor/* routes render hardcoded English — sk/cs/de/pl/hu users see English throughout the realtor workspace",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 reality-web segment review 2026-09-22"
+      ],
+      "evidence": [
+        "grep useTranslations|next-intl under src/app/[locale]/realtor → only realtor/listings/page.tsx",
+        "realtor/page.tsx:46-48 <h1>Realtor workspace</h1> hardcoded",
+        "realtor/profile/page.tsx:63 setSaveError('Name is required'); :88 Loading profile…; :93-94 heading hardcoded",
+        "realtor/analytics/page.tsx:54 'Could not load analytics.' :68-69 Analytics heading hardcoded",
+        "realtor/listings/new/page.tsx:27 'Could not create listing. Please try again.'; realtor/listings/[id]/edit/page.tsx:42,61 'Could not load/save listing.'"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
     }
   ]
 }

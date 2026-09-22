@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-20T18:38:00Z",
-  "last_run_ms": 0,
+  "last_run_iso": "2026-09-22T06:37:33Z",
+  "last_run_ms": 300000,
   "last_pr_seen": 2956,
   "last_issue_seen": 2966,
-  "last_commit_sha": "5d4560aa69adc28d3226510bbca6575c00f4c7a2",
+  "last_commit_sha": "01365de11b8ae56fc798dcced7024e34fc49001d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1011,7 +1011,10 @@
     "dep-update-noise-pr-2583",
     "dep-update-noise-pr-2585",
     "dep-update-noise-pr-2586",
-    "dep-update-noise-pr-2935"
+    "dep-update-noise-pr-2935",
+    "code-review-reality-web-agencybranding-save-silent-fail",
+    "code-review-reality-web-realtor-detail-modal-silent-fail",
+    "code-review-reality-web-realtor-routes-hardcoded-english"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1020,13 +1023,13 @@
     "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-09-06",
     "ppt-web-core": "2026-08-29",
-    "reality-web": "2026-08-29",
+    "reality-web": "2026-09-22",
     "mobile-rn": "2026-09-09",
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 79,
-    "vectors_created": 373,
+    "runs": 80,
+    "vectors_created": 376,
     "plans_created": 30,
     "quiet_days": 3,
     "auto_fix_count": 0

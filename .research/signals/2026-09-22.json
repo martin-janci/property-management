@@ -1,0 +1,170 @@
+{
+  "generated": "2026-09-22T06:37:33Z",
+  "signals": [
+    {
+      "id": "code-review-reality-web-agencybranding-save-silent-fail",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 reality-web segment review 2026-09-22 (rotating expert)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "candidate_title": "Surface AgencyBranding save errors instead of swallowing them",
+      "candidate_files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx"
+      ],
+      "evidence": "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:81-94 awaits updateBranding.mutateAsync with no try/catch and no read of updateBranding.error/isError; on failure setHasChanges(false)/setLogoFile(null)/setCoverFile(null) skipped, promise rejection unhandled. Same shape as PRs #2967/#2968/#2969 but distinct component."
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-silent-fail",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 reality-web segment review 2026-09-22 (rotating expert)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "candidate_title": "Surface RealtorDetailModal save/remove/status errors inline",
+      "candidate_files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "evidence": "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:828/837/842 — three untrapped mutations (handleSave/handleRemove/handleStatusChange) all await mutateAsync then close modal or update UI; grep updateRealtor.(error|isError)/removeRealtor.(error|isError) → 0 hits. Contrast with InviteRealtorModal in same file (inviteError + role='alert')."
+    },
+    {
+      "id": "code-review-reality-web-realtor-routes-hardcoded-english",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 reality-web segment review 2026-09-22 (rotating expert)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "candidate_title": "Move realtor-workspace routes onto next-intl (sk/cs/de/pl/hu i18n gap)",
+      "candidate_files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx"
+      ],
+      "evidence": "All [locale]/realtor/* routes except realtor/listings/page.tsx render English literals under a locale-prefixed URL. Grep useTranslations|next-intl under src/app/[locale]/realtor returns exactly one file. Offending literals include realtor/page.tsx:46-48 heading, realtor/profile/page.tsx:63/88/93-94, realtor/analytics/page.tsx:54/68-69, realtor/listings/new/page.tsx:27, realtor/listings/[id]/edit/page.tsx:42/61. Sk/cs/de/pl/hu users see English throughout."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-22.md && head -1 | grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans → vacuous",
+      "observed": "0 new plans",
+      "expected": "each new plan has adversarial pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence",
+      "observed": "all prior slugs present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows",
+      "observed": "now=9 head=9",
+      "expected": "now ≥ head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "triage byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions",
+      "expected": "≤3 total (≤1 pr, ≤1 issue, ≤1 comment)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run",
+      "observed": "no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
