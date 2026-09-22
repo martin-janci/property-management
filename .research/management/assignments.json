@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-22T00:34:27Z",
+  "generated": "2026-09-22T00:43:37Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -72,18 +72,18 @@
     {
       "task_id": "code-review-reality-web-import-create-mutation-silent-fail",
       "branch": "auto-impl/code-review-reality-web-import-create-mu-8cc74cca",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-21T20:29:43Z",
-      "last_updated": "2026-09-22T00:34:27Z",
-      "status_changed_at": "2026-09-22T00:34:27Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-22T00:43:37Z",
+      "status_changed_at": "2026-09-22T00:43:37Z",
+      "pr_number": 2969,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2969",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2969 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none(spurious-substring); CRM+Feed create wizards try/catch mutateAsync + inline role=alert error (RealtorManagement pattern); createError in 6 locales; regression tests IG3-satisfied; VERIFY OK 7351356 (biome+typecheck clean, 264 vitest); rebased onto dev 66896ba; reclaimed after sandbox-timeout",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
