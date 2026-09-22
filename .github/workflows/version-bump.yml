@@ -21,21 +21,32 @@
 # `chore(version):` prefix, which is what the job-level `if:` below uses as the
 # loop guard so the merge does not re-trigger another bump.
 #
+# **Which carriers get staged.** `scripts/update-version.sh --list` is the single
+# carrier inventory; the bump step feeds it straight to
+# `git add --pathspec-from-file=-`, and `.github/workflows/version-drift.yml`
+# gates PRs on the same list. Do not re-type the paths here — add them to
+# `carrier_paths()` in that script.
+#
 # **Which secret is required.** `VERSION_BUMP_TOKEN` — a PAT (or GitHub App
 # installation token) with `contents: write` + `pull-requests: write` on this
 # repo, belonging to an identity that is *not* a CODEOWNER of the files a bump
 # touches (see **Approval** below).
 #
 # A PR opened with the default `secrets.GITHUB_TOKEN` does **not** trigger
-# `pull_request` workflow runs (GitHub's workflow-recursion guard). All four
-# checks `dev` requires — `security-gate-conclusion`, `deny-toml-ban-gate`,
-# `Workflow scripts must be executable (100755)`, `frontend` — are
-# `pull_request`-triggered, so with `GITHUB_TOKEN` they would never start and
-# auto-merge would wait forever. Hence the separate identity for the branch
-# push, the PR and the auto-merge call, and hence this workflow **fails loudly**
-# when `VERSION_BUMP_TOKEN` is missing rather than falling back to
-# `GITHUB_TOKEN`: that fallback cannot land, and a silently stuck PR is exactly
-# what froze the version for three months.
+# `pull_request` workflow runs (GitHub's workflow-recursion guard) — that part is
+# documented GitHub behaviour. What `dev` actually requires is **inferred, not
+# observed**: `.github/workflows/branch-protection-setup.yml` and
+# `.github/workflows/scripts/branch-protection-payload.py` declare four required
+# contexts (`security-gate-conclusion`, `deny-toml-ban-gate`, `Workflow scripts
+# must be executable (100755)`, `frontend`), one approving review, and
+# `require_code_owner_reviews: true`. That workflow runs on `GH_ADMIN_TOKEN` and
+# may never have applied the object — `research-land.yml:44-45` asserts the
+# opposite, that `dev` is unprotected. **Re-verify with
+# `gh api repos/$REPO/branches/dev/protection` and correct this comment.**
+# All four declared contexts come from unfiltered `pull_request:` jobs, so on that
+# inference a PR opened with `GITHUB_TOKEN` would never start them and auto-merge
+# would wait forever — hence the separate identity for the branch push, the PR and
+# the auto-merge call.
 #
 # Existing secrets were considered for the PR-opening step and rejected:
 #   * `GITHUB_TOKEN` — cannot trigger the required `pull_request` checks (above).
@@ -45,24 +56,38 @@
 #     documented purpose in `approve-pr.yml`; it must not also open the PR,
 #     because GitHub forbids approving your own PR.
 #
-# **Approval.** `dev` also requires a PR review, and `.github/CODEOWNERS` owns
-# `backend/Cargo.toml` and `backend/Cargo.lock`, which every bump rewrites — so
-# the bump PR needs a code-owner approval. The workflow approves it on a
-# best-effort basis with `AUTO_APPROVE_TOKEN`; if that secret is absent, lacks
-# permission, or belongs to the same user that opened the PR, the run still
-# succeeds and prints a warning, and the PR waits for a human review.
+# **Missing secret → skip, not red.** Until `VERSION_BUMP_TOKEN` exists this job
+# cannot land a bump at all, so it skips the whole write path and emits a
+# `::warning::` plus a job-summary block naming the fix, instead of failing red on
+# every push to `dev`. That is deliberate: this workflow ships ahead of the
+# secret, and a permanently red required-looking run trains everyone to ignore it.
+# **Nothing bumps until the secret exists** — the warning on the latest run is how
+# you tell "not configured yet" from "working".
+#
+# **Approval.** On the same inference, `dev` requires a review and
+# `.github/CODEOWNERS` owns `backend/Cargo.toml` + `backend/Cargo.lock`, which
+# every bump rewrites — so the bump PR needs a *code-owner* approval. The workflow
+# approves it best-effort with `AUTO_APPROVE_TOKEN`. Whether that review
+# **satisfies** `require_code_owner_reviews` is *not* established here:
+# `approve-pr.yml:9,218` documents `AUTO_APPROVE_TOKEN` as an identity that must
+# not be the PR author, and nothing in this repo says whether it is the code owner.
+# So this workflow makes no claim that the auto-approval is sufficient — it only
+# guarantees the wait is **visible**: the final "Report and gate on the bump PR"
+# step writes version/branch/PR/reviewDecision to the job summary and turns a PR
+# that still needs a review, or that has been open longer than one CI cycle, into a
+# red run. A bump PR nobody can approve can no longer sit open behind green runs.
 #
 # **When it fails.**
-#   * `VERSION_BUMP_TOKEN secret is not set` → mint the token and
+#   * `VERSION_BUMP_TOKEN is not set` (warning, job skipped) → mint the token and
 #     `gh secret set VERSION_BUMP_TOKEN`. Nothing bumps until it exists.
 #   * `could not enable auto-merge` → check that *Allow auto-merge* and *Allow
 #     squash merging* are on in Settings → General, then
-#     `gh pr merge <n> --squash --auto`.
-#   * the PR exists but never merges → a required check is red or the review is
-#     missing. Look at the PR, not at this workflow: fix the check (on a
-#     version-only diff that usually means a carrier was left unstaged — see the
-#     staging guard below) or approve it. Re-running this workflow only
-#     re-pushes the same branch.
+#     `gh pr merge <n> --squash --auto`. (Re-arming an already-armed PR is not a
+#     failure — the step re-reads the PR and only fails if auto-merge is really off.)
+#   * `PR #N still needs a review` / `open for N minutes` → the bump PR cannot
+#     land. Approve it, or fix the red required check. On a version-only diff a red
+#     check usually means a carrier was left unstaged — see the staging guard below.
+#     Re-running this workflow only re-pushes the same branch.
 #   * a bump PR is still open when the next push to `dev` arrives → the next run
 #     recomputes the same next version, reuses the same `chore/version-X.Y.Z`
 #     branch and PR and re-arms auto-merge, so bumps coalesce instead of racing.
@@ -98,9 +123,10 @@ jobs:
           # Only read here: the history for the `.research/`-only detection
           # below. The write path (branch push, PR, auto-merge) uses
           # VERSION_BUMP_TOKEN explicitly — see the header. The `||` fallback
-          # exists so a missing secret surfaces as the actionable error from the
-          # "Require VERSION_BUMP_TOKEN" step instead of a checkout auth error;
-          # no write ever runs on it, because that step aborts the job first.
+          # exists so a missing secret surfaces as the actionable warning from the
+          # "Check VERSION_BUMP_TOKEN" step instead of a checkout auth error; no
+          # write ever runs on it, because every step after that one is skipped
+          # when the secret is absent.
           token: ${{ secrets.VERSION_BUMP_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
@@ -129,23 +155,29 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"; echo ".research/-only push — skipping version bump"
           fi
 
-      # Fail loudly and early: without this identity the bump PR cannot get its
-      # required checks, so it could never land. Better a red run with a fix-it
-      # message than a PR that hangs on auto-merge forever.
-      - name: Require VERSION_BUMP_TOKEN
+      # Without this identity the bump PR cannot get its required checks, so it
+      # could never land — every step below is therefore skipped. This is a loud
+      # skip (annotation + job summary), not a red run: the workflow lands before
+      # the secret exists, and a `Version Bump` that is red on every push to `dev`
+      # would be filtered out as noise within a day. See "Missing secret → skip,
+      # not red" in the header.
+      - name: Check VERSION_BUMP_TOKEN
+        id: token
         if: steps.detect.outputs.skip != 'true'
         env:
           VERSION_BUMP_TOKEN: ${{ secrets.VERSION_BUMP_TOKEN }}
         run: |
           set -euo pipefail
           if [ -n "${VERSION_BUMP_TOKEN:-}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
             echo "VERSION_BUMP_TOKEN is set."
             exit 0
           fi
+          echo "present=false" >> "$GITHUB_OUTPUT"
           cat >&2 <<'MSG'
-          ERROR: VERSION_BUMP_TOKEN secret is not set — the version cannot be bumped.
+          VERSION_BUMP_TOKEN secret is not set — NOTHING WAS BUMPED by this run.
 
-          Why this is fatal instead of falling back to GITHUB_TOKEN:
+          Why the bump needs its own identity:
             * a direct push to protected `dev` is rejected (GH006), so the bump
               has to land as a PR with auto-merge;
             * a PR opened with GITHUB_TOKEN does not trigger `pull_request`
@@ -160,17 +192,22 @@ jobs:
             2. gh secret set VERSION_BUMP_TOKEN --body "<token>"
             3. re-run this workflow (or push to dev again).
           MSG
-          echo "::error::VERSION_BUMP_TOKEN is not set — see this step's log and the header of .github/workflows/version-bump.yml."
-          exit 1
+          {
+            echo "### Version bump skipped"
+            echo ""
+            echo "\`VERSION_BUMP_TOKEN\` is not set, so **the version was not bumped**."
+            echo "See the step log, or \"Missing secret\" in \`.github/workflows/version-bump.yml\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::VERSION_BUMP_TOKEN is not set — the version was NOT bumped. Create the secret (see this step's log)."
 
       - name: Configure git
-        if: steps.detect.outputs.skip != 'true'
+        if: steps.detect.outputs.skip != 'true' && steps.token.outputs.present == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Setup Node (for package.json sync)
-        if: steps.detect.outputs.skip != 'true'
+        if: steps.detect.outputs.skip != 'true' && steps.token.outputs.present == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: '20'
@@ -183,7 +220,7 @@ jobs:
       # avoids a double bump.
       - name: Bump version and open an auto-merging PR
         id: bump
-        if: steps.detect.outputs.skip != 'true'
+        if: steps.detect.outputs.skip != 'true' && steps.token.outputs.present == 'true'
         env:
           # gh and the branch push both act as the dedicated bump identity, so
           # the PR triggers `dev`'s required `pull_request` checks.
@@ -201,21 +238,13 @@ jobs:
           VERSION="$(tr -d '[:space:]' < VERSION)"
           BRANCH="chore/version-$VERSION"
 
-          # Stage every carrier scripts/update-version.sh writes. T2 of the
-          # release-process plan replaces this hand-kept list with
-          # `update-version.sh --list` + `git add --pathspec-from-file=-`; until
-          # then the guard below refuses to commit a partial bump.
+          # Stage VERSION (the source) plus exactly the carriers
+          # scripts/update-version.sh declares. The script's `--list` is the ONE
+          # inventory — no hand-kept copy of the paths lives here, so a carrier
+          # added to `carrier_paths()` is staged by this workflow, gated by
+          # version-drift.yml and documented, all from one edit.
           git add VERSION
-          git add package.json 2>/dev/null || true
-          git add backend/Cargo.toml 2>/dev/null || true
-          git add backend/Cargo.lock 2>/dev/null || true
-          git add backend/servers/deploy-server/Cargo.toml 2>/dev/null || true
-          git add backend/servers/deploy-server/Cargo.lock 2>/dev/null || true
-          git add frontend/package.json 2>/dev/null || true
-          git add "frontend/apps/*/package.json" 2>/dev/null || true
-          git add "frontend/packages/*/package.json" 2>/dev/null || true
-          git add mobile-native/gradle.properties 2>/dev/null || true
-          git add docs/api/typespec/main.tsp 2>/dev/null || true
+          ./scripts/update-version.sh --list | git add --pathspec-from-file=-
 
           if git diff --cached --quiet; then
             echo "No version files changed"
@@ -223,14 +252,14 @@ jobs:
           fi
 
           # The tree was pristine at `git reset --hard origin/dev`, so anything
-          # still unstaged was written by the bump and is missing from the list
-          # above. Committing without it produces a PR whose required checks go
+          # still unstaged was written by the bump and is NOT declared by
+          # `--list`. Committing without it produces a PR whose required checks go
           # red (a stale backend/Cargo.lock alone breaks `cargo build --locked`)
           # and auto-merge would never land it — so stop here instead.
           LEFTOVER="$(git status --porcelain | grep -vE '^[MARDC] ' || true)"
           if [ -n "$LEFTOVER" ]; then
             echo "$LEFTOVER" | sed 's/^/  unstaged: /' >&2
-            echo "::error::the bump wrote files this workflow does not stage — add them to the staging list in .github/workflows/version-bump.yml (or stop writing them in scripts/update-version.sh)."
+            echo "::error::the bump wrote files scripts/update-version.sh --list does not declare — add them to carrier_paths() in that script (or stop writing them)."
             exit 1
           fi
 
@@ -248,6 +277,7 @@ jobs:
 
           if [ -z "$PR" ]; then
             BODY_FILE="$(mktemp)"
+            trap 'rm -f "$BODY_FILE"' EXIT
             cat > "$BODY_FILE" <<EOF
           Automated patch bump of \`VERSION\` to \`$VERSION\`, opened by
           \`.github/workflows/version-bump.yml\`.
@@ -258,32 +288,60 @@ jobs:
 
           Version-only change: please do not push anything else onto this branch.
           EOF
-            URL="$(gh pr create --repo "$REPO" --base dev --head "$BRANCH" \
+            gh pr create --repo "$REPO" --base dev --head "$BRANCH" \
               --title "chore(version): bump to $VERSION" \
-              --body-file "$BODY_FILE" | tail -n1)"
-            PR="${URL##*/}"
-            echo "opened PR #$PR ($URL)"
+              --body-file "$BODY_FILE"
+            rm -f "$BODY_FILE"
+            trap - EXIT
+            # Re-query instead of parsing the create output: `gh pr create` prints
+            # the URL, but a trailing blank line (or any future extra line) would
+            # make `${URL##*/}` an empty PR number, and every later step would then
+            # fail with a misleading "Allow auto-merge is off" diagnosis.
+            PR="$(gh pr list --repo "$REPO" --head "$BRANCH" --base dev --state open \
+                    --json number --jq '.[0].number // empty')"
+            if [ -z "$PR" ]; then
+              echo "::error::gh pr create succeeded but no open PR for $BRANCH could be found — open it by hand: gh pr create --base dev --head $BRANCH --title 'chore(version): bump to $VERSION'"
+              exit 1
+            fi
+            echo "opened PR #$PR for $BRANCH"
+            REUSED=false
           else
             echo "reusing open PR #$PR for $BRANCH"
+            REUSED=true
           fi
 
           {
             echo "version=$VERSION"
             echo "branch=$BRANCH"
             echo "pr=$PR"
+            echo "reused=$REUSED"
           } >> "$GITHUB_OUTPUT"
 
+          # Idempotent: every coalescing run re-arms auto-merge on the same PR.
+          # `gh pr merge --auto` errors when auto-merge is already enabled, so a
+          # non-zero exit is not by itself a failure — re-read the PR and only fail
+          # if auto-merge is genuinely off.
           if ! gh pr merge "$PR" --repo "$REPO" --squash --auto --delete-branch; then
-            echo "::error::could not enable auto-merge on PR #$PR — verify that 'Allow auto-merge' and 'Allow squash merging' are enabled in Settings → General, then run: gh pr merge $PR --squash --auto"
-            exit 1
+            if [ "$(gh pr view "$PR" --repo "$REPO" --json autoMergeRequest \
+                      --jq 'if .autoMergeRequest == null then "off" else "armed" end')" = "armed" ]; then
+              echo "auto-merge was already armed on PR #$PR — nothing to do."
+            else
+              echo "::error::could not enable auto-merge on PR #$PR — verify that 'Allow auto-merge' and 'Allow squash merging' are enabled in Settings → General, then run: gh pr merge $PR --squash --auto"
+              exit 1
+            fi
+          else
+            echo "auto-merge (squash) armed on PR #$PR — version $VERSION"
           fi
-          echo "auto-merge (squash) armed on PR #$PR — version $VERSION"
 
-      # Best effort only: dev requires a review and CODEOWNERS owns
-      # backend/Cargo.{toml,lock}, which the bump rewrites. A failure here
-      # leaves the PR waiting for a human instead of failing the run.
+      # Best effort only, and deliberately not claimed to be sufficient: on the
+      # inference in the header `dev` requires a code-owner review and CODEOWNERS
+      # owns backend/Cargo.{toml,lock}, which the bump rewrites, while
+      # approve-pr.yml:9,218 documents AUTO_APPROVE_TOKEN as an identity that must
+      # not be the PR author — nothing in this repo says whether it is the code
+      # owner. So a failure (or an approval that does not satisfy the code-owner
+      # rule) does not fail this step; the gate step below makes the wait visible.
       - name: Approve the bump PR (best effort)
-        if: steps.detect.outputs.skip != 'true' && steps.bump.outputs.pr != ''
+        if: steps.detect.outputs.skip != 'true' && steps.token.outputs.present == 'true' && steps.bump.outputs.pr != ''
         env:
           GH_TOKEN: ${{ secrets.AUTO_APPROVE_TOKEN }}
           REPO: ${{ github.repository }}
@@ -300,3 +358,81 @@ jobs:
           else
             echo "::warning::could not approve PR #$PR with AUTO_APPROVE_TOKEN (it may belong to the same identity that opened the PR, or lack pull-requests: write). Approve it by hand — auto-merge is already armed."
           fi
+
+      # The end of F-P5's failure mode. A bump PR that can never land — no
+      # approving review (require_code_owner_reviews + CODEOWNERS on
+      # backend/Cargo.{toml,lock}), or simply sitting open past a CI cycle — used to
+      # coexist with a green run, so `VERSION` froze in silence. This step records
+      # the PR's real state in the job summary and goes red when it cannot land, so
+      # the freeze is visible on the run that caused it.
+      #
+      # It runs after the approval attempt on purpose: a freshly opened PR is
+      # REVIEW_REQUIRED until something approves it, and it is exactly the case
+      # "the auto-approval did not take" that must be loud.
+      - name: Report and gate on the bump PR
+        if: steps.detect.outputs.skip != 'true' && steps.token.outputs.present == 'true' && steps.bump.outputs.pr != ''
+        env:
+          GH_TOKEN: ${{ secrets.VERSION_BUMP_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ steps.bump.outputs.pr }}
+          VERSION: ${{ steps.bump.outputs.version }}
+          BRANCH: ${{ steps.bump.outputs.branch }}
+          REUSED: ${{ steps.bump.outputs.reused }}
+          # One CI cycle on this repo, with headroom. A bump PR still open past
+          # this is not "waiting for checks", it is stuck.
+          STALL_AFTER_MINUTES: '90'
+        run: |
+          set -euo pipefail
+
+          STATE="$(gh pr view "$PR" --repo "$REPO" \
+              --json reviewDecision,mergeStateStatus,autoMergeRequest,createdAt,url \
+              --jq '[(.reviewDecision // "NONE"),
+                     (.mergeStateStatus // "UNKNOWN"),
+                     (if .autoMergeRequest == null then "off" else "armed" end),
+                     .createdAt, .url] | @tsv')"
+          IFS=$'\t' read -r REVIEW MERGE_STATE AUTO CREATED URL <<< "$STATE"
+
+          AGE_MIN=$(( ( $(date -u +%s) - $(date -u -d "$CREATED" +%s) ) / 60 ))
+
+          {
+            echo "### Version bump $VERSION"
+            echo ""
+            echo "| field | value |"
+            echo "| --- | --- |"
+            echo "| version | \`$VERSION\` |"
+            echo "| branch | \`$BRANCH\` |"
+            echo "| PR | [#$PR]($URL) |"
+            echo "| reused existing PR | \`$REUSED\` |"
+            echo "| reviewDecision | \`$REVIEW\` |"
+            echo "| mergeStateStatus | \`$MERGE_STATE\` |"
+            echo "| auto-merge | \`$AUTO\` |"
+            echo "| PR age (minutes) | $AGE_MIN |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "PR #$PR: review=$REVIEW merge_state=$MERGE_STATE auto_merge=$AUTO age=${AGE_MIN}m"
+
+          FAILED=0
+
+          if [ "$AUTO" != "armed" ]; then
+            echo "::error::auto-merge is not armed on PR #$PR ($URL) — it will not land on its own. Run: gh pr merge $PR --squash --auto"
+            FAILED=1
+          fi
+
+          case "$REVIEW" in
+            REVIEW_REQUIRED|CHANGES_REQUESTED)
+              echo "::error::PR #$PR ($URL) has reviewDecision=$REVIEW, so auto-merge cannot land the bump to $VERSION. A code owner must approve it (.github/CODEOWNERS covers backend/Cargo.{toml,lock}, which every bump rewrites). Until then VERSION stays where it is."
+              FAILED=1
+              ;;
+          esac
+
+          if [ "$AGE_MIN" -gt "$STALL_AFTER_MINUTES" ]; then
+            echo "::error::PR #$PR ($URL) has been open for ${AGE_MIN} minutes (> $STALL_AFTER_MINUTES) and still has not merged — look at the PR's checks and review, not at this workflow."
+            FAILED=1
+          fi
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo "The bump to $VERSION is NOT landed. See $URL" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "PR #$PR is armed and unblocked — it merges itself when the required checks go green."
