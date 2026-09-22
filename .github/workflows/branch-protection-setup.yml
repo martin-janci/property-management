@@ -159,11 +159,19 @@ jobs:
             "security-gate-conclusion" \
             "deny-toml-ban-gate" \
             "Workflow scripts must be executable (100755)" \
-            "frontend")
+            "frontend" \
+            "frontend-images")
           # "frontend" (2026-07-23): the frontend.yml aggregator context added
           # in #2444 — single producer with a no-op path on pure-backend PRs
           # (proven green on backend-only #2454), so requiring it cannot wedge
           # any PR shape. Closes the "frontend breakage merges silently" gap.
+          # "frontend-images" (T7): docker-frontend.yml's aggregator context.
+          # docker-frontend.yml built no frontend image for three months
+          # (20/20 runs failed, last success 2026-06-16) while the deployer
+          # kept shipping `:dev` — nothing was red because the workflow only
+          # ran on push and its deploy job was gated `needs: build` (F-P8).
+          # Same single-producer/no-op-path shape as "frontend", so requiring
+          # it cannot wedge a pure-backend PR.
 
           # Build the merged list of required status checks (existing ∪ new).
           MERGED=$(python3 -c "

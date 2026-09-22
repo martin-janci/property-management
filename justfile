@@ -91,7 +91,7 @@ verify-plan:
     ./scripts/verify-impact.sh --plan-only
 
 # Run all quality checks
-check: check-backend check-frontend
+check: check-backend check-frontend check-docker-manifests
 
 # Check backend (format + clippy)
 check-backend:
@@ -103,6 +103,12 @@ check-backend:
 check-frontend:
     @echo "📦 Checking frontend code..."
     cd frontend && pnpm check
+
+# Check that each frontend Dockerfile's deps stage still copies every workspace
+# manifest the app it builds needs (T7 / F-P8). Seconds, no Docker, no install.
+check-docker-manifests:
+    @echo "🐳 Checking frontend Dockerfile manifest lists..."
+    ./scripts/check-frontend-docker-manifests.sh
 
 # Fix all code quality issues
 fix: fix-backend fix-frontend

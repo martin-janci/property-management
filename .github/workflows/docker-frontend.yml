@@ -5,6 +5,33 @@ name: Docker Build & Push (Frontend)
 # and docker-build.yml for why the two triggers cannot share one `push:` key.
 # Both call the same reusable workflow, so tag builds and branch builds publish
 # identical images under identical tags.
+#
+# BLOCKING, SINGLE-PRODUCER GATING (T7 / F-P8)
+# --------------------------------------------
+# This workflow failed 20 of its 20 most recent runs — no successful frontend
+# image since 2026-06-16 — while docker-build.yml kept POSTing {"tag":"dev"} to
+# the deployer. Prod therefore pulled a June frontend against a September
+# backend for three months, and NOTHING noticed: the frontend's own
+# `trigger-deploy` is gated `needs: build`, so a broken build simply produced no
+# deploy and no red signal on any PR. The workflow only ran on push, so it
+# could not even be registered as a required status check.
+#
+# It now runs on EVERY pull request (no `paths:` filter) and ends in an
+# always-reporting aggregator job, `frontend-images`, which is the SOLE producer
+# of that status context — the same single-producer pattern frontend.yml and
+# backend.yml use (#1672):
+#   - pure-backend PR: `changes` says frontend=false, the image build skips, and
+#     `frontend-images` succeeds as a no-op, so requiring the context can never
+#     wedge a PR that does not touch the frontend;
+#   - frontend-touched PR: `frontend-images` is red unless the manifest gate and
+#     all three image builds actually succeeded.
+# The reusable workflow's publish gate already excludes `pull_request`, so a PR
+# build validates the image without pushing anything to GHCR.
+#
+# Registering `frontend-images` as a required check on `dev` needs the
+# branch-protection API, which a workflow's GITHUB_TOKEN cannot reach: it is in
+# branch-protection-setup.yml's NEW_CHECKS list, and the one-shot `gh api`
+# equivalent is in docs/runbooks/frontend-image-required-check.md.
 
 on:
   push:
@@ -16,6 +43,10 @@ on:
       - '.github/workflows/docker-frontend.yml'
       - '.github/workflows/docker-frontend-images.yml'
       - '.github/actions/docker-image-tags/action.yml'
+  # NO `paths:` filter: a required status check that a path filter skips never
+  # reports at all, which would wedge every PR that does not touch the
+  # frontend. The `changes` job below decides what actually has to run.
+  pull_request:
   workflow_dispatch:
     inputs:
       push:
@@ -27,8 +58,59 @@ permissions:
   contents: read
   packages: write
 
+# A newer PR push makes an in-flight validation run obsolete. Push runs are NOT
+# cancelled: `trigger-deploy` runs there, and cancelling a deploy mid-flip is
+# worse than doing a redundant one.
+concurrency:
+  group: docker-frontend-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # Single source of truth for "does this PR need a frontend image build?".
+  # On push/workflow_dispatch there is no PR diff to filter, so force true.
+  # Mirrors frontend.yml's `changes` job, including the coalesced
+  # `filter || force` output.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend || steps.force.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Detect frontend image changes
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'docker/frontend/**'
+              - 'docker/nginx/**'
+              - '.github/workflows/docker-frontend.yml'
+              - '.github/workflows/docker-frontend-images.yml'
+              - '.github/actions/docker-image-tags/action.yml'
+
+      - name: Force frontend=true for non-PR events
+        id: force
+        if: github.event_name != 'pull_request'
+        run: echo "frontend=true" >> "$GITHUB_OUTPUT"
+
+  # The deps stage of every frontend Dockerfile copies workspace manifests one
+  # by one, so adding a `workspace:*` dependency anywhere in the chain can break
+  # the image build while every other check stays green. This recomputes the
+  # required set from the real package.json files. Seconds, no Docker, no
+  # install — so it runs on every event, not just frontend-touching ones.
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check frontend Dockerfile manifest lists
+        run: ./scripts/check-frontend-docker-manifests.sh
+
   build:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     uses: ./.github/workflows/docker-frontend-images.yml
     with:
       # Only a workflow_dispatch may widen the publish gate past main/dev/`v*`.
@@ -86,3 +168,58 @@ jobs:
             -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
             -H "Content-Type: application/json" \
             -d "{\"tag\": \"$BRANCH_TAG\", \"target\": \"$TARGET\"}"
+
+  # ALWAYS-REPORTING aggregator context `frontend-images` (single producer,
+  # #1672 pattern). This is the context to register as required on `dev`;
+  # `trigger-deploy` is deliberately NOT a dependency, because a deploy-trigger
+  # failure is an infra concern (see its own continue-on-error note) and must
+  # not make a PR red.
+  # `!cancelled()` (not `always()`) so a user-cancelled run does not paint a
+  # green context over unfinished work.
+  frontend-images:
+    needs: [changes, manifests, build]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate frontend image job results
+        env:
+          FRONTEND_TOUCHED: ${{ needs.changes.outputs.frontend }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          MANIFESTS_RESULT: ${{ needs.manifests.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          set -euo pipefail
+          echo "changes.frontend: $FRONTEND_TOUCHED"
+          echo "changes:          $CHANGES_RESULT"
+          echo "manifests:        $MANIFESTS_RESULT"
+          echo "build:            $BUILD_RESULT"
+
+          fail=0
+          for entry in \
+            "changes:$CHANGES_RESULT" \
+            "manifests:$MANIFESTS_RESULT" \
+            "build:$BUILD_RESULT"; do
+            job="${entry%%:*}"; result="${entry#*:}"
+            # Any hard failure/cancellation fails the aggregate regardless of
+            # which paths the PR touched.
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              echo "::error::Frontend image job '$job' result: $result"
+              fail=1
+            fi
+            # On a frontend-touched PR every job must have actually SUCCEEDED —
+            # a skip means it was short-circuited by an upstream failure.
+            if [ "$FRONTEND_TOUCHED" = "true" ] && [ "$result" != "success" ]; then
+              echo "::error::Frontend image paths changed but job '$job' did not succeed (result: $result)"
+              fail=1
+            fi
+          done
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::A frontend image would not build from this commit — see the failing job above. This is the gate that was missing while docker-frontend.yml failed 20 runs in a row (F-P8)."
+            exit 1
+          fi
+          if [ "$FRONTEND_TOUCHED" != "true" ]; then
+            echo "No frontend image paths changed — image build not required; context satisfied as no-op."
+          else
+            echo "All frontend image jobs passed."
+          fi
