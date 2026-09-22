@@ -141,6 +141,27 @@ Fixed in `docker/frontend/{ppt-web,admin-web,reality-web}.Dockerfile`:
    `manifests` job of `docker-frontend.yml` on every event — seconds, no Docker,
    no install.
 
+### What was and was not built locally
+
+`docker build --target builder -f docker/frontend/ppt-web.Dockerfile .` was
+attempted on the development box and **did not complete**: the daemon there is
+I/O-starved (`[internal] load metadata` 62.7s, `load .dockerignore` 27.5s, the
+base-image pull 817.6s, and a bare `WORKDIR /app` 4875.2s), so the run was
+still inside the `deps` stage COPY list after ~2h and was stopped. It did get
+far enough to show the Dockerfile parses, `node:22-alpine` resolves, and all 13
+`deps`-stage COPY sources exist and transfer. **`pnpm install
+--frozen-lockfile` and `pnpm --filter @ppt/web build` were never reached, so no
+image in this branch has ever been built end to end.** The first
+`docker-frontend.yml` run is the first real test.
+
+What *was* checked locally is the musl hypothesis below, at the lockfile level:
+every native package named in it carries both a `linux-x64-musl` and a
+`linux-arm64-musl` entry in `frontend/pnpm-lock.yaml` — `@tailwindcss/oxide`
+4.3.3, `lightningcss` 1.32.0/1.33.0, `@rolldown/binding` 1.2.7, `@next/swc`
+16.3.3, `@swc/core` 1.16.1 (plus `@biomejs/cli`, `@napi-rs/canvas`,
+`@parcel/watcher`). That rules out "the musl variant is missing from the
+lockfile"; it does not rule out a musl binding that resolves but fails to load.
+
 ### Still to confirm on the first real run
 
 The GitHub API was rate-limited while this landed, so the CI logs for the 20
@@ -157,8 +178,12 @@ step and check, in this order:
    against the committed lockfile and leaves it byte-identical);
 2. the `builder` stage `pnpm --filter … build` — a musl/native-binding failure
    (`@tailwindcss/oxide`, `lightningcss`, `@rolldown/binding`, `@next/swc`)
-   would point at alpine rather than at Node. All `*-musl` variants are present
-   in the lockfile, so this should not fire;
+   would point at alpine rather than at Node. Every one of those has both
+   `linux-x64-musl` and `linux-arm64-musl` in the lockfile (verified, see
+   above), so a *missing variant* is ruled out — but a binding that installs
+   and then fails to load is not, and this is the hypothesis with the most
+   weight now that the Node-20 story has been withdrawn. If it fires, the fix
+   is a glibc base (`node:22-slim`) for the builder stage, not another pin;
 3. `frontend.yml` itself, which still pins `node-version: '20'` in all five of
    its jobs and so violates the same `engines` constraint as the old image did.
    Aligning it to 22 is a follow-up, deliberately out of T7's scope.
