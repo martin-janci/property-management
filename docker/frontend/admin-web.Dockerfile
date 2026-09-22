@@ -2,6 +2,17 @@
 # Produces a static build served by Nginx.
 
 # =============================================================================
+# Version identity (T6) — declared before the first FROM so every stage can
+# pick the value up with a bare `ARG` re-declaration. CI passes all three from
+# .github/workflows/docker-frontend-images.yml, where APP_VERSION is the
+# release version (never a branch name) and GIT_SHA is github.sha. The
+# defaults apply to local builds only.
+# =============================================================================
+ARG APP_VERSION=0.0.0-dev
+ARG GIT_SHA=unknown
+ARG BUILD_DATE=unknown
+
+# =============================================================================
 # Stage 1: Dependencies
 # =============================================================================
 FROM node:20-alpine AS deps
@@ -34,6 +45,15 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 COPY --from=deps /app/ ./
 COPY frontend/ ./
 
+# Bake the version identity into the bundle — same three values the image
+# labels and the `/version` endpoint report.
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+ENV VITE_APP_VERSION=${APP_VERSION}
+ENV VITE_GIT_SHA=${GIT_SHA}
+ENV VITE_BUILT_AT=${BUILD_DATE}
+
 RUN pnpm --filter @ppt/admin-web build
 
 # =============================================================================
@@ -62,6 +82,24 @@ RUN addgroup -g 1001 -S ppt && \
 
 USER ppt
 EXPOSE 8080
+
+# OCI version identity (T6). Until now `git grep -c LABEL -- docker/` was 0 and
+# the only labels came from metadata-action, whose `image.version` is the branch
+# name on a branch build. Declared last in the stage so a new commit SHA
+# invalidates nothing but this metadata layer.
+#
+# ENV as well as ARG, because /docker-entrypoint.d/10-render-template.sh
+# envsubst's these three into the `/version` endpoint at container start.
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/martin-janci/property-management"
+ENV APP_VERSION=${APP_VERSION} \
+    GIT_SHA=${GIT_SHA} \
+    BUILD_DATE=${BUILD_DATE}
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget -q --spider http://localhost:8080/health || exit 1

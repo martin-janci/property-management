@@ -17,12 +17,36 @@ use utoipa::ToSchema;
 
 use crate::state::{AppState, CacheMetrics};
 
+/// Commit the binary was built from.
+///
+/// Injected at image build time by `docker/backend/Dockerfile`
+/// (`ARG GIT_SHA` → `ENV GIT_SHA`, fed from `github.sha` by
+/// `.github/workflows/docker-backend-images.yml`) and read here with
+/// `option_env!`, so reporting it costs no runtime git invocation and no extra
+/// dependency. A binary built outside that pipeline reports `"unknown"`.
+const GIT_COMMIT: &str = match option_env!("GIT_SHA") {
+    Some(sha) => sha,
+    None => "unknown",
+};
+
+/// RFC3339 timestamp of the build, same origin as [`GIT_COMMIT`]
+/// (`ARG BUILD_DATE`). Equal to the image's
+/// `org.opencontainers.image.created` label.
+const BUILT_AT: &str = match option_env!("BUILD_DATE") {
+    Some(ts) => ts,
+    None => "unknown",
+};
+
 /// Minimal liveness probe response.
 #[derive(Serialize, ToSchema)]
 pub struct LivenessResponse {
     pub status: &'static str,
     pub service: &'static str,
     pub version: &'static str,
+    /// Commit the image was built from, or `"unknown"` outside the image build.
+    pub commit: &'static str,
+    /// RFC3339 build timestamp, or `"unknown"` outside the image build.
+    pub built_at: &'static str,
 }
 
 /// Liveness probe. No I/O. See module docstring for the cascade story.
@@ -39,6 +63,8 @@ pub async fn liveness() -> (StatusCode, Json<LivenessResponse>) {
             status: "ok",
             service: "reality-server",
             version: env!("CARGO_PKG_VERSION"),
+            commit: GIT_COMMIT,
+            built_at: BUILT_AT,
         }),
     )
 }
@@ -77,6 +103,10 @@ pub struct HealthResponse {
     pub status: HealthStatus,
     /// Service version
     pub version: String,
+    /// Commit the image was built from (`"unknown"` outside the image build).
+    pub commit: String,
+    /// RFC3339 build timestamp (`"unknown"` outside the image build).
+    pub built_at: String,
     /// Service name
     pub service: String,
     /// Region/deployment
@@ -300,6 +330,8 @@ pub async fn readiness(State(state): State<AppState>) -> (StatusCode, Json<Healt
     let response = HealthResponse {
         status: overall_status,
         version: env!("CARGO_PKG_VERSION").to_string(),
+        commit: GIT_COMMIT.to_string(),
+        built_at: BUILT_AT.to_string(),
         service: "reality-server".to_string(),
         region,
         dependencies: Some(dependencies),

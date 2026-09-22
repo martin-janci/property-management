@@ -3,6 +3,17 @@
 # Supports: linux/amd64, linux/arm64
 
 # =============================================================================
+# Version identity (T6) — declared once, before the first FROM, so the same
+# defaults are available to every stage via a bare `ARG` re-declaration.
+# CI passes all three from .github/workflows/docker-backend-images.yml, where
+# APP_VERSION is the release version (never a branch name) and GIT_SHA is
+# github.sha. The defaults only apply to local builds.
+# =============================================================================
+ARG APP_VERSION=0.0.0-dev
+ARG GIT_SHA=unknown
+ARG BUILD_DATE=unknown
+
+# =============================================================================
 # Stage 1: Chef - Prepare recipe for dependency caching
 # =============================================================================
 FROM --platform=$BUILDPLATFORM rust:slim-bookworm AS chef
@@ -102,6 +113,21 @@ COPY frontend/packages/sitemap/src/json/sitemap.json /frontend/packages/sitemap/
 # `docker exec <api-container> ppt-seed ...` post-deploy — so they must
 # ship in the api-server image, not just exist in the build stage.
 ENV SQLX_OFFLINE=true
+
+# Version identity, injected as compile-time environment. Deliberately placed
+# AFTER `cargo chef cook` so a new commit SHA cannot invalidate the dependency
+# cache layer, and read with `option_env!` (see
+# backend/servers/*/src/routes/health.rs) so the binary can report its own
+# commit and build time without a git call at runtime and without a new
+# dependency. Cargo tracks env vars used by `option_env!` in its fingerprint,
+# so a changed SHA does rebuild the crates that read it.
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+ENV APP_VERSION=${APP_VERSION} \
+    GIT_SHA=${GIT_SHA} \
+    BUILD_DATE=${BUILD_DATE}
+
 RUN RUST_TARGET=$(cat /tmp/rust-target) && \
     if [ "$TARGETARCH" = "arm64" ]; then \
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
@@ -156,6 +182,19 @@ USER ppt
 
 EXPOSE 8080
 
+# OCI version identity (T6). Without these, the only labels on the image came
+# from metadata-action, whose `image.version` is the branch name on a branch
+# build — so `imagetools inspect` could not answer "which release is this?".
+# Declared last in the stage so a new commit SHA invalidates nothing but the
+# metadata layer itself.
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/martin-janci/property-management"
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
@@ -171,6 +210,19 @@ RUN chown -R ppt:ppt /app
 USER ppt
 
 EXPOSE 8081
+
+# OCI version identity (T6). Without these, the only labels on the image came
+# from metadata-action, whose `image.version` is the branch name on a branch
+# build — so `imagetools inspect` could not answer "which release is this?".
+# Declared last in the stage so a new commit SHA invalidates nothing but the
+# metadata layer itself.
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/martin-janci/property-management"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8081/health || exit 1
@@ -191,6 +243,19 @@ RUN chown -R ppt:ppt /app
 USER ppt
 
 EXPOSE 8082
+
+# OCI version identity (T6). Without these, the only labels on the image came
+# from metadata-action, whose `image.version` is the branch name on a branch
+# build — so `imagetools inspect` could not answer "which release is this?".
+# Declared last in the stage so a new commit SHA invalidates nothing but the
+# metadata layer itself.
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/martin-janci/property-management"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8082/health || exit 1

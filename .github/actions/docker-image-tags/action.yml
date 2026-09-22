@@ -38,10 +38,58 @@ outputs:
   json:
     description: 'Full metadata-action JSON output.'
     value: ${{ steps.meta.outputs.json }}
+  app_version:
+    description: >-
+      The release version to stamp into the image: the semver of a `v*` tag,
+      and the repo-root `VERSION` file on every other ref. Deliberately never
+      the branch name (unlike `version` above) — a running container reporting
+      `dev` as its version is what made "which version is in prod?"
+      unanswerable. Pass this to every Dockerfile as `--build-arg APP_VERSION`.
+    value: ${{ steps.appver.outputs.app_version }}
+  build_date:
+    description: >-
+      RFC3339 build timestamp. Identical to the `org.opencontainers.image.created`
+      label this action sets, so the label, the Dockerfile `LABEL` and the
+      runtime `built_at` all carry the same instant.
+    value: ${{ steps.appver.outputs.build_date }}
 
 runs:
   using: composite
   steps:
+    # Resolved BEFORE metadata-action, because the same value feeds three
+    # places that must never disagree: the `org.opencontainers.image.version`
+    # label override below, the `--build-arg APP_VERSION` the callers hand to
+    # every Dockerfile, and the `/version` endpoint the frontend images serve.
+    # metadata-action's own `version` output is the *tag* (branch name on a
+    # branch push), which is exactly what must not end up in the label.
+    #
+    # Needs the repository checked out (for `VERSION`) — both callers check out
+    # before invoking this action.
+    - name: Resolve app version
+      id: appver
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [[ "${GITHUB_REF:-}" == refs/tags/v* ]]; then
+          # A release tag is the one authoritative version.
+          app_version="${GITHUB_REF_NAME#v}"
+          origin="git tag ${GITHUB_REF_NAME}"
+        else
+          # Branch / dispatch build: the repo's single source of truth. Not the
+          # branch name.
+          app_version="$(tr -d '[:space:]' < VERSION)"
+          origin='VERSION file'
+        fi
+        if [ -z "$app_version" ]; then
+          echo "::error::could not resolve an app version (ref=${GITHUB_REF:-unset})"
+          exit 1
+        fi
+        {
+          echo "app_version=$app_version"
+          echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        } >> "$GITHUB_OUTPUT"
+        echo "app_version=$app_version (from $origin)"
+
     - name: Docker metadata
       id: meta
       uses: docker/metadata-action@v6
@@ -52,6 +100,15 @@ runs:
         # `type=raw` rule below.
         flavor: |
           latest=false
+        # Label overrides. metadata-action derives
+        # `org.opencontainers.image.version` from its own `version` output, i.e.
+        # the branch name on a branch push — the F-P9 blocker. Pin it (and
+        # `created`, so it matches the BUILD_DATE build arg byte for byte) to the
+        # values resolved above. `revision` (github.sha) and `source` (repo URL)
+        # are already correct out of the box.
+        labels: |
+          org.opencontainers.image.version=${{ steps.appver.outputs.app_version }}
+          org.opencontainers.image.created=${{ steps.appver.outputs.build_date }}
         tags: |
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}

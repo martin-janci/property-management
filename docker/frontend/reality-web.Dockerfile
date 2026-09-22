@@ -2,6 +2,17 @@
 # Supports standalone output mode for optimized production deployment
 
 # =============================================================================
+# Version identity (T6) — declared before the first FROM so every stage can
+# pick the value up with a bare `ARG` re-declaration. CI passes all three from
+# .github/workflows/docker-frontend-images.yml, where APP_VERSION is the
+# release version (never a branch name) and GIT_SHA is github.sha. The
+# defaults apply to local builds only.
+# =============================================================================
+ARG APP_VERSION=0.0.0-dev
+ARG GIT_SHA=unknown
+ARG BUILD_DATE=unknown
+
+# =============================================================================
 # Stage 1: Dependencies
 # =============================================================================
 FROM node:20-alpine AS deps
@@ -81,6 +92,15 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Bake the version identity into the bundle (NEXT_PUBLIC_* is inlined at build
+# time) — the same values the image labels carry and `/api/version` serves.
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+ENV NEXT_PUBLIC_APP_VERSION=${APP_VERSION}
+ENV NEXT_PUBLIC_GIT_SHA=${GIT_SHA}
+ENV NEXT_PUBLIC_BUILT_AT=${BUILD_DATE}
+
 RUN pnpm --filter @ppt/reality-web build
 
 # =============================================================================
@@ -100,6 +120,20 @@ COPY --from=builder --chown=nextjs:nextjs /app/apps/reality-web/public* ./apps/r
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+# OCI version identity (T6). reality-web has no nginx in front of it, so the
+# runtime surface is the Next route handler at /api/version, which reads these
+# env vars (see frontend/apps/reality-web/src/app/api/version/route.ts).
+ARG APP_VERSION
+ARG GIT_SHA
+ARG BUILD_DATE
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/martin-janci/property-management"
+ENV APP_VERSION=${APP_VERSION} \
+    GIT_SHA=${GIT_SHA} \
+    BUILD_DATE=${BUILD_DATE}
 
 USER nextjs
 EXPOSE 3000

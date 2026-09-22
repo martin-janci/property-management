@@ -88,16 +88,39 @@ jobs:
           # per-repo limit and caused evictions.
           cache-from: type=gha,scope=backend-shared
           cache-to: type=gha,mode=max,scope=backend-shared
+          # Version identity (T6). These three feed the OCI labels in
+          # docker/backend/Dockerfile and, via `option_env!`, the `commit` /
+          # `built_at` fields of each server's /health payload — so a running
+          # container and its image agree, with no git call at runtime.
           build-args: |
             BUILDPLATFORM=linux/amd64
+            APP_VERSION=${{ steps.meta.outputs.app_version }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.meta.outputs.build_date }}
 
       - name: Verify pushed manifest
         if: env.PUSH_IMAGES == 'true'
         env:
           IMAGE_REF: ${{ env.IMAGE_PREFIX }}/ppt-${{ matrix.target }}:${{ steps.meta.outputs.version }}
+          EXPECTED_VERSION: ${{ steps.meta.outputs.app_version }}
         run: |
           set -euo pipefail
           # No `|| true` and no `2>/dev/null`: a tag we just pushed that does
           # not resolve is a build failure. Silencing it is what let release.yml
           # poll forever for images that were never published.
           docker buildx imagetools inspect "$IMAGE_REF"
+
+          # And the image must be able to say which version it is. The label is
+          # the only thing a deployer can read without starting the container,
+          # so an image whose `org.opencontainers.image.version` is missing — or
+          # is a branch name instead of the release version — is a broken image,
+          # not a cosmetic problem. See F-P9.
+          got="$(docker buildx imagetools inspect "$IMAGE_REF" --format '{{json .Image}}' \
+            | jq -r '[ .. | objects | .config? | objects
+                       | (.Labels // .labels) | objects
+                       | ."org.opencontainers.image.version"? // empty ] | first // ""')"
+          if [ "$got" != "$EXPECTED_VERSION" ]; then
+            echo "::error::$IMAGE_REF has org.opencontainers.image.version='$got', expected '$EXPECTED_VERSION'"
+            exit 1
+          fi
+          echo "$IMAGE_REF org.opencontainers.image.version=$got"
