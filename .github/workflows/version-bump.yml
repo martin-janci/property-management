@@ -1,3 +1,72 @@
+# Version Bump
+#
+# ## Version bumping
+#
+# **Who bumps.** This workflow, and only this workflow. Every push to `dev`
+# that touches anything outside `.research/` bumps the PATCH digit with
+# `scripts/bump-version.sh patch`, which rewrites `VERSION` and then lets
+# `scripts/update-version.sh` propagate it to every carrier (backend
+# `Cargo.toml`/`Cargo.lock`, deploy-server's own pair, the `package.json`
+# files, `mobile-native/gradle.properties`, `docs/api/typespec/main.tsp`).
+# Do not bump `VERSION` by hand in a feature PR.
+#
+# **How it lands.** `dev` is protected and carries required status checks, so
+# a direct push from CI can never satisfy them — it is rejected with
+# `remote: error: GH006: Protected branch update failed for refs/heads/dev`.
+# That is what froze `VERSION` at 0.3.218 from 2026-06-16 until this workflow
+# was rewritten. So the job now pushes a `chore/version-X.Y.Z` branch, opens a
+# `chore(version): bump to X.Y.Z` PR against `dev` and arms auto-merge
+# (squash). The PR runs the same required checks as any other PR and merges
+# itself the moment they are green. The squash subject keeps the
+# `chore(version):` prefix, which is what the job-level `if:` below uses as the
+# loop guard so the merge does not re-trigger another bump.
+#
+# **Which secret is required.** `VERSION_BUMP_TOKEN` — a PAT (or GitHub App
+# installation token) with `contents: write` + `pull-requests: write` on this
+# repo, belonging to an identity that is *not* a CODEOWNER of the files a bump
+# touches (see **Approval** below).
+#
+# A PR opened with the default `secrets.GITHUB_TOKEN` does **not** trigger
+# `pull_request` workflow runs (GitHub's workflow-recursion guard). All four
+# checks `dev` requires — `security-gate-conclusion`, `deny-toml-ban-gate`,
+# `Workflow scripts must be executable (100755)`, `frontend` — are
+# `pull_request`-triggered, so with `GITHUB_TOKEN` they would never start and
+# auto-merge would wait forever. Hence the separate identity for the branch
+# push, the PR and the auto-merge call, and hence this workflow **fails loudly**
+# when `VERSION_BUMP_TOKEN` is missing rather than falling back to
+# `GITHUB_TOKEN`: that fallback cannot land, and a silently stuck PR is exactly
+# what froze the version for three months.
+#
+# Existing secrets were considered for the PR-opening step and rejected:
+#   * `GITHUB_TOKEN` — cannot trigger the required `pull_request` checks (above).
+#   * `GH_ADMIN_TOKEN` — the admin PAT `branch-protection-setup.yml` uses; far
+#     more privilege than opening a chore PR needs.
+#   * `AUTO_APPROVE_TOKEN` — reused *only* to approve the PR, which is its
+#     documented purpose in `approve-pr.yml`; it must not also open the PR,
+#     because GitHub forbids approving your own PR.
+#
+# **Approval.** `dev` also requires a PR review, and `.github/CODEOWNERS` owns
+# `backend/Cargo.toml` and `backend/Cargo.lock`, which every bump rewrites — so
+# the bump PR needs a code-owner approval. The workflow approves it on a
+# best-effort basis with `AUTO_APPROVE_TOKEN`; if that secret is absent, lacks
+# permission, or belongs to the same user that opened the PR, the run still
+# succeeds and prints a warning, and the PR waits for a human review.
+#
+# **When it fails.**
+#   * `VERSION_BUMP_TOKEN secret is not set` → mint the token and
+#     `gh secret set VERSION_BUMP_TOKEN`. Nothing bumps until it exists.
+#   * `could not enable auto-merge` → check that *Allow auto-merge* and *Allow
+#     squash merging* are on in Settings → General, then
+#     `gh pr merge <n> --squash --auto`.
+#   * the PR exists but never merges → a required check is red or the review is
+#     missing. Look at the PR, not at this workflow: fix the check (on a
+#     version-only diff that usually means a carrier was left unstaged — see the
+#     staging guard below) or approve it. Re-running this workflow only
+#     re-pushes the same branch.
+#   * a bump PR is still open when the next push to `dev` arrives → the next run
+#     recomputes the same next version, reuses the same `chore/version-X.Y.Z`
+#     branch and PR and re-arms auto-merge, so bumps coalesce instead of racing.
+
 name: Version Bump
 
 on:
@@ -14,19 +83,25 @@ jobs:
   bump-version:
     name: Bump Patch Version
     runs-on: ubuntu-latest
-    # Skip if the commit was made by this workflow (avoid infinite loop)
+    # Skip if the commit was made by this workflow (avoid infinite loop).
+    # The bump lands as a squash merge titled "chore(version): bump to X.Y.Z
+    # (#N)", so the prefix test still matches.
     if: "!startsWith(github.event.head_commit.message, 'chore(version):')"
 
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
         with:
-          # GITHUB_TOKEN push does not re-trigger push-based workflows (GitHub
-          # prevents workflow recursion). That is intentional here — the version
-          # bump commit does not need to kick off CI again.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Only read here: the history for the `.research/`-only detection
+          # below. The write path (branch push, PR, auto-merge) uses
+          # VERSION_BUMP_TOKEN explicitly — see the header. The `||` fallback
+          # exists so a missing secret surfaces as the actionable error from the
+          # "Require VERSION_BUMP_TOKEN" step instead of a checkout auth error;
+          # no write ever runs on it, because that step aborts the job first.
+          token: ${{ secrets.VERSION_BUMP_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       # Defence-in-depth for finding subagent-race-on-dev-push: a push that
@@ -54,6 +129,40 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"; echo ".research/-only push — skipping version bump"
           fi
 
+      # Fail loudly and early: without this identity the bump PR cannot get its
+      # required checks, so it could never land. Better a red run with a fix-it
+      # message than a PR that hangs on auto-merge forever.
+      - name: Require VERSION_BUMP_TOKEN
+        if: steps.detect.outputs.skip != 'true'
+        env:
+          VERSION_BUMP_TOKEN: ${{ secrets.VERSION_BUMP_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${VERSION_BUMP_TOKEN:-}" ]; then
+            echo "VERSION_BUMP_TOKEN is set."
+            exit 0
+          fi
+          cat >&2 <<'MSG'
+          ERROR: VERSION_BUMP_TOKEN secret is not set — the version cannot be bumped.
+
+          Why this is fatal instead of falling back to GITHUB_TOKEN:
+            * a direct push to protected `dev` is rejected (GH006), so the bump
+              has to land as a PR with auto-merge;
+            * a PR opened with GITHUB_TOKEN does not trigger `pull_request`
+              runs, so `dev`'s required checks would never start and auto-merge
+              would wait forever.
+
+          Fix:
+            1. create a PAT (classic `repo`, or fine-grained with
+               contents: write + pull-requests: write on this repo) or a GitHub
+               App installation token, owned by an identity that is NOT a
+               CODEOWNER of backend/Cargo.toml (see .github/CODEOWNERS);
+            2. gh secret set VERSION_BUMP_TOKEN --body "<token>"
+            3. re-run this workflow (or push to dev again).
+          MSG
+          echo "::error::VERSION_BUMP_TOKEN is not set — see this step's log and the header of .github/workflows/version-bump.yml."
+          exit 1
+
       - name: Configure git
         if: steps.detect.outputs.skip != 'true'
         run: |
@@ -66,43 +175,128 @@ jobs:
         with:
           node-version: '20'
 
-      # Recompute the bump against the current tip of dev, then push, retrying
-      # on a non-fast-forward rejection. cancel-in-progress: false queues runs
-      # rather than dropping them, so by the time a queued run reaches the front
-      # of the queue `dev` has advanced — at minimum by the preceding run's own
-      # chore(version:) commit — and this run's checkout is stale. A bare push
-      # would then be non-fast-forward and the protected-branch hook declines it
-      # (GH006). Re-fetching and RECOMPUTING the bump (not replaying a stale
-      # commit) against fresh `dev` each attempt keeps the push fast-forward and
-      # avoids a double-bump.
-      - name: Commit and push version bump
+      # Recompute the bump against the current tip of dev, then land it as an
+      # auto-merging PR. cancel-in-progress: false queues runs rather than
+      # dropping them, so by the time a queued run reaches the front of the
+      # queue `dev` has advanced and this run's checkout is stale — hence the
+      # re-fetch and the RECOMPUTE (not a replay of a stale commit), which also
+      # avoids a double bump.
+      - name: Bump version and open an auto-merging PR
+        id: bump
         if: steps.detect.outputs.skip != 'true'
+        env:
+          # gh and the branch push both act as the dedicated bump identity, so
+          # the PR triggers `dev`'s required `pull_request` checks.
+          GH_TOKEN: ${{ secrets.VERSION_BUMP_TOKEN }}
+          VERSION_BUMP_TOKEN: ${{ secrets.VERSION_BUMP_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          for attempt in 1 2 3; do
-            git fetch origin dev
-            git reset --hard origin/dev
+          set -euo pipefail
 
-            ./scripts/bump-version.sh patch
+          git fetch origin dev
+          git reset --hard origin/dev
 
-            VERSION=$(cat VERSION | tr -d '[:space:]')
-            git add VERSION
-            git add backend/Cargo.toml 2>/dev/null || true
-            git add frontend/package.json 2>/dev/null || true
-            git add "frontend/apps/*/package.json" 2>/dev/null || true
-            git add "frontend/packages/*/package.json" 2>/dev/null || true
-            git add mobile-native/gradle.properties 2>/dev/null || true
-            git add docs/api/typespec/main.tsp 2>/dev/null || true
-            if git diff --cached --quiet; then
-              echo "No version files changed"
-              exit 0
-            fi
+          ./scripts/bump-version.sh patch
 
-            git commit -m "chore(version): bump to $VERSION"
-            if git push origin HEAD:dev; then
-              echo "Version bumped to $VERSION and pushed to dev"
-              exit 0
-            fi
-            echo "push rejected (attempt $attempt) — dev moved, retrying"
-          done
-          echo "ERROR: failed to push version bump after 3 attempts" >&2
-          exit 1
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          BRANCH="chore/version-$VERSION"
+
+          # Stage every carrier scripts/update-version.sh writes. T2 of the
+          # release-process plan replaces this hand-kept list with
+          # `update-version.sh --list` + `git add --pathspec-from-file=-`; until
+          # then the guard below refuses to commit a partial bump.
+          git add VERSION
+          git add package.json 2>/dev/null || true
+          git add backend/Cargo.toml 2>/dev/null || true
+          git add backend/Cargo.lock 2>/dev/null || true
+          git add backend/servers/deploy-server/Cargo.toml 2>/dev/null || true
+          git add backend/servers/deploy-server/Cargo.lock 2>/dev/null || true
+          git add frontend/package.json 2>/dev/null || true
+          git add "frontend/apps/*/package.json" 2>/dev/null || true
+          git add "frontend/packages/*/package.json" 2>/dev/null || true
+          git add mobile-native/gradle.properties 2>/dev/null || true
+          git add docs/api/typespec/main.tsp 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "No version files changed"
+            exit 0
+          fi
+
+          # The tree was pristine at `git reset --hard origin/dev`, so anything
+          # still unstaged was written by the bump and is missing from the list
+          # above. Committing without it produces a PR whose required checks go
+          # red (a stale backend/Cargo.lock alone breaks `cargo build --locked`)
+          # and auto-merge would never land it — so stop here instead.
+          LEFTOVER="$(git status --porcelain | grep -vE '^[MARDC] ' || true)"
+          if [ -n "$LEFTOVER" ]; then
+            echo "$LEFTOVER" | sed 's/^/  unstaged: /' >&2
+            echo "::error::the bump wrote files this workflow does not stage — add them to the staging list in .github/workflows/version-bump.yml (or stop writing them in scripts/update-version.sh)."
+            exit 1
+          fi
+
+          git commit -m "chore(version): bump to $VERSION"
+
+          # Force-push: the branch name carries the version and is owned by this
+          # workflow, so the only thing it can overwrite is an earlier attempt
+          # at the very same bump. The URL carries a masked secret.
+          git push --force \
+            "https://x-access-token:${VERSION_BUMP_TOKEN}@github.com/${REPO}.git" \
+            "HEAD:refs/heads/$BRANCH"
+
+          PR="$(gh pr list --repo "$REPO" --head "$BRANCH" --base dev --state open \
+                  --json number --jq '.[0].number // empty')"
+
+          if [ -z "$PR" ]; then
+            BODY_FILE="$(mktemp)"
+            cat > "$BODY_FILE" <<EOF
+          Automated patch bump of \`VERSION\` to \`$VERSION\`, opened by
+          \`.github/workflows/version-bump.yml\`.
+
+          \`dev\` is protected, so CI cannot push the bump directly (GH006) —
+          it lands as this PR with auto-merge (squash) armed. It merges itself
+          as soon as the required checks are green and the review is in.
+
+          Version-only change: please do not push anything else onto this branch.
+          EOF
+            URL="$(gh pr create --repo "$REPO" --base dev --head "$BRANCH" \
+              --title "chore(version): bump to $VERSION" \
+              --body-file "$BODY_FILE" | tail -n1)"
+            PR="${URL##*/}"
+            echo "opened PR #$PR ($URL)"
+          else
+            echo "reusing open PR #$PR for $BRANCH"
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "branch=$BRANCH"
+            echo "pr=$PR"
+          } >> "$GITHUB_OUTPUT"
+
+          if ! gh pr merge "$PR" --repo "$REPO" --squash --auto --delete-branch; then
+            echo "::error::could not enable auto-merge on PR #$PR — verify that 'Allow auto-merge' and 'Allow squash merging' are enabled in Settings → General, then run: gh pr merge $PR --squash --auto"
+            exit 1
+          fi
+          echo "auto-merge (squash) armed on PR #$PR — version $VERSION"
+
+      # Best effort only: dev requires a review and CODEOWNERS owns
+      # backend/Cargo.{toml,lock}, which the bump rewrites. A failure here
+      # leaves the PR waiting for a human instead of failing the run.
+      - name: Approve the bump PR (best effort)
+        if: steps.detect.outputs.skip != 'true' && steps.bump.outputs.pr != ''
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_APPROVE_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ steps.bump.outputs.pr }}
+        run: |
+          set -uo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::AUTO_APPROVE_TOKEN is not set — PR #$PR needs a code-owner approval by hand before auto-merge can land it."
+            exit 0
+          fi
+          if gh pr review "$PR" --repo "$REPO" --approve \
+               --body "Approved automatically: version-only bump opened by the Version Bump workflow."; then
+            echo "approved PR #$PR"
+          else
+            echo "::warning::could not approve PR #$PR with AUTO_APPROVE_TOKEN (it may belong to the same identity that opened the PR, or lack pull-requests: write). Approve it by hand — auto-merge is already armed."
+          fi
