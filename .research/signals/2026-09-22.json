@@ -1,0 +1,198 @@
+{
+  "generated": "2026-09-22T04:33:55Z",
+  "run_kind": "incremental",
+  "since_iso": "2026-09-20T18:38:00Z",
+  "lag_hours": 33,
+  "phases": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "skipped (dispatcher covered reality-web/ppt-web-core/api-core segments 2026-09-18..2026-09-21; no new merged-PR churn to align a fresh routine review against)",
+    "phase_1_6_pm": "skipped (dispatcher hourly cycle covers PM synthesis; no application-code merges since 2026-09-20 to synthesize new deltas from)",
+    "phase_2_decide": "ok",
+    "phase_3_promote": "ok (no candidate met readiness gate)",
+    "phase_3_5_adversarial": "n/a (no promotions this run)",
+    "phase_4_write_artifacts": "ok",
+    "phase_5_autofix": "no candidate",
+    "phase_6_stage_gate_commit": "pending"
+  },
+  "observation_summary": {
+    "merged_prs_since_cursor": 0,
+    "open_prs_touched": 3,
+    "closed_not_merged": 0,
+    "new_issues": 0,
+    "commits_on_dev": 18,
+    "notes": "Only dispatcher chore commits landed on dev (research/planning branch activity landed via research-land.yml). 3 open drafts (#2967 #2968 #2969) are dispatcher-owned in-flight fixes for the reality-web silent-fail rows already in backlog.json."
+  },
+  "signals": [
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-09-21 (dispatcher Tier-1d, adopted by routine 2026-09-22 after direct-diff verification)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/format.ts",
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx"
+      ],
+      "evidence": [
+        "format.ts:48-59 formatPrice() has no try/catch around new Intl.NumberFormat({style:'currency', currency}).format().",
+        "ListingCard.tsx:105 overrides safe currency:'EUR' default with raw listing.currency — public search grid crashes on one bad listing.",
+        "ComparisonView.tsx and AgencyListings.tsx have identical unguarded currency style calls.",
+        "Reference fix already in-repo at app/[locale]/realtor/listings/page.tsx:16-22 (try/catch with `${value} ${currency}` fallback).",
+        "confidence upgraded medium → high on 2026-09-22 after routine directly read format.ts:48-59 and ListingCard.tsx:100-115 — both verified in-tree exactly as described."
+      ],
+      "adopted_from_signal_file": ".research/signals/2026-09-21-reality-web-tier1d.json",
+      "cloud_landable": true
+    },
+    {
+      "id": "code-review-reality-web-listing-sections-currency-ssr-500",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-09-21 (dispatcher Tier-1d, adopted by routine 2026-09-22 after direct-diff verification)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx"
+      ],
+      "evidence": [
+        "ListingHeader.tsx:6-16 guards currency only via `typeof currency !== 'string' || currency.length === 0` — non-empty malformed codes still throw during SSR.",
+        "AdditionalInfo.tsx:6-16 uses the identical guard shape.",
+        "Section renderers are on the public SSR/ISR listing detail page — throw → HTTP 500 on SEO-indexed URL.",
+        "getListing() parseListingDetail does not normalize/validate currency against ISO-4217 — bad code reaches the renderer untouched.",
+        "confidence upgraded medium → high on 2026-09-22 after routine directly read ListingHeader.tsx:1-25 — verified in-tree exactly as described."
+      ],
+      "adopted_from_signal_file": ".research/signals/2026-09-21-reality-web-tier1d.json",
+      "cloud_landable": true
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — neither of today's two adopted signals is on the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise-lockfile-drift, stalled-review); no in-window merged PR contributed one either. Score-2 code-review-finding rows are manual-implementer work by design.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-22.md && head -1 matches # 2026-09-22",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signal reemit with score_delta != 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [items[]|select(.score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no new plans this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A -- .research/plans/",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep across staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists no Phases-that-failed",
+      "observed": "brief: 'Phases that failed: none.'",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan still resolves in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= count at HEAD",
+      "observed": "9 >= 9",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency + kill switch",
+      "observed": "auto_fix_actions=[]; no history conflicts",
+      "expected": "all sub-checks pass"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — no-op",
+      "observed": "pm_cursor.next_index unchanged (5==5)",
+      "expected": "no-op when Phase 1.6 did not run"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token pattern grep on staged diff (added lines)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

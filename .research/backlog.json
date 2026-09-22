@@ -10732,6 +10732,58 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-currency-code-rangeerror-crash",
+      "title": "reality-web ListingCard / ComparisonView / AgencyListings pass raw listing.currency into Intl.NumberFormat with no try/catch — a malformed ISO-4217 code crashes the React subtree",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-09-21 (dispatcher Tier-1d adopted 2026-09-22)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/format.ts:48-59 formatPrice() has no try/catch around new Intl.NumberFormat({style:'currency', currency}).format() — a bad currency code throws RangeError.",
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx:105 overrides the safe currency:'EUR' default with the raw listing.currency; public search-results grid subtree crashes on one bad listing.",
+        "ComparisonView.tsx:37-41 and AgencyListings.tsx:372-377 both call Intl.NumberFormat currency style with unguarded currency (only ?? 'EUR' guards null, not malformed non-empty).",
+        "Reference for correct fix already in-repo: app/[locale]/realtor/listings/page.tsx:16-22 wraps the identical call in try/catch with `${value} ${currency}` fallback — cloud-landable single-package fix.",
+        "confidence upgraded medium → high on 2026-09-22 after direct file read (routine): format.ts lines 48-59 and ListingCard.tsx line 105 both verified in-tree exactly as described."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/format.ts",
+        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx",
+        "frontend/apps/reality-web/src/components/comparison/ComparisonView.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listing-sections-currency-ssr-500",
+      "title": "reality-web ListingHeader / AdditionalInfo currency guards only check length===0 — a malformed non-empty code (US, EURO, €, 12) SSR-500s the public listing page",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-09-21 (dispatcher Tier-1d adopted 2026-09-22)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx:6-16 guards currency only via `typeof currency !== 'string' || currency.length === 0` — non-empty but malformed codes (US, EURO, €, digits) still make Intl.NumberFormat throw RangeError during SSR.",
+        "AdditionalInfo.tsx:6-16 uses the identical guard shape — same false-safety on the public listing detail page (app/[locale]/listings/[slug]/page.tsx SSR/ISR).",
+        "getListing() parseListingDetail validates response shape but does NOT normalize/validate currency against ISO-4217 — a bad code reaches these renderers untouched. Server render throw → HTTP 500 on an SEO-indexed public URL (worse than the client-side crash in the sibling finding).",
+        "Fix: replace length===0 with try/catch mirroring app/[locale]/realtor/listings/page.tsx:16-22 or strict /^[A-Za-z]{3}$/ validation. Cloud-landable single-package reality-web edit.",
+        "confidence upgraded medium → high on 2026-09-22 after direct file read (routine): ListingHeader.tsx lines 6-16 verified in-tree exactly as described."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
     }
   ]
 }
