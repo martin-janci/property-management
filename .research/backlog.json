@@ -10732,6 +10732,42 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "title": "stalled review: PR #2744 fix(dispatcher) un-wedge oversize-archive push (40d open, draft, needs-human-review; approve blocked by self-PR)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "PR #2744 opened 2026-08-13 by martin-janci; last update 2026-08-13 (40d idle, 40d open). Draft with label needs-human-review. Dispatcher-authored fix; verdict=approve blocked by self-PR rule (bot==author, no second approver). Blocks the entire MCP-only push path (#2743) until a human approves+merges."
+      ],
+      "files": [],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "title": "stalled review: PR #2902 screen-map-drift-pr-2894-reality (22d open, draft, verdict=changes, contaminated branch reverts .research/management)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2902"
+      ],
+      "evidence": [
+        "PR #2902 opened 2026-08-31 by martin-janci; last update 2026-09-18 (22d open). Draft with label needs-human-review. Dispatcher reviewer verdict=changes; branch reverts .research/management state ledger and is stale-behind-dev. Reviewer flagged operator close+re-cut recommended; NOT respawned (rebase_attempts=1) to avoid re-contamination."
+      ],
+      "files": [],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
     }
   ]
 }

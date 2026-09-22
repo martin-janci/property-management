@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-09-20 18:38 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-22 03:04 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -39,6 +39,9 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure | `frontend/apps/reality-web/src/components/import/CrmConnection.tsx (+1)` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
+| 2 | bug | FeedCard pause-toggle and delete actions swallow mutation errors — a failed feed removal looks identical to success | `frontend/apps/reality-web/src/components/import/FeedImport.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
+| 2 | bug | SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained | `frontend/apps/reality-web/src/components/import/SyncSchedule.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 2 | bug | api-server push_fanout: FCM HTTP v1 uses a static FCM_OAUTH_TOKEN loaded once at startup — Google's ~1h token TTL breaks Android push after first hour | `backend/servers/api-server/src/services/push_fanout.rs` | PR #2914 (+1) | 2026-09-01 | done | — |
 | 2 | perf | api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout) | 2026-09-01 | dropped | — |
 | 2 | bug | ppt-web-ui EmergencyContactDirectoryPage: 5 error handlers show raw `err.message` (English backend copy) — the t() i18n fallback is dead code on the common failure path | `frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts) | 2026-09-01 | done | — |
@@ -174,8 +177,10 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | dx | stalled review: PR #2744 fix(dispatcher) un-wedge oversize-archive push (40d open, draft, needs-human-review; approve blocked by self-PR) | — | PR #2744 | 2026-09-22 | needs-human-judgement | — |
+| 1 | dx | stalled review: PR #2902 screen-map-drift-pr-2894-reality (22d open, draft, verdict=changes, contaminated branch reverts .research/management) | — | PR #2902 | 2026-09-22 | needs-human-judgement | — |
 | 1 | dx | stalled review: PR #2558 feat(acc) UC-ACC-05.9 invoice PDF render endpoint (15d open, 13d idle) | — | PR #2558 | 2026-09-20 | done | — |
-| 1 | refactor | backend api-server routes/integrations/webhook.rs — repeated-churn (runs_seen=3, 2799 lines this window) | `backend/servers/api-server/src/routes/integrations/webhook.rs` | churn 2026-09-20 (routine catch-up 19d) | 2026-09-20 | open | — |
+| 1 | refactor | backend api-server routes/integrations/webhook.rs — repeated-churn (runs_seen=3, 2799 lines this window) | `backend/servers/api-server/src/routes/integrations/webhook.rs` | churn 2026-09-20 (routine catch-up 19d) | 2026-09-20 | dropped | — |
 | 1 | bug | ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch | `frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx` | rotating-expert-review [ppt-web-ui] | 2026-09-06 | done | — |
 | 1 | bug | api-server push_fanout: FCM legacy fallback (`https://fcm.googleapis.com/fcm/send`) is Google-decommissioned dead code — send_fcm_legacy can never deliver in production | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout) | 2026-09-01 | done | — |
 | 1 | bug | ppt-web-ui meters feature: toLocaleDateString()/toLocaleString() called with NO locale argument across 8 sites — dates follow browser locale, not the user's in-app language | `frontend/apps/ppt-web/src/features/meters/components/MeterCard.tsx (+4)` | PR #2917 (+1) | 2026-09-01 | done | — |

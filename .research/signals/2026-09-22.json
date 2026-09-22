@@ -1,0 +1,162 @@
+{
+  "date": "2026-09-22",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score>=3 + allowlist match) this run",
+  "signals": [
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "PR #2744 (fix(dispatcher) un-wedge oversize-archive push) opened 2026-08-13 by martin-janci, still draft, labelled needs-human-review; last update 2026-08-13 (40d idle). Dispatcher-authored fix; reviewer verdict=approve is blocked by self-PR rule (bot==author, no second approver), so the PR cannot merge without a human. This blocks the entire MCP-only push path (#2743)."
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "type": "stalled-review",
+      "source": "PR #2902",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "PR #2902 (screen-map-drift-pr-2894-reality) opened 2026-08-31 by martin-janci, still draft, labelled needs-human-review; last update 2026-09-18 (22d open, 4d idle). Dispatcher reviewer verdict=changes: branch reverts .research/management state ledger and is stale-behind-dev; NOT respawned (rebase_attempts=1) per dispatcher guard. Needs operator close+re-cut to unblock."
+    },
+    {
+      "id": "dep-update-noise-batch-2026-09-22",
+      "type": "dep-update-noise",
+      "source": "gh pr list open+closed since 2026-09-08",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "5 dependabot PRs opened in the window and still open (#2957 tower-http, #2960 expo-secure-store, #2961 kotlin group, #2962 compose-bom, #2963 gradle-minor-patch, #2964 cargo-minor-patch, #2965 npm-minor-patch); 3 dependabot PRs closed unmerged as superseded (#2939 cargo group, #2958 gradle group, #2959 npm group). No lockfile-drift sub-shape — none of the merged base state changed to warrant an auto-fix consumer-manifest bump. Logged for the brief; no backlog impact."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 | grep '^# 2026-09-22$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true (last_pr_seen 2956→2969, last_commit_sha bumped, seen_signals +2, stats.runs 79→80)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true — 421 items, all unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-scored",
+      "observed": "true — stalled-review-pr-2744 / -2902 are net-new ids; dep-update-noise-batch id is net-new; no cumulative-type re-emit this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true (max is 6)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items updated_at <=2026-09-08 decayed or dropped",
+      "observed": "0 eligible — all 3 pre-existing open items updated 2026-09-21; both ready items updated 2026-09-20 and 2026-08-25 respectively (ready, not open, so decay doesn't apply)",
+      "expected": "all decay/drop"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial-pass annotation in brief",
+      "observed": "no new plans this run",
+      "expected": "vacuous pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all 15 sections + capability + mode + files exist",
+      "observed": "0 new plans this run",
+      "expected": "vacuous pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty (Phase 1.5/1.6 skipped explicitly)",
+      "observed": "skip declared in brief; review_cursor / pm_cursor / coverage_cursor unchanged from HEAD",
+      "expected": "cursors match HEAD"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still resolvable",
+      "observed": "all HEAD plans still present (none added or removed this run)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive/ count >= HEAD",
+      "observed": "8 >= 8 (no changes)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "auto_fix_actions=[]; no auto-fix this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped: no-op)",
+      "observed": "management artifacts unchanged from HEAD; pm_cursor / coverage_cursor unchanged (Phase 1.6 skipped)",
+      "expected": "no-op or all conditions"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
