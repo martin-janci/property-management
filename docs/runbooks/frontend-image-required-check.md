@@ -80,23 +80,43 @@ Do **not** require the matrix jobs (`build / build (ppt-web)` …): their contex
 names change with the matrix, and a required context that stops being produced
 blocks every PR.
 
-`trigger-deploy` is deliberately *not* a dependency of the aggregator. It is
-`continue-on-error` by design (issue #950: an OIDC 403 while onyx's `auth.yaml`
-is being edited must not fail an image build that already pushed), and an infra
-hiccup must not make a PR red.
+`trigger-deploy` is deliberately *not* a dependency of the aggregator, so an
+infra hiccup on a push cannot make a PR red. Note that the job is no longer
+blanket-`continue-on-error` (that also hid a deploy the deployer *refused*):
+only the OIDC step is tolerated, and the POST step warns on a transport error,
+a 5xx or a 401/403 — issue #950's case — while failing the job on any other
+4xx.
 
-## What was actually wrong with the image build
+## What was wrong with the image build
+
+**Read this heading literally: these are defects the files prove, not a
+diagnosed root cause.** The CI logs of the 20 failed runs have still not been
+read (the GitHub API was rate-limited while this landed) and the clone is
+shallow (1506 commits, history does not reach 2026-06-16), so the breaking
+commit was never bisected. Defects 2–4 are each sufficient to produce a broken
+or non-reproducible image; which one actually reddened those runs is unproven.
+Defect 1 is a correctness fix, **not** a cause — see its own caveat.
 
 Fixed in `docker/frontend/{ppt-web,admin-web,reality-web}.Dockerfile`:
 
-1. **Base image was `node:20-alpine` while the workspace toolchain had moved
-   past Node 20.** `frontend/package.json` declares
-   `engines.node: ^20.19.0 || >=22.12.0`, but `frontend/pnpm-lock.yaml` now
-   pins packages that exclude 20 outright — notably
-   `rollup-plugin-visualizer@7.1.1` (`engines: {node: '>=22'}`), which
+1. **Base image was `node:20-alpine` while the declared `engines` ranges had
+   moved past Node 20.** `frontend/package.json` declares
+   `engines.node: ^20.19.0 || >=22.12.0`, and `frontend/pnpm-lock.yaml` pins
+   packages that exclude 20 outright — notably
+   `rollup-plugin-visualizer@7.1.1` (`engines: {node: '>=22'}`, confirmed at
+   `frontend/pnpm-lock.yaml:9924`), which
    `frontend/apps/ppt-web/vite.config.ts` imports on line 3 and therefore loads
    on every `vite build`, plus `commander@15.0.0` (`>=22.12.0`). Now
    `node:22-alpine`, which satisfies every `engines` range in the lockfile.
+
+   **This was almost certainly NOT the cause of the red runs**, and the earlier
+   version of this runbook overstated it. No `.npmrc` in this repo sets
+   `engine-strict`, so pnpm only *warns* on a violated range; and
+   `frontend.yml:171-176` builds ppt-web on `node-version: '20'` with pnpm 8
+   against this exact lockfile, as a check that is already required on `dev`.
+   Node 20 demonstrably builds ppt-web in CI. The change is still right — the
+   image should run the Node the workspace asks for — but it buys correctness,
+   not a fix.
 2. **The pnpm pin was inert and disagreed with everything else.** The
    Dockerfiles ran `corepack prepare pnpm@9.15.0 --activate`, but with corepack
    enabled the `packageManager` field of the package.json in the working
@@ -143,13 +163,12 @@ step and check, in this order:
    its jobs and so violates the same `engines` constraint as the old image did.
    Aligning it to 22 is a follow-up, deliberately out of T7's scope.
 
-## Mixed-revision deploys are now refused
+## Mixed-revision deploys
 
-Separately from CI, the deployer no longer accepts a release whose services
-disagree about which commit they were built from — the situation that shipped
-for three months here. `BlueGreenDeployer::deploy` reads
-`org.opencontainers.image.revision` (stamped into every image by T6) off each
-pulled image and refuses with `400` before anything is torn down:
+Separately from CI, the deployer now compares the commit every service image
+was built from — the thing that went unnoticed for three months here.
+`BlueGreenDeployer::deploy` reads `org.opencontainers.image.revision` (stamped
+into every image by T6) off each pulled image before anything is torn down:
 
 ```
 mixed-revision deploy refused: the service images do not share one
@@ -158,16 +177,36 @@ sep2026: api-server, reality-server). Every service must come from the same
 commit; rebuild the lagging image(s) and retry.
 ```
 
-Policy, with the reasoning and unit tests in
-`backend/servers/deploy-server/src/domain/release.rs`:
+What a disagreement COSTS depends on how the deploy was addressed
+(`BlueGreenSpec::require_single_revision`). A **version**-addressed deploy can
+promise one commit; a **mutable-tag** deploy cannot, so there the same finding
+is a warning:
 
-| images | outcome |
-|---|---|
-| all share one revision | deploy proceeds, commit logged |
-| revisions disagree | **refused (400)**, every divergent service named |
-| some labelled, some not | **refused (400)** — an unlabelled image cannot be shown to be the same build |
-| none labelled | allowed, logged at `warn` — every `Release` row written before T6 looks like this, and `pmctl rollback` builds its spec from those rows |
+| deploy path | addressed by | on a mixed revision |
+|---|---|---|
+| `POST /api/promote` (a candidate registered by `release.yml` from a `v*` tag) | immutable version | **refused (400)**, every divergent service named |
+| `POST /api/deploy` (branch auto-deploy, `:dev` / `:main`) | mutable branch tag | `warn!`, deploy proceeds |
+| auto-rollback after a failed health grace, and `pmctl rollback` | a previously recorded release | `warn!`, rollback proceeds |
 
-Once every image in GHCR has been rebuilt post-T6, the "none labelled" branch
-should be tightened to a refusal as well; it exists only to keep the rollback
-path to pre-T6 releases alive.
+Refusing on the last two would be worse than the bug it catches: the branch tag
+is rewritten by two separate workflow runs (`docker-build.yml` and
+`docker-frontend.yml`), so between them the refs legitimately name different
+commits, and a rollback that refuses leaves the bad colour live with
+"AUTO-ROLLBACK FAILED — system in indeterminate state".
+
+The divergence itself is closed **at the source**: both image workflows lost the
+`paths:` filter on their branch `push:` trigger, so one push to `main`/`dev`
+rebuilds all six images at one commit instead of refreshing only the half that
+changed. The warn-path then covers the minutes between the two runs finishing.
+
+And a refused deploy is no longer silent: the `trigger-deploy` jobs lost their
+job-level `continue-on-error`, and their `POST /api/deploy` step fails the job
+on a 4xx from the deployer while still tolerating a transport error, a 5xx or an
+OIDC 401/403 (issue #950's case).
+
+Per-verdict reasoning and unit tests are in
+`backend/servers/deploy-server/src/domain/release.rs`; a release where NO image
+carries the label is allowed and logged at `warn` on every path, because every
+`Release` row written before T6 looks like that and `pmctl rollback` builds its
+spec from those rows. Once every image in GHCR has been rebuilt post-T6, that
+branch should be tightened to a refusal on the version-addressed path.

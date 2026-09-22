@@ -16,12 +16,20 @@ ARG BUILD_DATE=unknown
 # Stage 1: Dependencies
 # =============================================================================
 # Node 22, not 20 (T7). `frontend/package.json` declares
-# `engines.node: ^20.19.0 || >=22.12.0`, but the workspace has since picked up
+# `engines.node: ^20.19.0 || >=22.12.0`, and the workspace has since picked up
 # packages that exclude 20 outright — `rollup-plugin-visualizer@7.1.1`
-# (`engines.node: >=22`, and `frontend/apps/ppt-web/vite.config.ts` imports it
-# at module scope) and `commander@15.0.0` (`>=22.12.0`). This stage installs the
-# whole workspace closure from the shared lockfile, so it must satisfy every
-# `engines` range in `frontend/pnpm-lock.yaml`; 22-alpine does, 20 did not.
+# (`engines.node: >=22`, imported at module scope by
+# `frontend/apps/ppt-web/vite.config.ts`, so it loads on every `vite build`) and
+# `commander@15.0.0` (`>=22.12.0`). 22-alpine satisfies every `engines` range in
+# `frontend/pnpm-lock.yaml`; 20 does not.
+#
+# NOT claimed to be the diagnosed cause of the 20 red runs. No `.npmrc` in this
+# repo sets `engine-strict`, so pnpm only WARNS on a violated `engines` range,
+# and `frontend.yml` builds ppt-web green on node-version '20' against this exact
+# lockfile. Node 22 is the correct base because it is the one the declared ranges
+# ask for — the actual failing step of those runs is still unread (the GitHub API
+# was rate-limited), and the remaining hypotheses are in
+# docs/runbooks/frontend-image-required-check.md.
 FROM node:22-alpine AS deps
 WORKDIR /app
 # Copy the manifest of every workspace package this image's app depends on,
