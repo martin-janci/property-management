@@ -1,5 +1,6 @@
 {
   "name": "ppt-frontend",
+  "version": "0.3.218",
   "private": true,
   "description": "PPT Frontend Monorepo",
   "workspaces": [
