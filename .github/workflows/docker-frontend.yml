@@ -1,5 +1,11 @@
 name: Docker Build & Push (Frontend)
 
+# Branch path for the frontend images. The `v*` tag path lives in
+# docker-frontend-tag.yml, deliberately WITHOUT a paths filter — see that file
+# and docker-build.yml for why the two triggers cannot share one `push:` key.
+# Both call the same reusable workflow, so tag builds and branch builds publish
+# identical images under identical tags.
+
 on:
   push:
     branches: [main, dev]
@@ -8,8 +14,8 @@ on:
       - 'docker/frontend/**'
       - 'docker/nginx/**'
       - '.github/workflows/docker-frontend.yml'
-    tags:
-      - 'v*'
+      - '.github/workflows/docker-frontend-images.yml'
+      - '.github/actions/docker-image-tags/action.yml'
   workflow_dispatch:
     inputs:
       push:
@@ -17,79 +23,23 @@ on:
         type: boolean
         default: true
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/martin-janci
-
 permissions:
   contents: read
   packages: write
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - target: ppt-web
-            dockerfile: docker/frontend/ppt-web.Dockerfile
-          - target: ppt-reality-web
-            dockerfile: docker/frontend/reality-web.Dockerfile
-          - target: ppt-admin-web
-            dockerfile: docker/frontend/admin-web.Dockerfile
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Login to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.target }}
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v') || inputs.push == true) }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.target }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
-          build-args: |
-            VITE_API_URL=/api
-            VITE_WS_URL=/ws
-            VITE_API_DEFAULT=worktree
-
-      - name: Image size
-        if: github.event_name != 'pull_request'
-        run: |
-          docker buildx imagetools inspect ${{ env.IMAGE_PREFIX }}/${{ matrix.target }}:${{ steps.meta.outputs.version }} 2>/dev/null || true
+    uses: ./.github/workflows/docker-frontend-images.yml
+    with:
+      # Only a workflow_dispatch may widen the publish gate past main/dev/`v*`.
+      force_push: ${{ github.event_name == 'workflow_dispatch' && inputs.push }}
 
   # Branch-keyed auto-deploy: main → prod, dev → staging.
   # Frontend changes alone (no backend churn) still need to roll the running
   # target's blue/green slot. Backend-only pushes go through the analogous
   # job in docker-build.yml. If a single merge touches both, both workflows
-  # fire and call /api/deploy with the same SHA — the deploy-server's worktree
-  # locks make the second call a near-no-op redeploy.
+  # fire and call /api/deploy with the same branch tag — the deploy-server's
+  # worktree locks make the second call a near-no-op redeploy.
   trigger-deploy:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
@@ -124,11 +74,11 @@ jobs:
         env:
           DEPLOY_URL: https://onyx.rlt.sk
           # See docker-build.yml's mirror of this step for the rationale on
-          # using the branch tag instead of SHORT_SHA: paths-filtered builds
-          # mean only some service images get a fresh `:<sha>` per push, and
-          # the deploy-server pulls all four. The `:main` / `:dev` tag is
-          # rewritten by whichever workflow produced the most recent build of
-          # that service.
+          # using the branch tag instead of `sha-<sha>`: paths-filtered branch
+          # builds mean only some service images get a fresh immutable tag per
+          # push, and the deploy-server pulls all of them. The `:main` / `:dev`
+          # tag is rewritten by whichever workflow produced the most recent
+          # build of that service.
           BRANCH_TAG: ${{ steps.target.outputs.name == 'prod' && 'main' || 'dev' }}
           TARGET: ${{ steps.target.outputs.name }}
         run: |

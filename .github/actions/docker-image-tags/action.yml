@@ -1,0 +1,60 @@
+name: 'Docker image tags'
+description: >-
+  The single shared image-tag contract for every property-management service
+  image. Backend and frontend images must never be addressable differently, so
+  this is the ONLY place tag patterns are declared. Both docker-build.yml and
+  docker-frontend.yml (and their tag-triggered callers) go through here.
+
+# Emitted tag set — see docs "Image tagging contract":
+#
+#   X.Y.Z            only on a `v*` tag   immutable, the human-readable release tag
+#   X.Y              only on a `v*` tag   mutable within a minor
+#   latest           only on a `v*` tag   NEVER from a branch push
+#   sha-<full sha>   every build          immutable
+#   <branch>         branch pushes only   mutable, refused by the deployer
+#
+# `latest` and `X.Y` are additionally suppressed for pre-release tags
+# (`v1.2.3-rc.1`): metadata-action skips `{{major}}.{{minor}}` for pre-releases
+# on its own, and the `latest` guard below excludes any tag carrying a `-`, so a
+# throwaway or RC tag can never move `latest`.
+
+inputs:
+  images:
+    description: 'Fully-qualified image name(s), newline-separated.'
+    required: true
+
+outputs:
+  tags:
+    description: 'Newline-separated tag list for docker/build-push-action.'
+    value: ${{ steps.meta.outputs.tags }}
+  labels:
+    description: 'OCI labels for the image.'
+    value: ${{ steps.meta.outputs.labels }}
+  version:
+    description: >-
+      The highest-priority tag value: the semver on a `v*` tag, the branch name
+      on a branch push. Safe to hand to `imagetools inspect`.
+    value: ${{ steps.meta.outputs.version }}
+  json:
+    description: 'Full metadata-action JSON output.'
+    value: ${{ steps.meta.outputs.json }}
+
+runs:
+  using: composite
+  steps:
+    - name: Docker metadata
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: ${{ inputs.images }}
+        # `latest=false` turns off metadata-action's implicit `latest=auto`,
+        # which would re-add `latest` behind our back and defeat the explicit
+        # `type=raw` rule below.
+        flavor: |
+          latest=false
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+          type=ref,event=branch
+          type=sha,prefix=sha-,format=long

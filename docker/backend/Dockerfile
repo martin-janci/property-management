@@ -1,4 +1,5 @@
-# Multi-stage Dockerfile for Rust backend services (api-server, reality-server)
+# Multi-stage Dockerfile for Rust backend services
+# (api-server, reality-server, accounting-server)
 # Supports: linux/amd64, linux/arm64
 
 # =============================================================================
@@ -92,11 +93,12 @@ COPY backend/servers ./servers
 COPY frontend/packages/sitemap/src/json/sitemap.json /frontend/packages/sitemap/src/json/sitemap.json
 
 # Build the applications
-# Build server binaries plus the api-server-side helper bins (`ppt-seed`
+# Build every server binary plus the api-server-side helper bins (`ppt-seed`
 # bootstraps OAuth clients + admin user; `ppt-features` toggles feature
 # flags) in a single cargo invocation so the matrix workflow can share a
-# single GHA cache scope (see .github/workflows/docker-build.yml). The
-# helper bins are needed at runtime — operators run them via
+# single GHA cache scope (see
+# .github/workflows/docker-backend-images.yml). The helper bins are needed
+# at runtime — operators run them via
 # `docker exec <api-container> ppt-seed ...` post-deploy — so they must
 # ship in the api-server image, not just exist in the build stage.
 ENV SQLX_OFFLINE=true
@@ -105,16 +107,17 @@ RUN RUST_TARGET=$(cat /tmp/rust-target) && \
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
     export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu && \
     cargo build --release --target $RUST_TARGET \
-        --bin api-server --bin reality-server \
+        --bin api-server --bin reality-server --bin accounting-server \
         --bin ppt-seed --bin ppt-features && \
     mkdir -p target/release && \
     cp target/$RUST_TARGET/release/api-server target/release/api-server && \
     cp target/$RUST_TARGET/release/reality-server target/release/reality-server && \
+    cp target/$RUST_TARGET/release/accounting-server target/release/accounting-server && \
     cp target/$RUST_TARGET/release/ppt-seed target/release/ppt-seed && \
     cp target/$RUST_TARGET/release/ppt-features target/release/ppt-features; \
     else \
     cargo build --release \
-        --bin api-server --bin reality-server \
+        --bin api-server --bin reality-server --bin accounting-server \
         --bin ppt-seed --bin ppt-features; \
     fi
 
@@ -173,3 +176,23 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8081/health || exit 1
 
 CMD ["/app/reality-server"]
+
+# =============================================================================
+# Accounting Server - Production target
+# =============================================================================
+# Tenant-scoped accounting resource server (backend/servers/accounting-server,
+# binds 0.0.0.0:8082). It is a workspace member built by CI's
+# `cargo build --release --workspace`, but had no published image at all until
+# now, so nothing could deploy it.
+FROM runtime-base AS accounting-server
+
+COPY --from=builder /app/target/release/accounting-server /app/accounting-server
+RUN chown -R ppt:ppt /app
+USER ppt
+
+EXPOSE 8082
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8082/health || exit 1
+
+CMD ["/app/accounting-server"]
