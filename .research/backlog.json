@@ -10732,6 +10732,77 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-silent-fail",
+      "title": "reality-web AgencyBranding.handleSave swallows updateBranding errors — logo/cover files dropped silently",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "ppt-dev-review 2026-09-22 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:78-95 — handleSave awaits updateBranding.mutateAsync(...) with no try/catch, then unconditionally clears setHasChanges(false)/setLogoFile(null)/setCoverFile(null); on rejection the just-uploaded File objects are lost, hasChanges disappears, and the Save button reverts to disabled — user thinks branding saved.",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts:258-288 — useUpdateBranding defines mutationFn + onSuccess only; no onError, no toast infrastructure.",
+        "Sibling template already present in the same file family: RealtorManagement.tsx:568-581 InviteModal.handleSubmit wraps mutateAsync in try/catch and renders inviteError at L621-625.",
+        "Same class of bug already landed on other reality-web silent-fail sites: PR #2967 (SyncSchedule), PR #2968 (FeedCard), PR #2969 (import create wizards)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": "plans/code-review-reality-web-agency-branding-save-silent-fail.md"
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-silent-fail",
+      "title": "reality-web RealtorManagement DetailModal save/remove/status handlers phantom-succeed on error",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "ppt-dev-review 2026-09-22 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:828-848 — DetailModal.handleSave/handleRemove/handleStatusChange each await updateRealtor.mutateAsync/removeRealtor.mutateAsync with no try/catch and then unconditionally transition UI (setIsEditing(false), onClose(), or leave modal open with toggled status).",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts:307-331 (useUpdateRealtor) and 333-345 (useRemoveRealtor) — both define onSuccess only; no onError anywhere.",
+        "Existing correct template in the same file: InviteModal.handleSubmit at RealtorManagement.tsx:568-581 — try/catch + setInviteError, alert rendered at L621-625.",
+        "Same silent-fail class as PR #2967 (SyncSchedule), PR #2968 (FeedCard), PR #2969 (import create wizards) — three sibling handlers in one modal compound the impact vs the single-handler cases already fixed."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": "plans/code-review-reality-web-realtor-detail-modal-silent-fail.md"
+    },
+    {
+      "id": "code-review-reality-web-realtor-resend-unhandled-rejection",
+      "title": "reality-web RealtorManagement resend-invitation try/finally without catch — unhandled rejection + no user feedback",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "ppt-dev-review 2026-09-22 (reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:288-296 — try { await resendInvitation.mutateAsync(...) } finally { setResending(false) } — no catch, so a failed resend triggers browser-level unhandledrejection + user sees only the spinner clear.",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts:347-353 useResendInvitation supplies no onError and no onSuccess (no cache invalidation) — nothing else catches the failure or acknowledges the success.",
+        "Sibling to the DetailModal silent-fail promoted this run (`code-review-reality-web-realtor-detail-modal-silent-fail`), same file; kept as separate item because the fix shape is narrower (add catch + toast, plus consider adding onSuccess to the hook)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx",
+        "frontend/packages/reality-api-client/src/agency/hooks.ts"
+      ],
+      "created_at": "2026-09-22",
+      "updated_at": "2026-09-22",
+      "plan": null
     }
   ]
 }

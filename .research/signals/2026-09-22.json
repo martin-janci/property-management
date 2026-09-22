@@ -1,0 +1,166 @@
+{
+  "date": "2026-09-22",
+  "trigger": "planner-buffer-low",
+  "trigger_payload": "buffer-low: claimable=8/72 — all landable backlog exhausted (remaining = mobile-native + api-server cloud-blocked); refill planner with landable frontend/reality-web vectors",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-22",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-09-20T18:38:00Z; now=2026-09-22T08:40Z (~46h)",
+      "score_delta": 0,
+      "evidence": "Routine last ran 46h ago; above the 36h threshold. Below the 3-day stale-routine-alert threshold. Fire-payload origin: planner-buffer-low, not the daily cadence.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-reality-web-agency-branding-save-silent-fail",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review 2026-09-22 (reality-web segment; frontend expert)",
+      "score_delta": 3,
+      "evidence": "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:78-95 — handleSave awaits updateBranding.mutateAsync(...) with no try/catch, then unconditionally clears setHasChanges(false)/setLogoFile(null)/setCoverFile(null). frontend/packages/reality-api-client/src/agency/hooks.ts:258-288 — useUpdateBranding defines onSuccess only, no onError. Same silent-fail class as PRs #2967/#2968/#2969 already in dispatcher review; expanded scope to agency/. Severity: High (data loss — uploaded logo/cover Files dropped from state on failure).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-detail-modal-silent-fail",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review 2026-09-22 (reality-web segment; frontend expert)",
+      "score_delta": 3,
+      "evidence": "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:828-848 — DetailModal.handleSave/handleRemove/handleStatusChange each await updateRealtor.mutateAsync / removeRealtor.mutateAsync with no try/catch and unconditionally close the modal or exit edit mode. frontend/packages/reality-api-client/src/agency/hooks.ts:307-331,333-345 — both hooks define onSuccess only. Existing correct template in the same file at L568-581 (InviteModal.handleSubmit). Severity: High (three sibling handlers phantom-succeed on failure; compounding impact vs single-handler cases).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-web-realtor-resend-unhandled-rejection",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review 2026-09-22 (reality-web segment; frontend expert)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:288-296 — try/finally around resendInvitation.mutateAsync with no catch: browser-level unhandledrejection + no user feedback. frontend/packages/reality-api-client/src/agency/hooks.ts:347-353 useResendInvitation has no onError AND no onSuccess (no cache invalidation). Severity: Medium (narrower blast radius than the DetailModal fix; kept as an open backlog row).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — code-review-finding signals are not on the auto-fix allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-22.md && head -1 | grep '^# 2026-09-22$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.last_commit_sha, seen_signals.length, or stats changed vs HEAD",
+      "observed": "last_commit_sha bumped 5d4560aa → 01365de1; seen_signals +4; stats.runs +1; stats.vectors_created +3; stats.plans_created +2",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id in seen_signals re-emits with score_delta != 0",
+      "observed": "true — all 4 new signal ids are absent from prior seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap ≤8 and open items >14d without evidence decay",
+      "observed": "max score 6 (test-gap-inquiry-idor-regression, done); no open items with updated_at ≤ 2026-09-08 exist",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has 'adversarial pass:' annotation in brief",
+      "observed": "brief 'Plans promoted' section annotates both plans as 'adversarial pass: passed'",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each has 4 metadata + 11 headings + ≥1 capability ticked + Mode declared + cited files exist",
+      "observed": "2 new plans; both have Vector/Score/Source/Confidence + all 11 required headings + C1+C6 ticked + Mode: cloud-ok + all cited files resolve",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "only .research/ paths staged",
+      "expected": "0 outside .research/"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached (with baseline docs excluded) grep for secrets/private hostnames",
+      "observed": "no matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to a regeneration from backlog.json",
+      "observed": "targeted Edit maintains byte-identity: only timestamp + 3 new rows changed, matching the sort key (score desc → updated_at desc → JSON insertion order tiebreak)",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists any failed phases with corresponding cursor untouched",
+      "observed": "no phases failed; brief 'Phases that failed' says 'none'",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still present in plans/ or plans/_archive/",
+      "observed": "no plans removed this run; both new plans are net-additions",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ count this run ≥ HEAD count",
+      "observed": "unchanged (8 files); no archive edits this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to a regeneration",
+      "observed": "only timestamp changed; no triage rows added/mutated this run — the 3 new code-review-finding rows are vector=bug, not vector=triage",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (cap + idempotency + kill switch + verify-all gate)",
+      "observed": "auto_fix_actions == [] — no eligible signal; kill switch not tested (no candidate to run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 was skipped this run — gate is a no-op",
+      "observed": "pm_cursor and coverage_cursor unchanged vs HEAD; gate no-ops per spec",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached added lines have no Telegram bot-token literal",
+      "observed": "no matches",
+      "expected": "0"
+    }
+  ]
+}
