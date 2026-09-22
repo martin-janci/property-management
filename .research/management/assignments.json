@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-22T16:29:45Z",
+  "generated": "2026-09-22T18:30:16Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
       "branch": "auto-impl/gh-issue-2743-66ef5ab8",
       "status": "review",
       "claimed_at": "2026-08-13T04:28:20Z",
-      "last_updated": "2026-09-22T16:29:45Z",
+      "last_updated": "2026-09-22T18:30:16Z",
       "status_changed_at": "2026-08-13T04:42:22Z",
       "pr_number": 2744,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
@@ -21,14 +21,16 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "screen-map-drift-pr-2894-reality",
       "branch": "auto-impl/screen-map-drift-pr-2894-reality-b0a2b158",
       "status": "review",
       "claimed_at": "2026-08-31T06:26:28Z",
-      "last_updated": "2026-09-22T16:29:45Z",
+      "last_updated": "2026-09-22T18:30:16Z",
       "status_changed_at": "2026-08-31T06:38:30Z",
       "pr_number": 2902,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2902",
@@ -43,14 +45,16 @@
       "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-reality-web-feedcard-mutation-silent-fail",
       "branch": "auto-impl/code-review-reality-web-feedcard-mutatio-3dc49c32",
       "status": "review",
       "claimed_at": "2026-09-21T20:29:43Z",
-      "last_updated": "2026-09-22T16:29:45Z",
+      "last_updated": "2026-09-22T18:30:16Z",
       "status_changed_at": "2026-09-21T22:31:00Z",
       "pr_number": 2968,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2968",
@@ -74,7 +78,7 @@
       "branch": "auto-impl/code-review-reality-web-import-create-mu-8cc74cca",
       "status": "review",
       "claimed_at": "2026-09-21T20:29:43Z",
-      "last_updated": "2026-09-22T16:29:45Z",
+      "last_updated": "2026-09-22T18:30:16Z",
       "status_changed_at": "2026-09-22T00:43:37Z",
       "pr_number": 2969,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2969",
@@ -98,7 +102,7 @@
       "branch": "auto-impl/code-review-reality-web-syncschedule-sav-dc8d1ee7",
       "status": "review",
       "claimed_at": "2026-09-21T20:29:43Z",
-      "last_updated": "2026-09-22T16:29:45Z",
+      "last_updated": "2026-09-22T18:30:16Z",
       "status_changed_at": "2026-09-21T22:31:00Z",
       "pr_number": 2967,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2967",
