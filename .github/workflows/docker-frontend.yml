@@ -34,16 +34,17 @@ name: Docker Build & Push (Frontend)
 # equivalent is in docs/runbooks/frontend-image-required-check.md.
 
 on:
+  # NO `paths:` filter on the branch push trigger. It used to be filtered on
+  # `frontend/**` while docker-build.yml was filtered on the DISJOINT
+  # `backend/**`, so a frontend-only push refreshed `ppt-web:dev` and left
+  # `ppt-api-server:dev` at an older commit (and vice versa) — the five refs the
+  # auto-deploy pulls from one branch tag came from different commits as a matter
+  # of routine. That divergence is manufactured by the triggers, so it has to be
+  # fixed here: every push to main/dev now rebuilds every frontend image at that
+  # commit, and docker-build.yml does the same for the backend ones.
   push:
     branches: [main, dev]
-    paths:
-      - 'frontend/**'
-      - 'docker/frontend/**'
-      - 'docker/nginx/**'
-      - '.github/workflows/docker-frontend.yml'
-      - '.github/workflows/docker-frontend-images.yml'
-      - '.github/actions/docker-image-tags/action.yml'
-  # NO `paths:` filter: a required status check that a path filter skips never
+  # NO `paths:` filter here either: a required status check that a path filter skips never
   # reports at all, which would wedge every PR that does not touch the
   # frontend. The `changes` job below decides what actually has to run.
   pull_request:
@@ -125,11 +126,11 @@ jobs:
   trigger-deploy:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
-    # continue-on-error: deploy-trigger failures (e.g. OIDC 403 while onyx
-    # auth.yaml is being updated) must not mark a successful image build red.
-    # The images are already pushed when this job runs; a trigger failure is
-    # an infra-side concern, not a build failure. See issue #950.
-    continue-on-error: true
+    # NO job-level `continue-on-error` — see the mirror of this job in
+    # docker-build.yml. It hid every kind of failure, including a deploy the
+    # deployer REFUSED; the POST step distinguishes infra (warn) from a refusal
+    # (fail). This job is deliberately NOT part of the `frontend-images`
+    # aggregator, so a red deploy trigger on a push does not make a PR red.
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -147,6 +148,10 @@ jobs:
       - name: Get OIDC token for ppt-deploy
         uses: actions/github-script@v9
         id: oidc
+        # Tolerated on purpose: an OIDC hiccup is infra, not a build defect.
+        # The POST step turns a missing token into a 401/403, which it also
+        # tolerates — while a 400 (a REFUSED deploy) fails the job.
+        continue-on-error: true
         with:
           script: |
             const token = await core.getIDToken('ppt-deploy');
@@ -155,19 +160,48 @@ jobs:
       - name: POST /api/deploy
         env:
           DEPLOY_URL: https://onyx.rlt.sk
-          # See docker-build.yml's mirror of this step for the rationale on
-          # using the branch tag instead of `sha-<sha>`: paths-filtered branch
-          # builds mean only some service images get a fresh immutable tag per
-          # push, and the deploy-server pulls all of them. The `:main` / `:dev`
-          # tag is rewritten by whichever workflow produced the most recent
-          # build of that service.
+          # See docker-build.yml's mirror of this step. Both workflows now build
+          # on every push to main/dev, so one push refreshes all six images at
+          # one commit; the branch tag stays the deploy address because the two
+          # workflow runs finish at different times, and the deployer only warns
+          # about a transiently mixed revision on this path.
           BRANCH_TAG: ${{ steps.target.outputs.name == 'prod' && 'main' || 'dev' }}
           TARGET: ${{ steps.target.outputs.name }}
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
         run: |
-          curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
-            -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
+          set -uo pipefail
+
+          # No `-f`: the status code is what separates "the deployer refused
+          # this deploy" (red) from "the deployer was unreachable / the token
+          # was rejected" (warn). `-f` collapses both into exit 22, which the
+          # old job-level continue-on-error then painted green.
+          body_file="$(mktemp)"
+          code="$(curl -sS -o "$body_file" -w '%{http_code}' \
+            -X POST "$DEPLOY_URL/api/deploy" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"$BRANCH_TAG\", \"target\": \"$TARGET\"}"
+            -d "{\"tag\": \"$BRANCH_TAG\", \"target\": \"$TARGET\"}")" || code="000"
+          body="$(cat "$body_file")"
+          rm -f "$body_file"
+          echo "POST $DEPLOY_URL/api/deploy -> HTTP $code"
+          echo "$body"
+
+          case "$code" in
+            2*)
+              echo "Deploy of :$BRANCH_TAG to $TARGET accepted."
+              ;;
+            401|403)
+              echo "::warning::deploy trigger not authorized (HTTP $code) — OIDC/infra, not a build failure. The images are pushed; re-run this job once auth is restored."
+              ;;
+            000|5*)
+              echo "::warning::deploy trigger could not reach the deployer (HTTP $code) — infra, not a build failure. The images are pushed."
+              ;;
+            *)
+              echo "::error::the deploy-server REFUSED this deploy (HTTP $code): $body"
+              echo "The images were pushed, but $TARGET was NOT updated. This is a real failure — do not ignore it."
+              exit 1
+              ;;
+          esac
 
   # ALWAYS-REPORTING aggregator context `frontend-images` (single producer,
   # #1672 pattern). This is the context to register as required on `dev`;
