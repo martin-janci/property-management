@@ -8,7 +8,7 @@ import { useBuildings } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import type { PrivacySettings } from '../../features/neighbors';
 import { useNeighbors, usePrivacySettings } from '../../features/neighbors';
 import { NeighborDetailPage, NeighborsPage, NeighborsPrivacySettingsPage } from '../lazyRoutes';
@@ -137,9 +137,36 @@ function NeighborsPrivacySettingsRoute() {
 export function neighborRoutes() {
   return (
     <>
-      <Route path="/neighbors" element={<NeighborsPageRoute />} />
-      <Route path="/neighbors/:neighborId" element={<NeighborDetailRoute />} />
-      <Route path="/neighbors/privacy" element={<NeighborsPrivacySettingsRoute />} />
+      <Route
+        path="/neighbors"
+        element={
+          <ProtectedRoute>
+            <NeighborsPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      {/*
+        `/neighbors/privacy` must be declared before `/neighbors/:neighborId`
+        (React Router v6 specificity resolves the static segment first even
+        in source order, but keeping this order defends against future
+        router-config changes).
+      */}
+      <Route
+        path="/neighbors/privacy"
+        element={
+          <ProtectedRoute>
+            <NeighborsPrivacySettingsRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/neighbors/:neighborId"
+        element={
+          <ProtectedRoute>
+            <NeighborDetailRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

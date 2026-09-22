@@ -29,7 +29,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { apiRequest } from '../../hooks/useApi';
+import { ApiError, apiRequest } from '../../hooks/useApi';
 import { formatDate, formatTime } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 import type { Document } from './DocumentsScreen';
@@ -71,19 +71,19 @@ export function formatBytes(bytes: number): string {
 /**
  * Decide whether a failed /preview request means "this file type can't be
  * previewed, fall back to /download" (true) versus a genuine error to surface
- * (false). The backend signals an unsupported preview with PREVIEW_NOT_SUPPORTED
- * / HTTP 400; anything else (auth, network, 5xx) is a hard failure.
+ * (false). The backend signals an unsupported preview with the structured
+ * error `{ code: "PREVIEW_NOT_SUPPORTED" }` (see routes/documents/core.rs).
+ * Anything else (auth 401, invalid UUID 400, network, 5xx) is a hard failure.
+ *
+ * We match on the structured `code` — never on the message string — so a
+ * translated backend message or a different 400 (bad JWT, invalid UUID) does
+ * not silently trigger the download fallback.
  *
  * Exported so the fallback decision can be unit-tested independently of the
  * RN render tree, and reused by DocumentDetailScreen's open action.
  */
 export function isPreviewUnsupportedError(err: unknown): boolean {
-  const message = err instanceof Error ? err.message : '';
-  return (
-    message.includes('PREVIEW_NOT_SUPPORTED') ||
-    message.includes('not supported') ||
-    message.includes('HTTP 400')
-  );
+  return err instanceof ApiError && err.code === 'PREVIEW_NOT_SUPPORTED';
 }
 
 function getFileIcon(type: Document['type']): string {
@@ -120,6 +120,28 @@ export async function downloadToCache(url: string, filename: string): Promise<st
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/**
+ * Refresh the presigned URL if it has already expired or is within
+ * `EXPIRY_REFRESH_WINDOW_MS` of doing so, so the OS viewer never receives
+ * a 403 from S3 for a stale link.
+ */
+const EXPIRY_REFRESH_WINDOW_MS = 60_000;
+
+function isExpiringSoon(expiresAt: Date): boolean {
+  return Date.now() >= expiresAt.getTime() - EXPIRY_REFRESH_WINDOW_MS;
+}
+
+/**
+ * Guard against a compromised backend handing us a non-https URL — the
+ * presigned URL should always be `https://…s3.amazonaws.com/…`. `Linking`
+ * on some Android OEMs will happily open custom schemes (`javascript:`,
+ * `intent://`, …) that `canOpenURL` cannot always reject; enforce the
+ * scheme explicitly.
+ */
+function isHttpsUrl(url: string): boolean {
+  return url.startsWith('https://');
+}
+
 export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScreenProps) {
   const { t } = useTranslation();
   const [state, setState] = useState<PreviewState>({ status: 'idle' });
@@ -127,17 +149,19 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
 
   // ── Fetch presigned URL on mount ──────────────────────────────────────────
 
-  const fetchPreviewUrl = useCallback(async () => {
+  const fetchPreviewUrl = useCallback(async (): Promise<PreviewState> => {
     setState({ status: 'loading' });
     try {
       const data = await apiRequest<PresignedUrlResponse>(
         `/api/v1/documents/${document.id}/preview`
       );
-      setState({
+      const next: PreviewState = {
         status: 'ready',
         url: data.url,
         expiresAt: new Date(data.expires_at),
-      });
+      };
+      setState(next);
+      return next;
     } catch (err) {
       // PREVIEW_NOT_SUPPORTED (400) → fall back to download endpoint
       if (isPreviewUnsupportedError(err)) {
@@ -145,22 +169,27 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
           const fallback = await apiRequest<PresignedUrlResponse>(
             `/api/v1/documents/${document.id}/download`
           );
-          setState({
+          const next: PreviewState = {
             status: 'fallback',
             url: fallback.url,
             expiresAt: new Date(fallback.expires_at),
-          });
+          };
+          setState(next);
+          return next;
         } catch (fallbackErr) {
           const fallbackMessage =
             fallbackErr instanceof Error ? fallbackErr.message : t('errors.generic');
-          setState({ status: 'error', message: fallbackMessage });
+          const next: PreviewState = { status: 'error', message: fallbackMessage };
+          setState(next);
+          return next;
         }
-      } else {
-        setState({
-          status: 'error',
-          message: err instanceof Error ? err.message : t('errors.generic'),
-        });
       }
+      const next: PreviewState = {
+        status: 'error',
+        message: err instanceof Error ? err.message : t('errors.generic'),
+      };
+      setState(next);
+      return next;
     }
   }, [document.id, t]);
 
@@ -168,12 +197,33 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
     void fetchPreviewUrl();
   }, [fetchPreviewUrl]);
 
+  /**
+   * Resolve a still-valid presigned URL. If the current state's URL has
+   * already expired (or is within `EXPIRY_REFRESH_WINDOW_MS` of expiring),
+   * re-fetch before proceeding — otherwise the OS viewer receives a 403.
+   * Returns `null` if the refresh fails or the state is not ready.
+   */
+  const resolveFreshUrl = useCallback(async (): Promise<string | null> => {
+    if (state.status !== 'ready' && state.status !== 'fallback') return null;
+    if (!isExpiringSoon(state.expiresAt)) return state.url;
+    const refreshed = await fetchPreviewUrl();
+    if (refreshed.status === 'ready' || refreshed.status === 'fallback') {
+      return refreshed.url;
+    }
+    return null;
+  }, [state, fetchPreviewUrl]);
+
   // ── Open in native viewer ─────────────────────────────────────────────────
 
   const handleOpen = useCallback(async () => {
-    if (state.status !== 'ready' && state.status !== 'fallback') return;
+    const url = await resolveFreshUrl();
+    if (!url) return;
+    if (!isHttpsUrl(url)) {
+      Alert.alert(t('common.error'), t('documents.preview.openFailed'));
+      return;
+    }
     try {
-      const canOpen = await Linking.canOpenURL(state.url);
+      const canOpen = await Linking.canOpenURL(url);
       if (!canOpen) {
         Alert.alert(
           t('documents.preview.cannotOpenTitle'),
@@ -181,16 +231,21 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
         );
         return;
       }
-      await Linking.openURL(state.url);
+      await Linking.openURL(url);
     } catch {
       Alert.alert(t('common.error'), t('documents.preview.openFailed'));
     }
-  }, [state, t]);
+  }, [resolveFreshUrl, t]);
 
   // ── Share via expo-sharing ────────────────────────────────────────────────
 
   const handleShare = useCallback(async () => {
-    if (state.status !== 'ready' && state.status !== 'fallback') return;
+    const url = await resolveFreshUrl();
+    if (!url) return;
+    if (!isHttpsUrl(url)) {
+      Alert.alert(t('common.error'), t('documents.preview.shareFailed'));
+      return;
+    }
     const sharingAvailable = await Sharing.isAvailableAsync();
     if (!sharingAvailable) {
       Alert.alert(t('documents.preview.sharingUnavailableTitle'), '');
@@ -199,7 +254,7 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
 
     setIsSharing(true);
     try {
-      const localUri = await downloadToCache(state.url, document.name);
+      const localUri = await downloadToCache(url, document.name);
       await Sharing.shareAsync(localUri, {
         mimeType: mimeTypeFromDocType(document.type),
         dialogTitle: document.name,
@@ -210,7 +265,7 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
     } finally {
       setIsSharing(false);
     }
-  }, [state, document, t]);
+  }, [resolveFreshUrl, document, t]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 

@@ -8,6 +8,7 @@
  * @see Story 79.2 - Authentication Flow Implementation
  */
 
+import type { TenantRole } from '@ppt/api-client';
 import { setReturnUrl } from '@ppt/shared';
 import type React from 'react';
 import { useEffect } from 'react';
@@ -31,8 +32,8 @@ export interface ProtectedRouteProps {
   children: React.ReactNode;
   /** Optional redirect path override (defaults to /login) */
   redirectTo?: string;
-  /** Optional roles required to access the route */
-  requiredRoles?: string[];
+  /** Optional roles required to access the route (validated against TenantRole at compile time) */
+  requiredRoles?: TenantRole[];
 }
 
 // ============================================================================
@@ -77,7 +78,7 @@ function storeReturnUrl(pathname: string, search: string): void {
  * <Route
  *   path="/admin"
  *   element={
- *     <ProtectedRoute requiredRoles={['admin']}>
+ *     <ProtectedRoute requiredRoles={['org_admin', 'super_admin']}>
  *       <AdminPage />
  *     </ProtectedRoute>
  *   }

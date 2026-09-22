@@ -4,9 +4,10 @@
  * Type definitions for the Authentication API (UC-14).
  */
 
-/** User role within a tenant (mirrors Shared.TenantRole in OpenAPI spec) */
+/** User role within a tenant (mirrors Shared.TenantRole in OpenAPI spec — 12 variants) */
 export type TenantRole =
   | 'super_admin'
+  | 'platform_admin'
   | 'org_admin'
   | 'manager'
   | 'technical_manager'

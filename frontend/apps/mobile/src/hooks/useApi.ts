@@ -51,6 +51,24 @@ interface RequestOptions {
   headers?: Record<string, string>;
 }
 
+/**
+ * Error thrown by `apiRequest` for non-2xx responses. Extends `Error` so all
+ * existing catches that only inspect `.message` keep working; adds
+ * `code` (structured error code from the backend `{code, message}` envelope,
+ * when present) and `status` (raw HTTP status) so callers can branch on the
+ * *reason* for a 400 rather than string-matching on the message.
+ */
+export class ApiError extends Error {
+  readonly code?: string;
+  readonly status: number;
+  constructor(status: number, message: string, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
 /** Send an authenticated JSON request to the api-server. */
 export async function apiRequest<T>(
   path: string,
@@ -82,13 +100,15 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     let message = `HTTP ${response.status}`;
+    let code: string | undefined;
     try {
       const body = await response.json();
       if (body?.message) message = body.message;
+      if (typeof body?.code === 'string') code = body.code;
     } catch {
       // body wasn't JSON — fall back to the status code message
     }
-    throw new Error(message);
+    throw new ApiError(response.status, message, code);
   }
 
   if (response.status === 204) {

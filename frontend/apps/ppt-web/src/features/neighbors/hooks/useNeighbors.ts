@@ -86,6 +86,19 @@ export function mapApiPrivacyToFeature(api: ApiPrivacySettings): PrivacySettings
 /**
  * Map feature-layer PrivacySettings to the API UpdatePrivacySettingsRequest.
  * We collapse the granular visibility flags back to the three-value API enum.
+ *
+ * The API expresses contact-info visibility as a boolean and profile visibility
+ * as a three-value enum. Because the user can pick a different level for name
+ * vs. email in the UI, we collapse to the MORE RESTRICTIVE of the two so we
+ * never broadcast contact info beyond the intended audience:
+ *
+ *   showEmail=private     → contact info hidden (regardless of name visibility)
+ *   showEmail=neighbors   → profile downgraded to contacts_only; contact bool false
+ *                           (API's contacts_only bucket already implies contact-info
+ *                            visible to contacts, so we don't set the boolean too)
+ *   showEmail=building    → contact info visible only when profile is visible;
+ *                           otherwise the profile bucket already gates access.
+ *   showEmail=public      → contact info visible (public profile).
  */
 export function mapFeaturePrivacyToApi(settings: PrivacySettings): ApiUpdatePrivacySettingsRequest {
   let profileVisibility: ApiUpdatePrivacySettingsRequest['profileVisibility'];
@@ -97,10 +110,19 @@ export function mapFeaturePrivacyToApi(settings: PrivacySettings): ApiUpdatePriv
     profileVisibility = 'visible';
   }
 
+  // If email visibility is more restrictive than name visibility, downgrade
+  // profileVisibility so the API bucket honours the user's tightest choice.
+  if (settings.showEmail === 'private') {
+    // Never expose contacts; profile can still be visible/contacts_only/hidden.
+  } else if (settings.showEmail === 'neighbors' && profileVisibility === 'visible') {
+    profileVisibility = 'contacts_only';
+  }
+
+  // showContactInfo is only true when the user actively opened contact info
+  // to `building` or `public` AND the resolved profileVisibility permits it.
   const showContactInfo =
-    settings.showEmail === 'neighbors' ||
-    settings.showEmail === 'building' ||
-    settings.showEmail === 'public';
+    profileVisibility === 'visible' &&
+    (settings.showEmail === 'building' || settings.showEmail === 'public');
 
   return { profileVisibility, showContactInfo };
 }
