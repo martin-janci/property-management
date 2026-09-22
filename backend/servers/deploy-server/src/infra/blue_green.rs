@@ -65,6 +65,33 @@ pub struct BlueGreenSpec {
     /// HTTP handlers (deploy/promote) where access to secrets and target
     /// config is centralized.
     pub service_envs: std::collections::HashMap<String, Vec<String>>,
+    /// Whether a mixed-revision image set must be REFUSED rather than warned
+    /// about. See [`BlueGreenDeployer::check_single_revision`] for the check
+    /// itself; this flag decides what its verdict costs.
+    ///
+    /// `true` only for **version-addressed** deploys — `promote_handler`,
+    /// which deploys a candidate registered by `release.yml` from one `v*`
+    /// tag, where every service image genuinely comes from one commit and a
+    /// disagreement means someone hand-built an image or a build leg silently
+    /// failed.
+    ///
+    /// `false` for every deploy addressed by a MUTABLE tag, because there
+    /// divergence is the steady state, not the exception:
+    ///   * `deploy_handler` builds all five refs from one branch tag
+    ///     (`:dev` / `:main`), and the backend and frontend image workflows
+    ///     are separate runs — whichever finishes second rewrites its own
+    ///     services' branch tag, so between the two POSTs the refs legitimately
+    ///     name different commits;
+    ///   * the two rollback paths in `api/promote.rs` re-deploy a *previous*
+    ///     `Release` row, which for an auto-deploy row carries exactly such a
+    ///     branch tag. Refusing there would turn a failed health grace into
+    ///     "AUTO-ROLLBACK FAILED — system in indeterminate state" instead of
+    ///     restoring the previous colour, i.e. it would break recovery to
+    ///     protect against staleness.
+    ///
+    /// On those paths the mismatch is logged at `warn!` and the deploy
+    /// proceeds.
+    pub require_single_revision: bool,
 }
 
 impl BlueGreenSpec {
@@ -99,7 +126,21 @@ impl BlueGreenSpec {
             reality_apex: target.reality_apex.clone(),
             ppt_apex: target.ppt_apex.clone(),
             service_envs,
+            // Conservative default: a `Release` row can have been written by
+            // the branch-tag auto-deploy, so its images are allowed to
+            // disagree. Only `promote_handler` — the one caller that knows it
+            // is deploying a version-addressed candidate — opts in via
+            // [`Self::require_single_revision`].
+            require_single_revision: false,
         })
+    }
+
+    /// Opt this spec into the strict single-revision policy (or back out of
+    /// it). See [`Self::require_single_revision`] for when each value is
+    /// correct; the default from [`Self::from_release`] is `false`.
+    pub fn require_single_revision(mut self, require: bool) -> Self {
+        self.require_single_revision = require;
+        self
     }
 
     /// Every service image this spec will deploy, keyed by the same service
@@ -397,10 +438,13 @@ impl BlueGreenDeployer {
             self.pull_image(docker, img).await?;
         }
 
-        // Every service must come from ONE commit, and this is the last moment
-        // at which refusing is free: the images are local, but nothing has been
-        // torn down or re-routed yet. See `assert_single_revision`.
-        self.assert_single_revision(spec).await?;
+        // Compare the commit every service image was built from. This is the
+        // last moment at which refusing is free: the images are local, but
+        // nothing has been torn down or re-routed yet. Whether a disagreement
+        // refuses the deploy or only logs depends on
+        // `spec.require_single_revision` — see that field and
+        // `check_single_revision`.
+        self.check_single_revision(spec).await?;
 
         let target_name = &spec.target_name;
 
@@ -676,13 +720,21 @@ impl BlueGreenDeployer {
     /// and the unit tests):
     ///   * all images share one revision  -> proceed, logging the commit;
     ///   * revisions disagree, or some images carry the label and others do
-    ///     not -> refuse with 400, naming every divergent service;
+    ///     not -> refuse with 400 naming every divergent service, but ONLY
+    ///     when `spec.require_single_revision` is set; otherwise log at
+    ///     `warn!` and proceed;
     ///   * NO image carries the label -> warn and proceed. Every Release row
     ///     written before T6 looks like this, and `pmctl rollback` builds its
     ///     spec from those rows — refusing them would delete the recovery path
     ///     to every pre-T6 release, which is a worse failure than the one this
     ///     check prevents.
-    async fn assert_single_revision(&self, spec: &BlueGreenSpec) -> Result<()> {
+    ///
+    /// The flag exists because a mutable tag cannot promise one commit: the
+    /// branch-tag auto-deploy (`deploy_handler`) and both rollback paths
+    /// legitimately see divergent refs, so refusing there would stop every
+    /// staging/prod deploy instead of catching a stale image. See
+    /// [`BlueGreenSpec::require_single_revision`].
+    async fn check_single_revision(&self, spec: &BlueGreenSpec) -> Result<()> {
         let mut entries = Vec::new();
         for (service, image) in spec.service_images() {
             let revision = self.docker.image_label(image, REVISION_LABEL).await?;
@@ -691,12 +743,24 @@ impl BlueGreenDeployer {
 
         let verdict = check_revisions(&entries);
         if let Some(reason) = verdict.rejection() {
-            tracing::error!(
+            if spec.require_single_revision {
+                tracing::error!(
+                    target_name = %spec.target_name,
+                    tag = %spec.tag,
+                    "{reason}"
+                );
+                return Err(crate::DeployError::BadRequest(reason));
+            }
+            // Mutable-tag deploy (branch auto-deploy or a rollback to such a
+            // release): divergence is expected here, so it must not block the
+            // deploy. Logged loudly so it is still visible in the deploy log.
+            tracing::warn!(
                 target_name = %spec.target_name,
                 tag = %spec.tag,
-                "{reason}"
+                "{reason} (tolerated: this deploy is addressed by a mutable tag, \
+                 not a release version — see BlueGreenSpec::require_single_revision)"
             );
-            return Err(crate::DeployError::BadRequest(reason));
+            return Ok(());
         }
         match verdict {
             RevisionCheck::Uniform(rev) => tracing::info!(
@@ -947,5 +1011,87 @@ mod build_service_envs_tests {
             matches!(err, crate::DeployError::Config(_)),
             "expected a Config error, got {err:?}"
         );
+    }
+}
+
+/// The single-revision POLICY (which paths refuse a mixed-revision image set
+/// and which only warn). The check itself is unit-tested in
+/// `domain::release::revision_tests`; what is pinned here is that the strict
+/// mode is opt-in, so the branch-tag auto-deploy and both rollback paths
+/// cannot inherit it by accident.
+#[cfg(test)]
+mod revision_policy_tests {
+    use super::*;
+
+    fn test_target() -> crate::config::Target {
+        crate::config::Target {
+            docker_socket: "/var/run/docker.sock".into(),
+            caddy_url: "http://localhost:2019".into(),
+            reality_apex: "staging.rlt.sk".into(),
+            ppt_apex: "staging.ppt.rlt.sk".into(),
+            idle_timeout: None,
+            promote_strategy: None,
+            rollback_mode: "manual".into(),
+            health_grace: None,
+        }
+    }
+
+    fn branch_tag_release() -> crate::domain::Release {
+        let mut images = std::collections::HashMap::new();
+        for (svc, img) in [
+            ("api-server", "ghcr.io/x/ppt-api-server:dev"),
+            ("reality-server", "ghcr.io/x/ppt-reality-server:dev"),
+            ("ppt-web", "ghcr.io/x/ppt-web:dev"),
+            ("reality-web", "ghcr.io/x/ppt-reality-web:dev"),
+            ("admin-web", "ghcr.io/x/ppt-admin-web:dev"),
+        ] {
+            images.insert(svc.to_string(), img.to_string());
+        }
+        crate::domain::Release {
+            tag: "dev".into(),
+            images,
+            state: crate::domain::ReleaseState::Staging,
+            target: Some("staging".into()),
+            promoted_at: None,
+            notes: None,
+        }
+    }
+
+    /// `from_release` is the constructor both rollback paths and `wake` use, so
+    /// its default must be the tolerant one. If this flips to `true`, an
+    /// auto-rollback to a branch-tag release starts failing with
+    /// "AUTO-ROLLBACK FAILED — system in indeterminate state".
+    #[test]
+    fn from_release_does_not_require_a_single_revision_by_default() {
+        let spec = BlueGreenSpec::from_release(
+            &branch_tag_release(),
+            "staging",
+            &test_target(),
+            std::collections::HashMap::new(),
+        )
+        .expect("spec builds");
+        assert!(
+            !spec.require_single_revision,
+            "from_release must default to the tolerant policy — rollback and the \
+             branch-tag auto-deploy both go through it"
+        );
+    }
+
+    /// Only `promote_handler` opts in, and it does so through this builder.
+    #[test]
+    fn require_single_revision_opts_a_spec_in_and_out() {
+        let spec = BlueGreenSpec::from_release(
+            &branch_tag_release(),
+            "prod",
+            &test_target(),
+            std::collections::HashMap::new(),
+        )
+        .expect("spec builds");
+        assert!(
+            spec.clone()
+                .require_single_revision(true)
+                .require_single_revision
+        );
+        assert!(!spec.require_single_revision(false).require_single_revision);
     }
 }
