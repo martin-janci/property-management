@@ -344,7 +344,7 @@ function ConnectionCard({
   );
 }
 
-function AddConnectionModal({
+export function AddConnectionModal({
   agencyId,
   selectedProvider,
   onSelectProvider,
@@ -362,6 +362,7 @@ function AddConnectionModal({
   const [instanceUrl, setInstanceUrl] = useState('');
   const [fieldMapping, setFieldMapping] = useState<CrmFieldMapping>(DEFAULT_FIELD_MAPPING);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const testMutation = useTestCrmConnection(agencyId);
   const createMutation = useCreateCrmConnection(agencyId);
@@ -388,19 +389,25 @@ function AddConnectionModal({
 
   const handleCreate = async () => {
     if (!selectedProvider) return;
-    await createMutation.mutateAsync({
-      provider: selectedProvider,
-      name:
-        name ||
-        `${CRM_PROVIDERS.find((p) => p.id === selectedProvider)?.name} ${t('connectionSuffix')}`,
-      credentials: {
-        apiKey,
-        instanceUrl: selectedProvider === 'salesforce' ? instanceUrl : undefined,
-      },
-      fieldMapping,
-      syncFrequency: 'daily',
-    });
-    onClose();
+    setCreateError(null);
+    try {
+      await createMutation.mutateAsync({
+        provider: selectedProvider,
+        name:
+          name ||
+          `${CRM_PROVIDERS.find((p) => p.id === selectedProvider)?.name} ${t('connectionSuffix')}`,
+        credentials: {
+          apiKey,
+          instanceUrl: selectedProvider === 'salesforce' ? instanceUrl : undefined,
+        },
+        fieldMapping,
+        syncFrequency: 'daily',
+      });
+      onClose();
+    } catch (error) {
+      console.error('Failed to create CRM connection:', error);
+      setCreateError(t('createError'));
+    }
   };
 
   return (
@@ -524,6 +531,11 @@ function AddConnectionModal({
                   />
                 </div>
               ))}
+              {createError && (
+                <div className="create-error" role="alert" aria-live="assertive">
+                  {createError}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -691,6 +703,14 @@ function AddConnectionModal({
         }
 
         .test-result.error {
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
+        }
+
+        .create-error {
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-size: 14px;
           background: var(--ppt-color-danger-light);
           color: var(--ppt-color-danger-dark);
         }

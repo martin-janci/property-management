@@ -981,6 +981,7 @@
       "mappingHint": "Feleltesse meg a CRM-mezőket a hirdetés tulajdonságaival",
       "creating": "Létrehozás...",
       "createConnection": "Kapcsolat létrehozása",
+      "createError": "A kapcsolat létrehozása nem sikerült. Kérjük, próbálja újra.",
       "connectionFailed": "A kapcsolat sikertelen",
       "connectionSuffix": "kapcsolat",
       "status": {
@@ -1030,6 +1031,7 @@
       "mappingHint": "Feleltesse meg a feed mezőit a hirdetés tulajdonságaival",
       "creating": "Létrehozás...",
       "createFeed": "Feed létrehozása",
+      "createError": "A feed létrehozása nem sikerült. Kérjük, próbálja újra.",
       "defaultName": "Ingatlan-feed",
       "status": {
         "active": "Aktív",
