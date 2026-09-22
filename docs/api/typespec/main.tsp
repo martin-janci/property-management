@@ -30,6 +30,9 @@ using TypeSpec.OpenAPI;
   title: "Property Management API",
 })
 @info(#{
+  // Synced from the repo-root VERSION file by scripts/update-version.sh, which
+  // asserts this line exists (an empty @info made the sync a silent no-op).
+  version: "0.3.218"
 })
 @server("https://api.property-management.example.com", "Production")
 @server("http://localhost:8080", "Development")
