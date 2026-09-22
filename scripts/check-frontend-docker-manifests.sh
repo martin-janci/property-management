@@ -24,6 +24,10 @@
 #   * it reads `pnpm --filter <pkg> build` out of each Dockerfile to learn
 #     which app that image builds,
 #   * it walks the `workspace:` dependency graph transitively from that app,
+#   * it collects the manifest COPYs of the `deps` stage ONLY — the stage that
+#     runs `pnpm install`. A manifest copied in a later stage cannot help that
+#     install, so counting it would make this gate pass on a Dockerfile that
+#     still fails to build,
 #   * it fails if a required manifest is not COPY'd, if a COPY'd path does not
 #     exist, or if a COPY lands a manifest in a directory that does not match
 #     its workspace path (which would make pnpm see the wrong package name).
@@ -104,6 +108,11 @@ failures = []
 # ---------------------------------------------------------------------------
 copy_re = re.compile(r"^COPY\s+(?!--)(.*)$")
 filter_re = re.compile(r"pnpm\s+--filter\s+(\S+)\s+build")
+# `FROM <image> AS <stage>` — used to bound the COPY scan to the deps stage.
+from_re = re.compile(r"^FROM\s+\S+(?:\s+AS\s+(\S+))?\s*$", re.IGNORECASE)
+# The stage that runs `pnpm install`, i.e. the one whose manifest list decides
+# whether the install can resolve the workspace at all.
+DEPS_STAGE = "deps"
 
 for dockerfile in DOCKERFILES:
     path = os.path.join(root, dockerfile)
@@ -124,9 +133,25 @@ for dockerfile in DOCKERFILES:
         )
         continue
 
+    # Only the `deps` stage counts. A manifest COPY'd in the builder or
+    # production stage cannot help `pnpm install`, which runs in `deps` — and
+    # scanning the whole file would let such a line satisfy a gate whose error
+    # message says "deps stage does not copy ...". Stage tracking, not "stop at
+    # the second FROM", so the check stays correct if the stage order changes.
     copied = set()
+    stage = None
+    saw_deps_stage = False
     for line in lines:
-        m = copy_re.match(line.strip())
+        stripped = line.strip()
+        fm = from_re.match(stripped)
+        if fm:
+            stage = (fm.group(1) or "").lower() or None
+            if stage == DEPS_STAGE:
+                saw_deps_stage = True
+            continue
+        if stage != DEPS_STAGE:
+            continue
+        m = copy_re.match(stripped)
         if not m:
             continue
         parts = m.group(1).split()
@@ -146,6 +171,15 @@ for dockerfile in DOCKERFILES:
                 failures.append(
                     f"{dockerfile}: COPY {src} -> {dest}, expected destination ./{want}/"
                 )
+
+    if not saw_deps_stage:
+        failures.append(
+            f"{dockerfile}: no `FROM ... AS {DEPS_STAGE}` stage — this check reads the "
+            f"workspace-manifest COPY list out of that stage, so it cannot verify this "
+            f"Dockerfile. Rename the install stage back to `{DEPS_STAGE}`, or teach this "
+            f"script the new name."
+        )
+        continue
 
     for src in sorted(copied):
         if not os.path.isfile(os.path.join(root, src)):
@@ -187,8 +221,8 @@ for dockerfile in DOCKERFILES:
         )
     if missing:
         failures.append(
-            f"{dockerfile}: deps stage does not copy {len(missing)} required "
-            f"manifest(s): {', '.join(missing)}"
+            f"{dockerfile}: the `{DEPS_STAGE}` stage does not copy {len(missing)} "
+            f"required manifest(s): {', '.join(missing)}"
         )
 
 # ---------------------------------------------------------------------------
