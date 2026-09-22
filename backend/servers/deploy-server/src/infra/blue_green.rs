@@ -1,4 +1,5 @@
 // backend/servers/deploy-server/src/infra/blue_green.rs
+use crate::domain::{check_revisions, RevisionCheck, ServiceRevision, REVISION_LABEL};
 use crate::infra::{CaddyClient, DockerClient};
 use crate::Result;
 use bollard::container::{
@@ -99,6 +100,25 @@ impl BlueGreenSpec {
             ppt_apex: target.ppt_apex.clone(),
             service_envs,
         })
+    }
+
+    /// Every service image this spec will deploy, keyed by the same service
+    /// names `Release::images` and `build_staging_images` use, so an error
+    /// message names what the API caller named. `admin-web` is absent exactly
+    /// when [`Self::admin_web_image`] is `None`.
+    ///
+    /// One list, used both to pull and to verify — the two cannot drift.
+    pub fn service_images(&self) -> Vec<(&'static str, &str)> {
+        let mut out = vec![
+            ("api-server", self.api_image.as_str()),
+            ("reality-server", self.reality_image.as_str()),
+            ("ppt-web", self.ppt_web_image.as_str()),
+            ("reality-web", self.reality_web_image.as_str()),
+        ];
+        if let Some(admin) = &self.admin_web_image {
+            out.push(("admin-web", admin.as_str()));
+        }
+        out
     }
 }
 
@@ -373,17 +393,14 @@ pub fn build_service_envs(
 impl BlueGreenDeployer {
     pub async fn deploy(&self, spec: &BlueGreenSpec) -> Result<()> {
         let docker = self.docker.bollard();
-        for img in [
-            &spec.api_image,
-            &spec.reality_image,
-            &spec.ppt_web_image,
-            &spec.reality_web_image,
-        ] {
+        for (_service, img) in spec.service_images() {
             self.pull_image(docker, img).await?;
         }
-        if let Some(admin_img) = &spec.admin_web_image {
-            self.pull_image(docker, admin_img).await?;
-        }
+
+        // Every service must come from ONE commit, and this is the last moment
+        // at which refusing is free: the images are local, but nothing has been
+        // torn down or re-routed yet. See `assert_single_revision`.
+        self.assert_single_revision(spec).await?;
 
         let target_name = &spec.target_name;
 
@@ -641,6 +658,63 @@ impl BlueGreenDeployer {
             .map(|s| format!("{target_name}-{s}-{prev_color}"))
             .collect();
         self.docker.cleanup_containers(&prev_containers).await;
+        Ok(())
+    }
+
+    /// Refuse a deploy whose service images were not all built from the same
+    /// commit (T7, closing F-P8).
+    ///
+    /// `docker-frontend.yml` failed 20 consecutive runs while
+    /// `docker-build.yml` kept POSTing `{"tag":"dev"}`, so `ppt-web:dev`
+    /// resolved to a June image and `ppt-api-server:dev` to a September one and
+    /// prod ran a three-month-old frontend against a new API schema. A mutable
+    /// tag cannot express that; the `org.opencontainers.image.revision` label
+    /// T6 stamps into every image can, and it is readable without starting a
+    /// container.
+    ///
+    /// Policy (see `domain::release::check_revisions` for the full reasoning
+    /// and the unit tests):
+    ///   * all images share one revision  -> proceed, logging the commit;
+    ///   * revisions disagree, or some images carry the label and others do
+    ///     not -> refuse with 400, naming every divergent service;
+    ///   * NO image carries the label -> warn and proceed. Every Release row
+    ///     written before T6 looks like this, and `pmctl rollback` builds its
+    ///     spec from those rows — refusing them would delete the recovery path
+    ///     to every pre-T6 release, which is a worse failure than the one this
+    ///     check prevents.
+    async fn assert_single_revision(&self, spec: &BlueGreenSpec) -> Result<()> {
+        let mut entries = Vec::new();
+        for (service, image) in spec.service_images() {
+            let revision = self.docker.image_label(image, REVISION_LABEL).await?;
+            entries.push(ServiceRevision::new(service, image, revision));
+        }
+
+        let verdict = check_revisions(&entries);
+        if let Some(reason) = verdict.rejection() {
+            tracing::error!(
+                target_name = %spec.target_name,
+                tag = %spec.tag,
+                "{reason}"
+            );
+            return Err(crate::DeployError::BadRequest(reason));
+        }
+        match verdict {
+            RevisionCheck::Uniform(rev) => tracing::info!(
+                target_name = %spec.target_name,
+                tag = %spec.tag,
+                revision = %rev,
+                "all {} service images agree on one commit",
+                entries.len()
+            ),
+            RevisionCheck::Unlabelled => tracing::warn!(
+                target_name = %spec.target_name,
+                tag = %spec.tag,
+                "no service image carries {REVISION_LABEL}; deploying an \
+                 unverifiable release (pre-T6 images, or built outside CI)"
+            ),
+            RevisionCheck::Empty => {}
+            RevisionCheck::Divergent(_) => unreachable!("rejected above"),
+        }
         Ok(())
     }
 
