@@ -48,9 +48,15 @@ outputs:
     value: ${{ steps.appver.outputs.app_version }}
   build_date:
     description: >-
-      RFC3339 build timestamp. Identical to the `org.opencontainers.image.created`
-      label this action sets, so the label, the Dockerfile `LABEL` and the
-      runtime `built_at` all carry the same instant.
+      RFC3339 build timestamp of the BUILT COMMIT (its committer date in UTC),
+      not the moment this job happened to run. It must be derived from the
+      commit, because this composite action runs once per matrix leg: a
+      `date -u` here would stamp a different `org.opencontainers.image.created`
+      (and a different runtime `built_at`) into every service image of one
+      release, and `created` could then not be used to correlate the services
+      of a release. Identical to the `org.opencontainers.image.created` label
+      this action sets, so the label, the Dockerfile `LABEL` and the runtime
+      `built_at` all carry the same instant for every image of one release.
     value: ${{ steps.appver.outputs.build_date }}
 
 runs:
@@ -84,11 +90,34 @@ runs:
           echo "::error::could not resolve an app version (ref=${GITHUB_REF:-unset})"
           exit 1
         fi
+
+        # BUILD DATE = the committer date of the built commit, in UTC.
+        #
+        # NOT `date -u`: this composite action runs once per matrix leg (three
+        # backend images, three frontend images, each also per platform), so a
+        # wall-clock timestamp makes every service of one release report a
+        # different `org.opencontainers.image.created` / `built_at`. The commit
+        # date is the same value in every leg and in both workflows, so the
+        # label is a property of the release rather than of the runner.
+        commit_sha="${GITHUB_SHA:-HEAD}"
+        date_origin="committer date of $commit_sha"
+        build_date="$(TZ=UTC git show -s --format=%cd \
+          --date=format-local:%Y-%m-%dT%H:%M:%SZ "$commit_sha" 2>/dev/null || true)"
+        if [ -z "$build_date" ]; then
+          # Only reachable when the checkout has no git metadata. Fall back
+          # loudly: the value is still correct-ish, but it is no longer
+          # identical across the legs of one release.
+          echo "::warning::could not read the committer date of $commit_sha; falling back to the current time, which differs per matrix leg"
+          build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          date_origin="wall clock (NOT reproducible across matrix legs)"
+        fi
+
         {
           echo "app_version=$app_version"
-          echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "build_date=$build_date"
         } >> "$GITHUB_OUTPUT"
         echo "app_version=$app_version (from $origin)"
+        echo "build_date=$build_date ($date_origin)"
 
     - name: Docker metadata
       id: meta
