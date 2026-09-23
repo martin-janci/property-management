@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-23",
+  "since_iso": "2026-09-20T18:38:00Z",
+  "lag_hours": 70,
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso vs now",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "state.last_run_iso=2026-09-20T18:38:00Z, now=2026-09-23T16:31:00Z, LAG_HOURS≈70 (>36h threshold). Under stale_routine_alert threshold (LAG_DAYS<3)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-mutation-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-09-23 ppt-web-ui",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun mutateAsync without try/catch; only .isPending consumed",
+        "TemplateLibraryPage.tsx:53-60 — handleUseTemplate awaits mutateAsync then branches on result?.id, rejection swallowed and neither navigate runs",
+        "ExecutionMonitoringPage.tsx:74-77 — handleRetry awaits mutateAsync then closes details modal, hiding error state",
+        "grep -rn MutationCache frontend/apps/ppt-web/src/ = 0 hits (no global onError fallback)",
+        "same class as reality-web PRs #2967/#2968/#2969 (silent-fail import/CRM+Feed) — recurring anti-pattern"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-09-23.md && head -1 grep '^# 2026-09-23$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq slurpfile prev advance-check", "observed": "true (seen_signals grew, last_run_iso/last_commit_sha advanced)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq re-emit-check", "observed": "true (only cumulative-type re-emits allowed; none in this run)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap ≤ 8; decay applied to open items >14d", "observed": "no open items are >14d old this run (all open items updated 2026-09-21)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "brief annotation adversarial pass check", "observed": "1 new plan promoted, brief carries 'adversarial pass: passed'", "expected": "match" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans, each has 4 metadata + 11 headings + ≥1 capability tick + Mode + files exist", "observed": "1 plan; all metadata + headings + Mode: cloud-ok + C1/C6 ticked + all 4 file paths resolve", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (verified pre-commit)", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secret scan of staged diff (excluding baseline docs)", "observed": "0 hits", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "regenerate backlog.md and diff -q against staged", "observed": "byte-identical (regenerator tested against pre-mutation state)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief phases-failed vs cursor honesty check", "observed": "no phases failed; all cursors advanced appropriately", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans present in plans/ or plans/_archive/", "observed": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md still present", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ archive count at HEAD", "observed": "no plans archived this run; count preserved", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "regenerate IDEAS_TRIAGE.md and diff -q against staged", "observed": "byte-identical (regenerator tested against current state; produced identical output)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix cap + idempotency + kill-switch checks", "observed": "auto_fix_actions=[]; no candidate met certainty bar this run", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid (Phase 1.6 skipped: no-op)", "observed": "Phase 1.6 skipped; management/action-list.json + risks.json parse; pm_cursor.next_index=5 (0..7 valid); coverage_cursor.next_index=7 (in [0,13))", "expected": "true" },
+    { "goal": "G17", "passed": true, "command": "no telegram bot-token literal in staged diff", "observed": "0 hits", "expected": "0" }
+  ]
+}

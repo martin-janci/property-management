@@ -10732,6 +10732,32 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-mutation-silent-fail",
+      "title": "workflow-automation feature swallows mutateAsync errors across 3 pages (Rules delete/toggle/run, TemplateLibrary use-template, ExecutionMonitoring retry)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-09-23 ppt-web-ui"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 — confirmDelete/handleToggle/handleRun each `await mutation.mutateAsync(...)` with NO try/catch and NO mutation.error/isError branch anywhere in the file (only .isPending at 303/306). A failed delete closes the confirm dialog and re-enables the button with no explanation; a failed toggle/run reverts nothing visible.",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx:53-60 — handleUseTemplate does `const result = await createFromTemplate.mutateAsync(...); if (result?.id) navigate(...) else navigate('/automations/rules/new', { state: { template } });` — on mutateAsync REJECTION the unhandled promise propagates and neither navigate runs, but nothing tells the user why. `createFromTemplate.error` is never rendered in the file.",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx:74-77 — handleRetry does `await retryExecution.mutateAsync(log.id); setSelectedLog(null);` with no try/catch and no error rendering; a failed retry closes the details modal, hiding the failure state entirely.",
+        "verified query-provider audit: `grep -rn MutationCache frontend/apps/ppt-web/src/` returns zero hits — no global onError toast fallback catches these either. Same recurring bug class as reality-web PRs #2967/#2968/#2969 (import/CRM+Feed silent-fail) and PR #2890 (code-review-reality-web-mutation-no-onerror). Fix shape: wrap each in try/catch + toast, mirroring frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:100-190 (proper pattern with onToastError already in-place).",
+        "Contrast: CreateRulePage.tsx:62 and EditRulePage.tsx:113 in the SAME feature DO render createRule.error / updateRule.error — pattern was correct for one set of pages and forgotten for the delete/toggle/run/use-template/retry actions."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx"
+      ],
+      "created_at": "2026-09-23",
+      "updated_at": "2026-09-23",
+      "plan": "plans/code-review-ppt-web-ui-workflow-automation-mutation-silent-fail.md"
     }
   ]
 }
