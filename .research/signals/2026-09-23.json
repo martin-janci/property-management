@@ -1,0 +1,164 @@
+{
+  "date": "2026-09-23",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-23",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "state.last_run_iso=2026-09-20T18:38:00Z; current run at 2026-09-23T20:34Z — lag ~74h (3d 2h) since previous routine commit",
+        "cloud routine cursor stale; dispatcher-branch (planning) has continued hourly cycles independently — 30 dispatcher chore commits on dev in the window with 0 claimed / 0 reviewed / 0 merged"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-09-23",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-09-20T18:38:00Z is 3d old (>=3d threshold); cloud routine trigger may be paused or failing to fire",
+        "dispatcher state on planning branch (assignments.json) is fresh — the two loops advance independently, so a stale routine cursor does not by itself indicate dispatcher trouble"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "buffer-low-2026-09-23-payload",
+      "type": "operator-note",
+      "source": "routine fire-payload 2026-09-23",
+      "score_delta": 0,
+      "evidence": [
+        "operator payload: 'buffer-low: claimable=0/72 — all backlog structurally blocked (mobile-native AGP egress + api-server swagger-ui egress); need landable frontend vectors + operator to unblock #2966 and the 5 needs-human-review PRs'",
+        "backlog.json snapshot at this run: 3 open (all recent code-review-reality-web-*-silent-fail, already PR'd as #2967/#2968/#2969), 2 ready (mobile-native-kmp — blocked by AGP egress per closed #2652)",
+        "operator ask: land more frontend vectors + review the 5 open drafts (#2967-#2971). Routine cannot land PRs (Phase 5 allowlist is doc-stub / orphan-remove / lockfile-bump / issue / stalled-review-comment only)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-23.md && head -1 .research/briefs/2026-09-23.md | grep -q '^# 2026-09-23$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json seen_signals grew (+3), last_commit_sha advanced, stats.runs +1",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no new signal id already in prior seen_signals with non-zero score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap ≤8, decay applied to open items >14d",
+      "observed": "no open items >14d this run; no scores >8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has adversarial pass note in brief",
+      "observed": "0 new plans this run — vacuously pass",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each has 15 sections + ≥1 real file",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged .research/ diff (baseline docs exempt)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md <(regen from backlog.json)",
+      "observed": "byte-identical (only timestamp changed; JSON unchanged)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists phase failures; failed-phase cursors did not advance",
+      "observed": "no phase failures this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan still present (active or archive)",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive plan count >= HEAD's count",
+      "observed": "unchanged (8 files in _archive)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md <(regen from backlog.json triage rows)",
+      "observed": "byte-identical (only timestamp changed; JSON unchanged)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + kill-switch + idempotency",
+      "observed": "auto_fix_actions=[]; no candidate this run (0 pr / 0 issue / 0 comment)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor bounds + GC7 coverage_cursor",
+      "observed": "Phase 1.6 skipped this run (no-op per spec)",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot-token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
