@@ -1,9 +1,18 @@
 {
-  "generated": "2026-09-21T12:25:38Z",
+  "generated": "2026-09-23T08:29:00Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-23T08:29:00Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-09), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-09 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new; and the unfiltered 'is:pr is:merged base:dev merged:>=2026-09-09' => total_count=0, i.e. ZERO PRs merged into dev anywhere in the 14d window. Cross-checked list_pull_requests (closed, base=dev, updated desc, perPage=50): newest merge into dev is #2955/#2956 @2026-09-08 (both already carry post-merge-reviewed from prior runs), everything below is older/out-of-window; the four most-recent in-window-adjacent merges (2955@09-08,2956@09-08,2950@09-07,2952@09-07) are all past-reviewed. Top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2936,2934,2867,2865,2749) closed unmerged (no merged_at). Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-09-21T12:25:38Z",
       "prs_scanned": 0,
@@ -487,57 +496,6 @@
         2858,
         2860
       ]
-    },
-    {
-      "run_at": "2026-08-26T15:00:00Z",
-      "prs_scanned": 2,
-      "clean": [
-        2855
-      ],
-      "with_issues": [
-        {
-          "pr": 2856,
-          "issue": 2859,
-          "findings": 2,
-          "specialist": "pm-rust-backend",
-          "note": "server-side overdue moderation filter: (1) medium test-gap -- new overdue_only SQL predicate in list_moderation_cases has no #[sqlx::test]; FE test mocks the hook, only backend test change is a call-signature bump in aml_dsa_cross_org_idor_tests.rs; no list<->overdue_count invariant test. (2) low correctness -- overdue view hard-caps at limit=200 (=MAX_PAGE_LIMIT) with no pagination, so orgs with >200 breaches re-exhibit the badge-vs-list mismatch #2853 fixed; suggest an explicit 'showing first 200' affordance."
-        }
-      ],
-      "skipped_already_reviewed": [
-        2856,
-        2854,
-        2853,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833,
-        2830,
-        2829,
-        2828,
-        2827,
-        2826,
-        2825,
-        2821,
-        2818,
-        2817
-      ],
-      "note": "Tier-1d demand-driven post-merge review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI unavailable -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no compile: api-server build pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, and no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-12), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Enumerated 40 closed-into-dev PRs (updated desc): only #2855 and #2856 lacked post-merge-reviewed; both merged 2026-08-26, both landable FE/BE TS+Rust (preferred over mobile-native). Reviewed both; labeled both post-merge-reviewed. #2855 (DsaReportsPage window.alert->localized toast) CLEAN: 3 regression tests, i18n across 6 locales, DsaTransparencyReportCard hardcoded labels explicitly out-of-scope. #2856 -> opened follow-up #2859 (2 findings). Verified in-tree that #2856's react-query key includes params (toggle refetches) and MAX_PAGE_LIMIT=200 matches FE OVERDUE_PAGE_LIMIT=200 -- those are correct; findings are the untested predicate + the 200-cap truncation. Deduped: no open from-merged-review issue for #2856 (#2853 closed source issue; #2857 unrelated security follow-up)."
     }
   ]
 }
