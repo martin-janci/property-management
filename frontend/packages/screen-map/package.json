@@ -27,13 +27,13 @@
     "@ppt/sitemap": "workspace:*",
     "commander": "^15.0.0",
     "gray-matter": "^4.0.3",
-    "hono": "^4.13.5",
+    "hono": "^4.13.8",
     "yauzl-promise": "^4.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^5.3.0",
     "vitest": "^4.1.11"
   }
