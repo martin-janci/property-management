@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-24",
+  "run_iso": "2026-09-24T02:30:00Z",
+  "since_iso": "2026-09-23T20:34:00Z",
+  "lag_hours": 5,
+  "cursors_before": {
+    "last_pr_seen": 2956,
+    "last_issue_seen": 2966,
+    "last_commit_sha": "be8ddd57efac5dc8a035e2a43c5c58169c3242ff"
+  },
+  "cursors_after": {
+    "last_pr_seen": 2956,
+    "last_issue_seen": 2966,
+    "last_commit_sha": "497f79307127e54c106a4809df16af696aa72411"
+  },
+  "phases_run": ["1", "2", "4", "6"],
+  "phases_skipped": {
+    "1.5": "no application-code churn in the 5h window; every dev commit was a .research/-only dispatcher chore. Skipping avoids duplicating dispatcher Tier-1d coverage already logged in signals/2026-09-2{1,2,3}-*-tier1d.json.",
+    "1.6": "same empty-churn reason; dispatcher project-management artifacts were re-generated at Tier-1c/Tier-1d in the same 5h window (see dispatcher commits 6edf704d and 497f7930). A fresh pm role-agent invocation over zero delta is waste.",
+    "5": "no signal met the certainty bar (confidence=high + score>=3 + allowlist type). No auto-fix candidate."
+  },
+  "signals": [
+    {
+      "id": "buffer-low-2026-09-24-payload",
+      "type": "operator-payload",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "candidate_vector": null,
+      "confidence": "high",
+      "evidence": "operator fire payload: 'buffer-low: claimable=8/72 — refill planner (all remaining open items mobile-native egress-gated or human-gated; 0 landable)'. Log-only; the buffer starvation is a symptom of operator-only stall (5 draft PRs #2967-#2971 waiting on human review + 8 mobile-native/KMP items behind AGP dl.google.com egress + 2 backend retries behind utoipa-swagger-ui egress #2966). The routine cannot help directly — none of these match Phase 5's allowlist."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-09-24.md && head -1 | grep '^# 2026-09-24$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "compare staged state.json vs HEAD state.json", "observed": "last_commit_sha changed be8ddd57 -> 497f7930; stats.quiet_days bumped 3 -> 4; seen_signals grew by 1", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq unique backlog ids", "observed": "unique", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "signal-vs-seen dedup", "observed": "buffer-low-2026-09-24-payload not previously seen", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "cap+decay", "observed": "no scores >8; 0 open items older than 14d needing decay", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "adversarial pass per new plan", "observed": "no new plans this run", "expected": "vacuous pass" },
+    { "goal": "G7", "passed": true,  "command": "plan-file count/readiness", "observed": "0 new plans this run (cap is 2)", "expected": "<=2 and all sections present" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l", "observed": "0 (only .research/ paths)", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "secret/hostname grep on staged diff (excluding baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identity vs regen", "observed": "only timestamp line changed; backlog.json items unchanged, so regen is identical to staged", "expected": "diff exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty", "observed": "no phase failures reported; brief's 'Phases that failed' says none", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still exist", "observed": "no plan files deleted this run; archive count unchanged", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run >= HEAD count", "observed": "unchanged (8 archived plans both sides)", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identity vs regen", "observed": "only timestamp line changed; triage rows unchanged, so regen is identical to staged", "expected": "diff exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (cap+idempotency+killswitch)", "observed": "auto_fix_actions=[]; no push, no issue, no comment", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + coverage cursor (only when Phase 1.6 ran)", "observed": "Phase 1.6 skipped this run; gate no-op", "expected": "vacuous pass" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal", "observed": "0 matches", "expected": "0" }
+  ]
+}
