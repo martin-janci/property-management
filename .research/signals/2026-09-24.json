@@ -1,13 +1,25 @@
 {
   "date": "2026-09-24",
-  "signals": [],
+  "signals": [
+    {
+      "id": "buffer-low-2026-09-24-payload",
+      "type": "operator-note",
+      "source": "routine trigger payload 2026-09-24T14:29Z",
+      "score_delta": 0,
+      "evidence": "operator payload verbatim: 'buffer-low: claimable=8/72 — refill planner (landable pool empty: mobile-native + backend cloud-build gated)'. Recorded as an operator-note; the routine cannot promote below the readiness gate on the operator's request. The 2 mobile-native `ready` plans + 3 reality-web open items with live PRs (#2967-#2969) already represent every route the readiness gate opens; the 'cloud-build gated' half of the payload is an infra observation for the dispatcher-side executor, out of the routine's scope.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
   "auto_fix_actions": [],
   "auto_fix_skipped_reason": "no candidate — allowlist did not fire",
   "notes": [
-    "Quiet incremental run (6h after 2026-09-23T20:34Z). 0 merged PRs, 0 issues, 0 open-PR updates, 0 application-code commits (7 dev commits are all .research/ chore).",
-    "Phase 1.5 skipped: no application-code churn since last run — dispatcher Tier-1d cycles cover the window (same call as 2026-09-23).",
-    "Phase 1.6 skipped: same reason.",
-    "backlog.md + IDEAS_TRIAGE.md regenerated from backlog.json; picked up 3 dispatcher-added rows (2026-09-21) and 1 status flip (webhook.rs open→dropped, from yesterday's routine)."
+    "Same-day rerun (11h after this morning's 2026-09-24T03:19Z run) triggered by an operator buffer-low payload.",
+    "0 merged PRs, 0 issues, 0 open-PR updates from a human, 5 more `.research/` dispatcher chore commits on `dev` since morning cursor (e09587a2 -> a4b00d3).",
+    "Phase 1.5 skipped: 0 application-code churn since the last routine run — Phase 1.5 would repeat the same review the dispatcher's Tier-1d loops already cover.",
+    "Phase 1.6 skipped: same reason; PM cursor + coverage cursor unchanged.",
+    "backlog.md + IDEAS_TRIAGE.md regenerated with fresh timestamp; JSON body byte-identical to morning render (no items added or flipped).",
+    "quiet_days NOT bumped: this calendar day was already counted quiet by the morning routine run; bumping again would double-count 2026-09-24."
   ],
   "goal_checks": [
     {
@@ -21,7 +33,7 @@
       "goal": "G2",
       "passed": true,
       "command": "jq compare staged state.json vs HEAD",
-      "observed": "true",
+      "observed": "true (last_commit_sha e09587a2 -> a4b00d3; last_run_iso advanced; seen_signals grew by 1; stats.runs 81 -> 82)",
       "expected": "true"
     },
     {
@@ -35,16 +47,22 @@
       "goal": "G4",
       "passed": true,
       "command": "no cumulative-type re-emit with score_delta != 0",
-      "observed": "true (0 signals emitted)",
+      "observed": "true (1 signal emitted, buffer-low-2026-09-24-payload — not previously in seen_signals, score_delta=0)",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq no item.score > 8",
-      "observed": "true",
-      "expected": "true",
-      "remediation": "decay check no-op — 0 open items older than 14d this run"
+      "command": "jq no item.score > 8; decay of open>14d",
+      "observed": "true — 0 items over cap; 0 open items with updated_at older than 14d (3 open reality-web rows are 3 days old)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "each new plan has matching brief annotation",
+      "observed": "0 new plans this run",
+      "expected": "N/A"
     },
     {
       "goal": "G7",
@@ -71,9 +89,8 @@
       "goal": "G10",
       "passed": true,
       "command": "regenerate backlog.md from backlog.json; diff -q",
-      "observed": "identical",
-      "expected": "identical",
-      "remediation": "regenerated view repaired 3 missing rows + 1 status flip left in place by prior runs"
+      "observed": "identical (only timestamp changed vs morning render; JSON body unchanged)",
+      "expected": "identical"
     },
     {
       "goal": "G11",
@@ -114,7 +131,7 @@
       "goal": "G16",
       "passed": true,
       "command": "jq -e .items on action-list.json + risks.json; project-state.md non-empty; pm_cursor.next_index in [0,7]",
-      "observed": "all ok; pm_cursor unchanged (Phase 1.6 skipped) — GC7 clause is a no-op",
+      "observed": "all ok; pm_cursor + coverage_cursor unchanged (Phase 1.6 skipped) — GC7 clause is a no-op",
       "expected": "all pass"
     },
     {
