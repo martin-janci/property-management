@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-09-24 03:17 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-24 20:41 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -39,6 +39,9 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | ppt-web-core faults.tsx: 7 silent-fail mutations (triage/resolve/confirm/reopen/addComment/addAttachment/deleteAttachment) — same class as reality-web import silent-fail | `frontend/apps/ppt-web/src/routes/groups/faults.tsx (+1)` | rotating-expert-review ppt-web-core 2026-09-24 | 2026-09-24 | open | — |
+| 2 | bug | ppt-web-core ai-dashboards.tsx: acknowledge mutations for sentiment alerts + maintenance predictions silent-fail — no onError, no toast | `frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx (+2)` | rotating-expert-review ppt-web-core 2026-09-24 | 2026-09-24 | open | — |
+| 2 | bug | ppt-web-core messaging.tsx: deleteMessage mutation silent-fail — inconsistent with sibling delete/archive handlers which do toast | `frontend/apps/ppt-web/src/routes/groups/messaging.tsx (+1)` | rotating-expert-review ppt-web-core 2026-09-24 | 2026-09-24 | open | — |
 | 2 | bug | CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure | `frontend/apps/reality-web/src/components/import/CrmConnection.tsx (+1)` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 2 | bug | FeedCard pause-toggle and delete actions swallow mutation errors — a failed feed removal looks identical to success | `frontend/apps/reality-web/src/components/import/FeedImport.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 2 | bug | SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained | `frontend/apps/reality-web/src/components/import/SyncSchedule.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |

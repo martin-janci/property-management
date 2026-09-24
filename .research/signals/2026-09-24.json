@@ -1,13 +1,192 @@
 {
   "date": "2026-09-24",
-  "signals": [],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-faults-silent-mutations",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:445 — triage.mutate({...}) has no onError; hook useTriageFault (packages/api-client/src/faults/hooks.ts:156) also omits onError",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:451 — resolve.mutate({resolution_notes}) silent-fail; useResolveFault (faults/hooks.ts:182) has no onError",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:452 — confirm.mutate(rating) silent-fail",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:453 — reopen.mutate(reason) silent-fail",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:455 — addComment.mutate silent-fail",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:457 — addAttachment.mutate(file) silent-fail (upload failures never surface)",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:458 — deleteAttachment.mutate(id) silent-fail"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/packages/api-client/src/faults/hooks.ts"
+      ],
+      "title": "ppt-web-core faults.tsx: 7 silent-fail mutations (triage/resolve/confirm/reopen/addComment/addAttachment/deleteAttachment) — same class as reality-web import silent-fail"
+    },
+    {
+      "id": "code-review-ppt-web-core-ai-ack-silent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx:48 — acknowledge.mutate(id) with no onError; useAcknowledgeSentimentAlert (features/sentiment/hooks/useSentiment.ts:89) has only onSuccess",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx:81 — acknowledge.mutate(id) silent-fail; useAcknowledgeMaintenancePrediction (features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:72) has only onSuccess",
+        "Failed POSTs leave the alert/prediction unacknowledged with no toast — same class as the reality-web import silent-fail already logged"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "title": "ppt-web-core ai-dashboards.tsx: acknowledge mutations for sentiment alerts + maintenance predictions silent-fail — no onError, no toast"
+    },
+    {
+      "id": "code-review-ppt-web-core-delete-msg-silent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx:207 — deleteMessage.mutate({threadId, messageId}) invoked with no onError and no user feedback",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:353 — useDeleteMessage mutation defines only onSuccess (invalidates queries); failures are swallowed by TanStack Query",
+        "Delete failures (permissions, offline, 4xx) show no toast; sibling delete/archive thread handlers in messaging.tsx do surface an error toast, so this handler is the odd one out"
+      ],
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts"
+      ],
+      "title": "ppt-web-core messaging.tsx: deleteMessage mutation silent-fail — inconsistent with sibling delete/archive handlers which do toast"
+    },
+    {
+      "id": "dep-update-noise-pr-2961",
+      "type": "dep-update-noise",
+      "source": "PR #2961",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2961 (dependabot open, updated in window)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2975",
+      "type": "dep-update-noise",
+      "source": "PR #2975",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2975 (dependabot open, updated in window)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2974",
+      "type": "dep-update-noise",
+      "source": "PR #2974",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2974 (dependabot open, updated in window)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2973",
+      "type": "dep-update-noise",
+      "source": "PR #2973",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2973 (dependabot open, updated in window)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2957",
+      "type": "dep-update-noise",
+      "source": "PR #2957",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2957 (dependabot open, updated in window)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2972",
+      "type": "dep-update-noise",
+      "source": "PR #2972",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2972 (dependabot open, updated in window)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2962",
+      "type": "dep-update-noise",
+      "source": "PR #2962",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2962 (dependabot open, updated in window)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2965",
+      "type": "dep-update-noise",
+      "source": "PR #2965",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2965 closed unmerged — dependabot self-superseded by newer group PR; not actionable"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2964",
+      "type": "dep-update-noise",
+      "source": "PR #2964",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2964 closed unmerged — dependabot self-superseded by newer group PR; not actionable"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2963",
+      "type": "dep-update-noise",
+      "source": "PR #2963",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2963 closed unmerged — dependabot self-superseded by newer group PR; not actionable"
+      ]
+    }
+  ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — allowlist did not fire",
+  "auto_fix_skipped_reason": "no candidate — Phase 1.5 findings are score 2 (below score>=3 bar); no allowlist match",
   "notes": [
-    "Quiet incremental run (6h after 2026-09-23T20:34Z). 0 merged PRs, 0 issues, 0 open-PR updates, 0 application-code commits (7 dev commits are all .research/ chore).",
-    "Phase 1.5 skipped: no application-code churn since last run — dispatcher Tier-1d cycles cover the window (same call as 2026-09-23).",
-    "Phase 1.6 skipped: same reason.",
-    "backlog.md + IDEAS_TRIAGE.md regenerated from backlog.json; picked up 3 dispatcher-added rows (2026-09-21) and 1 status flip (webhook.rs open→dropped, from yesterday's routine)."
+    "Same-day rerun triggered by buffer-low payload from operator (claimable=8/72, remaining cloud-blocked). Overwrote earlier brief + signals.",
+    "17h window: 0 merged PRs (last_pr_seen stays 2956), 0 new issues (last_issue_seen stays 2966), 9 commits on dev all .research/ chore. No code churn ⇒ no churn-hotspot / risky-churn signals.",
+    "7 open + 3 closed-unmerged dependabot PRs logged as dep-update-noise (score 0). Closed-unmerged dependabot PRs (#2963/#2964/#2965) are self-superseded by newer batched group PRs (#2973/#2974/#2975).",
+    "Phase 1.5 targeted the oldest cloud-landable segment (ppt-web-core, last 2026-08-29). Frontend expert returned 3 medium-severity silent-fail mutation findings — same class as the reality-web import bug already in flight (PRs #2967-#2969).",
+    "Phase 1.6 skipped: same-day rerun, no observed code churn, pm_cursor unchanged (next_index=5 pm-security still pending).",
+    "Phase 3 no-op: 3 new items land at score 2 (< score>=3 promotion bar). They refill the planner's cloud-landable buffer per operator trigger; dispatcher's backlog-refill will surface them.",
+    "last_commit_sha advanced to origin/dev HEAD 059b366 (10 same-day .research/ chore commits post-cursor). review_cursor.ppt-web-core → 2026-09-24."
   ],
   "goal_checks": [
     {
@@ -22,20 +201,21 @@
       "passed": true,
       "command": "jq compare staged state.json vs HEAD",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "remediation": "advanced last_run_iso + last_commit_sha + seen_signals (+13) + review_cursor.ppt-web-core + stats.runs+1 + stats.vectors_created+3"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq [.items[].id] | length == unique | length",
-      "observed": "true",
+      "command": "jq [.items[].id] uniqueness",
+      "observed": "true (422 unique)",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no cumulative-type re-emit with score_delta != 0",
-      "observed": "true (0 signals emitted)",
+      "command": "no non-cumulative re-emit with score_delta != 0 for ids already in prior seen_signals",
+      "observed": "true",
       "expected": "true"
     },
     {
@@ -44,12 +224,12 @@
       "command": "jq no item.score > 8",
       "observed": "true",
       "expected": "true",
-      "remediation": "decay check no-op — 0 open items older than 14d this run"
+      "remediation": "decay check no-op — 0 open items older than 14d (14d cutoff = 2026-09-10; all 3 opens updated 2026-09-21)"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "count new plans, headings, metadata",
+      "command": "count new plans",
       "observed": "0 new plans",
       "expected": "<=2"
     },
@@ -72,14 +252,13 @@
       "passed": true,
       "command": "regenerate backlog.md from backlog.json; diff -q",
       "observed": "identical",
-      "expected": "identical",
-      "remediation": "regenerated view repaired 3 missing rows + 1 status flip left in place by prior runs"
+      "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
       "command": "cross-check phases-that-failed vs unadvanced cursors",
-      "observed": "no phases failed",
+      "observed": "no phases failed; last_pr_seen + last_issue_seen not advanced because 0 new merged PRs / 0 new issues in window",
       "expected": "consistent"
     },
     {
@@ -107,7 +286,7 @@
       "goal": "G15",
       "passed": true,
       "command": "auto_fix_actions cap + idempotency + kill switch",
-      "observed": "0 actions this run",
+      "observed": "0 actions this run — no signal met certainty bar",
       "expected": "cap respected"
     },
     {

@@ -10732,6 +10732,78 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-faults-silent-mutations",
+      "title": "ppt-web-core faults.tsx: 7 silent-fail mutations (triage/resolve/confirm/reopen/addComment/addAttachment/deleteAttachment) — same class as reality-web import silent-fail",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-09-24"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:445 — triage.mutate({...}) has no onError; hook useTriageFault (packages/api-client/src/faults/hooks.ts:156) also omits onError",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:451 — resolve.mutate({resolution_notes}) silent-fail; useResolveFault (faults/hooks.ts:182) has no onError",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:452 — confirm.mutate(rating) silent-fail",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:453 — reopen.mutate(reason) silent-fail",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:455 — addComment.mutate silent-fail"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/packages/api-client/src/faults/hooks.ts"
+      ],
+      "created_at": "2026-09-24",
+      "updated_at": "2026-09-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ai-ack-silent",
+      "title": "ppt-web-core ai-dashboards.tsx: acknowledge mutations for sentiment alerts + maintenance predictions silent-fail — no onError, no toast",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-09-24"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx:48 — acknowledge.mutate(id) with no onError; useAcknowledgeSentimentAlert (features/sentiment/hooks/useSentiment.ts:89) has only onSuccess",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx:81 — acknowledge.mutate(id) silent-fail; useAcknowledgeMaintenancePrediction (features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:72) has only onSuccess",
+        "Failed POSTs leave the alert/prediction unacknowledged with no toast — same class as the reality-web import silent-fail already logged"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-09-24",
+      "updated_at": "2026-09-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-delete-msg-silent",
+      "title": "ppt-web-core messaging.tsx: deleteMessage mutation silent-fail — inconsistent with sibling delete/archive handlers which do toast",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-09-24"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx:207 — deleteMessage.mutate({threadId, messageId}) invoked with no onError and no user feedback",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:353 — useDeleteMessage mutation defines only onSuccess (invalidates queries); failures are swallowed by TanStack Query",
+        "Delete failures (permissions, offline, 4xx) show no toast; sibling delete/archive thread handlers in messaging.tsx do surface an error toast, so this handler is the odd one out"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts"
+      ],
+      "created_at": "2026-09-24",
+      "updated_at": "2026-09-24",
+      "plan": null
     }
   ]
 }
