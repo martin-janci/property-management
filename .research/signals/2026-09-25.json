@@ -137,7 +137,7 @@
       "goal": "G13",
       "passed": true,
       "command": "count files in plans/_archive/; now>=HEAD",
-      "observed": "now=8, HEAD=8",
+      "observed": "now=9, HEAD=9",
       "expected": "now>=HEAD"
     },
     {
