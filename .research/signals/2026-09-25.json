@@ -1,0 +1,294 @@
+{
+  "generated": "2026-09-25T10:53:40Z",
+  "source_run": "daily research routine",
+  "since_last_run": "2026-09-24T03:19:07Z",
+  "lag_hours": 31,
+  "phases_ok": [
+    "phase-1",
+    "phase-1.5",
+    "phase-1.6",
+    "phase-2",
+    "phase-3",
+    "phase-4"
+  ],
+  "phases_failed": [],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-fault-detail-mutations-swallow-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 ppt-web-core routes/groups/faults.tsx). Signals cross-referenced from .research/signals/2026-09-25-ppt-web-core-tier1d.json which the dispatcher generated earlier today.",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/packages/api-client/src/faults/hooks.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:444-458 wires 7 state-changing fault-workflow handlers (Triage/Resolve/Confirm/Reopen/AddComment/AddAttachment/DeleteAttachment) as bare .mutate() calls with no onError option and no try/catch.",
+        "Generated hooks in frontend/packages/api-client/src/faults/hooks.ts (useResolveFault :182-192, useConfirmFault :195-205, useReopenFault :208+, plus siblings) only wire onSuccess; TanStack Query swallows the rejected mutationFn — no toast, no inline error, no state change, cache not invalidated on failure.",
+        "Correct pattern already exists in-repo: reports.tsx:148-157 downloadReport.mutate with onError toast (guarded by reports.download-retry.route.test.tsx); financial.tsx:204-210 inline onError.",
+        "Fix (low-risk): onError toast at each call site in faults.tsx (mirroring reports.tsx), or attach shared onError to the generated fault mutation hooks."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 ppt-web-core contexts/OrganizationProvider.tsx). Signals cross-referenced from .research/signals/2026-09-25-ppt-web-core-tier1d.json.",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-10 rebuilds the context value on every render; not wrapped in useMemo.",
+        "OrganizationProvider consumes useAuth() and re-renders on every AuthContext change (silent token refresh spreads a new user object). Every context consumer sees a new value identity even when org fields are unchanged.",
+        "Impact: render-perf smell on memoized selectors + useEffect deps keyed on the context object. Fix: wrap in useMemo([user?.organizationId, user?.organizationName])."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "type": "stalled-review",
+      "source": "PR #2902",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2902 (screen-map-drift-pr-2894-reality: reconcile saved-searches screen-map with PR #2894 i18n) opened 2026-08-31 by martin-janci; last activity 2026-09-18 (7d idle, 25d open). Draft, label=needs-human-review — past the >7d stalled threshold and the >14d dispatcher-park mark."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "type": "stalled-review",
+      "source": "PR #2744",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2744 (fix(dispatcher): un-wedge oversize-archive push (#1162) + close retry-remint cross-id ghost (#2460)) opened 2026-08-13 by martin-janci; last activity 2026-08-13 (43d idle, 43d open). Draft, label=needs-human-review — the most-aged item in the needs-human-review queue this run."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2957",
+      "type": "dep-update-noise",
+      "source": "PR #2957",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot cargo axum group — tower-http 0.7.0 → 0.7.1 in /backend; open since 2026-09-10, 15d idle. Not scored (dep-update-noise)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2960",
+      "type": "dep-update-noise",
+      "source": "PR #2960",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot npm — expo-secure-store 56.0.4 → 57.0.3 in /frontend; open since 2026-09-10, 15d idle. Not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2961",
+      "type": "dep-update-noise",
+      "source": "PR #2961",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot gradle kotlin group — 4 updates; open since 2026-09-10, 15d idle. Not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2962",
+      "type": "dep-update-noise",
+      "source": "PR #2962",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot gradle compose group — androidx.compose:compose-bom 2026.06.01 → 2026.09.00; open since 2026-09-17, 8d idle. Not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2972",
+      "type": "dep-update-noise",
+      "source": "PR #2972",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot gradle ktor group — 7 updates in /mobile-native; open 2026-09-24. Not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2973",
+      "type": "dep-update-noise",
+      "source": "PR #2973",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot gradle-minor-patch group — 5 updates; open 2026-09-24. Not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2974",
+      "type": "dep-update-noise",
+      "source": "PR #2974",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot cargo-minor-patch group — 17 updates; open 2026-09-24. Not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2975",
+      "type": "dep-update-noise",
+      "source": "PR #2975",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot npm-minor-patch group — 29 updates; open 2026-09-24. Not scored."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-25.md && head -1 | grep -q ^# 2026-09-25$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursors + seen_signals diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id re-scored (non-cumulative)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items > 14d — decay pass is trivially satisfied",
+      "observed": "0 candidates",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans have adversarial pass",
+      "observed": "no plans promoted this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans in this diff",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname grep on staged diff (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases surfaced + cursors held",
+      "observed": "no phases failed",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans in plans/ or plans/_archive/",
+      "observed": "no prior-run plan moves this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD archive count",
+      "observed": "now=9 head=9",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen(backlog.json | vector==triage)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <=3 with per-category caps",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "PM artifacts valid + coverage_cursor advanced with pm_cursor",
+      "observed": "EPICS=13 CC_NOW=8 CC_HEAD=7 PM_NOW=6 PM_HEAD=5",
+      "expected": "advance both"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

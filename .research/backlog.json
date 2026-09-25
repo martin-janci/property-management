@@ -10732,6 +10732,89 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-fault-detail-mutations-swallow-errors",
+      "title": "ppt-web fault-detail actions (Triage/Resolve/Confirm/Reopen/AddComment/AddAttachment/DeleteAttachment) fire mutations with no onError — 4xx/5xx silently swallowed on manager-critical fault workflow",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-25 (ppt-web-core routes/groups/faults.tsx)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:444-458 wires 7 state-changing fault-workflow handlers (Triage/Resolve/Confirm/Reopen/AddComment/AddAttachment/DeleteAttachment) as bare .mutate() calls with no onError option and no try/catch.",
+        "The generated mutation hooks in frontend/packages/api-client/src/faults/hooks.ts (useResolveFault :182-192, useConfirmFault :195-205, useReopenFault :208+, plus siblings) only wire onSuccess; TanStack Query swallows the rejected mutationFn — no toast, no inline error, no state change, cache not invalidated on failure.",
+        "Correct pattern already exists in-repo: frontend/apps/ppt-web/src/routes/groups/reports.tsx:148-157 (downloadReport.mutate with onError toast, guarded by reports.download-retry.route.test.tsx); frontend/apps/ppt-web/src/routes/groups/financial.tsx:204-210 (inline onError on mutations).",
+        "Fix (low-risk): pass an onError toast at each call site in faults.tsx (mirroring reports.tsx), or attach a shared onError to the generated fault mutation hooks."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/packages/api-client/src/faults/hooks.ts"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "title": "ppt-web OrganizationProvider context value rebuilt on every render — every AuthContext token-refresh cascades unrelated org-consumer re-renders",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-25 (ppt-web-core contexts/OrganizationProvider.tsx)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-10 — value object is rebuilt on every render (not wrapped in useMemo) and passed to <OrganizationContext.Provider value={value}>.",
+        "OrganizationProvider consumes useAuth() and re-renders on every AuthContext change (silent token refresh calls setUser at contexts/AuthContext.tsx:433-435, spreading a new user object), producing a new value identity even when organizationId/organizationName are unchanged.",
+        "Impact is a render-perf smell rather than a crash: memoized selectors / useMemo/useEffect deps keyed on the context object re-run on unrelated auth churn.",
+        "Fix: wrap the object in useMemo([user?.organizationId, user?.organizationName])."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "title": "stalled review: PR #2902 screen-map-drift-pr-2894-reality reconcile (25d open, 7d idle, draft on needs-human-review)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2902"
+      ],
+      "evidence": [
+        "PR #2902 (screen-map-drift-pr-2894-reality: reconcile saved-searches screen-map with PR #2894 i18n) opened 2026-08-31 by martin-janci; last activity 2026-09-18 (7d idle, 25d open). Draft, label=needs-human-review — sitting past the >7d stalled threshold and past the >14d dispatcher-park mark. Auto-fix allowlist could ping but score=1 < 3 gate."
+      ],
+      "files": [],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2744",
+      "title": "stalled review: PR #2744 fix(dispatcher) un-wedge oversize-archive push + retry-remint ghost close (43d open, 43d idle, draft on needs-human-review)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2744"
+      ],
+      "evidence": [
+        "PR #2744 (fix(dispatcher): un-wedge oversize-archive push (#1162) + close retry-remint cross-id ghost (#2460)) opened 2026-08-13 by martin-janci; last activity 2026-08-13 (43d idle, 43d open). Draft, label=needs-human-review — the most-aged item in the needs-human-review queue this run."
+      ],
+      "files": [],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
     }
   ]
 }

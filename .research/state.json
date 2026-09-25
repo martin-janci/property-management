@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-24T03:19:07Z",
-  "last_run_ms": 60000,
+  "last_run_iso": "2026-09-25T10:53:40Z",
+  "last_run_ms": 4321,
   "last_pr_seen": 2956,
   "last_issue_seen": 2966,
-  "last_commit_sha": "e09587a290ff46655646f5b3f4b6e39f863a98d7",
+  "last_commit_sha": "59cdd7ef6e9c5f99364c96f7cafaf5fb67c8891f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -524,6 +524,7 @@
     }
   },
   "seen_signals": [
+    "buffer-low-2026-09-23-payload",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -730,11 +731,13 @@
     "code-review-ppt-web-core-api-onunauthorized-unwired",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
+    "code-review-ppt-web-core-fault-detail-mutations-swallow-errors",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
     "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
     "code-review-ppt-web-core-logout-cache-purge-gap",
     "code-review-ppt-web-core-mutation-no-onerror",
     "code-review-ppt-web-core-notfound-i18n-gap",
+    "code-review-ppt-web-core-org-provider-value-not-memoized",
     "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-route-error-boundary-gap",
@@ -833,11 +836,23 @@
     "dep-update-noise-pr-2476",
     "dep-update-noise-pr-2477",
     "dep-update-noise-pr-2491",
+    "dep-update-noise-pr-2583",
+    "dep-update-noise-pr-2585",
+    "dep-update-noise-pr-2586",
     "dep-update-noise-pr-2625",
     "dep-update-noise-pr-2673",
     "dep-update-noise-pr-2749",
     "dep-update-noise-pr-2750",
     "dep-update-noise-pr-2751",
+    "dep-update-noise-pr-2935",
+    "dep-update-noise-pr-2957",
+    "dep-update-noise-pr-2960",
+    "dep-update-noise-pr-2961",
+    "dep-update-noise-pr-2962",
+    "dep-update-noise-pr-2972",
+    "dep-update-noise-pr-2973",
+    "dep-update-noise-pr-2974",
+    "dep-update-noise-pr-2975",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -888,6 +903,8 @@
     "lag-warning-2026-08-22",
     "lag-warning-2026-08-25",
     "lag-warning-2026-08-28",
+    "lag-warning-2026-09-20",
+    "lag-warning-2026-09-23",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -902,6 +919,7 @@
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
     "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/reports.rs",
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
@@ -934,10 +952,13 @@
     "screen-map-drift-pr-839-ppt",
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
+    "stale-routine-alert-2026-09-23",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
     "stalled-review-pr-2559",
+    "stalled-review-pr-2744",
+    "stalled-review-pr-2902",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-aml-review-decision-cast",
@@ -1005,16 +1026,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "lag-warning-2026-09-20",
-    "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
-    "dep-update-noise-pr-2583",
-    "dep-update-noise-pr-2585",
-    "dep-update-noise-pr-2586",
-    "dep-update-noise-pr-2935",
-    "lag-warning-2026-09-23",
-    "stale-routine-alert-2026-09-23",
-    "buffer-low-2026-09-23-payload"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1022,14 +1034,14 @@
     "api-core": "2026-09-01",
     "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-09-06",
-    "ppt-web-core": "2026-08-29",
+    "ppt-web-core": "2026-09-25",
     "reality-web": "2026-08-29",
     "mobile-rn": "2026-09-09",
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 81,
-    "vectors_created": 373,
+    "runs": 82,
+    "vectors_created": 377,
     "plans_created": 30,
     "quiet_days": 4,
     "auto_fix_count": 0
@@ -1045,19 +1057,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-09-25",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }
