@@ -1,9 +1,18 @@
 {
-  "generated": "2026-09-24T10:30:03Z",
+  "generated": "2026-09-25T12:25:47Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-25T12:25:47Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-11), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI proxy-403 unreliable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives; no MCP issues opened). Enumeration: search_pull_requests 'is:merged base:dev merged:>=2026-09-11' => total_count=0 (search index unsynced in runner, as in prior runs). Cross-checked list_pull_requests (state=closed, base=dev): sort=created desc perPage=40 AND sort=updated desc perPage=25. Newest genuine merge into dev is #2956@2026-09-08T20:33Z (then #2955@09-08, #2952/#2950@09-07) — all already carry post-merge-reviewed from prior runs and all predate the 09-11 window start. #463 (merged 2026-05-24, updated 09-22 by unrelated activity) is likewise already post-merge-reviewed and far out of window. Higher-numbered rows 2965/2964/2963/2959/2958/2939/2936/2933/2808/2591 have no merged_at (open or closed-unmerged dependabot PRs), not merges into dev. ZERO PRs merged into dev within the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-09-24T10:30:03Z",
       "prs_scanned": 0,
@@ -408,50 +417,6 @@
         2870,
         2869,
         2868
-      ]
-    },
-    {
-      "run_at": "2026-08-27T20:27:31Z",
-      "prs_scanned": 2,
-      "clean": [
-        2864,
-        2863
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        2860,
-        2858,
-        2856,
-        2855,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833,
-        2829,
-        2826,
-        2825,
-        2821
-      ],
-      "note": "Tier-1d demand-driven post-merge review (claim buffer starved: honest claimable=6, all mobile-native/KMP-gated & unlandable in cloud runner). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6 (did NOT touch assignments.json/action-list.json, no git add/commit/push). gh CLI proxy-403'd -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, 2 PR diffs reviewed inline + in-tree source verification (static/diff review only: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-13), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run (2026-08-27T02:00Z) reviewed #2858+#2860 and opened #2861+#2862. Label-based enumeration of merged-into-dev PRs: exactly TWO lacked post-merge-reviewed -- #2864 (merged 2026-08-27T08:30Z) and #2863 (merged 2026-08-27T06:25Z). NOTE: these two PRs ARE the auto-impl fixes for the follow-up issues the prior run filed (#2864 Closes #2861, #2863 Closes #2862) -- i.e. this is a follow-up-of-follow-up loop closure. BOTH CLEAN: verified the fixes fully & correctly address the filed findings. #2864 (rust-backend, db+api-server): adds `ORDER BY granted_at ASC, organization_id ASC, role ASC` to MembershipRepository::list_for_user -- a TOTAL order over the (user_id,organization_id,role) PK (used granted_at not the issue-proposed created_at because user_memberships has no created_at col; correct), fixing the ROOT-CAUSE non-determinism finding #1 at source so every .first() caller is deterministic; removes the now-dead single-org check_capability_grant (finding #2, grep-confirmed zero callers); refreshes the stale grant_capability doc-comment to the strictest-across-all-orgs semantics (finding #3). All 3 residual findings from #2861 resolved. 2 IG3 #[sqlx::test]s in new membership_test.rs (orders_by_granted_at inserts later row first + asserts earlier sorts first [fails on pre-fix no-ORDER-BY]; tiebreaks_deterministically same granted_at two roles + repeatability). Verified in-tree: check_principal_kind_change (auth_policy.rs:247-261) loads the .first() membership's policy into `let _policy` and DISCARDS it -- a documented best-effort liveness probe, not a security decision, so the .first() pick was never fail-open; determinism fix is a robustness nicety, no latent semantic bug to file. mod.rs `pub mod membership_test;` matches existing convention (accounting_test, granular_notification_test also unconditional; inner content #[cfg(test)]-gated) -- not a finding. #2863 (react-web, ppt-web/compliance): guards the overdue-truncation notice on `(stats?.overdue_count ?? 0) > OVERDUE_PAGE_LIMIT && cases.length === OVERDUE_PAGE_LIMIT` -- the exact fix proposed in #2862, suppressing the false-positive 'first 200 of 200 -- refine filters' at the exact-200 boundary where nothing is truncated; the `?? cases.length` count fallback is now unreachable (retained dead-safe). Boundary Vitest added (overdue_count===200 + 200 rows => queryByText(/first 200 of/i) not present) -- fails on old guard, passes with fix; existing 350>200 true-positive test untouched. NET-NEW actionable issues: 0. Both PRs labeled post-merge-reviewed via issue_write.update (both carried no pre-existing labels, no clobber) so they will not resurface; no breadcrumb comment needed (no issue opened). Deduped: no open from-merged-review issue for #2863/#2864.",
-      "focus_prs": [
-        2863,
-        2864
       ]
     }
   ]
