@@ -1,157 +1,72 @@
 {
-  "date": "2026-09-25",
+  "run_iso": "2026-09-25T20:35:52Z",
+  "note": "Same-day rerun overwrite. Earlier 14:44Z run banked buffer-low-2026-09-25-payload (recorded in seen_signals). This file lists signals derived this rerun window (5h51m): 3 code-review-finding rows folded from the dispatcher's Tier-1d generator file signals/2026-09-25-api-core-tier1d.json (committed at 16:34Z as 1118221), plus the updated buffer-low payload from the trigger.",
   "signals": [
     {
-      "id": "buffer-low-2026-09-25-payload",
-      "type": "operator-context",
-      "source": "routine trigger payload 2026-09-25T14:38Z",
-      "score_delta": 0,
-      "evidence": [
-        "trigger payload: 'buffer-low: claimable=8/72 — refill planner (all open items mobile-native-gated)'",
-        "dispatcher-side telemetry; logged in brief under Watch; not a code vector"
+      "id": "code-review-api-core-voice-contact-manager-placeholder-email",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d api-core review 2026-09-25 (commit 1118221, file signals/2026-09-25-api-core-tier1d.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "files": ["backend/servers/api-server/src/services/voice_commands.rs"],
+      "evidence": "backend/servers/api-server/src/services/voice_commands.rs:531-556 - action_contact_manager is a LIVE voice-assistant webhook handler (dispatched from process_command via voice_intent::CONTACT_MANAGER at :172) that returns hardcoded PLACEHOLDER email addresses to residents: :537 'spravca@example.com' (sk), :538 'spravce@example.com' (cs), :539 'manager@example.com' (en). The same placeholder is echoed into the response card content (:549) and into the structured data payload (:554 manager_email)."
+    },
+    {
+      "id": "code-review-api-core-scheduler-no-panic-supervision",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d api-core review 2026-09-25 (commit 1118221, file signals/2026-09-25-api-core-tier1d.json)",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs",
+        "backend/servers/api-server/src/main.rs"
       ],
+      "evidence": "backend/servers/api-server/src/services/scheduler/mod.rs:262-288 - Scheduler::start() spawns a SINGLE tokio task whose body is `loop { ticker.tick().await; self.run_scheduled_tasks().await; }`. run_scheduled_tasks (:290-405) sequentially awaits ~20 scheduled jobs. Each job's Result::Err is caught and logged, but a PANIC inside any awaited job (slice/index panic, unwrap in a called repository, arithmetic overflow in debug) is NOT caught - no catch_unwind, no per-job tokio::spawn isolation - so it unwinds the whole loop task and the loop exits permanently."
+    },
+    {
+      "id": "code-review-api-core-voice-book-facility-false-success",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d api-core review 2026-09-25 (commit 1118221, file signals/2026-09-25-api-core-tier1d.json)",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "files": ["backend/servers/api-server/src/services/voice_commands.rs"],
+      "evidence": "backend/servers/api-server/src/services/voice_commands.rs:447-466 - action_book_facility returns VoiceActionResult { success: true, ... } (:459) while its response_text (:451-455) tells the user 'Facility booking is not yet available via voice assistant. Please use the mobile app or web portal.' The handler reports SUCCESS for a feature it explicitly did not perform."
+    },
+    {
+      "id": "buffer-low-2026-09-25-payload-v2",
+      "type": "operator-context",
+      "source": "trigger payload delivered to routine 20:28Z",
+      "score_delta": 0,
+      "candidate_vector": "triage",
       "confidence": "high",
-      "candidate_vector": "triage"
+      "files": [],
+      "evidence": "buffer-low: claimable=8/72 landable=0 - all open backlog is cloud-blocked (mobile-native AGP egress + backend swagger-ui #2966); refill with landable frontend/reality-web vectors. Follow-up to buffer-low-2026-09-25-payload from the 14:44Z run; landable count dropped from unspecified to explicit 0. Recorded in seen_signals; no score delta (process signal)."
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — allowlist did not fire",
-  "notes": [
-    "Incremental run 35h after 2026-09-24T03:19Z. 0 merged PRs (last_pr_seen=2956 unchanged), 0 new issues (last_issue_seen=2966 unchanged), 0 open-PR touched-since-last-run events landed (all pre-existing drafts).",
-    "23 commits on dev in window: 20 dispatcher chore commits + 2 tier-1d generator signal commits + 1 dispatcher pre-spawn-claim commit + 0 application-code merges (the 2026-09-24 routine brief commit is inside the window but is a routine commit, not application code). Dispatcher fast-path spawned 2 draft PRs (#2976 IDOR #2945 retry1 + #2977 IDOR #2944 retry1) on 2026-09-25 02:44Z; these are dispatcher assignments, not new backlog vectors.",
-    "3 closed-not-merged dependabot PRs (#2963/#2964/#2965) superseded by new dependabot rollups (#2972/#2973/#2974/#2975); classified as dep-update-noise (score=0, brief-log only).",
-    "Phase 1.5 skipped: no application-code churn since last run — third consecutive skip (2026-09-23, 2026-09-24, 2026-09-25). Dispatcher Tier-1d generator continues to cover reviewable segments (signals/2026-09-25-{api-handlers,ppt-web-core,reality-web}-tier1d.json already landed on dev, dispatcher-branch scope).",
-    "Phase 1.6 skipped: same reason — no delivery-relevant merges to synthesise.",
-    "Buffer-low trigger context surfaces the mobile-native-gate concentration in the current active-plan set (25 plans on disk; dispatcher reports 8/8 claimable slots with dep-blocked=0 — telemetry is dispatcher-side, not routine cursor).",
-    "backlog.md + IDEAS_TRIAGE.md regenerated with new timestamp (14:44 UTC); byte-identity check confirmed against jq-based renderer.",
-    "Routine lag: 35h (< 36h threshold) — no lag_warning emitted; no stale_routine_alert (< 3d)."
-  ],
+  "auto_fix_skipped_reason": "no candidate matched allowlist (screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise lockfile-drift / stalled-review) at confidence=high + score>=3 this run",
   "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f briefs/2026-09-25.md; head -1 matches '# 2026-09-25'",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq compare staged state.json vs HEAD",
-      "observed": "true — last_commit_sha advanced e09587a2→41f78e55; stats.runs 81→82; stats.quiet_days 4→5; seen_signals +1 (buffer-low-2026-09-25-payload)",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique | length))'",
-      "observed": "true (419 items, 419 unique ids)",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "no re-emit of prior seen_signals with score_delta != 0",
-      "observed": "true (only signal this run, buffer-low-2026-09-25-payload, has score_delta=0; not in prior seen_signals — new id)",
-      "expected": "true"
-    },
-    {
-      "goal": "G5-cap",
-      "passed": true,
-      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
-      "observed": "true (max score = 6)",
-      "expected": "true"
-    },
-    {
-      "goal": "G5-decay",
-      "passed": true,
-      "command": "decay check — open items with updated_at ≤ 14d ago",
-      "observed": "no-op — the 3 open reality-web silent-fail items are updated_at=2026-09-21 (4d ago); the 4 non-open non-terminal items are within window; nothing to decay",
-      "expected": "no-op"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "no new plans this run — G6 no-op",
-      "observed": "0 new plans",
-      "expected": "n/a"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '_archive/' | grep -c '\\.md$' <= 2",
-      "observed": "0 new plans",
-      "expected": "<= 2"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l == 0",
-      "observed": "0 files outside .research/",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "grep for secrets in staged diff excluding four baseline docs",
-      "observed": "0 matches",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "regenerate backlog.md from backlog.json via render-backlog.sh; diff -q against staged",
-      "observed": "identical (byte-for-byte match after regen; renderer stable-sorts by score-desc, updated_at-desc, then original array index asc)",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "brief lists 'Phases that failed'; verify cursor advancement matches",
-      "observed": "no failed phases; all cursors advanced as expected",
-      "expected": "consistent"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "every prior-run plan slug present in plans/ or plans/_archive/",
-      "observed": "25 active + 8 archive; every prior slug still present",
-      "expected": "no silent deletions"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "[ archive-count-now >= archive-count-HEAD ]",
-      "observed": "8 == 8",
-      "expected": ">=  HEAD"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "regenerate IDEAS_TRIAGE.md from backlog.json (vector==triage); diff -q against staged",
-      "observed": "identical (byte-for-byte match)",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto_fix_actions cap + kill-switch + idempotency",
-      "observed": "0 actions this run; auto_fix_history untouched",
-      "expected": "no-op"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "management artifacts valid (when Phase 1.6 ran)",
-      "observed": "Phase 1.6 skipped this run — gate is a no-op; pm_cursor.next_index=5 and coverage_cursor.next_index=7 both stay unchanged from HEAD",
-      "expected": "no-op"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "no Telegram token literal in staged diff",
-      "observed": "0 matches",
-      "expected": "0"
-    }
+    {"goal": "G1", "passed": true,  "command": "test -f briefs/2026-09-25.md && head -1 == '# 2026-09-25'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true,  "command": "jq compare staged state.json vs HEAD", "observed": "true (last_commit_sha 41f78e55 -> a8c2a32, seen_signals 492 -> 496, stats.runs 82 -> 83)", "expected": "true"},
+    {"goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true,  "command": "no signal id in this run's signals[] was in prior seen_signals with a re-applied score_delta (cumulative-type allowlist inapplicable — no churn-hotspot / repeated-churn re-emits this run)", "observed": "true", "expected": "true"},
+    {"goal": "G5-cap", "passed": true,  "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G5-decay", "passed": true,  "command": "no open item has updated_at older than 14 days without decay-or-drop; the 3 new rows are today; the 3 open reality-web silent-fail items are 4d old (inside window); the 2 ready mobile-native items are 5d and 41d old — the 41d row was already decayed and remains open with plan-in-flight per its evidence", "observed": "n/a-adverse: no decay-eligible open row untouched", "expected": "true"},
+    {"goal": "G6", "passed": true,  "command": "no new plans this run — adversarial pass gate n/a", "observed": "0 new plans", "expected": "true (n/a)"},
+    {"goal": "G7-count", "passed": true,  "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '\\.md$' || true", "observed": "0", "expected": "<=2"},
+    {"goal": "G7-metadata", "passed": true,  "command": "n/a — 0 new plans", "observed": "n/a", "expected": "n/a"},
+    {"goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (staged set is: briefs/2026-09-25.md, signals/2026-09-25.json, state.json, backlog.json, backlog.md, IDEAS_TRIAGE.md — all under .research/)", "expected": "0"},
+    {"goal": "G9", "passed": true,  "command": "git diff --cached scan for secret + private-hostname patterns (excluding 4 baseline docs)", "observed": "0 matches", "expected": "0"},
+    {"goal": "G10", "passed": true,  "command": "regenerated backlog.md matches staged (Python renderer parity vs prior 14:44 render — only diff is the timestamp widget + the 3 appended rows at their sort positions)", "observed": "byte-identical after regen", "expected": "true"},
+    {"goal": "G11", "passed": true,  "command": "no failed phases this run; no cursor stalled inappropriately", "observed": "all phases advanced or explicitly skipped-by-policy", "expected": "true"},
+    {"goal": "G12", "passed": true,  "command": "no prior-run plans deleted this run; plans/ still contains the 2 mobile-native plans + archived plans intact", "observed": "true", "expected": "true"},
+    {"goal": "G13", "passed": true,  "command": "git ls-files .research/plans/_archive/ | wc -l >= git ls-tree HEAD .research/plans/_archive/ | wc -l", "observed": "equal (no archive change this run)", "expected": "true"},
+    {"goal": "G14", "passed": true,  "command": "regenerated IDEAS_TRIAGE.md matches staged (Python renderer parity; only diff vs HEAD is the timestamp widget)", "observed": "byte-identical after regen", "expected": "true"},
+    {"goal": "G15", "passed": true,  "command": "jq '.auto_fix_actions | length <= 3 and ...' signals/2026-09-25.json", "observed": "true (auto_fix_actions is empty)", "expected": "true"},
+    {"goal": "G16", "passed": true,  "command": "Phase 1.6 skipped this rerun (already covered by 14:44 run); management artifacts unchanged; pm_cursor and coverage_cursor unchanged this run — GC7 gate is a no-op when Phase 1.6 didn't run", "observed": "no-op (skip)", "expected": "true (no-op)"},
+    {"goal": "G17", "passed": true,  "command": "git diff --cached added-line grep for Telegram token patterns (URL form or bare 8-10:35+)", "observed": "0 matches", "expected": "0"}
   ]
 }

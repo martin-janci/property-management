@@ -10732,6 +10732,67 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-contact-manager-placeholder-email",
+      "title": "voice contact_manager returns hardcoded placeholder emails (manager@example.com) to residents — not a real contact",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d api-core review 2026-09-25"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:531-556 — action_contact_manager (dispatched from process_command via voice_intent::CONTACT_MANAGER at :172) returns hardcoded placeholder emails: :537 'spravca@example.com' (sk), :538 'spravce@example.com' (cs), :539 'manager@example.com' (en); the same placeholder is echoed into response card content (:549) and structured data payload (:554 manager_email)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-scheduler-no-panic-supervision",
+      "title": "Scheduler::start() spawns single task with no per-job panic isolation — one panic silently kills all cron jobs",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d api-core review 2026-09-25"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:262-288 — Scheduler::start() spawns a SINGLE tokio task whose body is `loop { ticker.tick().await; self.run_scheduled_tasks().await; }`. run_scheduled_tasks (:290-405) sequentially awaits ~20 scheduled jobs. Each job's Result::Err is caught and logged, but a PANIC inside any awaited job (slice/index panic, unwrap in a called repository, arithmetic overflow in debug) is NOT caught — no catch_unwind, no per-job tokio::spawn isolation — so it unwinds the whole loop task and the loop exits permanently."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs",
+        "backend/servers/api-server/src/main.rs"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-book-facility-false-success",
+      "title": "voice book_facility returns success:true while telling user 'not yet available' — corrupts command-history metrics",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d api-core review 2026-09-25"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:447-466 — action_book_facility returns VoiceActionResult { success: true, ... } (:459) while its response_text (:451-455) tells the user 'Facility booking is not yet available via voice assistant. Please use the mobile app or web portal.' The handler reports SUCCESS for a feature it explicitly did not perform."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
     }
   ]
 }
