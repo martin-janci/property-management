@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-25T22:34:42Z",
+  "generated": "2026-09-25T22:44:41Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -172,18 +172,18 @@
     {
       "task_id": "gh-issue-2978",
       "branch": "auto-impl/gh-issue-2978-ac9bbc2a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-25T22:30:59Z",
-      "last_updated": "2026-09-25T22:30:59Z",
-      "status_changed_at": "2026-09-25T22:30:59Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-25T22:44:41Z",
+      "status_changed_at": "2026-09-25T22:44:41Z",
+      "pr_number": 2979,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2979",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2979 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=rerouted useAiChat+useOcrMeterReading through getApiClient(); Bearer header now sent; delete surfaces errors; verify green (2669 tests)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
