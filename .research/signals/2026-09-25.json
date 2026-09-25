@@ -2,35 +2,49 @@
   "date": "2026-09-25",
   "signals": [
     {
-      "id": "buffer-low-2026-09-25-payload",
+      "id": "gh-issue-2978",
+      "type": "new-issue-observed",
+      "source": "gh issue #2978 (labeled bug + frontend; opened 2026-09-25T20:37Z by martin-janci)",
+      "score_delta": 3,
+      "evidence": [
+        "Issue title: 'ppt-web AI-chat + OCR feature hooks call the API via raw fetch() with no Authorization header (unauthenticated → 401 in prod) + silent delete'",
+        "Verified against dev: useAiChat.ts apiFetch<T>() (line ~32) sends Content-Type only; no `Authorization` bearer header. useOcrMeterReading.ts ocrFetch<T>() (line ~26) same pattern for /api/v1/ai/ocr/meter-reading + /ocr/correction. useDeleteSession (line 131-136) never checks response.ok.",
+        "Sibling useSentiment.ts routes through getApiClient() (frontend/apps/ppt-web/src/lib/api.ts) with an inline comment naming the interceptor mechanism — pattern the two hooks skip.",
+        "Dispatcher already ingested: action-list.json holds identical id `gh-issue-2978` (owner_role=pm-frontend, priority=high, first_open_at=2026-09-25T22:26:15Z); assignments.json shows in-progress on auto-impl/gh-issue-2978-ac9bbc2a (claimed 2026-09-25T22:30:59Z). Routine promotion suppressed under Phase-3 slug-stem uniqueness (stem collides with the open action-list item)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "buffer-low-2026-09-25-payload-v2",
       "type": "operator-context",
-      "source": "routine trigger payload 2026-09-25T14:38Z",
+      "source": "routine trigger payload 2026-09-25T22:34Z",
       "score_delta": 0,
       "evidence": [
-        "trigger payload: 'buffer-low: claimable=8/72 — refill planner (all open items mobile-native-gated)'",
-        "dispatcher-side telemetry; logged in brief under Watch; not a code vector"
+        "trigger payload: 'buffer-low: claimable=9/72 — coverage exhausted (49/49 done), backlog empty; refill planner' — second buffer-low payload today (variant vs `buffer-low-2026-09-25-payload` which reported 8/72 with all items mobile-native-gated).",
+        "buffer-low condition self-resolved between snapshot and this routine turn: dispatcher issue-ingest picked up gh-issue-2978 at 22:26:15Z and pre-spawn-claimed at 22:30:59Z (commit 34d6b67, 'dispatcher pre-spawn claim — 1 new task(s)') — the very refill the payload asked for."
       ],
       "confidence": "high",
       "candidate_vector": "triage"
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — allowlist did not fire",
+  "auto_fix_skipped_reason": "no candidate — allowlist did not fire (allowlist covers screen-map-drift/orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review; none applied this run)",
   "notes": [
-    "Incremental run 35h after 2026-09-24T03:19Z. 0 merged PRs (last_pr_seen=2956 unchanged), 0 new issues (last_issue_seen=2966 unchanged), 0 open-PR touched-since-last-run events landed (all pre-existing drafts).",
-    "23 commits on dev in window: 20 dispatcher chore commits + 2 tier-1d generator signal commits + 1 dispatcher pre-spawn-claim commit + 0 application-code merges (the 2026-09-24 routine brief commit is inside the window but is a routine commit, not application code). Dispatcher fast-path spawned 2 draft PRs (#2976 IDOR #2945 retry1 + #2977 IDOR #2944 retry1) on 2026-09-25 02:44Z; these are dispatcher assignments, not new backlog vectors.",
-    "3 closed-not-merged dependabot PRs (#2963/#2964/#2965) superseded by new dependabot rollups (#2972/#2973/#2974/#2975); classified as dep-update-noise (score=0, brief-log only).",
-    "Phase 1.5 skipped: no application-code churn since last run — third consecutive skip (2026-09-23, 2026-09-24, 2026-09-25). Dispatcher Tier-1d generator continues to cover reviewable segments (signals/2026-09-25-{api-handlers,ppt-web-core,reality-web}-tier1d.json already landed on dev, dispatcher-branch scope).",
-    "Phase 1.6 skipped: same reason — no delivery-relevant merges to synthesise.",
-    "Buffer-low trigger context surfaces the mobile-native-gate concentration in the current active-plan set (25 plans on disk; dispatcher reports 8/8 claimable slots with dep-blocked=0 — telemetry is dispatcher-side, not routine cursor).",
-    "backlog.md + IDEAS_TRIAGE.md regenerated with new timestamp (14:44 UTC); byte-identity check confirmed against jq-based renderer.",
-    "Routine lag: 35h (< 36h threshold) — no lag_warning emitted; no stale_routine_alert (< 3d)."
+    "Same-day rerun (2nd routine invocation on 2026-09-25). Fired ~8h after the 14:44Z run by a fresh buffer-low payload variant. Prior brief + signals for 2026-09-25 are overwritten per Same-day-rerun idempotent-rewrite rule.",
+    "Cursor advances: last_commit_sha 41f78e55 → 34d6b67 (6 dev commits in the window, all .research/ — 4 dispatcher ticks + 1 tier-1d dev-review signal gen + 1 dispatcher pre-spawn-claim). last_issue_seen 2966 → 2978. last_pr_seen unchanged (0 merged PRs in the window).",
+    "0 merged PRs in the window (REST fetch confirms no PR > 2956 has merged_at set). 0 open-PR update events landed since 14:44Z. 1 new issue: #2978 (bug+frontend; the buffer-low resolution).",
+    "Phase 1.5 skipped: fourth consecutive routine skip. No application-code churn since 2026-09-20; dispatcher-branch Tier-1d cycles (signals/2026-09-25-{api-handlers,api-core,ppt-web-core,reality-web}-tier1d.json) keep segment coverage warm; firing a fresh routine review over an empty routine-side delta duplicates work.",
+    "Phase 1.6 skipped: same reason — no delivery-relevant merges to synthesise. pm_cursor.next_index and coverage_cursor.next_index stay unchanged from HEAD.",
+    "backlog.md + IDEAS_TRIAGE.md regenerated with fresh 22:34 UTC timestamp; byte-identity confirmed against jq-based renderer.",
+    "New backlog vector: gh-issue-2978 (score=3, vector=bug, confidence=high, status=open, plan=null). Promotion suppressed — stem collision with the open dispatcher action-list item id gh-issue-2978.",
+    "Routine lag: ~8h since 14:44Z — well under 36h; no lag_warning; no stale_routine_alert."
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-09-25.md; head -1 matches '# 2026-09-25'",
+      "command": "test -f briefs/2026-09-25.md && head -1 matches '# 2026-09-25'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
@@ -38,21 +52,21 @@
       "goal": "G2",
       "passed": true,
       "command": "jq compare staged state.json vs HEAD",
-      "observed": "true — last_commit_sha advanced e09587a2→41f78e55; stats.runs 81→82; stats.quiet_days 4→5; seen_signals +1 (buffer-low-2026-09-25-payload)",
+      "observed": "true — last_commit_sha 41f78e55 → 34d6b67, last_issue_seen 2966 → 2978, seen_signals +2 (gh-issue-2978, buffer-low-2026-09-25-payload-v2), stats.runs 82 → 83, stats.vectors_created 373 → 374",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
       "command": "jq '[.items[].id] | (length == (unique | length))'",
-      "observed": "true (419 items, 419 unique ids)",
+      "observed": "true (420 items, 420 unique ids)",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no re-emit of prior seen_signals with score_delta != 0",
-      "observed": "true (only signal this run, buffer-low-2026-09-25-payload, has score_delta=0; not in prior seen_signals — new id)",
+      "command": "no re-emit of prior seen_signals with score_delta != 0 for non-cumulative types",
+      "observed": "true — both signals have fresh ids not in prior seen_signals (gh-issue-2978 new; buffer-low-…-v2 distinct from yesterday's -payload)",
       "expected": "true"
     },
     {
@@ -66,14 +80,14 @@
       "goal": "G5-decay",
       "passed": true,
       "command": "decay check — open items with updated_at ≤ 14d ago",
-      "observed": "no-op — the 3 open reality-web silent-fail items are updated_at=2026-09-21 (4d ago); the 4 non-open non-terminal items are within window; nothing to decay",
+      "observed": "no-op — the 3 open reality-web silent-fail rows are updated_at=2026-09-21 (4d ago); the new gh-issue-2978 row is today; other non-terminal items within window; nothing to decay",
       "expected": "no-op"
     },
     {
       "goal": "G6",
       "passed": true,
       "command": "no new plans this run — G6 no-op",
-      "observed": "0 new plans",
+      "observed": "0 new plans (gh-issue-2978 promotion suppressed by Phase-3 stem-uniqueness)",
       "expected": "n/a"
     },
     {
@@ -100,22 +114,22 @@
     {
       "goal": "G10",
       "passed": true,
-      "command": "regenerate backlog.md from backlog.json via render-backlog.sh; diff -q against staged",
-      "observed": "identical (byte-for-byte match after regen; renderer stable-sorts by score-desc, updated_at-desc, then original array index asc)",
+      "command": "regenerate backlog.md from backlog.json via jq renderer; diff -q against staged",
+      "observed": "identical (byte-for-byte match after regen)",
       "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
       "command": "brief lists 'Phases that failed'; verify cursor advancement matches",
-      "observed": "no failed phases; all cursors advanced as expected",
+      "observed": "no failed phases; cursors advanced consistently",
       "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
       "command": "every prior-run plan slug present in plans/ or plans/_archive/",
-      "observed": "25 active + 8 archive; every prior slug still present",
+      "observed": "25 active + 8 archive; every prior slug still present (no deletions)",
       "expected": "no silent deletions"
     },
     {
@@ -123,7 +137,7 @@
       "passed": true,
       "command": "[ archive-count-now >= archive-count-HEAD ]",
       "observed": "8 == 8",
-      "expected": ">=  HEAD"
+      "expected": ">= HEAD"
     },
     {
       "goal": "G14",

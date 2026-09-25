@@ -1,11 +1,12 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-09-25 14:44 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-25 22:34 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
 | 6 | test-gap | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | `backend/servers/reality-server/src/routes/inquiries.rs (+1)` | PR #497 (+2) | 2026-05-26 | done | plans/_archive/test-gap-inquiry-idor-regression.md |
 | 5 | security | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature | `backend/servers/api-server/src/routes/voice_webhooks.rs (+1)` | standing-scan-2026-07-28 | 2026-07-28 | dropped | — |
+| 3 | bug | ppt-web AI-chat + OCR feature hooks bypass shared api client — apiFetch/ocrFetch omit Authorization header (401 in prod); useDeleteSession swallows failures | `frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts (+2)` | Issue #2978 (+2) | 2026-09-25 | open | — |
 | 3 | bug | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | `mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp) (+1) | 2026-09-20 | ready | plans/code-review-mobile-native-kmp-create-listing-not-wired.md |
 | 3 | security | api-server client-ip resolver trusts CF-Connecting-IP on any private-range peer — CF-only gate missing, reintroduces #2789 spoof class | `backend/servers/api-server/src/client_ip.rs` | dispatcher Tier-1d rotating-expert-review 2026-08-29 (api-core client-ip) | 2026-08-29 | done | plans/code-review-api-core-client-ip-cf-spoof.md |
 | 3 | bug | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryModels.kt (+3)` | mobile-native-kmp segment review 2026-08-16 | 2026-08-25 | ready | plans/code-review-mobile-native-kmp-inquiries-response-contract.md |

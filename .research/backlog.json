@@ -10732,6 +10732,32 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "gh-issue-2978",
+      "title": "ppt-web AI-chat + OCR feature hooks bypass shared api client — apiFetch/ocrFetch omit Authorization header (401 in prod); useDeleteSession swallows failures",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Issue #2978",
+        "dispatcher-issue-ingest 2026-09-25T22:26:15Z",
+        "dispatcher claimed 2026-09-25T22:30:59Z (auto-impl/gh-issue-2978-ac9bbc2a)"
+      ],
+      "evidence": [
+        "Issue #2978 (labels: bug, frontend; authored by operator 2026-09-25T20:37Z) — 3 defects verified against dev: (a) useAiChat.ts apiFetch<T>() at ~L32 uses bare fetch() with only Content-Type header — no `Authorization` bearer header attached; (b) useOcrMeterReading.ts ocrFetch<T>() at ~L26 same pattern for /api/v1/ai/ocr/meter-reading + /ocr/correction; (c) useDeleteSession (useAiChat.ts:131-136) fires fetch(...DELETE...) but never checks response.ok — failed delete resolves as success, onSuccess invalidates the query.",
+        "Sibling hook features/sentiment/hooks/useSentiment.ts routes through getApiClient() from src/lib/api.ts (verified) — inline comment: 'getApiClient() ensures the shared axios interceptors apply: Bearer-token injection'. useAiChat + useOcrMeterReading skip that interceptor, so calls hit the API unauthenticated.",
+        "Dispatcher-side: action-list.json holds an identical id `gh-issue-2978` (owner_role=pm-frontend, priority=high, source=dispatcher-issue-ingest 2026-09-25T22:26:15Z); assignments.json shows status=in-progress on branch auto-impl/gh-issue-2978-ac9bbc2a (claimed 2026-09-25T22:30:59Z). Routine promotion suppressed per Phase-3 slug-stem uniqueness rule (stem collides with the open action-list item)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts",
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
     }
   ]
 }
