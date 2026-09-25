@@ -1,0 +1,172 @@
+{
+  "date": "2026-09-25",
+  "signals": [
+    {
+      "id": "dep-update-noise-pr-2972",
+      "type": "dep-update-noise",
+      "source": "PR #2972",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2972 — bump the ktor group in /mobile-native with 7 updates (created 2026-09-24T10:13Z)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2973",
+      "type": "dep-update-noise",
+      "source": "PR #2973",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2973 — bump the gradle-minor-patch group across 1 directory with 5 updates (created 2026-09-24T10:13Z)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2974",
+      "type": "dep-update-noise",
+      "source": "PR #2974",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2974 — bump the cargo-minor-patch group across 1 directory with 17 updates (created 2026-09-24T10:16Z)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2975",
+      "type": "dep-update-noise",
+      "source": "PR #2975",
+      "score_delta": 0,
+      "evidence": "dependabot PR #2975 — bump the npm-minor-patch group across 1 directory with 29 updates (created 2026-09-24T10:23Z)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — allowlist did not fire",
+  "notes": [
+    "Quiet incremental run (~33h after 2026-09-24T03:19Z). 0 merged PRs since last routine run (last_pr_seen=2956 unchanged), 0 new/updated issues, 0 application-code commits (21 commits on `dev` in the window are all `.research/` chore commits: dispatcher + routine + 2 fast-path assignments-only updates).",
+    "Trigger payload: `buffer-low: claimable=0/72 — refill planner`. Caller flags dispatcher-side starvation (0 claimable rows despite headroom). Routine has NO promotable candidates this run: the 2 `ready` items already carry plans (mobile-native-kmp inquiries-response-contract, mobile-native-kmp create-listing-not-wired) and are the source of the 2 KMP tasks already claimed by dispatcher; the 3 `open` reality-web silent-fail items have live in-review PRs (#2967/#2968/#2969 → assignment status=review), so their stems collide with active assignments and the readiness gate rejects them. This is a supply-side outage the routine can't self-heal — no new signals means no new backlog rows to promote. Surfaced in the brief's *Open questions* + PushNotification.",
+    "Phase 1.5 skipped: no application-code churn since last run — dispatcher Tier-1d cycles cover the window (same call as 2026-09-23 and 2026-09-24 briefs; both today's dispatcher Tier-1d files under signals/ show 0 landable net-new findings).",
+    "Phase 1.6 skipped: same reason. `pm_cursor.next_index=5` (pm-security) preserved; `coverage_cursor.next_index=7` preserved.",
+    "4 dep-update-noise signals emitted for #2972-#2975 (all created in window). score_delta=0 by rule — logged for audit trail, no backlog mutation. #2957/#2961/#2962 were rebase updates (not created in window) — no signal.",
+    "backlog.md + IDEAS_TRIAGE.md regenerated (timestamp-only diff — backlog.json unchanged this run because no scored signals fired, no decay trigger fired: only `open` items decay after 14d, all 3 open reality-web rows are dated 2026-09-21, still under 14d)."
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-25.md && head -1 matches # 2026-09-25",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true — last_run_iso, seen_signals length, stats.runs, stats.quiet_days all advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique | length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no cumulative-type re-emit with score_delta != 0",
+      "observed": "true — 4 new signal ids (dep-update-noise-pr-297[2-5]), all fresh; 0 cumulative re-emits with score_delta != 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no item.score > 8; decay applied to open items >14d",
+      "observed": "true — 0 items score >8; 0 open items have updated_at older than 14d (all 3 open items dated 2026-09-21)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "n/a — 0 new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans, headings, metadata",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets in staged diff excluding baseline docs",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md from backlog.json; diff -q",
+      "observed": "identical — backlog.json unchanged this run so table body unchanged; only timestamp line moves",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "cross-check phases-that-failed vs unadvanced cursors",
+      "observed": "no phases failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plans/<slug>.md still present in plans/ or plans/_archive/",
+      "observed": "all present (25 in plans/, 8 in _archive/, no deletions)",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "count files in plans/_archive/; now>=HEAD",
+      "observed": "now=8, HEAD=8",
+      "expected": "now>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md from backlog.json triage rows; diff -q",
+      "observed": "identical — same as G10 (JSON unchanged, timestamp-only diff)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency + kill switch",
+      "observed": "0 actions this run",
+      "expected": "cap respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "jq -e .items on action-list.json + risks.json; project-state.md non-empty; pm_cursor.next_index in [0,7]",
+      "observed": "all ok; pm_cursor unchanged (Phase 1.6 skipped) — GC7 clause is a no-op",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for literal telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
