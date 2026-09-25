@@ -10732,6 +10732,114 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-frontend-packages-auth-exp-bypass",
+      "title": "@ppt/shared decodeJwt casts payload without validating exp — token with missing/non-numeric exp reads as never-expiring in isTokenExpired()",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-24 (frontend/packages @ppt/shared)"
+      ],
+      "evidence": [
+        "frontend/packages/shared/src/auth.ts:60-81 decodeJwt() does `JSON.parse(jsonPayload) as JwtPayload` — a cast, not validation — so the decoded payload is trusted against the type without checking any claim is actually present or well-typed. JwtPayload declares `exp: number` (auth.ts:26 — required, non-optional), but a token whose payload omits `exp` (or carries a non-numeric exp) yields `payload.exp === undefined` at runtime while satisfying the compiler via the `as` cast.",
+        "frontend/packages/shared/src/auth.ts:90-98 isTokenExpired() then evaluates `payload.exp <= now + bufferSeconds` = `undefined <= number` = `false`, so an exp-less token is reported NOT expired (valid forever) — the exact inverse of the documented contract ('returns true if expired or invalid'). This is a client-side token-expiry BYPASS: auto-logout-on-expiry never fires and the app keeps using/refreshing a token it should reject. Same root defect leaks into getTokenExpiration() (auth.ts:106-113 -> `new Date(undefined*1000)` = Invalid Date object instead of the documented null) and getTokenRemainingTime() (auth.ts:121-129 -> `Math.max(0, undefined - now)` = NaN instead of the documented 0/-1). Fix: validate typeof payload.exp === 'number' && Number.isFinite(payload.exp) in decodeJwt (return null otherwise), mirroring the Number.isNaN(getTime()) guard the sibling validation.ts date validators already use.",
+        "Reachable via any tampered/legacy localStorage token or any backend that ever issues an exp-less JWT; @ppt/shared is imported by ppt-web and mobile."
+      ],
+      "files": [
+        "frontend/packages/shared/src/auth.ts"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-frontend-packages-formatdate-rangeerror",
+      "title": "@ppt/shared date formatters feed unguarded new Date(input) into Intl/toISOString — malformed timestamp throws RangeError and crashes render",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-24 (frontend/packages @ppt/shared)"
+      ],
+      "evidence": [
+        "frontend/packages/shared/src/formatting.ts:93-98 toDate() does an unguarded `new Date(input)`, which returns an Invalid Date for a malformed or nullish timestamp string. Every date formatter feeds that straight into Intl without a NaN guard: formatDate (103-111), formatDetailedDate (116-124), formatDateTime (129-139), formatTime (144-151), formatRelativeTime (163-197) call `new Intl.DateTimeFormat(...).format(toDate(date))`, and formatISODate (156-158) calls `toDate(date).toISOString().split('T')[0]`.",
+        "`Intl.DateTimeFormat.prototype.format(<Invalid Date>)` throws `RangeError: Invalid time value`, and `<Invalid Date>.toISOString()` throws the same RangeError. So passing a malformed or absent API timestamp (e.g. an optional/nullable `createdAt` that arrives as '' , null-coerced, or a wrong-typed value) to any of these throws synchronously during render and crashes the component subtree unless an error boundary catches it — no graceful fallback string.",
+        "This is the same Invalid-Date hazard that the sibling frontend/packages/shared/src/validation.ts:300-350 date validators explicitly guard with `Number.isNaN(d.getTime())`; the formatters omit that guard. Fix: in toDate (or each formatter) detect `Number.isNaN(d.getTime())` and return a safe placeholder (e.g. '' or '—') instead of throwing. @ppt/shared formatters are used across ppt-web, reality-web and mobile."
+      ],
+      "files": [
+        "frontend/packages/shared/src/formatting.ts"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-fetch-no-auth",
+      "title": "ppt-web ai-chat hooks use raw fetch() with no Authorization header — every /api/v1/ai/chat call 401s; useDeleteSession also silently swallows failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-24 (ppt-web-core ai-chat)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:30-46 — the shared apiFetch() helper calls raw `fetch(url, { headers: { 'Content-Type': 'application/json', ...options?.headers } })` and NEVER attaches an ``Authorization` header (Bearer scheme)` header. Every AI-chat endpoint is authenticated and lives under API_BASE `/api/v1/ai/chat` (:19), so all six hooks that go through apiFetch — useAiChatSessions (:53), useAiChatSession (:68), useAiChatMessages (:80), useCreateSession (:96), useSendMessage (:113), useMessageFeedback (:148), useEscalatedMessages (:165) — send requests with NO bearer token. ppt-web authenticates by injecting a localStorage bearer token (AuthContext + lib/api.ts request interceptor); a bare fetch carries none, so the api-server returns 401 and the entire AI-chat feature is non-functional for authenticated users.",
+        "This is confirmed by the in-repo reference implementation: features/notification-analytics/hooks/useNotificationAnalytics.ts:7-9 and :35-41 reads `ppt_access_token` from localStorage and sets ``Authorization` header (Bearer scheme) ${token}` with the explicit comment 'the handler requires authentication — a bare fetch would 401'; features/sentiment/hooks/useSentiment.ts routes through getApiClient() precisely so 'the shared axios interceptors apply: Bearer-token injection' (:17-20). useAiChat.ts does neither. It is the SAME defect class already filed and FIXED for person-months/useBuildingUnits (backlog code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor, status done) — recurring here in a file that fix never touched.",
+        "Second, distinct bug in the same file: useDeleteSession (:131-142) calls `await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'DELETE' })` at :136 with NO headers AND — unlike apiFetch — NO `response.ok` check. So a failed DELETE (401 from the missing token, 403, network error) neither throws nor rejects: the mutation resolves as success and onSuccess (:138) invalidates the sessions query, so the UI reports the session deleted when it was not (silent destructive-action failure). Landable frontend-only remedy: route all AI-chat calls through getApiClient() (preferred — inherits bearer injection, 401->refresh replay, ErrorResponse->ApiError, retry) or attach the localStorage bearer token as notification-analytics does, and make useDeleteSession share apiFetch so it checks response.ok. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL test asserting the request carries an Authorization header and that a rejected DELETE surfaces an error. Confidence high: traced from apiFetch through the auth transport (localStorage bearer) and confirmed against the sibling files that document the 401."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": "plans/code-review-ppt-web-core-aichat-fetch-no-auth.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+      "title": "ppt-web OCR meter-reading hooks use raw fetch() with no Authorization header — both authenticated /api/v1/ai/ocr endpoints 401 on every call",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-24 (ppt-web-core meters/ocr)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:26-35 — the ocrFetch() helper calls raw `fetch(url, options)` and attaches NO ``Authorization` header (Bearer scheme)` header (callers pass only a Content-Type at :60-62 for the correction POST, and nothing at all for the multipart upload). Both endpoints are authenticated api-server routes under API_BASE `/api/v1/ai` (:11): useOcrProcessImage POSTs multipart to `/api/v1/ai/ocr/meter-reading` (:45) and useOcrCorrection POSTs JSON to `/api/v1/ai/ocr/correction` (:59). ppt-web authenticates via a localStorage bearer token that only lib/api.ts's axios interceptor injects; a bare fetch carries none, so both OCR calls 401 and the OCR meter-reading feature (Epic 128) never works for a real signed-in user.",
+        "Same raw-fetch-bypasses-JWT class as the flagship ai-chat finding and as the already-FIXED person-months finding (backlog code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor, done). Correct in-repo pattern to copy: features/sentiment/hooks/useSentiment.ts routes through getApiClient() so the shared interceptors inject the bearer token; features/notification-analytics/hooks/useNotificationAnalytics.ts:35-41 attaches the localStorage token manually with the comment 'a bare fetch would 401'. The hook does at least expose processingError/correctionError (:98-99) so the component can render the failure — but the failure is guaranteed on every call, not incidental. Landable frontend-only remedy: replace ocrFetch with getApiClient() (multipart is supported by axios) or attach the bearer token; medium severity because the whole feature path is broken but the error is at least surfaced to the caller. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest test asserting the OCR request carries an Authorization header. Confidence high: traced the auth transport and confirmed against the sibling reference hooks."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized",
+      "title": "ppt-web OrganizationProvider passes an unmemoized context object — every AuthContext re-render invalidates all useOrganization() subscribers",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-09-24 (ppt-web-core OrganizationProvider)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — the context value is built as a fresh object literal on every render (`const value = user?.organizationId ? { organizationId, organizationName } : null`) and passed straight into <OrganizationContext.Provider value={value}>. Because OrganizationProvider consumes useAuth() and re-renders on every AuthContext change, a NEW object identity is handed to the context on each render, so every component subscribed via useOrganization() (hooks/useOrganization.ts) re-renders even when organizationId/organizationName are unchanged.",
+        "This diverges from the app's own established pattern: every other provider in this segment memoizes its context value — contexts/AuthContext.tsx wraps its value in useMemo (:689-712) and contexts/WebSocketContext.tsx does the same (:392-405), each with the explicit comment 'Memoize the context value to prevent unnecessary re-renders'. OrganizationProvider is the lone provider that does not. Landable frontend-only remedy: wrap the value in useMemo keyed on [user?.organizationId, user?.organizationName] (returning null when no org). Low severity (+1, render-perf/consistency smell, not a correctness crash). Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest render-count test. Confidence medium: the missing memoization is confirmed by static read and by contrast with the sibling providers; the runtime re-render impact scales with how many components consume useOrganization()."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "created_at": "2026-09-25",
+      "updated_at": "2026-09-25",
+      "plan": null
     }
   ]
 }

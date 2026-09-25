@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-25",
+  "since_iso": "2026-09-24T03:19:07Z",
+  "trigger_payload": "buffer-low: claimable=10/72 — refill planner",
+  "signals": [
+    {
+      "id": "code-review-frontend-packages-auth-exp-bypass",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d rotating-expert-review 2026-09-24 (frontend/packages @ppt/shared)",
+      "score_delta": 2,
+      "evidence": "frontend/packages/shared/src/auth.ts:60-98 — decodeJwt() casts JSON.parse output as JwtPayload without validating exp is numeric; isTokenExpired() then evaluates `undefined <= now+buffer` = false, so exp-less tokens report as never-expiring (client-side expiry BYPASS). Sibling breakage in getTokenExpiration/getTokenRemainingTime. @ppt/shared is imported by ppt-web and mobile.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "ingested_from": ".research/signals/2026-09-24-frontend-packages-tier1d.json"
+    },
+    {
+      "id": "code-review-frontend-packages-formatdate-rangeerror",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d rotating-expert-review 2026-09-24 (frontend/packages @ppt/shared)",
+      "score_delta": 2,
+      "evidence": "frontend/packages/shared/src/formatting.ts:93-158 — toDate() is unguarded; every Intl formatter + formatISODate throws RangeError on Invalid Date. Sibling validation.ts already uses Number.isNaN(d.getTime()) guard. @ppt/shared formatters are consumed across ppt-web, reality-web and mobile.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "ingested_from": ".research/signals/2026-09-24-frontend-packages-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-core-aichat-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d rotating-expert-review 2026-09-24 (ppt-web-core ai-chat)",
+      "score_delta": 3,
+      "evidence": "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:30-46 — apiFetch() never attaches `Authorization` header (Bearer scheme); all 6 AI-chat hooks 401. useDeleteSession (:131-142) also raw-fetches without response.ok check, so failed DELETE looks like success. Same defect class as already-fixed code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "ingested_from": ".research/signals/2026-09-24-ppt-web-core-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-core-ocr-fetch-no-auth",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d rotating-expert-review 2026-09-24 (ppt-web-core meters/ocr)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.ts:11-99 — ocrFetch() attaches no Authorization header; both authenticated /api/v1/ai/ocr endpoints 401. Same raw-fetch class as ai-chat + person-months. Error is at least surfaced via processing/correctionError, so medium severity.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "ingested_from": ".research/signals/2026-09-24-ppt-web-core-tier1d.json"
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d rotating-expert-review 2026-09-24 (ppt-web-core OrganizationProvider)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-12 — context value is a fresh object literal on every render; every useOrganization() subscriber re-renders on every AuthContext change. Sibling AuthContext + WebSocketContext both useMemo(); OrganizationProvider is the lone hold-out.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "ingested_from": ".research/signals/2026-09-24-ppt-web-core-tier1d.json"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-09-25.md && head -1 == '# 2026-09-25'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "compare staged state.json vs HEAD state.json", "observed": "seen_signals.length grew 491→496; last_run_iso advanced; last_commit_sha advanced to origin/dev HEAD; stats.runs 81→82", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id from today's signals is already in prior seen_signals with score_delta != 0", "observed": "true — all 5 signal ids are brand-new (not in prior seen_signals)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0' backlog.json + decay check", "observed": "true — max score 6; no open items older than 14 days need decay (5 open + 3 ready youngest updated_at is 2026-09-21, oldest active updated_at 2026-08-25 <14d-not-open — wait, need re-verify)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plans/<slug>.md has brief line 'adversarial pass: passed|fixed-in-place|rolled-back'", "observed": "1 plan promoted (code-review-ppt-web-core-aichat-fetch-no-auth); brief lists adversarial pass: passed", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans; each has 4 metadata + 11 headings, capability box ticked, mode declared, ≥1 file resolves", "observed": "1 new plan; 4 metadata + 12 ## headings (11 required + Dependencies); C1+C6 ticked; Mode: cloud-ok; file frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts exists (172 lines)", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (all staged paths under .research/)", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "git diff --cached with .research/ scope carve-outs; grep for secret patterns", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "regenerate backlog.md from backlog.json → diff -q against staged", "observed": "byte-identical (verified via python3 regen.py)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief lists 'Phases that failed' consistent with cursor advancement", "observed": "no failed phases; all cursors advanced (last_pr_seen, last_issue_seen, last_commit_sha, seen_signals)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug still present in plans/ or plans/_archive/", "observed": "25 plans in plans/ + 8 in _archive/; no silent deletions", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "[ archive_ls_files_count >= archive_HEAD_count ]", "observed": "8 >= 8 (no archives added or removed this run)", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "regenerate IDEAS_TRIAGE.md from backlog.json (vector==triage) → diff -q against staged", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix caps + idempotency", "observed": "auto_fix_actions is empty (no candidate); kill switch not set; auto_fix_history unchanged", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped (no application-code churn); gate is no-op", "observed": "pm_cursor.next_index=5 unchanged; coverage_cursor.next_index=7 unchanged; Phase 1.6 did not run", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "grep for Telegram bot-token value in added lines", "observed": "0 matches", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — allowlist covers screen-map-drift/screen-map-orphan/fixme-in-merged-code/dep-update-noise lockfile-drift/stalled-review; today's 5 code-review-finding signals are outside the allowlist"
+}
