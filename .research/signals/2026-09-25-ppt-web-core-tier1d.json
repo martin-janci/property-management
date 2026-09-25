@@ -1,0 +1,52 @@
+{
+  "generated": "2026-09-25T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven generator (claim buffer starved: only mobile-native/KMP backlog remains, structurally unlandable in cloud runner AGP egress-blocked #2652) 2026-09-25",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "OLDEST-UNREVIEWED per the task-provided deterministic cursor in .research/state.json review_cursor (present, so used as instructed over the signals-corpus fallback). state.json review_cursor: {api-handlers:2026-08-31, api-core:2026-09-01, reality-server:2026-08-31, ppt-web-ui:2026-09-06, ppt-web-core:2026-08-29, reality-web:2026-08-29, mobile-rn:2026-09-09, mobile-native-kmp:2026-09-10}. Oldest is a tie at 2026-08-29 between ppt-web-core and reality-web. SATURATION-SKIP applies to reality-web: backlog.json holds exactly 3 open code-review-finding rows for it (code-review-reality-web-import-create-mutation-silent-fail, -feedcard-mutation-silent-fail, -syncschedule-save-silent-fail) which meets the skill's >=3-open skip rule. ppt-web-core has 0 open code-review-finding rows in backlog.json, so it wins the tie. ppt-web-core is a LANDABLE frontend segment (verifiable via pnpm/vitest), satisfying the dispatcher's landable-preferred directive. NOTE: the state.json review_cursor is known-stale (not advanced by prior tier1d demand-driven runs); the actual signals corpus shows ppt-web-core was reviewed as recently as 2026-09-23 and 2026-09-24, so this segment is heavily mined. The task instruction to use the present review_cursor was followed for determinism (matching the prior 2026-09-23 run's identical determination); the review still surfaced net-new findings not present in the prior signals. Static-only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Segment remains exceptionally clean and is over-mined by prior runs (auth-guard 2026-09-17/09-20, financial-query-silent-error 2026-09-17, community/reports route-stubs 2026-09-11, errorhandler-raw-message 2026-09-20, queryKeys allowlist test-gap 2026-09-23). Re-reviewed lib/api.ts (single-flight 401 refresh-and-replay, idempotent-only auto-retry, DEV-gated logging), contexts/AuthContext.tsx (token lifecycle + cold-boot skew guard + scoped logout cache purge + handleUnauthorized error catch), contexts/WebSocketContext.tsx + lib/websocket.ts (token-rotation-safe reconnect, max-retries wiring, DEV-gated diagnostics, handler-error isolation, URL token properly encoded via searchParams), lib/errorHandler.ts, lib/analytics.ts, lib/storage.ts, hooks/* (useWebSocket/useNetworkStatus), routes/ aggregators + App.tsx (Suspense + pathname-keyed RouteErrorBoundary). All console.* are import.meta.env.DEV-gated. financial.tsx route-group mutations DO carry onError (verified inline useMutation defs at :180-186,:204-210) so the prior financial-silent-error class is scoped to queries only. The two net-new findings below are: (1) MEDIUM - fault DETAIL state-changing mutations swallow errors with no UI feedback (distinct from the already-filed financial QUERY silent-error and the faults url-param/auth-guard findings); (2) LOW - OrganizationProvider recreates its context value each render. A near-duplicate reports-schedules query-isError gap was intentionally NOT emitted (same class as the already-filed 2026-09-17 financial-query-silent-error and 2026-09-11 reports-route-stub-analytics).",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-fault-detail-mutations-swallow-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 ppt-web-core routes/groups/faults.tsx)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/packages/api-client/src/faults/hooks.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx:444-458 - FaultDetailPageRoute wires every state-changing fault action as a bare fire-and-forget mutation with NO error handling: onTriage -> triage.mutate({priority,category,assigned_to}) (:445), onResolve -> resolve.mutate({resolution_notes}) (:451), onConfirm -> confirm.mutate(rating) (:452), onReopen -> reopen.mutate(reason) (:453), onAddComment -> addComment.mutate(...) (:455), onAddAttachment -> addAttachment.mutate(file) (:457), onDeleteAttachment -> deleteAttachment.mutate(id) (:458). None passes an onError option and none is wrapped in try/catch.",
+        "The mutation hooks come from @ppt/api-client (faults.tsx:14-29 import block) and are generated with ONLY an onSuccess handler and NO onError: frontend/packages/api-client/src/faults/hooks.ts:182-192 useResolveFault (useMutation with mutationFn + onSuccess invalidateQueries, no onError), :195-205 useConfirmFault (same shape), :208+ useReopenFault (same shape), and the sibling useTriageFault/useAddComment/useAddAttachment/useDeleteAttachment follow the identical generated pattern. TanStack Query therefore swallows a rejected mutationFn: the promise rejection is captured internally and, with no onError anywhere, produces zero UI feedback.",
+        "Net effect: a manager clicking Resolve / Triage / Reopen on a fault whose request 4xx/5xx (permission denied, validation error, server error) sees NOTHING - no toast, no inline error, no state change - and reasonably believes the action succeeded (the cache is not invalidated on failure either, so the stale status persists on screen). This is a correctness/UX defect on manager-critical fault-workflow transitions.",
+        "The gap is inconsistent within the SAME route wrapper: the fault-DETAIL QUERY error IS surfaced - faults.tsx:407-415 runs a useEffect that shows an error toast when the useFault query `error` is set. Only the mutations are unhandled. The correct mutation pattern already exists elsewhere in the segment (routes/groups/reports.tsx:148-157 downloadReport.mutate(id,{onError:()=>showToast(...)}), guarded by a regression test reports.download-retry.route.test.tsx; and routes/groups/financial.tsx:204-210 defines onError inline on its mutations).",
+        "This is NET-NEW vs prior ppt-web-core signals: the already-filed faults findings were code-review-ppt-web-core-faults-url-param-unvalidated-cast (2026-09-11, URL enum cast) and the auth-guard findings (2026-09-17/09-20); the already-filed silent-error finding code-review-ppt-web-core-financial-query-silent-error (2026-09-17) covers financial QUERIES (isError not read), a different file and a different mechanism (query vs mutation). No prior signal covers the fault-detail mutation onError gap.",
+        "Fix (low-risk): pass an onError toast at each call site in faults.tsx (mirroring reports.tsx), or add a shared onError to the generated fault mutation hooks. Confidence high: full call path traced from the FaultDetailPage handler props through the generated hook definitions confirming no onError exists at either layer; reachable in production on the /faults/:faultId manager route."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-org-provider-value-not-memoized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 ppt-web-core contexts/OrganizationProvider.tsx)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/OrganizationProvider.tsx:8-10 - the context value is rebuilt as a fresh object literal on every render: `const value = user?.organizationId ? { organizationId: user.organizationId, organizationName: user.organizationName } : null;` then passed straight to <OrganizationContext.Provider value={value}>. It is not wrapped in useMemo.",
+        "OrganizationProvider consumes useAuth() (:6) and re-renders whenever the AuthContext value changes (e.g. every silent token refresh calls setUser with a spread-new user object - contexts/AuthContext.tsx:433-435 - so AuthContext re-renders are frequent). Each such render yields a new `value` object identity even when organizationId/organizationName are unchanged, so every component subscribed via useOrganization() re-renders unnecessarily.",
+        "Impact is a performance/correctness-of-render smell rather than a crash: consumers relying on referential stability of the org context (memoized selectors, effect deps keyed on the context object) will re-run on unrelated auth churn. Low severity; the fix is to wrap the object in useMemo([user?.organizationId, user?.organizationName]). Net-new: no prior ppt-web-core signal covers OrganizationProvider. Confidence medium (static-only; not runtime-profiled)."
+      ]
+    }
+  ]
+}
