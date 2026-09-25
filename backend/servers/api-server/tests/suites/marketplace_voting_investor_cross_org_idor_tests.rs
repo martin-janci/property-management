@@ -1,5 +1,5 @@
 //! Regression tests for the cross-tenant IDOR fixes on the marketplace,
-//! voting, and investor-portal endpoints (issues #778 and #830).
+//! voting, and investor-portal endpoints (issues #778, #830 and #2945).
 //!
 //! Audit history:
 //!   * `GET /api/v1/marketplace/rfqs/{id}` looked an RFQ up by primary key
@@ -167,6 +167,27 @@ async fn seed_portfolio(pool: &PgPool, org_id: Uuid) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed portfolio")
+}
+
+/// Seed a property row inside `portfolio_id`, with a building under `org_id`;
+/// return the property id. `current_value` is intentionally left NULL so a
+/// leaked cross-tenant write (which sets it) is detectable.
+async fn seed_property(pool: &PgPool, org_id: Uuid, portfolio_id: Uuid, slug: &str) -> Uuid {
+    let building = seed_building(pool, org_id, slug).await;
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO portfolio_properties
+            (portfolio_id, building_id, investment_amount, ownership_share,
+             acquisition_date, acquisition_cost)
+        VALUES ($1, $2, 50000.00, 25.0000, CURRENT_DATE, 50000.00)
+        RETURNING id
+        "#,
+    )
+    .bind(portfolio_id)
+    .bind(building)
+    .fetch_one(pool)
+    .await
+    .expect("seed portfolio property")
 }
 
 /// Seed a service-provider profile owned by `user_id`; return its id.
@@ -438,6 +459,136 @@ async fn list_portfolio_properties_for_own_org_succeeds(pool: PgPool) {
         resp.status,
         StatusCode::OK,
         "Org A member must be able to list its own portfolio properties: {}",
+        resp.text()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Investor portal — portfolio property write (update / remove)
+//
+// #2945: `update_portfolio_property` / `remove_portfolio_property` gated on
+// `verify_portfolio_org(portfolio_id, org)` but the repo keyed the write on the
+// `property_id` alone. An attacker could therefore pass its OWN portfolio id
+// (which passes the org gate) together with a victim's property id and
+// update/delete another org's property. The repo writes are now scoped to
+// `portfolio_id AND id`, so a property that isn't in the caller's portfolio
+// resolves to no row → 404, with the victim row left untouched.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn update_portfolio_property_from_other_org_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "pp-upd-a").await;
+    let org_b = seed_org(&pool, "pp-upd-b").await;
+    let user_b = seed_user(&pool, "pp-upd-b@mvi-idor.test").await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
+    let portfolio_a = seed_portfolio(&pool, org_a).await;
+    let portfolio_b = seed_portfolio(&pool, org_b).await;
+    let property_a = seed_property(&pool, org_a, portfolio_a, "PPUpdA").await;
+
+    // Attacker (org B) uses its OWN portfolio id (passes verify_portfolio_org)
+    // but targets org A's property id.
+    let token_b = mint_token(user_b, "pp-upd-b@mvi-idor.test", Some(org_b));
+    let uri = format!("/api/v1/investor-portal/portfolios/{portfolio_b}/properties/{property_a}");
+    let resp = app
+        .execute(
+            app.put(&uri)
+                .bearer(&token_b)
+                .json(serde_json::json!({ "current_value": "999999.00" }))
+                .build(),
+        )
+        .await;
+
+    assert_not_ok(resp.status, "update_portfolio_property cross-tenant");
+
+    // The victim's row must be untouched — current_value stays NULL.
+    let victim_value: Option<String> =
+        sqlx::query_scalar("SELECT current_value::text FROM portfolio_properties WHERE id = $1")
+            .bind(property_a)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch victim property");
+    assert!(
+        victim_value.is_none(),
+        "cross-tenant update must not modify the victim property, got current_value={victim_value:?}"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn update_portfolio_property_for_own_org_succeeds(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "pp-upd-own-a").await;
+    let user_a = seed_user(&pool, "pp-upd-own-a@mvi-idor.test").await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
+    let portfolio_a = seed_portfolio(&pool, org_a).await;
+    let property_a = seed_property(&pool, org_a, portfolio_a, "PPUpdOwnA").await;
+
+    let token_a = mint_token(user_a, "pp-upd-own-a@mvi-idor.test", Some(org_a));
+    let uri = format!("/api/v1/investor-portal/portfolios/{portfolio_a}/properties/{property_a}");
+    let resp = app
+        .execute(
+            app.put(&uri)
+                .bearer(&token_a)
+                .json(serde_json::json!({ "current_value": "123456.00" }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "Org A member must be able to update its own portfolio property: {}",
+        resp.text()
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn remove_portfolio_property_from_other_org_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "pp-del-a").await;
+    let org_b = seed_org(&pool, "pp-del-b").await;
+    let user_b = seed_user(&pool, "pp-del-b@mvi-idor.test").await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
+    let portfolio_a = seed_portfolio(&pool, org_a).await;
+    let portfolio_b = seed_portfolio(&pool, org_b).await;
+    let property_a = seed_property(&pool, org_a, portfolio_a, "PPDelA").await;
+
+    let token_b = mint_token(user_b, "pp-del-b@mvi-idor.test", Some(org_b));
+    let uri = format!("/api/v1/investor-portal/portfolios/{portfolio_b}/properties/{property_a}");
+    let resp = app.execute(app.delete(&uri).bearer(&token_b).build()).await;
+
+    assert_not_ok(resp.status, "remove_portfolio_property cross-tenant");
+
+    // The victim's row must still exist.
+    let still_exists: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM portfolio_properties WHERE id = $1)")
+            .bind(property_a)
+            .fetch_one(&pool)
+            .await
+            .expect("check victim property");
+    assert!(
+        still_exists,
+        "cross-tenant delete must not remove the victim property"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn remove_portfolio_property_for_own_org_succeeds(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "pp-del-own-a").await;
+    let user_a = seed_user(&pool, "pp-del-own-a@mvi-idor.test").await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
+    let portfolio_a = seed_portfolio(&pool, org_a).await;
+    let property_a = seed_property(&pool, org_a, portfolio_a, "PPDelOwnA").await;
+
+    let token_a = mint_token(user_a, "pp-del-own-a@mvi-idor.test", Some(org_a));
+    let uri = format!("/api/v1/investor-portal/portfolios/{portfolio_a}/properties/{property_a}");
+    let resp = app.execute(app.delete(&uri).bearer(&token_a).build()).await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "Org A member must be able to remove its own portfolio property: {}",
         resp.text()
     );
 }
