@@ -10,6 +10,7 @@ import { useExecutionLogs, useExecutionStats, useRetryExecution } from '@ppt/api
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { useToast } from '../../../components';
 import { ExecutionDetailsModal } from '../components/ExecutionDetailsModal';
 import { ExecutionLogItem } from '../components/ExecutionLogItem';
 import { ExecutionStats } from '../components/ExecutionStats';
@@ -20,6 +21,7 @@ const skeletonKeys = ['skeleton-1', 'skeleton-2', 'skeleton-3', 'skeleton-4', 's
 
 export function ExecutionMonitoringPage() {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [statusFilter, setStatusFilter] = useState<ExecutionStatus | 'all'>('all');
   const [dateRange, setDateRange] = useState<DateRange>('week');
   const [ruleFilter, setRuleFilter] = useState<string>('');
@@ -72,8 +74,21 @@ export function ExecutionMonitoringPage() {
   };
 
   const handleRetry = async (log: ExecutionLog) => {
-    await retryExecution.mutateAsync(log.id);
-    setSelectedLog(null);
+    try {
+      await retryExecution.mutateAsync(log.id);
+      showToast({
+        type: 'success',
+        title: 'Execution retried',
+        message: 'The execution was queued for retry.',
+      });
+      setSelectedLog(null);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Retry failed',
+        message: err instanceof Error ? err.message : 'The execution could not be retried.',
+      });
+    }
   };
 
   const logs = logsData?.data ?? [];

@@ -10,6 +10,7 @@ import { useAutomationTemplates, useCreateRuleFromTemplate } from '@ppt/api-clie
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useToast } from '../../../components';
 import { TemplateCard } from '../components/TemplateCard';
 import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
 
@@ -33,6 +34,7 @@ const skeletonKeys = [
 
 export function TemplateLibraryPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [previewTemplate, setPreviewTemplate] = useState<AutomationTemplate | null>(null);
@@ -51,11 +53,20 @@ export function TemplateLibraryPage() {
   const createFromTemplate = useCreateRuleFromTemplate();
 
   const handleUseTemplate = async (template: AutomationTemplate) => {
-    const result = await createFromTemplate.mutateAsync(template.id);
-    if (result?.id) {
-      navigate(`/automations/rules/${result.id}/edit`);
-    } else {
-      navigate('/automations/rules/new', { state: { template } });
+    try {
+      const result = await createFromTemplate.mutateAsync(template.id);
+      if (result?.id) {
+        navigate(`/automations/rules/${result.id}/edit`);
+      } else {
+        navigate('/automations/rules/new', { state: { template } });
+      }
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Could not use template',
+        message:
+          err instanceof Error ? err.message : 'A rule could not be created from this template.',
+      });
     }
   };
 
