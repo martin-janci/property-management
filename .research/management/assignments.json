@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T16:59:38Z",
+  "generated": "2026-09-26T18:42:20Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -174,15 +174,15 @@
       "branch": "auto-impl/gh-issue-2982-d7db6aa5",
       "status": "review",
       "claimed_at": "2026-09-26T16:30:43Z",
-      "last_updated": "2026-09-26T16:57:48Z",
+      "last_updated": "2026-09-26T18:32:11Z",
       "status_changed_at": "2026-09-26T16:57:48Z",
       "pr_number": 2983,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2983",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=2983 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=rerouted news pages + notification-analytics hook through getApiClient(); IG3 tests added; verify OK (2672 tests); deferred gdprClient+accounting-upload w/ rationale (tenant-header/regression)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=news+notif-analytics correctly routed via getApiClient; auth/404/tests sound; CI green; approve posted as comment (self-PR blocks formal approve)",
+      "last_reviewed_oid": "4e4cb248e15a27ca822a9ba05e41b80d082681c3",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
