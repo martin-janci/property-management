@@ -10980,6 +10980,50 @@
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-base-url-env-split",
+      "title": "ppt-web reads API base URL from two competing env vars (VITE_API_URL + undeclared VITE_API_BASE_URL); auth path breaks on split-origin deploys",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 pass2 ppt-web-core contexts/AuthContext.tsx + lib/api.ts + vite-env.d.ts)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:77 + main.tsx:19 + features/accounting/api/paymentMatching.ts:69 read VITE_API_URL; contexts/AuthContext.tsx:97 + features/auth/authApiClient.ts:10 + 6 other feature modules read the undeclared VITE_API_BASE_URL. Only VITE_API_URL is declared in vite-env.d.ts; split-origin production deploys following the documented VITE_API_URL contract silently fall back to '' for the auth client (login/refresh/logout) and 7 feature modules. Fix: converge on a single getApiBaseUrl() helper or alias the two vars and declare both in ImportMetaEnv."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/vite-env.d.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-query-silent-error",
+      "title": "financial + rentals dashboards swallow useQuery errors; zero-fallback renders as 'no data' on API failure (money-bearing screens)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 pass2 ppt-web-core routes/groups/financial.tsx + routes/groups/rentals.tsx)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-96 destructures only { data, isLoading } from three useQuery calls (getARAgingReport / getOverdueInvoices / listInvoices); on error the code falls through to `?? { current:0, ..., total:0 }` / `?? []` and renders the dashboard as €0 outstanding / €0 overdue / €0 total with isLoading=false — silent misleading empty-state on a money-bearing screen.",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:233-265 has the same shape for rentalsApiListReservations + rentalsApiListConnections — bookings collapses to [] and RentalStatistics render totalBookings 0 / totalRevenue 0 / occupancyRate 0. Sibling mutations in the same files DO handle errors (onError: handleRentalsAuthError), so the query paths are an inconsistent omission not a design choice. Fix: destructure isError/error and render an error state (or pass isError into the presentational page so it can distinguish 'failed' from 'genuinely empty' + offer retry)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
     }
   ]
 }

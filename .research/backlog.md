@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-09-26 17:17 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-26 22:42 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -45,6 +45,8 @@
 | 2 | bug | Mobile RN fault-report photos silently dropped when upload fails — no user-visible error | `frontend/apps/mobile/src` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn) | 2026-09-26 | open | — |
 | 2 | bug | Mobile RN offline queue drops permanent 4xx failures without user feedback | `frontend/apps/mobile/src` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn) | 2026-09-26 | open | — |
 | 2 | bug | reality-web listings page renders empty state on API error — no error UI, users see 'no results' | `frontend/apps/reality-web/src/app` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web) | 2026-09-26 | open | — |
+| 2 | bug | ppt-web reads API base URL from two competing env vars (VITE_API_URL + undeclared VITE_API_BASE_URL); auth path breaks on split-origin deploys | `frontend/apps/ppt-web/src/vite-env.d.ts (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 pass2 ppt-web-core contexts/AuthContext.tsx + lib/api.ts + vite-env.d.ts) | 2026-09-26 | open | — |
+| 2 | bug | financial + rentals dashboards swallow useQuery errors; zero-fallback renders as 'no data' on API failure (money-bearing screens) | `frontend/apps/ppt-web/src/routes/groups/financial.tsx (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 pass2 ppt-web-core routes/groups/financial.tsx + routes/groups/rentals.tsx) | 2026-09-26 | open | — |
 | 2 | bug | CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure | `frontend/apps/reality-web/src/components/import/CrmConnection.tsx (+1)` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 2 | bug | FeedCard pause-toggle and delete actions swallow mutation errors — a failed feed removal looks identical to success | `frontend/apps/reality-web/src/components/import/FeedImport.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 2 | bug | SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained | `frontend/apps/reality-web/src/components/import/SyncSchedule.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |

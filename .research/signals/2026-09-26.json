@@ -1,46 +1,330 @@
 {
-  "generated": "2026-09-26T17:15:00Z",
-  "run": "routine-incremental",
+  "generated": "2026-09-26T22:42:00Z",
+  "run": "routine-incremental (pass2 same-day rerun; buffer-low: claimable=12/72 refill)",
   "since_iso": "2026-09-25T14:44:52Z",
-  "note": "Ingests today's dispatcher-emitted Tier-1d code-review-finding signal files under .research/signals/2026-09-26-*-tier1d.json (they were generated but never rolled into backlog/seen_signals); adds churn hotspots from PR #2979 (ppt-web AI-chat + OCR migration to authenticated API client); records dependabot noise and the buffer-low trigger payload as log-only signals. Phase 1.5 (fresh rotating-expert-review) and Phase 1.6 (project-management skill) skipped this run — dispatcher Tier-1d covers segment review, dispatcher-branch PM skill covers delivery synthesis; running them fresh would duplicate token spend. Same call as 2026-09-23/24/25 briefs.",
+  "note": "Same-day rerun 5h28m after 17:14 UTC pass1 (see brief; both passes documented there). Trigger payload: buffer-low: claimable=12/72 — refill planner. Pass2 ingests two dispatcher Tier-1d pass2 code-review-finding signals from signals/2026-09-26-ppt-web-core-tier1d-2.json (created by dispatcher commit 0d58ea1 at 18:42 UTC between the two routine runs) that had never touched seen_signals/backlog.json, plus records this run's buffer-low trigger as buffer-low-2026-09-26-payload-pass2. No new merged PRs, no new issues, no code-touching commits between pass1 and pass2 — only dispatcher .research/ chore commits. Phase 1.5 and Phase 1.6 skipped for pass2 (dispatcher already covers segment review; Phase 1.6 already ran in pass1). Neither new signal clears the score-3 promotion gate — no new plans this run.",
   "signals": [
-    { "id": "code-review-ppt-web-core-authed-roots-session-leak", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)", "score_delta": 3, "confidence": "high", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d.json — full 4-line evidence block preserved there." },
-    { "id": "code-review-ppt-web-core-ws-category-map-gap", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)", "score_delta": 2, "confidence": "high", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d.json." },
-    { "id": "code-review-ppt-web-core-api-default-export-orphan", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)", "score_delta": 1, "confidence": "medium", "candidate_vector": "refactor", "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d.json." },
-    { "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)", "score_delta": 2, "confidence": "high", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-ui-tier1d.json." },
-    { "id": "code-review-ppt-web-ui-automation-feature-no-i18n", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)", "score_delta": 1, "confidence": "medium", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-ui-tier1d.json." },
-    { "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)", "score_delta": 1, "confidence": "medium", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-ui-tier1d.json." },
-    { "id": "code-review-mobile-rn-fault-photos-silently-dropped", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)", "score_delta": 2, "confidence": "high", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-mobile-rn-tier1d.json." },
-    { "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)", "score_delta": 2, "confidence": "medium", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-mobile-rn-tier1d.json." },
-    { "id": "code-review-mobile-rn-meter-reading-no-numeric-validation", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)", "score_delta": 1, "confidence": "medium", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-mobile-rn-tier1d.json." },
-    { "id": "code-review-reality-web-listings-page-no-error-state", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)", "score_delta": 2, "confidence": "high", "candidate_vector": "bug", "evidence": "Ingested from .research/signals/2026-09-26-reality-web-tier1d.json." },
-    { "id": "code-review-reality-web-callback-hardcoded-login-string", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)", "score_delta": 1, "confidence": "high", "candidate_vector": "refactor", "evidence": "Ingested from .research/signals/2026-09-26-reality-web-tier1d.json." },
-    { "id": "code-review-reality-server-dup-url-validator", "type": "code-review-finding", "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-server)", "score_delta": 1, "confidence": "medium", "candidate_vector": "refactor", "evidence": "Ingested from .research/signals/2026-09-26-reality-server-tier1d.json." },
-    { "id": "churn-hotspot-frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx", "type": "churn-hotspot", "source": "PR #2979 (ppt-web AI-chat + OCR migration to authenticated API client)", "score_delta": 1, "confidence": "high", "candidate_vector": "refactor", "evidence": "187 added/removed lines in the window since 2026-09-25T14:44:52Z; first appearance in hotspot_history (runs_seen=1)." },
-    { "id": "churn-hotspot-frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.test.tsx", "type": "churn-hotspot", "source": "PR #2979", "score_delta": 1, "confidence": "high", "candidate_vector": "refactor", "evidence": "172 added/removed lines in the window; first appearance." },
-    { "id": "churn-hotspot-frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts", "type": "churn-hotspot", "source": "PR #2979", "score_delta": 1, "confidence": "high", "candidate_vector": "refactor", "evidence": "83 added/removed lines in the window; first appearance. Test churn dominates the source-file churn — the PR is a one-shot refactor to route through the authenticated axios client, not repeated instability. Not converted to a backlog row (log-only)." },
-    { "id": "dep-update-noise-pr-2981", "type": "dep-update-noise", "source": "PR #2981 (dependabot cargo-minor-patch group, 18 updates)", "score_delta": 0, "confidence": "high", "candidate_vector": "dep-update", "evidence": "Dependabot group rollup; open, not merged; log-only per allowlist." },
-    { "id": "buffer-low-2026-09-26-payload", "type": "operator-context", "source": "routine trigger payload 2026-09-26", "score_delta": 0, "confidence": "high", "candidate_vector": "triage", "evidence": "Trigger payload: buffer-low: claimable=9/72 (honest~1; 8/9 mobile-native-gated #2652) — refill planner. Dispatcher-side telemetry; not a routine-side backlog row." }
+    {
+      "id": "code-review-ppt-web-core-authed-roots-session-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d.json — full 4-line evidence block preserved there.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-category-map-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-orphan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-ui-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-ui-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-ui-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-mobile-rn-fault-photos-silently-dropped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-mobile-rn-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-mobile-rn-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-mobile-rn-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-reality-web-listings-page-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-reality-web-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-reality-web-callback-hardcoded-login-string",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Ingested from .research/signals/2026-09-26-reality-web-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validator",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-server)",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "Ingested from .research/signals/2026-09-26-reality-server-tier1d.json.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2979 (ppt-web AI-chat + OCR migration to authenticated API client)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "187 added/removed lines in the window since 2026-09-25T14:44:52Z; first appearance in hotspot_history (runs_seen=1).",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2979",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "172 added/removed lines in the window; first appearance.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts",
+      "type": "churn-hotspot",
+      "source": "PR #2979",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "83 added/removed lines in the window; first appearance. Test churn dominates the source-file churn — the PR is a one-shot refactor to route through the authenticated axios client, not repeated instability. Not converted to a backlog row (log-only).",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "dep-update-noise-pr-2981",
+      "type": "dep-update-noise",
+      "source": "PR #2981 (dependabot cargo-minor-patch group, 18 updates)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "Dependabot group rollup; open, not merged; log-only per allowlist.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "buffer-low-2026-09-26-payload",
+      "type": "operator-context",
+      "source": "routine trigger payload 2026-09-26",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Trigger payload: buffer-low: claimable=9/72 (honest~1; 8/9 mobile-native-gated #2652) — refill planner. Dispatcher-side telemetry; not a routine-side backlog row.",
+      "re_emit_note": "already in prev-run state.seen_signals — score_delta zeroed on pass2 same-day rewrite to preserve G4"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-base-url-env-split",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 pass2 ppt-web-core contexts/AuthContext.tsx + lib/api.ts + vite-env.d.ts)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d-2.json — full multi-line evidence block preserved there. Two env vars in play (VITE_API_URL declared, VITE_API_BASE_URL undeclared), 8 modules read the undeclared one incl. AuthContext.getAuthApi."
+    },
+    {
+      "id": "code-review-ppt-web-core-route-query-silent-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 pass2 ppt-web-core routes/groups/financial.tsx + routes/groups/rentals.tsx)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Ingested from .research/signals/2026-09-26-ppt-web-core-tier1d-2.json — full multi-line evidence block preserved there. financial + rentals dashboards destructure only { data, isLoading } from useQuery; error paths fall through to zero-fallback and render dashboards as €0 with isLoading=false."
+    },
+    {
+      "id": "buffer-low-2026-09-26-payload-pass2",
+      "type": "operator-context",
+      "source": "routine trigger payload 2026-09-26 22:35",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Trigger payload: buffer-low: claimable=12/72 — refill planner. Dispatcher-side telemetry (claimable rose 9→12 vs prior run at 17:14). Not a routine-side backlog row."
+    }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist. The promoted score-3 finding (code-review-ppt-web-core-authed-roots-session-leak) is a multi-file code fix — it goes through the manual plan path (Phase 3), not the auto-fix allowlist (screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise lockfile-drift / stalled-review only).",
+  "auto_fix_skipped_reason": "pass2: no candidate matched confidence=high + score>=3 + allowlist. The two new pass2 tier-1d rows (code-review-ppt-web-core-api-base-url-env-split, code-review-ppt-web-core-route-query-silent-error) are score 2 / confidence medium — below both the auto-fix bar and the manual-promotion bar. All prior pass1 findings likewise fall outside the auto-fix allowlist (screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise lockfile-drift / stalled-review only).",
   "goal_checks": [
-    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-09-26.md && head -1 == '# 2026-09-26'", "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2", "passed": true, "command": "state.json advanced vs HEAD", "observed": "true", "expected": "true", "detail": "last_pr_seen 2956→2980, last_issue_seen 2966→2982, last_commit_sha updated, seen_signals length +17, hotspot_history +3, stats.runs 82→83." },
-    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | length == (unique | length)' backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id was in prior seen_signals with score_delta>0 on re-emit", "observed": "true", "expected": "true", "detail": "All 12 code-review-* IDs + 3 churn-hotspot IDs are new to seen_signals; buffer-low + dep-update-noise-pr-2981 are new IDs." },
-    { "goal": "G5", "passed": true, "command": "score cap 8 + decay applied", "observed": "true", "expected": "true", "detail": "0 open rows had updated_at <= 2026-09-12; no decay to apply. No score above 8." },
-    { "goal": "G6", "passed": true, "command": "every new plan has an adversarial-pass annotation in the brief", "observed": "true", "expected": "true" },
-    { "goal": "G7", "passed": true, "command": "at most 2 new plans, all sections + metadata + Files exist", "observed": "1 new plan; 4 metadata + 11 headings + Mode + Files present and resolving", "expected": "≤2, all gates" },
-    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
-    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged .research/ diff (excluding baseline docs)", "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G10", "passed": true, "command": "diff backlog.md /tmp/backlog.regen.md", "observed": "byte-identical", "expected": "exit 0" },
-    { "goal": "G11", "passed": true, "command": "phases that failed listed with cursor unadvanced", "observed": "no phase failures this run", "expected": "vacuously true" },
-    { "goal": "G12", "passed": true, "command": "every prior-run plan slug resolves in plans/ or plans/_archive/", "observed": "no plans removed this run", "expected": "true" },
-    { "goal": "G13", "passed": true, "command": "archive file count this run >= HEAD count", "observed": "8 == 8", "expected": "true" },
-    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "byte-identical", "expected": "exit 0" },
-    { "goal": "G15", "passed": true, "command": "no auto-fix actions this run (see auto_fix_skipped_reason)", "observed": "auto_fix_actions.length == 0", "expected": "true" },
-    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run — pm_cursor.next_index unchanged (5), gate is a no-op", "observed": "no-op", "expected": "no-op" },
-    { "goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged diff", "observed": "exit 0", "expected": "exit 0" }
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-26.md && head -1 == '# 2026-09-26'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "detail": "pass2: last_run_iso 17:14→22:42, last_commit_sha 3e2239d9→3177967a, seen_signals +3 (509→512), stats.runs 83→84, vectors_created 385→387. Cumulative day: seen_signals +19 vs prior real run's HEAD."
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emitted signal with non-zero score_delta outside the cumulative-type allowlist",
+      "observed": "true",
+      "expected": "true",
+      "detail": "17 pass1 signals carried forward with score_delta zeroed (re_emit_note stamped); the 3 pass2-new signals (2 tier-1d pass2, 1 buffer-low-pass2) are NOT in HEAD.seen_signals and carry their real score_deltas (2 + 2 + 0)."
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap ≤8 and decay applied for open+updated_at≤today-14",
+      "observed": "no items >8; 0 open items with updated_at≤2026-09-12",
+      "expected": "cap held; decay window empty"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has 'adversarial pass:' annotation",
+      "observed": "0 new plans this run — clause is a no-op",
+      "expected": "no-op when 0 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans; each meets readiness gates",
+      "observed": "0 new plans this run — pass2 promoted nothing (both new signals are score 2, below the score-3 gate)",
+      "expected": "≤2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged .research/ diff (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regeneration from backlog.json",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — brief lists any failed phases and cursors match",
+      "observed": "brief lists 'none across either pass'; every cursor advanced normally",
+      "expected": "no-op when no phase failed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present (in plans/ or plans/_archive/)",
+      "observed": "all HEAD plan slugs resolve on-disk",
+      "expected": "no missing slug"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ file count non-decreasing",
+      "observed": "9 now vs 9 at HEAD (unchanged this run — no archive operations)",
+      "expected": "now ≥ head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regeneration from backlog.json (vector==triage rows)",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps: ≤1 PR, ≤1 issue, ≤1 comment; idempotency vs history; verify-all-gated",
+      "observed": "auto_fix_actions=[] this run (no candidate matched allowlist+certainty bar); ROUTINE_AUTOFIX_DISABLED unset in env",
+      "expected": "true when no actions taken"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid AND pm_cursor / coverage_cursor within bounds",
+      "observed": "action-list.items parses; risks.items parses; project-state.md non-empty; pm_cursor.next_index=5 (unchanged — Phase 1.6 skipped in pass2), coverage_cursor.next_index=7 (unchanged — GC7 clause is a no-op when pm_cursor unchanged); epics=13, 7<13 in bounds.",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot-token value in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    }
   ]
 }

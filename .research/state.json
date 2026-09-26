@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-26T17:14:48Z",
-  "last_run_ms": 8000,
+  "last_run_iso": "2026-09-26T22:42:00Z",
+  "last_run_ms": 4321,
   "last_pr_seen": 2980,
   "last_issue_seen": 2982,
-  "last_commit_sha": "3e2239d96f8f9935c68932ddf2e379d9b48404de",
+  "last_commit_sha": "3177967a217f8d5894afd9b4a1b45c9aae175306",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -542,6 +542,7 @@
     "buffer-low-2026-09-23-payload",
     "buffer-low-2026-09-25-payload",
     "buffer-low-2026-09-26-payload",
+    "buffer-low-2026-09-26-payload-pass2",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-form-rs",
@@ -751,6 +752,7 @@
     "code-review-mobile-rn-thread-send-silent-fail",
     "code-review-mobile-rn-vote-list-cast",
     "code-review-mobile-rn-vote-xform-untested",
+    "code-review-ppt-web-core-api-base-url-env-split",
     "code-review-ppt-web-core-api-default-export-orphan",
     "code-review-ppt-web-core-api-onunauthorized-unwired",
     "code-review-ppt-web-core-authctx-init-stale-role",
@@ -764,6 +766,7 @@
     "code-review-ppt-web-core-raw-fetch-bypasses-jwt-interceptor",
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-route-error-boundary-gap",
+    "code-review-ppt-web-core-route-query-silent-error",
     "code-review-ppt-web-core-ws-category-map-gap",
     "code-review-ppt-web-core-ws-event-name-mismatch",
     "code-review-ppt-web-core-ws-giveup-no-resume",
@@ -1061,8 +1064,8 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 83,
-    "vectors_created": 385,
+    "runs": 84,
+    "vectors_created": 387,
     "plans_created": 31,
     "quiet_days": 5,
     "auto_fix_count": 0
