@@ -1,73 +1,58 @@
 # PPT Project State
 
-_Generated: 2026-08-31 — routine Phase 1.6 lightweight upkeep (pm-devops rotation slot; 76-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-devops → pm-security next), coverage_cursor idx 6 → 7 (epic-81 re-checked, no material change; advances to epic-82). Sprint window 2026-08-26..08-31 shipped 10 PRs — all code-review batch (#2889-#2899, dispatcher merged in-window)._
+_Generated: 2026-09-26 — routine Phase 1.6 lightweight upkeep (pm-security rotation slot; 67-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 7 → 8 (epic-82 re-checked, no material change; advances to epic-83). Sprint window 2026-09-08..09-26 shipped **0 PRs** — 18 days without a merge to `dev`._
 
 ## Executive summary
 
-- **Delivery still at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring and 84-2 sign page). No status flips this window. The last window's 10 PRs were exclusively `code-review-*` fixes surfaced by the dev-team static passes:
-  - Backend security/reliability — PR #2893 (SSO introspect negative-cache poisoning fix), PR #2898 (validate reporter_email/reporter_phone on report submit), PR #2899 (compliance guard widening for PlatformAdmin).
-  - Backend correctness — PR #2892 (measure text length by char count not bytes; 8 files), PR #2896 (localize saved-search alert copy by recipient locale).
-  - Frontend correctness — PR #2889 (wire realtime ws events to query invalidation — end-to-end dead sync fix), PR #2890 (surface swallowed mutation errors), PR #2891 (wire onUnauthorized so 401 triggers session recovery).
-  - Frontend i18n — PR #2894 (Saved Searches localization), PR #2895 (Inquiries page localization).
-- **Auto-review loop still working:** all 10 merged PRs were originated by the ppt-dev-review generator over the prior 2 days (dispatcher spawned static passes → landed as `code-review-*` PRs → all merged in the same window). Zero regressions detected on the batch.
-- **Buffer starved (cloud-only):** 7/8 open backlog items are mobile-native/KMP — structurally unclaimable in the cloud dispatcher (AGP/Gradle egress gate, issue #2652). Every dispatcher commit since 2026-08-30 records `GC3-buffer-bounds=FAIL (record-only)`. Tier-1d generator kicks per run just to keep the buffer above floor. **Infra decision surfaced this run (pm-devops).**
-- **One open PR touched this run:** #2897 (`code-review-reality-server-sso-per-call-client-no-timeout`) — approved but had a real merge conflict against #2893 (both touched `introspect_pm_token`); dispatcher Phase 5.6 threaded the pooled `reqwest::Client` through the extracted `introspect_pm_token_inner`, pushed the merge (bca285d..aa5c544). CI red on the resolution attempt (fmt + introspect test-shard). Standing manual-reconciliation request on the PR.
-- **No new blockers.** Standing gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) still holds; owner pm-security.
+- **Delivery unchanged at 47/49 stories done, 2 partial** (84-1 direct-to-S3 upload wiring, 84-2 sign page). No status flips this window. **Zero PRs merged in 18 days** — last merge was #2956 on 2026-09-08.
+- **Sprint story-complete, tracking-hygiene gap.** Every story in the active sprint's epics (6, 7a, 8a, 10a, 10b, 80) reads `done` in `_bmad-output/implementation-artifacts/sprint-status.yaml`'s `development_status` block, but the `epics:` summary block at the top is stale (epic-6 says `3/6`, epic-7a `2/5`, epic-10b/80 status fields don't match their per-story counts). Reconciliation queued as `pm-scrum-master-reconcile-stale-epic-counts`.
+- **Auto-review + dispatcher loop still ticking but no throughput.** Since 2026-09-08 all dispatcher activity has been Tier-1d generator kicks and buffer-refill telemetry; every open backlog item is either mobile-native/KMP (7/8 items — structurally unclaimable in the cloud runner due to the AGP/Gradle egress gate) or waiting on a cloud-build unblock. `GC3-buffer-bounds=FAIL (record-only)` is now chronic.
+- **Two high-severity security fixes stuck in retry loop.** #2944 (cross-tenant IDOR in violation records) and #2945 (portfolio_properties read+write missing org scope) have failed twice on the same cloud-build blocker (cited as #2652). Their retry-1 drafts (#2977, #2976) remain open with `mergeable_state: unstable`. **Critical mismatch:** #2652's actual body describes a mobile-native/KMP `dl.google.com` egress 403, not the swagger-ui/api-server egress that supposedly blocks these retries — the wrong root-cause issue is being tracked. Both #2944 and #2945 are marked `closed` on GitHub despite the fixes being unmerged.
+- **New auth-bypass this run:** #2978 — ppt-web AI-chat + OCR feature hooks call the API via raw `fetch()` with no `Authorization` header. Draft fix #2979 exists (`mergeable_state: dirty`). Fails-closed today (401 behind `<ProtectedRoute>`) but same anti-pattern as the already-fixed #486. Add lint/test guard alongside the merge.
+- **59-day-old accounting PRs still stalled:** #2555, #2559 (feat(acc)) remain unreviewed since 2026-07-30 with no owner assigned. Merge, close, or rescope decision needed from pm-tech-lead.
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** unchanged this run. Extended-scope epics (10B, 80, 81, 82, 83, 84, 85, 79, 8A, 9) folded into `coverage.json` and largely done.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **story-level `done` across all sprint epics; summary block stale**. Extended-scope epics folded into `coverage.json`.
 
-| Epic | Sprint status | Coverage status (13 epics) |
-|---|---|---|
-| 6 — Announcements & Communication | in-progress | 6/6 stories done in coverage |
-| 7A — Basic Document Management | in-progress | 5/5 stories done in coverage |
-| 8A — Basic Notification Preferences | done | 3/3 stories done |
-| 10A — OAuth Provider Foundation | done | 3/3 stories done |
-| 10B — Platform Administration | in-progress | 7/7 stories done |
-| 80 — Dispute Resolution | partial | 3/3 stories done in coverage |
-| 81 — Reports | (extended) | 2/2 stories done in coverage; **re-checked this run (idx 6), no material change, last_checked=2026-08-31** |
-| 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial (84-1, 84-2) — unchanged |
-| 82 / 83 / 85 / 79 / 7a / 8a / 9 | (extended) | all done in coverage |
+| Epic | Sprint status (stale) | Actual story-level | Coverage status (13 epics) |
+|---|---|---|---|
+| 6 — Announcements & Communication | in-progress (3/6) | done (6/6) | 6/6 stories done in coverage |
+| 7A — Basic Document Management | in-progress (2/5) | done (5/5) | 5/5 stories done in coverage |
+| 8A — Basic Notification Preferences | done | done | 3/3 stories done |
+| 10A — OAuth Provider Foundation | done | done | 3/3 stories done |
+| 10B — Platform Administration | in-progress | done | 7/7 stories done |
+| 80 — Dispute Resolution | partial | done | 3/3 stories done in coverage |
+| 82 — (extended) | (extended) | done | 2/2 stories done in coverage; **re-checked this run (idx 7), no material change, last_checked=2026-09-26** |
+| 84 — Documents / e-signature | (extended) | 3/5 done, 2 partial | 3/5 done, 2 partial (84-1, 84-2) — unchanged |
+| 81 / 83 / 85 / 79 / 7a / 8a / 9 | (extended) | all done | all done in coverage |
 
-## Shipped since last run (10 PRs merged 2026-08-30 within the run window)
+## Shipped since last run (0 PRs merged in 18d window since 2026-09-08)
 
-- **#2889** — code-review ppt-web-core ws-event-name-mismatch: wire realtime WS events to query invalidation (100% dead sync fix, real event names)
-- **#2890** — code-review reality-web mutation-no-onerror: surface swallowed mutation errors (favorites/saved-searches/inquiries)
-- **#2891** — code-review ppt-web-core api-onunauthorized-unwired: wire onUnauthorized so 401 triggers session recovery
-- **#2892** — code-review reality-server bytelen-charcount-validation: measure text length by character count not bytes (8 files, accented Slovak/Czech/German)
-- **#2893** — code-review reality-server sso-introspect-negcache-poison: don't cache active=false on PM introspection outage
-- **#2894** — code-review reality-web saved-searches-i18n: localize Saved Searches page + card (6 locales)
-- **#2895** — code-review reality-web inquiries-i18n: i18n the Inquiries page (6 locales)
-- **#2896** — code-review reality-server alert-drainer-i18n-english-only: localize saved-search alert copy by recipient locale (sk/cs/de/en with plural buckets)
-- **#2898** — code-review reality-server report-contact-unvalidated: validate reporter_email/reporter_phone on report submit
-- **#2899** — code-review api-handlers compliance-superadmin-exact-match: let PlatformAdmin reach compliance reports
+- _nothing_ — every commit on `dev` since #2956 merged (2026-09-08) has been `.research/` chore commits from the daily routine + the dispatcher planning loop. Zero application-code merges.
 
-## What's next (top 5 actions from ranked backlog)
+## What's next (top actions from the ranked action list)
 
-1. **[high] Unblock mobile-native/KMP builds in the cloud runner (issue #2652)** — 7/8 open backlog items structurally unclaimable — **owner: pm-devops**. New this run — cloud-runner starvation is now chronic; pushing it into the top actions.
-2. **[high] Wire ppt-web direct-to-S3 upload (84-1 partial)** — POST /api/v1/documents/upload-url consumer + regression test — **owner: pm-frontend**. Highest-leverage single move (drops partial count 2 → 1).
-3. **[high] Build signer-facing document-sign page (84-2 partial)** — flip screen-map ppt/document-sign buildStatus planned → shipped — **owner: pm-frontend**. Closes 49/49 MVP when paired with #2.
-4. **[high] Resolve gh-issue-2797** — cargo-deny RUSTSEC-2026-0258 (h2 empty-DATA-frame DoS) blocks every backend PR — **owner: pm-security**. Standing since 2026-08-18.
-5. **[medium] Resolve #2897 CI red** — PR approved and merge-conflict-resolved (bca285d..aa5c544), but CI shard is red (fmt + introspect test); needs manual reconciliation in a buildable env — **owner: pm-backend**.
+1. **[high]** Move PR #2979 (gh-issue-2978 AI-chat auth-header fix) out of draft into review and merge. Owner: pm-frontend.
+2. **[high]** Unblock cloud-runner builds for api-server (swagger-ui egress 403 per issue #2652) so #2944/#2945 retries can complete. Owner: pm-devops.
+3. **[high]** Reconcile #2652's actual body (mobile-native/KMP `dl.google.com` egress) against the claimed api-server/swagger-ui blocker so the correct root cause is tracked. Owner: pm-devops.
+4. **[high]** Land the cross-tenant IDOR fixes #2944 / #2945 once the cloud build is green. Owner: pm-security.
+5. **[medium]** Reconcile stale epic-level completion counts (epic-6, 7a, 10b, 80) in `sprint-status.yaml` against `development_status` entries. Owner: pm-scrum-master.
 
 ## Blockers
 
-- **None new this run.** Sprint continues with no red flags; all 10 code-review PRs landed in-window.
-- **Standing:** gh-issue-2797 (cargo-deny RUSTSEC-2026-0258 h2 DoS) blocks every backend PR until landed. Owner: pm-security.
-- **Standing infra:** issue #2652 — mobile-native/KMP builds unlandable in cloud runner. Owner: pm-devops (surfaced as this run's top action).
-- **Aging:** 84-1 + 84-2 partial stories unchanged for 4 upkeep windows. Owner: pm-frontend.
+- **gh-issue-2944 / gh-issue-2945 (cross-tenant IDOR fixes)** — backend api-server unbuildable in cloud runner; two failed retries; wrong root-cause issue (#2652) tracked. Owner: pm-devops.
+- **PR #2979 (gh-issue-2978 fix)** — still in draft, `mergeable_state: dirty`. Owner: pm-frontend.
+- **PR #2555 / #2559** — 59 days old with no review movement, no owner assigned. Owner: pm-tech-lead.
 
-## Role focus today: **pm-devops** (rotation idx 4; last 2026-06-16, 76d stale) + pm-scrum-master always-on
+## Role focus today
 
-- **pm-scrum-master** (always-on): the code-review auto-generator + dispatcher merge loop delivered 10 PRs in one window with no regressions detected — the loop is a working delivery mechanism. Delivery blocker is now infrastructural, not code: mobile-native/KMP items can't be picked up in cloud, and the backlog rank is exhausted of landable items (`Buffer starved (claimable=0/floor=36)` on the 2026-08-31T00:35Z commit).
-- **pm-devops** (rotation): flagged the mobile-native/KMP cloud-runner gap (issue #2652) as the top standing infra risk. Also proposed a nightly `verify-all.sh --quick` sweep on `dev` HEAD to surface silent infra regressions, and a dependabot-queue triage (7 open dep PRs, 3d idle). See `roles/pm-devops.md` for the full 4 next-actions and 2 risks.
+- **pm-scrum-master** (always-on synthesis) — summary above.
+- **pm-security** (rotating role; last-run 2026-07-21 → 2026-09-26) — see `roles/pm-security.md`.
 
-## Coverage (upkeep this run — 2026-08-31)
+## Coverage upkeep
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated` bumped to 2026-08-31T03:10:00Z, no re-scan.
-- **Epic re-check: epic-81** — cursor idx 6. Both stories (81-1 report-schedule-editing, 81-2 report-execution-history) still `done`. No PR in the 2026-08-26..08-31 window touched reports schedule routes/screens; evidence entry appended to 81-1 noting the negative check. `last_checked = 2026-08-31` stamped on both stories.
-- **Merged-PR evidence:** none of the 10 merged PRs (all code-review batch) match a coverage story by keyword — all were correctness hardening of already-shipped surfaces. No status flips.
-- **`coverage_cursor` advances 6 → 7** (epic-81 → epic-82 next run).
-- **`pm_cursor` advances 4 → 5** (pm-devops → pm-security next run). role_last_run["pm-devops"] = 2026-08-31.
-- **Composition unchanged: 47 done · 2 partial · 0 not-started** across 13 epics. **Missing UC links: 3** (UC-33.1/33.2/33.3 already queued). Zero orphan screens, zero validation errors.
+- **Merged PRs mapped to stories:** 0 (no merges this window).
+- **Epic re-checked (rotating slot `coverage_cursor.next_index=7`):** epic-82 — no material change; `last_checked=2026-09-26`.
+- **Cursor advance:** `coverage_cursor.next_index 7 → 8` (epic-83 up next).
+- **`scan_kind`:** `upkeep` (no deep re-scan; the authoritative full rebuild is the on-demand local `/ppt-project-management scan`).

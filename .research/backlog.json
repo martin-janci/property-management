@@ -10732,6 +10732,62 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-unbounded-pagination-wave-2",
+      "title": "api-handlers: LIMIT clamp missed on second wave of list endpoints (community, property_valuation, portfolio_analytics, infrastructure, outages, voting, government_portal, documents)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-26 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/community.rs:545 — list_posts binds `query.limit`/`query.offset` from PaginationQuery straight into community_repo.get_group_posts; PaginationQuery (community.rs:292-297) has default 20 but no upper-bound validation",
+        "backend/crates/db/src/repositories/community.rs:266-285 — get_group_posts binds those values directly into `LIMIT $2 OFFSET $3` with no clamp, so a hostile `?limit=2147483647` (i32::MAX) forces a full-table LIMIT",
+        "backend/servers/api-server/src/routes/pagination.rs:1-28 — the project's own `clamp_limit` helper exists specifically to prevent this ('must collapse to MAX_PAGE_LIMIT ... never reach SQL as an unbounded full-table-scan LIMIT') but is not applied here",
+        "Same unclamped pattern repeats in property_valuation.rs:313/621/663/867, portfolio_analytics.rs:774, community.rs:696/812, infrastructure.rs:348/520/1102/1581, outages.rs:352, voting.rs:247, government_portal.rs:374, documents/core.rs:695",
+        "Sibling item code-review-api-handlers-unbounded-pagination-limit (status=done 2026-08-29) fixed the ai/*, vendors/contacts, compliance, predictive_maintenance handlers under the same pattern — this wave was missed"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/community.rs",
+        "backend/servers/api-server/src/routes/property_valuation.rs",
+        "backend/servers/api-server/src/routes/portfolio_analytics.rs",
+        "backend/servers/api-server/src/routes/infrastructure.rs",
+        "backend/servers/api-server/src/routes/outages.rs",
+        "backend/servers/api-server/src/routes/voting.rs",
+        "backend/servers/api-server/src/routes/government_portal.rs",
+        "backend/servers/api-server/src/routes/documents/core.rs",
+        "backend/servers/api-server/src/routes/pagination.rs",
+        "backend/crates/db/src/repositories/community.rs"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-tenant-export-path",
+      "title": "api-handlers: admin_tenant_lifecycle.rs export_handler accepts caller-supplied out_dir with no allowlist / traversal check",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-09-26 (api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:98-102 — export_handler reads `out_dir: Option<String>` from the request JSON body and does `PathBuf::from(b)` with no allowlist / traversal / base-directory check, then passes it to tenant_ops::export_tenant which writes the tarball there",
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:50-52 — the route is capability-gated by `TenantExport` (+ recent-MFA + audit), so blast radius is limited to a compromised platform-admin credential",
+        "Missing defense-in-depth: constrain writes under a fixed exports base dir or reject absolute / `..` paths — a compromised platform-admin could otherwise write the tarball anywhere the api-server process can reach on the host filesystem",
+        "reachable — `pub mod admin_tenant_lifecycle` in routes/mod.rs:6"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
     }
   ]
 }

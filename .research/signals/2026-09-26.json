@@ -1,0 +1,157 @@
+{
+  "date": "2026-09-26",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-26.md && head -1 grep ^# 2026-09-26$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advancement",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap check + decay applied to 0 items (nothing >14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuous",
+      "observed": "0 new plans",
+      "expected": "0 or all have adversarial pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^\\.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief mentions no failed phases; no cursor un-advanced",
+      "observed": "no phase failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "25 active + 9 archived (unchanged)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged >= HEAD",
+      "observed": "9 >= 9",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions this run",
+      "observed": "auto_fix_actions=[]",
+      "expected": "cap satisfied"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 clause",
+      "observed": "action-list+risks parse; pm_cursor 5->6; coverage_cursor 7->8 (13 epics)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep on added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-unbounded-pagination-wave-2",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/community.rs:545 — list_posts binds query.limit/query.offset from PaginationQuery straight into community_repo.get_group_posts; no upper-bound clamp",
+        "backend/crates/db/src/repositories/community.rs:266-285 — get_group_posts binds those values directly into LIMIT $2 OFFSET $3 with no clamp",
+        "backend/servers/api-server/src/routes/pagination.rs:1-28 — the project's own clamp_limit helper exists but is not applied here; same unclamped pattern in property_valuation.rs, portfolio_analytics.rs, infrastructure.rs, outages.rs, voting.rs, government_portal.rs, documents/core.rs"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-tenant-export-path",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:98-102 — export_handler takes out_dir: Option<String> from the request JSON body and does PathBuf::from(b) with no allowlist / traversal / base-directory check",
+        "backend/servers/api-server/src/routes/admin_tenant_lifecycle.rs:50-52 — the route is capability-gated by TenantExport + recent-MFA + audit, so blast radius is limited to a compromised platform-admin credential, but a defense-in-depth check is missing",
+        "reachable — pub mod admin_tenant_lifecycle in routes/mod.rs:6"
+      ],
+      "expert": "security"
+    }
+  ],
+  "auto_fix_actions": []
+}

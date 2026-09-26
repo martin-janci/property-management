@@ -1,6 +1,16 @@
-# PPT Roadmap — upkeep 2026-08-25
+# PPT Roadmap — upkeep 2026-09-26
 
-⚠ Buffer below half — consider running `/ppt-project-management scan` to refresh coverage (only 5 gap candidates remain in the ranked pool because 47/49 stories are already `done`; the queue is genuinely draining, not stale).
+⚠ Buffer below half — consider running `/ppt-project-management scan` to refresh coverage (only 5 gap candidates remain in the ranked pool because 47/49 stories are already `done`; the queue is genuinely draining, not stale). **Zero merges in the 18-day window since 2026-09-08 — the bottleneck this run is throughput, not backlog.**
+
+### New this run (2026-09-26 — pm-security + pm-scrum-master synthesis)
+
+- [high] Move PR #2979 (gh-issue-2978 AI-chat + OCR auth-header fix) out of draft → review → merge — owner: pm-frontend
+- [high] Unblock cloud-runner builds for api-server (swagger-ui egress 403 per issue #2652) so #2944/#2945 retries can complete — owner: pm-devops
+- [high] Reconcile #2652 body (mobile-native/KMP `dl.google.com` egress) against the claimed api-server/swagger-ui blocker — correct root-cause tracking needed — owner: pm-devops
+- [medium] Reconcile stale epic-level completion counts (epic-6, 7a, 10b, 80) in `sprint-status.yaml` — owner: pm-scrum-master
+- [medium] Triage 59d-stalled review PRs #2555 / #2559 (feat(acc)) — merge, close, or re-scope — owner: pm-tech-lead
+- [medium] Promote `plans/security-llm-doc-idor.md` (Epic 64 `ai.rs` cross-tenant IDOR — tenant-blind SQL on `self.pool`) to a tracked backlog item — owner: pm-security
+- [medium] Re-open or correct the closed state of #2944/#2945 (fixes still unmerged as drafts #2977/#2976) — owner: pm-security
 
 ## State of the project
 
@@ -65,4 +75,4 @@
 
 - [medium] Link UC-33.3 to a dispute screen-map (last of 3 UC-33.x residual from coverage.screen_gaps) — owner: pm-frontend
 
-Buffer: **17/36 open** · 9 in-progress · 7 items resolved this run · project at 47/49. Auto-review loop is doing its job: every issue closed this run resolved by a merged PR in the same window (#2827→#2822, #2826→#2823, #2833→#2832, #2834→#2831, #2828→facilities-silent-errors, #2829→aml-prompt-alert, dispatcher fix→#2743). Next lever is finishing 84-1/84-2 to close MVP delivery.
+Buffer: **18/36 open** · 0 items resolved this run · project at 47/49. **No merges this run (18-day dry window).** Merge cadence is now the throughput bottleneck — six new pm-analysis actions surfaced this run (see the "New this run" block at top). Next lever is (a) unblocking the cloud-runner build to move #2944/#2945 IDOR fixes, and (b) shepherding #2979 out of draft so the AI-chat auth-bypass (#2978) closes.

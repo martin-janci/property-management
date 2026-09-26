@@ -209,7 +209,73 @@
           "frontend"
         ]
       }
+    },
+    {
+      "id": "pm-scrum-master-unblock-api-server-cloud-build-2652",
+      "action": "Unblock cloud-runner builds for api-server (swagger-ui egress 403 per issue #2652) so #2944/#2945 retries can complete",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-26"
+    },
+    {
+      "id": "pm-scrum-master-reconcile-stale-epic-counts",
+      "action": "Reconcile stale epic-level completion counts (epic-6, 7a, 10b, 80) in sprint-status.yaml against development_status entries",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-26"
+    },
+    {
+      "id": "pm-scrum-master-triage-stalled-2555-2559",
+      "action": "Triage the two 59-day-old stalled review PRs #2555, #2559 (feat(acc)) — merge, close, or re-scope with a decision recorded",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-26"
+    },
+    {
+      "id": "pm-security-reconcile-2652-actual-vs-cited",
+      "action": "Reconcile issue #2652 body (mobile-native/KMP dl.google.com egress) against the claimed api-server/swagger-ui blocker so the correct root cause is tracked",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-26"
+    },
+    {
+      "id": "pm-security-reopen-2944-2945-issue-state",
+      "action": "Re-open or correct the closed state of issues #2944/#2945 given their fixes are still unmerged (draft PRs #2977/#2976)",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-26"
+    },
+    {
+      "id": "pm-security-promote-llm-doc-idor-plan",
+      "action": "Promote plans/security-llm-doc-idor.md (Epic 64 ai.rs cross-tenant IDOR) to a tracked backlog item — add principal binding + org predicate to publish_description, list_listing_descriptions, get_photo_enhancement",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-09-26"
     }
   ],
-  "generated": "2026-09-07T14:38:29Z"
+  "generated": "2026-09-26T02:44:52Z"
 }
