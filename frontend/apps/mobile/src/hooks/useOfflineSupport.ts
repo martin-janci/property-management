@@ -168,6 +168,22 @@ export interface OfflineState {
   lastSyncTime: Date | null;
 }
 
+/**
+ * Actions dropped this session because the server rejected them with a
+ * PERMANENT client error (a 4xx not in `RETRYABLE_HTTP_STATUSES`).
+ *
+ * A permanent 4xx means the queued request can never win on retry (bad
+ * payload, gone, forbidden, …), so `processQueue` removes it from the queue.
+ * Previously that drop was silent — only a `console.error` — so offline-created
+ * content the user cared about (e.g. a fault reported while offline) could
+ * vanish with no user-visible signal. These dropped actions are now surfaced as
+ * hook state so the UI can raise a user-visible error, regardless of which
+ * caller triggered the flush (the NetInfo auto-sync listener passes no
+ * callback, so callback-only reporting would miss the most common path). The
+ * consumer acknowledges them via `clearPermanentFailures` once shown.
+ */
+export type PermanentFailure = QueuedAction;
+
 export interface UseOfflineSupportReturn extends OfflineState {
   // Caching
   cacheData: <T>(key: string, data: T, expiresIn?: number) => Promise<void>;
@@ -183,6 +199,14 @@ export interface UseOfflineSupportReturn extends OfflineState {
   isSyncing: boolean;
   // Sync progress (for UI binding)
   syncProgress: SyncProgress | null;
+  /**
+   * Actions dropped this session on a permanent 4xx (see `PermanentFailure`).
+   * The UI watches this to surface a user-visible error instead of the item
+   * disappearing silently, then calls `clearPermanentFailures` to acknowledge.
+   */
+  permanentFailures: PermanentFailure[];
+  /** Acknowledge and clear the surfaced permanent-failure list. */
+  clearPermanentFailures: () => void;
 }
 
 export function useOfflineSupport(): UseOfflineSupportReturn {
@@ -193,6 +217,8 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
+  // Permanent 4xx drops surfaced for the UI (issue: silent permanent-4xx drop).
+  const [permanentFailures, setPermanentFailures] = useState<PermanentFailure[]>([]);
 
   // Synchronous re-entrancy guard for processQueue (issue #1767).
   //
@@ -373,6 +399,14 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         const succeededIds = new Set<string>();
         const terminalFailureIds = new Set<string>();
 
+        // Actions dropped this cycle on a PERMANENT 4xx. Collected so the drop
+        // can be surfaced to the user instead of vanishing with only a
+        // console.error (issue: silent permanent-4xx drop). Appended to the
+        // hook's `permanentFailures` state after the loop, so every caller —
+        // including the NetInfo auto-sync listener that passes no callback —
+        // gets user-visible feedback.
+        const droppedPermanent: QueuedAction[] = [];
+
         // Offline-edit linkage (issue #1767): when a CREATE that carries a temp
         // `localId` flushes and the server returns the real id, record the
         // mapping so subsequent queued actions targeting that temp id can be
@@ -422,6 +456,10 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
             if (isPermanent) {
               failed++;
               terminalFailureIds.add(action.id);
+              // Record the dropped action so the UI can raise a user-visible
+              // error — the drop used to be silent (console.error only), so an
+              // offline-created item rejected by the server just disappeared.
+              droppedPermanent.push(action);
               console.error('Action permanently failed (4xx), dropping:', action);
               // A terminal failure can't block its successors — skip it and keep
               // draining the rest of the queue this cycle.
@@ -531,6 +569,13 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         };
         setSyncProgress(finalProgress);
         onProgress?.(finalProgress);
+
+        // Surface any permanent 4xx drops so the UI can show a user-visible
+        // error. Appended (not replaced) so drops from a previous cycle the
+        // user hasn't acknowledged yet are not lost.
+        if (droppedPermanent.length > 0) {
+          setPermanentFailures((prev) => [...prev, ...droppedPermanent]);
+        }
 
         return { success, failed };
       } catch (error) {
@@ -653,6 +698,12 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     [getQueuedActions]
   );
 
+  // Acknowledge and clear the surfaced permanent-failure list. Called by the UI
+  // once it has shown the user the "some offline changes were discarded" error.
+  const clearPermanentFailures = useCallback((): void => {
+    setPermanentFailures([]);
+  }, []);
+
   // Clear the offline queue
   const clearQueue = useCallback(async (): Promise<void> => {
     try {
@@ -702,5 +753,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     syncData,
     isSyncing,
     syncProgress,
+    permanentFailures,
+    clearPermanentFailures,
   };
 }

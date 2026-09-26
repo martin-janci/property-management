@@ -339,7 +339,9 @@
     "syncFailed": "Niektore polozky sa nepodarilo synchronizovat",
     "syncProgress": "Synchronizujem {{current}} z {{total}}",
     "itemSynced": "{{item}} uspesne synchronizovane",
-    "itemFailed": "Nepodarilo sa synchronizovat {{item}}"
+    "itemFailed": "Nepodarilo sa synchronizovat {{item}}",
+    "droppedTitle": "Zmeny zahodené",
+    "droppedMessage": "{{count}} offline zmien sa nepodarilo uložiť a boli zahodené, pretože ich server odmietol."
   },
   "help": {
     "title": "Centrum pomoci",

@@ -339,7 +339,9 @@
     "syncFailed": "Nektere polozky se nepodarilo synchronizovat",
     "syncProgress": "Synchronizuji {{current}} z {{total}}",
     "itemSynced": "{{item}} uspesne synchronizovano",
-    "itemFailed": "Nepodarilo se synchronizovat {{item}}"
+    "itemFailed": "Nepodarilo se synchronizovat {{item}}",
+    "droppedTitle": "Změny zahozeny",
+    "droppedMessage": "{{count}} offline změn se nepodařilo uložit a byly zahozeny, protože je server odmítl."
   },
   "help": {
     "title": "Centrum napovedy",
