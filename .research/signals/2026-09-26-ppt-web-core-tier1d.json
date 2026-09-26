@@ -1,0 +1,56 @@
+{
+  "generated": "2026-09-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven generator (claim buffer starved of cloud-landable work) 2026-09-26",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "OLDEST-UNREVIEWED per the deterministic cursor in .research/state.json review_cursor (used as instructed). ppt-web-core and reality-web tie at 2026-08-29 (oldest); alphabetical tiebreak picks ppt-web-core, a cloud-landable frontend segment (task prefers reality-web/ppt-web/api-core over structurally-unlandable mobile-native). Saturation check: 0 open code-review-finding items in backlog.json for any segment, so no saturation-skip. Scope reviewed: hooks/, lib/, contexts/, routes/ (excluding the routes+App.tsx auth-guard and OrgProvider-memoization areas already mined on 2026-09-20/09-23/09-24/09-25) plus App.tsx and env-var wiring.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Segment is exceptionally clean and heavily over-mined by recent runs (auth-guard 09-20, authed-roots-adhoc-guard-gap 09-23, aichat/ocr-fetch-no-auth + orgprovider-unmemoized 09-24, fault-detail-mutations-swallow-errors + org-provider-value-not-memoized 09-25, errorhandler-raw-message 09-20). Verified-clean this pass (no finding filed): lib/api.ts (robust 401 single-flight replay + method-scoped retry), lib/websocket.ts + WebSocketContext.tsx (token-rotation teardown, bounded backoff, memoized onEntityEvent caller), lib/storage.ts, lib/analytics.ts, hooks/useWebSocket.ts, hooks/useNetworkStatus.ts, AuthContext.tsx token lifecycle, and AUTHED_QUERY_KEY_ROOTS completeness (all live inline roots + all imported @ppt/api-client key-factory roots meters/messages/reports/notification-triggers are covered; backend /auth/logout confirmed to require no bearer, so clearing tokens before the revoke call is correct). Two NET-NEW findings below.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-api-baseurl-env-var-divergence",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core env-var wiring)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/vite-env.d.ts",
+        "frontend/apps/ppt-web/src/main.tsx"
+      ],
+      "evidence": [
+        "ppt-web reads the API base URL from TWO DIFFERENT, uncoordinated Vite env variables. Group A uses `VITE_API_URL`: lib/api.ts:77 `const DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'` (the shared axios client), main.tsx:19 `baseUrl: import.meta.env.VITE_API_URL || ''` (the generated @ppt/api-client OpenAPI.BASE), and features/accounting/api/paymentMatching.ts:69 `${import.meta.env.VITE_API_URL || ''}/api/v1/...`. Group B uses `VITE_API_BASE_URL`: contexts/AuthContext.tsx:97 `const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''` (base for createAuthApi -> login/refresh/logout/SSO), plus features/auth/authApiClient.ts:10, features/buildings/hooks/useBuildings.ts:19, features/messaging/hooks/useMessaging.ts:38, features/registry/pages/RegistryPage.tsx:15, features/registry/pages/RegistryRulesPage.tsx:14, features/privacy/gdprClient.ts:9, features/neighbors/hooks/useNeighbors.ts:31.",
+        "Only ONE of the two names is declared in the typed env surface: vite-env.d.ts:4 declares `readonly VITE_API_URL: string` inside ImportMetaEnv; `VITE_API_BASE_URL` is NOT declared there, so it is untyped (`import.meta.env.VITE_API_BASE_URL` is `any`/undefined at the type level) and typos or a missing value are invisible to `pnpm typecheck`. The vite.config.ts comments (lines 34-35) reference BOTH names ('OpenAPI.BASE = '' and VITE_API_BASE_URL = ''' ... 'In production VITE_API_URL must be set explicitly'), confirming the two names are conflated rather than a deliberate split.",
+        "Production impact: the api.ts doc-comment (line 76) and vite.config.ts (line 35) both state 'In production VITE_API_URL must be set' — i.e. the documented/typed knob is VITE_API_URL. In a cross-origin deployment where an operator sets only VITE_API_URL (the documented, typed one), Group B falls back to '' (same-origin relative). That routes the ENTIRE auth flow (login/refresh/logout/SSO callback via AuthContext.getAuthApi) plus buildings, messaging, registry, privacy/GDPR and neighbors requests to the WEB origin instead of the API origin — login and those features break in prod while the axios client + generated api-client (Group A) work, a confusing partial outage. The mirror failure (only VITE_API_BASE_URL set) breaks the axios client and generated client instead.",
+        "This is NET-NEW vs prior ppt-web-core signals: none of the mined findings (auth-guard 09-20, authed-roots-adhoc-guard-gap 09-23, fetch-no-auth 09-24, mutation/query error-handling 09-25, errorhandler-raw-message 09-20) touch env-var/base-URL wiring.",
+        "Fix (low-risk): consolidate on a single canonical name (VITE_API_URL, since it is the typed + documented one), replace all VITE_API_BASE_URL reads with it (or add a shared `const API_BASE_URL` in one module that both groups import), and declare the canonical name in vite-env.d.ts so a missing value is a type/lint signal. Confidence medium: the two-name divergence and the single-name typing are objectively confirmed by static read; the prod breakage is conditional on deploy-time config that this static pass cannot observe."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-notif-analytics-query-ungated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core routes/groups/notifications.tsx)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/notifications.tsx",
+        "frontend/apps/ppt-web/src/features/notification-analytics/hooks/useNotificationAnalytics.ts"
+      ],
+      "evidence": [
+        "features/notification-analytics/hooks/useNotificationAnalytics.ts:64-70 defines useNotificationAnalytics as a bare useQuery with NO `enabled` gate (queryKey + queryFn: () => fetchAnalytics(filters) + staleTime only). It therefore fires on every mount regardless of role or auth state.",
+        "routes/groups/notifications.tsx:30-57 NotificationAnalyticsPageRoute calls useNotificationAnalytics(filters) unconditionally, then computes `isOperator = isManagerRole(user?.role)` and passes `data={isOperator ? data : undefined}` (:46) — i.e. for a non-operator the fetched result is explicitly DISCARDED. So every non-operator mount emits an analytics request that the backend answers with 403 (the handler enforces `audit_read`, see the :38-41 comment) and whose payload is thrown away: a guaranteed-forbidden, guaranteed-wasted round-trip on each mount.",
+        "The route is also NOT wrapped in <ProtectedRoute> (notifications.tsx:165 `<Route path=\"/notifications/analytics\" element={<NotificationAnalyticsPageRoute />} />`) while its SIBLING in the same file IS (:166-173 `/notifications/triggers` is wrapped). Consequence for an unauthenticated deep-link to /notifications/analytics: no ProtectedRoute redirect fires; instead the ungated query runs with no token -> 401 -> the global axios onUnauthorized handler (AuthContext.handleUnauthorized) runs logout()+redirect. The user reaches /login, but via the failed-request/global-logout path rather than the clean setReturnUrl redirect that ProtectedRoute performs for every other operator route. In the nav the link is already operator-gated (App.tsx:148-152 `isOperator && <Link to=\"/notifications/analytics\">`), confirming the intended gating that the route level omits.",
+        "Distinct from the 2026-09-20 routes-missing-auth-guard finding, which enumerated faults/announcements/disputes/messaging/neighbors/community and did NOT include notifications.tsx; and the fresh mechanism here (a useQuery with no `enabled` firing a request whose result is discarded for non-operators) is not covered by any prior signal.",
+        "Fix (low-risk): gate the hook with `enabled: isOperator` (pass isOperator into useNotificationAnalytics, or lift the enabled flag), and wrap the route in <ProtectedRoute requiredRoles={MANAGER_ROLES}> to match the sibling and the nav gating. Confidence medium: the missing `enabled` and the missing wrapper are confirmed by static read; the exact 403/401 runtime sequence is inferred from the handler comments and the shared axios 401 path, not runtime-confirmed."
+      ]
+    }
+  ]
+}
