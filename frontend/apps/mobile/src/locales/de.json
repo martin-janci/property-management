@@ -131,6 +131,8 @@
     "galleryButton": "Galerie",
     "submitButton": "Meldung absenden",
     "successSubmit": "Storungsmeldung erfolgreich gesendet",
+    "photosNotUploadedTitle": "Meldung gespeichert — Fotos nicht angehangt",
+    "photosNotUploadedWarning": "Die Storungsmeldung wurde gespeichert, aber die angehangten Fotos konnten nicht hochgeladen werden und wurden nicht ubernommen. Bitte fugen Sie sie erneut in den Storungsdetails hinzu.",
     "failedSubmit": "Storungsmeldung konnte nicht gesendet werden",
     "cameraPermissionDenied": "Kameraberechtigung ist erforderlich",
     "photoLibraryPermissionDenied": "Fotobibliotheksberechtigung ist erforderlich",
