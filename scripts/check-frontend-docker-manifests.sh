@@ -36,6 +36,27 @@
 # is harmless (it only adds importers pnpm already has in the lockfile), and
 # the three Dockerfiles historically share one list.
 #
+# THE SECOND LIST (added 2026-09-26)
+# ----------------------------------
+# There are TWO hand-maintained lists per Dockerfile, not one, and the first
+# version of this script only guarded the first:
+#
+#   * the `deps` stage copies workspace *manifests* so `pnpm install` can
+#     resolve the workspace,  and
+#   * a selective `builder` stage copies the installed *node_modules* back,
+#     one workspace directory at a time.
+#
+# Every break this script's header cites as motivation was in fact the SECOND
+# list: dev-panel (`Cannot find module 'react'`), api-client (38x
+# `Cannot find module '@tanstack/react-query'`) and e2e (`Cannot find module
+# '@playwright/test'`) each had their manifest copied and their node_modules
+# forgotten, so the deps check passed green while the build died in
+# `next build`'s type-check phase. The node_modules list is now checked
+# against the same closure.
+#
+# A Dockerfile that copies the whole install tree (`COPY --from=deps /app/ ./`)
+# has no second list to get wrong and is reported as such.
+#
 # frontend/apps/mobile is deliberately absent from every list: `.dockerignore`
 # excludes `frontend/apps/mobile/` from the build context entirely, so a COPY
 # of it could not succeed. It is listed in NOT_IN_CONTEXT below so that
@@ -113,6 +134,11 @@ from_re = re.compile(r"^FROM\s+\S+(?:\s+AS\s+(\S+))?\s*$", re.IGNORECASE)
 # The stage that runs `pnpm install`, i.e. the one whose manifest list decides
 # whether the install can resolve the workspace at all.
 DEPS_STAGE = "deps"
+# The stage that runs the app build, i.e. the one whose node_modules list
+# decides whether type-check can resolve each workspace package's own deps.
+BUILDER_STAGE = "builder"
+# `COPY --from=deps <src>... <dest>` — the builder stage's node_modules list.
+from_deps_copy_re = re.compile(r"^COPY\s+--from=deps\s+(.*)$")
 
 for dockerfile in DOCKERFILES:
     path = os.path.join(root, dockerfile)
@@ -224,6 +250,71 @@ for dockerfile in DOCKERFILES:
             f"{dockerfile}: the `{DEPS_STAGE}` stage does not copy {len(missing)} "
             f"required manifest(s): {', '.join(missing)}"
         )
+
+    # ----------------------------------------------------------------------
+    # 4. The builder stage's node_modules list, against the same closure.
+    # ----------------------------------------------------------------------
+    # pnpm's isolated layout gives each workspace package its own
+    # `node_modules` holding that package's own dependencies. `next build` /
+    # `vite build` type-check workspace sources in place, so a package whose
+    # directory is present (via `COPY frontend/ ./`) but whose node_modules is
+    # not gets `Cannot find module` for every dependency it declares.
+    nm_copied = set()
+    whole_tree = False
+    stage = None
+    for line in lines:
+        stripped = line.strip()
+        fm = from_re.match(stripped)
+        if fm:
+            stage = (fm.group(1) or "").lower() or None
+            continue
+        if stage != BUILDER_STAGE:
+            continue
+        m = from_deps_copy_re.match(stripped)
+        if not m:
+            continue
+        parts = m.group(1).split()
+        if len(parts) < 2:
+            continue
+        for src in parts[:-1]:
+            norm = src.rstrip("/")
+            if norm in ("/app", ""):
+                whole_tree = True
+            elif norm.endswith("/node_modules"):
+                # /app/packages/e2e/node_modules -> packages/e2e ; /app/node_modules -> ""
+                nm_copied.add(norm[len("/app/"):-len("/node_modules")].strip("/")
+                              if norm != "/app/node_modules" else "")
+
+    if whole_tree:
+        print(f"  builder: copies the whole install tree — no per-package list to drift")
+    elif not nm_copied:
+        failures.append(
+            f"{dockerfile}: the `{BUILDER_STAGE}` stage copies neither the whole install "
+            f"tree (`COPY --from={DEPS_STAGE} /app/ ./`) nor any per-package "
+            f"`node_modules` — the build has no installed dependencies"
+        )
+    else:
+        # "" is the workspace-root node_modules, which every build needs.
+        nm_required = {""} | {
+            os.path.dirname(manifests[name])[len("frontend/"):]
+            for name in closure
+            if manifests[name] not in NOT_IN_CONTEXT
+        }
+        nm_missing = sorted(x or "<root>" for x in (nm_required - nm_copied))
+        nm_extra = sorted(x for x in (nm_copied - nm_required) if x)
+        print(
+            f"  builder: copies {len(nm_copied)} node_modules dir(s) for a "
+            f"{len(nm_required)}-directory closure"
+        )
+        if nm_extra:
+            print(f"  note: copies node_modules outside the closure: {', '.join(nm_extra)}")
+        if nm_missing:
+            failures.append(
+                f"{dockerfile}: the `{BUILDER_STAGE}` stage does not copy "
+                f"{len(nm_missing)} required node_modules dir(s): "
+                f"{', '.join(nm_missing)} — `pnpm --filter {app} build` will fail in "
+                f"type-check with `Cannot find module` for their dependencies"
+            )
 
 # ---------------------------------------------------------------------------
 if failures:

@@ -113,6 +113,15 @@ WORKDIR /app
 # copied here, so `next build`'s Turbopack type-check failed with 38
 # `Cannot find module '@tanstack/react-query'` errors, all in
 # `packages/api-client/src/**`. See #2560.
+
+# 2026-09-26: added `e2e`. `tsconfig.json` includes `**/*.ts`, which sweeps in
+# `apps/reality-web/e2e/**/*.spec.ts`; those import `@ppt/e2e`, whose own
+# devDependencies (`@playwright/test`, `@ppt/sitemap`) materialize in
+# `packages/e2e/node_modules`. That directory was never copied, so `next build`
+# died in type-check with `Cannot find module '@playwright/test'` in
+# `packages/e2e/src/**` plus the TS7031 implicit-any fallout in every spec.
+# Proven by the docker-frontend.yml run on PR #2971:
+# https://github.com/martin-janci/property-management/actions/runs/35759371277
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/packages/ui-kit/node_modules ./packages/ui-kit/node_modules
@@ -121,6 +130,13 @@ COPY --from=deps /app/packages/reality-api-client/node_modules ./packages/realit
 COPY --from=deps /app/packages/dev-panel/node_modules ./packages/dev-panel/node_modules
 COPY --from=deps /app/packages/sitemap/node_modules ./packages/sitemap/node_modules
 COPY --from=deps /app/apps/reality-web/node_modules ./apps/reality-web/node_modules
+COPY --from=deps /app/packages/e2e/node_modules ./packages/e2e/node_modules
+# `vite-plugin-ppt-worktree` (package name `@ppt/vite-plugin-worktree`) is
+# required(...) at the top of next.config.js. It resolves today only because it
+# declares no runtime `dependencies` — the source arrives via `COPY frontend/`
+# and needs nothing from its own node_modules. One `dependencies` entry would
+# break the build; copy it so the list matches the declared closure.
+COPY --from=deps /app/packages/vite-plugin-ppt-worktree/node_modules ./packages/vite-plugin-ppt-worktree/node_modules
 
 # Copy source
 COPY frontend/ ./
