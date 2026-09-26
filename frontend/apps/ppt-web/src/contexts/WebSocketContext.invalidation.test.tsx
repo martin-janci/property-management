@@ -134,10 +134,60 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     const onEntityEvent = vi.fn();
     const socket = mountProvider(onEntityEvent);
 
-    socket.simulateServerEvent('notification.created', { category: 'system' });
+    socket.simulateServerEvent('notification.created', { category: 'not_a_real_category' });
 
     expect(onEntityEvent).toHaveBeenCalledTimes(1);
     expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications']);
+  });
+
+  // Regression: `categoryToQueryKeys` originally omitted the `community` and
+  // `system` categories, so a `notification.created` frame for either fell
+  // through to the notifications-only fallback and left its entity feed stale on
+  // push (the community feed in particular). The map must cover every
+  // `NotificationCategory` the server can emit.
+  it('invalidates the community root on a notification.created community frame', () => {
+    const onEntityEvent = vi.fn();
+    const socket = mountProvider(onEntityEvent);
+
+    socket.simulateServerEvent('notification.created', { category: 'community' });
+
+    expect(onEntityEvent).toHaveBeenCalledTimes(1);
+    const [eventType, queryKeys] = onEntityEvent.mock.calls[0];
+    expect(eventType).toBe('notification.created');
+    expect(queryKeys).toEqual(['notifications', 'community']);
+  });
+
+  it('invalidates the system root on a notification.created system frame', () => {
+    const onEntityEvent = vi.fn();
+    const socket = mountProvider(onEntityEvent);
+
+    socket.simulateServerEvent('notification.created', { category: 'system' });
+
+    expect(onEntityEvent).toHaveBeenCalledTimes(1);
+    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications', 'system']);
+  });
+
+  it('covers every NotificationCategory the api-server can emit', () => {
+    // Mirror of `common::notifications::NotificationCategory` (serialized
+    // snake_case). Keep in lock-step with the backend enum — a missing key
+    // silently degrades that category to the notifications-only fallback.
+    const backendCategories = [
+      'announcements',
+      'faults',
+      'votes',
+      'messages',
+      'community',
+      'financial',
+      'documents',
+      'system',
+    ];
+
+    for (const category of backendCategories) {
+      expect(
+        categoryToQueryKeys[category],
+        `categoryToQueryKeys is missing the "${category}" category`
+      ).toBeDefined();
+    }
   });
 
   it('does not fire for a legacy entity:updated frame (server never emits it)', () => {
