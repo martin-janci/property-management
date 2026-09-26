@@ -164,6 +164,36 @@ function renderAuthApp(): RenderResult {
 // Tests
 // ---------------------------------------------------------------------------
 
+/**
+ * Mounted-route-group / feature-page domains whose `@ppt/api-client` query
+ * hooks are used in ppt-web (disputes / iot / outages / leases / voting /
+ * community / compliance / esignature / my-units / portfolio-performance /
+ * templates / integrations / syndication / oauth-grants / mfa / layout).
+ * Their caches previously survived logout — regression guard for the
+ * shared-workstation session-leak fix. Each entry is `[queryKey, root]`; the
+ * root is the first segment `removeQueries` prefix-matches on logout.
+ */
+const NEWLY_COVERED_SEED: ReadonlyArray<readonly [readonly unknown[], string]> = [
+  [['community', 'posts', {}], 'community'],
+  [['disputes', 'list', {}], 'disputes'],
+  [['iot', 'sensors', {}], 'iot'],
+  [['outages', 'list', {}], 'outages'],
+  [['leases', 'list', {}], 'leases'],
+  [['violations', 'list', {}], 'violations'],
+  [['voting', 'list', {}], 'voting'],
+  [['compliance', 'moderation', 'cases', {}], 'compliance'],
+  [['esignature', 'requests', {}], 'esignature'],
+  [['my-units'], 'my-units'],
+  [['portfolio-performance', 'dashboard-summary'], 'portfolio-performance'],
+  [['templates', 'list', {}], 'templates'],
+  [['integrations', 'airbnb', 'status'], 'integrations'],
+  [['syndication', 'dashboard'], 'syndication'],
+  [['oauth-grants', 'user'], 'oauth-grants'],
+  [['mfa', 'status'], 'mfa'],
+  [['layout', 'tenant'], 'layout'],
+];
+const NEWLY_COVERED_ROOTS = NEWLY_COVERED_SEED.map(([, root]) => root);
+
 describe('AuthContext.logout — Issue #712', () => {
   beforeEach(() => {
     seedAuthedSession();
@@ -212,6 +242,11 @@ describe('AuthContext.logout — Issue #712', () => {
       'rentals',
       'meters',
       'auth',
+      // Mounted-route-group / feature-page domains whose @ppt/api-client caches
+      // previously leaked across sessions on a shared workstation because their
+      // roots were missing from AUTHED_QUERY_KEY_ROOTS. `voting` is the live
+      // root (the legacy `votes` root never matched votingKeys queries).
+      ...NEWLY_COVERED_ROOTS,
     ]) {
       expect(AUTHED_QUERY_KEY_ROOTS).toContain(root);
     }
@@ -249,6 +284,13 @@ describe('AuthContext.logout — Issue #712', () => {
     queryClient.setQueryData(['auth', 'sessions'], [{ id: 'sess-1' }]);
     queryClient.setQueryData(['router', 'breadcrumbs'], ['home']);
 
+    // Mounted-route-group / feature-page caches (community…layout) — seeded
+    // with representative real key shapes. Before the session-leak fix these
+    // roots were absent from AUTHED_QUERY_KEY_ROOTS and survived logout.
+    for (const [key] of NEWLY_COVERED_SEED) {
+      queryClient.setQueryData(key, [{ id: `${key[0]}-seed` }]);
+    }
+
     // Sanity: all entries present before logout.
     expect(queryClient.getQueryData(['user', 'profile'])).toBeDefined();
     expect(queryClient.getQueryData(['faults', 'list', { page: 1 }])).toBeDefined();
@@ -267,6 +309,9 @@ describe('AuthContext.logout — Issue #712', () => {
     expect(queryClient.getQueryData(['rentals', 'reservations', 'tenant-1'])).toBeDefined();
     expect(queryClient.getQueryData(['meters', 'building-list', 'b-1'])).toBeDefined();
     expect(queryClient.getQueryData(['auth', 'sessions'])).toBeDefined();
+    for (const [key] of NEWLY_COVERED_SEED) {
+      expect(queryClient.getQueryData(key)).toBeDefined();
+    }
     expect(queryClient.getQueryData(['router', 'breadcrumbs'])).toBeDefined();
 
     // Trigger logout via the live context.
@@ -302,6 +347,11 @@ describe('AuthContext.logout — Issue #712', () => {
     expect(queryClient.getQueryData(['rentals', 'reservations', 'tenant-1'])).toBeUndefined();
     expect(queryClient.getQueryData(['meters', 'building-list', 'b-1'])).toBeUndefined();
     expect(queryClient.getQueryData(['auth', 'sessions'])).toBeUndefined();
+    // Mounted-route-group / feature-page caches must not survive logout — the
+    // core of the shared-workstation session-leak fix.
+    for (const [key] of NEWLY_COVERED_SEED) {
+      expect(queryClient.getQueryData(key)).toBeUndefined();
+    }
 
     // (c) Non-auth-scoped cache survives — the purge is bounded to the
     // AUTHED_QUERY_KEY_ROOTS list, not a blanket `queryClient.clear()`.

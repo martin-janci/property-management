@@ -31,7 +31,29 @@
  *     — most of its roots are out of scope for ppt-web's logout purge.
  */
 
-import { messagingKeys, meterKeys, notificationTriggerKeys, reportKeys } from '@ppt/api-client';
+import {
+  communityKeys,
+  complianceKeys,
+  disputeKeys,
+  esignatureKeys,
+  integrationKeys,
+  iotKeys,
+  layoutKeys,
+  leaseKeys,
+  messagingKeys,
+  meterKeys,
+  mfaKeys,
+  myUnitsKeys,
+  notificationTriggerKeys,
+  oauthGrantKeys,
+  outageKeys,
+  portfolioPerformanceKeys,
+  reportKeys,
+  syndicationKeys,
+  templateKeys,
+  violationKeys,
+  votingKeys,
+} from '@ppt/api-client';
 import { describe, expect, it } from 'vitest';
 import { AUTHED_QUERY_KEY_ROOTS, queryKeys } from './queryKeys';
 
@@ -132,14 +154,39 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
   });
 
   // Shared @ppt/api-client factories consumed by ppt-web for auth-/tenant-scoped
-  // data. Kept explicit — the full api-client roster is out of ppt-web's logout
-  // scope. `notificationTriggerKeys` is the exact root PR #2650 missed.
+  // data. Kept explicit — the full api-client roster is used by other apps and
+  // most roots are out of ppt-web's logout scope. Every factory listed here is
+  // reached by a mounted ppt-web route group or feature page (verified: its
+  // query hooks are imported from `@ppt/api-client` in ppt-web/src), so its
+  // cache must be purged on logout. `notificationTriggerKeys` is the exact root
+  // PR #2650 missed; the block below (community…layout) is the set that leaked
+  // across sessions on a shared workstation until this row was completed.
   describe('consumed @ppt/api-client key factories', () => {
     const consumedApiClientFactories: Record<string, KeyFactory> = {
       meterKeys,
       messagingKeys,
       notificationTriggerKeys,
       reportKeys,
+      // Mounted-route-group / feature-page domains previously missing from the
+      // allow-list (this fix). `votingKeys` (root `voting`) is the live voting
+      // factory — the allow-list's legacy `votes` root never matched it.
+      communityKeys,
+      disputeKeys,
+      iotKeys,
+      outageKeys,
+      leaseKeys,
+      violationKeys,
+      votingKeys,
+      complianceKeys,
+      esignatureKeys,
+      myUnitsKeys,
+      portfolioPerformanceKeys,
+      templateKeys,
+      integrationKeys,
+      syndicationKeys,
+      oauthGrantKeys,
+      mfaKeys,
+      layoutKeys,
     };
 
     it.each(
