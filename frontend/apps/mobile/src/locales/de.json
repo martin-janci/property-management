@@ -299,7 +299,9 @@
     "syncFailed": "Einige Elemente konnten nicht synchronisiert werden",
     "syncProgress": "Synchronisiere {{current}} von {{total}}",
     "itemSynced": "{{item}} erfolgreich synchronisiert",
-    "itemFailed": "{{item}} konnte nicht synchronisiert werden"
+    "itemFailed": "{{item}} konnte nicht synchronisiert werden",
+    "droppedTitle": "Änderungen verworfen",
+    "droppedMessage": "{{count}} Offline-Änderung(en) konnten nicht gespeichert werden und wurden verworfen, weil der Server sie abgelehnt hat."
   },
   "help": {
     "title": "Hilfecenter",

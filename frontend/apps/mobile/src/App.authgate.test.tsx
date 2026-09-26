@@ -28,6 +28,8 @@ jest.mock('./hooks', () => ({
     isSyncing: false,
     syncProgress: null,
     processQueue: jest.fn(),
+    permanentFailures: [],
+    clearPermanentFailures: jest.fn(),
   }),
   usePushNotifications: () => ({ registerForPushNotifications: jest.fn() }),
   useDeepLinkRouting: jest.fn(),
