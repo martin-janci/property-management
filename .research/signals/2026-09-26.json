@@ -1,0 +1,373 @@
+{
+  "generated": "2026-09-26T14:48:00Z",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn hooks/useOfflineSupport.ts + components/sync/SyncProgressToast.tsx)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts",
+        "frontend/apps/mobile/src/components/sync/SyncProgressToast.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:419-427 — in processQueue's catch, an action whose replay returns a PERMANENT 4xx (executeQueuedAction marks it `permanent` for any 4xx that is NOT in RETRYABLE_HTTP_STATUSES {401,408,429}, i.e. 400/403/404/409/422/…) is handled by: `failed++; terminalFailureIds.add(action.id); console.error('Action permanently failed (4xx), dropping:', action);` — and terminalFailureIds are then EXCLUDED from the carried-forward queue at :479 (`(a) => !succeededIds.has(a.id) && !terminalFailureIds.has(a.id)`). So the queued action — which is offline-created USER CONTENT (a fault report, a meter reading, a message the user composed while offline) — is permanently deleted from AsyncStorage with no persisted record and no user-facing notification. The only trace is a dev-console line that never reaches a released build's user.",
+        "The failure is invisible to the user AND the app's own recovery affordance cannot recover it: components/sync/SyncProgressToast.tsx renders a Retry button whenever `isComplete && failed > 0` (:129) and PendingSyncIndicator.tsx shows a per-item retry for status 'failed' (:87). But the permanently-dropped items were already removed from the queue (:479), so tapping Retry re-runs processQueue over a queue that no longer contains them — a guaranteed no-op for exactly the items the '⚠ N failed' badge is telling the user to retry. The UI thus actively implies the lost content is recoverable when it has already been discarded.",
+        "Impact: a resident who reports a fault or submits a meter reading while offline is shown a success/'saved offline, will sync when online' confirmation (e.g. screens/faults/ReportFaultScreen.tsx queueForLater Alert 'faults.queuedTitle', screens/meters/MeterReadingScreen.tsx 'meters.savedOffline'), then — if the replay hits a 422 validation error or a 403 (e.g. a permission/tenant edge, a since-deleted building, a server-side validation the client did not mirror) — the content silently vanishes with no way for the user to learn it was lost or to re-enter it. This is a data-loss-visibility gap that the surrounding code was otherwise carefully written to avoid (the same file goes to great lengths NOT to drop transient/5xx failures, issues #1767/#2637).",
+        "Fix (landable in isolation, jest-expo coverable): instead of silently discarding permanent-4xx actions, either (a) move them to a persisted dead-letter list (a new AsyncStorage key in services/localCacheKeys) and surface a 'these offline items could not be synced' screen/toast with the failing action + server message so the user can re-enter or dismiss, and/or (b) at minimum emit a user-visible notification (not console.error) naming what was dropped and why, and stop showing a Retry affordance for items that are no longer in the queue. Confidence medium: the drop + dequeue + console-only + Retry-no-op chain is statically certain and traced end-to-end; the medium (not high) rating reflects that a permanent-4xx-on-replay outcome is not runtime-confirmed to be common in production."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-fault-photos-silently-dropped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn screens/faults/ReportFaultScreen.tsx)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:519-566 renders a full photo-attachment UX — camera + gallery pickers (pickImage), up to 5 photos (selectionLimit 5, :195/:200), in-place compression when over 10 MB (applyPhotos :211), thumbnail previews with remove buttons (:523-528), and warning copy — yet handleSubmit (:285) builds the CreateFaultVariables payload (:301-310) with only building_id/title/description/category/priority/location_description/idempotency_key and NEVER includes `photos`. The photos array (state at :96) is not referenced anywhere in the submit or queue path.",
+        "The omission is acknowledged in-code as unfinished: the comment at :297-300 says 'NOTE: `photos` holds local device URIs (compressed in-place when over 10 MB). Uploading attachments needs the presigned-URL pipeline (POST /faults/{id}/attachments), which has no shared mobile helper yet — tracked as a follow-up. The fault itself is created/queued here.' So the attachments are deliberately dropped, but nothing tells the user.",
+        "The user-facing copy actively promises an upload that never happens: locales/en.json 'faults.photosCompressedWarning' = '…were compressed to {{final}} MB so they upload faster…' and 'faults.photosStillLargeWarning' = '…so the upload may be slow or fail on a weak connection.' After submit the user sees 'faults.successSubmit' ('Fault reported successfully', Alert at :324) or the offline 'faults.queuedTitle' with no mention that the photos they attached, compressed and previewed were discarded. Photo evidence is exactly what makes a fault report actionable for a property manager, so silently dropping it while confirming success is a real data-integrity/trust problem, not a cosmetic one.",
+        "Fix (landable in isolation): either wire the attachment upload after the fault create resolves (POST /api/v1/faults/{id}/attachments via the presigned-URL pipeline; for the offline path, enqueue dependent attachment-upload actions keyed to the fault's temp localId, which useOfflineSupport already remaps to the server id — issue #1767) OR, as an honest interim, warn the user at submit time that photos are not yet uploaded (and/or hide the photo picker behind the missing capability) so no one believes evidence was filed when it was not. Confidence HIGH: the payload omission and the 'no shared mobile helper yet' comment are unambiguous and the reachable success/queued alerts contain no photo caveat — traced entirely within this one file."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn screens/meters/MeterReadingScreen.tsx)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:99-133 — handleSubmit's only validation is `if (!reading.trim()) { Alert.alert(...'meters.readingRequired'); return; }`. There is no numeric parse, no non-negative check, and no monotonic (>= previous reading) check. The raw string is placed verbatim into the queued/POSTed body: `reading: reading.trim()` (:111 / :126, endpoint POST /api/v1/meter-readings). A value like '', ' 12.3.4', '-5', '1,234', 'abc' (see below), or a fat-fingered extra digit is submitted as-is.",
+        "keyboardType=\"decimal-pad\" (:224) only chooses the on-screen soft keyboard; it does NOT constrain the value. React Native TextInput still accepts PASTED text, hardware-keyboard input, and platform IMEs regardless of keyboardType, and decimal-pad permits multiple '.' separators on some Android IMEs — so non-numeric or malformed content can reach `reading` and be submitted. Contrast screens/meters/MeterDetailScreen.tsx:51-55, which defensively coerces incoming readings with a toNumber(Number.parseFloat) helper — the write path has no equivalent guard.",
+        "This compounds with the offline queue's silent permanent-4xx drop (see code-review-mobile-rn-offline-permanent-4xx-silent-drop): when offline, an unvalidated/malformed reading is queued, the user is shown 'meters.savedOffline / willSyncWhenOnline' success, and if the backend rejects the malformed value with a 422 on replay the reading is silently discarded — the user never learns their utility reading did not record. Even online, a lower-than-previous or mistyped reading corrupts consumption/billing calculations downstream.",
+        "Fix (small, jest-expo coverable): before enqueue/submit, parse the reading with Number.parseFloat, reject NaN / negative / non-finite with a localized error Alert (mirroring the existing 'meters.readingRequired' pattern), optionally warn when the new value is below the last known reading, and send a normalized numeric value rather than the raw string. Confidence medium; score_delta 1 (Low) because decimal-pad mitigates casual non-numeric entry, so the residual risk is paste/IME/format/monotonic rather than a guaranteed crash or security issue — a data-quality/validation gap."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-roots-session-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 — `AUTHED_QUERY_KEY_ROOTS` is the allow-list that logout() iterates to purge per-user cache, and its own doc comment (:346-350) states it 'must cover ALL tenant-/user-scoped caches' and that such caches 'must never survive logout on a shared workstation' (#712 replaced the blunt queryClient.clear() with this scoped removal). The list is materially incomplete. A sweep of the query-key factories actually mounted in ppt-web (each defines `all: ['<root>']`) versus this allow-list shows these authed roots are MISSING from the purge: community, disputes, iot, outages, leases, voting, plus (defined in @ppt/api-client and reachable) visitors, packages, violations, my-units, compliance, esignature, portfolio-performance, registries, templates, integrations, syndication, ecosystem, oauth-grants, mfa. Each of community/disputes/iot/outages/leases/voting is a mounted ppt-web route group (frontend/apps/ppt-web/src/routes/groups/{community,disputes,iot,outages,leases,voting}.tsx) whose pages populate a TanStack Query cache under that root.",
+        "Auth path traced end-to-end: logout() at frontend/apps/ppt-web/src/contexts/AuthContext.tsx:614-637 clears localStorage + React state, then loops `for (const root of AUTHED_QUERY_KEY_ROOTS) queryClient.removeQueries({ queryKey: [root] })` (:624-626) — a prefix-match purge. Any cached query whose first key segment is NOT in the allow-list is left intact. So after User A views e.g. /disputes (mediation chat threads, resolution PII), /leases (tenant PII), or /community (neighbour posts/marketplace), then logs out, those caches persist in the shared queryClient; User B logging in on the same browser is served User A's cached tenant/user-scoped data until each query happens to refetch. This is the exact cross-session data-leak class the list was created to prevent — a privacy/isolation defect on a shared-workstation path.",
+        "Confirmed drift example (not just omission): the list contains 'votes' (:360) but the live factory root is `['voting']` (frontend/packages/api-client/src/voting/hooks.ts, `all: ['voting']`), and voting.tsx is a mounted ppt-web route — so the voting cache is never purged despite an entry that looks like it covers it. Landable frontend-only remedy: extend AUTHED_QUERY_KEY_ROOTS with the missing mounted roots (correcting 'votes' -> 'voting' or adding both), and add a guard test that asserts every `*.all` key-factory root imported into ppt-web appears in AUTHED_QUERY_KEY_ROOTS so the list cannot silently drift again. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest test that seeds queries for each root, calls logout(), and asserts getQueryCache() is empty of authed roots. Confidence high: traced login -> cache population (mounted route groups) -> logout purge loop -> allow-list omission."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-category-map-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "backend/crates/common/src/notifications/mod.rs"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:61-68 — `categoryToQueryKeys` maps a `notification.created` payload.category to the query roots to invalidate. It covers only 6 categories: announcements, faults, votes, messages, documents, financial. The backend enum NotificationCategory (backend/crates/common/src/notifications/mod.rs:75-121, `#[serde(rename_all = \"snake_case\")]`) has 8 variants whose wire strings are: announcements, faults, votes, messages, community, financial, documents, system. So `community` and `system` are absent from the frontend map.",
+        "Real stale-data miss for `community`: backend maps NotificationEvent::CommunityEvent -> NotificationCategory::Community (backend/crates/common/src/notifications/events.rs:285) which serializes to \"community\". When that notification.created frame arrives, WebSocketContext.tsx:344-350 does `categoryToQueryKeys[category]` -> undefined, so `queryKeys` falls back to `['notifications']` only and the `['community']` cache is never invalidated. `['community']` is a live ppt-web cache: frontend/packages/api-client/src/community/hooks.ts:28 defines `communityKeys.all = ['community']` (posts/events/groups/marketplace lists) and community.tsx is a mounted route group. Net effect: a new community event pushes a notification but the community feed/events list stays stale until a manual refetch — the map's own comment (:55-59) claims it refreshes 'both the notification list and the announcements list', but the community domain silently falls through.",
+        "Landable frontend-only remedy: add `community: ['community']` to categoryToQueryKeys (and decide whether `system`/EmergencyAlert needs any list root — likely notifications-only, so document it explicitly to close the gap). Ideally add a small unit test / type-level check that every NotificationCategory wire value is either mapped or explicitly allow-listed, so future backend categories can't silently regress realtime sync. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest test dispatching a `notification.created` frame with category 'community' and asserting onEntityEvent is called with a queryKeys array containing 'community'. Confidence high: traced the CommunityEvent -> Community -> \"community\" serialization on the backend and the undefined lookup on the frontend against the live ['community'] cache root."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-orphan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — `export default getApiClient();` runs at module import time, eagerly constructing an axios instance with DEFAULT config (no getToken, no onUnauthorized, DEFAULT_BASE_URL). AuthProvider later calls configureApiClient() (contexts/AuthContext.tsx:380), which does `apiInstance = createAxiosInstance(config)` (api.ts:348) — a brand-new instance — so the eagerly-created default export is immediately orphaned and can never receive a custom baseURL/timeout passed to configureApiClient. It is a latent footgun: any future `import apiClient from '../lib/api'` binds permanently to that pre-configuration instance, bypassing configureApiClient's baseURL and the reset lifecycle (resetApiClient() at :356 nulls apiInstance but the default-exported object reference lives on).",
+        "Confirmed unused today: no default-style importer of lib/api exists (grep of frontend/apps/ppt-web/src for `import <ident> from '.../lib/api'` returns 0 non-test hits), and lib/index.ts (:8-18) re-exports only the named symbols (getApiClient, configureApiClient, resetApiClient, ...), not the default. So the line is a dead eager side-effect at import time plus a trap for future callers. Landable frontend-only remedy: delete the `export default getApiClient();` line (callers already use the named getApiClient()), or, if a default is desired for ergonomics, make it a lazy accessor rather than an eager call so it always resolves to the configured singleton. Verifiable via `pnpm --filter @ppt/web typecheck` + `pnpm --filter @ppt/web test`. Confidence medium: static analysis confirms the orphaning and zero current default-import consumers, but severity is low precisely because nothing imports it yet — this is a smell/footgun cleanup, not an active production break."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui features/workflow-automation/pages/AutomationRulesPage.tsx)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 - three state-changing handlers await a mutateAsync with NO try/catch and NO rendered error state: confirmDelete (:56-61) -> await deleteRule.mutateAsync(deleteConfirm.id) then setDeleteConfirm(null); handleToggle (:63-68) -> await updateRule.mutateAsync({id, data:{isEnabled}}); handleRun (:70-72) -> await runRule.mutateAsync(rule.id). deleteRule/updateRule/runRule come from @ppt/api-client (useDeleteAutomationRule/useUpdateAutomationRule/useRunAutomationRule, imported :11-13,:44-46).",
+        "None of the three mutations' .error is rendered anywhere in the file: grep for deleteRule./updateRule./runRule./.error/.isError in AutomationRulesPage.tsx returns only deleteRule.isPending (:303 disabled, :306 'Deleting...' label) — the pending state is wired but the error state is not. So on a rejected request (permission denied, 4xx/5xx, network) the async handler's promise rejects unhandled and the user gets zero feedback.",
+        "confirmDelete has an extra defect: because setDeleteConfirm(null) is on the line AFTER the awaited mutateAsync (:58->:59), a rejected delete skips the state reset, leaving the delete-confirmation modal stuck open with no error message and no way to tell the delete failed. The manager reasonably assumes it worked (or retries into a second rejection).",
+        "The correct pattern exists on the sibling CreateRulePage in the SAME feature: CreateRulePage.tsx:62-66 renders {createRule.error && (...)} to surface create failures. AutomationRulesPage simply omits the equivalent for delete/toggle/run. Fix (low-risk): render deleteRule.error/updateRule.error/runRule.error inline (mirroring CreateRulePage), and move setDeleteConfirm(null) into an onSuccess / finally so the modal always closes appropriately.",
+        "NET-NEW and distinct from prior signals: the 7 existing ppt-web-ui findings are all in other features; the 2026-09-25 code-review-ppt-web-core-fault-detail-mutations-swallow-errors is a different segment (core), different file (routes/groups/faults.tsx), different feature (faults). Confidence high: full call path traced from the handler to the generated mutation hooks; reachable in production on the /automations/rules manager route (delete/pause/run rule)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui features/workflow-automation/)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "evidence": [
+        "The entire workflow-automation feature ships hardcoded English with no i18n on a 6-locale app (src/i18n/config.ts:5 locales = ['en','sk','cs','de','pl','hu']). 12 of 15 non-test files have ZERO useTranslation/t() calls: ActionBuilder.tsx, ConditionBuilder.tsx, ExecutionLogItem.tsx, ExecutionStats.tsx, RuleCard.tsx, TemplateCard.tsx, TriggerSelector.tsx, AutomationRulesPage.tsx, CreateRulePage.tsx, EditRulePage.tsx, ExecutionMonitoringPage.tsx, TemplateLibraryPage.tsx (only ExecutionDetailsModal.tsx, RuleBuilder.tsx, TemplatePreviewModal.tsx have any t()).",
+        "Confirmed hardcoded user-facing strings: AutomationRulesPage.tsx:82 <h1>Automation Rules</h1>, :133 placeholder=\"Search rules...\", :150-152 option labels 'All Status'/'Active'/'Paused', :167-171 'All Triggers'/'Time Based'/'Event Based'/'Condition Based'/'Manual', :217 empty-state <h3>No automation rules yet</h3>, :285 <h3>Delete Automation Rule</h3>. CreateRulePage.tsx:50 'Back to Rules', :52 <h1>Create Automation Rule</h1>, :53-54 subtitle, :64 error text 'Failed to create automation rule. Please try again.'.",
+        "TriggerSelector.tsx:22-58 hardcodes the trigger taxonomy shown to the user as plain English literals: trigger type label/description pairs ('Time Based','Event Based','Condition Based','Manual' :25-43) and the full event-type list with categories ('Fault Created'/'Faults', 'Payment Received'/'Payments', 'Document Uploaded'/'Documents', 'Vote Started'/'Voting', 'Guest Registered'/'Guests', etc. :49-58). Non-EN managers (sk/cs/de/pl/hu) see the whole automation builder in English.",
+        "Same class as already-filed done findings code-review-ppt-web-ui-moderation-no-i18n, -vote-detail-hardcoded-en, and -confirm-dialog-i18n, but a net-new, larger surface (an entire feature area rather than a single component). Low severity (i18n gap) but broad. Confidence medium (static-only)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui features/workflow-automation/pages/CreateRulePage.tsx)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:18-19 - handleSave receives rule: Partial<AutomationRule> from the RuleBuilder and immediately casts it to the full required type as it crosses the create-mutation API boundary: `await createRule.mutateAsync(rule as AutomationRule)`. The `as AutomationRule` assertion silences the compiler even though the value is typed Partial<> — every field the AutomationRule interface marks required (and that RuleBuilder did not populate) can be undefined at runtime while the type system now claims it is present.",
+        "This defeats the one compile-time guarantee that the create payload is complete: if RuleBuilder emits a partial rule (missing trigger, empty actions, etc.) the POST goes out as if well-formed, so validation is entirely deferred to the server (best case a 422 surfaced via createRule.error :62; worse case a malformed rule persisted if the server is lenient). The type-safe fix is to type useCreateAutomationRule's input as the actual create-request DTO (partial-by-design) or to validate/assemble a complete AutomationRule in RuleBuilder before onSave, rather than lying to the compiler with `as`.",
+        "Matches the skill's frontend pattern 'TypeScript cast that crosses an API boundary'. Net-new (no prior ppt-web-ui signal covers this file). Low severity, confidence medium (static-only; the concrete impact depends on whether RuleBuilder enforces completeness, which was not runtime-verified)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validator",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-server URL-validation surface)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs",
+        "backend/servers/reality-server/src/routes/users.rs",
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "evidence": [
+        "fn validate_image_or_link_url is duplicated VERBATIM in two public-endpoint route modules: routes/reports.rs:38 (guards report attachment URLs at submit_report:219) and routes/users.rs:28 (guards profile_image_url at update_me:357). The two copies are byte-identical apart from the length-cap constant name (reports.rs MAX_URL_LEN=2048 vs users.rs MAX_PROFILE_URL_LEN=2048 — same value): both parse with url::Url::parse and allow only http/https schemes to block javascript:/data:/file: stored-XSS payloads that the frontend later renders in <img src=>/<a href=>.",
+        "Both copies carry a now-STALE comment justifying the inline duplication: reports.rs:35-37 and users.rs:23-25 each say 'Inlined locally ... once the auth-hardening branch lands a shared `url_validator` module this should be swapped for the import.' That shared module ALREADY EXISTS on the reviewed tree: backend/servers/reality-server/src/util/url_validator.rs defines pub fn validate_fetch_url (util/mod.rs:7 re-exports it) and it is already imported and used by routes/agency_imports.rs:7. So the premise of the 'once it lands' TODO is satisfied, yet the two inline copies were never consolidated.",
+        "Impact (maintainability with a security-adjacent edge, hence low/+1): the reality-server public/anonymous URL-acceptance policy is now defined in THREE independent places with two different intents — util::validate_fetch_url (scheme + private-IP/SSRF + length, for server-fetched feed URLs) and two copies of validate_image_or_link_url (scheme + length, for frontend-rendered URLs). A future hardening of the frontend-rendered policy (e.g. blocking a newly-dangerous scheme, tightening the length cap, or adding host allow-listing) must be applied to both inline copies in lockstep; a change to only one silently drifts the report-attachment and profile-image code paths apart on an XSS-defense surface. There is NO active bug today — update_me and submit_report both correctly invoke their local validator — this is a consolidation/DRY finding.",
+        "Fix (low-risk): promote a single validate_display_url (scheme + length, distinct from the SSRF-oriented validate_fetch_url) into util/url_validator.rs beside the existing helper, replace the two inline copies with a shared import, and delete the stale 'once it lands on main' comments. NET-NEW: not covered by any prior reality-server signal (09-24 filed 0 findings) and orthogonal to the documented DNS-rebinding fetch-time follow-up. Confidence medium: the verbatim duplication, the stale comment, and the already-present shared module are objectively confirmed by static read; the drift risk is latent (no current defect)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2980",
+      "type": "dep-update-noise",
+      "source": "PR #2980 (merged 2026-09-26)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "rustls 0.23.40→0.23.45 (RUSTSEC-2026-0285), chacha20 0.10.1→0.10.2 (yanked), h2 0.4.15→0.4.19 (deploy-server ban guard). Lockfile-only in backend/ and backend/servers/deploy-server/."
+      ],
+      "files": [
+        "backend/Cargo.lock",
+        "backend/servers/deploy-server/Cargo.lock"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2981",
+      "type": "dep-update-noise",
+      "source": "PR #2981 (open dependabot cargo-minor-patch group)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot cargo-minor-patch group with 18 updates, opened 2026-09-26 12:05Z. Awaiting review."
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2974",
+      "type": "dep-update-noise",
+      "source": "PR #2974 (closed unmerged 2026-09-26)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "dependabot cargo-minor-patch group (17 updates) closed unmerged 2026-09-26 12:04Z — superseded by #2981 (18-update variant)."
+      ],
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2957",
+      "type": "dep-update-noise",
+      "source": "PR #2957 (dependabot, still open 16d)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": [
+        "tower-http 0.7.0→0.7.1 in axum group, opened 2026-09-10, no reviewDecision, requested_reviewers=[martin-janci]."
+      ],
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no eligible signal met confidence=high + score≥3 + allowlist bar this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-09-26.md && head -1",
+      "observed": "brief exists, first line matches '# 2026-09-26'",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json staged vs HEAD",
+      "observed": "last_pr_seen 2956→2981, last_issue_seen 2966→2982, seen_signals 492→506, cursor_advance=true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique length on .items[].id",
+      "observed": "no duplicate ids",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-counted",
+      "observed": "all 14 signals fresh (none in prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap ≤8 + decay ≥1 for open items >14d",
+      "observed": "no scores>8, no open items ≥14d present",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation on each new plan",
+      "observed": "plans/code-review-ppt-web-core-authed-roots-session-leak.md · adversarial pass: passed",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, 4 metadata + 11 headings + capability tick + Mode + Files exist",
+      "observed": "1 new plan; 4 metadata; 12 headings (includes Dependencies); C1+C6 ticked; Mode: cloud-ok; all 7 Files paths resolve on disk",
+      "expected": "all constraints met"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files all under .research/",
+      "observed": "gate deferred to Phase 6 stage; only .research/ files edited this run",
+      "expected": "0 non-.research/ paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets / private hostnames in staged .research/ (excl. 4 baseline docs)",
+      "observed": "no secrets or private hostnames introduced",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md, diff against staged",
+      "observed": "regenerator matches byte-for-byte",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases this run",
+      "expected": "n/a — no failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "no plans deleted this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count ≥ HEAD count",
+      "observed": "no archive changes this run",
+      "expected": "count unchanged"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md, diff against staged",
+      "observed": "regenerator matches byte-for-byte",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill-switch, caps, idempotency, verify-all)",
+      "observed": "auto_fix_actions=[]; no phase-5 actions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor liveness",
+      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor 5→6; coverage_cursor 7→8 (advanced with pm_cursor)",
+      "expected": "all conditions met"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in diff",
+      "observed": "no bot-token pattern in staged .research/",
+      "expected": "0 matches"
+    }
+  ],
+  "notes": "Tier-1d signals ingested from 4 dispatcher-generated files: signals/2026-09-26-{mobile-rn,ppt-web-core,ppt-web-ui,reality-server}-tier1d.json. Routine's Phase 1.5 subagent skipped as redundant with dispatcher's Tier-1d generators."
+}

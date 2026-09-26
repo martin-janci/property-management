@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-25T14:44:52Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 2956,
-  "last_issue_seen": 2966,
-  "last_commit_sha": "41f78e551a2744c1d9c6c8a91e309bf9b0c78289",
+  "last_run_iso": "2026-09-26T14:48:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2981,
+  "last_issue_seen": 2982,
+  "last_commit_sha": "af28ce0ea42f379020dd47f5a71cd8e85fabe37d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1015,23 +1015,37 @@
     "lag-warning-2026-09-23",
     "stale-routine-alert-2026-09-23",
     "buffer-low-2026-09-23-payload",
-    "buffer-low-2026-09-25-payload"
+    "buffer-low-2026-09-25-payload",
+    "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
+    "code-review-mobile-rn-fault-photos-silently-dropped",
+    "code-review-mobile-rn-meter-reading-no-numeric-validation",
+    "code-review-ppt-web-core-authed-roots-session-leak",
+    "code-review-ppt-web-core-ws-category-map-gap",
+    "code-review-ppt-web-core-api-default-export-orphan",
+    "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
+    "code-review-ppt-web-ui-automation-feature-no-i18n",
+    "code-review-ppt-web-ui-createrule-partial-cast-boundary",
+    "code-review-reality-server-dup-url-validator",
+    "dep-update-noise-pr-2980",
+    "dep-update-noise-pr-2981",
+    "dep-update-noise-pr-2974",
+    "dep-update-noise-pr-2957"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-08-31",
     "api-core": "2026-09-01",
-    "reality-server": "2026-08-31",
-    "ppt-web-ui": "2026-09-06",
-    "ppt-web-core": "2026-08-29",
+    "reality-server": "2026-09-26",
+    "ppt-web-ui": "2026-09-26",
+    "ppt-web-core": "2026-09-26",
     "reality-web": "2026-08-29",
-    "mobile-rn": "2026-09-09",
+    "mobile-rn": "2026-09-26",
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 82,
-    "vectors_created": 373,
-    "plans_created": 30,
+    "runs": 83,
+    "vectors_created": 383,
+    "plans_created": 31,
     "quiet_days": 5,
     "auto_fix_count": 0
   },
@@ -1046,19 +1060,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-09-26",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }
