@@ -1,0 +1,53 @@
+{
+  "generated": "2026-09-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven (claim buffer starved; non-mobile-native segment preferred — mobile-native/KMP is unlandable in cloud, issue #2652) 2026-09-26",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed. Today's other Tier-1d runs already covered mobile-rn, ppt-web-core, ppt-web-ui, and reality-server (see sibling 2026-09-26-*-tier1d.json signal files). Among the remaining non-mobile-native segments, review_cursor dates are reality-web=2026-08-29 (oldest), api-handlers=2026-08-31, api-core=2026-09-01. reality-web is the genuine oldest-unreviewed and is a cloud-landable Frontend/Next.js segment. Current real code churn (git log since 2026-09-01, excluding .research/) is concentrated in frontend/apps/ppt-web meters+ai-chat hooks (already ppt-web-core territory, covered), so churn does not redirect to another uncovered non-mobile segment. SATURATION CHECK PASSED: backlog.json holds 0 open code-review-finding rows for reality-web (in fact 0 for every segment), so the >=3-open skip rule does not trigger. Segment root = frontend/apps/reality-web/src. Static analysis only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "Both findings are frontend-only edits under frontend/apps/reality-web/src (app/[locale]/listings/page.tsx and app/[locale]/auth/callback/page.tsx, plus messages/*.json for the i18n key). Verifiable in the cloud runner via `pnpm --filter @ppt/reality-web typecheck` + Vitest/RTL without a backend or device. No mobile-native/Gradle or Rust build involved.",
+  "findings_count": 2,
+  "static_only": true,
+  "note": "reality-web is a mature, well-defended segment. The listing detail SSR path (getListing -> parseListingDetail -> notFound()) handles malformed 200 bodies and soft-404s correctly; the OAuth callback enforces CSRF state + open-redirect protection (GH #1826); every dangerouslySetInnerHTML site routes through serializeForScript (escapes </script> + U+2028/U+2029); MSW is dev-gated behind NODE_ENV; agency hooks carry enabled:!!id guards. The two surviving findings are (1) a query-error-handling gap on the flagship public search page that is inconsistent with every sibling list page, and (2) an i18n gap. Cap of 3 not reached — no further findings met the severity bar (nits skipped).",
+  "signals": [
+    {
+      "id": "code-review-reality-web-listings-page-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx",
+        "frontend/apps/reality-web/src/lib/query-provider.tsx",
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:145 — the flagship public listings SEARCH page destructures only `const { data, isLoading } = useListings(filters, currentPage);`. It never reads `isError`/`error`. On a failed query, TanStack Query returns data===undefined with isLoading===false, so the render at :337 does `listings={data?.data ?? []}` and passes it to ListingGrid with isLoading=false.",
+        "frontend/apps/reality-web/src/components/listings/ListingGrid.tsx:65-66 — with an empty array and isLoading=false, ListingGrid renders `<EmptyState icon=\"🔍\" title={t('emptyTitle')} description={t('emptyDescription')} />`. Net effect: a backend/network failure on the most-trafficked public page is presented to the user as a benign \"no properties found\" empty state, with NO error message and NO retry affordance. Users (and crawlers) cannot distinguish 'API is down' from '0 matches'.",
+        "frontend/apps/reality-web/src/lib/query-provider.tsx:20-28 — the QueryClient sets only staleTime + refetchOnWindowFocus and does NOT set `throwOnError`/`useErrorBoundary`, so query errors are swallowed at the hook and are never surfaced to the app/[locale]/error.tsx error boundary either. There is thus no path by which this error becomes visible.",
+        "Confirmed inconsistency (not a stylistic nit): every SIBLING list page in the same segment DOES handle the error branch — price-map/page.tsx:45 (`isError`), realtor/listings/page.tsx:72 (`error`), inquiries/page.tsx:315 (`error`), agency/[slug]/page.tsx:28 (`isError`), agency/inquiries/page.tsx:87 (`error`), favorites/page.tsx:21 (`error`), saved-searches/page.tsx:300 (`error`). listings/page.tsx is the lone public search page that silently drops it. Landable frontend-only remedy: destructure `isError` from useListings and render an error state (with a retry/refetch) distinct from the empty state, matching the sibling pages. Verifiable via `pnpm --filter @ppt/reality-web typecheck` + a Vitest/RTL test that makes useListings return isError and asserts an error UI (not EmptyState) renders. Confidence high: traced hook return -> page destructure -> ListingGrid empty-state fallback -> absent throwOnError, so the error is provably invisible in production."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-callback-hardcoded-login-string",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/messages/en.json"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:146 — `<p style={styles.loadingText}>Completing login...</p>` is a hardcoded English literal shown to the user during the SSO callback wait. Every other user-facing string in the SAME component is already localized via next-intl: the component holds `const t = useTranslations('auth.callback')` (:80) and uses t('title'), t('invalidState'), t('returnHome'). This one visible string was missed.",
+        "reality-web is a public, SEO-indexed multi-locale portal. The messages catalogue ships 6 locales — messages/{sk,cs,en,de,hu,pl}.json — and the `auth.callback` block (en.json:107-111) currently defines only title/invalidState/returnHome, with no `loading`-style key, so a non-English visitor sees English mid-flow. (A generic `common.loading` = 'Loading...' exists at en.json:118 but is unused here and semantically weaker.) Landable frontend-only remedy: add e.g. `auth.callback.completing` (\"Completing login…\") to all 6 messages/*.json and replace the literal with `t('completing')`. Verifiable via `pnpm --filter @ppt/reality-web typecheck` + the repo's i18n key-parity check. Confidence high on the gap (literal is right there and t() is already in scope); severity low — cosmetic, non-blocking, no functional/security impact."
+      ]
+    }
+  ]
+}
