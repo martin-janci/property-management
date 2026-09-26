@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOrganization } from '../../../hooks';
+import { getApiClient } from '../../../lib/api';
 import { NewsArticleCard } from '../components';
 import type { ArticleStatus, ArticleSummary } from '../types';
 
@@ -30,17 +31,18 @@ export function NewsListPage() {
     setError(null);
 
     try {
-      const params = new URLSearchParams({ organization_id: organizationId });
-      if (statusFilter) params.append('status', statusFilter);
-      if (showPinnedOnly) params.append('pinned_only', 'true');
+      // Route through the shared axios client (`getApiClient()`) so the request
+      // carries `Authorization: Bearer <token>` via the request interceptor.
+      // A raw `fetch('/api/v1/news')` here sent NO auth header and 401'd behind
+      // <ProtectedRoute> in production (#2982). Paths are relative to the
+      // client baseURL (`/api/v1`).
+      const params: Record<string, string> = { organization_id: organizationId };
+      if (statusFilter) params.status = statusFilter;
+      if (showPinnedOnly) params.pinned_only = 'true';
 
-      const response = await fetch(`/api/v1/news?${params}`);
+      const response = await getApiClient().get('/news', { params });
 
-      if (!response.ok) {
-        throw new Error('Failed to load articles');
-      }
-
-      const data = await response.json();
+      const data = response.data;
       // Convert snake_case to camelCase
       setArticles(
         data.map((a: Record<string, unknown>) => ({
@@ -75,14 +77,9 @@ export function NewsListPage() {
       if (!confirm('Are you sure you want to delete this article?')) return;
 
       try {
-        const params = new URLSearchParams({ organization_id: organizationId });
-        const response = await fetch(`/api/v1/news/${id}?${params}`, {
-          method: 'DELETE',
+        await getApiClient().delete(`/news/${id}`, {
+          params: { organization_id: organizationId },
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to delete article');
-        }
 
         setArticles((prev) => prev.filter((a) => a.id !== id));
       } catch (err) {
@@ -97,15 +94,9 @@ export function NewsListPage() {
       if (!organizationId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${id}/publish`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organization_id: organizationId }),
+        await getApiClient().post(`/news/${id}/publish`, {
+          organization_id: organizationId,
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to publish article');
-        }
 
         loadArticles();
       } catch (err) {
@@ -120,15 +111,9 @@ export function NewsListPage() {
       if (!organizationId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${id}/archive`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organization_id: organizationId }),
+        await getApiClient().post(`/news/${id}/archive`, {
+          organization_id: organizationId,
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to archive article');
-        }
 
         loadArticles();
       } catch (err) {
@@ -143,15 +128,10 @@ export function NewsListPage() {
       if (!organizationId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${id}/pin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organization_id: organizationId, pinned }),
+        await getApiClient().post(`/news/${id}/pin`, {
+          organization_id: organizationId,
+          pinned,
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to update pin status');
-        }
 
         loadArticles();
       } catch (err) {

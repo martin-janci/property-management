@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useOrganization } from '../../../hooks';
+import { getApiClient } from '../../../lib/api';
 import type { ArticleStatus, CreateArticleRequest } from '../types';
 
 export function CreateArticlePage() {
@@ -52,18 +53,14 @@ export function CreateArticlePage() {
           reactionsEnabled,
         };
 
-        const response = await fetch(`/api/v1/news?organization_id=${organizationId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+        // Route through the shared axios client so the request is authenticated
+        // (Bearer token via the request interceptor). A raw `fetch()` here sent
+        // no Authorization header and 401'd behind <ProtectedRoute> (#2982).
+        const response = await getApiClient().post<{ id: string }>('/news', payload, {
+          params: { organization_id: organizationId },
         });
 
-        if (!response.ok) {
-          throw new Error(t('news.errors.createFailed'));
-        }
-
-        const data = await response.json();
-        navigate(`/news/${data.id}`);
+        navigate(`/news/${response.data.id}`);
       } catch (err) {
         setError(err instanceof Error ? err.message : t('news.errors.createFailed'));
       } finally {
