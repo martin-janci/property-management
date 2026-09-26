@@ -1026,6 +1026,8 @@
       "feedName": "Název feedu (volitelné)",
       "feedNamePlaceholder": "Můj feed nemovitostí",
       "fetchError": "Nepodařilo se načíst feed. Zkontrolujte URL a zkuste to znovu.",
+      "updateError": "Nepodařilo se aktualizovat feed. Zkuste to znovu.",
+      "removeError": "Nepodařilo se odstranit feed. Zkuste to znovu.",
       "format": "Formát",
       "itemsFound": "Nalezené položky",
       "availableFields": "Dostupná pole",
