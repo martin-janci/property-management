@@ -337,7 +337,11 @@ export const queryKeys = {
  *
  * Covers the centralized {@link queryKeys} factory roots (including
  * `accounting`), the shared `@ppt/api-client` key-factory roots consumed by
- * ppt-web (`messages`, `meters`, `reports`), and the ad-hoc roots used
+ * ppt-web (`messages`, `meters`, `reports`, plus every mounted-route-group
+ * domain: `community`, `disputes`, `iot`, `outages`, `leases`, `violations`,
+ * `voting`, `compliance`, `esignature`, `my-units`, `portfolio-performance`,
+ * `templates`, `integrations`, `syndication`, `oauth-grants`, `mfa`, `layout`),
+ * and the ad-hoc roots used
  * directly in feature hooks (`developer`, `ocr`, `actionQueue`,
  * `executionLogs`, `executionStats`, `ai-chat`, `predictive-maintenance`,
  * `sentiment`, `notification-analytics`, `notification-triggers`,
@@ -369,6 +373,30 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   // Shared @ppt/api-client key-factory roots consumed by ppt-web
   'meters',
   'reports',
+  // Mounted-route-group domains whose caches populate via @ppt/api-client
+  // hooks (disputes/iot/outages/leases/voting/... route groups). These roots
+  // were absent from the allow-list, so their tenant-/user-scoped caches
+  // survived logout and leaked into the next session on a shared workstation.
+  // NOTE: `voting` is the live api-client root (votingKeys.all === ['voting']);
+  // the legacy local `queryKeys.votes` factory root (`votes`, above) is kept
+  // for the WebSocket invalidation map but no longer backs the voting queries.
+  'community',
+  'disputes',
+  'iot',
+  'outages',
+  'leases',
+  'violations',
+  'voting',
+  'compliance',
+  'esignature',
+  'my-units',
+  'portfolio-performance',
+  'templates',
+  'integrations',
+  'syndication',
+  'oauth-grants',
+  'mfa',
+  'layout',
   // Ad-hoc roots used directly in feature hooks
   'developer',
   'ocr',
