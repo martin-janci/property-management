@@ -988,6 +988,7 @@
       "mappingHint": "Přiřaďte pole CRM k vlastnostem nabídky",
       "creating": "Vytvářím...",
       "createConnection": "Vytvořit připojení",
+      "createError": "Nepodařilo se vytvořit připojení. Zkuste to znovu.",
       "connectionFailed": "Připojení selhalo",
       "connectionSuffix": "připojení",
       "status": {
@@ -1037,6 +1038,7 @@
       "mappingHint": "Přiřaďte pole feedu k vlastnostem nabídky",
       "creating": "Vytvářím...",
       "createFeed": "Vytvořit feed",
+      "createError": "Nepodařilo se vytvořit feed. Zkuste to znovu.",
       "defaultName": "Feed nemovitostí",
       "status": {
         "active": "Aktivní",

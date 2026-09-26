@@ -988,6 +988,7 @@
       "mappingHint": "Ordnen Sie Ihre CRM-Felder den Inserateigenschaften zu",
       "creating": "Erstelle...",
       "createConnection": "Verbindung erstellen",
+      "createError": "Verbindung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
       "connectionFailed": "Verbindung fehlgeschlagen",
       "connectionSuffix": "Verbindung",
       "status": {
@@ -1037,6 +1038,7 @@
       "mappingHint": "Ordnen Sie Feed-Felder den Inserateigenschaften zu",
       "creating": "Erstelle...",
       "createFeed": "Feed erstellen",
+      "createError": "Feed konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
       "defaultName": "Immobilien-Feed",
       "status": {
         "active": "Aktiv",

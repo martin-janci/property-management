@@ -981,6 +981,7 @@
       "mappingHint": "Dopasuj pola CRM do właściwości oferty",
       "creating": "Tworzenie...",
       "createConnection": "Utwórz połączenie",
+      "createError": "Nie udało się utworzyć połączenia. Spróbuj ponownie.",
       "connectionFailed": "Połączenie nie powiodło się",
       "connectionSuffix": "Połączenie",
       "status": {
@@ -1030,6 +1031,7 @@
       "mappingHint": "Dopasuj pola kanału do właściwości oferty",
       "creating": "Tworzenie...",
       "createFeed": "Utwórz kanał",
+      "createError": "Nie udało się utworzyć kanału. Spróbuj ponownie.",
       "defaultName": "Kanał nieruchomości",
       "status": {
         "active": "Aktywny",
