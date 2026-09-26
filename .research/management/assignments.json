@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T22:50:27Z",
+  "generated": "2026-09-26T22:50:47Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -238,18 +238,18 @@
     {
       "task_id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
       "branch": "auto-impl/code-review-ppt-web-ui-automation-rules-f44d700a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-26T22:31:46Z",
-      "last_updated": "2026-09-26T22:31:46Z",
-      "status_changed_at": "2026-09-26T22:31:46Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-26T22:50:47Z",
+      "status_changed_at": "2026-09-26T22:50:47Z",
+      "pr_number": 2986,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2986",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2986 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wired all workflow-automation mutations to useToast error+success; biome+typecheck green, new regression tests pass; sole verify fail = unrelated flaky reports.create-schedule timeout (5/5 in isolation), left draft for CI re-run; drift=owner-hint-only",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
