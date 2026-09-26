@@ -10732,6 +10732,254 @@
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-authed-roots-session-leak",
+      "title": "logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-392 — AUTHED_QUERY_KEY_ROOTS is missing mounted-route roots (community, disputes, iot, outages, leases, voting) and has a votes→voting drift; docstring at :346-350 states the list must cover ALL tenant-/user-scoped caches (Issue #712).",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:614-637 — logout() iterates AUTHED_QUERY_KEY_ROOTS only; any cache root not in the list survives logout and leaks into the next login on the same browser."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/packages/api-client/src/community/hooks.ts",
+        "frontend/packages/api-client/src/voting/hooks.ts"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": "plans/code-review-ppt-web-core-authed-roots-session-leak.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-category-map-gap",
+      "title": "WebSocketContext.categoryToQueryKeys missing community + system categories → stale community feed on push",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:61-68 — categoryToQueryKeys covers only 6 of the 8 NotificationCategory serde values; community and system are absent.",
+        "backend/crates/common/src/notifications/mod.rs:75-121 — NotificationCategory has 8 snake_case variants including community and system.",
+        "frontend/packages/api-client/src/community/hooks.ts:29 — communityKeys.all = ['community']; community route mounted in ppt-web, cache never invalidated on notification.created(category='community')."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "backend/crates/common/src/notifications/mod.rs"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-default-export-orphan",
+      "title": "lib/api.ts eagerly-created default export is orphaned by configureApiClient() — footgun for future default-importers",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:370 — export default getApiClient() runs at import time with DEFAULT config; AuthProvider's configureApiClient() replaces the internal apiInstance, orphaning the default-exported object.",
+        "no default-style importer exists today (grep confirmed zero non-test hits under frontend/apps/ppt-web/src) — latent footgun rather than active break."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
+      "title": "Automation-rules feature mutations swallow errors silently (no toast / no reload)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-ppt-web-ui-tier1d.json — code-review-finding score_delta=+2, confidence=high, vector=bug; ppt-web-ui automation feature mutations return without surfacing failure."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/automation"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
+      "title": "ppt-web automation feature ships English-only strings — missing i18n keys",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-ppt-web-ui-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=bug; hardcoded strings in automation UI."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/automation"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",
+      "title": "CreateRule component casts Partial payload at boundary — silent runtime shape mismatch risk",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-ppt-web-ui-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=bug."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/automation"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-fault-photos-silently-dropped",
+      "title": "Mobile RN fault-report photos silently dropped when upload fails — no user-visible error",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-mobile-rn-tier1d.json — code-review-finding score_delta=+2, confidence=high, vector=bug; fault-report photo pipeline swallows upload errors."
+      ],
+      "files": [
+        "frontend/apps/mobile/src"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
+      "title": "Mobile RN offline queue drops permanent 4xx failures without user feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-mobile-rn-tier1d.json — code-review-finding score_delta=+2, confidence=medium, vector=bug."
+      ],
+      "files": [
+        "frontend/apps/mobile/src"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
+      "title": "Mobile RN meter-reading input accepts non-numeric — silent write of garbage values",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-mobile-rn-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=bug."
+      ],
+      "files": [
+        "frontend/apps/mobile/src"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listings-page-no-error-state",
+      "title": "reality-web listings page renders empty state on API error — no error UI, users see 'no results'",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-reality-web-tier1d.json — code-review-finding score_delta=+2, confidence=high, vector=bug."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-callback-hardcoded-login-string",
+      "title": "reality-web SSO callback carries a hardcoded 'login' redirect string — bypasses i18n and locale-aware routing",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-reality-web-tier1d.json — code-review-finding score_delta=+1, confidence=high, vector=refactor."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validator",
+      "title": "reality-server carries a duplicated URL-validation helper — merge into shared crate",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-server)"
+      ],
+      "evidence": [
+        ".research/signals/2026-09-26-reality-server-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=refactor."
+      ],
+      "files": [
+        "backend/servers/reality-server/src"
+      ],
+      "created_at": "2026-09-26",
+      "updated_at": "2026-09-26",
+      "plan": null
     }
   ]
 }
