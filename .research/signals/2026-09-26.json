@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-26",
+  "run_started_at": "2026-09-26T08:35:38Z",
+  "signals": [
+    {
+      "id": "buffer-low-2026-09-26-payload",
+      "type": "dispatcher-telemetry",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "evidence": "buffer-low: claimable=8/72 (all 8 open items mobile-native-gated; coverage exhausted 49/49 done) — refill planner",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-09-26.md && head -1 …", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq compare staged state vs HEAD",                    "observed": "true",   "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq unique-ids in backlog",                           "observed": "true",   "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id re-scored",              "observed": "true",   "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "no score>8; no undecayed >14d open items",           "observed": "true",   "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "each new plans/ file has adversarial-pass note",     "observed": "no new plans this run", "expected": "no new plans this run" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans; each has 4 metadata + 11 headings",    "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached only .research/ paths",            "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G9", "passed": true,  "command": "no secrets/private hostnames in staged diff",        "observed": "0",      "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md regen",                           "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failures match cursor-freeze",                 "observed": "no phases failed", "expected": "match" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or _archive/",       "observed": "true",   "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "plans/_archive/ count monotonic",                    "observed": "true",   "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen",                      "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix caps + idempotency",                        "observed": "0 auto-fix actions", "expected": "≤3 (≤1 pr, ≤1 issue, ≤1 comment)" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid",                         "observed": "phase 1.6 skipped — no-op", "expected": "no-op when skipped" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token literal committed",            "observed": "0",      "expected": "0" }
+  ]
+}
