@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useOrganization } from '../../../hooks';
+import { getApiClient } from '../../../lib/api';
 import type { ArticleStatus, NewsArticle, UpdateArticleRequest } from '../types';
 
 export function EditArticlePage() {
@@ -35,13 +36,13 @@ export function EditArticlePage() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/v1/news/${id}?organization_id=${organizationId}`);
+        // Authenticated read via the shared axios client (Bearer token from the
+        // request interceptor); a raw `fetch()` here 401'd in production (#2982).
+        const response = await getApiClient().get(`/news/${id}`, {
+          params: { organization_id: organizationId },
+        });
 
-        if (!response.ok) {
-          throw new Error(t('news.errors.loadFailed'));
-        }
-
-        const data = await response.json();
+        const data = response.data;
         const article: NewsArticle = {
           id: data.id,
           organizationId: data.organization_id,
@@ -112,15 +113,9 @@ export function EditArticlePage() {
           reactionsEnabled,
         };
 
-        const response = await fetch(`/api/v1/news/${id}?organization_id=${organizationId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+        await getApiClient().put(`/news/${id}`, payload, {
+          params: { organization_id: organizationId },
         });
-
-        if (!response.ok) {
-          throw new Error(t('news.errors.updateFailed'));
-        }
 
         navigate(`/news/${id}`);
       } catch (err) {
