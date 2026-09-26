@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T22:50:47Z",
+  "generated": "2026-09-26T22:51:06Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -304,18 +304,18 @@
     {
       "task_id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
       "branch": "auto-impl/code-review-mobile-rn-offline-permanent-eeada319",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-26T22:31:46Z",
-      "last_updated": "2026-09-26T22:31:46Z",
-      "status_changed_at": "2026-09-26T22:31:46Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-26T22:51:06Z",
+      "status_changed_at": "2026-09-26T22:51:06Z",
+      "pr_number": 2988,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2988",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=2988 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=surfaced permanent-4xx drops via permanentFailures state+Alert; affected tests/typecheck/biome green; full verify red ONLY on pre-existing env RN <Modal> transform (byte-identical to dev); drift=owner-hint-only",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
