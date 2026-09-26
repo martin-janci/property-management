@@ -189,6 +189,26 @@
           "security"
         ]
       }
+    },
+    {
+      "id": "gh-issue-2982",
+      "action": "Follow-up: remaining raw-fetch() API bypasses in ppt-web — unauthenticated news mutations + interceptor bypasses (PR #2979) (Closes #2982)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-09-26T16:24:58Z (#2982)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-26T16:24:58Z",
+      "issue_ref": {
+        "number": 2982,
+        "url": "https://github.com/martin-janci/property-management/issues/2982",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-09-07T14:38:29Z"

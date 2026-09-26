@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T14:34:25Z",
+  "generated": "2026-09-26T16:59:38Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -168,6 +168,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "gh-issue-2982",
+      "branch": "auto-impl/gh-issue-2982-d7db6aa5",
+      "status": "review",
+      "claimed_at": "2026-09-26T16:30:43Z",
+      "last_updated": "2026-09-26T16:57:48Z",
+      "status_changed_at": "2026-09-26T16:57:48Z",
+      "pr_number": 2983,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2983",
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2983 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=rerouted news pages + notification-analytics hook through getApiClient(); IG3 tests added; verify OK (2672 tests); deferred gdprClient+accounting-upload w/ rationale (tenant-header/regression)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
