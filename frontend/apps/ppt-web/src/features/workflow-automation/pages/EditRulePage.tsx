@@ -9,20 +9,34 @@ import type { AutomationRule } from '@ppt/api-client';
 import { useAutomationRule, useUpdateAutomationRule } from '@ppt/api-client';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { useToast } from '../../../components';
 import { RuleBuilder } from '../components/RuleBuilder';
 
 const skeletonKeys = ['skeleton-step-1', 'skeleton-step-2', 'skeleton-step-3', 'skeleton-step-4'];
 
 export function EditRulePage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { id } = useParams<{ id: string }>();
   const { data: rule, isLoading, error } = useAutomationRule(id ?? '');
   const updateRule = useUpdateAutomationRule();
 
   const handleSave = async (updatedRule: Partial<AutomationRule>) => {
-    if (id) {
+    if (!id) return;
+    try {
       await updateRule.mutateAsync({ id, data: updatedRule });
+      showToast({
+        type: 'success',
+        title: 'Rule updated',
+        message: 'The automation rule was updated.',
+      });
       navigate('/automations/rules');
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Update failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be updated.',
+      });
     }
   };
 
