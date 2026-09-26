@@ -15,13 +15,21 @@ set -eu
 # Space-separated origins allowed to frame ppt-web when ?layoutPreview=1 is
 # present (mirrors reality-web's env). Safe empty default = carve-out disabled.
 : "${LAYOUT_PREVIEW_FRAME_ANCESTORS:=}"
+# Version identity for the `/version` endpoint. The Dockerfile sets these from
+# the APP_VERSION / GIT_SHA / BUILD_DATE build args, so the defaults below only
+# ever apply to an image built outside the release pipeline — in which case
+# /version answers "unknown" rather than serving an unsubstituted `${...}`.
+: "${APP_VERSION:=unknown}"
+: "${GIT_SHA:=unknown}"
+: "${BUILD_DATE:=unknown}"
 
 export BG_TARGET BG_COLOR LAYOUT_PREVIEW_FRAME_ANCESTORS
+export APP_VERSION GIT_SHA BUILD_DATE
 
 # Only these vars are substituted. nginx's own `$host`, `$remote_addr`
 # etc. must NOT be expanded — they're nginx variables, evaluated per request.
-envsubst '${BG_TARGET} ${BG_COLOR} ${LAYOUT_PREVIEW_FRAME_ANCESTORS}' \
+envsubst '${BG_TARGET} ${BG_COLOR} ${LAYOUT_PREVIEW_FRAME_ANCESTORS} ${APP_VERSION} ${GIT_SHA} ${BUILD_DATE}' \
     < /etc/nginx/conf.d/default.conf.template \
     > /etc/nginx/conf.d/default.conf
 
-echo "rendered ppt-web nginx config: BG_TARGET=${BG_TARGET} BG_COLOR=${BG_COLOR}"
+echo "rendered nginx config: BG_TARGET=${BG_TARGET} BG_COLOR=${BG_COLOR} APP_VERSION=${APP_VERSION} GIT_SHA=${GIT_SHA}"

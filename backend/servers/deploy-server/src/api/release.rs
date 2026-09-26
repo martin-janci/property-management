@@ -144,6 +144,15 @@ pub async fn deploy_handler(
         ppt_apex: target_cfg.ppt_apex.clone(),
         target_name: target.as_str().into(),
         service_envs,
+        // A BRANCH tag (`dev` / `main`) addresses five independently-built
+        // images: docker-build.yml and docker-frontend.yml are separate
+        // workflow runs, so between them the branch tag of the backend
+        // services can already point at this commit while the frontend ones
+        // still point at the previous successful frontend build. Requiring one
+        // revision here would refuse every staging/prod auto-deploy — the
+        // deployer logs a warning instead, and the strict check is applied on
+        // the version-addressed path (`promote_handler`).
+        require_single_revision: false,
     };
     let deployer = BlueGreenDeployer { docker, caddy };
     deployer.deploy(&spec).await?;
@@ -210,6 +219,10 @@ pub async fn wake_handler(
         .get(target.as_str())
         .ok_or_else(|| DeployError::Config("staging target missing".into()))?;
     let service_envs = build_service_envs(target.as_str(), target_cfg)?;
+    // `wake` re-deploys whatever Release row is currently recorded for the
+    // target, which on staging is the branch-tag row written by
+    // `deploy_handler` — so the same mutable-tag reasoning applies and the
+    // default (`false`) from `from_release` is the correct policy.
     let spec = BlueGreenSpec::from_release(&rel, target.as_str(), target_cfg, service_envs)?;
     let docker = svc
         .docker_pool

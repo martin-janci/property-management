@@ -65,6 +65,7 @@ jobs:
           RUNNABLE_SCRIPTS='
           scripts/build-ios.sh
           scripts/generate-rn-app-icons.sh
+          scripts/check-frontend-docker-manifests.sh
           '
           offenders="$(git ls-files -s -- '.github/workflows/scripts/*.sh' $RUNNABLE_SCRIPTS \
             | awk '$1 != "100755" { print $1 "  " $4 }')"

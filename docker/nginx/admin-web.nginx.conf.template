@@ -43,6 +43,24 @@ server {
         add_header Content-Type text/plain;
     }
 
+    # Version identity, baked into the image at build time (T6).
+    #
+    # Strictly additive: /health above still returns the literal `OK` every
+    # existing probe matches on (the Dockerfile HEALTHCHECK, the deploy-server's
+    # wait_until_ready). This endpoint is the one that answers "which version is
+    # actually running?" — until now a running frontend container could not say.
+    #
+    # The three placeholders below are substituted at container start by
+    # /docker-entrypoint.d/10-render-template.sh from the image's ENV, which the
+    # Dockerfile sets from the same build args that feed the OCI labels — so the
+    # label and this body can never disagree. (Named without braces here on
+    # purpose: envsubst would rewrite them inside this comment too.)
+    location = /version {
+        access_log off;
+        default_type application/json;
+        return 200 '{"version":"${APP_VERSION}","commit":"${GIT_SHA}","built_at":"${BUILD_DATE}"}\n';
+    }
+
     # Same-origin shim: admin SPA fetches `/api/v1/...` which Caddy in
     # front maps to admin.<reality_apex>, nginx then proxies to the
     # api-server container in the same Docker network color.

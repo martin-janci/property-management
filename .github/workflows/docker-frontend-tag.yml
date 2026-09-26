@@ -1,0 +1,23 @@
+name: Docker Build & Push (Frontend, release tag)
+
+# The tag trigger, on purpose in its own workflow and with NO paths filter.
+# See docker-build-tag.yml for the full explanation: `on.push.paths` is applied
+# to tag pushes too, and a tag push has an empty commit list, so a paths filter
+# can never match it. While `tags: ['v*']` sat under the paths-filtered `push:`
+# key of docker-frontend.yml, a release tag built no frontend image at all.
+#
+# The build itself is the same reusable workflow docker-frontend.yml calls.
+# There is deliberately no auto-deploy job here: release.yml owns tag pushes.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/docker-frontend-images.yml
