@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T22:50:02Z",
+  "generated": "2026-09-26T22:50:27Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -194,18 +194,18 @@
     {
       "task_id": "code-review-ppt-web-core-authed-roots-session-leak",
       "branch": "auto-impl/code-review-ppt-web-core-authed-roots-se-c07a77dd",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-26T22:31:46Z",
-      "last_updated": "2026-09-26T22:31:46Z",
-      "status_changed_at": "2026-09-26T22:31:46Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-26T22:50:27Z",
+      "status_changed_at": "2026-09-26T22:50:27Z",
+      "pr_number": 2987,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2987",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2987 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=extended AUTHED_QUERY_KEY_ROOTS with 17 missing mounted-route roots + fixed votes->voting drift; guard+logout tests; VERIFY OK 137 files/2686 tests; drift=owner-hint-only",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
