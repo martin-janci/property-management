@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T22:51:06Z",
+  "generated": "2026-09-26T22:54:21Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -282,18 +282,18 @@
     {
       "task_id": "code-review-mobile-rn-fault-photos-silently-dropped",
       "branch": "auto-impl/code-review-mobile-rn-fault-photos-silen-a6a1063f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-26T22:31:46Z",
-      "last_updated": "2026-09-26T22:31:46Z",
-      "status_changed_at": "2026-09-26T22:31:46Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-26T22:54:21Z",
+      "status_changed_at": "2026-09-26T22:54:21Z",
+      "pr_number": 2989,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2989",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=2989 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=fault-report photos never uploaded+dropped silently; now shows user-visible Alert on all submit/queue paths (+6 locales) w/ jest-expo regression; ALSO revived mobile jest suite 0->691 via 2 moduleNameMapper stubs (RN0.87/jest-expo56 incompat, relevant to #2951); VERIFY OK 30e14f0c; drift=owner-hint-only",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
