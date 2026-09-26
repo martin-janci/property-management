@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T22:34:30Z",
+  "generated": "2026-09-26T22:44:14Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -260,18 +260,18 @@
     {
       "task_id": "code-review-reality-web-listings-page-no-error-state",
       "branch": "auto-impl/code-review-reality-web-listings-page-no-16009347",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-26T22:31:46Z",
-      "last_updated": "2026-09-26T22:31:46Z",
-      "status_changed_at": "2026-09-26T22:31:46Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-26T22:43:52Z",
+      "status_changed_at": "2026-09-26T22:43:52Z",
+      "pr_number": 2984,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2984",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2984 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=listings API error now renders shared ErrorState via ListingGrid isError/onRetry; 6-locale parity; regression red-on-main; VERIFY OK 2bb240a; draft",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
