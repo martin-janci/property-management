@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-25T22:44:41Z",
+  "generated": "2026-09-26T00:30:00Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -174,15 +174,15 @@
       "branch": "auto-impl/gh-issue-2978-ac9bbc2a",
       "status": "review",
       "claimed_at": "2026-09-25T22:30:59Z",
-      "last_updated": "2026-09-25T22:44:41Z",
+      "last_updated": "2026-09-26T00:30:00Z",
       "status_changed_at": "2026-09-25T22:44:41Z",
       "pr_number": 2979,
       "pr_url": "https://github.com/martin-janci/property-management/pull/2979",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=2979 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=rerouted useAiChat+useOcrMeterReading through getApiClient(); Bearer header now sent; delete surfaces errors; verify green (2669 tests)",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=auth-fix-correct-tests-solid-ci-green-approved-as-comment-self-pr; self-authored PR cannot receive a valid bot approval, parked human-gated",
+      "last_reviewed_oid": "45e91c16090a56dadc3589d2f703b39ef4c1a5d4",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
