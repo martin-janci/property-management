@@ -199,6 +199,14 @@ bump-major:
 sync-version:
     ./scripts/update-version.sh
 
+# List every version carrier (the single inventory, also consumed by CI)
+list-version-carriers:
+    ./scripts/update-version.sh --list
+
+# Assert every carrier matches VERSION (same check as the version-drift workflow)
+check-version:
+    ./scripts/update-version.sh --check
+
 # =============================================================================
 # MAINTENANCE
 # =============================================================================

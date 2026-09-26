@@ -1,5 +1,6 @@
 {
   "name": "@ppt/admin-web",
+  "version": "0.3.218",
   "private": true,
   "description": "Super-admin Control Plane (React SPA)",
   "type": "module",
