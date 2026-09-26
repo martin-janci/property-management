@@ -189,26 +189,6 @@
           "security"
         ]
       }
-    },
-    {
-      "id": "gh-issue-2978",
-      "action": "ppt-web AI-chat + OCR feature hooks call the API via raw fetch() with no Authorization header (unauthenticated → 401 in prod) + silent delete (Closes #2978)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-09-25T22:26:15Z (#2978)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-25T22:26:15Z",
-      "issue_ref": {
-        "number": 2978,
-        "url": "https://github.com/martin-janci/property-management/issues/2978",
-        "labels": [
-          "bug",
-          "frontend"
-        ]
-      }
     }
   ],
   "generated": "2026-09-07T14:38:29Z"
