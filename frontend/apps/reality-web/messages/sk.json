@@ -1061,6 +1061,7 @@
       "cancel": "Zrušiť",
       "saving": "Ukladám...",
       "saveChanges": "Uložiť zmeny",
+      "saveError": "Zmeny sa nepodarilo uložiť. Skúste to znova.",
       "status": "Stav",
       "enabled": "Povolené",
       "disabled": "Zakázané",

@@ -1054,6 +1054,7 @@
       "cancel": "Anuluj",
       "saving": "Zapisywanie...",
       "saveChanges": "Zapisz zmiany",
+      "saveError": "Nie udało się zapisać zmian. Spróbuj ponownie.",
       "status": "Status",
       "enabled": "Włączone",
       "disabled": "Wyłączone",

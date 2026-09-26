@@ -1061,6 +1061,7 @@
       "cancel": "Cancel",
       "saving": "Saving...",
       "saveChanges": "Save Changes",
+      "saveError": "Couldn't save changes. Please try again.",
       "status": "Status",
       "enabled": "Enabled",
       "disabled": "Disabled",
