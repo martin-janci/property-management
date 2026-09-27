@@ -299,7 +299,9 @@
     "syncFailed": "Niektore elementy nie zostaly zsynchronizowane",
     "syncProgress": "Synchronizowanie {{current}} z {{total}}",
     "itemSynced": "{{item}} zsynchronizowano pomyslnie",
-    "itemFailed": "Nie udalo sie zsynchronizowac {{item}}"
+    "itemFailed": "Nie udalo sie zsynchronizowac {{item}}",
+    "droppedTitle": "Zmiany odrzucone",
+    "droppedMessage": "Nie udało się zapisać {{count}} zmian offline i zostały odrzucone, ponieważ serwer je odrzucił."
   },
   "help": {
     "title": "Centrum pomocy",

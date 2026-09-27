@@ -299,7 +299,9 @@
     "syncFailed": "Nehany elem szinkronizalasa sikertelen",
     "syncProgress": "Szinkronizalas {{current}}/{{total}}",
     "itemSynced": "{{item}} sikeresen szinkronizalva",
-    "itemFailed": "{{item}} szinkronizalasa sikertelen"
+    "itemFailed": "{{item}} szinkronizalasa sikertelen",
+    "droppedTitle": "Módosítások elvetve",
+    "droppedMessage": "{{count}} offline módosítást nem sikerült menteni, és elvetésre kerültek, mert a szerver elutasította azokat."
   },
   "help": {
     "title": "Sugocentrum",

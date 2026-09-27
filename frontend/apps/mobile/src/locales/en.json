@@ -339,7 +339,9 @@
     "syncFailed": "Some items failed to sync",
     "syncProgress": "Syncing {{current}} of {{total}}",
     "itemSynced": "{{item}} synced successfully",
-    "itemFailed": "Failed to sync {{item}}"
+    "itemFailed": "Failed to sync {{item}}",
+    "droppedTitle": "Changes discarded",
+    "droppedMessage": "{{count}} offline change(s) could not be saved and were discarded because the server rejected them."
   },
   "help": {
     "title": "Help Center",
