@@ -131,6 +131,8 @@
     "galleryButton": "Galeria",
     "submitButton": "Wyslij zgloszenie",
     "successSubmit": "Zgloszenie usterki zostalo pomyslnie wyslane",
+    "photosNotUploadedTitle": "Zgloszenie zapisane — zdjecia nie zostaly dolaczone",
+    "photosNotUploadedWarning": "Zgloszenie usterki zostalo zapisane, ale dolaczonych zdjec nie udalo sie przeslac i nie zostaly uwzglednione. Prosze dodac je ponownie ze szczegolow usterki.",
     "failedSubmit": "Nie udalo sie wyslac zgloszenia usterki",
     "cameraPermissionDenied": "Wymagane jest uprawnienie do aparatu",
     "photoLibraryPermissionDenied": "Wymagane jest uprawnienie do biblioteki zdjec",

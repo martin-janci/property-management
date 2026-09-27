@@ -131,6 +131,8 @@
     "galleryButton": "Galerie",
     "submitButton": "Odeslat hlaseni",
     "successSubmit": "Hlaseni zavady bylo uspesne odeslano",
+    "photosNotUploadedTitle": "Hlaseni ulozeno — fotografie nebyly pripojeny",
+    "photosNotUploadedWarning": "Hlaseni zavady bylo ulozeno, ale pripojene fotografie se nepodarilo nahrat a nebyly zahrnuty. Prosim, pridejte je znovu z detailu zavady.",
     "failedSubmit": "Nepodarilo se odeslat hlaseni zavady",
     "cameraPermissionDenied": "K fotografovani je potreba opravneni fotoaparatu",
     "photoLibraryPermissionDenied": "Je potreba opravneni pro knihovnu fotografii",

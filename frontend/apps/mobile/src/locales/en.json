@@ -131,6 +131,8 @@
     "galleryButton": "Gallery",
     "submitButton": "Submit Report",
     "successSubmit": "Fault report submitted successfully",
+    "photosNotUploadedTitle": "Report saved — photos not attached",
+    "photosNotUploadedWarning": "The fault report was saved, but the attached photos could not be uploaded and were not included. Please add them again from the fault details.",
     "failedSubmit": "Failed to submit fault report",
     "cameraPermissionDenied": "Camera permission is required to take photos",
     "photoLibraryPermissionDenied": "Photo library permission is required",

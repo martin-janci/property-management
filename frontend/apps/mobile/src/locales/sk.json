@@ -131,6 +131,8 @@
     "galleryButton": "Galeria",
     "submitButton": "Odoslat hlasenie",
     "successSubmit": "Hlasenie poruchy bolo uspesne odoslane",
+    "photosNotUploadedTitle": "Hlasenie ulozene — fotografie neboli pripojene",
+    "photosNotUploadedWarning": "Hlasenie poruchy bolo ulozene, ale pripojene fotografie sa nepodarilo nahrat a neboli zahrnute. Prosim, pridajte ich znova z detailu poruchy.",
     "failedSubmit": "Nepodarilo sa odoslat hlasenie poruchy",
     "cameraPermissionDenied": "Na fotografovanie je potrebne povolenie fotoaparatu",
     "photoLibraryPermissionDenied": "Je potrebne povolenie pre kniznicu fotografii",

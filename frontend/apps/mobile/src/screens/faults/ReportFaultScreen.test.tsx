@@ -244,6 +244,47 @@ describe('ReportFaultScreen', () => {
     );
   });
 
+  it('warns that attached photos were not uploaded instead of dropping them silently', async () => {
+    // Regression: the fault create carries no attachments (no presigned-upload
+    // helper on mobile yet), so previously the picked photos vanished behind a
+    // plain "success" alert and the user never knew. Now any selected photo
+    // triggers a user-visible "photos not attached" warning.
+    const pickerMock = jest.requireMock('expo-image-picker');
+    pickerMock.requestMediaLibraryPermissionsAsync.mockResolvedValue({ status: 'granted' });
+    pickerMock.launchImageLibraryAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///leak-1.jpg' }],
+    });
+
+    const onSuccess = jest.fn();
+    renderScreen({ onSuccess });
+    fillValidForm();
+
+    // Attach a photo from the gallery, then wait until it is rendered (the '✕'
+    // remove control only appears once the photo state has settled).
+    fireEvent.press(screen.getByText('faults.galleryButton'));
+    await waitFor(() => expect(screen.getByText('✕')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('faults.submitButton'));
+
+    // The fault itself is still created online…
+    await waitFor(() => expect(mockApiRequest).toHaveBeenCalledTimes(1));
+    // …but the user is told the photos were NOT attached (not silently dropped).
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'faults.photosNotUploadedTitle',
+        'faults.photosNotUploadedWarning',
+        expect.any(Array)
+      )
+    );
+    // The plain success alert must NOT fire when photos were dropped.
+    expect(alertSpy).not.toHaveBeenCalledWith(
+      'common.done',
+      'faults.successSubmit',
+      expect.any(Array)
+    );
+  });
+
   it('falls back to the queue on request failure, reusing the attempted idempotency key', async () => {
     mockApiRequest.mockRejectedValueOnce(new Error('network down'));
     renderScreen();

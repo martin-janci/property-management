@@ -131,6 +131,8 @@
     "galleryButton": "Galeria",
     "submitButton": "Jelentes bekuldese",
     "successSubmit": "Hibajelentes sikeresen elkuldve",
+    "photosNotUploadedTitle": "Bejelentes mentve — a fenykepek nem lettek csatolva",
+    "photosNotUploadedWarning": "A hibajelentes mentve lett, de a csatolt fenykepeket nem sikerult feltolteni, ezert nem kerultek bele. Kerjuk, adja hozza oket ujra a hiba reszleteibol.",
     "failedSubmit": "Nem sikerult elkuldeni a hibajelentest",
     "cameraPermissionDenied": "Kamera engedelyre van szukseg",
     "photoLibraryPermissionDenied": "Fotokozyvtar engedelyre van szukseg",
