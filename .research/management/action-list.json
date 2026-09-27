@@ -208,40 +208,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
-      "action": "Mobile RN offline queue drops permanent 4xx failures without user feedback",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
-      "action": "Automation-rules feature mutations swallow errors silently (no toast / no reload)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
       "action": "Mobile RN meter-reading input accepts non-numeric — silent write of garbage values",
       "owner_role": "pm-backend",
@@ -273,23 +239,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
-      "action": "ppt-web automation feature ships English-only strings — missing i18n keys",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
       }
     },
     {
