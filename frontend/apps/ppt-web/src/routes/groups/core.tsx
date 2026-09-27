@@ -160,12 +160,30 @@ export function dashboardRoutes() {
   return (
     <>
       {/* Bare /dashboard 404'd previously — redirect it to the manager
-          dashboard so users typing the obvious URL get something useful (the
-          ProtectedRoute / role check on the target page handles auth +
-          role-based fan-out). */}
+          dashboard so users typing the obvious URL get something useful. The
+          target pages do NOT self-guard, so each is wrapped in
+          <ProtectedRoute> below to require authentication (unauthenticated
+          hits redirect to /login). No role gate here: bare /dashboard always
+          lands on /dashboard/manager, so a manager-role gate would deny
+          residents typing the obvious URL — role-based fan-out is done by the
+          Home page's dashboard button, not this route. */}
       <Route path="/dashboard" element={<Navigate to="/dashboard/manager" replace />} />
-      <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
-      <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
+      <Route
+        path="/dashboard/manager"
+        element={
+          <ProtectedRoute>
+            <ManagerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/resident"
+        element={
+          <ProtectedRoute>
+            <ResidentDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       {/* Dashboard layout customisation (Task 4, layout tenant-editor plan).
           Org-admin / super-admin only. */}
       <Route

@@ -24,8 +24,9 @@ import type { AuthContextValue } from '../../contexts/AuthContext';
 let mockAuth: AuthContextValue;
 
 vi.mock('../../contexts/AuthContext', async () => {
-  const actual =
-    await vi.importActual<typeof import('../../contexts/AuthContext')>('../../contexts/AuthContext');
+  const actual = await vi.importActual<typeof import('../../contexts/AuthContext')>(
+    '../../contexts/AuthContext'
+  );
   return { ...actual, useAuth: () => mockAuth };
 });
 
