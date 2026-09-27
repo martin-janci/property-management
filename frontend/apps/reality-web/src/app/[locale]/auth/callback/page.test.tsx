@@ -29,21 +29,45 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Framework-boundary mock: next/navigation.
+// Framework-boundary mocks.
 //
-// The global setup (src/test/setup.tsx) mocks next/navigation with a static
-// useRouter/useSearchParams. Override it here so each test can (a) capture the
-// router.replace spy to assert redirect targets and (b) feed arbitrary query
-// params into useSearchParams.
+// The page navigates through the locale-aware `useRouter`/`Link` from
+// `@/i18n/routing` (so redirects keep the active `/[locale]/…` prefix) but
+// still reads query params through `next/navigation`'s `useSearchParams`.
+//
+//   - `@/i18n/routing`: capture the `router.replace` spy to assert redirect
+//     targets, and render `Link` as a plain <a> so `returnHome` is queryable.
+//   - `next/navigation`: feed arbitrary query params into `useSearchParams`.
+//
+// The global setup (src/test/setup.tsx) mocks both modules statically; these
+// per-file overrides make the router.replace spy and the query params
+// controllable.
 // ---------------------------------------------------------------------------
 
 const replaceSpy = vi.fn<(href: string) => void>();
 let currentParams = new URLSearchParams();
 
-vi.mock('next/navigation', () => ({
+vi.mock('@/i18n/routing', () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: replaceSpy,
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+  usePathname: () => '/en/auth/callback',
+  getPathname: () => '/en/auth/callback',
+  redirect: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
     refresh: vi.fn(),

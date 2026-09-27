@@ -107,7 +107,9 @@
     "callback": {
       "title": "Login Failed",
       "invalidState": "Invalid state token. Please try logging in again.",
-      "returnHome": "Return Home"
+      "returnHome": "Return Home",
+      "loading": "Loading...",
+      "completingLogin": "Completing login..."
     }
   },
   "common": {

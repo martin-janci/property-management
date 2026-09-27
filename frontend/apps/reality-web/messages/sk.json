@@ -107,7 +107,9 @@
     "callback": {
       "title": "Prihlásenie zlyhalo",
       "invalidState": "Neplatný stavový token. Skúste sa prihlásiť znova.",
-      "returnHome": "Späť na domovskú stránku"
+      "returnHome": "Späť na domovskú stránku",
+      "loading": "Načítava sa...",
+      "completingLogin": "Dokončuje sa prihlásenie..."
     }
   },
   "common": {
