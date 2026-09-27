@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-27T10:53:00Z",
+  "generated": "2026-09-27T11:00:00Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -214,18 +214,18 @@
     {
       "task_id": "code-review-ppt-web-core-home-cta-role-drift",
       "branch": "auto-impl/code-review-ppt-web-core-home-cta-role-d-8e1d7998",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-27T10:23:00Z",
-      "last_updated": "2026-09-27T10:23:00Z",
-      "status_changed_at": "2026-09-27T10:23:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-27T11:00:00Z",
+      "status_changed_at": "2026-09-27T11:00:00Z",
+      "pr_number": 2995,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2995",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=2995 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=Home CTA uses isManagerRole(user?.role) not 'manager' literal; org_admin/property_manager/technical_manager/super_admin route to /dashboard/manager; VERIFY OK (142 files/4575 tests) TDD test:+fix:",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
