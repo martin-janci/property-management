@@ -1,0 +1,33 @@
+{
+  "generated": "2026-09-23T16:34:26Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: remaining backlog structurally infra-blocked on mobile-native/KMP + api-server cloud build) 2026-09-23",
+  "segment_reviewed": "api-core",
+  "selection_reason": "CHURN-ALIGNED. The sole hotspot from the most recent Phase 1 run (state.json hotspot_history, last_seen 2026-09-20 == last_run_iso) is backend/servers/api-server/src/services/push_fanout.rs (recent_churn 2564). services/ is outside routes/, so it maps to segment api-core (per SKILL segment map: 'backend/api-server/src/ excl. handlers/'; actual repo layout is backend/servers/api-server/src/). Saturation check PASSED: 0 open code-review-finding rows for api-core in backlog.json (grep of type=code-review-finding && status=open == {}). Cloud-LANDABLE segment (backend, non-mobile-native) — matches the soft preference; note landing is still gated on api-server cloud build infra until unblocked, but the finding stays valid regardless.",
+  "experts_used": ["rust"],
+  "findings_count": 1,
+  "static_only": true,
+  "note": "Static-only pass (no compile, no tests). The churn hotspot push_fanout.rs and the rest of api-core (stripe webhook HMAC verify, actions/api_call.rs SSRF connect-time re-validation, totp/backup-code argon2 verify, workflow_executor condition engine, notification_pipeline quiet-gate fail-closed) were reviewed and found exceptionally clean/hardened — the low-hanging fruit is already picked (dense issue-#/PR-# defensive comments). The ONE clear real flaw in push_fanout.rs itself (ApnsHttpAdapter mints a fresh ES256 provider JWT per send -> Apple TooManyProviderTokenUpdates under load) is ALREADY in backlog.json as code-review-api-core-apns-jwt-per-send-mint with status=dropped, so it is deliberately NOT re-emitted (would be triage noise). The one finding below is fresh (dedup-checked: no backlog row mentions weekend_quiet_hours / window_for / quiet-hours master gating) and cloud-landable (pure backend fn, trivially unit-testable). Backend/api-server landing gated on cloud-build infra until unblocked.",
+  "signals": [
+    {
+      "id": "code-review-api-core-quiet-hours-weekend-master-gate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-23 api-core notification/quiet-hours service)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/quiet_hours.rs",
+        "backend/servers/api-server/src/services/notification_pipeline.rs"
+      ],
+      "evidence": [
+        "quiet_hours.rs window_for() gates the two windows ASYMMETRICALLY: the weekday branch (:61 `if schedule.quiet_hours_enabled`) requires the master flag, but the weekend branch (:51 `if is_weekend && schedule.weekend_quiet_hours_enabled`) checks ONLY weekend_quiet_hours_enabled and never the master quiet_hours_enabled.",
+        "Consequence: a user with quiet_hours_enabled=false (quiet hours turned OFF) but weekend_quiet_hours_enabled=true and a weekend window configured (weekend_quiet_hours_start/end Some) still gets quiet hours ACTIVE on Sat/Sun. evaluate() returns active=true and the pipeline holds their weekend push notifications even though the user disabled the feature.",
+        "Reachable in production: notification_pipeline.rs resolve_push_quiet_gate (:385-402) calls quiet_hours::evaluate (:391) and treats state.active as authoritative with NO pre-gate on quiet_hours_enabled; notification_digest.rs:307 likewise gates purely on evaluate().active. So window_for is the sole gate and the master flag is silently ignored on weekends.",
+        "The asymmetry is the tell that this is an oversight, not intent: if the two flags were meant to be fully independent, the weekday branch would not need the `if quiet_hours_enabled` gate either. Effect is a real UX bug — time-sensitive weekend pushes held/delayed for a user who turned quiet hours off (not lost; released at the bogus window end via the pipeline release horizon), so Medium not High.",
+        "Fix shape: gate the weekend branch on the master switch too, e.g. require `schedule.quiet_hours_enabled` before considering either window (or explicitly document+test the intended flag relationship). Pure function, already has a `disabled_is_never_active` unit test scaffold in the same mod tests block — add a weekend-with-master-off case. Confidence medium (static read; hinges on quiet_hours_enabled being the feature master toggle, which the UI-facing granular_notifications route surfaces as an independent boolean)."
+      ]
+    }
+  ]
+}
