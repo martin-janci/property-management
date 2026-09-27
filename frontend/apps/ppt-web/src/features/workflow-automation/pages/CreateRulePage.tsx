@@ -9,15 +9,30 @@ import type { AutomationRule } from '@ppt/api-client';
 import { useCreateAutomationRule } from '@ppt/api-client';
 import { useNavigate } from 'react-router-dom';
 
+import { useToast } from '../../../components';
 import { RuleBuilder } from '../components/RuleBuilder';
 
 export function CreateRulePage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const createRule = useCreateAutomationRule();
 
   const handleSave = async (rule: Partial<AutomationRule>) => {
-    await createRule.mutateAsync(rule as AutomationRule);
-    navigate('/automations/rules');
+    try {
+      await createRule.mutateAsync(rule as AutomationRule);
+      showToast({
+        type: 'success',
+        title: 'Rule created',
+        message: 'The automation rule was created.',
+      });
+      navigate('/automations/rules');
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Create failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be created.',
+      });
+    }
   };
 
   const handleCancel = () => {

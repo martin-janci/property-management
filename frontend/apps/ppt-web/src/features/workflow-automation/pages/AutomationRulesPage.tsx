@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useToast } from '../../../components';
 import { RuleCard } from '../components/RuleCard';
 
 type FilterStatus = 'all' | 'active' | 'paused';
@@ -24,6 +25,7 @@ const skeletonKeys = ['skeleton-1', 'skeleton-2', 'skeleton-3'];
 
 export function AutomationRulesPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [triggerFilter, setTriggerFilter] = useState<FilterTrigger>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,21 +56,60 @@ export function AutomationRulesPage() {
   };
 
   const confirmDelete = async () => {
-    if (deleteConfirm) {
-      await deleteRule.mutateAsync(deleteConfirm.id);
+    if (!deleteConfirm) return;
+    const rule = deleteConfirm;
+    try {
+      await deleteRule.mutateAsync(rule.id);
+      showToast({
+        type: 'success',
+        title: 'Rule deleted',
+        message: `"${rule.name}" was deleted.`,
+      });
       setDeleteConfirm(null);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Delete failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be deleted.',
+      });
     }
   };
 
   const handleToggle = async (rule: AutomationRule, enabled: boolean) => {
-    await updateRule.mutateAsync({
-      id: rule.id,
-      data: { isEnabled: enabled },
-    });
+    try {
+      await updateRule.mutateAsync({
+        id: rule.id,
+        data: { isEnabled: enabled },
+      });
+      showToast({
+        type: 'success',
+        title: enabled ? 'Rule activated' : 'Rule paused',
+        message: `"${rule.name}" was ${enabled ? 'activated' : 'paused'}.`,
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Update failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be updated.',
+      });
+    }
   };
 
   const handleRun = async (rule: AutomationRule) => {
-    await runRule.mutateAsync(rule.id);
+    try {
+      await runRule.mutateAsync(rule.id);
+      showToast({
+        type: 'success',
+        title: 'Rule triggered',
+        message: `"${rule.name}" is now running.`,
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Run failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be run.',
+      });
+    }
   };
 
   const rules = rulesData?.data ?? [];
