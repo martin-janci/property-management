@@ -10696,7 +10696,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
@@ -10710,7 +10710,12 @@
       ],
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2968
+      }
     },
     {
       "id": "code-review-reality-web-syncschedule-save-silent-fail",
@@ -10763,7 +10768,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
       ],
@@ -10778,7 +10783,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2985
+      }
     },
     {
       "id": "code-review-ppt-web-core-api-default-export-orphan",
@@ -10807,7 +10817,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
@@ -10819,7 +10829,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2986
+      }
     },
     {
       "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
@@ -10827,7 +10842,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
@@ -10839,7 +10854,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2991
+      }
     },
     {
       "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",
@@ -10867,7 +10887,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)"
       ],
@@ -10879,7 +10899,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2989
+      }
     },
     {
       "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
@@ -10887,7 +10912,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)"
       ],
@@ -10899,7 +10924,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2988
+      }
     },
     {
       "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
@@ -10927,7 +10957,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
       ],
@@ -10939,7 +10969,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2984
+      }
     },
     {
       "id": "code-review-reality-web-callback-hardcoded-login-string",

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-09-26T08:40:06Z",
+  "archived_at": "2026-09-27T06:35:42Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4504,6 +4504,29 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-fault-photos-silently-dropped",
+      "action": "Mobile RN fault-report photos silently dropped when upload fails — no user-visible error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=high vector=bug) | dev-reconcile 2026-09-27T06:27:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-26T18:28:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "576d1f03eb2bea8cba324a845fc8a6d415be72c1",
+        "subject": "code-review-mobile-rn-fault-photos-silently-dropped: warn when fault-report photos can't be uploaded (#2989)",
+        "at": "2026-09-27T06:27:02Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
       "action": "mobile: empty/error/loading state strings hardcoded in English across ~18 screens despite react-i18next being wired",
       "owner_role": "pm-backend",
@@ -5322,6 +5345,29 @@
         "merged_pr": 2646,
         "merged_at": "2026-08-03T22:18:47Z",
         "at": "2026-08-04T00:07:12Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-category-map-gap",
+      "action": "WebSocketContext.categoryToQueryKeys missing community + system categories → stale community feed on push",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=high vector=bug) | dev-reconcile 2026-09-27T06:27:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-26T18:28:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "749789f9c7c16af1dbdd7b4c4fb2bfc0aa94d3d8",
+        "subject": "code-review-ppt-web-core-ws-category-map-gap: cover community + system in WS category→queryKey map (#2985)",
+        "at": "2026-09-27T06:27:02Z"
       }
     },
     {
@@ -7100,6 +7146,29 @@
       "stale_reconciled": {
         "at": "2026-08-09T14:11:09Z",
         "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listings-page-no-error-state",
+      "action": "reality-web listings page renders empty state on API error — no error UI, users see 'no results'",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=high vector=bug) | dev-reconcile 2026-09-27T06:27:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-26T18:28:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "3e8f60b1bd5552fd3f7e8ca4a5d52c2d72a8d562",
+        "subject": "code-review-reality-web-listings-page-no-error-state: distinct error state on listings API failure (#2984)",
+        "at": "2026-09-27T06:27:02Z"
       }
     },
     {
@@ -16623,6 +16692,32 @@
         "commit": "7c7f341b2e668e3e109e77e003d030abc9cdefa2",
         "subject": "gh-issue-2978: route ppt-web AI-chat + OCR hooks through the authenticated API client (#2979)",
         "at": "2026-09-26T08:24:33Z"
+      }
+    },
+    {
+      "id": "gh-issue-2982",
+      "action": "Follow-up: remaining raw-fetch() API bypasses in ppt-web — unauthenticated news mutations + interceptor bypasses (PR #2979) (Closes #2982)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-09-26T16:24:58Z (#2982) | dev-reconcile 2026-09-27T06:27:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-26T16:24:58Z",
+      "issue_ref": {
+        "number": 2982,
+        "url": "https://github.com/martin-janci/property-management/issues/2982",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "68558f8400228bc90a8d3f62809a757200cbe398",
+        "subject": "gh-issue-2982: route ppt-web news + notification-analytics through the authenticated API client (#2983)",
+        "at": "2026-09-27T06:27:02Z"
       }
     },
     {

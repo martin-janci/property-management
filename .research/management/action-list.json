@@ -191,26 +191,6 @@
       }
     },
     {
-      "id": "gh-issue-2982",
-      "action": "Follow-up: remaining raw-fetch() API bypasses in ppt-web — unauthenticated news mutations + interceptor bypasses (PR #2979) (Closes #2982)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-09-26T16:24:58Z (#2982)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T16:24:58Z",
-      "issue_ref": {
-        "number": 2982,
-        "url": "https://github.com/martin-janci/property-management/issues/2982",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-authed-roots-session-leak",
       "action": "logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation",
       "owner_role": "pm-backend",
@@ -224,23 +204,6 @@
       "backlog_ref": {
         "plan": "plans/code-review-ppt-web-core-authed-roots-session-leak.md",
         "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-fault-photos-silently-dropped",
-      "action": "Mobile RN fault-report photos silently dropped when upload fails — no user-visible error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
         "vector": "bug"
       }
     },
@@ -262,42 +225,8 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-ws-category-map-gap",
-      "action": "WebSocketContext.categoryToQueryKeys missing community + system categories → stale community feed on push",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
       "action": "Automation-rules feature mutations swallow errors silently (no toast / no reload)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listings-page-no-error-state",
-      "action": "reality-web listings page renders empty state on API error — no error UI, users see 'no results'",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -412,6 +341,40 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-dashboard-routes-unguarded",
+      "action": "ppt-web dashboard routes lack ProtectedRoute wrapper — no auth on /dashboard/*",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-27T06:27:52Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-27T06:27:52Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-home-cta-role-drift",
+      "action": "ppt-web Home CTA uses role==='manager' literal — org_admin/property_manager misrouted",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-09-27T06:27:52Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-27T06:27:52Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
       }
     }
   ],
