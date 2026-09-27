@@ -225,40 +225,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-api-default-export-orphan",
-      "action": "lib/api.ts eagerly-created default export is orphaned by configureApiClient() — footgun for future default-importers",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",
-      "action": "CreateRule component casts Partial payload at boundary — silent runtime shape mismatch risk",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-server-dup-url-validator",
       "action": "reality-server carries a duplicated URL-validation helper — merge into shared crate",
       "owner_role": "pm-tech-lead",
@@ -273,57 +239,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-reality-web-callback-hardcoded-login-string",
-      "action": "reality-web SSO callback carries a hardcoded 'login' redirect string — bypasses i18n and locale-aware routing",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-dashboard-routes-unguarded",
-      "action": "ppt-web dashboard routes lack ProtectedRoute wrapper — no auth on /dashboard/*",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-27T06:27:52Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-27T06:27:52Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-home-cta-role-drift",
-      "action": "ppt-web Home CTA uses role==='manager' literal — org_admin/property_manager misrouted",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-27T06:27:52Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-27T06:27:52Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
       }
     }
   ],
