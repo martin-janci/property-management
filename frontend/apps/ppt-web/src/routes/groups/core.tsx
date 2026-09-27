@@ -38,7 +38,7 @@ import {
   TemplateLibraryPage,
   TwoFactorAuthPage,
 } from '../lazyRoutes';
-import { MANAGER_ROLES } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 // Sessions management page (#966) — lazy-loaded.
 const SessionsPage = lazy(() =>
@@ -97,7 +97,7 @@ export function Home() {
             <button
               type="button"
               onClick={() =>
-                navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')
+                navigate(isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident')
               }
               className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
             >
