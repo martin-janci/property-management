@@ -131,6 +131,8 @@
     "galleryButton": "Galeria",
     "submitButton": "Odoslat hlasenie",
     "successSubmit": "Hlasenie poruchy bolo uspesne odoslane",
+    "photosNotUploadedTitle": "Hlasenie ulozene — fotografie neboli pripojene",
+    "photosNotUploadedWarning": "Hlasenie poruchy bolo ulozene, ale pripojene fotografie sa nepodarilo nahrat a neboli zahrnute. Prosim, pridajte ich znova z detailu poruchy.",
     "failedSubmit": "Nepodarilo sa odoslat hlasenie poruchy",
     "cameraPermissionDenied": "Na fotografovanie je potrebne povolenie fotoaparatu",
     "photoLibraryPermissionDenied": "Je potrebne povolenie pre kniznicu fotografii",
@@ -339,7 +341,9 @@
     "syncFailed": "Niektore polozky sa nepodarilo synchronizovat",
     "syncProgress": "Synchronizujem {{current}} z {{total}}",
     "itemSynced": "{{item}} uspesne synchronizovane",
-    "itemFailed": "Nepodarilo sa synchronizovat {{item}}"
+    "itemFailed": "Nepodarilo sa synchronizovat {{item}}",
+    "droppedTitle": "Zmeny zahodené",
+    "droppedMessage": "{{count}} offline zmien sa nepodarilo uložiť a boli zahodené, pretože ich server odmietol."
   },
   "help": {
     "title": "Centrum pomoci",

@@ -6,6 +6,7 @@
  */
 
 import type { ConditionOperator, TriggerCondition } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface ConditionBuilderProps {
   conditions: TriggerCondition[];
@@ -14,71 +15,136 @@ interface ConditionBuilderProps {
 }
 
 const fieldOptions = [
-  { value: 'fault.category', label: 'Fault Category', type: 'select' },
-  { value: 'fault.priority', label: 'Fault Priority', type: 'select' },
-  { value: 'fault.status', label: 'Fault Status', type: 'select' },
-  { value: 'fault.location', label: 'Fault Location', type: 'text' },
-  { value: 'payment.amount', label: 'Payment Amount', type: 'number' },
-  { value: 'payment.daysOverdue', label: 'Days Overdue', type: 'number' },
-  { value: 'document.type', label: 'Document Type', type: 'select' },
-  { value: 'document.size', label: 'Document Size (MB)', type: 'number' },
-  { value: 'user.role', label: 'User Role', type: 'select' },
-  { value: 'building.id', label: 'Building', type: 'select' },
-  { value: 'unit.id', label: 'Unit', type: 'select' },
+  {
+    value: 'fault.category',
+    labelKey: 'automation.conditionBuilder.fieldFaultCategory',
+    type: 'select',
+  },
+  {
+    value: 'fault.priority',
+    labelKey: 'automation.conditionBuilder.fieldFaultPriority',
+    type: 'select',
+  },
+  {
+    value: 'fault.status',
+    labelKey: 'automation.conditionBuilder.fieldFaultStatus',
+    type: 'select',
+  },
+  {
+    value: 'fault.location',
+    labelKey: 'automation.conditionBuilder.fieldFaultLocation',
+    type: 'text',
+  },
+  {
+    value: 'payment.amount',
+    labelKey: 'automation.conditionBuilder.fieldPaymentAmount',
+    type: 'number',
+  },
+  {
+    value: 'payment.daysOverdue',
+    labelKey: 'automation.conditionBuilder.fieldDaysOverdue',
+    type: 'number',
+  },
+  {
+    value: 'document.type',
+    labelKey: 'automation.conditionBuilder.fieldDocumentType',
+    type: 'select',
+  },
+  {
+    value: 'document.size',
+    labelKey: 'automation.conditionBuilder.fieldDocumentSize',
+    type: 'number',
+  },
+  { value: 'user.role', labelKey: 'automation.conditionBuilder.fieldUserRole', type: 'select' },
+  { value: 'building.id', labelKey: 'automation.conditionBuilder.fieldBuilding', type: 'select' },
+  { value: 'unit.id', labelKey: 'automation.conditionBuilder.fieldUnit', type: 'select' },
 ];
 
-const operatorOptions: { value: ConditionOperator; label: string; types: string[] }[] = [
-  { value: 'equals', label: 'equals', types: ['text', 'number', 'select'] },
-  { value: 'not_equals', label: 'does not equal', types: ['text', 'number', 'select'] },
-  { value: 'contains', label: 'contains', types: ['text'] },
-  { value: 'not_contains', label: 'does not contain', types: ['text'] },
-  { value: 'greater_than', label: 'greater than', types: ['number'] },
-  { value: 'less_than', label: 'less than', types: ['number'] },
-  { value: 'greater_than_or_equals', label: 'greater than or equals', types: ['number'] },
-  { value: 'less_than_or_equals', label: 'less than or equals', types: ['number'] },
-  { value: 'is_empty', label: 'is empty', types: ['text', 'select'] },
-  { value: 'is_not_empty', label: 'is not empty', types: ['text', 'select'] },
-  { value: 'in_list', label: 'is one of', types: ['text', 'select'] },
-  { value: 'not_in_list', label: 'is not one of', types: ['text', 'select'] },
+const operatorOptions: { value: ConditionOperator; labelKey: string; types: string[] }[] = [
+  {
+    value: 'equals',
+    labelKey: 'automation.conditionBuilder.opEquals',
+    types: ['text', 'number', 'select'],
+  },
+  {
+    value: 'not_equals',
+    labelKey: 'automation.conditionBuilder.opNotEquals',
+    types: ['text', 'number', 'select'],
+  },
+  { value: 'contains', labelKey: 'automation.conditionBuilder.opContains', types: ['text'] },
+  { value: 'not_contains', labelKey: 'automation.conditionBuilder.opNotContains', types: ['text'] },
+  {
+    value: 'greater_than',
+    labelKey: 'automation.conditionBuilder.opGreaterThan',
+    types: ['number'],
+  },
+  { value: 'less_than', labelKey: 'automation.conditionBuilder.opLessThan', types: ['number'] },
+  {
+    value: 'greater_than_or_equals',
+    labelKey: 'automation.conditionBuilder.opGreaterThanOrEquals',
+    types: ['number'],
+  },
+  {
+    value: 'less_than_or_equals',
+    labelKey: 'automation.conditionBuilder.opLessThanOrEquals',
+    types: ['number'],
+  },
+  {
+    value: 'is_empty',
+    labelKey: 'automation.conditionBuilder.opIsEmpty',
+    types: ['text', 'select'],
+  },
+  {
+    value: 'is_not_empty',
+    labelKey: 'automation.conditionBuilder.opIsNotEmpty',
+    types: ['text', 'select'],
+  },
+  { value: 'in_list', labelKey: 'automation.conditionBuilder.opInList', types: ['text', 'select'] },
+  {
+    value: 'not_in_list',
+    labelKey: 'automation.conditionBuilder.opNotInList',
+    types: ['text', 'select'],
+  },
 ];
 
-const fieldValueOptions: Record<string, { value: string; label: string }[]> = {
+const fieldValueOptions: Record<string, { value: string; labelKey: string }[]> = {
   'fault.category': [
-    { value: 'electrical', label: 'Electrical' },
-    { value: 'plumbing', label: 'Plumbing' },
-    { value: 'hvac', label: 'HVAC' },
-    { value: 'structural', label: 'Structural' },
-    { value: 'other', label: 'Other' },
+    { value: 'electrical', labelKey: 'automation.conditionBuilder.valFaultCategoryElectrical' },
+    { value: 'plumbing', labelKey: 'automation.conditionBuilder.valFaultCategoryPlumbing' },
+    { value: 'hvac', labelKey: 'automation.conditionBuilder.valFaultCategoryHvac' },
+    { value: 'structural', labelKey: 'automation.conditionBuilder.valFaultCategoryStructural' },
+    { value: 'other', labelKey: 'automation.conditionBuilder.valFaultCategoryOther' },
   ],
   'fault.priority': [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-    { value: 'critical', label: 'Critical' },
+    { value: 'low', labelKey: 'automation.conditionBuilder.valFaultPriorityLow' },
+    { value: 'medium', labelKey: 'automation.conditionBuilder.valFaultPriorityMedium' },
+    { value: 'high', labelKey: 'automation.conditionBuilder.valFaultPriorityHigh' },
+    { value: 'critical', labelKey: 'automation.conditionBuilder.valFaultPriorityCritical' },
   ],
   'fault.status': [
-    { value: 'reported', label: 'Reported' },
-    { value: 'acknowledged', label: 'Acknowledged' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'resolved', label: 'Resolved' },
-    { value: 'closed', label: 'Closed' },
+    { value: 'reported', labelKey: 'automation.conditionBuilder.valFaultStatusReported' },
+    { value: 'acknowledged', labelKey: 'automation.conditionBuilder.valFaultStatusAcknowledged' },
+    { value: 'in_progress', labelKey: 'automation.conditionBuilder.valFaultStatusInProgress' },
+    { value: 'resolved', labelKey: 'automation.conditionBuilder.valFaultStatusResolved' },
+    { value: 'closed', labelKey: 'automation.conditionBuilder.valFaultStatusClosed' },
   ],
   'document.type': [
-    { value: 'contract', label: 'Contract' },
-    { value: 'invoice', label: 'Invoice' },
-    { value: 'report', label: 'Report' },
-    { value: 'minutes', label: 'Meeting Minutes' },
-    { value: 'other', label: 'Other' },
+    { value: 'contract', labelKey: 'automation.conditionBuilder.valDocumentTypeContract' },
+    { value: 'invoice', labelKey: 'automation.conditionBuilder.valDocumentTypeInvoice' },
+    { value: 'report', labelKey: 'automation.conditionBuilder.valDocumentTypeReport' },
+    { value: 'minutes', labelKey: 'automation.conditionBuilder.valDocumentTypeMinutes' },
+    { value: 'other', labelKey: 'automation.conditionBuilder.valDocumentTypeOther' },
   ],
   'user.role': [
-    { value: 'owner', label: 'Owner' },
-    { value: 'tenant', label: 'Tenant' },
-    { value: 'manager', label: 'Manager' },
-    { value: 'admin', label: 'Admin' },
+    { value: 'owner', labelKey: 'automation.conditionBuilder.valUserRoleOwner' },
+    { value: 'tenant', labelKey: 'automation.conditionBuilder.valUserRoleTenant' },
+    { value: 'manager', labelKey: 'automation.conditionBuilder.valUserRoleManager' },
+    { value: 'admin', labelKey: 'automation.conditionBuilder.valUserRoleAdmin' },
   ],
 };
 
 export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBuilderProps) {
+  const { t } = useTranslation();
   const addCondition = () => {
     onChange([...conditions, { field: 'fault.category', operator: 'equals', value: '' }]);
   };
@@ -105,7 +171,9 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="block text-sm font-medium text-gray-700">Conditions</span>
+        <span className="block text-sm font-medium text-gray-700">
+          {t('automation.conditionBuilder.title')}
+        </span>
         <button
           type="button"
           onClick={addCondition}
@@ -121,7 +189,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Add Condition
+          {t('automation.conditionBuilder.add')}
         </button>
       </div>
 
@@ -141,11 +209,10 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
             />
           </svg>
-          <p className="mt-2 text-sm text-gray-500">No conditions added</p>
-          <p className="text-xs text-gray-400">
-            Conditions filter when the automation runs. Without conditions, it runs for all matching
-            triggers.
+          <p className="mt-2 text-sm text-gray-500">
+            {t('automation.conditionBuilder.emptyTitle')}
           </p>
+          <p className="text-xs text-gray-400">{t('automation.conditionBuilder.emptyBody')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -156,7 +223,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
             >
               {index > 0 && (
                 <span className="self-center px-2 py-1 text-xs font-medium text-gray-500 bg-gray-200 rounded">
-                  AND
+                  {t('automation.conditionBuilder.and')}
                 </span>
               )}
 
@@ -170,7 +237,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
                 >
                   {fieldOptions.map((field) => (
                     <option key={field.value} value={field.value}>
-                      {field.label}
+                      {t(field.labelKey)}
                     </option>
                   ))}
                 </select>
@@ -186,7 +253,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
                 >
                   {getAvailableOperators(condition.field).map((op) => (
                     <option key={op.value} value={op.value}>
-                      {op.label}
+                      {t(op.labelKey)}
                     </option>
                   ))}
                 </select>
@@ -200,10 +267,10 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
                       disabled={disabled}
                       className="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Select...</option>
+                      <option value="">{t('automation.conditionBuilder.selectPlaceholder')}</option>
                       {fieldValueOptions[condition.field].map((opt) => (
                         <option key={opt.value} value={opt.value}>
-                          {opt.label}
+                          {t(opt.labelKey)}
                         </option>
                       ))}
                     </select>
@@ -213,7 +280,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
                       value={condition.value as number}
                       onChange={(e) => updateCondition(index, { value: Number(e.target.value) })}
                       disabled={disabled}
-                      placeholder="Value"
+                      placeholder={t('automation.conditionBuilder.valuePlaceholder')}
                       className="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     />
                   ) : (
@@ -222,7 +289,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
                       value={condition.value as string}
                       onChange={(e) => updateCondition(index, { value: e.target.value })}
                       disabled={disabled}
-                      placeholder="Value"
+                      placeholder={t('automation.conditionBuilder.valuePlaceholder')}
                       className="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     />
                   ))}
@@ -233,7 +300,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
                 onClick={() => removeCondition(index)}
                 disabled={disabled}
                 className="p-1 text-gray-400 hover:text-red-500 disabled:opacity-50"
-                title="Remove condition"
+                title={t('automation.conditionBuilder.removeCondition')}
               >
                 <svg
                   className="w-5 h-5"
@@ -257,7 +324,7 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
 
       {conditions.length > 0 && (
         <p className="text-xs text-gray-500 mt-2">
-          All conditions must be true for the automation to run.
+          {t('automation.conditionBuilder.allMustBeTrue')}
         </p>
       )}
     </div>

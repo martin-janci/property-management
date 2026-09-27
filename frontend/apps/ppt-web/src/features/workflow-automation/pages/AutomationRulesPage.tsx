@@ -13,8 +13,10 @@ import {
   useUpdateAutomationRule,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useToast } from '../../../components';
 import { RuleCard } from '../components/RuleCard';
 
 type FilterStatus = 'all' | 'active' | 'paused';
@@ -23,7 +25,9 @@ type FilterTrigger = 'all' | 'time_based' | 'event_based' | 'condition_based' | 
 const skeletonKeys = ['skeleton-1', 'skeleton-2', 'skeleton-3'];
 
 export function AutomationRulesPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [triggerFilter, setTriggerFilter] = useState<FilterTrigger>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,21 +58,60 @@ export function AutomationRulesPage() {
   };
 
   const confirmDelete = async () => {
-    if (deleteConfirm) {
-      await deleteRule.mutateAsync(deleteConfirm.id);
+    if (!deleteConfirm) return;
+    const rule = deleteConfirm;
+    try {
+      await deleteRule.mutateAsync(rule.id);
+      showToast({
+        type: 'success',
+        title: 'Rule deleted',
+        message: `"${rule.name}" was deleted.`,
+      });
       setDeleteConfirm(null);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Delete failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be deleted.',
+      });
     }
   };
 
   const handleToggle = async (rule: AutomationRule, enabled: boolean) => {
-    await updateRule.mutateAsync({
-      id: rule.id,
-      data: { isEnabled: enabled },
-    });
+    try {
+      await updateRule.mutateAsync({
+        id: rule.id,
+        data: { isEnabled: enabled },
+      });
+      showToast({
+        type: 'success',
+        title: enabled ? 'Rule activated' : 'Rule paused',
+        message: `"${rule.name}" was ${enabled ? 'activated' : 'paused'}.`,
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Update failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be updated.',
+      });
+    }
   };
 
   const handleRun = async (rule: AutomationRule) => {
-    await runRule.mutateAsync(rule.id);
+    try {
+      await runRule.mutateAsync(rule.id);
+      showToast({
+        type: 'success',
+        title: 'Rule triggered',
+        message: `"${rule.name}" is now running.`,
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Run failed',
+        message: err instanceof Error ? err.message : 'The automation rule could not be run.',
+      });
+    }
   };
 
   const rules = rulesData?.data ?? [];
@@ -79,10 +122,8 @@ export function AutomationRulesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Automation Rules</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Create and manage automated workflows for your properties.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('automation.rules.title')}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t('automation.rules.subtitle')}</p>
         </div>
         <button
           type="button"
@@ -98,7 +139,7 @@ export function AutomationRulesPage() {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Create Rule
+          {t('automation.rules.createRule')}
         </button>
       </div>
 
@@ -108,7 +149,7 @@ export function AutomationRulesPage() {
           {/* Search */}
           <div className="flex-1 min-w-64">
             <label htmlFor="search" className="sr-only">
-              Search rules
+              {t('automation.rules.searchLabel')}
             </label>
             <div className="relative">
               <svg
@@ -130,7 +171,7 @@ export function AutomationRulesPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search rules..."
+                placeholder={t('automation.rules.searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -139,7 +180,7 @@ export function AutomationRulesPage() {
           {/* Status Filter */}
           <div>
             <label htmlFor="status-filter" className="sr-only">
-              Filter by status
+              {t('automation.rules.filterStatusLabel')}
             </label>
             <select
               id="status-filter"
@@ -147,16 +188,16 @@ export function AutomationRulesPage() {
               onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
+              <option value="all">{t('automation.rules.allStatus')}</option>
+              <option value="active">{t('automation.status.active')}</option>
+              <option value="paused">{t('automation.status.paused')}</option>
             </select>
           </div>
 
           {/* Trigger Filter */}
           <div>
             <label htmlFor="trigger-filter" className="sr-only">
-              Filter by trigger
+              {t('automation.rules.filterTriggerLabel')}
             </label>
             <select
               id="trigger-filter"
@@ -164,11 +205,11 @@ export function AutomationRulesPage() {
               onChange={(e) => setTriggerFilter(e.target.value as FilterTrigger)}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Triggers</option>
-              <option value="time_based">Time Based</option>
-              <option value="event_based">Event Based</option>
-              <option value="condition_based">Condition Based</option>
-              <option value="manual">Manual</option>
+              <option value="all">{t('automation.rules.allTriggers')}</option>
+              <option value="time_based">{t('automation.triggerType.time_based')}</option>
+              <option value="event_based">{t('automation.triggerType.event_based')}</option>
+              <option value="condition_based">{t('automation.triggerType.condition_based')}</option>
+              <option value="manual">{t('automation.triggerType.manual')}</option>
             </select>
           </div>
         </div>
@@ -177,7 +218,7 @@ export function AutomationRulesPage() {
       {/* Content */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-700">Failed to load automation rules. Please try again.</p>
+          <p className="text-red-700">{t('automation.rules.loadError')}</p>
         </div>
       )}
 
@@ -214,10 +255,10 @@ export function AutomationRulesPage() {
               d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No automation rules yet</h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Create your first automation to streamline your property management tasks.
-          </p>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('automation.rules.emptyTitle')}
+          </h3>
+          <p className="mt-2 text-sm text-gray-500">{t('automation.rules.emptyBody')}</p>
           <button
             type="button"
             onClick={() => navigate('/automations/rules/new')}
@@ -237,13 +278,13 @@ export function AutomationRulesPage() {
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            Create Your First Rule
+            {t('automation.rules.createFirst')}
           </button>
         </div>
       ) : (
         <>
           <p className="text-sm text-gray-500 mb-4">
-            Showing {rules.length} of {totalRules} rules
+            {t('automation.rules.showing', { shown: rules.length, total: totalRules })}
           </p>
           <div className="grid gap-4">
             {rules.map((rule) => (
@@ -282,12 +323,18 @@ export function AutomationRulesPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Delete Automation Rule</h3>
-                <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {t('automation.rules.deleteTitle')}
+                </h3>
+                <p className="text-sm text-gray-500">{t('automation.rules.deleteIrreversible')}</p>
               </div>
             </div>
             <p className="text-gray-700 mb-6">
-              Are you sure you want to delete <strong>{deleteConfirm.name}</strong>?
+              <Trans
+                i18nKey="automation.rules.deleteConfirm"
+                values={{ name: deleteConfirm.name }}
+                components={{ 1: <strong /> }}
+              />
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -295,7 +342,7 @@ export function AutomationRulesPage() {
                 onClick={() => setDeleteConfirm(null)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
               >
-                Cancel
+                {t('automation.rules.cancel')}
               </button>
               <button
                 type="button"
@@ -303,7 +350,9 @@ export function AutomationRulesPage() {
                 disabled={deleteRule.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
               >
-                {deleteRule.isPending ? 'Deleting...' : 'Delete'}
+                {deleteRule.isPending
+                  ? t('automation.rules.deleting')
+                  : t('automation.rules.delete')}
               </button>
             </div>
           </div>

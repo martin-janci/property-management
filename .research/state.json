@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-26T17:14:48Z",
-  "last_run_ms": 8000,
-  "last_pr_seen": 2980,
+  "last_run_iso": "2026-09-27T03:18:40Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 2991,
   "last_issue_seen": 2982,
-  "last_commit_sha": "3e2239d96f8f9935c68932ddf2e379d9b48404de",
+  "last_commit_sha": "8c5d5952345e4873b719751ab5364b07aa2cdd6d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1047,7 +1047,9 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-ppt-web-core-dashboard-routes-unguarded",
+    "code-review-ppt-web-core-home-cta-role-drift"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1055,14 +1057,14 @@
     "api-core": "2026-09-01",
     "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-09-06",
-    "ppt-web-core": "2026-08-29",
+    "ppt-web-core": "2026-09-27",
     "reality-web": "2026-08-29",
     "mobile-rn": "2026-09-09",
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 83,
-    "vectors_created": 385,
+    "runs": 84,
+    "vectors_created": 387,
     "plans_created": 31,
     "quiet_days": 5,
     "auto_fix_count": 0

@@ -7,6 +7,7 @@
 
 import type { ActionType, AutomationAction } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ActionBuilderProps {
   actions: AutomationAction[];
@@ -14,58 +15,60 @@ interface ActionBuilderProps {
   disabled?: boolean;
 }
 
-const actionTypes: { value: ActionType; label: string; icon: string; description: string }[] = [
-  {
-    value: 'send_notification',
-    label: 'Send Notification',
-    icon: '🔔',
-    description: 'Send push or email notification',
-  },
-  {
-    value: 'send_email',
-    label: 'Send Email',
-    icon: '📧',
-    description: 'Send an email to specified recipients',
-  },
-  {
-    value: 'create_task',
-    label: 'Create Task',
-    icon: '✅',
-    description: 'Create a new task or work order',
-  },
-  {
-    value: 'update_status',
-    label: 'Update Status',
-    icon: '🔄',
-    description: 'Change status of an item',
-  },
-  {
-    value: 'assign_user',
-    label: 'Assign User',
-    icon: '👤',
-    description: 'Assign to a user or team',
-  },
-  {
-    value: 'add_tag',
-    label: 'Add Tag',
-    icon: '🏷️',
-    description: 'Add a tag or label',
-  },
-  {
-    value: 'webhook',
-    label: 'Call Webhook',
-    icon: '🔗',
-    description: 'Send data to external service',
-  },
-  {
-    value: 'delay',
-    label: 'Add Delay',
-    icon: '⏱️',
-    description: 'Wait before next action',
-  },
-];
+const actionTypes: { value: ActionType; labelKey: string; icon: string; descriptionKey: string }[] =
+  [
+    {
+      value: 'send_notification',
+      labelKey: 'automation.actionBuilder.typeSendNotification',
+      icon: '🔔',
+      descriptionKey: 'automation.actionBuilder.typeSendNotificationDesc',
+    },
+    {
+      value: 'send_email',
+      labelKey: 'automation.actionBuilder.typeSendEmail',
+      icon: '📧',
+      descriptionKey: 'automation.actionBuilder.typeSendEmailDesc',
+    },
+    {
+      value: 'create_task',
+      labelKey: 'automation.actionBuilder.typeCreateTask',
+      icon: '✅',
+      descriptionKey: 'automation.actionBuilder.typeCreateTaskDesc',
+    },
+    {
+      value: 'update_status',
+      labelKey: 'automation.actionBuilder.typeUpdateStatus',
+      icon: '🔄',
+      descriptionKey: 'automation.actionBuilder.typeUpdateStatusDesc',
+    },
+    {
+      value: 'assign_user',
+      labelKey: 'automation.actionBuilder.typeAssignUser',
+      icon: '👤',
+      descriptionKey: 'automation.actionBuilder.typeAssignUserDesc',
+    },
+    {
+      value: 'add_tag',
+      labelKey: 'automation.actionBuilder.typeAddTag',
+      icon: '🏷️',
+      descriptionKey: 'automation.actionBuilder.typeAddTagDesc',
+    },
+    {
+      value: 'webhook',
+      labelKey: 'automation.actionBuilder.typeWebhook',
+      icon: '🔗',
+      descriptionKey: 'automation.actionBuilder.typeWebhookDesc',
+    },
+    {
+      value: 'delay',
+      labelKey: 'automation.actionBuilder.typeDelay',
+      icon: '⏱️',
+      descriptionKey: 'automation.actionBuilder.typeDelayDesc',
+    },
+  ];
 
 export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProps) {
+  const { t } = useTranslation();
   const [showActionPicker, setShowActionPicker] = useState(false);
 
   const addAction = (type: ActionType) => {
@@ -74,7 +77,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
       ...actions,
       {
         type,
-        name: actionConfig?.label ?? type,
+        name: actionConfig?.labelKey ? t(actionConfig.labelKey) : type,
         config: {},
         order: actions.length,
       },
@@ -107,7 +110,9 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="block text-sm font-medium text-gray-700">Actions</span>
+        <span className="block text-sm font-medium text-gray-700">
+          {t('automation.actionBuilder.title')}
+        </span>
         <button
           type="button"
           onClick={() => setShowActionPicker(true)}
@@ -123,7 +128,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Add Action
+          {t('automation.actionBuilder.add')}
         </button>
       </div>
 
@@ -143,10 +148,8 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
               d="M13 10V3L4 14h7v7l9-11h-7z"
             />
           </svg>
-          <p className="mt-2 text-sm text-gray-500">No actions added yet</p>
-          <p className="text-xs text-gray-400">
-            Add actions to define what happens when this automation runs.
-          </p>
+          <p className="mt-2 text-sm text-gray-500">{t('automation.actionBuilder.emptyTitle')}</p>
+          <p className="text-xs text-gray-400">{t('automation.actionBuilder.emptyBody')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -178,7 +181,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                         updateAction(index, { config: { ...action.config, title: e.target.value } })
                       }
                       disabled={disabled}
-                      placeholder="Notification title"
+                      placeholder={t('automation.actionBuilder.notificationTitlePlaceholder')}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
                     />
                     <textarea
@@ -189,7 +192,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                         })
                       }
                       disabled={disabled}
-                      placeholder="Notification message"
+                      placeholder={t('automation.actionBuilder.notificationMessagePlaceholder')}
                       rows={2}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
                     />
@@ -205,7 +208,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                         updateAction(index, { config: { ...action.config, to: e.target.value } })
                       }
                       disabled={disabled}
-                      placeholder="Recipient email(s)"
+                      placeholder={t('automation.actionBuilder.emailToPlaceholder')}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
                     />
                     <input
@@ -217,7 +220,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                         })
                       }
                       disabled={disabled}
-                      placeholder="Subject"
+                      placeholder={t('automation.actionBuilder.emailSubjectPlaceholder')}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
                     />
                   </div>
@@ -245,9 +248,9 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                       disabled={disabled}
                       className="px-2 py-1.5 text-sm border border-gray-300 rounded-md"
                     >
-                      <option value="minutes">Minutes</option>
-                      <option value="hours">Hours</option>
-                      <option value="days">Days</option>
+                      <option value="minutes">{t('automation.actionBuilder.unitMinutes')}</option>
+                      <option value="hours">{t('automation.actionBuilder.unitHours')}</option>
+                      <option value="days">{t('automation.actionBuilder.unitDays')}</option>
                     </select>
                   </div>
                 )}
@@ -260,9 +263,9 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                       updateAction(index, { config: { ...action.config, url: e.target.value } })
                     }
                     disabled={disabled}
-                    placeholder="Webhook URL (must start with https://)"
+                    placeholder={t('automation.actionBuilder.webhookPlaceholder')}
                     pattern="https://.*"
-                    title="Please enter a valid HTTPS URL starting with https://"
+                    title={t('automation.actionBuilder.webhookTitle')}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
                   />
                 )}
@@ -275,7 +278,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                   onClick={() => moveAction(index, index - 1)}
                   disabled={disabled || index === 0}
                   className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                  title="Move up"
+                  title={t('automation.actionBuilder.moveUp')}
                 >
                   <svg
                     className="w-4 h-4"
@@ -297,7 +300,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                   onClick={() => moveAction(index, index + 1)}
                   disabled={disabled || index === actions.length - 1}
                   className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                  title="Move down"
+                  title={t('automation.actionBuilder.moveDown')}
                 >
                   <svg
                     className="w-4 h-4"
@@ -319,7 +322,7 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                   onClick={() => removeAction(index)}
                   disabled={disabled}
                   className="p-1 text-gray-400 hover:text-red-500 disabled:opacity-50"
-                  title="Remove action"
+                  title={t('automation.actionBuilder.removeAction')}
                 >
                   <svg
                     className="w-4 h-4"
@@ -347,7 +350,9 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Add Action</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t('automation.actionBuilder.add')}
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowActionPicker(false)}
@@ -379,8 +384,8 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                 >
                   <span className="text-2xl">{actionType.icon}</span>
                   <div>
-                    <p className="font-medium text-gray-900">{actionType.label}</p>
-                    <p className="text-xs text-gray-500">{actionType.description}</p>
+                    <p className="font-medium text-gray-900">{t(actionType.labelKey)}</p>
+                    <p className="text-xs text-gray-500">{t(actionType.descriptionKey)}</p>
                   </div>
                 </button>
               ))}

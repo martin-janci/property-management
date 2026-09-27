@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-09-26 17:17 UTC by routine</sub>
+<sub>Last regenerated: 2026-09-27 03:20 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -40,6 +40,8 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | ppt-web dashboard routes lack ProtectedRoute wrapper — no auth on /dashboard/* | `frontend/apps/ppt-web/src/routes/groups/core.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router) | 2026-09-27 | open | — |
+| 2 | bug | ppt-web Home CTA uses role==='manager' literal — org_admin/property_manager misrouted | `frontend/apps/ppt-web/src/routes/groups/core.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router) | 2026-09-27 | open | — |
 | 2 | bug | WebSocketContext.categoryToQueryKeys missing community + system categories → stale community feed on push | `frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache) | 2026-09-26 | open | — |
 | 2 | bug | Automation-rules feature mutations swallow errors silently (no toast / no reload) | `frontend/apps/ppt-web/src/features/automation` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature) | 2026-09-26 | open | — |
 | 2 | bug | Mobile RN fault-report photos silently dropped when upload fails — no user-visible error | `frontend/apps/mobile/src` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn) | 2026-09-26 | open | — |

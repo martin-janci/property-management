@@ -12,6 +12,7 @@ import type {
   TriggerType,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TriggerSelectorProps {
   value?: Partial<AutomationTrigger>;
@@ -19,65 +20,133 @@ interface TriggerSelectorProps {
   disabled?: boolean;
 }
 
-const triggerTypes: { value: TriggerType; label: string; description: string; icon: string }[] = [
+const triggerTypes: {
+  value: TriggerType;
+  labelKey: string;
+  descriptionKey: string;
+  icon: string;
+}[] = [
   {
     value: 'time_based',
-    label: 'Time Based',
-    description: 'Run on a schedule (daily, weekly, etc.)',
+    labelKey: 'automation.triggerType.time_based',
+    descriptionKey: 'automation.triggerSelector.timeBasedDesc',
     icon: '🕐',
   },
   {
     value: 'event_based',
-    label: 'Event Based',
-    description: 'Run when something happens',
+    labelKey: 'automation.triggerType.event_based',
+    descriptionKey: 'automation.triggerSelector.eventBasedDesc',
     icon: '⚡',
   },
   {
     value: 'condition_based',
-    label: 'Condition Based',
-    description: 'Run when conditions are met',
+    labelKey: 'automation.triggerType.condition_based',
+    descriptionKey: 'automation.triggerSelector.conditionBasedDesc',
     icon: '🔀',
   },
   {
     value: 'manual',
-    label: 'Manual',
-    description: 'Run only when triggered manually',
+    labelKey: 'automation.triggerType.manual',
+    descriptionKey: 'automation.triggerSelector.manualDesc',
     icon: '👆',
   },
 ];
 
-const eventTypes: { value: EventTriggerType; label: string; category: string }[] = [
-  { value: 'fault_created', label: 'Fault Created', category: 'Faults' },
-  { value: 'fault_status_changed', label: 'Fault Status Changed', category: 'Faults' },
-  { value: 'payment_received', label: 'Payment Received', category: 'Payments' },
-  { value: 'payment_overdue', label: 'Payment Overdue', category: 'Payments' },
-  { value: 'document_uploaded', label: 'Document Uploaded', category: 'Documents' },
-  { value: 'announcement_published', label: 'Announcement Published', category: 'Announcements' },
-  { value: 'vote_started', label: 'Vote Started', category: 'Voting' },
-  { value: 'vote_ended', label: 'Vote Ended', category: 'Voting' },
-  { value: 'guest_registered', label: 'Guest Registered', category: 'Guests' },
-  { value: 'maintenance_scheduled', label: 'Maintenance Scheduled', category: 'Maintenance' },
-  { value: 'meter_reading_due', label: 'Meter Reading Due', category: 'Meters' },
-  { value: 'lease_expiring', label: 'Lease Expiring', category: 'Leases' },
+/** Stable event-category ids, each mapped to its heading i18n key. */
+const eventCategories: { id: string; labelKey: string }[] = [
+  { id: 'faults', labelKey: 'automation.triggerSelector.categoryFaults' },
+  { id: 'payments', labelKey: 'automation.triggerSelector.categoryPayments' },
+  { id: 'documents', labelKey: 'automation.triggerSelector.categoryDocuments' },
+  { id: 'announcements', labelKey: 'automation.triggerSelector.categoryAnnouncements' },
+  { id: 'voting', labelKey: 'automation.triggerSelector.categoryVoting' },
+  { id: 'guests', labelKey: 'automation.triggerSelector.categoryGuests' },
+  { id: 'maintenance', labelKey: 'automation.triggerSelector.categoryMaintenance' },
+  { id: 'meters', labelKey: 'automation.triggerSelector.categoryMeters' },
+  { id: 'leases', labelKey: 'automation.triggerSelector.categoryLeases' },
+];
+
+const eventTypes: { value: EventTriggerType; labelKey: string; category: string }[] = [
+  {
+    value: 'fault_created',
+    labelKey: 'automation.triggerSelector.eventFaultCreated',
+    category: 'faults',
+  },
+  {
+    value: 'fault_status_changed',
+    labelKey: 'automation.triggerSelector.eventFaultStatusChanged',
+    category: 'faults',
+  },
+  {
+    value: 'payment_received',
+    labelKey: 'automation.triggerSelector.eventPaymentReceived',
+    category: 'payments',
+  },
+  {
+    value: 'payment_overdue',
+    labelKey: 'automation.triggerSelector.eventPaymentOverdue',
+    category: 'payments',
+  },
+  {
+    value: 'document_uploaded',
+    labelKey: 'automation.triggerSelector.eventDocumentUploaded',
+    category: 'documents',
+  },
+  {
+    value: 'announcement_published',
+    labelKey: 'automation.triggerSelector.eventAnnouncementPublished',
+    category: 'announcements',
+  },
+  {
+    value: 'vote_started',
+    labelKey: 'automation.triggerSelector.eventVoteStarted',
+    category: 'voting',
+  },
+  {
+    value: 'vote_ended',
+    labelKey: 'automation.triggerSelector.eventVoteEnded',
+    category: 'voting',
+  },
+  {
+    value: 'guest_registered',
+    labelKey: 'automation.triggerSelector.eventGuestRegistered',
+    category: 'guests',
+  },
+  {
+    value: 'maintenance_scheduled',
+    labelKey: 'automation.triggerSelector.eventMaintenanceScheduled',
+    category: 'maintenance',
+  },
+  {
+    value: 'meter_reading_due',
+    labelKey: 'automation.triggerSelector.eventMeterReadingDue',
+    category: 'meters',
+  },
+  {
+    value: 'lease_expiring',
+    labelKey: 'automation.triggerSelector.eventLeaseExpiring',
+    category: 'leases',
+  },
 ];
 
 const schedulePresets = [
-  { label: 'Every hour', value: '0 * * * *' },
-  { label: 'Every day at 9 AM', value: '0 9 * * *' },
-  { label: 'Every Monday at 9 AM', value: '0 9 * * 1' },
-  { label: 'First of every month', value: '0 9 1 * *' },
-  { label: 'Custom...', value: 'custom' },
+  { labelKey: 'automation.triggerSelector.presetEveryHour', value: '0 * * * *' },
+  { labelKey: 'automation.triggerSelector.presetEveryDay9', value: '0 9 * * *' },
+  { labelKey: 'automation.triggerSelector.presetEveryMonday9', value: '0 9 * * 1' },
+  { labelKey: 'automation.triggerSelector.presetFirstOfMonth', value: '0 9 1 * *' },
+  { labelKey: 'automation.triggerSelector.presetCustom', value: 'custom' },
 ];
 
 export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorProps) {
+  const { t } = useTranslation();
   const [showScheduleCustom, setShowScheduleCustom] = useState(false);
   const [customCron, setCustomCron] = useState('');
 
   const handleTypeSelect = (type: TriggerType) => {
+    const labelKey = triggerTypes.find((item) => item.value === type)?.labelKey;
     onChange({
       ...value,
       type,
-      name: triggerTypes.find((t) => t.value === type)?.label ?? '',
+      name: labelKey ? t(labelKey) : '',
       timeConfig:
         type === 'time_based'
           ? { schedule: '0 9 * * *', timezone: 'Europe/Bratislava' }
@@ -126,7 +195,9 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
     <div className="space-y-6">
       {/* Trigger Type Selection */}
       <div>
-        <span className="block text-sm font-medium text-gray-700 mb-3">Trigger Type</span>
+        <span className="block text-sm font-medium text-gray-700 mb-3">
+          {t('automation.triggerSelector.triggerTypeLabel')}
+        </span>
         <div className="grid grid-cols-2 gap-3">
           {triggerTypes.map((trigger) => (
             <button
@@ -141,8 +212,8 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
               } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <span className="text-2xl mb-2">{trigger.icon}</span>
-              <span className="font-medium text-gray-900">{trigger.label}</span>
-              <span className="text-xs text-gray-500 mt-1">{trigger.description}</span>
+              <span className="font-medium text-gray-900">{t(trigger.labelKey)}</span>
+              <span className="text-xs text-gray-500 mt-1">{t(trigger.descriptionKey)}</span>
             </button>
           ))}
         </div>
@@ -151,7 +222,9 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
       {/* Time-based Configuration */}
       {value?.type === 'time_based' && (
         <div className="border-t pt-6">
-          <span className="block text-sm font-medium text-gray-700 mb-3">Schedule</span>
+          <span className="block text-sm font-medium text-gray-700 mb-3">
+            {t('automation.triggerSelector.scheduleLabel')}
+          </span>
           <div className="space-y-3">
             {schedulePresets.map((preset) => (
               <label
@@ -172,7 +245,7 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
                   disabled={disabled}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 />
-                <span className="ml-3 text-sm text-gray-900">{preset.label}</span>
+                <span className="ml-3 text-sm text-gray-900">{t(preset.labelKey)}</span>
               </label>
             ))}
 
@@ -192,14 +265,14 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
                   disabled={disabled || !customCron}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Apply
+                  {t('automation.triggerSelector.apply')}
                 </button>
               </div>
             )}
 
             <div className="mt-4">
               <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-1">
-                Timezone
+                {t('automation.triggerSelector.timezoneLabel')}
               </label>
               <select
                 id="timezone"
@@ -230,25 +303,19 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
       {/* Event-based Configuration */}
       {value?.type === 'event_based' && (
         <div className="border-t pt-6">
-          <span className="block text-sm font-medium text-gray-700 mb-3">Event Type</span>
+          <span className="block text-sm font-medium text-gray-700 mb-3">
+            {t('automation.triggerSelector.eventTypeLabel')}
+          </span>
           <div className="space-y-4">
-            {[
-              'Faults',
-              'Payments',
-              'Documents',
-              'Announcements',
-              'Voting',
-              'Guests',
-              'Maintenance',
-              'Meters',
-              'Leases',
-            ].map((category) => {
-              const categoryEvents = eventTypes.filter((e) => e.category === category);
+            {eventCategories.map((category) => {
+              const categoryEvents = eventTypes.filter((e) => e.category === category.id);
               if (categoryEvents.length === 0) return null;
 
               return (
-                <div key={category}>
-                  <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">{category}</h4>
+                <div key={category.id}>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">
+                    {t(category.labelKey)}
+                  </h4>
                   <div className="grid grid-cols-2 gap-2">
                     {categoryEvents.map((event) => (
                       <label
@@ -268,7 +335,7 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
                           disabled={disabled}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                         />
-                        <span className="ml-2 text-sm text-gray-900">{event.label}</span>
+                        <span className="ml-2 text-sm text-gray-900">{t(event.labelKey)}</span>
                       </label>
                     ))}
                   </div>
@@ -287,11 +354,10 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
               <span className="text-2xl">👆</span>
               <div>
                 <p className="text-sm text-gray-700">
-                  This automation will only run when you manually trigger it from the automations
-                  dashboard.
+                  {t('automation.triggerSelector.manualInfo')}
                 </p>
                 <p className="text-xs text-gray-500 mt-2">
-                  Useful for one-time tasks or actions you want to control.
+                  {t('automation.triggerSelector.manualInfoHint')}
                 </p>
               </div>
             </div>
@@ -307,10 +373,11 @@ export function TriggerSelector({ value, onChange, disabled }: TriggerSelectorPr
               <span className="text-2xl">🔀</span>
               <div>
                 <p className="text-sm text-gray-700">
-                  This automation will check conditions periodically and run when all conditions are
-                  met.
+                  {t('automation.triggerSelector.conditionInfo')}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">Configure conditions in the next step.</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {t('automation.triggerSelector.conditionInfoHint')}
+                </p>
               </div>
             </div>
           </div>
