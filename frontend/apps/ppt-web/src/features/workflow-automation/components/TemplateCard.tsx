@@ -6,6 +6,7 @@
  */
 
 import type { AutomationTemplate } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface TemplateCardProps {
   template: AutomationTemplate;
@@ -31,9 +32,27 @@ const categoryIcons: Record<string, string> = {
   general: '⚙️',
 };
 
+const categoryLabelKeys: Record<string, string> = {
+  faults: 'automation.templateCard.categoryFaults',
+  payments: 'automation.templateCard.categoryPayments',
+  communications: 'automation.templateCard.categoryCommunications',
+  documents: 'automation.templateCard.categoryDocuments',
+  maintenance: 'automation.templateCard.categoryMaintenance',
+  general: 'automation.templateCard.categoryGeneral',
+};
+
+const triggerTypeLabelKeys: Record<string, string> = {
+  time_based: 'automation.triggerType.time_based',
+  event_based: 'automation.triggerType.event_based',
+  condition_based: 'automation.triggerType.condition_based',
+  manual: 'automation.triggerType.manual',
+};
+
 export function TemplateCard({ template, onUse, onPreview }: TemplateCardProps) {
+  const { t } = useTranslation();
   const categoryColor = categoryColors[template.category] ?? categoryColors.general;
   const categoryIcon = categoryIcons[template.category] ?? categoryIcons.general;
+  const categoryLabel = t(categoryLabelKeys[template.category] ?? categoryLabelKeys.general);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow flex flex-col h-full">
@@ -42,14 +61,12 @@ export function TemplateCard({ template, onUse, onPreview }: TemplateCardProps) 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="text-base font-semibold text-gray-900">{template.name}</h3>
-            <span
-              className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${categoryColor}`}
-            >
-              {template.category}
+            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${categoryColor}`}>
+              {categoryLabel}
             </span>
             {template.isPopular && (
               <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                Popular
+                {t('automation.templateCard.popular')}
               </span>
             )}
           </div>
@@ -75,22 +92,14 @@ export function TemplateCard({ template, onUse, onPreview }: TemplateCardProps) 
                 d="M13 10V3L4 14h7v7l9-11h-7z"
               />
             </svg>
-            {template.triggerType === 'time_based'
-              ? 'Time Based'
-              : template.triggerType === 'event_based'
-                ? 'Event Based'
-                : template.triggerType === 'condition_based'
-                  ? 'Condition Based'
-                  : 'Manual'}
+            {t(triggerTypeLabelKeys[template.triggerType] ?? triggerTypeLabelKeys.manual)}
           </span>
           <span>•</span>
-          <span>
-            {template.actionsCount ?? 0} action{(template.actionsCount ?? 0) !== 1 ? 's' : ''}
-          </span>
+          <span>{t('automation.templateCard.actions', { count: template.actionsCount ?? 0 })}</span>
           {template.usageCount !== undefined && (
             <>
               <span>•</span>
-              <span>{template.usageCount} uses</span>
+              <span>{t('automation.templateCard.uses', { count: template.usageCount })}</span>
             </>
           )}
         </div>
@@ -105,7 +114,7 @@ export function TemplateCard({ template, onUse, onPreview }: TemplateCardProps) 
             ))}
             {template.tags.length > 3 && (
               <span className="px-2 py-0.5 text-xs text-gray-400">
-                +{template.tags.length - 3} more
+                {t('automation.templateCard.moreTags', { count: template.tags.length - 3 })}
               </span>
             )}
           </div>
@@ -119,14 +128,14 @@ export function TemplateCard({ template, onUse, onPreview }: TemplateCardProps) 
           onClick={() => onPreview(template)}
           className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
         >
-          Preview
+          {t('automation.templateCard.preview')}
         </button>
         <button
           type="button"
           onClick={() => onUse(template)}
           className="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
         >
-          Use Template
+          {t('automation.templateCard.useTemplate')}
         </button>
       </div>
     </div>

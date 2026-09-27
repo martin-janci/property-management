@@ -8,19 +8,24 @@
 import type { AutomationTemplate, TemplateCategory } from '@ppt/api-client';
 import { useAutomationTemplates, useCreateRuleFromTemplate } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../../components';
 import { TemplateCard } from '../components/TemplateCard';
 import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
 
-const categories: { value: TemplateCategory | 'all'; label: string; icon: string }[] = [
-  { value: 'all', label: 'All Templates', icon: '📚' },
-  { value: 'faults', label: 'Faults', icon: '🔧' },
-  { value: 'payments', label: 'Payments', icon: '💰' },
-  { value: 'communications', label: 'Communications', icon: '📢' },
-  { value: 'documents', label: 'Documents', icon: '📄' },
-  { value: 'maintenance', label: 'Maintenance', icon: '🛠️' },
+const categories: { value: TemplateCategory | 'all'; labelKey: string; icon: string }[] = [
+  { value: 'all', labelKey: 'automation.templateLibrary.categoryAll', icon: '📚' },
+  { value: 'faults', labelKey: 'automation.templateLibrary.categoryFaults', icon: '🔧' },
+  { value: 'payments', labelKey: 'automation.templateLibrary.categoryPayments', icon: '💰' },
+  {
+    value: 'communications',
+    labelKey: 'automation.templateLibrary.categoryCommunications',
+    icon: '📢',
+  },
+  { value: 'documents', labelKey: 'automation.templateLibrary.categoryDocuments', icon: '📄' },
+  { value: 'maintenance', labelKey: 'automation.templateLibrary.categoryMaintenance', icon: '🛠️' },
 ];
 
 const skeletonKeys = [
@@ -33,6 +38,7 @@ const skeletonKeys = [
 ];
 
 export function TemplateLibraryPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all');
@@ -82,10 +88,10 @@ export function TemplateLibraryPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Template Library</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Start quickly with pre-built automation templates for common workflows.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t('automation.templateLibrary.title')}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">{t('automation.templateLibrary.subtitle')}</p>
         </div>
         <button
           type="button"
@@ -101,7 +107,7 @@ export function TemplateLibraryPage() {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Create from Scratch
+          {t('automation.templateLibrary.createFromScratch')}
         </button>
       </div>
 
@@ -111,7 +117,7 @@ export function TemplateLibraryPage() {
           {/* Search */}
           <div className="flex-1">
             <label htmlFor="template-search" className="sr-only">
-              Search templates
+              {t('automation.templateLibrary.searchLabel')}
             </label>
             <div className="relative">
               <svg
@@ -133,7 +139,7 @@ export function TemplateLibraryPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search templates..."
+                placeholder={t('automation.templateLibrary.searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -154,7 +160,7 @@ export function TemplateLibraryPage() {
               }`}
             >
               <span className="mr-1.5">{category.icon}</span>
-              {category.label}
+              {t(category.labelKey)}
             </button>
           ))}
         </div>
@@ -163,7 +169,7 @@ export function TemplateLibraryPage() {
       {/* Content */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-700">Failed to load templates. Please try again.</p>
+          <p className="text-red-700">{t('automation.templateLibrary.loadError')}</p>
         </div>
       )}
 
@@ -205,11 +211,13 @@ export function TemplateLibraryPage() {
               d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No templates found</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('automation.templateLibrary.emptyTitle')}
+          </h3>
           <p className="mt-2 text-sm text-gray-500">
             {searchQuery || selectedCategory !== 'all'
-              ? 'Try adjusting your filters or search query.'
-              : 'Templates will appear here once they are available.'}
+              ? t('automation.templateLibrary.emptyBodyFiltered')
+              : t('automation.templateLibrary.emptyBody')}
           </p>
           {(searchQuery || selectedCategory !== 'all') && (
             <button
@@ -220,14 +228,17 @@ export function TemplateLibraryPage() {
               }}
               className="mt-4 text-sm text-blue-600 hover:text-blue-700"
             >
-              Clear filters
+              {t('automation.templateLibrary.clearFilters')}
             </button>
           )}
         </div>
       ) : (
         <>
           <p className="text-sm text-gray-500 mb-4">
-            Showing {templates.length} of {totalTemplates} templates
+            {t('automation.templateLibrary.showing', {
+              shown: templates.length,
+              total: totalTemplates,
+            })}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {templates.map((template) => (
@@ -266,7 +277,7 @@ export function TemplateLibraryPage() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <span className="text-gray-700">Creating automation from template...</span>
+            <span className="text-gray-700">{t('automation.templateLibrary.creating')}</span>
           </div>
         </div>
       )}

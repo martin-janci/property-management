@@ -7,12 +7,14 @@
 
 import type { AutomationRule } from '@ppt/api-client';
 import { useCreateAutomationRule } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../../components';
 import { RuleBuilder } from '../components/RuleBuilder';
 
 export function CreateRulePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const createRule = useCreateAutomationRule();
@@ -62,12 +64,10 @@ export function CreateRulePage() {
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Rules
+          {t('automation.createPage.back')}
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Create Automation Rule</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Set up a new automated workflow for your property management tasks.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('automation.createPage.title')}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t('automation.createPage.subtitle')}</p>
       </div>
 
       {/* Builder */}
@@ -76,7 +76,7 @@ export function CreateRulePage() {
       {/* Error Display */}
       {createRule.error && (
         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">Failed to create automation rule. Please try again.</p>
+          <p className="text-red-700">{t('automation.createPage.error')}</p>
         </div>
       )}
     </div>

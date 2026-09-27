@@ -7,6 +7,7 @@
 
 import type { AutomationRule } from '@ppt/api-client';
 import { useAutomationRule, useUpdateAutomationRule } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useToast } from '../../../components';
@@ -15,6 +16,7 @@ import { RuleBuilder } from '../components/RuleBuilder';
 const skeletonKeys = ['skeleton-step-1', 'skeleton-step-2', 'skeleton-step-3', 'skeleton-step-4'];
 
 export function EditRulePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { id } = useParams<{ id: string }>();
@@ -48,7 +50,7 @@ export function EditRulePage() {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">Invalid rule ID.</p>
+          <p className="text-red-700">{t('automation.editPage.invalidId')}</p>
         </div>
       </div>
     );
@@ -58,7 +60,7 @@ export function EditRulePage() {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">Failed to load automation rule. Please try again.</p>
+          <p className="text-red-700">{t('automation.editPage.loadError')}</p>
         </div>
       </div>
     );
@@ -87,12 +89,16 @@ export function EditRulePage() {
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Rules
+          {t('automation.editPage.back')}
         </button>
         <h1 className="text-2xl font-bold text-gray-900">
-          {isLoading ? 'Loading...' : `Edit: ${rule?.name ?? 'Automation Rule'}`}
+          {isLoading
+            ? t('automation.editPage.loading')
+            : t('automation.editPage.titlePrefix', {
+                name: rule?.name ?? t('automation.editPage.fallbackName'),
+              })}
         </h1>
-        <p className="mt-1 text-sm text-gray-500">Modify your automation workflow settings.</p>
+        <p className="mt-1 text-sm text-gray-500">{t('automation.editPage.subtitle')}</p>
       </div>
 
       {/* Loading State */}
@@ -126,7 +132,7 @@ export function EditRulePage() {
       {/* Error Display */}
       {updateRule.error && (
         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">Failed to update automation rule. Please try again.</p>
+          <p className="text-red-700">{t('automation.editPage.updateError')}</p>
         </div>
       )}
     </div>
