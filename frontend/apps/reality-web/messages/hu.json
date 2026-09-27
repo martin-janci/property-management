@@ -107,7 +107,9 @@
     "callback": {
       "title": "A bejelentkezés sikertelen",
       "invalidState": "Érvénytelen állapot-token. Kérjük, próbáljon meg újra bejelentkezni.",
-      "returnHome": "Vissza a főoldalra"
+      "returnHome": "Vissza a főoldalra",
+      "loading": "Betöltés...",
+      "completingLogin": "Bejelentkezés befejezése..."
     }
   },
   "common": {

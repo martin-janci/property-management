@@ -107,7 +107,9 @@
     "callback": {
       "title": "Anmeldung fehlgeschlagen",
       "invalidState": "Ungültiges Status-Token. Bitte versuchen Sie erneut, sich anzumelden.",
-      "returnHome": "Zurück zur Startseite"
+      "returnHome": "Zurück zur Startseite",
+      "loading": "Wird geladen...",
+      "completingLogin": "Anmeldung wird abgeschlossen..."
     }
   },
   "common": {

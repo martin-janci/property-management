@@ -107,7 +107,9 @@
     "callback": {
       "title": "Logowanie nie powiodło się",
       "invalidState": "Nieprawidłowy token stanu. Spróbuj zalogować się ponownie.",
-      "returnHome": "Powrót do strony głównej"
+      "returnHome": "Powrót do strony głównej",
+      "loading": "Ładowanie...",
+      "completingLogin": "Kończenie logowania..."
     }
   },
   "common": {
