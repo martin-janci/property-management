@@ -429,6 +429,7 @@
     "enterReading": "Zadejte odecet",
     "readingPlaceholder": "0,00",
     "readingRequired": "Prosim zadejte odecet",
+    "readingInvalid": "Zadejte platne cislo",
     "photo": "Fotografie (volitelne)",
     "submit": "Odeslat odecet",
     "submitSuccess": "Odecet merice byl uspesne odeslan",
