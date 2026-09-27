@@ -27,11 +27,27 @@ interface RuleBuilderProps {
 
 type BuilderStep = 'trigger' | 'conditions' | 'actions' | 'review';
 
-const steps: { id: BuilderStep; label: string; description: string }[] = [
-  { id: 'trigger', label: 'Trigger', description: 'When should this run?' },
-  { id: 'conditions', label: 'Conditions', description: 'Filter when to run' },
-  { id: 'actions', label: 'Actions', description: 'What should happen?' },
-  { id: 'review', label: 'Review', description: 'Confirm and save' },
+const steps: { id: BuilderStep; labelKey: string; descriptionKey: string }[] = [
+  {
+    id: 'trigger',
+    labelKey: 'automation.builder.stepTriggerLabel',
+    descriptionKey: 'automation.builder.stepTriggerDesc',
+  },
+  {
+    id: 'conditions',
+    labelKey: 'automation.builder.stepConditionsLabel',
+    descriptionKey: 'automation.builder.stepConditionsDesc',
+  },
+  {
+    id: 'actions',
+    labelKey: 'automation.builder.stepActionsLabel',
+    descriptionKey: 'automation.builder.stepActionsDesc',
+  },
+  {
+    id: 'review',
+    labelKey: 'automation.builder.stepReviewLabel',
+    descriptionKey: 'automation.builder.stepReviewDesc',
+  },
 ];
 
 export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBuilderProps) {
@@ -153,7 +169,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                   )}
                 </button>
                 <span className="ml-4 text-sm font-medium text-gray-900 hidden sm:block">
-                  {step.label}
+                  {t(step.labelKey)}
                 </span>
               </div>
               {index !== steps.length - 1 && (
@@ -175,8 +191,10 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
       {/* Step Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">{steps[currentStepIndex].label}</h2>
-          <p className="text-sm text-gray-500">{steps[currentStepIndex].description}</p>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {t(steps[currentStepIndex].labelKey)}
+          </h2>
+          <p className="text-sm text-gray-500">{t(steps[currentStepIndex].descriptionKey)}</p>
         </div>
 
         {currentStep === 'trigger' && (
@@ -209,7 +227,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
             <div className="space-y-4">
               <div>
                 <label htmlFor="rule-name" className="block text-sm font-medium text-gray-700">
-                  Rule Name *
+                  {t('automation.builder.ruleNameLabel')}
                 </label>
                 <input
                   id="rule-name"
@@ -217,7 +235,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                   value={rule.name ?? ''}
                   onChange={(e) => updateRule({ name: e.target.value })}
                   disabled={isLoading}
-                  placeholder="e.g., Auto-assign high priority faults"
+                  placeholder={t('automation.builder.ruleNamePlaceholder')}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -226,7 +244,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                   htmlFor="rule-description"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Description
+                  {t('automation.builder.descriptionLabel')}
                 </label>
                 <textarea
                   id="rule-description"
@@ -234,7 +252,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                   onChange={(e) => updateRule({ description: e.target.value })}
                   disabled={isLoading}
                   rows={2}
-                  placeholder="Describe what this automation does..."
+                  placeholder={t('automation.builder.descriptionPlaceholder')}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -248,22 +266,28 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label htmlFor="rule-enabled" className="text-sm text-gray-700">
-                  Enable this automation immediately
+                  {t('automation.builder.enableImmediately')}
                 </label>
               </div>
             </div>
 
             {/* Summary */}
             <div className="border-t pt-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">Summary</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-4">
+                {t('automation.builder.summary')}
+              </h3>
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 {/* Trigger Summary */}
                 <div className="flex items-start gap-3">
                   <span className="text-lg">⚡</span>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Trigger</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      {t('automation.builder.triggerSummaryTitle')}
+                    </p>
                     <p className="text-sm text-gray-500">
-                      {rule.trigger?.name ?? rule.trigger?.type ?? 'Not configured'}
+                      {rule.trigger?.name ??
+                        rule.trigger?.type ??
+                        t('automation.builder.triggerNotConfigured')}
                     </p>
                   </div>
                 </div>
@@ -272,11 +296,15 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                 <div className="flex items-start gap-3">
                   <span className="text-lg">🔀</span>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Conditions</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      {t('automation.builder.conditionsSummaryTitle')}
+                    </p>
                     <p className="text-sm text-gray-500">
                       {(rule.trigger?.conditions?.length ?? 0) > 0
-                        ? `${rule.trigger?.conditions?.length} condition(s)`
-                        : 'No conditions (runs for all triggers)'}
+                        ? t('automation.builder.conditionsCount', {
+                            count: rule.trigger?.conditions?.length ?? 0,
+                          })
+                        : t('automation.builder.noConditionsSummary')}
                     </p>
                   </div>
                 </div>
@@ -285,11 +313,15 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                 <div className="flex items-start gap-3">
                   <span className="text-lg">🎯</span>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Actions</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      {t('automation.builder.actionsSummaryTitle')}
+                    </p>
                     <p className="text-sm text-gray-500">
                       {(rule.actions?.length ?? 0) > 0
-                        ? `${rule.actions?.length} action(s)`
-                        : 'No actions configured'}
+                        ? t('automation.builder.actionsCount', {
+                            count: rule.actions?.length ?? 0,
+                          })
+                        : t('automation.builder.noActionsSummary')}
                     </p>
                     {rule.actions && rule.actions.length > 0 && (
                       <ul className="mt-1 text-xs text-gray-400">
@@ -318,7 +350,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
               disabled={isLoading}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
             >
-              Previous
+              {t('automation.builder.previous')}
             </button>
           ) : (
             <button
@@ -327,7 +359,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
               disabled={isLoading}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
             >
-              Cancel
+              {t('automation.builder.cancel')}
             </button>
           )}
         </div>
@@ -340,7 +372,7 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
               disabled={isLoading || !canProceed()}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {t('automation.builder.next')}
             </button>
           ) : (
             <button
@@ -371,7 +403,9 @@ export function RuleBuilder({ initialRule, onSave, onCancel, isLoading }: RuleBu
                   />
                 </svg>
               )}
-              {initialRule?.id ? 'Save Changes' : 'Create Automation'}
+              {initialRule?.id
+                ? t('automation.builder.saveChanges')
+                : t('automation.builder.createAutomation')}
             </button>
           )}
         </div>
