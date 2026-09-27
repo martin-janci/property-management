@@ -5,7 +5,7 @@
       "id": "code-review-ppt-web-core-dashboard-routes-unguarded",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
@@ -16,13 +16,14 @@
         "frontend/apps/ppt-web/src/routes/groups/core.tsx",
         "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx",
         "frontend/apps/ppt-web/src/features/dashboard/pages/ResidentDashboardPage.tsx"
-      ]
+      ],
+      "rerun_note": "re-emitted for audit trail; score already applied by the earlier 2026-09-27T03:18Z tick"
     },
     {
       "id": "code-review-ppt-web-core-home-cta-role-drift",
       "type": "code-review-finding",
       "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
@@ -33,23 +34,82 @@
         "frontend/apps/ppt-web/src/routes/groups/core.tsx",
         "frontend/apps/ppt-web/src/routes/shared.tsx",
         "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "rerun_note": "re-emitted for audit trail; score already applied by the earlier 2026-09-27T03:18Z tick"
+    },
+    {
+      "id": "screen-map-drift-pr-2984-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2984 (code-review-reality-web-listings-page-no-error-state) merged 2026-09-27T04:30Z",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2984 touched frontend/apps/reality-web/src/app/[locale]/listings/page.tsx (drift trigger set) without updating any docs/screens/reality/*.md. Canonical doc docs/screens/reality/listings.md exists but was not touched.",
+        "Heuristic caveat: change is a UI error-state addition; a doc-side note would be appropriate but this is a review candidate, not a promotable plan (Phase 3 de-prioritises)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx",
+        "docs/screens/reality/listings.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn 2026-09-27 rerun window (03:19Z–08:48Z, 8 merged PRs)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "churn=193 lines this run (PR #2991 workflow-automation i18n batch land). First hotspot appearance — hotspot_history.runs_seen 0→1."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn 2026-09-27 rerun window (03:19Z–08:48Z, 8 merged PRs)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "churn=181 lines this run (PR #2991 workflow-automation i18n batch land). First hotspot appearance — hotspot_history.runs_seen 0→1."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ActionBuilder.tsx",
+      "type": "churn-hotspot",
+      "source": "top-3 raw churn 2026-09-27 rerun window (03:19Z–08:48Z, 8 merged PRs)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "churn=149 lines this run (PR #2991 workflow-automation i18n batch land). First hotspot appearance — hotspot_history.runs_seen 0→1."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ActionBuilder.tsx"
       ]
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no-candidate: no code-review-finding is on the Phase 5 allowlist, and the two new signals need review/tests, not a mechanical fix.",
+  "auto_fix_skipped_reason": "no-candidate: 4 new signals — 1 screen-map-drift (medium confidence, +2 score → item score=2 < 3 gate), 3 churn-hotspot (Phase 5 allowlist excludes churn); nothing eligible.",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "command": "test -f briefs/2026-09-27.md && head -1 matches # 2026-09-27",
       "observed": "matched",
       "expected": "matched"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq state.json against HEAD",
+      "command": "jq state.json diff vs HEAD",
       "observed": "true",
       "expected": "true"
     },
@@ -63,98 +123,120 @@
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq re-emitted signals with score_delta!=0 and non-cumulative",
-      "observed": "0 offenders",
-      "expected": "0"
+      "command": "signals dedup vs prior seen_signals (cumulative allowlist)",
+      "observed": "true",
+      "expected": "true",
+      "remediation": "set score_delta=0 on two same-day re-emitted code-review-finding signals from the 03:18Z tick"
     },
     {
-      "goal": "G5",
+      "goal": "G5-cap",
       "passed": true,
-      "command": "no score >8 and decay applied to open >=14d",
-      "observed": "cap ok; no open row >=14d old",
-      "expected": "ok"
+      "command": "jq score cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "0 open items with updated_at <= 2026-09-13 (all recent)",
+      "observed": "0 candidates",
+      "expected": "0 candidates or decayed"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "adversarial-pass annotation on each new plan",
-      "observed": "0 new plans this run",
-      "expected": "one annotation per new plan"
+      "command": "N/A no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0 or all with adversarial pass annotation"
     },
     {
-      "goal": "G7",
+      "goal": "G7-count",
       "passed": true,
-      "command": "<=2 new plans + all readiness gates",
-      "observed": "0 new plans",
+      "command": "0 new plans this run",
+      "observed": "0",
       "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "no new plans",
+      "observed": "N/A",
+      "expected": "all fields present when new plans exist"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "no new plans",
+      "observed": "N/A",
+      "expected": "all 11 headings when new plans exist"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only outside .research/",
+      "command": "git diff --cached --name-only | grep -v .research/ | wc -l",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "grep secrets/hostnames in staged diff (excl. baseline docs)",
+      "command": "secrets grep against staged diff (excluding baseline docs)",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md against regenerated view",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "match",
+      "expected": "match"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "brief lists failed phases and matching cursor stalled",
-      "observed": "no failed phases; cursors advanced consistently",
-      "expected": "consistent"
+      "command": "no phase failures this run; brief.Phases_that_failed=none",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior plan slug present in plans/ or plans/_archive/",
-      "observed": "all present",
-      "expected": "all present"
+      "command": "all HEAD plans still present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive size non-decreasing",
-      "observed": "9 == 9",
-      "expected": ">=HEAD"
+      "command": "archive count cur=9 head=9",
+      "observed": ">=head",
+      "expected": ">=head"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md against regenerated view",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "match",
+      "expected": "match"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix caps + idempotency + kill-switch honored",
-      "observed": "no auto_fix_actions this run",
-      "expected": "<=3 total, <=1 each kind"
+      "command": "auto_fix_actions caps (<=1 pr, <=1 issue, <=1 comment)",
+      "observed": "0/0/0",
+      "expected": "<=1 each"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts still valid on disk",
-      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor.next_index=5 in [0,7]",
-      "expected": "valid + Phase 1.6 skipped (no-op)"
+      "command": "Phase 1.6 skipped this rerun (dispatcher-covered); pm_cursor.next_index=5 in [0,7]",
+      "observed": "true",
+      "expected": "true (no-op when Phase 1.6 skipped)"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token literal in staged added lines",
+      "command": "no Telegram token in staged diff",
       "observed": "0",
       "expected": "0"
     }
@@ -182,5 +264,6 @@
         "application": 0
       }
     }
-  }
+  },
+  "validated_at": "2026-09-27T08:52:50Z"
 }

@@ -11065,6 +11065,88 @@
       "created_at": "2026-09-27",
       "updated_at": "2026-09-27",
       "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2984-reality",
+      "title": "PR #2984 changed reality-web listings/page.tsx without a matching docs/screens/reality/*.md update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2984"
+      ],
+      "evidence": [
+        "PR #2984 (code-review-reality-web-listings-page-no-error-state: distinct error state on listings API failure) touched frontend/apps/reality-web/src/app/[locale]/listings/page.tsx (drift trigger set) without updating any docs/screens/reality/*.md — the canonical doc for this route (docs/screens/reality/listings.md) exists but was not touched.",
+        "Best-effort heuristic caveat: the change is an error-state UI addition; docs/screens/reality/listings.md would ideally note the new error state, but this is a review candidate, not a promotable plan — Phase 3 gate explicitly de-prioritises this class."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx",
+        "docs/screens/reality/listings.md"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx",
+      "title": "Churn hotspot: workflow-automation ConditionBuilder.tsx — 193 lines this run (PR #2991)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-09-27 (PR #2991)"
+      ],
+      "evidence": [
+        "churn=193 lines this run (PR #2991 workflow-automation i18n batch). runs_seen=1 in hotspot_history — first touch of this file in the routine window."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx",
+      "title": "Churn hotspot: workflow-automation TriggerSelector.tsx — 181 lines this run (PR #2991)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-09-27 (PR #2991)"
+      ],
+      "evidence": [
+        "churn=181 lines this run (PR #2991 workflow-automation i18n batch). runs_seen=1 in hotspot_history — first touch of this file in the routine window."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ActionBuilder.tsx",
+      "title": "Churn hotspot: workflow-automation ActionBuilder.tsx — 149 lines this run (PR #2991)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "top-3 churn 2026-09-27 (PR #2991)"
+      ],
+      "evidence": [
+        "churn=149 lines this run (PR #2991 workflow-automation i18n batch). runs_seen=1 in hotspot_history — first touch of this file in the routine window."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ActionBuilder.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
     }
   ]
 }

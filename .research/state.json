@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-27T03:18:40Z",
+  "last_run_iso": "2026-09-27T08:49:51Z",
   "last_run_ms": 0,
   "last_pr_seen": 2991,
   "last_issue_seen": 2982,
-  "last_commit_sha": "8c5d5952345e4873b719751ab5364b07aa2cdd6d",
+  "last_commit_sha": "7cfe5e948b214ca0284fd9b80acc85d4d4089e78",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -536,6 +536,21 @@
       "runs_seen": 1,
       "last_seen": "2026-09-26",
       "recent_churn": 83
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-27",
+      "recent_churn": 193
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-27",
+      "recent_churn": 181
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/components/ActionBuilder.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-27",
+      "recent_churn": 149
     }
   },
   "seen_signals": [
@@ -646,6 +661,9 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ActionBuilder.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
@@ -755,8 +773,10 @@
     "code-review-ppt-web-core-api-onunauthorized-unwired",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-authed-roots-session-leak",
+    "code-review-ppt-web-core-dashboard-routes-unguarded",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
+    "code-review-ppt-web-core-home-cta-role-drift",
     "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
     "code-review-ppt-web-core-logout-cache-purge-gap",
     "code-review-ppt-web-core-mutation-no-onerror",
@@ -968,6 +988,7 @@
     "screen-map-drift-pr-2890-reality",
     "screen-map-drift-pr-2894-reality",
     "screen-map-drift-pr-2895-reality",
+    "screen-map-drift-pr-2984-reality",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1047,9 +1068,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "code-review-ppt-web-core-dashboard-routes-unguarded",
-    "code-review-ppt-web-core-home-cta-role-drift"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1063,8 +1082,8 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 84,
-    "vectors_created": 387,
+    "runs": 85,
+    "vectors_created": 391,
     "plans_created": 31,
     "quiet_days": 5,
     "auto_fix_count": 0
