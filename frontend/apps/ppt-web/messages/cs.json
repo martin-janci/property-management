@@ -2498,7 +2498,8 @@
       "back": "Zpět na pravidla",
       "title": "Vytvořit pravidlo automatizace",
       "subtitle": "Nastavte nový automatizovaný pracovní postup pro správu nemovitostí.",
-      "error": "Nepodařilo se vytvořit pravidlo automatizace. Zkuste to znovu."
+      "error": "Nepodařilo se vytvořit pravidlo automatizace. Zkuste to znovu.",
+      "incomplete": "Dokončete pravidlo: vyžaduje se název, spouštěč a alespoň jedna akce."
     },
     "editPage": {
       "back": "Zpět na pravidla",

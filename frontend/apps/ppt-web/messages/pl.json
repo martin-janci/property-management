@@ -2370,7 +2370,8 @@
       "back": "Powrót do reguł",
       "title": "Utwórz regułę automatyzacji",
       "subtitle": "Skonfiguruj nowy zautomatyzowany przepływ pracy do zarządzania nieruchomościami.",
-      "error": "Nie udało się utworzyć reguły automatyzacji. Spróbuj ponownie."
+      "error": "Nie udało się utworzyć reguły automatyzacji. Spróbuj ponownie.",
+      "incomplete": "Uzupełnij regułę: wymagana jest nazwa, wyzwalacz i co najmniej jedna akcja."
     },
     "editPage": {
       "back": "Powrót do reguł",

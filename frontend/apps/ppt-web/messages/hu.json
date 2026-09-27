@@ -2364,7 +2364,8 @@
       "back": "Vissza a szabályokhoz",
       "title": "Automatizálási szabály létrehozása",
       "subtitle": "Állítson be egy új automatizált munkafolyamatot az ingatlankezelési feladatokhoz.",
-      "error": "Nem sikerült létrehozni az automatizálási szabályt. Kérjük, próbálja újra."
+      "error": "Nem sikerült létrehozni az automatizálási szabályt. Kérjük, próbálja újra.",
+      "incomplete": "Kérjük, egészítse ki a szabályt: név, indító és legalább egy művelet szükséges."
     },
     "editPage": {
       "back": "Vissza a szabályokhoz",

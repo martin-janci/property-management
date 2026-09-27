@@ -2500,7 +2500,8 @@
       "back": "Späť na pravidlá",
       "title": "Vytvoriť pravidlo automatizácie",
       "subtitle": "Nastavte nový automatizovaný pracovný postup pre správu nehnuteľností.",
-      "error": "Nepodarilo sa vytvoriť pravidlo automatizácie. Skúste to znova."
+      "error": "Nepodarilo sa vytvoriť pravidlo automatizácie. Skúste to znova.",
+      "incomplete": "Dokončite pravidlo: vyžaduje sa názov, spúšťač a aspoň jedna akcia."
     },
     "editPage": {
       "back": "Späť na pravidlá",
