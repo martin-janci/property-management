@@ -339,8 +339,9 @@ export const queryKeys = {
  * `accounting`), the shared `@ppt/api-client` key-factory roots consumed by
  * ppt-web (`messages`, `meters`, `reports`, plus every mounted-route-group
  * domain: `community`, `disputes`, `iot`, `outages`, `leases`, `violations`,
- * `voting`, `compliance`, `esignature`, `my-units`, `portfolio-performance`,
- * `templates`, `integrations`, `syndication`, `oauth-grants`, `mfa`, `layout`),
+ * `voting`, `registries`, `compliance`, `esignature`, `my-units`,
+ * `portfolio-performance`, `templates`, `integrations`, `syndication`,
+ * `oauth-grants`, `mfa`, `layout`),
  * and the ad-hoc roots used
  * directly in feature hooks (`developer`, `ocr`, `actionQueue`,
  * `executionLogs`, `executionStats`, `ai-chat`, `predictive-maintenance`,
@@ -387,6 +388,10 @@ export const AUTHED_QUERY_KEY_ROOTS = [
   'leases',
   'violations',
   'voting',
+  // Building registries — pets/vehicles/parking/rules (Epic 57). Consumed via
+  // `createRegistryHooks` on RegistryPage; `registryKeys.all === ['registries']`.
+  // Tenant-scoped, so it must be purged on logout on a shared workstation.
+  'registries',
   'compliance',
   'esignature',
   'my-units',

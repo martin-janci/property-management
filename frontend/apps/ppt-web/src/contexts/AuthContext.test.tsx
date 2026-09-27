@@ -167,8 +167,9 @@ function renderAuthApp(): RenderResult {
 /**
  * Mounted-route-group / feature-page domains whose `@ppt/api-client` query
  * hooks are used in ppt-web (disputes / iot / outages / leases / voting /
- * community / compliance / esignature / my-units / portfolio-performance /
- * templates / integrations / syndication / oauth-grants / mfa / layout).
+ * registries / community / compliance / esignature / my-units /
+ * portfolio-performance / templates / integrations / syndication /
+ * oauth-grants / mfa / layout).
  * Their caches previously survived logout — regression guard for the
  * shared-workstation session-leak fix. Each entry is `[queryKey, root]`; the
  * root is the first segment `removeQueries` prefix-matches on logout.
@@ -181,6 +182,9 @@ const NEWLY_COVERED_SEED: ReadonlyArray<readonly [readonly unknown[], string]> =
   [['leases', 'list', {}], 'leases'],
   [['violations', 'list', {}], 'violations'],
   [['voting', 'list', {}], 'voting'],
+  // Building registries — real shape from registryKeys.petsList()
+  // (['registries','pets','list',params]); consumed via createRegistryHooks.
+  [['registries', 'pets', 'list', {}], 'registries'],
   [['compliance', 'moderation', 'cases', {}], 'compliance'],
   [['esignature', 'requests', {}], 'esignature'],
   [['my-units'], 'my-units'],
