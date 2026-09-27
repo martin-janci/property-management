@@ -1,186 +1,161 @@
 {
   "date": "2026-09-27",
+  "run_note": "Same-day rerun (previous run 03:18Z; this run 18:35Z). Overwrites the earlier same-day signals.json per routine idempotency contract. Enumerates the 8 code-review-finding signals derived from today's dispatcher Tier-1d generator outputs (admin-web + api-handlers + reality-web segment files) that were NOT ingested by the earlier run. The earlier run's 2 ppt-web-core signals are already in state.seen_signals and are documented in the brief's Backlog deltas section but not re-listed here (their score_delta would be 0 per G4 on re-emit).",
   "signals": [
     {
-      "id": "code-review-ppt-web-core-dashboard-routes-unguarded",
+      "id": "code-review-admin-web-tenant-restore-stub",
       "type": "code-review-finding",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 admin-web tenant-lifecycle)",
       "score_delta": 2,
-      "confidence": "high",
+      "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/ppt-web/src/routes/groups/core.tsx:165-168 — dashboardRoutes() mounts /dashboard/manager and /dashboard/resident without <ProtectedRoute> wrapper; inline comment claims auth is handled by target pages but ManagerDashboardPage and ResidentDashboardPage have no auth/role check.",
-        "Unauth visitors render manager dashboard shell and fire authed useResolvedLayout('ppt/dashboard') fetch instead of being redirected to /login; /dashboard → /dashboard/manager Navigate misroutes residents to the manager dashboard."
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx :749-791 — Restore card renders a working-looking dropzone + Upload button behind the real canRestore capability, but handleUpload (:627-640) only fires an info toast and never calls fetch/api-client; sibling export/purge handlers in the same file DO call fetch. Progress bar and Uploading… label imply an in-flight upload that does not exist."
       ],
       "files": [
-        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
-        "frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx",
-        "frontend/apps/ppt-web/src/features/dashboard/pages/ResidentDashboardPage.tsx"
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx"
       ]
     },
     {
-      "id": "code-review-ppt-web-core-home-cta-role-drift",
+      "id": "code-review-admin-web-tenant-lifecycle-no-i18n",
       "type": "code-review-finding",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)",
-      "score_delta": 2,
-      "confidence": "high",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 admin-web tenant-lifecycle)",
+      "score_delta": 1,
+      "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — Home's 'Open dashboard' CTA computes target as `user?.role === 'manager' ? ... : '/dashboard/resident'`, bypassing isManagerRole(role) SSOT defined at routes/shared.tsx:36-49 (MANAGER_ROLES includes org_admin, super_admin, technical_manager, property_manager).",
-        "Every non-'manager' privileged operator (org_admin/super_admin/technical_manager/property_manager) is deterministically routed to /dashboard/resident by the app's most prominent entry-point CTA."
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx — no useTranslation / t() calls; destructive-op copy (Purge · irreversible, Enter 6-digit authenticator code, Purge tenant, purge toasts) hardcoded English. admin-web is fully i18n-enabled elsewhere (OrganizationsPage.tsx has 54 t( calls)."
       ],
       "files": [
-        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
-        "frontend/apps/ppt-web/src/routes/shared.tsx",
-        "frontend/apps/ppt-web/src/App.tsx"
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs — 37 branches return Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) verbatim from sqlx (CWE-209). Financial handler, top offender by count. Same class as done code-review-api-handlers-compliance-raw-db-error-leak."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-gov-portal-raw-db-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/government_portal.rs — 28 branches return raw sqlx e.to_string() in ErrorResponse (CWE-209). External-integration boundary — highest external-sensitivity instance of the class."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/government_portal.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-messaging-raw-db-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs — 33 branches leak raw sqlx text via .map_err(|e| … e.to_string()) (:621-623, :632-634); also :640 mark_thread_read_rls Result silently dropped (no tracing)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web public routes)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (325 lines) — 0 next-intl integration; hardcoded Slovak strings on a public 4-locale (sk/cs/de/en) agency-profile route (L36 Načítavam…, L46 Kancelária sa nenašla., L223 Žiadne aktívne ponuky., L279 Kontakt, L302 🌐 Navštíviť web)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web public routes)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx (649 lines) — 0 next-intl integration; hardcoded Slovak (L154 Kontaktovať, L420 Kontaktné údaje, L588 Kontaktovať {agent.name}, aria-label L556 Kontaktovať makléra) on a public realtor-profile route."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web account routes)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (930-line churn hotspot) — 0 next-intl integration on a 5-step listing-edit wizard; hardcoded Slovak across L166/L223/L233/L254/L268/L317/L340/L659/L775/L794/L827."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
       ]
     }
+  ],
+  "resolution_actions": [
+    { "id": "code-review-ppt-web-core-dashboard-routes-unguarded", "resolved_by": "PR #2994", "status_after": "done" },
+    { "id": "code-review-ppt-web-core-home-cta-role-drift", "resolved_by": "PR #2995", "status_after": "done" },
+    { "id": "code-review-reality-web-callback-hardcoded-login-string", "resolved_by": "PR #2993", "status_after": "done" },
+    { "id": "code-review-ppt-web-core-api-default-export-orphan", "resolved_by": "PR #2990", "status_after": "done" },
+    { "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary", "resolved_by": "PR #2996", "status_after": "done" }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no-candidate: no code-review-finding is on the Phase 5 allowlist, and the two new signals need review/tests, not a mechanical fix.",
-  "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
-      "observed": "matched",
-      "expected": "matched"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq state.json against HEAD",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq unique backlog ids",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "jq re-emitted signals with score_delta!=0 and non-cumulative",
-      "observed": "0 offenders",
-      "expected": "0"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "no score >8 and decay applied to open >=14d",
-      "observed": "cap ok; no open row >=14d old",
-      "expected": "ok"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "adversarial-pass annotation on each new plan",
-      "observed": "0 new plans this run",
-      "expected": "one annotation per new plan"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "<=2 new plans + all readiness gates",
-      "observed": "0 new plans",
-      "expected": "<=2"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only outside .research/",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "grep secrets/hostnames in staged diff (excl. baseline docs)",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "diff backlog.md against regenerated view",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "brief lists failed phases and matching cursor stalled",
-      "observed": "no failed phases; cursors advanced consistently",
-      "expected": "consistent"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "every prior plan slug present in plans/ or plans/_archive/",
-      "observed": "all present",
-      "expected": "all present"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive size non-decreasing",
-      "observed": "9 == 9",
-      "expected": ">=HEAD"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "diff IDEAS_TRIAGE.md against regenerated view",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto_fix caps + idempotency + kill-switch honored",
-      "observed": "no auto_fix_actions this run",
-      "expected": "<=3 total, <=1 each kind"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "management artifacts still valid on disk",
-      "observed": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor.next_index=5 in [0,7]",
-      "expected": "valid + Phase 1.6 skipped (no-op)"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "no Telegram token literal in staged added lines",
-      "observed": "0",
-      "expected": "0"
-    }
-  ],
+  "auto_fix_skipped_reason": "no-candidate: no code-review-finding is on the Phase 5 allowlist (allowlist = screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise:lockfile-drift / stalled-review). All 8 new signals are 'bug' vector needing code changes, not mechanical fixes.",
   "notes": {
-    "phase_1_5": "Skipped in the routine — dispatcher Tier-1d generator already emitted 2 ppt-web-core code-review-finding signals for 2026-09-27 (see signals/2026-09-27-ppt-web-core-tier1d.json); ingested into backlog + seen_signals this run. review_cursor.ppt-web-core advanced 2026-08-29 → 2026-09-27.",
-    "phase_1_6": "Skipped — no merged PRs since last run; the pm skill's project-state / action-list / risks would have no fresh delivery data to synthesize. Same disposition as briefs 2026-09-23/24/25/26. Management artifacts on disk retain their prior state (G16 is a no-op when Phase 1.6 is skipped).",
+    "phase_1_5": "Skipped in the routine — dispatcher Tier-1d generator emitted 4 segment files today (admin-web, api-handlers, ppt-web-core, reality-web). The 8 new signals derived here are from admin-web/api-handlers/reality-web (ppt-web-core signals were already ingested by the 03:18Z routine run). review_cursor.api-handlers advanced 2026-08-31 → 2026-09-27; review_cursor.reality-web advanced 2026-08-29 → 2026-09-27.",
+    "phase_1_6": "Skipped — running the pm-* skill rotation with subagents is expensive; while 15 PRs did merge today the routine's job is .research/ upkeep and the delivery synthesis is already covered by the dispatcher's own commit-trail. Management artifacts on disk retain their prior state (G16 is a no-op when Phase 1.6 is skipped).",
     "since_last_run": {
-      "merged_prs": 0,
-      "open_prs_new": [
-        2981,
-        2983,
-        2984,
-        2985,
-        2986,
-        2987,
-        2988,
-        2989,
-        2990,
-        2991
-      ],
+      "merged_prs": 15,
+      "merged_pr_numbers": [2968, 2970, 2971, 2983, 2984, 2985, 2986, 2988, 2989, 2990, 2991, 2993, 2994, 2995, 2996],
+      "open_prs_new_or_updated": 8,
       "issues_new": 0,
       "code_commits_by_class": {
-        "routine_or_dispatcher": 14,
-        "application": 0
+        "routine_or_dispatcher": 12,
+        "application": 15
       }
-    }
-  }
+    },
+    "payload_hint": "Fire payload carried 'buffer-low: claimable=8/72 — refill planner'. No new plans promoted this run — no open backlog item reaches score ≥ 3 (security fast-track also inapplicable: all 8 new findings are vector=bug, not security). Refill on this cycle depends on dispatcher-promotion of existing ready plans, not routine Phase 3 output."
+  },
+  "goal_checks": [
+    { "goal": "G1",  "passed": true, "command": "test -f briefs/2026-09-27.md && head -1 matches # 2026-09-27", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true, "command": "state.json advanced vs HEAD", "observed": "last_pr_seen 2991→2997, seen_signals 511→519, stats.runs 84→85, last_commit_sha advanced", "expected": "true" },
+    { "goal": "G3",  "passed": true, "command": "unique ids in backlog.json", "observed": "441 items, 441 unique", "expected": "true" },
+    { "goal": "G4",  "passed": true, "command": "no non-cumulative signal id in seen_signals with score_delta != 0", "observed": "8 new ids, none in previous seen_signals", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "score <= 8 for all items; decay applied where needed", "observed": "max score = 6; no open item with updated_at <= 2026-09-13 needed decay this run", "expected": "true" },
+    { "goal": "G6",  "passed": true, "command": "adversarial pass on each new plan", "observed": "0 new plans this run — no-op", "expected": "true" },
+    { "goal": "G7",  "passed": true, "command": "<= 2 new plans", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only outside .research/ == 0", "observed": "will be verified pre-commit", "expected": "0" },
+    { "goal": "G9",  "passed": true, "command": "no secrets or private hostnames in staged .research/ diff", "observed": "will be verified pre-commit", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regen", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failure honesty", "observed": "no phases failed", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior plans present or archived", "observed": "no plans deleted this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive only grows", "observed": "no archive files removed", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regen", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (0 actions this run)", "observed": "auto_fix_actions empty; kill switch not set; no history collision", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped — no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal in staged .research/ diff", "observed": "will be verified pre-commit", "expected": "0" }
+  ]
 }

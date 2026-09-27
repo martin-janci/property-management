@@ -10796,19 +10796,21 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2990",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/lib/api.ts:370 — export default getApiClient() runs at import time with DEFAULT config; AuthProvider's configureApiClient() replaces the internal apiInstance, orphaning the default-exported object.",
-        "no default-style importer exists today (grep confirmed zero non-test hits under frontend/apps/ppt-web/src) — latent footgun rather than active break."
+        "no default-style importer exists today (grep confirmed zero non-test hits under frontend/apps/ppt-web/src) — latent footgun rather than active break.",
+        "resolved: PR #2990 merged 2026-09-27 — code-review-ppt-web-core-api-default-export-orphan: remove eager orphaned default export from lib/api.ts"
       ],
       "files": [
         "frontend/apps/ppt-web/src/lib/api.ts"
       ],
       "created_at": "2026-09-26",
-      "updated_at": "2026-09-26",
+      "updated_at": "2026-09-27",
       "plan": null
     },
     {
@@ -10867,18 +10869,20 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2996",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
       "evidence": [
-        ".research/signals/2026-09-26-ppt-web-ui-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=bug."
+        ".research/signals/2026-09-26-ppt-web-ui-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=bug.",
+        "resolved: PR #2996 merged 2026-09-27 — code-review-ppt-web-ui-createrule-partial-cast-boundary: type the automation-rule create payload at the boundary"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/automation"
       ],
       "created_at": "2026-09-26",
-      "updated_at": "2026-09-26",
+      "updated_at": "2026-09-27",
       "plan": null
     },
     {
@@ -10982,18 +10986,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2993",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
       ],
       "evidence": [
-        ".research/signals/2026-09-26-reality-web-tier1d.json — code-review-finding score_delta=+1, confidence=high, vector=refactor."
+        ".research/signals/2026-09-26-reality-web-tier1d.json — code-review-finding score_delta=+1, confidence=high, vector=refactor.",
+        "resolved: PR #2993 merged 2026-09-27 — code-review-reality-web-callback-hardcoded-login-string: locale-aware SSO callback + i18n loading copy"
       ],
       "files": [
         "frontend/apps/reality-web/src/app"
       ],
       "created_at": "2026-09-26",
-      "updated_at": "2026-09-26",
+      "updated_at": "2026-09-27",
       "plan": null
     },
     {
@@ -11022,15 +11028,17 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2994",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx:165-168 — dashboardRoutes() mounts `<Route path=\"/dashboard\" element={<Navigate to=\"/dashboard/manager\" replace />} />`, `<Route path=\"/dashboard/manager\" element={<ManagerDashboardPage />} />` and `<Route path=\"/dashboard/resident\" element={<ResidentDashboardPage />} />` with NO `<ProtectedRoute>` wrapper. The inline comment (core.tsx:161-164) justifies the omission: 'the ProtectedRoute / role check on the target page handles auth + role-based fan-out.' That claim is FALSE on the reviewed tree — verified against both target pages below.",
         "ManagerDashboardPage (frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx:21-48) performs NO auth check and NO redirect: it calls `useResolvedLayout('ppt/dashboard')` (:23, an authenticated api-client query) and reads `useAuth().user` only to toggle a 'customize' link for org_admin/super_admin (:24-28). There is no `isAuthenticated` guard, no `<Navigate to=\"/login\">`, no role fan-out. ResidentDashboardPage (ResidentDashboardPage.tsx) likewise has zero auth/role logic (grep for Navigate|redirect|isAuthenticated|useAuth|requiredRoles returns NONE). App.tsx (frontend/apps/ppt-web/src/App.tsx:252-284) wraps `<AppRoutes/>` in providers + RouteErrorBoundary + Suspense but NOT in any global ProtectedRoute — auth gating in this app is strictly per-route via `<ProtectedRoute>` (used on /emergency, /settings/*, /ai-assistant, /automations/*, /dashboard/customize, etc.). So the dashboard routes are the lone authed-surface routes with the guard omitted.",
         "Two concrete defects follow from the gap: (1) An UNAUTHENTICATED visitor navigating directly to /dashboard (or /dashboard/manager) renders the full manager dashboard shell and fires the authed `useResolvedLayout` fetch instead of being redirected to /login the way every ProtectedRoute-wrapped route is — inconsistent access control on the primary post-login landing surface. (2) The `/dashboard` -> Navigate('/dashboard/manager') redirect (core.tsx:166) sends EVERY role, including plain residents, to the MANAGER dashboard, and ManagerDashboardPage never fans a resident back to /dashboard/resident — directly contradicting the 'role-based fan-out' the comment promises. A resident typing /dashboard lands on the manager dashboard chrome.",
-        "Landable frontend-only remedy: wrap /dashboard/manager and /dashboard/resident in `<ProtectedRoute>` (matching the peer routes), and implement the role fan-out the comment claims — either redirect /dashboard based on isManagerRole(user?.role) (the SSOT in routes/shared.tsx) or have ManagerDashboardPage redirect non-manager roles to /dashboard/resident. Delete or correct the now-false comment. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL route test (pattern already in ProtectedRoute.routing.test.tsx) asserting an unauthenticated render of /dashboard/manager redirects to /login and a resident hitting /dashboard is not shown ManagerDashboardPage. Confidence high: traced route table (no wrapper) -> both page components (no guard/fan-out) -> App.tsx (no global guard) -> ProtectedRoute is the established mechanism used by every peer route."
+        "Landable frontend-only remedy: wrap /dashboard/manager and /dashboard/resident in `<ProtectedRoute>` (matching the peer routes), and implement the role fan-out the comment claims — either redirect /dashboard based on isManagerRole(user?.role) (the SSOT in routes/shared.tsx) or have ManagerDashboardPage redirect non-manager roles to /dashboard/resident. Delete or correct the now-false comment. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL route test (pattern already in ProtectedRoute.routing.test.tsx) asserting an unauthenticated render of /dashboard/manager redirects to /login and a resident hitting /dashboard is not shown ManagerDashboardPage. Confidence high: traced route table (no wrapper) -> both page components (no guard/fan-out) -> App.tsx (no global guard) -> ProtectedRoute is the established mechanism used by every peer route.",
+        "resolved: PR #2994 merged 2026-09-27 — code-review-ppt-web-core-dashboard-routes-unguarded: guard /dashboard/* with ProtectedRoute"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx",
@@ -11047,20 +11055,182 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2995",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — the Home landing page's 'Open dashboard' CTA computes its target as `navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')`. It hard-codes the single string 'manager' instead of the manager-equivalence check the codebase already owns.",
         "routes/shared.tsx:36-49 defines `MANAGER_ROLES = ['manager','org_admin','super_admin','technical_manager','property_manager']` and `isManagerRole(role)`, and its doc comment (:29-35) states MANAGER_ROLES is the 'Single source of truth shared by isManagerRole (nav/inline gating) and <ProtectedRoute requiredRoles={...}> so the two cannot drift apart.' Home's `=== 'manager'` literal bypasses that SSOT. As a direct consequence, a user whose role is org_admin, super_admin, technical_manager or property_manager clicks the primary dashboard CTA on the landing page and is routed to `/dashboard/resident` (the resident dashboard) rather than the manager dashboard.",
         "Confirmed drift, not a debatable style choice: the SAME file-neighbourhood already uses the SSOT correctly — App.tsx:127 does `const isOperator = isManagerRole(user?.role)` to gate operator-only nav links, and core.tsx:236 gates /settings/portal-webhooks with `requiredRoles={[...MANAGER_ROLES]}`. Home is the outlier that regressed to a bare literal, so privileged non-'manager' operators get the wrong dashboard from the app's most prominent entry point.",
-        "Landable frontend-only remedy: replace `user?.role === 'manager'` at core.tsx:100 with `isManagerRole(user?.role)` (import already resolvable from ../shared, as App.tsx and core.tsx:41 already import from routes/shared). Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL test rendering Home with user.role='property_manager' and asserting the CTA navigates to /dashboard/manager. Confidence high: the literal, the SSOT helper, and the correct peer usages are all objectively confirmed by static read; the misroute is deterministic for every manager-equivalent role except plain 'manager'."
+        "Landable frontend-only remedy: replace `user?.role === 'manager'` at core.tsx:100 with `isManagerRole(user?.role)` (import already resolvable from ../shared, as App.tsx and core.tsx:41 already import from routes/shared). Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL test rendering Home with user.role='property_manager' and asserting the CTA navigates to /dashboard/manager. Confidence high: the literal, the SSOT helper, and the correct peer usages are all objectively confirmed by static read; the misroute is deterministic for every manager-equivalent role except plain 'manager'.",
+        "resolved: PR #2995 merged 2026-09-27 — code-review-ppt-web-core-home-cta-role-drift: route Home CTA by manager-role membership"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx",
         "frontend/apps/ppt-web/src/routes/shared.tsx",
         "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-admin-web-tenant-restore-stub",
+      "title": "admin-web TenantLifecyclePage Restore card is a UI stub — Upload button + progress bar but no fetch call; misleads platform admins",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 admin-web tenant-lifecycle)"
+      ],
+      "evidence": [
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx :749-791 — Restore card renders a working-looking dropzone + Upload button behind the real canRestore capability, but handleUpload (:627-640) only fires an info toast and never calls fetch/api-client; contrast the sibling export/purge handlers in the same file which DO call `fetch('/api/v1/admin/tenants/${id}/export|purge')` (:311, :599)."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-admin-web-tenant-lifecycle-no-i18n",
+      "title": "admin-web TenantLifecyclePage hardcoded English strings — destructive-op copy not localized despite react-i18next available",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 admin-web tenant-lifecycle)"
+      ],
+      "evidence": [
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx — grep for useTranslation/t( returns ZERO hits over the file. Hardcoded strings across page (Lifecycle · {tenant.name}, Purge · irreversible, Enter 6-digit authenticator code, Purge tenant, Tenant purged toast, Purge failed toast). admin-web is fully i18n-enabled (OrganizationsPage.tsx has 54 t( calls). Non-EN platform admins performing irreversible tenant purge see English confirmation copy."
+      ],
+      "files": [
+        "frontend/apps/admin-web/src/pages/TenantLifecyclePage.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-leak",
+      "title": "api-server budgets.rs leaks raw sqlx e.to_string() into ErrorResponse across 37 branches — CWE-209 on a financial handler",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs — 37 error branches return `Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))` verbatim from sqlx (schema names / constraint names leak in the JSON body); first sites at :260, :291, :327, :363, :402, :441, :480, :519. Same defect class as done code-review-api-handlers-compliance-raw-db-error-leak — top offender by count on a financial-data handler."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-gov-portal-raw-db-leak",
+      "title": "api-server government_portal.rs leaks raw sqlx e.to_string() into ErrorResponse across 28 branches — CWE-209 on external-integration boundary",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/government_portal.rs — 28 error branches return `Json(ErrorResponse::new(\"DATABASE_ERROR\", e.to_string()))`; first sites at :96, :117, :147. External-integration surface (list_connections/list_submissions/list_attachments/list_schedules), so raw Postgres error text is the highest external-sensitivity instance of the class."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/government_portal.rs"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-messaging-raw-db-leak",
+      "title": "api-server messaging.rs leaks raw sqlx e.to_string() into ErrorResponse across 33 branches; mark_thread_read result silently discarded",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs — 33 error branches use `.map_err(|e| … Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())))?` on thread-detail (:621-623, :632-634). Private-messaging surface, so schema disclosure is a real info-disclosure risk. Also :640 `let _ = repo.mark_thread_read_rls(...).await;` silently drops the Result (no tracing) — minor reliability gap to fold into the same PR."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/messaging.rs"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n",
+      "title": "reality-web /[locale]/agency/[slug]/page.tsx has zero next-intl integration — cs/de/en visitors see hardcoded Slovak on a public agency profile",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web public routes)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (325 lines) — 0 imports of next-intl, 0 calls to getTranslations/useTranslations; hardcoded Slovak at L36 (Načítavam…), L46 (Kancelária sa nenašla.), L223 (Žiadne aktívne ponuky.), L279 (Kontakt), L302 (🌐 Navštíviť web). File header L9 claims next-intl integration that doesn't exist. Public route on a 4-locale portal (sk/cs/de/en)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "title": "reality-web /[locale]/realtor/[id]/page.tsx has zero next-intl integration — cs/de/en visitors see hardcoded Slovak on a public realtor profile",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web public routes)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx (649 lines) — 0 imports of next-intl, 0 calls to getTranslations/useTranslations; hardcoded Slovak L154 (Kontaktovať), L420 (Kontaktné údaje), L588 (Kontaktovať {agent.name}), aria-label L556 (Kontaktovať makléra) also unlocalized. Public 4-locale portal route."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-09-27",
+      "updated_at": "2026-09-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-no-i18n",
+      "title": "reality-web /[locale]/account/listings/[id]/edit/page.tsx (930 lines wizard) has zero next-intl — cs/de/en agents get Slovak-only edit flow",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-09-27 reality-web account routes)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (930 lines, churn hotspot — edited in the last 3 PRs touching the segment) — 0 imports of next-intl, 0 calls to getTranslations/useTranslations across a 5-step listing-edit wizard; hardcoded Slovak L166/L223/L233/L254/L268/L317/L340/L659/L775/L794/L827. Non-SK agents editing their own listing get a fully Slovak wizard."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
       ],
       "created_at": "2026-09-27",
       "updated_at": "2026-09-27",
