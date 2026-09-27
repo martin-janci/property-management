@@ -2391,7 +2391,8 @@
       "back": "Zurück zu den Regeln",
       "title": "Automatisierungsregel erstellen",
       "subtitle": "Richten Sie einen neuen automatisierten Workflow für Ihre Immobilienverwaltung ein.",
-      "error": "Automatisierungsregel konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+      "error": "Automatisierungsregel konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+      "incomplete": "Bitte vervollständigen Sie die Regel: Name, Auslöser und mindestens eine Aktion sind erforderlich."
     },
     "editPage": {
       "back": "Zurück zu den Regeln",

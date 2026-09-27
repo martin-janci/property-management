@@ -4681,7 +4681,8 @@
       "back": "Back to Rules",
       "title": "Create Automation Rule",
       "subtitle": "Set up a new automated workflow for your property management tasks.",
-      "error": "Failed to create automation rule. Please try again."
+      "error": "Failed to create automation rule. Please try again.",
+      "incomplete": "Please complete the rule: a name, a trigger, and at least one action are required."
     },
     "editPage": {
       "back": "Back to Rules",
