@@ -137,7 +137,7 @@ importers:
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.13.0
-        version: 4.13.0(playwright-core@1.62.1)
+        version: 4.13.0(playwright-core@1.63.0)
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -235,8 +235,8 @@ importers:
         specifier: ~57.0.15
         version: 57.0.15(expo@57.0.18)(react-native@0.87.1)(react@19.2.0)(typescript@5.9.3)
       expo-secure-store:
-        specifier: ~56.0.4
-        version: 56.0.4(expo@57.0.18)
+        specifier: ~57.0.3
+        version: 57.0.3(expo@57.0.18)
       expo-sharing:
         specifier: ~55.0.20
         version: 55.0.22(expo@57.0.18)(react-native@0.87.1)(react@19.2.0)
@@ -358,7 +358,7 @@ importers:
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.13.0
-        version: 4.13.0(playwright-core@1.62.1)
+        version: 4.13.0(playwright-core@1.63.0)
       '@axe-core/react':
         specifier: ^4.13.0
         version: 4.13.0
@@ -470,7 +470,7 @@ importers:
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.13.0
-        version: 4.13.0(playwright-core@1.62.1)
+        version: 4.13.0(playwright-core@1.63.0)
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -615,7 +615,7 @@ importers:
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.13.0
-        version: 4.13.0(playwright-core@1.62.1)
+        version: 4.13.0(playwright-core@1.63.0)
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -786,13 +786,13 @@ packages:
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
     dev: true
 
-  /@axe-core/playwright@4.13.0(playwright-core@1.62.1):
+  /@axe-core/playwright@4.13.0(playwright-core@1.63.0):
     resolution: {integrity: sha512-6YLx+kxXu5GJceG4ozFg+33a2EMTdjYwWGloJ3sb9Kta5pp+ZNS53uxGVog5JetIY8s++P5UrtX+cri+u0VAVg==}
     peerDependencies:
       playwright-core: '>= 1.0.0'
     dependencies:
       axe-core: 4.13.0
-      playwright-core: 1.62.1
+      playwright-core: 1.63.0
     dev: true
 
   /@axe-core/react@4.13.0:
@@ -6772,8 +6772,8 @@ packages:
       - typescript
     dev: false
 
-  /expo-secure-store@56.0.4(expo@57.0.18):
-    resolution: {integrity: sha512-hjEi/gmpdFFJ9lYbdp3k3p/WchV7Gi0Qt8jt/m/0WJadqQrskafHAlDxbZkII1cN3Yd7zp9Lvkeq3UfGhSwirQ==}
+  /expo-secure-store@57.0.3(expo@57.0.18):
+    resolution: {integrity: sha512-w7XkSQeUiYXPoKXo1jSrQqql7pyCSyIzOp2k0apsZZBE+RkoLTQIMjcbqc181y6KgupfNnYxkaKe+4MEg94+SA==}
     peerDependencies:
       expo: '*'
     dependencies:
@@ -9424,6 +9424,12 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
+  /playwright-core@1.63.0:
+    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
+    engines: {node: '>=20'}
+    hasBin: true
+    dev: true
+
   /playwright@1.62.1:
     resolution: {integrity: sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==}
     engines: {node: '>=20'}
@@ -9509,7 +9515,7 @@ packages:
       '@jest/schemas': 30.4.1
       ansi-styles: 5.2.0
       react-is-18: /react-is@18.3.1
-      react-is-19: /react-is@19.2.8
+      react-is-19: /react-is@19.3.0
     dev: true
 
   /proc-log@4.2.0:
@@ -9667,6 +9673,10 @@ packages:
 
   /react-is@19.2.8:
     resolution: {integrity: sha512-s5un28nYxKJw5gvUHyW5PCC28CvBqLu9r3cWgzHT4Vo/5fqqkFcdRYsGcKf50WMPpjjFZS5d76fn3YCo2njKwQ==}
+    dev: true
+
+  /react-is@19.3.0:
+    resolution: {integrity: sha512-UpMYezM4v5/18F28aC66AEsjXIgE02kyEMH6yLdgLXu/UTfa1Ntwck/nNLrbqJsEXW7gPb0coNO9FQse9WTovA==}
     dev: true
 
   /react-native@0.87.1(@babel/core@8.0.1)(@types/react@19.2.14)(react@19.2.0):
