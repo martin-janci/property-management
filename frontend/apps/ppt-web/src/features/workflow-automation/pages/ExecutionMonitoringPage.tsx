@@ -9,7 +9,9 @@ import type { ExecutionLog, ExecutionStatus } from '@ppt/api-client';
 import { useExecutionLogs, useExecutionStats, useRetryExecution } from '@ppt/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { useToast } from '../../../components';
 import { ExecutionDetailsModal } from '../components/ExecutionDetailsModal';
 import { ExecutionLogItem } from '../components/ExecutionLogItem';
 import { ExecutionStats } from '../components/ExecutionStats';
@@ -19,7 +21,9 @@ type DateRange = 'today' | 'week' | 'month' | 'all';
 const skeletonKeys = ['skeleton-1', 'skeleton-2', 'skeleton-3', 'skeleton-4', 'skeleton-5'];
 
 export function ExecutionMonitoringPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [statusFilter, setStatusFilter] = useState<ExecutionStatus | 'all'>('all');
   const [dateRange, setDateRange] = useState<DateRange>('week');
   const [ruleFilter, setRuleFilter] = useState<string>('');
@@ -72,8 +76,21 @@ export function ExecutionMonitoringPage() {
   };
 
   const handleRetry = async (log: ExecutionLog) => {
-    await retryExecution.mutateAsync(log.id);
-    setSelectedLog(null);
+    try {
+      await retryExecution.mutateAsync(log.id);
+      showToast({
+        type: 'success',
+        title: 'Execution retried',
+        message: 'The execution was queued for retry.',
+      });
+      setSelectedLog(null);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Retry failed',
+        message: err instanceof Error ? err.message : 'The execution could not be retried.',
+      });
+    }
   };
 
   const logs = logsData?.data ?? [];
@@ -90,10 +107,8 @@ export function ExecutionMonitoringPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Execution Monitoring</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Monitor and troubleshoot your automation executions.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('automation.execution.title')}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t('automation.execution.subtitle')}</p>
       </div>
 
       {/* Stats */}
@@ -107,7 +122,7 @@ export function ExecutionMonitoringPage() {
           {/* Date Range */}
           <div>
             <label htmlFor="date-range" className="sr-only">
-              Date range
+              {t('automation.execution.dateRangeLabel')}
             </label>
             <select
               id="date-range"
@@ -115,17 +130,17 @@ export function ExecutionMonitoringPage() {
               onChange={(e) => setDateRange(e.target.value as DateRange)}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="today">Today</option>
-              <option value="week">Last 7 Days</option>
-              <option value="month">Last 30 Days</option>
-              <option value="all">All Time</option>
+              <option value="today">{t('automation.execution.rangeToday')}</option>
+              <option value="week">{t('automation.execution.rangeWeek')}</option>
+              <option value="month">{t('automation.execution.rangeMonth')}</option>
+              <option value="all">{t('automation.execution.rangeAll')}</option>
             </select>
           </div>
 
           {/* Status Filter */}
           <div>
             <label htmlFor="status-filter" className="sr-only">
-              Status
+              {t('automation.execution.statusLabel')}
             </label>
             <select
               id="status-filter"
@@ -133,26 +148,26 @@ export function ExecutionMonitoringPage() {
               onChange={(e) => setStatusFilter(e.target.value as ExecutionStatus | 'all')}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-              <option value="running">Running</option>
-              <option value="pending">Pending</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="all">{t('automation.execution.allStatus')}</option>
+              <option value="completed">{t('automation.execution.statusCompleted')}</option>
+              <option value="failed">{t('automation.execution.statusFailed')}</option>
+              <option value="running">{t('automation.execution.statusRunning')}</option>
+              <option value="pending">{t('automation.execution.statusPending')}</option>
+              <option value="cancelled">{t('automation.execution.statusCancelled')}</option>
             </select>
           </div>
 
           {/* Rule Filter */}
           <div className="flex-1 min-w-48">
             <label htmlFor="rule-filter" className="sr-only">
-              Filter by rule
+              {t('automation.execution.ruleFilterLabel')}
             </label>
             <input
               id="rule-filter"
               type="text"
               value={ruleFilter}
               onChange={(e) => setRuleFilter(e.target.value)}
-              placeholder="Filter by rule ID..."
+              placeholder={t('automation.execution.ruleFilterPlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -180,7 +195,7 @@ export function ExecutionMonitoringPage() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Refresh
+            {t('automation.execution.refresh')}
           </button>
         </div>
       </div>
@@ -188,7 +203,7 @@ export function ExecutionMonitoringPage() {
       {/* Error */}
       {logsError && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-700">Failed to load execution logs. Please try again.</p>
+          <p className="text-red-700">{t('automation.execution.loadError')}</p>
         </div>
       )}
 
@@ -227,11 +242,13 @@ export function ExecutionMonitoringPage() {
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No execution logs</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('automation.execution.emptyTitle')}
+          </h3>
           <p className="mt-2 text-sm text-gray-500">
             {statusFilter !== 'all' || dateRange !== 'all' || ruleFilter
-              ? 'No executions match your current filters.'
-              : 'Execution logs will appear here when your automations run.'}
+              ? t('automation.execution.emptyBodyFiltered')
+              : t('automation.execution.emptyBody')}
           </p>
           {(statusFilter !== 'all' || dateRange !== 'all' || ruleFilter) && (
             <button
@@ -243,14 +260,14 @@ export function ExecutionMonitoringPage() {
               }}
               className="mt-4 text-sm text-blue-600 hover:text-blue-700"
             >
-              Clear filters
+              {t('automation.execution.clearFilters')}
             </button>
           )}
         </div>
       ) : (
         <>
           <p className="text-sm text-gray-500 mb-4">
-            Showing {logs.length} of {totalLogs} executions
+            {t('automation.execution.showing', { shown: logs.length, total: totalLogs })}
           </p>
           <div className="space-y-3">
             {logs.map((log) => (
@@ -293,7 +310,7 @@ export function ExecutionMonitoringPage() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <span className="text-gray-700">Retrying execution...</span>
+            <span className="text-gray-700">{t('automation.execution.retrying')}</span>
           </div>
         </div>
       )}
