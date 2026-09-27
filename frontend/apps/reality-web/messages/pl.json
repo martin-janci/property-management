@@ -1019,6 +1019,8 @@
       "feedName": "Nazwa kanału (opcjonalnie)",
       "feedNamePlaceholder": "Mój kanał nieruchomości",
       "fetchError": "Nie udało się pobrać kanału. Sprawdź URL i spróbuj ponownie.",
+      "updateError": "Nie udało się zaktualizować kanału. Spróbuj ponownie.",
+      "removeError": "Nie udało się usunąć kanału. Spróbuj ponownie.",
       "format": "Format",
       "itemsFound": "Znalezione pozycje",
       "availableFields": "Dostępne pola",

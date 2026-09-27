@@ -1026,6 +1026,8 @@
       "feedName": "Feed-Name (optional)",
       "feedNamePlaceholder": "Mein Immobilien-Feed",
       "fetchError": "Feed konnte nicht abgerufen werden. Bitte prüfen Sie die URL und versuchen Sie es erneut.",
+      "updateError": "Feed konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+      "removeError": "Feed konnte nicht entfernt werden. Bitte versuchen Sie es erneut.",
       "format": "Format",
       "itemsFound": "Gefundene Einträge",
       "availableFields": "Verfügbare Felder",
