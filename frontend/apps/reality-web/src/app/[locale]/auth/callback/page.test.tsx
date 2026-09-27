@@ -109,6 +109,19 @@ describe('SsoCallbackPage — reality-web SSO /auth/callback flow (Story 79.2)',
     expect(screen.queryByText('title')).not.toBeInTheDocument();
   });
 
+  it('renders the "completing login" status from an i18n key, not a hardcoded string', async () => {
+    // Regression: the progress copy used to be a hardcoded English literal
+    // ("Completing login..."), bypassing i18n. It must now come from the
+    // `auth.callback.completingLogin` message key. With the global next-intl
+    // test mock, `t(key)` returns the key itself, so the rendered text is the
+    // key — proving the string is no longer hardcoded.
+    renderCallback('');
+
+    await waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/'));
+    expect(screen.getByText('completingLogin')).toBeInTheDocument();
+    expect(screen.queryByText('Completing login...')).not.toBeInTheDocument();
+  });
+
   it('redirects when NO nonce was issued (server-cookie-only flow, nothing to verify)', async () => {
     // No `sso_state` in sessionStorage → no nonce was issued, so there is
     // nothing to validate and the server-set-cookie flow proceeds.
