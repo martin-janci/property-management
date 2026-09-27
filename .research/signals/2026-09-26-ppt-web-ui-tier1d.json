@@ -1,0 +1,71 @@
+{
+  "generated": "2026-09-26T00:00:00Z",
+  "source_run": "dispatcher Tier-1d buffer-starvation vector generator (claimable=8 < floor=36, run parity EVEN) 2026-09-26 — single ppt-dev-review static-review slice",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "OLDEST-UNREVIEWED after advancing past recently-covered segments. state.json review_cursor: {api-handlers:2026-08-31, api-core:2026-09-01, reality-server:2026-08-31, ppt-web-ui:2026-09-06, ppt-web-core:2026-08-29, reality-web:2026-08-29, mobile-rn:2026-09-09, mobile-native-kmp:2026-09-10}. The cursor is known-stale (dispatcher Tier-1d runs do not advance it), so the signals corpus was cross-referenced per the prior-run precedent: the 2026-09-25 batch already reviewed api-core, api-handlers, ppt-web-core AND reality-web (four tier1d slice files dated 2026-09-25 exist), and the task instruction excludes ppt-web-core and reality-server. Excluding all recently-covered segments (api-core, api-handlers, ppt-web-core, reality-web @ 2026-09-25; reality-server per task), the eligible remainder is {ppt-web-ui:2026-09-06, mobile-rn:2026-09-09, mobile-native-kmp:2026-09-10}. Oldest eligible is ppt-web-ui (2026-09-06). SATURATION check: backlog.json holds 0 OPEN code-review-finding rows for ppt-web-ui (7 exist, all status=done), so no saturation-skip. ppt-web-ui is a LANDABLE frontend segment (pnpm/vitest verifiable), satisfying the dispatcher landable-preferred directive over mobile-native-kmp (AGP egress-blocked #2652). Note: reality-web's 3 formerly-open findings are now all status=done in backlog.json (reconciled since 2026-09-25), so it is no longer saturated — but it was reviewed 2026-09-25, so rotation correctly advances past it. Static-only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "note": "Segment is 525 files; per the skill's >40-file rule the pass narrowed to the churn-hot workflow-automation feature (frontend/apps/ppt-web/src/features/workflow-automation/, the entire cluster touched by the most-recent PRs per git log). Also spot-verified reality-web-adjacent patterns do not recur here. The 7 existing ppt-web-ui done findings (createfault-mock-ai, moderation-fabricated-context, moderation-no-i18n, verification-badge-expired, vote-detail-hardcoded-en, submission-preview-modal-orphan, confirm-dialog-i18n) are all in OTHER features; none touches workflow-automation, so all three findings below are net-new. Finding (1) is distinct from the 2026-09-25 ppt-web-CORE fault-detail-mutations-swallow-errors signal: different segment (ui vs core), different file (features/workflow-automation/pages/AutomationRulesPage.tsx vs routes/groups/faults.tsx), different feature, and with an additional stuck-modal side-effect specific to confirmDelete. ppt-web supports 6 locales (en/sk/cs/de/pl/hu — src/i18n/config.ts:5), which is what makes the feature-wide English hardcoding in (2) a real user-facing gap on a matching precedent to the already-filed moderation-no-i18n / vote-detail-hardcoded-en / confirm-dialog-i18n findings.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui features/workflow-automation/pages/AutomationRulesPage.tsx)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx:56-72 - three state-changing handlers await a mutateAsync with NO try/catch and NO rendered error state: confirmDelete (:56-61) -> await deleteRule.mutateAsync(deleteConfirm.id) then setDeleteConfirm(null); handleToggle (:63-68) -> await updateRule.mutateAsync({id, data:{isEnabled}}); handleRun (:70-72) -> await runRule.mutateAsync(rule.id). deleteRule/updateRule/runRule come from @ppt/api-client (useDeleteAutomationRule/useUpdateAutomationRule/useRunAutomationRule, imported :11-13,:44-46).",
+        "None of the three mutations' .error is rendered anywhere in the file: grep for deleteRule./updateRule./runRule./.error/.isError in AutomationRulesPage.tsx returns only deleteRule.isPending (:303 disabled, :306 'Deleting...' label) — the pending state is wired but the error state is not. So on a rejected request (permission denied, 4xx/5xx, network) the async handler's promise rejects unhandled and the user gets zero feedback.",
+        "confirmDelete has an extra defect: because setDeleteConfirm(null) is on the line AFTER the awaited mutateAsync (:58->:59), a rejected delete skips the state reset, leaving the delete-confirmation modal stuck open with no error message and no way to tell the delete failed. The manager reasonably assumes it worked (or retries into a second rejection).",
+        "The correct pattern exists on the sibling CreateRulePage in the SAME feature: CreateRulePage.tsx:62-66 renders {createRule.error && (...)} to surface create failures. AutomationRulesPage simply omits the equivalent for delete/toggle/run. Fix (low-risk): render deleteRule.error/updateRule.error/runRule.error inline (mirroring CreateRulePage), and move setDeleteConfirm(null) into an onSuccess / finally so the modal always closes appropriately.",
+        "NET-NEW and distinct from prior signals: the 7 existing ppt-web-ui findings are all in other features; the 2026-09-25 code-review-ppt-web-core-fault-detail-mutations-swallow-errors is a different segment (core), different file (routes/groups/faults.tsx), different feature (faults). Confidence high: full call path traced from the handler to the generated mutation hooks; reachable in production on the /automations/rules manager route (delete/pause/run rule)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui features/workflow-automation/)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/TriggerSelector.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "evidence": [
+        "The entire workflow-automation feature ships hardcoded English with no i18n on a 6-locale app (src/i18n/config.ts:5 locales = ['en','sk','cs','de','pl','hu']). 12 of 15 non-test files have ZERO useTranslation/t() calls: ActionBuilder.tsx, ConditionBuilder.tsx, ExecutionLogItem.tsx, ExecutionStats.tsx, RuleCard.tsx, TemplateCard.tsx, TriggerSelector.tsx, AutomationRulesPage.tsx, CreateRulePage.tsx, EditRulePage.tsx, ExecutionMonitoringPage.tsx, TemplateLibraryPage.tsx (only ExecutionDetailsModal.tsx, RuleBuilder.tsx, TemplatePreviewModal.tsx have any t()).",
+        "Confirmed hardcoded user-facing strings: AutomationRulesPage.tsx:82 <h1>Automation Rules</h1>, :133 placeholder=\"Search rules...\", :150-152 option labels 'All Status'/'Active'/'Paused', :167-171 'All Triggers'/'Time Based'/'Event Based'/'Condition Based'/'Manual', :217 empty-state <h3>No automation rules yet</h3>, :285 <h3>Delete Automation Rule</h3>. CreateRulePage.tsx:50 'Back to Rules', :52 <h1>Create Automation Rule</h1>, :53-54 subtitle, :64 error text 'Failed to create automation rule. Please try again.'.",
+        "TriggerSelector.tsx:22-58 hardcodes the trigger taxonomy shown to the user as plain English literals: trigger type label/description pairs ('Time Based','Event Based','Condition Based','Manual' :25-43) and the full event-type list with categories ('Fault Created'/'Faults', 'Payment Received'/'Payments', 'Document Uploaded'/'Documents', 'Vote Started'/'Voting', 'Guest Registered'/'Guests', etc. :49-58). Non-EN managers (sk/cs/de/pl/hu) see the whole automation builder in English.",
+        "Same class as already-filed done findings code-review-ppt-web-ui-moderation-no-i18n, -vote-detail-hardcoded-en, and -confirm-dialog-i18n, but a net-new, larger surface (an entire feature area rather than a single component). Low severity (i18n gap) but broad. Confidence medium (static-only)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui features/workflow-automation/pages/CreateRulePage.tsx)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:18-19 - handleSave receives rule: Partial<AutomationRule> from the RuleBuilder and immediately casts it to the full required type as it crosses the create-mutation API boundary: `await createRule.mutateAsync(rule as AutomationRule)`. The `as AutomationRule` assertion silences the compiler even though the value is typed Partial<> — every field the AutomationRule interface marks required (and that RuleBuilder did not populate) can be undefined at runtime while the type system now claims it is present.",
+        "This defeats the one compile-time guarantee that the create payload is complete: if RuleBuilder emits a partial rule (missing trigger, empty actions, etc.) the POST goes out as if well-formed, so validation is entirely deferred to the server (best case a 422 surfaced via createRule.error :62; worse case a malformed rule persisted if the server is lenient). The type-safe fix is to type useCreateAutomationRule's input as the actual create-request DTO (partial-by-design) or to validate/assemble a complete AutomationRule in RuleBuilder before onSave, rather than lying to the compiler with `as`.",
+        "Matches the skill's frontend pattern 'TypeScript cast that crosses an API boundary'. Net-new (no prior ppt-web-ui signal covers this file). Low severity, confidence medium (static-only; the concrete impact depends on whether RuleBuilder enforces completeness, which was not runtime-verified)."
+      ]
+    }
+  ]
+}

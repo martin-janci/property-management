@@ -4,50 +4,31 @@
  * TanStack Query wrapper over `GET /api/v1/admin/notifications/analytics`. The
  * endpoint follows the `admin/audit` precedent: capability-gated (`audit_read`)
  * and absent from the generated `@ppt/api-client`, so we call the REST path
- * directly. The bearer token is read from localStorage (same convention as
- * `features/auth/authApiClient.ts` / `features/privacy/gdprClient.ts`) because
- * the handler requires authentication — a bare `fetch` would 401.
+ * directly through the shared axios client (`getApiClient()`). Routing through
+ * that client stamps `Authorization: Bearer <token>` via the request
+ * interceptor (a bare `fetch` bypassed it — the manual localStorage token read
+ * also missed the single-flight 401 refresh/replay, ErrorResponse → ApiError
+ * transformation, and transient-failure retry the interceptor provides, #2982).
+ * The path is relative to the client baseURL (`/api/v1`); the rejected ApiError
+ * still carries `.status` for consumers that branch on it.
  */
 import { useQuery } from '@tanstack/react-query';
+import { getApiClient } from '../../../lib/api';
 import type { NotificationAnalyticsFilters, NotificationAnalyticsResponse } from '../types';
 
-const ANALYTICS_PATH = '/api/v1/admin/notifications/analytics';
-const ACCESS_TOKEN_KEY = 'ppt_access_token';
-
-function readAccessToken(): string | undefined {
-  try {
-    return localStorage.getItem(ACCESS_TOKEN_KEY) ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
+const ANALYTICS_PATH = '/admin/notifications/analytics';
 
 async function fetchAnalytics(
   filters: NotificationAnalyticsFilters
 ): Promise<NotificationAnalyticsResponse> {
-  const params = new URLSearchParams();
   // Relative lower-bound alias; backend defaults to 24h when omitted.
-  params.set('after', filters.window);
+  const params: Record<string, string> = { after: filters.window };
   if (filters.channel) {
-    params.set('channel', filters.channel);
+    params.channel = filters.channel;
   }
 
-  const token = readAccessToken();
-  const headers = new Headers({ 'Content-Type': 'application/json' });
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-
-  const res = await fetch(`${ANALYTICS_PATH}?${params.toString()}`, { headers });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { message?: string } | null;
-    const error = new Error(body?.message || `Request failed (HTTP ${res.status})`) as Error & {
-      status: number;
-    };
-    error.status = res.status;
-    throw error;
-  }
-  return res.json() as Promise<NotificationAnalyticsResponse>;
+  const res = await getApiClient().get<NotificationAnalyticsResponse>(ANALYTICS_PATH, { params });
+  return res.data;
 }
 
 export const notificationAnalyticsKeys = {

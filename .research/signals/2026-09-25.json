@@ -1,0 +1,157 @@
+{
+  "date": "2026-09-25",
+  "signals": [
+    {
+      "id": "buffer-low-2026-09-25-payload",
+      "type": "operator-context",
+      "source": "routine trigger payload 2026-09-25T14:38Z",
+      "score_delta": 0,
+      "evidence": [
+        "trigger payload: 'buffer-low: claimable=8/72 — refill planner (all open items mobile-native-gated)'",
+        "dispatcher-side telemetry; logged in brief under Watch; not a code vector"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — allowlist did not fire",
+  "notes": [
+    "Incremental run 35h after 2026-09-24T03:19Z. 0 merged PRs (last_pr_seen=2956 unchanged), 0 new issues (last_issue_seen=2966 unchanged), 0 open-PR touched-since-last-run events landed (all pre-existing drafts).",
+    "23 commits on dev in window: 20 dispatcher chore commits + 2 tier-1d generator signal commits + 1 dispatcher pre-spawn-claim commit + 0 application-code merges (the 2026-09-24 routine brief commit is inside the window but is a routine commit, not application code). Dispatcher fast-path spawned 2 draft PRs (#2976 IDOR #2945 retry1 + #2977 IDOR #2944 retry1) on 2026-09-25 02:44Z; these are dispatcher assignments, not new backlog vectors.",
+    "3 closed-not-merged dependabot PRs (#2963/#2964/#2965) superseded by new dependabot rollups (#2972/#2973/#2974/#2975); classified as dep-update-noise (score=0, brief-log only).",
+    "Phase 1.5 skipped: no application-code churn since last run — third consecutive skip (2026-09-23, 2026-09-24, 2026-09-25). Dispatcher Tier-1d generator continues to cover reviewable segments (signals/2026-09-25-{api-handlers,ppt-web-core,reality-web}-tier1d.json already landed on dev, dispatcher-branch scope).",
+    "Phase 1.6 skipped: same reason — no delivery-relevant merges to synthesise.",
+    "Buffer-low trigger context surfaces the mobile-native-gate concentration in the current active-plan set (25 plans on disk; dispatcher reports 8/8 claimable slots with dep-blocked=0 — telemetry is dispatcher-side, not routine cursor).",
+    "backlog.md + IDEAS_TRIAGE.md regenerated with new timestamp (14:44 UTC); byte-identity check confirmed against jq-based renderer.",
+    "Routine lag: 35h (< 36h threshold) — no lag_warning emitted; no stale_routine_alert (< 3d)."
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-25.md; head -1 matches '# 2026-09-25'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true — last_commit_sha advanced e09587a2→41f78e55; stats.runs 81→82; stats.quiet_days 4→5; seen_signals +1 (buffer-low-2026-09-25-payload)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true (419 items, 419 unique ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emit of prior seen_signals with score_delta != 0",
+      "observed": "true (only signal this run, buffer-low-2026-09-25-payload, has score_delta=0; not in prior seen_signals — new id)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true (max score = 6)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "decay check — open items with updated_at ≤ 14d ago",
+      "observed": "no-op — the 3 open reality-web silent-fail items are updated_at=2026-09-21 (4d ago); the 4 non-open non-terminal items are within window; nothing to decay",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — G6 no-op",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '_archive/' | grep -c '\\.md$' <= 2",
+      "observed": "0 new plans",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l == 0",
+      "observed": "0 files outside .research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets in staged diff excluding four baseline docs",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md from backlog.json via render-backlog.sh; diff -q against staged",
+      "observed": "identical (byte-for-byte match after regen; renderer stable-sorts by score-desc, updated_at-desc, then original array index asc)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists 'Phases that failed'; verify cursor advancement matches",
+      "observed": "no failed phases; all cursors advanced as expected",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or plans/_archive/",
+      "observed": "25 active + 8 archive; every prior slug still present",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ archive-count-now >= archive-count-HEAD ]",
+      "observed": "8 == 8",
+      "expected": ">=  HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md from backlog.json (vector==triage); diff -q against staged",
+      "observed": "identical (byte-for-byte match)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + kill-switch + idempotency",
+      "observed": "0 actions this run; auto_fix_history untouched",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (when Phase 1.6 ran)",
+      "observed": "Phase 1.6 skipped this run — gate is a no-op; pm_cursor.next_index=5 and coverage_cursor.next_index=7 both stay unchanged from HEAD",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

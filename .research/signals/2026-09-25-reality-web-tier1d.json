@@ -1,0 +1,71 @@
+{
+  "generated": "2026-09-25T00:00:00Z",
+  "source_run": "dispatcher Phase 1.5 Tier-1d demand-driven static code review (claim buffer starved, honest claimable < floor 36; cloud-landable frontend segment preferred) 2026-09-25",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (tie). state.json review_cursor has ppt-web-core=2026-08-29 and reality-web=2026-08-29 as the two tied-oldest segments. ppt-web-core was mined earlier this same cycle (see .research/signals/2026-09-25-ppt-web-core-tier1d.json + 2026-09-24-ppt-web-core-tier1d.json, 3+3 findings) so re-picking it duplicates. reality-web's prior pass (2026-09-24-reality-web-tier1d.json) RECOMMENDED advancing the cursor to 2026-09-24 but state.json review_cursor.reality-web was NOT actually advanced (still 2026-08-29), so per the skill's rule reality-web is still tied-oldest and eligible. Saturation check: backlog.json has 0 OPEN code-review-finding items for reality-web (3 prior i18n findings all status=done), so no saturation skip. reality-web chosen: tied-oldest, unsaturated, cloud-landable Next.js frontend.",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "reality-web is a Next.js frontend app; findings here ARE landable in the cloud runner (unlike backend api-server, blocked by verify-gate egress-403 #2966; mobile-native KMP, AGP egress-gated; and RN mobile jest, broken #2951). Each finding below is an i18n / string-externalization change verifiable via `pnpm --filter @ppt/reality-web typecheck` + Biome, no backend or device dependency.",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "Frontend-expert static sweep (read + grep only, no build/test per skill contract). The prior 2026-09-24 reality-web pass found 0 and was security/crash-focused (SSR fetch, webhook HMAC, XSS sinks, SSO callback, TenantProvider) and explicitly did NOT audit i18n coverage of the authenticated account/realtor route group. Net-new finding this pass: the ENTIRE authenticated account/ + realtor/ route group renders hardcoded English on a 4-locale public portal (sk/cs/de/en). This is the SAME accepted-and-fixed finding class as the 3 done reality-web i18n items (comparison-view-i18n, realtor-mgmt-i18n, agency-errorstate-i18n) — recurring in files those fixes never touched. grep confirms these page files import NO useTranslations/getTranslations/next-intl yet contain user-facing titles, subtitles, form labels, button text, client-side validation messages, and error fallbacks. Split into 3 shippable route-group units for a starved buffer. Non-i18n surfaces re-confirmed clean: no `as any`/`as unknown as` outside test files; console.error/warn only in error boundaries and legitimate catch/diagnostic paths; useEffect data-fetchers (analytics, ComparisonUrlHandler) have proper catch + error state; RealtorManagement invite mutation has try/catch + i18n error. One nit deliberately NOT emitted: realtor/analytics keeps stale `analytics` grid visible during a failed period-change refetch (low UX, below cap threshold).",
+  "signals": [
+    {
+      "id": "code-review-reality-web-account-pages-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web] (dispatcher Tier-1d 2026-09-25 account route group)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx imports NO next-intl (grep for useTranslations/getTranslations/next-intl returns 0) yet is a fully user-facing authenticated page under [locale]. Every string is a hardcoded English literal: title 'Edit profile' (:48), subtitle 'Update your display name and contact preferences.' (:49), label 'Display name' (:63), label 'Email' (:75), hint 'Contact support to change the email on this account.' (:77), button 'Saving…'/'Save changes' (:81), link 'Back to account' (:87). Critically the client-side validation and error fallbacks are also English-only: 'Display name is required' (:32) and 'Could not save profile.' (:40). On the 4-locale portal (sk/cs/de/en) an sk/cs/de visitor sees English UI AND English error/validation text.",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx — same defect, security-adjacent: hardcoded validation/error strings 'Current password is required' (:36), 'New password is required' (:37), 'New password must differ from the current password' (:41), 'Passwords do not match' (:42), 'Current password is incorrect.' (:55), 'Could not change password. Please try again.' (:59); plus title 'Change password' (:68), subtitle (:69), labels 'Current password' (:83)/'New password' (:96)/'Confirm new password' (:113), hint 'At least {MIN_PASSWORD} characters.' (:108), button 'Updating…'/'Update password' (:126). A password-change flow surfacing English-only failure reasons to non-EN users is a comprehension/security-UX gap.",
+        "This is the SAME finding class already accepted+fixed 3× for reality-web (backlog: code-review-reality-web-comparison-view-i18n, -realtor-mgmt-i18n, -agency-errorstate-i18n, all status=done), recurring in the account/ route group those fixes never touched. Landable frontend-only remedy: add an `account` (or reuse `pages.*`) namespace to messages/{en,sk,cs,de}.json and route every literal through useTranslations, mirroring the already-fixed components. Verifiable via `pnpm --filter @ppt/reality-web typecheck` + a test asserting the page renders no bare English literal for a non-EN locale. Confidence medium: i18n absence is grep-confirmed by static read; no runtime render confirmation."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-hub-analytics-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web] (dispatcher Tier-1d 2026-09-25 realtor dashboard)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx (realtor dashboard hub, UC-51) imports NO next-intl. The SECTIONS nav model (:16-37) hardcodes English title+description pairs for every card: {'Profile','Public realtor profile and bio.'}, {'My listings','Listings you manage.'}, {'Create listing','Publish a new property to the portal.'}, {'Analytics','Views, inquiries and conversions for your listings.'}. These are the primary navigation labels of the realtor area — rendered in English to sk/cs/de realtors.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx (UC-51.10) imports NO next-intl. Hardcoded: PERIODS dropdown labels 'Last 7 days'/'Last 30 days'/'Last 90 days'/'Last year' (:14-19), title 'Analytics' (:68), subtitle 'Performance of your listings over time.' (:69), loading state 'Loading metrics…' (:80), StatCard labels 'Total listings'/'Active listings'/'Total views'/'Inquiries'/'Conversion rate' (:85-91), and the error fallback 'Could not load analytics.' (:54). Note the data-fetch error handling itself is correct (useEffect + catch + cancelled guard, :44-62) — only the surfaced strings are un-externalized.",
+        "Same accepted i18n finding class as the 3 done reality-web items. Landable frontend-only: add a `realtor` messages namespace and route SECTIONS/PERIODS/StatCard labels + error strings through useTranslations (client-component pattern already used by RealtorManagement.tsx after its i18n fix). Verifiable via `pnpm --filter @ppt/reality-web typecheck`. Confidence medium: grep-confirmed absence, no runtime confirmation."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-listing-crud-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web] (dispatcher Tier-1d 2026-09-25 realtor listing CRUD)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx imports NO next-intl: title 'Create listing' (:37), subtitle 'Publish a new property to Reality Portal.' (:38), and the create error fallback 'Could not create listing. Please try again.' (:27) are hardcoded English. This is the realtor listing-creation entry point on a 4-locale portal.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx imports NO next-intl: title 'Edit listing' (:74), subtitle 'Update the details of your listing.' (:75), loading state 'Loading listing…' (:81), guard message 'Missing listing id.' (:68), and error fallbacks 'Could not load listing.' (:42) + 'Could not save listing.' (:61) are hardcoded English. Both create and edit destructive/save flows surface English-only failure reasons to non-EN realtors.",
+        "Same accepted i18n finding class as the 3 done reality-web items; these two files are the realtor listing-CRUD pair those fixes never touched. Landable frontend-only: externalize titles/subtitles/state+error strings into the `realtor` messages namespace via useTranslations. Verifiable via `pnpm --filter @ppt/reality-web typecheck`. Confidence medium: grep-confirmed absence, no runtime confirmation."
+      ]
+    }
+  ]
+}

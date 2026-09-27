@@ -144,6 +144,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   const t = useTranslations('import.feed');
   const tHist = useTranslations('import.schedule.historyStatus');
   const [showHistory, setShowHistory] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const deleteMutation = useDeleteFeedSource(agencyId);
   const syncMutation = useSyncFeedSource(agencyId, feed.id);
   const updateMutation = useUpdateFeedSource(agencyId, feed.id);
@@ -152,14 +153,24 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   const statusConfig = getFeedStatusConfig(feed.status);
 
   const handleTogglePause = async () => {
-    await updateMutation.mutateAsync({
-      status: feed.status === 'active' ? 'paused' : 'active',
-    });
+    setActionError(null);
+    try {
+      await updateMutation.mutateAsync({
+        status: feed.status === 'active' ? 'paused' : 'active',
+      });
+    } catch {
+      setActionError(t('updateError'));
+    }
   };
 
   const handleDelete = async () => {
     if (confirm(t('confirmRemove'))) {
-      await deleteMutation.mutateAsync(feed.id);
+      setActionError(null);
+      try {
+        await deleteMutation.mutateAsync(feed.id);
+      } catch {
+        setActionError(t('removeError'));
+      }
     }
   };
 
@@ -233,6 +244,12 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           {t('remove')}
         </button>
       </div>
+
+      {actionError && (
+        <div className="feed-error" role="alert" aria-live="assertive">
+          {actionError}
+        </div>
+      )}
 
       {showHistory && history && (
         <div className="history-section">
@@ -379,6 +396,15 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
 
         .action-button.delete:hover {
           background: var(--ppt-color-danger-light);
+        }
+
+        .feed-error {
+          margin: 0 20px 16px;
+          padding: 12px 16px;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
+          border-radius: 8px;
+          font-size: 14px;
         }
 
         .history-section {

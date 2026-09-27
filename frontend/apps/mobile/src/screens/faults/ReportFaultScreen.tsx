@@ -270,6 +270,23 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
     }
   }, [t]);
 
+  // Surface the completion alert. The fault create carries no attachments —
+  // uploading the picked photos needs the presigned-URL pipeline
+  // (POST /faults/{id}/attachments), which has no shared mobile helper yet (see
+  // handleSubmit). Previously the photos were dropped silently behind a plain
+  // success alert, so the user believed they were attached (issue: RN fault
+  // photos silently dropped). When any photos were selected we now tell the
+  // user they were NOT uploaded instead of dropping them without a word.
+  const finishWithAlert = (title: string, message: string) => {
+    if (photos.length > 0) {
+      Alert.alert(t('faults.photosNotUploadedTitle'), t('faults.photosNotUploadedWarning'), [
+        { text: t('common.ok'), onPress: onSuccess },
+      ]);
+      return;
+    }
+    Alert.alert(title, message, [{ text: t('common.ok'), onPress: onSuccess }]);
+  };
+
   // Persist the create to the offline queue for replay on reconnect.
   const queueForLater = async (payload: CreateFaultVariables, message: string) => {
     await addToQueue({
@@ -279,7 +296,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
       body: payload,
     });
     setQueuedOffline(true);
-    Alert.alert(t('faults.queuedTitle'), message, [{ text: t('common.ok'), onPress: onSuccess }]);
+    finishWithAlert(t('faults.queuedTitle'), message);
   };
 
   const handleSubmit = async () => {
@@ -321,9 +338,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
       queryClient.invalidateQueries({ queryKey: ['faults', 'list'] });
       // The key has been consumed; a subsequent report gets a fresh one.
       idempotencyKeyRef.current = null;
-      Alert.alert(t('common.done'), t('faults.successSubmit'), [
-        { text: t('common.ok'), onPress: onSuccess },
-      ]);
+      finishWithAlert(t('common.done'), t('faults.successSubmit'));
     } catch (error) {
       // The request failed mid-flight. We can't tell a dropped connection from
       // a server error here, so queue for replay: a transient/5xx error retries

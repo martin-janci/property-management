@@ -9,6 +9,7 @@
 import type { ListingSummary } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/states/EmptyState';
+import { ErrorState } from '@/components/states/ErrorState';
 import { ListingCard } from './ListingCard';
 
 interface ListingGridProps {
@@ -16,6 +17,8 @@ interface ListingGridProps {
   viewMode: 'grid' | 'list';
   onToggleFavorite?: (listingId: string, isFavorite: boolean) => void;
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
 export function ListingGrid({
@@ -23,6 +26,8 @@ export function ListingGrid({
   viewMode,
   onToggleFavorite,
   isLoading = false,
+  isError = false,
+  onRetry,
 }: ListingGridProps) {
   const t = useTranslations('listings');
 
@@ -59,6 +64,21 @@ export function ListingGrid({
           }
         `}</style>
       </div>
+    );
+  }
+
+  // Distinguish API failure from a genuinely empty result set. On error `data`
+  // is undefined and `listings` is `[]`, which would otherwise fall through to
+  // the empty ("no results") state below and hide the failure from the user.
+  if (isError) {
+    return (
+      <ErrorState
+        icon="⚠️"
+        title={t('errorTitle')}
+        description={t('errorDescription')}
+        onRetry={onRetry}
+        retryLabel={t('retry')}
+      />
     );
   }
 
