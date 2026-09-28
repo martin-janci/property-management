@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-27T03:18:40Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 2991,
-  "last_issue_seen": 2982,
-  "last_commit_sha": "8c5d5952345e4873b719751ab5364b07aa2cdd6d",
+  "last_run_iso": "2026-09-28T03:23:09Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 2996,
+  "last_issue_seen": 3000,
+  "last_commit_sha": "1220daaa5077065048dc098fe5ead60671907e7a",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -536,6 +536,21 @@
       "runs_seen": 1,
       "last_seen": "2026-09-26",
       "recent_churn": 83
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-28",
+      "recent_churn": 56
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-28",
+      "recent_churn": 121
+    },
+    "frontend/apps/ppt-web/src/routes/groups/core.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-09-28",
+      "recent_churn": 32
     }
   },
   "seen_signals": [
@@ -1049,22 +1064,30 @@
     "untriaged-issue-951",
     "untriaged-issue-952",
     "code-review-ppt-web-core-dashboard-routes-unguarded",
-    "code-review-ppt-web-core-home-cta-role-drift"
+    "code-review-ppt-web-core-home-cta-role-drift",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+    "screen-map-drift-pr-2993-reality",
+    "screen-map-drift-pr-2994-ppt",
+    "screen-map-drift-pr-2995-ppt",
+    "code-review-ppt-web-ui-payment-matching-mutations-silent-fail",
+    "code-review-ppt-web-ui-payment-matching-no-i18n"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-09-27",
     "api-core": "2026-09-01",
     "reality-server": "2026-08-31",
-    "ppt-web-ui": "2026-09-06",
+    "ppt-web-ui": "2026-09-28",
     "ppt-web-core": "2026-09-27",
     "reality-web": "2026-08-29",
     "mobile-rn": "2026-09-09",
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 84,
-    "vectors_created": 387,
+    "runs": 85,
+    "vectors_created": 395,
     "plans_created": 31,
     "quiet_days": 5,
     "auto_fix_count": 0
@@ -1080,19 +1103,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-09-28",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }

@@ -1,6 +1,6 @@
 # PPT Project State
 
-_Generated: 2026-08-31 — routine Phase 1.6 lightweight upkeep (pm-devops rotation slot; 76-day stale slot refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-devops → pm-security next), coverage_cursor idx 6 → 7 (epic-81 re-checked, no material change; advances to epic-82). Sprint window 2026-08-26..08-31 shipped 10 PRs — all code-review batch (#2889-#2899, dispatcher merged in-window)._
+_Generated: 2026-09-28 — routine Phase 1.6 lightweight upkeep (pm-security rotation slot; slot last-run 2026-07-21 refreshed) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-security → pm-data next), coverage_cursor idx 7 → 8 (epic-82 re-checked, no material change; advances to epic-83). Sprint window 2026-09-27..09-28 shipped 4 code-review PRs (#2993 reality-web callback i18n, #2994 dashboard route guard, #2995 Home CTA role gate, #2996 CreateRule boundary typing) — all resolve prior code-review-finding backlog items._
 
 ## Executive summary
 

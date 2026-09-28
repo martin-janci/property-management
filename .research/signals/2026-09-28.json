@@ -1,0 +1,219 @@
+{
+  "generated": "2026-09-28T03:22:52Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-09-27..2026-09-28",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3 commits in 24h, 56 lines net (i18n bulk + boundary typing) \u2014 new hotspot (not in hotspot_history)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-09-27..2026-09-28",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2 commits, 121 lines net \u2014 workflow-automation module churn (i18n + toast wiring)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-09-27..2026-09-28",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2 commits, 32 lines net (PR #2994 ProtectedRoute wrap + PR #2995 Home CTA role gate)"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2993-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2993",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2993 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx without updating docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2994",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2994 touched frontend/apps/ppt-web/src/routes/groups/core.tsx without updating docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2995",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2995 touched frontend/apps/ppt-web/src/routes/groups/core.tsx without updating docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-matching-mutations-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:54-73 \u2014 uploadMutation/confirmMutation/rejectMutation all lack onError. Sibling AccountingInvoiceManagementPage.tsx (same feature) already wires parseApiError + showToast. On API failure the UI does nothing \u2014 same silent-fail class as PR #2986/#2967"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-matching-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx \u2014 no react-i18next import; hardcoded English: 'Payment Matching', 'Bank Statements', 'Match Review', 'Variable Symbol', 'Counterparty IBAN', 'Select a transaction\u2026', 'Upload CSV'"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$today.md && head -1 grep '^# $today$'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id]|(length==unique|length)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal ids not previously seen (non-cumulative + score_delta!=0)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "N/A \u2014 0 new plans this run",
+      "observed": "0 new plans",
+      "expected": "adversarial pass annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count(new plans) <= 2",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep -E secrets in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed: none'",
+      "observed": "none",
+      "expected": "recorded or none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plan slugs still exist",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= prev",
+      "observed": "9 >= 9",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors advanced",
+      "observed": "PM 5\u21926, CC 7\u21928, EPICS=13",
+      "expected": "cursors in range, GC7 satisfied"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
