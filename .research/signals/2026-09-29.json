@@ -1,0 +1,221 @@
+{
+  "generated": "2026-09-29T03:18:48Z",
+  "since_iso": "2026-09-27T03:18:40Z",
+  "last_pr_seen": 2991,
+  "last_issue_seen": 2982,
+  "merged_pr_range": "2993-2996",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-29",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": [
+        "48h since last_run_iso 2026-09-27T03:18:40Z (>36h threshold); 2d < 3d stale-routine bar"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "screen-map-drift-pr-2993-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2993",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2993 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx without updating docs/screens/reality/oauth-callback.md (implementations.reality-web block, apiStatus/Agent Log)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2994",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2994 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (dashboard route protection) without updating docs/screens/ppt/dashboard-manager.md or dashboard-resident.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2995",
+      "score_delta": 2,
+      "evidence": [
+        "PR #2995 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (Home CTA role routing) without updating docs/screens/ppt/home.md or dashboard-*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-core-tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2994, #2995",
+      "score_delta": 1,
+      "evidence": [
+        "32 lines changed across 2 PRs (#2994 +23/-5, #2995 +2/-2) in frontend/apps/ppt-web/src/routes/groups/core.tsx; top churn this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-workflow-automation-pages-createrulepage-tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2996",
+      "score_delta": 1,
+      "evidence": [
+        "25 lines changed (+23/-2) in frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-app-locale-auth-callback-page-tsx",
+      "type": "churn-hotspot",
+      "source": "PR #2993",
+      "score_delta": 1,
+      "evidence": [
+        "17 lines changed (+12/-5) in frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f + head -1 match",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state delta vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal not re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "cap OK; no decay needed",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans have adversarial pass note",
+      "observed": "no new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2, all sections",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hosts",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases + cursor stall",
+      "observed": "no phases failed",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "all present",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "9>=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE regen identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap + idempotency",
+      "observed": "0 actions",
+      "expected": "<=cap"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts + cursors",
+      "observed": "pm_cursor=6, coverage=8/13",
+      "expected": "in-range + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "reality-web",
+    "reason": "oldest-unreviewed (2026-08-29) AND churn-aligned (callback/page.tsx touched this run)",
+    "findings_count": 0,
+    "notes": "Manual review of frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx (the sole reality-web file churned this run) surfaced no new issues; CSRF nonce check, open-redirect guard, and locale-aware navigation all present. Cursor advanced to today."
+  },
+  "phase_1_6": {
+    "mode": "upkeep",
+    "role_slot": "pm-security",
+    "coverage_epic_advanced": "epic-82 → epic-83 (index 7 → 8)",
+    "notes": "Lightweight upkeep — pm_cursor 5→6, coverage_cursor 7→8. No PR mapped to a coverage story this run; management artifacts retained. project-state.md date stamp refresh only."
+  }
+}
