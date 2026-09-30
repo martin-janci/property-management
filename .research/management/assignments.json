@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-30T10:32:48Z",
+  "generated": "2026-09-30T10:36:27Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -280,28 +280,6 @@
     {
       "task_id": "gh-issue-3000",
       "branch": "auto-impl/gh-issue-3000-51639e06",
-      "status": "in-progress",
-      "claimed_at": "2026-09-30T10:32:48Z",
-      "last_updated": "2026-09-30T10:32:48Z",
-      "status_changed_at": "2026-09-30T10:32:48Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "refactor-repeated-churn-integrations-webhook-retry1",
-      "branch": "auto-impl/refactor-repeated-churn-integrations-web-a86ac4f7",
       "status": "in-progress",
       "claimed_at": "2026-09-30T10:32:48Z",
       "last_updated": "2026-09-30T10:32:48Z",
