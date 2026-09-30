@@ -11090,6 +11090,153 @@
         "assignment_status": "merged",
         "pr_number": 2995
       }
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "title": "screen-map drift: PR #3002 role-gated /dashboard/manager without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3002"
+      ],
+      "evidence": [
+        "PR #3002 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (role-gate manager dashboard) without any docs/screens/ppt/*.md update"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-09-30",
+      "updated_at": "2026-09-30",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "title": "screen-map drift: PR #2994 guarded /dashboard/* with ProtectedRoute without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2994"
+      ],
+      "evidence": [
+        "PR #2994 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (guard /dashboard/* with ProtectedRoute) without any docs/screens/ppt/*.md update"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-09-30",
+      "updated_at": "2026-09-30",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "title": "screen-map drift: PR #2995 routed Home CTA by manager-role without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2995"
+      ],
+      "evidence": [
+        "PR #2995 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (Home CTA by manager-role membership) without any docs/screens/ppt/*.md update"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-09-30",
+      "updated_at": "2026-09-30",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2993-reality",
+      "title": "screen-map drift: PR #2993 locale-aware SSO callback without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2993"
+      ],
+      "evidence": [
+        "PR #2993 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx (locale-aware SSO callback + i18n loading copy) without any docs/screens/reality/*.md update"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-09-30",
+      "updated_at": "2026-09-30",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-mobile-faultattachments-ts",
+      "title": "churn hotspot: frontend/apps/mobile/src/screens/faults/faultAttachments.ts (new file, +201 lines, UC-03.1 presigned pipeline)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3001",
+        "commit 3ececea3"
+      ],
+      "evidence": [
+        "Top-3 raw churn this run: 201 lines added in new file for UC-03.1 presigned attachment pipeline"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/faultAttachments.ts"
+      ],
+      "created_at": "2026-09-30",
+      "updated_at": "2026-09-30",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-ppt-web-conditionbuilder-tsx",
+      "title": "churn hotspot: workflow-automation ConditionBuilder.tsx (193 lines across i18n + createRule typing PRs)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2991",
+        "PR #2996"
+      ],
+      "evidence": [
+        "Top-3 raw churn this run: 193 lines in ConditionBuilder.tsx across workflow-automation i18n (#2991) + createRule payload typing (#2996) PRs"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx"
+      ],
+      "created_at": "2026-09-30",
+      "updated_at": "2026-09-30",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-mobile-faultattachments-test-ts",
+      "title": "churn hotspot: frontend/apps/mobile/src/screens/faults/faultAttachments.test.ts (new file, +192 lines)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3001",
+        "commit 3ececea3"
+      ],
+      "evidence": [
+        "Top-3 raw churn this run: 192 lines added in new test file for UC-03.1 presigned attachment pipeline"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/faultAttachments.test.ts"
+      ],
+      "created_at": "2026-09-30",
+      "updated_at": "2026-09-30",
+      "plan": null
     }
   ]
 }

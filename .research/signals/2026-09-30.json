@@ -1,0 +1,226 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-30",
+      "type": "lag_warning",
+      "source": "state.json:last_run_iso=2026-09-27T03:18:40Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 3d 11h (last run 2026-09-27T03:18:40Z, now 2026-09-30T14:33:36Z); >36h threshold + stale_routine_alert (>=3d)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3002",
+      "score_delta": 2,
+      "evidence": "PR #3002 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (role-gate manager dashboard) without any docs/screens/ppt/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2994",
+      "score_delta": 2,
+      "evidence": "PR #2994 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (ProtectedRoute /dashboard/*) without any docs/screens/ppt/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2995",
+      "score_delta": 2,
+      "evidence": "PR #2995 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (Home CTA by manager-role) without any docs/screens/ppt/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2993-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2993",
+      "score_delta": 2,
+      "evidence": "PR #2993 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx (locale-aware SSO callback + i18n loading copy) without any docs/screens/reality/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/faults/faultAttachments.ts",
+      "type": "churn-hotspot",
+      "source": "PR #3001 commit 3ececea3",
+      "score_delta": 1,
+      "evidence": "top-3 raw churn this run: 201 lines added (new file, presigned attachment pipeline for UC-03.1)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/faultAttachments.ts"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx",
+      "type": "churn-hotspot",
+      "source": "PRs #2991/#2996 in workflow-automation feature",
+      "score_delta": 1,
+      "evidence": "top-3 raw churn this run: 193 lines in ConditionBuilder.tsx across i18n + createRule typing PRs",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/faults/faultAttachments.test.ts",
+      "type": "churn-hotspot",
+      "source": "PR #3001 commit 3ececea3",
+      "score_delta": 1,
+      "evidence": "top-3 raw churn this run: 192 lines added (test file for new presigned attachment pipeline)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/faultAttachments.test.ts"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-09-30.md && head -1 == \"# 2026-09-30\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items >14d",
+      "observed": "0 items eligible",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial-pass annotation",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hosts in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans persist",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "index=9 HEAD=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor in bounds",
+      "observed": "epics=13 coverage_cursor=7 pm_cursor=5",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
