@@ -9,8 +9,10 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearOrgProvider, setOrgProvider } from '../auth/org-provider';
 import { clearTokenProvider, setTokenProvider } from '../auth/token-provider';
-import { ApiError, authenticatedFetchJson } from './fetch';
+import { client } from '../generated/client.gen';
+import { ApiError, authenticatedFetch, authenticatedFetchJson } from './fetch';
 import { setMfaChallengeHandler } from './mfa-handler';
 
 // ---------------------------------------------------------------------------
@@ -202,5 +204,115 @@ describe('authenticatedFetchJson', () => {
       'Unauthorized'
     );
     expect(mockHandler).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// authenticatedFetch — raw-Response primitive (#3000)
+// ---------------------------------------------------------------------------
+
+/**
+ * Response mock that supports `.clone()` (needed by the 401 marker peek). The
+ * clone shares the same lazily-provided body, which is fine for these tests.
+ */
+function mockRawResponse(status: number, body: unknown = {}): Response {
+  const res = {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+    clone() {
+      return res;
+    },
+  } as unknown as Response;
+  return res;
+}
+
+describe('authenticatedFetch (raw-Response primitive)', () => {
+  const originalBaseUrl = client.getConfig().baseUrl;
+
+  beforeEach(() => {
+    setTokenProvider(() => 'test-token');
+    setOrgProvider(() => 'org-7');
+    setMfaChallengeHandler(null);
+    client.setConfig({ baseUrl: '' });
+    vi.spyOn(globalThis, 'fetch');
+  });
+
+  afterEach(() => {
+    clearTokenProvider();
+    clearOrgProvider();
+    setMfaChallengeHandler(null);
+    client.setConfig({ baseUrl: originalBaseUrl });
+    vi.restoreAllMocks();
+  });
+
+  it('returns the raw Response without throwing on non-2xx', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(mockRawResponse(500, { error: 'boom' }));
+    const res = await authenticatedFetch('/api/v1/accounting/statements', { method: 'POST' });
+    expect(res.ok).toBe(false);
+    expect(res.status).toBe(500);
+  });
+
+  it('injects Authorization + X-Tenant-ID from the shared providers', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(mockRawResponse(200));
+    await authenticatedFetch('/api/v1/gdpr/privacy');
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const headers = (init as RequestInit).headers as Headers;
+    expect(headers.get('Authorization')).toBe('Bearer test-token');
+    expect(headers.get('X-Tenant-ID')).toBe('org-7');
+  });
+
+  it('does not force a JSON Content-Type (multipart boundary survives)', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(mockRawResponse(200));
+    const body = new FormData();
+    body.append('file', new File(['x'], 'f.csv'));
+    await authenticatedFetch('/api/v1/accounting/statements', { method: 'POST', body });
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const headers = (init as RequestInit).headers as Headers;
+    expect(headers.has('Content-Type')).toBe(false);
+    expect((init as RequestInit).body).toBeInstanceOf(FormData);
+  });
+
+  it('omits auth headers when there is no session', async () => {
+    clearTokenProvider();
+    clearOrgProvider();
+    vi.mocked(fetch).mockResolvedValueOnce(mockRawResponse(200));
+    await authenticatedFetch('/api/v1/gdpr/privacy');
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const headers = (init as RequestInit).headers as Headers;
+    expect(headers.has('Authorization')).toBe(false);
+    expect(headers.has('X-Tenant-ID')).toBe(false);
+  });
+
+  it('resolves the path against the generated client base URL', async () => {
+    client.setConfig({ baseUrl: 'https://api.example.test' });
+    vi.mocked(fetch).mockResolvedValueOnce(mockRawResponse(200));
+    await authenticatedFetch('/api/v1/gdpr/privacy');
+    const [url] = vi.mocked(fetch).mock.calls[0];
+    expect(String(url)).toBe('https://api.example.test/api/v1/gdpr/privacy');
+  });
+
+  it('retries once on 401 mfa_required when the handler resolves true', async () => {
+    const handler = vi.fn().mockResolvedValue(true);
+    setMfaChallengeHandler(handler);
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(mockRawResponse(401, { error: 'mfa_required' }))
+      .mockResolvedValueOnce(mockRawResponse(200));
+
+    const res = await authenticatedFetch('/api/v1/accounting/statements', { method: 'POST' });
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(res.ok).toBe(true);
+  });
+
+  it('does not retry a non-mfa 401', async () => {
+    const handler = vi.fn().mockResolvedValue(true);
+    setMfaChallengeHandler(handler);
+    vi.mocked(fetch).mockResolvedValueOnce(mockRawResponse(401, { error: 'unauthorized' }));
+
+    const res = await authenticatedFetch('/api/v1/gdpr/privacy');
+    expect(handler).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(401);
   });
 });

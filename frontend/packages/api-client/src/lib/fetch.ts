@@ -17,7 +17,8 @@
  * Hooks should import { authenticatedFetchJson } from '../lib/fetch'.
  */
 
-import { getToken } from '../auth';
+import { getOrg, getToken } from '../auth';
+import { client } from '../generated/client.gen';
 import { requestMfaChallenge } from './mfa-handler';
 
 /**
@@ -113,4 +114,80 @@ async function fetchJsonInner<T>(
  */
 export async function authenticatedFetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return fetchJsonInner<T>(url, init, false);
+}
+
+/**
+ * Resolve a request path against the generated client's configured base URL
+ * (set once in app bootstrap via `client.setConfig({ baseUrl })`), so a
+ * raw-`fetch` caller hits the SAME origin as every generated `@ppt/api-client`
+ * SDK call. Absolute URLs (with a scheme) pass through unchanged.
+ */
+function resolveApiUrl(path: string): string {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(path)) {
+    return path;
+  }
+  const baseUrl = client.getConfig().baseUrl ?? '';
+  return `${baseUrl}${path}`;
+}
+
+/**
+ * Internal retry-aware raw-fetch implementation shared by `authenticatedFetch`.
+ * Mirrors `fetchJsonInner`'s single-retry MFA flow, but returns the untouched
+ * `Response` so the caller can read the body itself.
+ */
+async function authenticatedFetchInner(
+  path: string,
+  init: RequestInit | undefined,
+  alreadyRetried: boolean
+): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  // Mirror the generated client's auth interceptor (`auth/interceptors.ts`):
+  // fill Authorization + X-Tenant-ID from the shared providers unless the caller
+  // already set them, and never force a `Content-Type` — so multipart/FormData
+  // bodies keep the browser-generated boundary.
+  if (!headers.has('Authorization')) {
+    const token = getToken();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  }
+  if (!headers.has('X-Tenant-ID')) {
+    const org = getOrg();
+    if (org) {
+      headers.set('X-Tenant-ID', org);
+    }
+  }
+
+  const response = await fetch(resolveApiUrl(path), { ...init, headers });
+
+  if (response.status === 401 && !alreadyRetried) {
+    // Peek at a clone so the caller still gets a readable body on the final
+    // response when this is a non-MFA 401.
+    const marker = (await response
+      .clone()
+      .json()
+      .catch(() => ({}))) as { error?: string };
+    if (marker?.error === 'mfa_required' && (await requestMfaChallenge())) {
+      return authenticatedFetchInner(path, init, true);
+    }
+  }
+
+  return response;
+}
+
+/**
+ * Shared authenticated `fetch` that returns the raw `Response`.
+ *
+ * Unlike `authenticatedFetchJson`, it does not force a JSON `Content-Type`,
+ * parse the body, or throw on non-2xx — so it fits multipart uploads and
+ * endpoints whose callers read the `Response` themselves. It draws
+ * Authorization + X-Tenant-ID from the same token/org providers as the
+ * generated SDK, resolves the same configured base URL, and applies the same
+ * `401 { error: "mfa_required" }` retry-once flow.
+ *
+ * Callers pass a path (resolved against the client base URL) or an absolute
+ * URL, and check `response.ok` themselves.
+ */
+export function authenticatedFetch(path: string, init?: RequestInit): Promise<Response> {
+  return authenticatedFetchInner(path, init, false);
 }
