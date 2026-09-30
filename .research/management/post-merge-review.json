@@ -1,9 +1,18 @@
 {
-  "generated": "2026-09-26T14:32:57Z",
+  "generated": "2026-09-30T08:30:50Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-09-30T08:30:50Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-16), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI absent). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch touched). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-16 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new. Cross-checked list_pull_requests (closed, base=dev) sort=updated desc perPage=50 AND sort=created desc perPage=30: every in-window merge (merged_at>=2026-09-16) already carries post-merge-reviewed from the 09-26 and 09-27/09-28 runs \u2014 #2979,#2980 (09-26) and the 09-27 batch #2968,#2970,#2971,#2983,#2984,#2985,#2986,#2988,#2989,#2990,#2991,#2993,#2994,#2995,#2996. Unlabeled top-of-list PRs 2974/2965/2964/2963/2959/2958 are dependabot PRs closed unmerged (no merged_at), not merges into dev. All 09-08-and-earlier merges predate the window. ZERO PRs net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-09-26T14:32:57Z",
       "prs_scanned": 2,
@@ -340,48 +349,6 @@
       "with_issues": [],
       "skipped_already_reviewed": [],
       "note": "Tier-1d demand-driven post-merge review (claim buffer starved, backlog+retry-remint dry). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to the orchestrator's Phase 6 (NO git add/commit/push; did NOT touch assignments.json/action-list.json or any archive/ledger). gh CLI proxy-403 -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (api-server build pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-15), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. NO-OP PASS: label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-15 -label:post-merge-reviewed -label:no-review-needed) returned ZERO rows -- all 86 merged-into-dev PRs in the window already carry post-merge-reviewed. Newest merge is #2874 (merged 2026-08-28); the last three runs THIS SAME DAY (00:30Z reviewed #2868-#2874 all CLEAN + labeled; 10:26Z no-op) already drained every net-new never-reviewed PR, and nothing has merged into dev since. 0 net-new never-reviewed PRs -> 0 reviewed, 0 issues opened, 0 labels applied, 0 breadcrumb comments. No open from-merged-review issue re-touched. Buffer stays starved of landable post-merge vectors: the only unreviewed work would be future merges, so no actionable follow-up exists this pass.",
-      "focus_prs": []
-    },
-    {
-      "run_at": "2026-08-29T10:26:25Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        2874,
-        2872,
-        2871,
-        2870,
-        2869,
-        2868,
-        2864,
-        2863,
-        2860,
-        2858,
-        2856,
-        2855,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833
-      ],
-      "note": "Tier-1d demand-driven post-merge review (claim buffer starved). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push, did NOT touch assignments.json/action-list.json). gh CLI unavailable/unauthenticated -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, static/diff review only (api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403; no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-15), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. NO-OP PASS: label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-15 -label:post-merge-reviewed -label:no-review-needed) returned ZERO rows -- every one of the 86 merged-into-dev PRs in the window already carries post-merge-reviewed. The prior run THIS SAME DAY (2026-08-29T00:30Z) reviewed the last six unlabeled net-new PRs (#2868-#2874, all merged 2026-08-28, all rust-backend/react landable, all CLEAN, 0 issues) and applied their labels; nothing has merged into dev since. 0 net-new never-reviewed PRs -> 0 reviewed, 0 issues opened, 0 labels applied, 0 breadcrumb comments. No open from-merged-review issue re-touched. Buffer stays starved of landable post-merge vectors: the only unreviewed work would be future merges, so no actionable follow-up exists this pass.",
       "focus_prs": []
     }
   ]
