@@ -1,87 +1,64 @@
 {
   "generated": "2026-09-30T00:00:00Z",
-  "source_run": "dispatcher Phase 1.5 Tier-1d demand-driven static code review (claim buffer starved: honest_claimable=8 < BUFFER_FLOOR=36; deterministic refill tiers found nothing; cloud-landable frontend segment preferred) 2026-09-30",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=8 < floor=36; deterministic tiers backlog-refill/retry-remint found nothing). Static single-segment code review, no compilation / no test execution. Produces fresh CLOUD-LANDABLE frontend backlog vectors.",
   "segment_reviewed": "reality-web",
-  "selection_reason": "oldest-unreviewed. review_cursor in .research/state.json had reality-web at 2026-08-29 = the single oldest segment (next oldest: reality-server 2026-08-31, api-core 2026-09-01). No fresh Phase-1 CHURN_FILES list was handed to this run, so churn-alignment did not apply and the skill's standalone default (oldest-unreviewed) governs. SATURATION CHECK PASSED: backlog.json holds 0 OPEN code-review-finding rows for reality-web (the 3 prior reality-web slugs comparison-view-i18n / realtor-mgmt-i18n / agency-errorstate-i18n are all status=done), so the >=3-open skip rule does not trigger. Segment root resolved to frontend/apps/reality-web/src/** (the skill's literal frontend/reality-web/src predates the apps/ workspace layout). Files already mined+fixed by recent PRs (#2993 callback i18n, #2984 listings error state, #2968 feedcard mutation) were deliberately excluded from this pass.",
-  "experts_used": [
-    "frontend"
-  ],
-  "landable_in_cloud": true,
-  "landability_note": "reality-web is a Next.js frontend app; findings here ARE landable in the cloud runner (unlike backend api-server, blocked by utoipa-swagger-ui build-script egress-403 #2966, and mobile-native KMP, AGP egress-gated). All three findings are frontend-only edits verifiable via `pnpm --filter @ppt/reality-web typecheck` + Vitest/RTL.",
-  "findings_count": 3,
+  "selection_reason": "oldest-unreviewed (cloud-landable frontend preference). Automatic selection: churn-alignment considered first but rejected — the only recent git churn touching backend/servers/api-server/src/routes (the api-handlers segment, 204 file-appearances in 14d) is a mechanical CI/versioning wave (PR #2971 'one tag contract, version identity in every image') plus a dispatcher chore, NOT hot logic; api-handlers was also just reviewed 2026-09-27 and reads clean on every Rust+Security static recipe (unwrap/expect/panic/todo all in #[cfg(test)] modules; routes use the repository pattern so only 1 inline sqlx query in the whole tree and tenant scoping is RLS-enforced in repositories; the one production expect() in integrations/oauth_state.rs is a documented test-harness double). So churn-alignment did not yield a productive slice. Fell through to oldest-unreviewed: state.json review_cursor makes reality-web (2026-08-29) the oldest segment, ahead of reality-server (2026-08-31) and api-core (2026-09-01); reality-web is cloud-landable frontend (dispatcher-preferred over egress-blocked api-server/mobile-native fix paths). SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for reality-web (all 19 historical code-review-findings are status=done), so the >=3-open skip rule does not trigger. DEDUP: prior reality-web Tier-1d passes (2026-09-19, 2026-09-19-2, 2026-09-21, 2026-09-22) covered i18n/localization gaps, a PhotoGallery index-OOB, an href url-scheme XSS sink, CSV filepick type-guard, comparison share-id encoding, and Intl.NumberFormat currency-code crash sinks (format.ts / ListingCard / ComparisonView currency path / ListingHeader / AdditionalInfo). This pass deliberately reviews the data-ingestion validation boundary (raw API JSON casts) and the URL-param -> API-param pagination flow, and returns 2 net-new, non-duplicate findings cleared against those prior signals + backlog.json. Static-only: findings are backlog signals, cloud-landable (single-package frontend edits under frontend/apps/reality-web/src/, verifiable with pnpm --filter @ppt/reality-web typecheck/test + biome).",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
   "static_only": true,
-  "note": "Static analysis only (read + grep, no build/test) per skill contract. reality-web is a mature, well-hardened segment: SSR data-fetch helpers (lib/layout.ts, lib/tenant-config.ts, lib/page-metadata.ts) all handle non-ok responses and never throw out of the SSR layer; the flagship listings/[slug]/page.tsx validates the response body before render and emits a real 404. Net-new findings this pass center on i18n/a11y completeness and dead-code drift, not correctness crashes. Cap of 3 respected; highest-severity kept.",
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "app/[locale]/listings/[slug]/page.tsx getListing (response.ok null-check + parseListingDetail shape validation + real 404 via notFound(); explicitly hardens against malformed 200 bodies — the reference pattern the comparison fetch path in finding-1 fails to follow)",
+    "lib/realtor-api.ts request() (network try/catch -> RealtorApiError(status 0), !response.ok -> typed RealtorApiError with server message, 204 handling; the `as T` is a thin typed wrapper, defensively consumed)",
+    "lib/auth-context.tsx probeSsoSession/checkSession (inflight-probe dedup, PROBE_CACHE_MS caching, transient-network treated as NOT logged-out, optimistic localStorage hydration corrected by async check; `as SessionInfo` cast is defensively consumed)",
+    "lib/tenant-config.ts / lib/layout.ts (documented 'never throw out of the SSR layer' fetchers: response.ok fallback to defaults, try/catch, string sanitizers clamp length<=200)",
+    "middleware.ts fetchKillSwitch (`(await response.json()) as {...}` is fully optional-chained: json.feature_flags?.building_disabled, flag?.enabled, json.locales?.[0] ?? null, plus try/catch fallback — safe despite the cast)",
+    "components/comparison/ComparisonView.tsx (primaryPhoto deref is ternary-guarded at L276, address?.city/district optional-chained, area>0 checked before division — currency path already covered by 2026-09-21 finding; this file's field derefs are defensive so finding-1's unvalidated body is a defense-in-depth/consistency gap, not a live crash today)",
+    "components/agency/RealtorManagement.tsx handleSubmit invite (mutateAsync in try/catch surfaces t('inviteError') to the user; console.error is supplementary)",
+    "components/listings/sections/Resources.tsx (target=_blank links carry rel='noopener noreferrer'); NOTE href={listing.virtualTourUrl}/{floorPlanUrl} are user-controlled href sinks that may share the class of the 2026-09-19 href url-scheme XSS finding — NOT re-emitted here to avoid duplicating that open class",
+    "app/[locale]/layout.tsx + components/listings/ListingDetailContent.tsx dangerouslySetInnerHTML (all routed through serializeForScript or static ORGANIZATION_LD constant — credited XSS-safe in 2026-09-21 pass)"
+  ],
   "signals": [
     {
-      "id": "code-review-reality-web-aria-label-i18n",
+      "id": "code-review-reality-web-listings-page-param-nan",
       "type": "code-review-finding",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-30 reality-web)",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-30 reality-web pagination param validation gap)",
       "segment": "reality-web",
       "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "i18n",
+      "confidence": "medium",
+      "candidate_vector": "bug",
       "expert": "frontend",
       "files": [
-        "frontend/apps/reality-web/src/components/ui/Header.tsx",
-        "frontend/apps/reality-web/src/components/ui/LanguageSwitcher.tsx",
-        "frontend/apps/reality-web/src/components/listings/SearchBar.tsx",
-        "frontend/apps/reality-web/src/components/listings/ListingFilters.tsx",
-        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx",
-        "frontend/apps/reality-web/src/app/[locale]/loading.tsx",
-        "frontend/apps/reality-web/src/app/[locale]/forbidden/page.tsx",
-        "frontend/apps/reality-web/src/app/[locale]/terms/page.tsx",
-        "frontend/apps/reality-web/src/app/[locale]/privacy/page.tsx",
-        "frontend/apps/reality-web/src/app/[locale]/cookies/page.tsx",
-        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts"
       ],
       "evidence": [
-        "Accessibility labels across LIVE, mounted components bypass the next-intl i18n layer and are hardcoded in a single language on a 4-locale portal (sk/cs/de/en). Screen-reader users on any non-matching locale hear the wrong-language announcement for core controls.",
-        "frontend/apps/reality-web/src/components/ui/Header.tsx:183 — `aria-label=\"Toggle menu\"` hardcoded English, even though the same component already uses `const t = useTranslations(...)` for every visible nav string (t('nav.sell'), t('common.login'), etc). Header is rendered on essentially every page (imported per-page: price-map, journal, profile, report, loading, ...), so this is reachable site-wide.",
-        "frontend/apps/reality-web/src/components/ui/LanguageSwitcher.tsx:157 — `aria-label=\"Select language\"` hardcoded English on the listbox; LanguageSwitcher is mounted inside Header (Header.tsx:105) => present on every page.",
-        "frontend/apps/reality-web/src/components/listings/SearchBar.tsx:162 `aria-label=\"Clear search\"` and frontend/apps/reality-web/src/components/listings/ListingFilters.tsx:128 `aria-label=\"Close filters\"` — hardcoded English on the core public listings search/filter UX; frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx:144 `aria-label=\"Breadcrumb\"`; frontend/apps/reality-web/src/app/[locale]/loading.tsx:11 `aria-label=\"Loading page\"`; frontend/apps/reality-web/src/app/[locale]/forbidden/page.tsx:29 `title=\"Access denied\"` on the 403 page.",
-        "Wrong-language (not merely untranslated) labels: frontend/apps/reality-web/src/app/[locale]/terms/page.tsx:56 and privacy/page.tsx:42 use `aria-label=\"Obsah\"` (Slovak), cookies/page.tsx:234 uses `aria-label=\"Nastavenia cookies\"` (Slovak), and account/listings/[id]/edit/page.tsx:531 uses `alt=\"Foto\"` (Slovak) — so EN/DE/CS visitors get Slovak screen-reader/alt text. This is an a11y correctness defect, not just a missing key.",
-        "Landable frontend-only remedy: route each of these through the existing t() / getTranslations namespaces and add the keys to messages/{en,sk,cs,de}.json, matching how the surrounding visible text in the same files is already localized. Verifiable via `pnpm --filter @ppt/reality-web typecheck` + an RTL test asserting the localized aria-label under a non-en locale. Confidence high: Header + LanguageSwitcher are provably mounted on every page and the attributes render unconditionally."
+        "frontend/apps/reality-web/src/app/[locale]/listings/page.tsx:144 — `const currentPage = Number(searchParams.get('page') || 1);` does NOT validate the user-controlled `page` query param. `searchParams.get('page')` returns the raw string, so a non-numeric value like `?page=abc` is truthy, survives the `|| 1` guard (which only defaults null/empty), and `Number('abc')` yields `NaN`. Negative (`?page=-5`), zero (`?page=0`), and fractional (`?page=1.5`) values also pass through unclamped.",
+        "That `currentPage` flows straight into `useListings(filters, currentPage)` (page.tsx:145). frontend/packages/reality-api-client/src/listings/hooks.ts:22-25 buildQueryString then does `params.set('page', String(page))`, i.e. `page=NaN` (literal string 'NaN') is sent to reality-server's public listings endpoint. The React Query key `['listings', filters, NaN]` (hooks.ts:49) is also unstable/degenerate.",
+        "Impact: this is the PUBLIC, SEO-indexed search/results page (app/[locale]/listings). A trivially mistyped or crafted/bookmarked `?page=` value produces a broken request instead of gracefully defaulting to page 1 — either a forced full-page error state (the component destructures `isError` and renders the error branch) or, if the server leniently coerces, silently wrong paging. Either way an unvalidated user-facing input on a high-traffic public route yields degraded UX rather than a clamp-to-valid-page.",
+        "Confidence MEDIUM (static-only): the Number()->NaN->String(NaN)='NaN'->API-param dataflow is confirmed by direct read; the one unconfirmed link is whether reality-server's page extractor rejects `page=NaN` with a 4xx (=> forced error state) or defaults it (=> silently-wrong-page) — both are user-facing defects, so the finding holds either way.",
+        "Fix (cloud-landable, frontend-only): clamp/validate the param, e.g. `const parsed = Number.parseInt(searchParams.get('page') ?? '', 10); const currentPage = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;`. Single-file reality-web edit, verifies with pnpm --filter @ppt/reality-web typecheck/test + biome; no backend coupling."
       ]
     },
     {
-      "id": "code-review-reality-web-comparebutton-unwired-i18n",
+      "id": "code-review-reality-web-comparison-url-unvalidated-cast",
       "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-30 reality-web API-body validation-boundary gap)",
       "segment": "reality-web",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-30 reality-web)",
       "score_delta": 1,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
       "files": [
-        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx",
-        "frontend/apps/reality-web/src/components/comparison/index.ts",
-        "frontend/apps/reality-web/src/components/listings/ListingCard.tsx"
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
       ],
       "evidence": [
-        "frontend/apps/reality-web/src/components/comparison/CompareButton.tsx is exported from the feature barrel (components/comparison/index.ts:7, Epic 51 Property Comparison) but is consumed NOWHERE in the app: grep for `CompareButton` across src/**/*.{ts,tsx} returns only its own definition and the barrel re-export. Its sibling ComparisonTray IS wired into app/[locale]/layout.tsx:261, so the tray (view/remove) is live but the per-listing add/remove entry point is not — the comparison feature has no in-card affordance to ADD a listing.",
-        "CompareButton.tsx:47 — `title={inComparison ? 'Remove from comparison' : 'Add to comparison'}` is hardcoded English with no useTranslations import (grep count 0), so even once wired it would leak English tooltips on the 4-locale portal.",
-        "ListingCard.tsx (the component actually rendered per card in ListingGrid) correctly uses `useTranslations('listing')` and contains no compare control — confirming the button was built but never mounted.",
-        "Remedy: either wire CompareButton into ListingCard (and localize its title via t()), or, if the in-card compare entry point was intentionally dropped, remove CompareButton + its barrel export to stop it drifting. Low severity: no live user impact today (dead export), but it is a completeness gap in the shipped comparison feature."
-      ]
-    },
-    {
-      "id": "code-review-reality-web-authbutton-orphan-drift",
-      "type": "code-review-finding",
-      "segment": "reality-web",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-30 reality-web)",
-      "score_delta": 1,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "expert": "frontend",
-      "files": [
-        "frontend/apps/reality-web/src/components/auth-button.tsx",
-        "frontend/apps/reality-web/src/components/ui/Header.tsx"
-      ],
-      "evidence": [
-        "frontend/apps/reality-web/src/components/auth-button.tsx exports `AuthButton()` but it is imported nowhere (grep for `AuthButton`/`auth-button` across src returns only the definition). The LIVE auth control is the inline auth-slot inside components/ui/Header.tsx:115-176. AuthButton is an orphaned duplicate.",
-        "The orphan has DRIFTED from the live Header slot: auth-button.tsx:161 links to `/profile` whereas Header.tsx:158 links to `/account/profile`; the orphan is missing the Header's `/saved-searches` (Header.tsx:143) and `/inquiries` (Header.tsx:150) menu entries. A future edit that revives this component would ship stale navigation.",
-        "It also violates two repo-wide reality-web conventions: (1) uses raw `<a href=\"/favorites\">` (L158) and `<a href=\"/profile\">` (L161) instead of the locale-aware `Link` from `@/i18n/routing` used everywhere else (Header.tsx, Footer.tsx, CookieConsentBanner.tsx, home/*), so its links would drop the `[locale]` prefix; (2) hardcodes English 'Sign In' (L127), 'My Favorites' (L159), 'Profile' (L162), 'Sign Out' (L165) with no useTranslations.",
-        "Remedy: delete components/auth-button.tsx (dead code). Low severity — not mounted, so no live impact — but removing it prevents accidental revival of drifted, non-localized, non-locale-prefixed nav. Verifiable via `pnpm --filter @ppt/reality-web typecheck` (no importers to break)."
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — a shared-comparison URL (`?ids=...`) fans out to `await fetch(`${getApiBase()}/api/v1/listings/${id}`)` per id and returns `response.json() as Promise<ListingSummary>` with NO runtime shape validation. The raw external API body is asserted to be a well-formed `ListingSummary` and then pushed into app state via `addToComparison(listing)` (L70).",
+        "This is the exact type-unsafe-cast-across-an-API-boundary pattern, and it is inconsistent with the app's own established convention: the sibling public detail page frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:79-92 documents that 'A 200 does not guarantee a well-formed body' and routes every listing body through `parseListingDetail(body)` to validate/coerce required nested fields (address.city, features, photos) before render, falling back to ListingNotFound on a bad body. The comparison ingestion path has no equivalent guard.",
+        "Why it is currently only LOW (defense-in-depth, not a live crash): ComparisonView.tsx happens to defensively guard its own field derefs (primaryPhoto ternary-guarded L276, address?.city optional-chained, area>0 before division). So a malformed body survives into state but does not crash today. The risk is regression-shaped: any future ComparisonView column that dereferences a required-but-actually-missing field (the currency path was already such a case, fixed 2026-09-21) crashes the comparison render, because the ingestion boundary provides no shape guarantee. Distinct from the 2026-09-19-2 comparison share-id ENCODING finding (that was about how ids are read from the URL; this is about validating the fetched listing BODY).",
+        "Confidence MEDIUM (static-only): the unvalidated cast and the absence of any parse step are confirmed by direct read; classified LOW because current downstream consumers are defensive.",
+        "Fix (cloud-landable, frontend-only): reuse/extract a ListingSummary normalizer (mirroring parseListingDetail) and validate each fetched body before `addToComparison`, dropping bad ones the same way the existing Promise.allSettled loop already drops failed fetches. Single-package reality-web edit, verifies with typecheck/test + biome."
       ]
     }
   ]
