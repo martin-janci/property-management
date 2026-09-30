@@ -10796,19 +10796,21 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2990",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/lib/api.ts:370 — export default getApiClient() runs at import time with DEFAULT config; AuthProvider's configureApiClient() replaces the internal apiInstance, orphaning the default-exported object.",
-        "no default-style importer exists today (grep confirmed zero non-test hits under frontend/apps/ppt-web/src) — latent footgun rather than active break."
+        "no default-style importer exists today (grep confirmed zero non-test hits under frontend/apps/ppt-web/src) — latent footgun rather than active break.",
+        "resolved: PR #2990 merged 2026-09-27 — remove eager orphaned default export from lib/api.ts"
       ],
       "files": [
         "frontend/apps/ppt-web/src/lib/api.ts"
       ],
       "created_at": "2026-09-26",
-      "updated_at": "2026-09-26",
+      "updated_at": "2026-09-30",
       "plan": null
     },
     {
@@ -10867,18 +10869,20 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2996",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
       "evidence": [
-        ".research/signals/2026-09-26-ppt-web-ui-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=bug."
+        ".research/signals/2026-09-26-ppt-web-ui-tier1d.json — code-review-finding score_delta=+1, confidence=medium, vector=bug.",
+        "resolved: PR #2996 merged 2026-09-27 — type the automation-rule create payload at the boundary"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/automation"
       ],
       "created_at": "2026-09-26",
-      "updated_at": "2026-09-26",
+      "updated_at": "2026-09-30",
       "plan": null
     },
     {
@@ -10982,18 +10986,20 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2993",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
       ],
       "evidence": [
-        ".research/signals/2026-09-26-reality-web-tier1d.json — code-review-finding score_delta=+1, confidence=high, vector=refactor."
+        ".research/signals/2026-09-26-reality-web-tier1d.json — code-review-finding score_delta=+1, confidence=high, vector=refactor.",
+        "resolved: PR #2993 merged 2026-09-27 — locale-aware SSO callback + i18n loading copy"
       ],
       "files": [
         "frontend/apps/reality-web/src/app"
       ],
       "created_at": "2026-09-26",
-      "updated_at": "2026-09-26",
+      "updated_at": "2026-09-30",
       "plan": null
     },
     {
@@ -11022,15 +11028,17 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2994",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx:165-168 — dashboardRoutes() mounts `<Route path=\"/dashboard\" element={<Navigate to=\"/dashboard/manager\" replace />} />`, `<Route path=\"/dashboard/manager\" element={<ManagerDashboardPage />} />` and `<Route path=\"/dashboard/resident\" element={<ResidentDashboardPage />} />` with NO `<ProtectedRoute>` wrapper. The inline comment (core.tsx:161-164) justifies the omission: 'the ProtectedRoute / role check on the target page handles auth + role-based fan-out.' That claim is FALSE on the reviewed tree — verified against both target pages below.",
         "ManagerDashboardPage (frontend/apps/ppt-web/src/features/dashboard/pages/ManagerDashboardPage.tsx:21-48) performs NO auth check and NO redirect: it calls `useResolvedLayout('ppt/dashboard')` (:23, an authenticated api-client query) and reads `useAuth().user` only to toggle a 'customize' link for org_admin/super_admin (:24-28). There is no `isAuthenticated` guard, no `<Navigate to=\"/login\">`, no role fan-out. ResidentDashboardPage (ResidentDashboardPage.tsx) likewise has zero auth/role logic (grep for Navigate|redirect|isAuthenticated|useAuth|requiredRoles returns NONE). App.tsx (frontend/apps/ppt-web/src/App.tsx:252-284) wraps `<AppRoutes/>` in providers + RouteErrorBoundary + Suspense but NOT in any global ProtectedRoute — auth gating in this app is strictly per-route via `<ProtectedRoute>` (used on /emergency, /settings/*, /ai-assistant, /automations/*, /dashboard/customize, etc.). So the dashboard routes are the lone authed-surface routes with the guard omitted.",
         "Two concrete defects follow from the gap: (1) An UNAUTHENTICATED visitor navigating directly to /dashboard (or /dashboard/manager) renders the full manager dashboard shell and fires the authed `useResolvedLayout` fetch instead of being redirected to /login the way every ProtectedRoute-wrapped route is — inconsistent access control on the primary post-login landing surface. (2) The `/dashboard` -> Navigate('/dashboard/manager') redirect (core.tsx:166) sends EVERY role, including plain residents, to the MANAGER dashboard, and ManagerDashboardPage never fans a resident back to /dashboard/resident — directly contradicting the 'role-based fan-out' the comment promises. A resident typing /dashboard lands on the manager dashboard chrome.",
-        "Landable frontend-only remedy: wrap /dashboard/manager and /dashboard/resident in `<ProtectedRoute>` (matching the peer routes), and implement the role fan-out the comment claims — either redirect /dashboard based on isManagerRole(user?.role) (the SSOT in routes/shared.tsx) or have ManagerDashboardPage redirect non-manager roles to /dashboard/resident. Delete or correct the now-false comment. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL route test (pattern already in ProtectedRoute.routing.test.tsx) asserting an unauthenticated render of /dashboard/manager redirects to /login and a resident hitting /dashboard is not shown ManagerDashboardPage. Confidence high: traced route table (no wrapper) -> both page components (no guard/fan-out) -> App.tsx (no global guard) -> ProtectedRoute is the established mechanism used by every peer route."
+        "Landable frontend-only remedy: wrap /dashboard/manager and /dashboard/resident in `<ProtectedRoute>` (matching the peer routes), and implement the role fan-out the comment claims — either redirect /dashboard based on isManagerRole(user?.role) (the SSOT in routes/shared.tsx) or have ManagerDashboardPage redirect non-manager roles to /dashboard/resident. Delete or correct the now-false comment. Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL route test (pattern already in ProtectedRoute.routing.test.tsx) asserting an unauthenticated render of /dashboard/manager redirects to /login and a resident hitting /dashboard is not shown ManagerDashboardPage. Confidence high: traced route table (no wrapper) -> both page components (no guard/fan-out) -> App.tsx (no global guard) -> ProtectedRoute is the established mechanism used by every peer route.",
+        "resolved: PR #2994 merged 2026-09-27 — guard /dashboard/* with ProtectedRoute"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx",
@@ -11038,7 +11046,7 @@
         "frontend/apps/ppt-web/src/features/dashboard/pages/ResidentDashboardPage.tsx"
       ],
       "created_at": "2026-09-27",
-      "updated_at": "2026-09-27",
+      "updated_at": "2026-09-30",
       "plan": null
     },
     {
@@ -11047,15 +11055,17 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #2995",
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx:99-101 — the Home landing page's 'Open dashboard' CTA computes its target as `navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')`. It hard-codes the single string 'manager' instead of the manager-equivalence check the codebase already owns.",
         "routes/shared.tsx:36-49 defines `MANAGER_ROLES = ['manager','org_admin','super_admin','technical_manager','property_manager']` and `isManagerRole(role)`, and its doc comment (:29-35) states MANAGER_ROLES is the 'Single source of truth shared by isManagerRole (nav/inline gating) and <ProtectedRoute requiredRoles={...}> so the two cannot drift apart.' Home's `=== 'manager'` literal bypasses that SSOT. As a direct consequence, a user whose role is org_admin, super_admin, technical_manager or property_manager clicks the primary dashboard CTA on the landing page and is routed to `/dashboard/resident` (the resident dashboard) rather than the manager dashboard.",
         "Confirmed drift, not a debatable style choice: the SAME file-neighbourhood already uses the SSOT correctly — App.tsx:127 does `const isOperator = isManagerRole(user?.role)` to gate operator-only nav links, and core.tsx:236 gates /settings/portal-webhooks with `requiredRoles={[...MANAGER_ROLES]}`. Home is the outlier that regressed to a bare literal, so privileged non-'manager' operators get the wrong dashboard from the app's most prominent entry point.",
-        "Landable frontend-only remedy: replace `user?.role === 'manager'` at core.tsx:100 with `isManagerRole(user?.role)` (import already resolvable from ../shared, as App.tsx and core.tsx:41 already import from routes/shared). Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL test rendering Home with user.role='property_manager' and asserting the CTA navigates to /dashboard/manager. Confidence high: the literal, the SSOT helper, and the correct peer usages are all objectively confirmed by static read; the misroute is deterministic for every manager-equivalent role except plain 'manager'."
+        "Landable frontend-only remedy: replace `user?.role === 'manager'` at core.tsx:100 with `isManagerRole(user?.role)` (import already resolvable from ../shared, as App.tsx and core.tsx:41 already import from routes/shared). Verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL test rendering Home with user.role='property_manager' and asserting the CTA navigates to /dashboard/manager. Confidence high: the literal, the SSOT helper, and the correct peer usages are all objectively confirmed by static read; the misroute is deterministic for every manager-equivalent role except plain 'manager'.",
+        "resolved: PR #2995 merged 2026-09-27 — route Home CTA by manager-role membership"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx",
@@ -11063,7 +11073,7 @@
         "frontend/apps/ppt-web/src/App.tsx"
       ],
       "created_at": "2026-09-27",
-      "updated_at": "2026-09-27",
+      "updated_at": "2026-09-30",
       "plan": null
     }
   ]

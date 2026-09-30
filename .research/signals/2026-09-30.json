@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-30",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + Phase-5 allowlist this run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-09-30",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine has not run for 71h (>36h threshold); last_run_iso=2026-09-27T03:18:40Z, now=2026-09-30T03:17:21Z; LAG_DAYS=2 (below 3-day stale_routine_alert threshold)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "resolutions": [
+    { "item_id": "code-review-reality-web-callback-hardcoded-login-string", "resolved_by": "PR #2993", "reason": "PR title verbatim match; merged 2026-09-27T14:28:37Z" },
+    { "item_id": "code-review-ppt-web-core-dashboard-routes-unguarded",     "resolved_by": "PR #2994", "reason": "PR title verbatim match; merged 2026-09-27T14:28:47Z" },
+    { "item_id": "code-review-ppt-web-core-home-cta-role-drift",             "resolved_by": "PR #2995", "reason": "PR title verbatim match; merged 2026-09-27T14:29:06Z" },
+    { "item_id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",  "resolved_by": "PR #2996", "reason": "PR title verbatim match; merged 2026-09-27T14:29:21Z" },
+    { "item_id": "code-review-ppt-web-core-api-default-export-orphan",       "resolved_by": "PR #2990", "reason": "PR title verbatim match; merged 2026-09-27T14:28:25Z (out-of-cursor — PR number < last_pr_seen but merged after last-run-iso; evidence-gone confirmed: no default export in lib/api.ts, comment at line 368 documents invariant)" }
+  ],
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/<today>.md && head -1 matches # <today>", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "jq compare cursors / seen_signals / hotspots / quiet_days vs HEAD",                 "observed": "true",   "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq [.items[].id] length == unique length",                                          "observed": "true",   "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "signals dedup vs prev seen_signals excluding cumulative types",                     "observed": "true",   "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "no item.score > 8; no open item aged >14d without decay (all rows within 14d)",     "observed": "true",   "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "0 new plans this run → vacuous pass",                                               "observed": "0 new plans", "expected": "each new plan annotated" },
+    { "goal": "G7",  "passed": true,  "command": "count new plans this run",                                                          "observed": "0 (<= 2)", "expected": "<= 2" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",                   "observed": "0",      "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "secrets/private-hostname grep on staged .research diff (baseline docs excluded)",   "observed": "0",      "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "diff backlog.md vs regenerated view",                                               "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true,  "command": "phase-failure honesty (no failed phases this run)",                                 "observed": "no failed phases", "expected": "consistent" },
+    { "goal": "G12", "passed": true,  "command": "every prior-run plan slug present in plans/ or plans/_archive/",                    "observed": "all present", "expected": "all present" },
+    { "goal": "G13", "passed": true,  "command": "archive count staged >= HEAD",                                                      "observed": "9 >= 9", "expected": ">= HEAD" },
+    { "goal": "G14", "passed": true,  "command": "diff IDEAS_TRIAGE.md vs regenerated view",                                          "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions length <= 3, per-type <= 1, none in prior auto_fix_history",       "observed": "0 actions", "expected": "cap satisfied" },
+    { "goal": "G16", "passed": true,  "command": "Phase 1.6 skipped this run (pm_cursor unchanged vs HEAD) → vacuous pass",           "observed": "pm_cursor=5 unchanged", "expected": "vacuous when 1.6 skipped" },
+    { "goal": "G17", "passed": true,  "command": "no telegram bot-token literal in staged added lines",                               "observed": "0",      "expected": "0" }
+  ]
+}
