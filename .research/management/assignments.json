@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-30T14:33:37Z",
+  "generated": "2026-09-30T16:29:54Z",
   "assignments": [
     {
       "task_id": "gh-issue-2743",
@@ -236,17 +236,17 @@
     {
       "task_id": "refactor-repeated-churn-integrations-webhook-retry1",
       "branch": "auto-impl/refactor-repeated-churn-integrations-web-a86ac4f7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-09-30T14:28:47Z",
-      "last_updated": "2026-09-30T14:28:47Z",
-      "status_changed_at": "2026-09-30T14:28:47Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-09-30T16:29:54Z",
+      "status_changed_at": "2026-09-30T16:28:02Z",
+      "pr_number": 3005,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3005",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=verified-pure-move: router() byte-identical, utoipa/async/tests count-match, re-exports preserve public paths, super->crate absolute rewrites matched; scope_drift is owner-hint artifact not real drift; CI green; no review posted (self-authored needs-human-review PR)",
+      "last_reviewed_oid": "15a4b4104e00e3bc1ee75e0100f1c93d5cdae597",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
