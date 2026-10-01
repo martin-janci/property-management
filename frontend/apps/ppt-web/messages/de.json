@@ -554,6 +554,11 @@
       "bookFacility": "Einrichtung buchen",
       "empty": "Keine Buchungen gefunden.",
       "allCaughtUp": "Alles erledigt! Keine ausstehenden Buchungen zu prüfen."
+    },
+    "errors": {
+      "fetchFailedTitle": "Einrichtungen konnten nicht geladen werden",
+      "fetchFailedDescription": "Beim Laden der Einrichtungen ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen"
     }
   },
   "faults": {

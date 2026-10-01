@@ -555,6 +555,11 @@
       "bookFacility": "Rezervovat prostor",
       "empty": "Nebyly nalezeny žádné rezervace.",
       "allCaughtUp": "Vše vyřízeno! Žádné čekající rezervace ke kontrole."
+    },
+    "errors": {
+      "fetchFailedTitle": "Prostory se nepodařilo načíst",
+      "fetchFailedDescription": "Při načítání prostorů došlo k chybě. Zkuste to znovu.",
+      "retry": "Zkusit znovu"
     }
   },
   "faults": {
