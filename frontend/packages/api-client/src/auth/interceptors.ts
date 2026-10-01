@@ -13,8 +13,7 @@
  * unauthenticated requests (no token / no active org) are unchanged.
  */
 
-import { getOrg } from './org-provider';
-import { getToken } from './token-provider';
+import { applyAuthHeaders } from './apply-headers';
 
 /**
  * Minimal structural shape of the generated client's request-interceptor
@@ -32,21 +31,14 @@ export interface AuthInterceptorClient {
 /**
  * Register the auth request-interceptor on the given client. Call exactly once
  * during app initialization, after `client.setConfig(...)`.
+ *
+ * The header injection lives in `applyAuthHeaders` (`./apply-headers.ts`), the
+ * single source of truth shared with the raw-`fetch` primitive (#3006), so this
+ * path cannot drift from it.
  */
 export function registerAuthInterceptors(client: AuthInterceptorClient): void {
   client.interceptors.request.use((request) => {
-    if (!request.headers.has('Authorization')) {
-      const token = getToken();
-      if (token) {
-        request.headers.set('Authorization', `Bearer ${token}`);
-      }
-    }
-    if (!request.headers.has('X-Tenant-ID')) {
-      const org = getOrg();
-      if (org) {
-        request.headers.set('X-Tenant-ID', org);
-      }
-    }
+    applyAuthHeaders(request.headers);
     return request;
   });
 }
