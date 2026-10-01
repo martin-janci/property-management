@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-01 04:42 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-01 08:38 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -47,6 +47,7 @@
 | 2 | test-gap | ppt-web Home CTA refactor (PR #2995) landed without touching docs/screens/ppt | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #2995 | 2026-10-01 | open | — |
 | 2 | test-gap | ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #3002 | 2026-10-01 | open | — |
 | 2 | refactor | Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives | `frontend/packages/api-client/src/lib/fetch.ts (+1)` | Issue #3006 (post-merge review of PR #3004) | 2026-10-01 | open | — |
+| 2 | bug | reality-server add_favorite returns 500 for missing listing / duplicate instead of 404/409 — substring-match error mapping misses sqlx RowNotFound + UniqueViolation | `backend/servers/reality-server/src/handlers/favorites/mod.rs (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-10-01 reality-server) | 2026-10-01 | open | — |
 | 2 | bug | ppt-web dashboard routes lack ProtectedRoute wrapper — no auth on /dashboard/* | `frontend/apps/ppt-web/src/routes/groups/core.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router) | 2026-09-27 | done | — |
 | 2 | bug | ppt-web Home CTA uses role==='manager' literal — org_admin/property_manager misrouted | `frontend/apps/ppt-web/src/routes/groups/core.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router) | 2026-09-27 | done | — |
 | 2 | bug | WebSocketContext.categoryToQueryKeys missing community + system categories → stale community feed on push | `frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache) | 2026-09-26 | done | — |
@@ -195,6 +196,7 @@
 | 1 | refactor | ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot) | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | churn 14d | 2026-10-01 | open | — |
 | 1 | refactor | ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx` | churn 14d | 2026-10-01 | open | — |
 | 1 | refactor | ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx` | churn 14d | 2026-10-01 | open | — |
+| 1 | refactor | reality-server favorites handler re-introduces the large-N anti-pattern its own repo author guarded against — is_favorited/get_favorites_count load the full join instead of using cheap EXISTS/COUNT helpers | `backend/servers/reality-server/src/handlers/favorites/mod.rs (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-10-01 reality-server) | 2026-10-01 | open | — |
 | 1 | refactor | lib/api.ts eagerly-created default export is orphaned by configureApiClient() — footgun for future default-importers | `frontend/apps/ppt-web/src/lib/api.ts` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache) | 2026-09-26 | done | — |
 | 1 | bug | ppt-web automation feature ships English-only strings — missing i18n keys | `frontend/apps/ppt-web/src/features/automation` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature) | 2026-09-26 | done | — |
 | 1 | bug | CreateRule component casts Partial payload at boundary — silent runtime shape mismatch risk | `frontend/apps/ppt-web/src/features/automation` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature) | 2026-09-26 | done | — |

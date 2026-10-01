@@ -11300,6 +11300,55 @@
       "created_at": "2026-10-01",
       "updated_at": "2026-10-01",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-server-favorites-add-error-mapping-500",
+      "title": "reality-server add_favorite returns 500 for missing listing / duplicate instead of 404/409 — substring-match error mapping misses sqlx RowNotFound + UniqueViolation",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-01 reality-server)"
+      ],
+      "evidence": [
+        "handlers/favorites/mod.rs:40-74 add_favorite error mapper tests `error_str.contains(\"violates foreign key\")` → ListingNotFound else DatabaseError (HTTP 500); CASE A (deterministic): repo.add_favorite's INSERT...SELECT FROM listings WHERE id=$2 returns sqlx::Error::RowNotFound on a missing listing (not an FK violation), so the handler 500s instead of 404 ListingNotFound (dead branch).",
+        "CASE B (concurrent duplicate TOCTOU): portal_favorites UNIQUE(user_id, listing_id) (migration 00063:65) — handler pre-check `favorites.iter().any(f.listing_id == listing_id)` is non-atomic, two racing inserts both pass and the second raises Postgres 23505 (`duplicate key value violates unique constraint`), which doesn't contain \"violates foreign key\" → DatabaseError → HTTP 500 instead of AlreadyFavorited. Same TOCTOU affects the MAX_FAVORITES_PER_USER=100 limit guard (no DB-side enforcement).",
+        "Fix: match on sqlx::Error::RowNotFound → ListingNotFound; UniqueViolation / code 23505 → AlreadyFavorited; make the limit DB-authoritative. Verify with `cargo build -p reality-server` + an integration test (add favorite for non-existent listing asserts ListingNotFound, concurrent duplicate asserts AlreadyFavorited).",
+        "Net-new: grep of backlog.json + signals/*.json for favorites-add / favorite error-mapping returned nothing (all prior 'favorite(s)' findings are reality-web)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-favorites-read-amplification",
+      "title": "reality-server favorites handler re-introduces the large-N anti-pattern its own repo author guarded against — is_favorited/get_favorites_count load the full join instead of using cheap EXISTS/COUNT helpers",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-01 reality-server)"
+      ],
+      "evidence": [
+        "handlers/favorites/mod.rs is_favorited (:103-114), get_favorites_count (:145-154), and add_favorite precondition (:48-60) all call `self.repo.get_favorites_with_listings(user_id)` — a portal_favorites JOIN listings + correlated per-row cover-photo subquery materialising up to 100 rows — then throw them away to return a bool, a usize, or compare .len().",
+        "Repo already ships purpose-built cheap helpers: `is_favorite` (searches.rs:535-545) is `SELECT EXISTS(…)` with a doc-comment explicitly stating it exists to avoid the large-N anti-pattern (large-N correctness bug on list-endpoint caps). portal.rs provides `count_favorites` (:564 COUNT) and `is_favorited` (:574). Handler re-introduces exactly what repo author warned against.",
+        "Latent correctness edge: count_derived-from-join DROPS favorites whose listing row was hard-deleted (INNER JOIN) — get_favorites_count and the add_favorite limit pre-check can under-count vs the true portal_favorites row count. count_favorites (COUNT over portal_favorites alone) is both cheaper and correct.",
+        "Remedy: delegate is_favorited → repo.is_favorite (EXISTS), get_favorites_count → repo.count_favorites, base limit guard on COUNT. Verify with `cargo build -p reality-server` + a focused unit test. Net-new: no prior reality-server favorites-read-amplification finding."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs",
+        "backend/crates/db/src/repositories/portal.rs"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
     }
   ]
 }

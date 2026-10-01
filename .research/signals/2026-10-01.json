@@ -1,5 +1,5 @@
 {
-  "generated_iso": "2026-10-01T04:46:44Z",
+  "generated_iso": "2026-10-01T08:38:11Z",
   "run_mode": "incremental",
   "trigger_payload": "buffer-low: claimable=9/72 — refill planner (pipeline wedged on #2966 infra + human-gated PRs)",
   "signals": [
@@ -12,13 +12,14 @@
         "Routine missed scheduled runs — 4d 1h since last run. Cloud cron likely paused or dispatcher-only commits kept state.last_run_iso stale."
       ],
       "confidence": "high",
-      "candidate_vector": "triage"
+      "candidate_vector": "triage",
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "screen-map-drift-pr-2994-ppt",
       "type": "screen-map-drift",
       "source": "PR #2994",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #2994 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (ppt-web route file) without touching any `docs/screens/ppt/*.md` — ProtectedRoute auth wrapper on /dashboard/{manager,resident}.",
         "Author's PR body claims 'no route paths added or removed' so screen-map frontmatter is unaffected — treat as review candidate per spec best-effort caveat."
@@ -27,13 +28,14 @@
       "candidate_vector": "test-gap",
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
-      ]
+      ],
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "screen-map-drift-pr-2995-ppt",
       "type": "screen-map-drift",
       "source": "PR #2995",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #2995 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (route file) without updating `docs/screens/ppt/*.md` — Home CTA role-based routing by manager-role membership."
       ],
@@ -41,13 +43,14 @@
       "candidate_vector": "test-gap",
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
-      ]
+      ],
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "screen-map-drift-pr-3002-ppt",
       "type": "screen-map-drift",
       "source": "PR #3002",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #3002 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (route file) without updating `docs/screens/ppt/*.md` — role-gate on manager-dashboard shell (closes #2998)."
       ],
@@ -55,7 +58,8 @@
       "candidate_vector": "test-gap",
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
-      ]
+      ],
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
@@ -108,14 +112,15 @@
         "Routine state.json has not advanced in 4 days — cloud cron likely paused. Dispatcher state in .research/management/assignments.json continues to tick (separate loop)."
       ],
       "confidence": "high",
-      "candidate_vector": "triage"
+      "candidate_vector": "triage",
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
@@ -125,14 +130,15 @@
       "expert": "frontend",
       "files": [
         "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
-      ]
+      ],
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
       "evidence": [
@@ -149,14 +155,15 @@
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx",
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
-      ]
+      ],
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
@@ -166,13 +173,14 @@
       "expert": "frontend",
       "files": [
         "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
-      ]
+      ],
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
     },
     {
       "id": "issue-ingest-3006",
       "type": "untriaged-issue",
       "source": "Issue #3006",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "Issue #3006 opened 2026-10-01 by post-merge review of PR #3004 — follow-up/from-merged-review labels; concrete fix proposal in body (factor applyAuthHeaders + shouldRetryOnMfa401; collapse 3-way drift).",
         "Backlog item code-review-ppt-web-api-client-auth-fetch-triplication seeded directly with score=2, vector=refactor, confidence=high."
@@ -182,6 +190,44 @@
       "files": [
         "frontend/packages/api-client/src/lib/fetch.ts",
         "frontend/packages/api-client/src/auth/interceptors.ts"
+      ],
+      "rerun_note": "same-day rerun; score_delta zeroed — already counted in prior state.seen_signals"
+    },
+    {
+      "id": "code-review-reality-server-favorites-add-error-mapping-500",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-01 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs"
+      ],
+      "evidence": [
+        "handlers/favorites/mod.rs:40-74 add_favorite error mapper tests `error_str.contains(\"violates foreign key\")` → ListingNotFound else DatabaseError (HTTP 500). CASE A: repo.add_favorite INSERT...SELECT returns sqlx::Error::RowNotFound on missing listing → 500 instead of 404; CASE B: unique-violation on duplicate → 500 instead of AlreadyFavorited; same TOCTOU affects MAX_FAVORITES_PER_USER limit guard.",
+        "Fix: match concrete sqlx::Error (RowNotFound/UniqueViolation code 23505). Verifiable with cargo build -p reality-server + integration test. Folded in by routine from dispatcher Tier-1d signals file .research/signals/2026-10-01-reality-server-tier1d.json (commit ddfd6f65)."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-favorites-read-amplification",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-01 reality-server)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs",
+        "backend/crates/db/src/repositories/reality_portal/searches.rs",
+        "backend/crates/db/src/repositories/portal.rs"
+      ],
+      "evidence": [
+        "handlers/favorites/mod.rs is_favorited/get_favorites_count/add_favorite limit guard all call repo.get_favorites_with_listings — full join + photo subquery — then throw rows away for a bool/usize. Cheap repo helpers (is_favorite EXISTS, count_favorites) are ignored. Latent correctness: COUNT-from-join under-counts favorites whose listing row was hard-deleted (INNER JOIN).",
+        "Remedy: delegate is_favorited→repo.is_favorite, get_favorites_count→repo.count_favorites, base limit guard on COUNT. Folded in by routine from dispatcher Tier-1d signals file (commit ddfd6f65)."
       ]
     }
   ],
@@ -189,16 +235,17 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f brief && head -1 matches",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "test -f briefs/2026-10-01.md && head -1 matches",
+      "observed": "ok",
+      "expected": "ok"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state.json advanced vs HEAD",
+      "command": "jq comparing staged state vs HEAD",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "last_run_iso advanced + 2 seen_signals added"
     },
     {
       "goal": "G3",
@@ -210,102 +257,104 @@
     {
       "goal": "G4",
       "passed": true,
-      "command": "no re-emit of non-cumulative seen signals with score_delta>0",
+      "command": "non-cumulative re-emits have score_delta==0",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "same-day rerun: 9 morning signal ids zeroed; 2 new Tier-1d signal ids absent from prior seen_signals so can carry their original score_delta"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "no score>8 and no score<0",
-      "observed": "true",
-      "expected": "true"
+      "command": "score cap + decay",
+      "observed": "max score 6, no open items older than 14d",
+      "expected": "ok"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "every new plan has adversarial-pass annotation in brief",
-      "observed": "1 of 1 annotated",
-      "expected": "all"
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "≥0 with adversarial-pass annotation each"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "<=2 new plans, each 4 metadata + 11 headings + capability tick + Mode + files on disk",
-      "observed": "1 new plan, all checks ok",
-      "expected": "all"
+      "command": "new plans count ≤2",
+      "observed": "0",
+      "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "no files outside .research/ staged",
-      "observed": "0",
+      "command": "only .research/ in staged diff",
+      "observed": "0 non-research paths",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets/private hostnames in staged diff",
-      "observed": "0",
+      "command": "no secrets/private hostnames",
+      "observed": "0 hits",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md == regen(backlog.json)",
+      "command": "backlog.md regen byte-identity",
       "observed": "diff empty",
-      "expected": "identical"
+      "expected": "diff empty"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases that failed matches cursor advancement",
-      "observed": "none",
-      "expected": "none"
+      "command": "no failed phases to surface",
+      "observed": "brief: Phases that failed: none",
+      "expected": "honest"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior plan slug still in plans/ or plans/_archive/",
-      "observed": "none missing",
-      "expected": "none missing"
+      "command": "prior plans still present",
+      "observed": "27 slugs accounted for",
+      "expected": "all present in plans/ or plans/_archive/"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count >= HEAD",
-      "observed": "9>=9",
-      "expected": ">="
+      "command": "archive only grows",
+      "observed": "prev=9 cur=9",
+      "expected": "cur ≥ prev"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md == regen(backlog.json | triage)",
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
       "observed": "diff empty",
-      "expected": "identical"
+      "expected": "diff empty"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps + idempotency",
-      "observed": "length=0",
-      "expected": "<=3"
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[], 0 PR/issue/comment",
+      "expected": "caps respected"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid + cursor liveness",
-      "observed": "epics=13, cc=8, pm=6",
-      "expected": "valid"
+      "command": "management artifacts valid; Phase 1.6 did not run on this rerun",
+      "observed": "action-list/risks/project-state parse ok; pm_cursor.next_index=6; coverage_cursor.next_index=8",
+      "expected": "ok (no-op gate when Phase 1.6 skipped)"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token in staged",
-      "observed": "0",
+      "command": "no Telegram token leaked",
+      "observed": "0 added-line matches",
       "expected": "0"
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist"
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist",
+  "rerun_note": "Same-day rerun 2026-10-01 08:37 UTC triggered by buffer-low (claimable=17/72). Folded in 2 Tier-1d signals the dispatcher wrote to signals/2026-10-01-reality-server-tier1d.json at 06:38 UTC."
 }
