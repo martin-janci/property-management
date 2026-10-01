@@ -11090,6 +11090,174 @@
         "assignment_status": "merged",
         "pr_number": 2995
       }
+    },
+    {
+      "id": "screen-map-drift-pr-2993-reality",
+      "title": "screen-map drift: PR #2993 — update docs/screens for touched routes",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2993"
+      ],
+      "evidence": [
+        "PR #2993 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx with no docs/screens/reality/*.md update — likely auth-callback or auth-login screen doc drifted"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "title": "screen-map drift: PR #2994 — update docs/screens for touched routes",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2994"
+      ],
+      "evidence": [
+        "PR #2994 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (ProtectedRoute wrap for /dashboard/*) with no docs/screens/ppt/*.md update"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "title": "screen-map drift: PR #2995 — update docs/screens for touched routes",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2995"
+      ],
+      "evidence": [
+        "PR #2995 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (home-cta role routing) with no docs/screens/ppt/*.md update"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "title": "screen-map drift: PR #3002 — update docs/screens for touched routes",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3002"
+      ],
+      "evidence": [
+        "PR #3002 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (role-gate manager dashboard shell) with no docs/screens/ppt/*.md update — matching screen likely docs/screens/ppt/manager-dashboard.md"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/manager-dashboard.md"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "title": "churn-hotspot: frontend/apps/ppt-web/src/routes/groups/core.tsx — monitor for repeated-churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-09-27 → 2026-10-01"
+      ],
+      "evidence": [
+        "Top-3 churn: core.tsx touched 3× (PR #2994, #2995, #3002) — route-table concentration on one file; next run watch for repeated-churn promotion."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+      "title": "churn-hotspot: frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx — monitor for repeated-churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-09-27 → 2026-10-01"
+      ],
+      "evidence": [
+        "Top-3 churn: CreateRulePage.tsx touched 3× (PR #2996 type-at-boundary + i18n wave) alongside TemplateLibrary/ExecutionMonitoring/EditRule/AutomationRules (each 2×)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
+      "title": "churn-hotspot: frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx — monitor for repeated-churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-09-27 → 2026-10-01"
+      ],
+      "evidence": [
+        "Top-3 churn: TemplateLibraryPage.tsx touched 2× in the workflow-automation i18n sweep; filler third hotspot after core.tsx and CreateRulePage.tsx."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "title": "reality-web /auth/login redirect guard missing /\\ check — open-redirect: `?redirect=/\\evil.example.com` sends user off-site",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "reality-web segment review 2026-10-01 (oldest-unreviewed; cursor 2026-08-29)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:72 — redirectTo guard is only startsWith('/') && !startsWith('//'); accepts `?redirect=/\\\\evil.example.com` which browsers normalize to a protocol-relative URL and router.replace sends the user off-site.",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:127-131 — the sibling SSO callback explicitly rejects both '//' and '/\\\\' prefixes; auth/callback/page.test.tsx:166 even has a regression test for the backslash escape — the login path is missing the matching guard and matching test.",
+        "login/page.tsx:20 — useRouter imported from next/navigation (not from @/i18n/routing), so Next.js performs the client navigation to the attacker-controlled relative URL verbatim without further validation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": "plans/code-review-reality-web-login-open-redirect-backslash.md"
     }
   ]
 }

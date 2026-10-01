@@ -1,0 +1,272 @@
+{
+  "date": "2026-10-01",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-01",
+      "type": "lag_warning",
+      "source": "routine lag check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Routine last ran 2026-09-27T03:18:40Z — 95h (≈3.95d) ago; above 36h warning threshold."
+      ],
+      "files": []
+    },
+    {
+      "id": "stale-routine-alert-2026-10-01",
+      "type": "stale_routine_alert",
+      "source": "routine lag check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "state.json last_run_iso=2026-09-27T03:18:40Z is 3d old; cloud routine may be paused. Dispatcher state is still ticking on the planning branch per assignments.json commits."
+      ],
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-2993-reality",
+      "type": "screen-map-drift",
+      "source": "PR #2993",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2993 touched frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx with no docs/screens/reality/*.md update — likely auth-callback or auth-login screen doc drifted"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2994",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2994 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (ProtectedRoute wrap for /dashboard/*) with no docs/screens/ppt/*.md update"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #2995",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #2995 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (home-cta role routing) with no docs/screens/ppt/*.md update"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3002",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3002 touched frontend/apps/ppt-web/src/routes/groups/core.tsx (role-gate manager dashboard shell) with no docs/screens/ppt/*.md update — matching screen likely docs/screens/ppt/manager-dashboard.md"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx",
+        "docs/screens/ppt/manager-dashboard.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-09-27 → 2026-10-01",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn: core.tsx touched 3× (PR #2994, #2995, #3002) — route-table concentration on one file; next run watch for repeated-churn promotion."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-09-27 → 2026-10-01",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn: CreateRulePage.tsx touched 3× (PR #2996 type-at-boundary + i18n wave) alongside TemplateLibrary/ExecutionMonitoring/EditRule/AutomationRules (each 2×)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-09-27 → 2026-10-01",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn: TemplateLibraryPage.tsx touched 2× in the workflow-automation i18n sweep; filler third hotspot after core.tsx and CreateRulePage.tsx."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-login-open-redirect-backslash",
+      "type": "code-review-finding",
+      "source": "reality-web segment review 2026-10-01 (oldest-unreviewed; cursor 2026-08-29)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx:72 — redirectTo guard is only startsWith('/') && !startsWith('//'); accepts `?redirect=/\\\\evil.example.com` which browsers normalize to a protocol-relative URL and router.replace sends the user off-site.",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx:127-131 — the sibling SSO callback explicitly rejects both '//' and '/\\\\' prefixes; auth/callback/page.test.tsx:166 even has a regression test for the backslash escape — the login path is missing the matching guard and matching test.",
+        "login/page.tsx:20 — useRouter imported from next/navigation (not from @/i18n/routing), so Next.js performs the client navigation to the attacker-controlled relative URL verbatim without further validation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/auth/callback/page.test.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no-candidate: the 4 screen-map-drift signals are confidence=medium (fails Phase 5 bar); the code-review-finding is not on the allowlist (manual plan path).",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "matched",
+      "expected": "matched"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq cumulative-type dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq cap<=8; decay check",
+      "observed": "cap=0 overflow; no decay candidates",
+      "expected": "cap=0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plan + adversarial pass in brief",
+      "observed": "plan annotated adversarial pass: passed",
+      "expected": "present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 plans, metadata+headings+mode+files",
+      "observed": "1 new plan passes all G7 sub-checks",
+      "expected": "<=2 valid plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secret patterns in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases",
+      "observed": "none failed; brief says so",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "no missing",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged >= HEAD",
+      "observed": "staged=9 head=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline",
+      "observed": "empty; no autofix fired",
+      "expected": "<=3 total, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "pm_cursor unchanged (HEAD=5 now=5); no advance → no-op",
+      "expected": "no-op or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram token patterns in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
