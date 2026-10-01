@@ -2629,5 +2629,15 @@
       "retryExecution": "Opakovať spustenie",
       "close": "Zavrieť"
     }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Pravidlá registra uložené",
+        "savedBody": "Vaše zmeny pravidiel registra boli použité.",
+        "saveFailed": "Pravidlá registra sa nepodarilo uložiť",
+        "saveFailedBody": "Vaše zmeny sa nepodarilo uložiť. Skúste to znova."
+      }
+    }
   }
 }

@@ -7,7 +7,9 @@
 import type { UpdateRegistryRulesRequest } from '@ppt/api-client';
 import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useToast } from '../../../components';
 import { RegistryRulesForm } from '../components/RegistryRulesForm';
 
 // API base URL - prefer environment configuration for different environments (dev/staging/prod)
@@ -22,6 +24,8 @@ const registryApi = createRegistryApi({
 export function RegistryRulesPage() {
   const { buildingId } = useParams<{ buildingId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // Create hooks instance from the API
   const registryHooks = useMemo(() => createRegistryHooks(registryApi), []);
@@ -44,10 +48,21 @@ export function RegistryRulesPage() {
         buildingId,
         data,
       });
-      // Success - could show a toast notification here
+      showToast({
+        type: 'success',
+        title: t('registry.rules.toast.saved'),
+        message: t('registry.rules.toast.savedBody'),
+      });
     } catch (err) {
-      // Error handling - could show error toast
+      // Keep the console trace for diagnostics, but always surface the failure
+      // to the user via a persistent error toast (and the server's message
+      // when we have one) so a failed save can never look like a success.
       console.error('Failed to update registry rules:', err);
+      showToast({
+        type: 'error',
+        title: t('registry.rules.toast.saveFailed'),
+        message: err instanceof Error ? err.message : t('registry.rules.toast.saveFailedBody'),
+      });
     }
   };
 
@@ -117,20 +132,6 @@ export function RegistryRulesPage() {
           isSubmitting={updateRulesMutation.isPending}
         />
       </div>
-
-      {/* Mutation error display */}
-      {updateRulesMutation.isError && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">Failed to save changes. Please try again.</p>
-        </div>
-      )}
-
-      {/* Success message */}
-      {updateRulesMutation.isSuccess && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-700">Registry rules updated successfully.</p>
-        </div>
-      )}
 
       {/* Info Section */}
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">

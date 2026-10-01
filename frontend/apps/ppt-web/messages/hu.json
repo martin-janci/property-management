@@ -2493,5 +2493,15 @@
       "retryExecution": "Végrehajtás újrapróbálása",
       "close": "Bezárás"
     }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
+    }
   }
 }
