@@ -556,6 +556,11 @@
       "bookFacility": "Zarezerwuj obiekt",
       "empty": "Nie znaleziono rezerwacji.",
       "allCaughtUp": "Wszystko załatwione! Brak oczekujących rezerwacji do sprawdzenia."
+    },
+    "errors": {
+      "fetchFailedTitle": "Nie udało się załadować obiektów",
+      "fetchFailedDescription": "Podczas ładowania obiektów wystąpił błąd. Spróbuj ponownie.",
+      "retry": "Spróbuj ponownie"
     }
   },
   "faults": {

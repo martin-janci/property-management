@@ -6,6 +6,7 @@
 
 import type { FacilitySummary, FacilityType } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FacilityCard } from './FacilityCard';
 
 interface FacilityListProps {
@@ -14,8 +15,13 @@ interface FacilityListProps {
   page: number;
   pageSize: number;
   isLoading?: boolean;
+  /** True when the facilities fetch failed. Renders a distinct error state
+   * (with retry) instead of the empty "No facilities found" placeholder. */
+  isError?: boolean;
   isManager?: boolean;
   onPageChange: (page: number) => void;
+  /** Re-run the facilities fetch (wired to the error state's retry button). */
+  onRetry?: () => void;
   onTypeFilter: (type?: FacilityType) => void;
   onBookableFilter: (bookable?: boolean) => void;
   onView: (id: string) => void;
@@ -46,8 +52,10 @@ export function FacilityList({
   page,
   pageSize,
   isLoading,
+  isError,
   isManager,
   onPageChange,
+  onRetry,
   onTypeFilter,
   onBookableFilter,
   onView,
@@ -55,6 +63,7 @@ export function FacilityList({
   onEdit,
   onCreate,
 }: FacilityListProps) {
+  const { t } = useTranslation();
   const [typeFilter, setTypeFilter] = useState<FacilityType | ''>('');
   const [bookableFilter, setBookableFilter] = useState<string>('');
 
@@ -120,6 +129,36 @@ export function FacilityList({
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      ) : isError ? (
+        <div className="text-center py-12" role="alert">
+          <svg
+            className="mx-auto h-12 w-12 text-red-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <p className="mt-4 text-gray-900 font-medium">
+            {t('facilities.errors.fetchFailedTitle')}
+          </p>
+          <p className="mt-1 text-gray-500">{t('facilities.errors.fetchFailedDescription')}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              {t('facilities.errors.retry')}
+            </button>
+          )}
         </div>
       ) : facilities.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
