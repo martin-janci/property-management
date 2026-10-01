@@ -1,7 +1,7 @@
 {
-  "generated_iso": "2026-10-01T04:46:44Z",
+  "generated_iso": "2026-10-01T06:38:01Z",
   "run_mode": "incremental",
-  "trigger_payload": "buffer-low: claimable=9/72 — refill planner (pipeline wedged on #2966 infra + human-gated PRs)",
+  "trigger_payload": "buffer-low: claimable=9/72 — refill planner (pipeline wedged on #2966 infra + human-gated PRs) ; re-fire 06:35Z: buffer-low: claimable=17/72 — refill planner (no new activity since 04:46Z; no promotable candidates)",
   "signals": [
     {
       "id": "lag-warning-2026-10-01",
@@ -18,7 +18,7 @@
       "id": "screen-map-drift-pr-2994-ppt",
       "type": "screen-map-drift",
       "source": "PR #2994",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #2994 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (ppt-web route file) without touching any `docs/screens/ppt/*.md` — ProtectedRoute auth wrapper on /dashboard/{manager,resident}.",
         "Author's PR body claims 'no route paths added or removed' so screen-map frontmatter is unaffected — treat as review candidate per spec best-effort caveat."
@@ -27,13 +27,14 @@
       "candidate_vector": "test-gap",
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
-      ]
+      ],
+      "re_emit_note": "already counted on morning run commit a4c0c35; score_delta zeroed on re-fire for G4 compliance"
     },
     {
       "id": "screen-map-drift-pr-2995-ppt",
       "type": "screen-map-drift",
       "source": "PR #2995",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #2995 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (route file) without updating `docs/screens/ppt/*.md` — Home CTA role-based routing by manager-role membership."
       ],
@@ -41,13 +42,14 @@
       "candidate_vector": "test-gap",
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
-      ]
+      ],
+      "re_emit_note": "already counted on morning run commit a4c0c35; score_delta zeroed on re-fire for G4 compliance"
     },
     {
       "id": "screen-map-drift-pr-3002-ppt",
       "type": "screen-map-drift",
       "source": "PR #3002",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #3002 modified `frontend/apps/ppt-web/src/routes/groups/core.tsx` (route file) without updating `docs/screens/ppt/*.md` — role-gate on manager-dashboard shell (closes #2998)."
       ],
@@ -55,7 +57,8 @@
       "candidate_vector": "test-gap",
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
-      ]
+      ],
+      "re_emit_note": "already counted on morning run commit a4c0c35; score_delta zeroed on re-fire for G4 compliance"
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
@@ -115,7 +118,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
-      "score_delta": 3,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
@@ -125,14 +128,15 @@
       "expert": "frontend",
       "files": [
         "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
-      ]
+      ],
+      "re_emit_note": "already counted on morning run commit a4c0c35; score_delta zeroed on re-fire for G4 compliance"
     },
     {
       "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "refactor",
       "evidence": [
@@ -149,14 +153,15 @@
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx",
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
-      ]
+      ],
+      "re_emit_note": "already counted on morning run commit a4c0c35; score_delta zeroed on re-fire for G4 compliance"
     },
     {
       "id": "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-ui",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "high",
       "candidate_vector": "bug",
       "evidence": [
@@ -166,13 +171,14 @@
       "expert": "frontend",
       "files": [
         "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
-      ]
+      ],
+      "re_emit_note": "already counted on morning run commit a4c0c35; score_delta zeroed on re-fire for G4 compliance"
     },
     {
       "id": "issue-ingest-3006",
       "type": "untriaged-issue",
       "source": "Issue #3006",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "Issue #3006 opened 2026-10-01 by post-merge review of PR #3004 — follow-up/from-merged-review labels; concrete fix proposal in body (factor applyAuthHeaders + shouldRetryOnMfa401; collapse 3-way drift).",
         "Backlog item code-review-ppt-web-api-client-auth-fetch-triplication seeded directly with score=2, vector=refactor, confidence=high."
@@ -182,7 +188,17 @@
       "files": [
         "frontend/packages/api-client/src/lib/fetch.ts",
         "frontend/packages/api-client/src/auth/interceptors.ts"
-      ]
+      ],
+      "re_emit_note": "already counted on morning run commit a4c0c35; score_delta zeroed on re-fire for G4 compliance"
+    },
+    {
+      "id": "buffer-low-check-2026-10-01-0635",
+      "type": "lag_warning",
+      "source": "scheduler re-fire",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "Dispatcher re-fired buffer-low (claimable=17/72, FLOOR=36) at 06:35Z. No merged PRs since #3004, no open PRs touched, no new/updated issues since the morning run 04:46Z. Phase 3 found no promotable candidates — 5 highest-scored open items stuck at score=2 (one below the generic gate; none security-vector so fast-track does not apply). Logged as informational; no backlog mutation.",
+      "candidate_vector": null
     }
   ],
   "goal_checks": [
@@ -307,5 +323,5 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist"
+  "auto_fix_skipped_reason": "no candidate — same-day re-fire; no new signals and all top open items remain at score=2 (one below the generic gate; none security so fast-track does not apply)"
 }
