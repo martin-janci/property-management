@@ -11090,6 +11090,72 @@
         "assignment_status": "merged",
         "pr_number": 2995
       }
+    },
+    {
+      "id": "churn-hotspot-deploy-server-blue-green",
+      "title": "Churn hotspot: deploy-server/src/infra/blue_green.rs — 238 lines reshaped in PR #2971 Wave 1 tag contract",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2971",
+        "local git numstat 8c5d5952..dfa6136"
+      ],
+      "evidence": [
+        "238 lines churned in a single commit (Wave 1 CI blue/green tag identity work)",
+        "No matching test diff in this window"
+      ],
+      "files": [
+        "backend/servers/deploy-server/src/infra/blue_green.rs"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-mobile-fault-attachments",
+      "title": "Churn hotspot: mobile/src/screens/faults/faultAttachments.ts — new 201-line presigned-upload module (PR #3001)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3001",
+        "local git numstat 8c5d5952..dfa6136"
+      ],
+      "evidence": [
+        "201 lines added alongside 192-line test file (presigned attachment pipeline)",
+        "Covered by matching test file in same PR; low immediate instability risk"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/faultAttachments.ts"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-ppt-web-condition-builder",
+      "title": "Churn hotspot: ppt-web workflow-automation ConditionBuilder.tsx — 193 lines reshaped in PR #2991 i18n",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2991",
+        "local git numstat 8c5d5952..dfa6136"
+      ],
+      "evidence": [
+        "193 lines churned in the automation i18n cleanup",
+        "No matching test diff in this window"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
     }
   ]
 }

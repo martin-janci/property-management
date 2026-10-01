@@ -1,0 +1,71 @@
+{
+  "generated_at": "2026-10-01T02:50:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-01",
+      "type": "lag_warning",
+      "source": "state.last_run_iso 2026-09-27T03:18:40Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-09-27 03:18 UTC — 95h (4d) ago; well past the 36h lag threshold. No stale_routine_alert (3d boundary) crossed per LAG_DAYS=3 edge; see brief.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/deploy-server/src/infra/blue_green.rs",
+      "type": "churn-hotspot",
+      "source": "git log 8c5d5952..dfa6136 --numstat",
+      "score_delta": 1,
+      "evidence": "238 lines (add+del) in single commit — PR #2971 Wave 1 blue/green tag-contract rewrite. First time this file is scored.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/faults/faultAttachments.ts",
+      "type": "churn-hotspot",
+      "source": "git log 8c5d5952..dfa6136 --numstat",
+      "score_delta": 1,
+      "evidence": "201 lines added — PR #3001 presigned attachment pipeline. Matching 192-line test file in same PR; already covered.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx",
+      "type": "churn-hotspot",
+      "source": "git log 8c5d5952..dfa6136 --numstat",
+      "score_delta": 1,
+      "evidence": "193 lines churned — PR #2991 workflow-automation i18n extraction. First time scored.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "buffer-low-report-2026-10-01",
+      "type": "process-signal",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "evidence": "Caller reports dispatcher buffer at claimable=8/72 — all landable work parked on infra blockers #2966 (api-server utoipa-swagger-ui egress), #2951 (mobile RN jest cloud egress), #2652 (closed — AGP). Routine commit itself cannot refill buffer; see brief.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist (lag_warning / churn-hotspot / process-signal not in Phase 5 allowlist)",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f .research/briefs/2026-10-01.md && head -1 == '# 2026-10-01'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "jq slurpfile vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq [.items[].id] | length == (unique | length)", "observed": "true (436 unique of 436)", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "signal re-emission vs seen_signals filter", "observed": "0 offenders", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "score > 8 count; decay inspection",   "observed": "no items > 8; no open items past 14d → no decay candidates this run", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "every new plan has adversarial pass annotation", "observed": "0 new plans this run → vacuously true", "expected": "true" },
+    { "goal": "G7",  "passed": true,  "command": "<= 2 new plans; readiness gate (vacuous)", "observed": "0 new plans", "expected": "<= 2" },
+    { "goal": "G8",  "passed": true,  "command": "staged files all under .research/",  "observed": "0 outside", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "secret/private-hostname grep",      "observed": "0 matches",  "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "backlog.md == regen(backlog.json)", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "phase-failure honesty", "observed": "no phases failed; brief 'Phases that failed: none'", "expected": "true" },
+    { "goal": "G12", "passed": true,  "command": "prior-run plan slugs present in plans/ or _archive/", "observed": "no plans deleted this run (only additions)", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "archive count this run >= HEAD count", "observed": "9 >= 9", "expected": ">=" },
+    { "goal": "G14", "passed": true,  "command": "IDEAS_TRIAGE.md == regen(backlog.json where vector=='triage')", "observed": "diff -q exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions caps + idempotency", "observed": "0 actions this run", "expected": "<=1 PR, <=1 issue, <=1 comment" },
+    { "goal": "G16", "passed": true,  "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped → gate no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true,  "command": "no Telegram bot-token value", "observed": "0 matches", "expected": "0" }
+  ]
+}

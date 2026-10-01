@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-27T03:18:40Z",
+  "last_run_iso": "2026-10-01T02:50:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2991,
-  "last_issue_seen": 2982,
-  "last_commit_sha": "8c5d5952345e4873b719751ab5364b07aa2cdd6d",
+  "last_pr_seen": 3005,
+  "last_issue_seen": 3006,
+  "last_commit_sha": "dfa6136",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -536,6 +536,21 @@
       "runs_seen": 1,
       "last_seen": "2026-09-26",
       "recent_churn": 83
+    },
+    "backend/servers/deploy-server/src/infra/blue_green.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-01",
+      "recent_churn": 238
+    },
+    "frontend/apps/mobile/src/screens/faults/faultAttachments.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-01",
+      "recent_churn": 201
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-01",
+      "recent_churn": 193
     }
   },
   "seen_signals": [
@@ -1049,7 +1064,12 @@
     "untriaged-issue-951",
     "untriaged-issue-952",
     "code-review-ppt-web-core-dashboard-routes-unguarded",
-    "code-review-ppt-web-core-home-cta-role-drift"
+    "code-review-ppt-web-core-home-cta-role-drift",
+    "lag-warning-2026-10-01",
+    "churn-hotspot-backend/servers/deploy-server/src/infra/blue_green.rs",
+    "churn-hotspot-frontend/apps/mobile/src/screens/faults/faultAttachments.ts",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/components/ConditionBuilder.tsx",
+    "buffer-low-report-2026-10-01"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1063,8 +1083,8 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 84,
-    "vectors_created": 387,
+    "runs": 85,
+    "vectors_created": 390,
     "plans_created": 31,
     "quiet_days": 5,
     "auto_fix_count": 0
