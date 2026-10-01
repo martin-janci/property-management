@@ -1,9 +1,18 @@
 {
-  "generated": "2026-10-01T02:34:27Z",
+  "generated": "2026-10-01T14:30:09Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-01T14:30:09Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (Tier-1d demand-driven, buffer-starvation trigger: claimable=15 < floor=36). Window=14d (merged>=2026-09-17), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI UNAVAILABLE in env; direct git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did not touch assignments.json/action-list.json/archives; review-only). Enumeration via list_pull_requests(closed, base=dev, sort=updated desc, perPage=50); merged detected by non-null merged_at (MCP 'merged' bool unreliable). ZERO net-new PRs to review: every in-window merge already carries post-merge-reviewed. In-window merges (merged_at>=2026-09-17), all reviewed by prior runs: #3004,#3002,#3001 @09-30 (today's 02:34Z run — #3004=>issue #3006, #3002+#3001 clean); #2983,#2989,#2994,#2968,#2984,#2985,#2986,#2988,#2970,#2971,#2990,#2991,#2993,#2995,#2996 @09-27; #2980,#2979 @09-26. Newest merge into dev is #3001/#3004 @2026-09-30T12:36Z; no merges on 10-01. Top-of-list dependabot PRs (#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939,#2958,#2591,#2933,#2808,#2934) are closed-unmerged (no merged_at), not merges into dev. #463 @2026-05-24 and #2955/#2956 @09-08 predate the window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass (hard rule: never re-review a post-merge-reviewed PR).",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-10-01T02:34:27Z",
       "prs_scanned": 3,
@@ -323,47 +332,6 @@
         2918,
         2917,
         2876
-      ]
-    },
-    {
-      "run_at": "2026-08-30T20:27:52Z",
-      "prs_scanned": 15,
-      "clean": [
-        2899,
-        2898,
-        2896,
-        2891,
-        2889,
-        2890,
-        2893,
-        2892,
-        2888,
-        2887,
-        2884,
-        2886,
-        2883,
-        2882,
-        2881
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-16), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Enumerated merged-into-dev PRs via GitHub MCP (gh CLI proxy-403); 15 net-new never-reviewed PRs (all others already carry post-merge-reviewed). Reviewed all 15 by static diff analysis (no build/DB in cloud runner). ALL 15 CLEAN: these are themselves code-review fast-follow fixes -- each is a small, well-scoped change with a regression test and good reuse (shared validators, canonical role helpers, EmptyState/i18n bundles). Checklist (correctness/security/perf/tests/regressions/conventions/json-key-case) found nothing actionable. Notable strong fixes: #2882 gates CF-Connecting-IP behind TRUST_CF_CONNECTING_IP (closes residual #2789 spoof class, fail-safe default); #2893 stops PM-introspection outages poisoning the negative token cache; #2887 fails loudly (503) instead of dropping OCR meter images; #2886 coerces types for workflow Eq/Ne/In/NotIn. 0 follow-up issues opened. All 15 PRs labeled post-merge-reviewed to block re-review. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push; untouched assignments.json/action-list.json/archives).",
-      "focus_prs": [
-        2899,
-        2898,
-        2896,
-        2891,
-        2889,
-        2890,
-        2893,
-        2892,
-        2888,
-        2887,
-        2884,
-        2886,
-        2883,
-        2882,
-        2881
       ]
     }
   ]
