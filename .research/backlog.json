@@ -11090,6 +11090,216 @@
         "assignment_status": "merged",
         "pr_number": 2995
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
+      "title": "RegistryRulesPage save silently swallows errors and gives no success feedback",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:48-51 — handleSubmit catch only calls console.error; no toast, no error state surfaced; failed updateRulesMutation.mutateAsync looks identical to success.",
+        "RegistryRulesPage.tsx:46-47 — success path also silent (code comment acknowledges 'could show a toast notification here'); user has no confirmation either way, inviting duplicate submits and lost edits."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": "plans/code-review-ppt-web-ui-registry-rules-save-silent-fail.md"
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
+      "title": "workflow-automation pages emit English-literal toast titles while rest of file uses i18n",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:29-33,47-50,53-57 — toast title/message literals ('Create failed', 'Rule created', …) while rest of page uses t('automation.createPage.*').",
+        "EditRulePage.tsx:30-34,37-41; AutomationRulesPage.tsx:66-114 (six toast groups incl. rule.name interpolations); ExecutionMonitoringPage.tsx:81-92; TemplateLibraryPage.tsx:70-76 — same anti-pattern repeats across all five automation pages."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/EditRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
+      "title": "FacilitiesPage swallows listFacilities error — empty indistinguishable from fetch failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-72 — listFacilities() rejection caught, logged to console.error, swallowed; no error state, isLoading flips false, user sees 'empty' list indistinguishable from an actually empty building.",
+        "FacilitiesPage.tsx:48-51,110-124 — component carries no error useState and FacilityList receives no error prop; there is no code path capable of rendering an error state. Prior PendingBookings fix (PendingBookingsPage.test.tsx:6 header) called out the same anti-pattern."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "title": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2994"
+      ],
+      "evidence": [
+        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "title": "ppt-web Home CTA refactor (PR #2995) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2995"
+      ],
+      "evidence": [
+        "PR #2995 route-level Home CTA role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "title": "ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3002"
+      ],
+      "evidence": [
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "title": "ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "4 commits in 14d touched core.tsx — three were route-auth refactors (PR #2994 ProtectedRoute wrap, PR #2995 Home CTA role gate, PR #3002 dashboard role gate). Signals route-table instability or an incomplete pattern migration."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+      "title": "ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "4 commits in 14d culminating in PR #2996 (boundary-cast fix); workflow-automation feature pages churn together — see sibling churn-hotspot items."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
+      "title": "ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "3 commits in 14d (tied with EditRulePage, ExecutionMonitoringPage, AutomationRulesPage) — the workflow-automation feature is churning as a unit; see hardcoded-toasts code-review finding for a concrete follow-up."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
+      "title": "Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #3006 (post-merge review of PR #3004)"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/lib/fetch.ts contains two near-identical retry-aware auth implementations after PR #3004 — fetchJsonInner and authenticatedFetchInner — both re-implementing header injection and 401→MFA→retry-once. A third copy of header-injection lives in the generated clients auth/interceptors.ts.",
+        "The three copies already drift: getAuthHeaders() (JSON path) sets only Authorization; authenticatedFetchInner (raw path) sets Authorization and X-Tenant-ID. Any future change (rename X-Tenant-ID, add a required header, change MFA marker key, bound the retry) must be made in three places that already disagree.",
+        "Proposed in #3006: factor applyAuthHeaders + shouldRetryOnMfa401 into shared helpers; add a test asserting authenticatedFetchJson and authenticatedFetch emit the same auth/tenant headers."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/lib/fetch.ts",
+        "frontend/packages/api-client/src/auth/interceptors.ts"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
     }
   ]
 }
