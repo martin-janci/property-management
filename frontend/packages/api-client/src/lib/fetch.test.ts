@@ -91,6 +91,26 @@ describe('authenticatedFetchJson', () => {
     expect(headers.Authorization).toBeUndefined();
   });
 
+  // #3006: the JSON path deliberately sends ONLY Authorization and never
+  // X-Tenant-ID — even when an org provider is registered — unlike the raw
+  // `authenticatedFetch` primitive (and the generated-client interceptor),
+  // which send both via the shared `applyAuthHeaders`. This pins that
+  // intentional divergence so the tenant header is never added here except as a
+  // deliberate behavior change.
+  it('does not inject X-Tenant-ID even when an org provider is registered (deliberate, #3006)', async () => {
+    setOrgProvider(() => 'org-7');
+    try {
+      vi.mocked(fetch).mockResolvedValueOnce(mockOkResponse({}));
+      await authenticatedFetchJson('/api/v1/test');
+      const called = vi.mocked(fetch).mock.calls[0];
+      const headers = (called[1] as RequestInit).headers as Record<string, string>;
+      expect(headers.Authorization).toBe('Bearer test-token');
+      expect(headers['X-Tenant-ID']).toBeUndefined();
+    } finally {
+      clearOrgProvider();
+    }
+  });
+
   it('throws an Error with server message on non-2xx responses', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       mockErrResponse(403, { message: 'Forbidden', error: 'forbidden' })
