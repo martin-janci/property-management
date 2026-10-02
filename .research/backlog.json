@@ -11388,7 +11388,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
       ],
@@ -11403,7 +11403,12 @@
       ],
       "created_at": "2026-10-02",
       "updated_at": "2026-10-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-02T20:28:19Z",
+        "assignment_status": "merged",
+        "pr_number": 3015
+      }
     },
     {
       "id": "code-review-reality-web-price-alert-markread-silent-fail",
