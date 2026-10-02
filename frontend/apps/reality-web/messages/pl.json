@@ -3,201 +3,201 @@
     "allListings": "Wszystkie oferty",
     "branding": "Branding",
     "buttonCancel": "Anuluj",
-    "buttonSendInvitation": "WyÅlij zaproszenie",
-    "buttonSending": "WysyÅanie...",
+    "buttonSendInvitation": "Wyślij zaproszenie",
+    "buttonSending": "Wysyłanie...",
     "dashboard": "Panel agencji",
     "formLabelEmail": "E-mail *",
-    "formLabelMessage": "WiadomoÅÄ osobista",
-    "formLabelName": "ImiÄ i nazwisko *",
+    "formLabelMessage": "Wiadomość osobista",
+    "formLabelName": "Imię i nazwisko *",
     "formLabelTitle": "Stanowisko",
     "formPlaceholderEmail": "agent@example.com",
-    "formPlaceholderMessage": "Dodaj osobistÄ wiadomoÅÄ do zaproszenia...",
+    "formPlaceholderMessage": "Dodaj osobistą wiadomość do zaproszenia...",
     "formPlaceholderName": "Jan Kowalski",
-    "formPlaceholderTitle": "Starszy agent nieruchomoÅci",
-    "inviteError": "BÅÄd podczas wysyÅania zaproszenia. SprÃ³buj ponownie.",
-    "inviteRealtor": "ZaproÅ agenta",
-    "loadErrorMessage": "Podczas Åadowania panelu agencji wystÄpiÅ bÅÄd. SprÃ³buj ponownie.",
-    "loadErrorTitle": "Nie udaÅo siÄ zaÅadowaÄ Twojej agencji",
-    "createAgency": "UtwÃ³rz agencjÄ",
-    "noAgencyMessage": "Nie jesteÅ powiÄzany z Å¼adnÄ agencjÄ.",
+    "formPlaceholderTitle": "Starszy agent nieruchomości",
+    "inviteError": "Błąd podczas wysyłania zaproszenia. Spróbuj ponownie.",
+    "inviteRealtor": "Zaproś agenta",
+    "loadErrorMessage": "Podczas ładowania panelu agencji wystąpił błąd. Spróbuj ponownie.",
+    "loadErrorTitle": "Nie udało się załadować Twojej agencji",
+    "createAgency": "Utwórz agencję",
+    "noAgencyMessage": "Nie jesteś powiązany z żadną agencją.",
     "noAgencyTitle": "Nie znaleziono agencji",
-    "manageRealtors": "ZarzÄdzaj agentami",
-    "performanceOverview": "PrzeglÄd wydajnoÅci",
+    "manageRealtors": "Zarządzaj agentami",
+    "performanceOverview": "Przegląd wydajności",
     "period1y": "1 rok",
     "period30d": "30 dni",
     "period7d": "7 dni",
     "period90d": "90 dni",
     "quickActions": "Szybkie akcje",
-    "retry": "SprÃ³buj ponownie",
-    "sectionLoadError": "Nie udaÅo siÄ zaÅadowaÄ tej sekcji.",
+    "retry": "Spróbuj ponownie",
+    "sectionLoadError": "Nie udało się załadować tej sekcji.",
     "topRealtors": "Najlepsi agenci",
     "viewAll": "Zobacz wszystkie",
     "inquiries": "Zapytania",
     "statActiveListings": "Aktywne oferty",
-    "statTotalViews": "ÅÄczne wyÅwietlenia",
+    "statTotalViews": "Łączne wyświetlenia",
     "statInquiries": "Zapytania",
-    "statConversionRate": "WspÃ³Åczynnik konwersji",
+    "statConversionRate": "Współczynnik konwersji",
     "statRealtors": "Agenci",
-    "statAvgDaysOnMarket": "År. dni na rynku",
-    "chartViews": "WyÅwietlenia",
+    "statAvgDaysOnMarket": "Śr. dni na rynku",
+    "chartViews": "Wyświetlenia",
     "chartInquiries": "Zapytania",
-    "leaderboardEmpty": "Brak aktywnych agentÃ³w",
-    "leaderboardStats": "{sales} sprzedaÅ¼y Â· {active} aktywnych",
-    "backToDashboard": "PowrÃ³t do panelu",
-    "realtorManagementTitle": "ZarzÄdzanie agentami",
-    "realtorManagementSubtitle": "ZarzÄdzaj swoim zespoÅem agentÃ³w nieruchomoÅci",
+    "leaderboardEmpty": "Brak aktywnych agentów",
+    "leaderboardStats": "{sales} sprzedaży · {active} aktywnych",
+    "backToDashboard": "Powrót do panelu",
+    "realtorManagementTitle": "Zarządzanie agentami",
+    "realtorManagementSubtitle": "Zarządzaj swoim zespołem agentów nieruchomości",
     "tabAll": "Wszyscy",
     "tabActive": "Aktywni",
-    "tabPending": "OczekujÄcy",
+    "tabPending": "Oczekujący",
     "tabInactive": "Nieaktywni",
-    "realtorsLoadError": "Nie udaÅo siÄ zaÅadowaÄ agentÃ³w. SprÃ³buj ponownie.",
+    "realtorsLoadError": "Nie udało się załadować agentów. Spróbuj ponownie.",
     "statusActive": "Aktywny",
-    "statusPending": "OczekujÄcy",
+    "statusPending": "Oczekujący",
     "statusInactive": "Nieaktywny",
     "statusSuspended": "Zawieszony",
     "cardListings": "Oferty",
-    "cardSales": "SprzedaÅ¼e",
+    "cardSales": "Sprzedaże",
     "cardReviews": "{count} opinii",
-    "buttonResend": "WyÅlij ponownie",
+    "buttonResend": "Wyślij ponownie",
     "buttonView": "Zobacz",
-    "detailTitle": "SzczegÃ³Åy agenta",
+    "detailTitle": "Szczegóły agenta",
     "formLabelBio": "Biografia",
-    "statTotalSales": "ÅÄczna sprzedaÅ¼",
+    "statTotalSales": "Łączna sprzedaż",
     "statRating": "Ocena",
     "statusLabel": "Status",
     "confirmRemoveQuestion": "Na pewno?",
-    "confirmRemoveYes": "Tak, usuÅ",
-    "buttonRemove": "UsuÅ",
+    "confirmRemoveYes": "Tak, usuń",
+    "buttonRemove": "Usuń",
     "buttonSaveChanges": "Zapisz zmiany",
     "buttonEdit": "Edytuj",
     "buttonClose": "Zamknij",
-    "emptyAllTitle": "Brak agentÃ³w",
-    "emptyAllDesc": "ZaproÅ swojego pierwszego agenta, aby rozpoczÄÄ.",
-    "emptyActiveTitle": "Brak aktywnych agentÃ³w",
-    "emptyActiveDesc": "Aktywni agenci pojawiÄ siÄ tutaj.",
-    "emptyInvitedTitle": "Brak oczekujÄcych zaproszeÅ",
-    "emptyInvitedDesc": "ZaproÅ agentÃ³w do swojej agencji.",
-    "emptyInactiveTitle": "Brak nieaktywnych agentÃ³w",
-    "emptyInactiveDesc": "Nieaktywni agenci pojawiÄ siÄ tutaj."
+    "emptyAllTitle": "Brak agentów",
+    "emptyAllDesc": "Zaproś swojego pierwszego agenta, aby rozpocząć.",
+    "emptyActiveTitle": "Brak aktywnych agentów",
+    "emptyActiveDesc": "Aktywni agenci pojawią się tutaj.",
+    "emptyInvitedTitle": "Brak oczekujących zaproszeń",
+    "emptyInvitedDesc": "Zaproś agentów do swojej agencji.",
+    "emptyInactiveTitle": "Brak nieaktywnych agentów",
+    "emptyInactiveDesc": "Nieaktywni agenci pojawią się tutaj."
   },
   "auth": {
     "login": {
-      "createOne": "UtwÃ³rz je",
-      "emailInvalid": "WprowadÅº prawidÅowy adres e-mail",
+      "createOne": "Utwórz je",
+      "emailInvalid": "Wprowadź prawidłowy adres e-mail",
       "emailLabel": "E-mail",
       "emailRequired": "E-mail jest wymagany",
-      "forgotPassword": "ZapomniaÅeÅ hasÅa?",
-      "genericError": "Logowanie nie powiodÅo siÄ. SprÃ³buj ponownie.",
-      "incorrectCredentials": "NieprawidÅowy e-mail lub hasÅo.",
-      "loading": "Åadowanieâ¦",
+      "forgotPassword": "Zapomniałeś hasła?",
+      "genericError": "Logowanie nie powiodło się. Spróbuj ponownie.",
+      "incorrectCredentials": "Nieprawidłowy e-mail lub hasło.",
+      "loading": "Ładowanie…",
       "noAccount": "Nie masz konta?",
-      "passwordLabel": "HasÅo",
-      "passwordRequired": "HasÅo jest wymagane",
-      "submit": "Zaloguj siÄ",
-      "submitting": "Logowanieâ¦",
+      "passwordLabel": "Hasło",
+      "passwordRequired": "Hasło jest wymagane",
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie…",
       "subtitle": "Witamy ponownie w Reality Portal.",
       "title": "Logowanie"
     },
     "protected": {
-      "description": "Zaloguj siÄ, aby uzyskaÄ dostÄp do tej strony.",
-      "loading": "Åadowanieâ¦",
-      "signIn": "Zaloguj siÄ",
+      "description": "Zaloguj się, aby uzyskać dostęp do tej strony.",
+      "loading": "Ładowanie…",
+      "signIn": "Zaloguj się",
       "title": "Wymagane logowanie"
     },
     "callback": {
-      "title": "Logowanie nie powiodÅo siÄ",
-      "invalidState": "NieprawidÅowy token stanu. SprÃ³buj zalogowaÄ siÄ ponownie.",
-      "returnHome": "PowrÃ³t do strony gÅÃ³wnej",
-      "loading": "Åadowanie...",
-      "completingLogin": "KoÅczenie logowania..."
+      "title": "Logowanie nie powiodło się",
+      "invalidState": "Nieprawidłowy token stanu. Spróbuj zalogować się ponownie.",
+      "returnHome": "Powrót do strony głównej",
+      "loading": "Ładowanie...",
+      "completingLogin": "Kończenie logowania..."
     }
   },
   "common": {
     "cancel": "Anuluj",
     "close": "Zamknij",
     "contact": "Kontakt",
-    "error": "BÅÄd",
+    "error": "Błąd",
     "favorites": "Ulubione",
-    "loading": "Åadowanie...",
-    "login": "Zaloguj siÄ",
-    "logout": "Wyloguj siÄ",
-    "register": "Zarejestruj siÄ",
+    "loading": "Ładowanie...",
+    "login": "Zaloguj się",
+    "logout": "Wyloguj się",
+    "register": "Zarejestruj się",
     "save": "Zapisz",
     "search": "Szukaj",
     "success": "Sukces"
   },
   "comparison": {
-    "loadError": "Nie udaÅo siÄ wczytaÄ udostÄpnionego porÃ³wnania. NiektÃ³re nieruchomoÅci mogÄ byÄ juÅ¼ niedostÄpne.",
-    "loading": "Wczytywanie udostÄpnionego porÃ³wnania...",
+    "loadError": "Nie udało się wczytać udostępnionego porównania. Niektóre nieruchomości mogą być już niedostępne.",
+    "loading": "Wczytywanie udostępnionego porównania...",
     "empty": {
-      "title": "Brak nieruchomoÅci do porÃ³wnania",
-      "description": "Dodaj nieruchomoÅci do porÃ³wnania ze strony z ofertami.",
-      "browse": "PrzeglÄdaj oferty"
+      "title": "Brak nieruchomości do porównania",
+      "description": "Dodaj nieruchomości do porównania ze strony z ofertami.",
+      "browse": "Przeglądaj oferty"
     },
     "actions": {
-      "share": "UdostÄpnij",
+      "share": "Udostępnij",
       "exportPdf": "Eksportuj PDF",
-      "clearAll": "WyczyÅÄ wszystko"
+      "clearAll": "Wyczyść wszystko"
     },
     "toast": {
-      "linkCopied": "Link do porÃ³wnania skopiowany do schowka!",
-      "shareUrl": "UdostÄpnij ten adres URL: {url}",
-      "pdfComingSoon": "Eksport do PDF juÅ¼ wkrÃ³tce!"
+      "linkCopied": "Link do porównania skopiowany do schowka!",
+      "shareUrl": "Udostępnij ten adres URL: {url}",
+      "pdfComingSoon": "Eksport do PDF już wkrótce!"
     },
-    "currencyWarning": "Uwaga: NieruchomoÅci uÅ¼ywajÄ rÃ³Å¼nych walut. WyrÃ³Å¼nianie porÃ³wnania cen jest wyÅÄczone.",
-    "propertyHeader": "NieruchomoÅÄ",
-    "remove": "UsuÅ",
-    "removeAria": "UsuÅ {title} z porÃ³wnania",
+    "currencyWarning": "Uwaga: Nieruchomości używają różnych walut. Wyróżnianie porównania cen jest wyłączone.",
+    "propertyHeader": "Nieruchomość",
+    "remove": "Usuń",
+    "removeAria": "Usuń {title} z porównania",
     "rows": {
       "price": "Cena",
       "type": "Typ",
-      "propertyType": "Typ nieruchomoÅci",
+      "propertyType": "Typ nieruchomości",
       "area": "Powierzchnia",
       "rooms": "Pokoje",
-      "floor": "PiÄtro",
+      "floor": "Piętro",
       "city": "Miasto",
       "district": "Dzielnica",
-      "pricePerSqm": "Cena za mÂ²"
+      "pricePerSqm": "Cena za m²"
     },
     "transactionType": {
-      "sale": "Na sprzedaÅ¼",
-      "rent": "Do wynajÄcia"
+      "sale": "Na sprzedaż",
+      "rent": "Do wynajęcia"
     }
   },
   "contact": {
-    "askQuestion": "ZadaÄ pytanie",
-    "checkAvailability": "SprawdziÄ dostÄpnoÅÄ",
-    "discussPrice": "OmÃ³wiÄ cenÄ",
+    "askQuestion": "Zadać pytanie",
+    "checkAvailability": "Sprawdzić dostępność",
+    "discussPrice": "Omówić cenę",
     "email": "E-mail",
-    "failedToSend": "Nie udaÅo siÄ wysÅaÄ wiadomoÅci. SprÃ³buj ponownie.",
-    "iWantTo": "ChcÄ",
-    "inquirySent": "Twoje zapytanie zostaÅo wysÅane. WkrÃ³tce siÄ z TobÄ skontaktujÄ.",
-    "message": "WiadomoÅÄ",
-    "messageSent": "WiadomoÅÄ wysÅana!",
-    "name": "Twoje imiÄ",
+    "failedToSend": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+    "iWantTo": "Chcę",
+    "inquirySent": "Twoje zapytanie zostało wysłane. Wkrótce się z Tobą skontaktują.",
+    "message": "Wiadomość",
+    "messageSent": "Wiadomość wysłana!",
+    "name": "Twoje imię",
     "optional": "(opcjonalnie)",
     "phone": "Telefon",
-    "placeholder": "CzeÅÄ, jestem zainteresowany tÄ nieruchomoÅciÄ...",
+    "placeholder": "Cześć, jestem zainteresowany tą nieruchomością...",
     "preferredDate": "Preferowana data",
     "preferredTime": "Preferowana godzina",
-    "privacyNotice": "WysyÅajÄc, zgadzasz siÄ z naszÄ politykÄ prywatnoÅci.",
-    "scheduleViewing": "UmÃ³w oglÄdanie",
-    "send": "WyÅlij wiadomoÅÄ",
-    "sendAnother": "WyÅlij kolejnÄ wiadomoÅÄ",
-    "sendMessage": "WyÅlij wiadomoÅÄ",
-    "sending": "WysyÅanie..."
+    "privacyNotice": "Wysyłając, zgadzasz się z naszą polityką prywatności.",
+    "scheduleViewing": "Umów oglądanie",
+    "send": "Wyślij wiadomość",
+    "sendAnother": "Wyślij kolejną wiadomość",
+    "sendMessage": "Wyślij wiadomość",
+    "sending": "Wysyłanie..."
   },
   "features": {
     "airConditioning": "Klimatyzacja",
     "balcony": "Balkon",
     "cellar": "Piwnica",
-    "disabledAccess": "DostÄp dla niepeÅnosprawnych",
+    "disabledAccess": "Dostęp dla niepełnosprawnych",
     "elevator": "Winda",
     "furnished": "Umeblowane",
-    "garage": "GaraÅ¼",
-    "garden": "OgrÃ³d",
+    "garage": "Garaż",
+    "garden": "Ogród",
     "parking": "Parking",
-    "petFriendly": "ZwierzÄta dozwolone",
+    "petFriendly": "Zwierzęta dozwolone",
     "terrace": "Taras"
   },
   "filters": {
@@ -205,17 +205,17 @@
     "anyRooms": "Dowolna",
     "anySize": "Dowolny rozmiar",
     "apartment": "Mieszkanie",
-    "area": "Powierzchnia (mÂ²)",
-    "area100To150": "100 - 150 mÂ²",
-    "area150To200": "150 - 200 mÂ²",
-    "area200Plus": "200+ mÂ²",
-    "area50To100": "50 - 100 mÂ²",
-    "areaUnder50": "Do 50 mÂ²",
-    "clearAll": "WyczyÅÄ wszystko",
+    "area": "Powierzchnia (m²)",
+    "area100To150": "100 - 150 m²",
+    "area150To200": "150 - 200 m²",
+    "area200Plus": "200+ m²",
+    "area50To100": "50 - 100 m²",
+    "areaUnder50": "Do 50 m²",
+    "clearAll": "Wyczyść wszystko",
     "commercial": "Komercyjne",
-    "garage": "GaraÅ¼",
+    "garage": "Garaż",
     "house": "Dom",
-    "land": "DziaÅka",
+    "land": "Działka",
     "minimumRooms": "Minimalna liczba pokoi",
     "office": "Biuro",
     "price100kTo200k": "{currency}100 000 - {currency}200 000",
@@ -224,9 +224,9 @@
     "price50kTo100k": "{currency}50 000 - {currency}100 000",
     "priceRange": "Zakres cen",
     "priceUnder50k": "Do {currency}50 000",
-    "propertyType": "Typ nieruchomoÅci",
+    "propertyType": "Typ nieruchomości",
     "roomsPlus": "{count}+",
-    "showResults": "PokaÅ¼ wyniki",
+    "showResults": "Pokaż wyniki",
     "title": "Filtry"
   },
   "footer": {
@@ -238,58 +238,58 @@
     "commercial": "Komercyjne",
     "company": "Firma",
     "contact": "Kontakt",
-    "copyright": "Â© {year} Reality Portal. Wszelkie prawa zastrzeÅ¼one.",
-    "description": "ZnajdÅº swojÄ idealnÄ nieruchomoÅÄ na SÅowacji, w Czechach i nie tylko.",
+    "copyright": "© {year} Reality Portal. Wszelkie prawa zastrzeżone.",
+    "description": "Znajdź swoją idealną nieruchomość na Słowacji, w Czechach i nie tylko.",
     "help": "Pomoc",
     "houses": "Domy",
-    "land": "DziaÅki",
-    "privacy": "Polityka prywatnoÅci",
-    "propertiesForRent": "NieruchomoÅci do wynajÄcia",
-    "propertiesForSale": "NieruchomoÅci na sprzedaÅ¼",
-    "propertyTypes": "Typy nieruchomoÅci",
+    "land": "Działki",
+    "privacy": "Polityka prywatności",
+    "propertiesForRent": "Nieruchomości do wynajęcia",
+    "propertiesForSale": "Nieruchomości na sprzedaż",
+    "propertyTypes": "Typy nieruchomości",
     "quickLinks": "Szybkie linki",
     "terms": "Regulamin"
   },
   "gallery": {
-    "closeGallery": "Zamknij galeriÄ",
-    "nextPhoto": "NastÄpne zdjÄcie",
-    "noPhotos": "Brak dostÄpnych zdjÄÄ",
-    "photoGallery": "Galeria zdjÄÄ",
-    "photoNumber": "ZdjÄcie {number}",
-    "photoOf": "ZdjÄcie {number} z {title}",
-    "previousPhoto": "Poprzednie zdjÄcie",
-    "viewFullscreen": "Zobacz zdjÄcia {title} na peÅnym ekranie",
-    "viewPhoto": "Zobacz zdjÄcie {number}"
+    "closeGallery": "Zamknij galerię",
+    "nextPhoto": "Następne zdjęcie",
+    "noPhotos": "Brak dostępnych zdjęć",
+    "photoGallery": "Galeria zdjęć",
+    "photoNumber": "Zdjęcie {number}",
+    "photoOf": "Zdjęcie {number} z {title}",
+    "previousPhoto": "Poprzednie zdjęcie",
+    "viewFullscreen": "Zobacz zdjęcia {title} na pełnym ekranie",
+    "viewPhoto": "Zobacz zdjęcie {number}"
   },
   "home": {
-    "browseByType": "PrzeglÄdaj wedÅug typu nieruchomoÅci",
-    "featuredForRent": "Polecane nieruchomoÅci do wynajÄcia",
-    "featuredForSale": "Polecane nieruchomoÅci na sprzedaÅ¼",
+    "browseByType": "Przeglądaj według typu nieruchomości",
+    "featuredForRent": "Polecane nieruchomości do wynajęcia",
+    "featuredForSale": "Polecane nieruchomości na sprzedaż",
     "featuredListings": "Polecane oferty",
-    "heroSubtitle": "Przeszukaj tysiÄce ofert na SÅowacji, w Czechach i nie tylko.",
-    "heroTitle": "ZnajdÅº swojÄ idealnÄ nieruchomoÅÄ",
+    "heroSubtitle": "Przeszukaj tysiące ofert na Słowacji, w Czechach i nie tylko.",
+    "heroTitle": "Znajdź swoją idealną nieruchomość",
     "listingsCount": "{count} ofert",
     "newListings": "Nowe oferty",
-    "searchPlaceholder": "Wpisz miasto, adres lub sÅowo kluczowe...",
-    "subtitle": "Przeszukaj tysiÄce ofert",
-    "title": "ZnajdÅº swojÄ idealnÄ nieruchomoÅÄ",
+    "searchPlaceholder": "Wpisz miasto, adres lub słowo kluczowe...",
+    "subtitle": "Przeszukaj tysiące ofert",
+    "title": "Znajdź swoją idealną nieruchomość",
     "viewAll": "Zobacz wszystkie",
-    "viewAllProperties": "Zobacz wszystkie nieruchomoÅci",
+    "viewAllProperties": "Zobacz wszystkie nieruchomości",
     "emptyTitle": "W tej chwili nie mamy polecanych ofert",
-    "emptyBody": "Nowe ogÅoszenia pojawiajÄ siÄ codziennie. Przejrzyj wszystkie aktualne oferty lub dodaj wÅasne ogÅoszenie za darmo.",
-    "emptyBrowseAll": "PrzeglÄdaj wszystkie oferty",
-    "emptyAddListing": "Dodaj wÅasne ogÅoszenie",
+    "emptyBody": "Nowe ogłoszenia pojawiają się codziennie. Przejrzyj wszystkie aktualne oferty lub dodaj własne ogłoszenie za darmo.",
+    "emptyBrowseAll": "Przeglądaj wszystkie oferty",
+    "emptyAddListing": "Dodaj własne ogłoszenie",
     "neighbourhoods": {
       "title": "Popularne dzielnice",
-      "subtitle": "Cena, dostÄpnoÅÄ i trend rynkowy w jednym miejscu.",
-      "exploreMap": "Zobacz mapÄ",
-      "browse": "PrzeglÄdaj oferty",
-      "ruzinov": "RuÅ¾inov",
-      "staremesto": "StarÃ© Mesto",
-      "petrzalka": "PetrÅ¾alka",
-      "novemesto": "NovÃ© Mesto",
+      "subtitle": "Cena, dostępność i trend rynkowy w jednym miejscu.",
+      "exploreMap": "Zobacz mapę",
+      "browse": "Przeglądaj oferty",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
       "karlovaves": "Karlova Ves",
-      "dubravka": "DÃºbravka"
+      "dubravka": "Dúbravka"
     },
     "city": {
       "bratislava": "Bratislava"
@@ -301,22 +301,22 @@
       },
       "passport": {
         "label": "Paszport budynku",
-        "desc": "Energia Â· stan funduszu Â· ujawnione usterki"
+        "desc": "Energia · stan funduszu · ujawnione usterki"
       },
       "history": {
         "label": "Historia cen",
-        "desc": "KaÅ¼da zmiana z datÄ w ogÅoszeniu"
+        "desc": "Każda zmiana z datą w ogłoszeniu"
       },
       "mortgage": {
-        "label": "WstÄpna decyzja kredytowa",
+        "label": "Wstępna decyzja kredytowa",
         "desc": "W aplikacji, z naszymi bankami partnerskimi"
       }
     },
     "cta": {
-      "title": "Sprzedajesz nieruchomoÅÄ?",
-      "body": "Dodaj ogÅoszenie w 5 minut, otrzymaj darmowy paszport budynku i dotrzyj do 210 000 zweryfikowanych kupujÄcych tygodniowo.",
-      "learnMore": "Dowiedz siÄ wiÄcej",
-      "startListing": "Dodaj nieruchomoÅÄ"
+      "title": "Sprzedajesz nieruchomość?",
+      "body": "Dodaj ogłoszenie w 5 minut, otrzymaj darmowy paszport budynku i dotrzyj do 210 000 zweryfikowanych kupujących tygodniowo.",
+      "learnMore": "Dowiedz się więcej",
+      "startListing": "Dodaj nieruchomość"
     }
   },
   "listing": {
@@ -324,98 +324,98 @@
     "additionalResources": "Dodatkowe zasoby",
     "amenities": "Udogodnienia",
     "area": "Powierzchnia",
-    "availableFrom": "DostÄpne od",
-    "bathroom": "Åazienka",
-    "bathrooms": "Åazienki",
+    "availableFrom": "Dostępne od",
+    "bathroom": "Łazienka",
+    "bathrooms": "Łazienki",
     "bedroom": "Sypialnia",
     "bedrooms": "Sypialnie",
-    "browseAll": "PrzeglÄdaj wszystkie oferty",
+    "browseAll": "Przeglądaj wszystkie oferty",
     "built": "Rok budowy",
-    "contactAgent": "Skontaktuj siÄ z agentem",
-    "contact_agent": "Skontaktuj siÄ z agentem",
+    "contactAgent": "Skontaktuj się z agentem",
+    "contact_agent": "Skontaktuj się z agentem",
     "description": "Opis",
     "energyRating": "Klasa energetyczna",
     "featured": "Polecane",
-    "features": "WyposaÅ¼enie",
-    "floor": "PiÄtro",
-    "floorNumber": "{number}. piÄtro",
-    "floorPlan": "Plan piÄtra",
-    "forRent": "Do wynajÄcia",
-    "forSale": "Na sprzedaÅ¼",
+    "features": "Wyposażenie",
+    "floor": "Piętro",
+    "floorNumber": "{number}. piętro",
+    "floorPlan": "Plan piętra",
+    "forRent": "Do wynajęcia",
+    "forSale": "Na sprzedaż",
     "listed": "Opublikowano",
     "location": "Lokalizacja",
-    "monthlyCharges": "OpÅaty miesiÄczne",
+    "monthlyCharges": "Opłaty miesięczne",
     "notFound": "Oferta nie znaleziona",
-    "notFoundDesc": "Oferta, ktÃ³rej szukasz, nie istnieje lub zostaÅa usuniÄta.",
-    "perMonth": "/miesiÄc",
+    "notFoundDesc": "Oferta, której szukasz, nie istnieje lub została usunięta.",
+    "perMonth": "/miesiąc",
     "price": "Cena",
     "rooms": "Pokoje",
     "roomsCount": "{count} pokoi",
-    "schedule_viewing": "UmÃ³w oglÄdanie",
-    "sqm": "mÂ²",
+    "schedule_viewing": "Umów oglądanie",
+    "sqm": "m²",
     "viewAll": "Zobacz wszystkie",
     "viewOnMap": "Zobacz na mapie",
     "virtualTour": "Wirtualny spacer"
   },
   "listings": {
-    "allProperties": "Wszystkie nieruchomoÅci",
-    "emptyDescription": "SprÃ³buj dostosowaÄ filtry lub kryteria wyszukiwania, aby znaleÅºÄ wiÄcej nieruchomoÅci.",
+    "allProperties": "Wszystkie nieruchomości",
+    "emptyDescription": "Spróbuj dostosować filtry lub kryteria wyszukiwania, aby znaleźć więcej nieruchomości.",
     "emptyTitle": "Nie znaleziono ofert",
-    "errorDescription": "Podczas Åadowania nieruchomoÅci wystÄpiÅ bÅÄd. SprÃ³buj ponownie.",
-    "errorTitle": "Nie udaÅo siÄ zaÅadowaÄ ofert",
+    "errorDescription": "Podczas ładowania nieruchomości wystąpił błąd. Spróbuj ponownie.",
+    "errorTitle": "Nie udało się załadować ofert",
     "filters": "Filtry",
     "gridView": "Widok siatki",
     "listView": "Widok listy",
-    "nextPage": "NastÄpna strona",
+    "nextPage": "Następna strona",
     "pageOf": "Strona {page} z {total}",
     "prevPage": "Poprzednia strona",
-    "propertiesForRent": "NieruchomoÅci do wynajÄcia",
-    "propertiesForSale": "NieruchomoÅci na sprzedaÅ¼",
+    "propertiesForRent": "Nieruchomości do wynajęcia",
+    "propertiesForSale": "Nieruchomości na sprzedaż",
     "resultsCount": "Znaleziono {count} ofert",
-    "retry": "SprÃ³buj ponownie",
+    "retry": "Spróbuj ponownie",
     "sortNewest": "Najnowsze",
     "sortOldest": "Najstarsze",
-    "sortPriceHigh": "Cena: od najwyÅ¼szej",
-    "sortPriceLow": "Cena: od najniÅ¼szej",
-    "sortSizeLarge": "Powierzchnia: od najwiÄkszej",
+    "sortPriceHigh": "Cena: od najwyższej",
+    "sortPriceLow": "Cena: od najniższej",
+    "sortSizeLarge": "Powierzchnia: od największej",
     "sortSizeSmall": "Powierzchnia: od najmniejszej",
     "tabAll": "Wszystkie",
-    "tabForRent": "Do wynajÄcia",
-    "tabForSale": "Na sprzedaÅ¼"
+    "tabForRent": "Do wynajęcia",
+    "tabForSale": "Na sprzedaż"
   },
   "nav": {
     "allListings": "Wszystkie oferty",
-    "home": "Strona gÅÃ³wna",
+    "home": "Strona główna",
     "myInquiries": "Moje zapytania",
     "profile": "Profil",
     "savedSearches": "Zapisane wyszukiwania",
     "journal": "Magazyn",
     "help": "Pomoc",
-    "listProperty": "Dodaj nieruchomoÅÄ",
-    "sell": "SprzedaÅ¼"
+    "listProperty": "Dodaj nieruchomość",
+    "sell": "Sprzedaż"
   },
   "pages": {
     "about": {
-      "description": "Reality Portal to wiodÄca platforma ogÅoszeÅ nieruchomoÅci na SÅowacji, w Czechach i nie tylko.",
+      "description": "Reality Portal to wiodąca platforma ogłoszeń nieruchomości na Słowacji, w Czechach i nie tylko.",
       "title": "O Reality Portal"
     },
     "contact": {
-      "description": "W sprawie wsparcia lub zapytaÅ biznesowych prosimy o kontakt pod adresem",
+      "description": "W sprawie wsparcia lub zapytań biznesowych prosimy o kontakt pod adresem",
       "email": "info@rlt.sk",
       "title": "Kontakt"
     },
     "privacy": {
-      "description": "ZobowiÄzujemy siÄ chroniÄ Twoje dane osobowe zgodnie z RODO i obowiÄzujÄcymi przepisami. PeÅna polityka prywatnoÅci zostanie tutaj opublikowana.",
-      "title": "Polityka prywatnoÅci"
+      "description": "Zobowiązujemy się chronić Twoje dane osobowe zgodnie z RODO i obowiązującymi przepisami. Pełna polityka prywatności zostanie tutaj opublikowana.",
+      "title": "Polityka prywatności"
     },
     "terms": {
-      "description": "KorzystajÄc z Reality Portal, zgadzasz siÄ na nasze warunki i postanowienia. PeÅne warunki korzystania zostanÄ tutaj opublikowane.",
+      "description": "Korzystając z Reality Portal, zgadzasz się na nasze warunki i postanowienia. Pełne warunki korzystania zostaną tutaj opublikowane.",
       "title": "Warunki korzystania"
     },
     "agentProfile": {
-      "activeListings": "Aktywne ogÅoszenia",
+      "activeListings": "Aktywne ogłoszenia",
       "contact": "Kontakt",
-      "languages": "JÄzyki",
+      "languages": "Języki",
       "reviews": "Opinie",
       "specializations": "Specjalizacje",
       "verified": "Zweryfikowany agent"
@@ -423,14 +423,14 @@
     "careers": {
       "hero": {
         "cta": "Wolne stanowiska",
-        "subtitle": "DoÅÄcz do naszego zespoÅu i pomÃ³Å¼ zmieniÄ sposÃ³b, w jaki ludzie kupujÄ, sprzedajÄ i wynajmujÄ nieruchomoÅci.",
-        "title": "Zbudujmy sensowny rynek nieruchomoÅci."
+        "subtitle": "Dołącz do naszego zespołu i pomóż zmienić sposób, w jaki ludzie kupują, sprzedają i wynajmują nieruchomości.",
+        "title": "Zbudujmy sensowny rynek nieruchomości."
       },
       "title": "Kariera",
       "h1": "Let's build a real estate market that makes sense."
     },
     "cookies": {
-      "reopen": "OtwÃ³rz ponownie ustawienia cookie",
+      "reopen": "Otwórz ponownie ustawienia cookie",
       "title": "Polityka cookie",
       "subtitle": "Cookie policy",
       "lastUpdated": "Last updated: 1 January 2025"
@@ -438,65 +438,65 @@
     "forAgents": {
       "features": "Co zyskujesz",
       "pricing": "Plany cenowe",
-      "subtitle": "Sprzedawaj wiÄcej z Reality Portal",
-      "title": "Dla agentÃ³w i agencji",
+      "subtitle": "Sprzedawaj więcej z Reality Portal",
+      "title": "Dla agentów i agencji",
       "heroTitle": "Sell more with Reality Portal",
       "heroBadge": "For agents & agencies",
       "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
     },
     "help": {
       "categories": "Kategorie",
-      "faq": "NajczÄÅciej zadawane pytania",
+      "faq": "Najczęściej zadawane pytania",
       "searchPlaceholder": "Szukaj w pomocy...",
       "title": "Centrum pomocy",
       "subtitle": "How can we help?",
       "intro": "Search our help centre or contact us directly."
     },
     "journal": {
-      "editorsPicks": "WybÃ³r redakcji",
-      "featured": "Polecany artykuÅ",
-      "latest": "Najnowsze artykuÅy",
-      "mostRead": "NajczÄÅciej czytane",
+      "editorsPicks": "Wybór redakcji",
+      "featured": "Polecany artykuł",
+      "latest": "Najnowsze artykuły",
+      "mostRead": "Najczęściej czytane",
       "newsletter": "Newsletter",
-      "subtitle": "Analizy, porady i wiadomoÅci ze Åwiata nieruchomoÅci.",
+      "subtitle": "Analizy, porady i wiadomości ze świata nieruchomości.",
       "title": "Reality magazyn",
       "readingTime": "{min} min read",
       "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
-      "newsletterSuccess": "â You're subscribed!",
+      "newsletterSuccess": "✅ You're subscribed!",
       "newsletterEmailPlaceholder": "you@email.com",
       "newsletterSubmit": "Subscribe",
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
       "save": "Zapisz zmiany",
-      "success": "OgÅoszenie zapisane!",
-      "title": "Edytuj ogÅoszenie"
+      "success": "Ogłoszenie zapisane!",
+      "title": "Edytuj ogłoszenie"
     },
     "priceMap": {
-      "clickHint": "Kliknij dzielnicÄ po szczegÃ³Åowe statystyki.",
-      "subtitle": "BratysÅawa â przeglÄd",
+      "clickHint": "Kliknij dzielnicę po szczegółowe statystyki.",
+      "subtitle": "Bratysława – przegląd",
       "title": "Mapa cen",
       "h1": "Price map"
     },
     "profile": {
       "tabs": {
-        "activity": "AktywnoÅÄ",
-        "listings": "Moje ogÅoszenia",
+        "activity": "Aktywność",
+        "listings": "Moje ogłoszenia",
         "reviews": "Opinie",
         "settings": "Ustawienia"
       },
-      "title": "MÃ³j profil"
+      "title": "Mój profil"
     },
     "report": {
-      "submit": "WyÅlij zgÅoszenie",
-      "subtitle": "Help us keep the portal trustworthy â tell us what's wrong.",
-      "success": "ZgÅoszenie wysÅane",
+      "submit": "Wyślij zgłoszenie",
+      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "success": "Zgłoszenie wysłane",
       "title": "Report a listing",
       "h1": "Report a listing"
     },
     "security": {
-      "reportCta": "ZgÅoÅ ogÅoszenie",
-      "subtitle": "How we keep listings, payments and your data safe â and what to watch out for.",
+      "reportCta": "Zgłoś ogłoszenie",
+      "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
       "title": "Security",
       "h1": "Your security is our priority",
       "scenariosHeading": "Common fraud scenarios"
@@ -524,12 +524,12 @@
           "description": "Verify details and publish"
         }
       },
-      "submit": "Opublikuj ogÅoszenie",
+      "submit": "Opublikuj ogłoszenie",
       "title": "Add listing",
       "stepLabel": "Step {step} of {total}: {stepTitle}",
       "asideTitle": "Steps",
-      "back": "â Back",
-      "next": "Next â",
+      "back": "← Back",
+      "next": "Next →",
       "publish": "Publish listing",
       "publishing": "Publishing…",
       "submitFailed": "Publishing failed, please try again.",
@@ -543,7 +543,7 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
-        "area": "Area (mÂ²)",
+        "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
         "roomsPlaceholder": "e.g. 3",
@@ -554,8 +554,8 @@
         "yearBuilt": "Year built",
         "yearBuiltPlaceholder": "e.g. 1995",
         "description": "Property description",
-        "descriptionPlaceholder": "Describe the property, its features and amenitiesâ¦",
-        "price": "Asking price (â¬)",
+        "descriptionPlaceholder": "Describe the property, its features and amenities…",
+        "price": "Asking price (€)",
         "priceSalePlaceholder": "e.g. 250000",
         "priceRentPlaceholder": "Monthly rent, e.g. 800",
         "priceNegotiable": "Price is negotiable",
@@ -579,9 +579,9 @@
       "photos": {
         "intro": "Upload photos (5 minimum, 30 maximum recommended).",
         "cta": "Click or drag photos here",
-        "formats": "JPG, PNG, WEBP Â· up to 10 MB each",
-        "selected_one": "â {count} photo selected",
-        "selected_other": "â {count} photos selected"
+        "formats": "JPG, PNG, WEBP · up to 10 MB each",
+        "selected_one": "✓ {count} photo selected",
+        "selected_other": "✓ {count} photos selected"
       },
       "summary": {
         "type": "Type",
@@ -616,19 +616,19 @@
       }
     },
     "listings": {
-      "title": "Wszystkie nieruchomoÅci",
-      "description": "Przeszukaj wszystkie oferty nieruchomoÅci na SÅowacji, w Czechach i nie tylko."
+      "title": "Wszystkie nieruchomości",
+      "description": "Przeszukaj wszystkie oferty nieruchomości na Słowacji, w Czechach i nie tylko."
     },
     "favorites": {
       "title": "Moje ulubione",
-      "description": "NieruchomoÅci, ktÃ³re zapisaÅeÅ.",
+      "description": "Nieruchomości, które zapisałeś.",
       "h1": "Moje ulubione",
       "priceAlertsLink": "Alerty cenowe",
-      "watchPrice": "ÅledÅº cenÄ",
-      "error": "Nie udaÅo siÄ zaÅadowaÄ ulubionych. SprÃ³buj ponownie.",
+      "watchPrice": "Śledź cenę",
+      "error": "Nie udało się załadować ulubionych. Spróbuj ponownie.",
       "emptyTitle": "Brak ulubionych",
-      "emptyText": "Zacznij przeglÄdaÄ oferty i zapisuj ulubione, klikajÄc ikonÄ serca.",
-      "browseListings": "PrzeglÄdaj oferty"
+      "emptyText": "Zacznij przeglądać oferty i zapisuj ulubione, klikając ikonę serca.",
+      "browseListings": "Przeglądaj oferty"
     },
     "login": {
       "title": "Sign in",
@@ -644,7 +644,7 @@
       "checkInbox": "Check your inbox",
       "checkInboxBody": "We sent a verification email to {email}. Click the link to activate your account.",
       "backToSignIn": "Back to sign in",
-      "creating": "Creating accountâ¦",
+      "creating": "Creating account…",
       "submit": "Create account",
       "displayNameRequired": "Display name is required",
       "emailRequired": "Email is required",
@@ -669,7 +669,7 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Enter a valid email address",
       "submit": "Send reset link",
-      "submitting": "Sendingâ¦",
+      "submitting": "Sending…",
       "checkInbox": "Check your inbox",
       "checkInboxBody": "If an account exists for {email}, we've sent instructions to reset your password.",
       "backToSignIn": "Back to sign in",
@@ -693,68 +693,68 @@
       "passwordTooShort": "Password must be at least 8 characters",
       "passwordsMismatch": "Passwords do not match",
       "submit": "Update password",
-      "submitting": "Savingâ¦",
+      "submitting": "Saving…",
       "requestNew": "Request a new reset link",
       "goToSignIn": "Go to sign in",
       "genericError": "Could not reset password. Please try again."
     },
     "priceAlerts": {
       "title": "Alerty cenowe",
-      "description": "Alerty o obniÅ¼kach cen i powrocie na rynek dla Twoich ulubionych ofert."
+      "description": "Alerty o obniżkach cen i powrocie na rynek dla Twoich ulubionych ofert."
     },
     "inquiries": {
-      "error": "Nie udaÅo siÄ zaÅadowaÄ zapytaÅ. SprÃ³buj ponownie.",
-      "emptyTitle": "Brak zapytaÅ",
-      "emptyText": "Gdy skontaktujesz siÄ z agentami w sprawie ofert, Twoje zapytania pojawiÄ siÄ tutaj.",
-      "browseListings": "PrzeglÄdaj oferty",
+      "error": "Nie udało się załadować zapytań. Spróbuj ponownie.",
+      "emptyTitle": "Brak zapytań",
+      "emptyText": "Gdy skontaktujesz się z agentami w sprawie ofert, Twoje zapytania pojawią się tutaj.",
+      "browseListings": "Przeglądaj oferty",
       "title": "Moje zapytania",
-      "subtitle": "ÅledÅº swoje zapytania o nieruchomoÅci i proÅby o oglÄdanie.",
+      "subtitle": "Śledź swoje zapytania o nieruchomości i prośby o oglądanie.",
       "filterAll": "Wszystkie",
       "status": {
-        "pending": "OczekujÄce",
+        "pending": "Oczekujące",
         "responded": "Odpowiedziano",
         "scheduled": "Zaplanowane",
-        "completed": "ZakoÅczone",
+        "completed": "Zakończone",
         "cancelled": "Anulowane"
       },
-      "viewingScheduled": "OglÄdanie zaplanowane: {date} o {time}",
-      "agentResponse": "OdpowiedÅº agenta:",
-      "cancelConfirm": "AnulowaÄ to zapytanie?",
+      "viewingScheduled": "Oglądanie zaplanowane: {date} o {time}",
+      "agentResponse": "Odpowiedź agenta:",
+      "cancelConfirm": "Anulować to zapytanie?",
       "cancelYes": "Tak, anuluj",
       "cancelNo": "Nie",
       "cancelInquiry": "Anuluj zapytanie",
       "previous": "Poprzednia",
-      "next": "NastÄpna",
+      "next": "Następna",
       "pageInfo": "Strona {page} z {total}"
     },
     "savedSearches": {
-      "alertsOff": "Powiadomienia wyÅÄczone",
-      "alertsOn": "Powiadomienia wÅÄczone",
+      "alertsOff": "Powiadomienia wyłączone",
+      "alertsOn": "Powiadomienia włączone",
       "allListings": "Wszystkie oferty",
       "confirmNo": "Nie",
       "confirmYes": "Tak",
-      "deleteAriaLabel": "UsuÅ zapisane wyszukiwanie",
-      "deleteConfirm": "UsunÄÄ?",
-      "emptyText": "Wyszukuj oferty i zapisz wyszukiwanie, aby otrzymywaÄ powiadomienia, gdy nowe nieruchomoÅci speÅniÄ Twoje kryteria.",
-      "emptyTitle": "Brak zapisanych wyszukiwaÅ",
-      "error": "Nie udaÅo siÄ zaÅadowaÄ zapisanych wyszukiwaÅ. SprÃ³buj ponownie.",
+      "deleteAriaLabel": "Usuń zapisane wyszukiwanie",
+      "deleteConfirm": "Usunąć?",
+      "emptyText": "Wyszukuj oferty i zapisz wyszukiwanie, aby otrzymywać powiadomienia, gdy nowe nieruchomości spełnią Twoje kryteria.",
+      "emptyTitle": "Brak zapisanych wyszukiwań",
+      "error": "Nie udało się załadować zapisanych wyszukiwań. Spróbuj ponownie.",
       "forRent": "Na wynajem",
-      "forSale": "Na sprzedaÅ¼",
+      "forSale": "Na sprzedaż",
       "frequency": {
         "daily": "Codziennie",
         "instant": "Natychmiast",
-        "weekly": "Co tydzieÅ"
+        "weekly": "Co tydzień"
       },
       "newCount": "{count} nowych",
       "startSearching": "Rozpocznij wyszukiwanie",
-      "subtitle": "ZarzÄdzaj swoimi zapisanymi wyszukiwaniami i otrzymuj powiadomienia, gdy nowe oferty speÅniÄ Twoje kryteria.",
+      "subtitle": "Zarządzaj swoimi zapisanymi wyszukiwaniami i otrzymuj powiadomienia, gdy nowe oferty spełnią Twoje kryteria.",
       "title": "Zapisane wyszukiwania",
       "view": "Zobacz"
     },
     "realtorListings": {
-      "error": "Nie udaÅo siÄ zaÅadowaÄ ofert.",
-      "empty": "Nie opublikowaÅeÅ jeszcze Å¼adnych ofert.",
-      "createFirst": "UtwÃ³rz swojÄ pierwszÄ ofertÄ"
+      "error": "Nie udało się załadować ofert.",
+      "empty": "Nie opublikowałeś jeszcze żadnych ofert.",
+      "createFirst": "Utwórz swoją pierwszą ofertę"
     }
   },
   "search": {
@@ -763,314 +763,314 @@
     "area_range": "Zakres powierzchni",
     "button": "Szukaj",
     "buy": "Kup",
-    "clearFilters": "WyczyÅÄ filtry",
+    "clearFilters": "Wyczyść filtry",
     "commercial": "Komercyjne",
     "filters": "Filtry",
     "house": "Dom",
-    "land": "DziaÅka",
+    "land": "Działka",
     "listingsCount": "{count} ofert",
     "maxArea": "Pow. maks.",
     "maxPrice": "Cena maks.",
     "minArea": "Pow. min.",
     "minPrice": "Cena min.",
     "noResults": "Nie znaleziono ofert",
-    "noResultsTip": "SprÃ³buj dostosowaÄ wyszukiwanie lub filtry",
-    "placeholder": "Szukaj wedÅug miasta, adresu lub sÅowa kluczowego...",
+    "noResultsTip": "Spróbuj dostosować wyszukiwanie lub filtry",
+    "placeholder": "Szukaj według miasta, adresu lub słowa kluczowego...",
     "popular": "Popularne:",
     "price_range": "Zakres cen",
-    "property_type": "Typ nieruchomoÅci",
+    "property_type": "Typ nieruchomości",
     "recentSearches": "Ostatnie wyszukiwania",
-    "rent": "Do wynajÄcia",
+    "rent": "Do wynajęcia",
     "resultsCount": "Znaleziono {count} ofert",
-    "sale": "Na sprzedaÅ¼",
+    "sale": "Na sprzedaż",
     "searching": "Wyszukiwanie...",
     "transaction_type": "Typ transakcji"
   },
   "error": {
-    "title": "CoÅ poszÅo nie tak",
-    "description": "WystÄpiÅ nieoczekiwany bÅÄd. SprÃ³buj ponownie za chwilÄ.",
-    "retry": "SprÃ³buj ponownie"
+    "title": "Coś poszło nie tak",
+    "description": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie za chwilę.",
+    "retry": "Spróbuj ponownie"
   },
   "notFound": {
     "title": "Strona nie istnieje",
-    "description": "Strona, ktÃ³rej szukasz, nie istnieje lub zostaÅa przeniesiona.",
-    "home": "PowrÃ³t do strony gÅÃ³wnej"
+    "description": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+    "home": "Powrót do strony głównej"
   },
   "cookieBanner": {
     "title": "We use cookies",
-    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it â we won't set them unless you accept.",
+    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it — we won't set them unless you accept.",
     "accept": "Accept all",
     "reject": "Reject optional",
     "manage": "Cookie settings"
   },
   "priceAlerts": {
     "h1": "Alerty cenowe",
-    "subtitle": "Zmiany cen i powrÃ³t na rynek dla ofert dodanych do ulubionych.",
-    "backToFavorites": "â PowrÃ³t do ulubionych",
-    "unread": "{count, plural, =0 {Brak nieprzeczytanych alertÃ³w} one {# nieprzeczytany alert} few {# nieprzeczytane alerty} other {# nieprzeczytanych alertÃ³w}}",
+    "subtitle": "Zmiany cen i powrót na rynek dla ofert dodanych do ulubionych.",
+    "backToFavorites": "← Powrót do ulubionych",
+    "unread": "{count, plural, =0 {Brak nieprzeczytanych alertów} one {# nieprzeczytany alert} few {# nieprzeczytane alerty} other {# nieprzeczytanych alertów}}",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
     "markRead": "Oznacz jako przeczytane",
     "backOnMarket": "Ponownie na rynku",
-    "priceChanged": "Cena siÄ zmieniÅa",
-    "drop": "obniÅ¼ka o {pct}",
+    "priceChanged": "Cena się zmieniła",
+    "drop": "obniżka o {pct}",
     "increase": "wzrost o {pct}",
-    "loadError": "Nie udaÅo siÄ zaÅadowaÄ alertÃ³w cenowych. SprÃ³buj ponownie.",
-    "emptyTitle": "Brak alertÃ³w cenowych",
-    "emptyText": "Powiadomimy CiÄ tutaj, gdy zmieniÄ siÄ ceny Twoich ulubionych ofert.",
-    "goToFavorites": "PrzejdÅº do ulubionych"
+    "loadError": "Nie udało się załadować alertów cenowych. Spróbuj ponownie.",
+    "emptyTitle": "Brak alertów cenowych",
+    "emptyText": "Powiadomimy Cię tutaj, gdy zmienią się ceny Twoich ulubionych ofert.",
+    "goToFavorites": "Przejdź do ulubionych"
   },
   "layout": {
-    "placeholderTitle": "Åadowanie sekcji",
-    "placeholderBody": "Ta sekcja jest chwilowo niedostÄpna."
+    "placeholderTitle": "Ładowanie sekcji",
+    "placeholderBody": "Ta sekcja jest chwilowo niedostępna."
   },
   "agencyListings": {
-    "back": "â PowrÃ³t do panelu",
+    "back": "← Powrót do panelu",
     "title": "Oferty agencji",
-    "subtitle": "ZarzÄdzaj wszystkimi ofertami nieruchomoÅci",
-    "createListing": "UtwÃ³rz ofertÄ",
+    "subtitle": "Zarządzaj wszystkimi ofertami nieruchomości",
+    "createListing": "Utwórz ofertę",
     "filterStatus": "Status",
     "filterRealtor": "Agent",
     "allRealtors": "Wszyscy agenci",
-    "showing": "WyÅwietlono {count} z {total} ofert",
-    "loadError": "Nie udaÅo siÄ zaÅadowaÄ ofert. SprÃ³buj ponownie.",
-    "colProperty": "NieruchomoÅÄ",
+    "showing": "Wyświetlono {count} z {total} ofert",
+    "loadError": "Nie udało się załadować ofert. Spróbuj ponownie.",
+    "colProperty": "Nieruchomość",
     "colType": "Typ",
     "colPrice": "Cena",
     "colStatus": "Status",
     "colRealtor": "Agent",
-    "colViews": "WyÅwietlenia",
+    "colViews": "Wyświetlenia",
     "colInquiries": "Zapytania",
     "colUpdated": "Zaktualizowano",
     "colActions": "Akcje",
     "previous": "Poprzednia",
-    "next": "NastÄpna",
+    "next": "Następna",
     "pageOf": "Strona {page} z {total}",
     "view": "Zobacz",
     "edit": "Edytuj",
-    "typeSale": "SprzedaÅ¼",
+    "typeSale": "Sprzedaż",
     "typeRent": "Wynajem",
     "emptyTitle": "Nie znaleziono ofert",
-    "emptyText": "UtwÃ³rz swojÄ pierwszÄ ofertÄ, aby rozpoczÄÄ.",
+    "emptyText": "Utwórz swoją pierwszą ofertę, aby rozpocząć.",
     "status": {
       "all": "Wszystkie",
       "active": "Aktywne",
       "draft": "Wersja robocza",
-      "pending": "OczekujÄce",
+      "pending": "Oczekujące",
       "sold": "Sprzedane",
-      "rented": "WynajÄte",
+      "rented": "Wynajęte",
       "withdrawn": "Wycofane"
     }
   },
   "agencyBranding": {
-    "back": "â PowrÃ³t do panelu",
+    "back": "← Powrót do panelu",
     "title": "Marka agencji",
-    "subtitle": "Dostosuj wyglÄd swojej agencji",
+    "subtitle": "Dostosuj wygląd swojej agencji",
     "saving": "Zapisywanie...",
     "saveChanges": "Zapisz zmiany",
     "logoTitle": "Logo",
-    "logoDesc": "Twoje logo pojawi siÄ na wszystkich ofertach i w profilu agencji.",
+    "logoDesc": "Twoje logo pojawi się na wszystkich ofertach i w profilu agencji.",
     "logoAlt": "Logo agencji",
-    "uploadLogo": "PrzeÅlij logo",
+    "uploadLogo": "Prześlij logo",
     "logoHint": "PNG, JPG do 2 MB. Zalecane: 400x200 px",
-    "coverTitle": "ZdjÄcie w tle",
-    "coverDesc": "ZdjÄcie w tle pojawia siÄ u gÃ³ry strony profilu Twojej agencji.",
-    "coverAlt": "ZdjÄcie w tle agencji",
-    "noCover": "Brak zdjÄcia w tle",
-    "uploadCover": "PrzeÅlij zdjÄcie w tle",
+    "coverTitle": "Zdjęcie w tle",
+    "coverDesc": "Zdjęcie w tle pojawia się u góry strony profilu Twojej agencji.",
+    "coverAlt": "Zdjęcie w tle agencji",
+    "noCover": "Brak zdjęcia w tle",
+    "uploadCover": "Prześlij zdjęcie w tle",
     "coverHint": "Zalecane: 1920x400 px",
     "colorsTitle": "Kolory marki",
-    "colorsDesc": "Wybierz kolory reprezentujÄce TwojÄ markÄ. BÄdÄ uÅ¼ywane na Twoich ofertach.",
+    "colorsDesc": "Wybierz kolory reprezentujące Twoją markę. Będą używane na Twoich ofertach.",
     "primaryColor": "Kolor podstawowy",
     "secondaryColor": "Kolor dodatkowy",
     "accentColor": "Kolor akcentu",
-    "previewTitle": "PodglÄd",
-    "previewDesc": "Zobacz, jak Twoja marka bÄdzie wyglÄdaÄ na ofertach.",
-    "featured": "WyrÃ³Å¼nione",
+    "previewTitle": "Podgląd",
+    "previewDesc": "Zobacz, jak Twoja marka będzie wyglądać na ofertach.",
+    "featured": "Wyróżnione",
     "yourAgency": "Twoja agencja",
-    "sampleTitle": "PrzykÅadowy tytuÅ oferty",
-    "contactAgent": "Skontaktuj siÄ z agentem"
+    "sampleTitle": "Przykładowy tytuł oferty",
+    "contactAgent": "Skontaktuj się z agentem"
   },
   "agencyInquiries": {
     "title": "Zapytania agencji",
     "subtitle": "Zapytania otrzymane dla ofert Twojej agencji.",
-    "loading": "Åadowanie zapytaÅâ¦",
-    "loadError": "Nie udaÅo siÄ zaÅadowaÄ zapytaÅ.",
-    "empty": "Å»adne zapytania nie pasujÄ do tego filtra.",
+    "loading": "Ładowanie zapytań…",
+    "loadError": "Nie udało się załadować zapytań.",
+    "empty": "Żadne zapytania nie pasują do tego filtra.",
     "status": {
       "all": "Wszystkie",
-      "pending": "OczekujÄce",
+      "pending": "Oczekujące",
       "responded": "Odpowiedziane",
       "scheduled": "Zaplanowane",
-      "completed": "ZakoÅczone",
+      "completed": "Zakończone",
       "cancelled": "Anulowane"
     }
   },
   "import": {
     "page": {
-      "back": "â PowrÃ³t do panelu",
+      "back": "← Powrót do panelu",
       "title": "Import ofert",
-      "subtitle": "Masowy import nieruchomoÅci z rÃ³Å¼nych ÅºrÃ³deÅ",
+      "subtitle": "Masowy import nieruchomości z różnych źródeł",
       "tabCsv": "Import CSV",
-      "tabCrm": "PoÅÄczenia CRM",
-      "tabFeed": "Å¹rÃ³dÅa kanaÅÃ³w"
+      "tabCrm": "Połączenia CRM",
+      "tabFeed": "Źródła kanałów"
     },
     "steps": {
-      "upload": "PrzeÅlij",
+      "upload": "Prześlij",
       "mapColumns": "Mapuj kolumny",
-      "preview": "PodglÄd",
+      "preview": "Podgląd",
       "import": "Import"
     },
     "csv": {
       "analyzing": "Analizowanie pliku CSV...",
-      "parseFailed": "Nie udaÅo siÄ przetworzyÄ pliku CSV",
-      "importFailed": "Import nie powiÃ³dÅ siÄ. SprÃ³buj ponownie.",
-      "uploadTitle": "PrzeciÄgnij i upuÅÄ plik CSV",
-      "uploadHint": "lub kliknij, aby przeglÄdaÄ",
-      "browseFiles": "PrzeglÄdaj pliki",
-      "supportedFormat": "ObsÅugiwany format: CSV (.csv)",
+      "parseFailed": "Nie udało się przetworzyć pliku CSV",
+      "importFailed": "Import nie powiódł się. Spróbuj ponownie.",
+      "uploadTitle": "Przeciągnij i upuść plik CSV",
+      "uploadHint": "lub kliknij, aby przeglądać",
+      "browseFiles": "Przeglądaj pliki",
+      "supportedFormat": "Obsługiwany format: CSV (.csv)",
       "mapTitle": "Mapuj kolumny CSV",
-      "mapSubtitle": "Dopasuj kolumny CSV do pÃ³l oferty",
+      "mapSubtitle": "Dopasuj kolumny CSV do pól oferty",
       "rowsFoundSuffix": "znalezionych wierszy",
-      "validationIssues": "{count} problemÃ³w z walidacjÄ",
-      "selectColumn": "-- Wybierz kolumnÄ --",
+      "validationIssues": "{count} problemów z walidacją",
+      "selectColumn": "-- Wybierz kolumnę --",
       "back": "Wstecz",
-      "previewImport": "PodglÄd importu",
-      "previewTitle": "PodglÄd importu",
+      "previewImport": "Podgląd importu",
+      "previewTitle": "Podgląd importu",
       "previewSubtitle": "Przejrzyj dane przed importem",
-      "totalRows": "ÅÄcznie wierszy",
-      "valid": "PrawidÅowe",
-      "invalid": "NieprawidÅowe",
-      "sampleTitle": "PodglÄd przykÅadowych danych",
-      "validationTitle": "Problemy z walidacjÄ ({count})",
+      "totalRows": "Łącznie wierszy",
+      "valid": "Prawidłowe",
+      "invalid": "Nieprawidłowe",
+      "sampleTitle": "Podgląd przykładowych danych",
+      "validationTitle": "Problemy z walidacją ({count})",
       "errorLocation": "Wiersz {row}, {column}:",
-      "moreIssues": "... i {count} wiÄcej problemÃ³w",
-      "skipInvalid": "PomiÅ nieprawidÅowe wiersze i importuj tylko prawidÅowe dane ({count} wierszy)",
-      "backToMapping": "PowrÃ³t do mapowania",
+      "moreIssues": "... i {count} więcej problemów",
+      "skipInvalid": "Pomiń nieprawidłowe wiersze i importuj tylko prawidłowe dane ({count} wierszy)",
+      "backToMapping": "Powrót do mapowania",
       "importListings": "Importuj {count} ofert",
       "importing": "Importowanie ofert...",
-      "importingHint": "Poczekaj, aÅ¼ przetworzymy Twoje dane.",
-      "complete": "Import zakoÅczony!",
+      "importingHint": "Poczekaj, aż przetworzymy Twoje dane.",
+      "complete": "Import zakończony!",
       "imported": "Zaimportowano",
       "failed": "Niepowodzenie",
-      "skipped": "PominiÄto",
+      "skipped": "Pominięto",
       "viewListings": "Zobacz oferty",
-      "importMore": "Importuj wiÄcej",
-      "errorTitle": "CoÅ poszÅo nie tak",
-      "tryAgain": "SprÃ³buj ponownie"
+      "importMore": "Importuj więcej",
+      "errorTitle": "Coś poszło nie tak",
+      "tryAgain": "Spróbuj ponownie"
     },
     "crm": {
-      "title": "PoÅÄczenia CRM",
-      "subtitle": "PoÅÄcz swÃ³j CRM, aby automatycznie synchronizowaÄ oferty nieruchomoÅci",
-      "addConnection": "Dodaj poÅÄczenie",
-      "emptyTitle": "Brak poÅÄczeÅ CRM",
-      "emptyText": "PoÅÄcz swÃ³j CRM, aby automatycznie synchronizowaÄ oferty",
-      "addFirst": "Dodaj pierwsze poÅÄczenie",
-      "confirmRemove": "Czy na pewno chcesz usunÄÄ to poÅÄczenie?",
+      "title": "Połączenia CRM",
+      "subtitle": "Połącz swój CRM, aby automatycznie synchronizować oferty nieruchomości",
+      "addConnection": "Dodaj połączenie",
+      "emptyTitle": "Brak połączeń CRM",
+      "emptyText": "Połącz swój CRM, aby automatycznie synchronizować oferty",
+      "addFirst": "Dodaj pierwsze połączenie",
+      "confirmRemove": "Czy na pewno chcesz usunąć to połączenie?",
       "lastSync": "Ostatnia synchronizacja:",
-      "nextSync": "NastÄpna synchronizacja:",
-      "frequency": "CzÄstotliwoÅÄ:",
+      "nextSync": "Następna synchronizacja:",
+      "frequency": "Częstotliwość:",
       "syncing": "Synchronizowanie...",
       "syncNow": "Synchronizuj teraz",
       "settings": "Ustawienia",
-      "remove": "UsuÅ",
-      "modalSelect": "Wybierz dostawcÄ CRM",
-      "modalConfigure": "Konfiguruj poÅÄczenie",
-      "modalMapping": "Mapowanie pÃ³l",
+      "remove": "Usuń",
+      "modalSelect": "Wybierz dostawcę CRM",
+      "modalConfigure": "Konfiguruj połączenie",
+      "modalMapping": "Mapowanie pól",
       "closeModal": "Zamknij okno",
-      "connectionName": "Nazwa poÅÄczenia (opcjonalnie)",
-      "connectionNamePlaceholder": "MÃ³j {provider}",
+      "connectionName": "Nazwa połączenia (opcjonalnie)",
+      "connectionNamePlaceholder": "Mój {provider}",
       "apiKey": "Klucz API",
-      "apiKeyPlaceholder": "WprowadÅº swÃ³j klucz API",
+      "apiKeyPlaceholder": "Wprowadź swój klucz API",
       "instanceUrl": "URL instancji",
       "back": "Wstecz",
       "testing": "Testowanie...",
-      "testConnection": "Testuj poÅÄczenie",
-      "mappingHint": "Dopasuj pola CRM do wÅaÅciwoÅci oferty",
+      "testConnection": "Testuj połączenie",
+      "mappingHint": "Dopasuj pola CRM do właściwości oferty",
       "creating": "Tworzenie...",
-      "createConnection": "UtwÃ³rz poÅÄczenie",
-      "connectionFailed": "PoÅÄczenie nie powiodÅo siÄ",
-      "connectionSuffix": "PoÅÄczenie",
+      "createConnection": "Utwórz połączenie",
+      "connectionFailed": "Połączenie nie powiodło się",
+      "connectionSuffix": "Połączenie",
       "status": {
-        "connected": "PoÅÄczono",
-        "disconnected": "RozÅÄczono",
-        "error": "BÅÄd",
+        "connected": "Połączono",
+        "disconnected": "Rozłączono",
+        "error": "Błąd",
         "syncing": "Synchronizowanie"
       }
     },
     "feed": {
-      "title": "Å¹rÃ³dÅa kanaÅÃ³w",
-      "subtitle": "Importuj oferty z kanaÅÃ³w XML, RSS lub JSON",
-      "addFeed": "Dodaj kanaÅ",
-      "emptyTitle": "Brak ÅºrÃ³deÅ kanaÅÃ³w",
-      "emptyText": "Dodaj kanaÅ XML, RSS lub JSON, aby importowaÄ oferty",
-      "addFirst": "Dodaj swÃ³j pierwszy kanaÅ",
-      "confirmRemove": "Czy na pewno chcesz usunÄÄ ten kanaÅ?",
+      "title": "Źródła kanałów",
+      "subtitle": "Importuj oferty z kanałów XML, RSS lub JSON",
+      "addFeed": "Dodaj kanał",
+      "emptyTitle": "Brak źródeł kanałów",
+      "emptyText": "Dodaj kanał XML, RSS lub JSON, aby importować oferty",
+      "addFirst": "Dodaj swój pierwszy kanał",
+      "confirmRemove": "Czy na pewno chcesz usunąć ten kanał?",
       "listings": "Oferty",
-      "syncFrequency": "CzÄstotliwoÅÄ synchronizacji",
+      "syncFrequency": "Częstotliwość synchronizacji",
       "lastSync": "Ostatnia synchronizacja",
       "syncing": "Synchronizowanie...",
       "syncNow": "Synchronizuj teraz",
       "pause": "Wstrzymaj",
-      "resume": "WznÃ³w",
+      "resume": "Wznów",
       "history": "Historia",
-      "remove": "UsuÅ",
+      "remove": "Usuń",
       "syncHistory": "Historia synchronizacji",
       "noHistory": "Brak historii synchronizacji",
       "historyStats": "{created} utworzono, {updated} zaktualizowano",
-      "modalAdd": "Dodaj ÅºrÃ³dÅo kanaÅu",
-      "modalPreview": "PodglÄd kanaÅu",
-      "modalMapping": "Mapowanie pÃ³l",
+      "modalAdd": "Dodaj źródło kanału",
+      "modalPreview": "Podgląd kanału",
+      "modalMapping": "Mapowanie pól",
       "closeModal": "Zamknij okno",
-      "feedUrl": "URL kanaÅu",
-      "feedUrlHint": "ObsÅuguje kanaÅy XML, RSS, Atom i JSON",
-      "feedName": "Nazwa kanaÅu (opcjonalnie)",
-      "feedNamePlaceholder": "MÃ³j kanaÅ nieruchomoÅci",
-      "fetchError": "Nie udaÅo siÄ pobraÄ kanaÅu. SprawdÅº URL i sprÃ³buj ponownie.",
-      "updateError": "Nie udaÅo siÄ zaktualizowaÄ kanaÅu. SprÃ³buj ponownie.",
-      "removeError": "Nie udaÅo siÄ usunÄÄ kanaÅu. SprÃ³buj ponownie.",
+      "feedUrl": "URL kanału",
+      "feedUrlHint": "Obsługuje kanały XML, RSS, Atom i JSON",
+      "feedName": "Nazwa kanału (opcjonalnie)",
+      "feedNamePlaceholder": "Mój kanał nieruchomości",
+      "fetchError": "Nie udało się pobrać kanału. Sprawdź URL i spróbuj ponownie.",
+      "updateError": "Nie udało się zaktualizować kanału. Spróbuj ponownie.",
+      "removeError": "Nie udało się usunąć kanału. Spróbuj ponownie.",
       "format": "Format",
       "itemsFound": "Znalezione pozycje",
-      "availableFields": "DostÄpne pola",
-      "sampleData": "PrzykÅadowe dane",
+      "availableFields": "Dostępne pola",
+      "sampleData": "Przykładowe dane",
       "back": "Wstecz",
       "fetching": "Pobieranie...",
-      "fetchFeed": "Pobierz kanaÅ",
+      "fetchFeed": "Pobierz kanał",
       "configureMapping": "Konfiguruj mapowanie",
-      "mappingHint": "Dopasuj pola kanaÅu do wÅaÅciwoÅci oferty",
+      "mappingHint": "Dopasuj pola kanału do właściwości oferty",
       "creating": "Tworzenie...",
-      "createFeed": "UtwÃ³rz kanaÅ",
-      "defaultName": "KanaÅ nieruchomoÅci",
+      "createFeed": "Utwórz kanał",
+      "defaultName": "Kanał nieruchomości",
       "status": {
         "active": "Aktywny",
         "paused": "Wstrzymany",
-        "error": "BÅÄd"
+        "error": "Błąd"
       },
       "frequency": {
-        "manual": "RÄcznie",
-        "hourly": "Co godzinÄ",
+        "manual": "Ręcznie",
+        "hourly": "Co godzinę",
         "daily": "Codziennie",
-        "weekly": "Co tydzieÅ"
+        "weekly": "Co tydzień"
       }
     },
     "schedule": {
       "title": "Harmonogram synchronizacji",
-      "subtitle": "Skonfiguruj automatycznÄ synchronizacjÄ dla {name}",
+      "subtitle": "Skonfiguruj automatyczną synchronizację dla {name}",
       "editSchedule": "Edytuj harmonogram",
-      "enableAuto": "WÅÄcz automatycznÄ synchronizacjÄ",
-      "syncFrequency": "CzÄstotliwoÅÄ synchronizacji",
+      "enableAuto": "Włącz automatyczną synchronizację",
+      "syncFrequency": "Częstotliwość synchronizacji",
       "preferredTime": "Preferowany czas",
-      "preferredDay": "Preferowany dzieÅ",
+      "preferredDay": "Preferowany dzień",
       "cancel": "Anuluj",
       "saving": "Zapisywanie...",
       "saveChanges": "Zapisz zmiany",
       "status": "Status",
-      "enabled": "WÅÄczone",
-      "disabled": "WyÅÄczone",
-      "frequency": "CzÄstotliwoÅÄ",
+      "enabled": "Włączone",
+      "disabled": "Wyłączone",
+      "frequency": "Częstotliwość",
       "notSet": "Nie ustawiono",
       "time": "Czas",
-      "day": "DzieÅ",
-      "nextRun": "NastÄpne uruchomienie",
+      "day": "Dzień",
+      "nextRun": "Następne uruchomienie",
       "syncHistory": "Historia synchronizacji",
       "noHistory": "Brak historii synchronizacji",
       "processed": "przetworzono",
@@ -1078,59 +1078,59 @@
       "updated": "zaktualizowano",
       "failed": "niepowodzenie",
       "freq": {
-        "manual": "RÄcznie",
-        "manualDesc": "Synchronizuj tylko po wywoÅaniu",
-        "hourly": "Co godzinÄ",
-        "hourlyDesc": "Synchronizuj co godzinÄ",
+        "manual": "Ręcznie",
+        "manualDesc": "Synchronizuj tylko po wywołaniu",
+        "hourly": "Co godzinę",
+        "hourlyDesc": "Synchronizuj co godzinę",
         "daily": "Codziennie",
         "dailyDesc": "Synchronizuj raz dziennie",
-        "weekly": "Co tydzieÅ",
+        "weekly": "Co tydzień",
         "weeklyDesc": "Synchronizuj raz w tygodniu"
       },
       "days": {
         "sunday": "Niedziela",
-        "monday": "PoniedziaÅek",
+        "monday": "Poniedziałek",
         "tuesday": "Wtorek",
-        "wednesday": "Åroda",
+        "wednesday": "Środa",
         "thursday": "Czwartek",
-        "friday": "PiÄtek",
+        "friday": "Piątek",
         "saturday": "Sobota"
       },
       "historyStatus": {
         "running": "W toku",
-        "completed": "ZakoÅczone",
+        "completed": "Zakończone",
         "failed": "Niepowodzenie",
         "cancelled": "Anulowane"
       }
     }
   },
   "listingForm": {
-    "labelTitle": "TytuÅ",
+    "labelTitle": "Tytuł",
     "labelDescription": "Opis",
-    "labelPropertyType": "Typ nieruchomoÅci",
+    "labelPropertyType": "Typ nieruchomości",
     "labelTransaction": "Transakcja",
     "labelPrice": "Cena",
     "labelCurrency": "Waluta",
     "labelCity": "Miasto",
     "labelPostalCode": "Kod pocztowy",
     "labelStreet": "Ulica",
-    "labelArea": "Powierzchnia (mÂ²)",
+    "labelArea": "Powierzchnia (m²)",
     "labelRooms": "Pokoje",
     "propertyTypeApartment": "Mieszkanie",
     "propertyTypeHouse": "Dom",
-    "propertyTypeLand": "DziaÅka",
+    "propertyTypeLand": "Działka",
     "propertyTypeCommercial": "Lokal komercyjny",
     "propertyTypeOther": "Inne",
-    "transactionSale": "Na sprzedaÅ¼",
+    "transactionSale": "Na sprzedaż",
     "transactionRent": "Na wynajem",
-    "saving": "Zapisywanieâ¦",
-    "errorTitleRequired": "TytuÅ jest wymagany",
+    "saving": "Zapisywanie…",
+    "errorTitleRequired": "Tytuł jest wymagany",
     "errorDescriptionRequired": "Opis jest wymagany",
     "errorCityRequired": "Miasto jest wymagane",
-    "errorPricePositive": "Cena musi byÄ liczbÄ dodatniÄ",
-    "errorAreaInvalid": "Powierzchnia musi byÄ prawidÅowÄ liczbÄ",
-    "errorAreaNegative": "Powierzchnia nie moÅ¼e byÄ ujemna",
-    "errorRoomsInvalid": "Liczba pokoi musi byÄ prawidÅowÄ liczbÄ",
-    "errorRoomsNegative": "Liczba pokoi nie moÅ¼e byÄ ujemna"
+    "errorPricePositive": "Cena musi być liczbą dodatnią",
+    "errorAreaInvalid": "Powierzchnia musi być prawidłową liczbą",
+    "errorAreaNegative": "Powierzchnia nie może być ujemna",
+    "errorRoomsInvalid": "Liczba pokoi musi być prawidłową liczbą",
+    "errorRoomsNegative": "Liczba pokoi nie może być ujemna"
   }
 }

@@ -42,7 +42,7 @@
     "chartViews": "Views",
     "chartInquiries": "Inquiries",
     "leaderboardEmpty": "No active realtors yet",
-    "leaderboardStats": "{sales} sales Â· {active} active",
+    "leaderboardStats": "{sales} sales · {active} active",
     "backToDashboard": "Back to Dashboard",
     "realtorManagementTitle": "Realtor Management",
     "realtorManagementSubtitle": "Manage your team of real estate agents",
@@ -89,18 +89,18 @@
       "forgotPassword": "Forgot password?",
       "genericError": "Sign in failed. Please try again.",
       "incorrectCredentials": "Incorrect email or password.",
-      "loading": "Loadingâ¦",
+      "loading": "Loading…",
       "noAccount": "Don't have an account?",
       "passwordLabel": "Password",
       "passwordRequired": "Password is required",
       "submit": "Sign in",
-      "submitting": "Signing inâ¦",
+      "submitting": "Signing in…",
       "subtitle": "Welcome back to Reality Portal.",
       "title": "Sign in"
     },
     "protected": {
       "description": "Please sign in to access this page.",
-      "loading": "Loadingâ¦",
+      "loading": "Loading…",
       "signIn": "Sign in",
       "title": "Sign in required"
     },
@@ -157,7 +157,7 @@
       "floor": "Floor",
       "city": "City",
       "district": "District",
-      "pricePerSqm": "Price per mÂ²"
+      "pricePerSqm": "Price per m²"
     },
     "transactionType": {
       "sale": "For Sale",
@@ -205,12 +205,12 @@
     "anyRooms": "Any",
     "anySize": "Any size",
     "apartment": "Apartment",
-    "area": "Area (mÂ²)",
-    "area100To150": "100 - 150 mÂ²",
-    "area150To200": "150 - 200 mÂ²",
-    "area200Plus": "200+ mÂ²",
-    "area50To100": "50 - 100 mÂ²",
-    "areaUnder50": "Under 50 mÂ²",
+    "area": "Area (m²)",
+    "area100To150": "100 - 150 m²",
+    "area150To200": "150 - 200 m²",
+    "area200Plus": "200+ m²",
+    "area50To100": "50 - 100 m²",
+    "areaUnder50": "Under 50 m²",
     "clearAll": "Clear all",
     "commercial": "Commercial",
     "garage": "Garage",
@@ -238,7 +238,7 @@
     "commercial": "Commercial",
     "company": "Company",
     "contact": "Contact",
-    "copyright": "Â© {year} Reality Portal. All rights reserved.",
+    "copyright": "© {year} Reality Portal. All rights reserved.",
     "description": "Find your perfect property across Slovakia, Czech Republic, and beyond.",
     "help": "Help",
     "houses": "Houses",
@@ -284,12 +284,12 @@
       "subtitle": "Price, availability and market trend at a glance.",
       "exploreMap": "Explore the map",
       "browse": "Browse listings",
-      "ruzinov": "RuÅ¾inov",
-      "staremesto": "StarÃ© Mesto",
-      "petrzalka": "PetrÅ¾alka",
-      "novemesto": "NovÃ© Mesto",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
       "karlovaves": "Karlova Ves",
-      "dubravka": "DÃºbravka"
+      "dubravka": "Dúbravka"
     },
     "city": {
       "bratislava": "Bratislava"
@@ -301,7 +301,7 @@
       },
       "passport": {
         "label": "Building passport",
-        "desc": "Energy Â· fund balance Â· faults disclosed"
+        "desc": "Energy · fund balance · faults disclosed"
       },
       "history": {
         "label": "Price history",
@@ -352,7 +352,7 @@
     "rooms": "Rooms",
     "roomsCount": "{count} rooms",
     "schedule_viewing": "Schedule Viewing",
-    "sqm": "mÂ²",
+    "sqm": "m²",
     "viewAll": "View all",
     "viewOnMap": "View on Map",
     "virtualTour": "Virtual Tour"
@@ -362,7 +362,7 @@
     "emptyDescription": "Try adjusting your filters or search criteria to find more properties.",
     "emptyTitle": "No listings found",
     "errorDescription": "Something went wrong while loading properties. Please try again.",
-    "errorTitle": "Couldnât load listings",
+    "errorTitle": "Couldn’t load listings",
     "filters": "Filters",
     "gridView": "Grid view",
     "listView": "List view",
@@ -454,7 +454,7 @@
       "title": "Reality Journal",
       "readingTime": "{min} min read",
       "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
-      "newsletterSuccess": "â You're subscribed!",
+      "newsletterSuccess": "✅ You're subscribed!",
       "newsletterEmailPlaceholder": "you@email.com",
       "newsletterSubmit": "Subscribe",
       "newsletterTitle": "Newsletter signup"
@@ -466,7 +466,7 @@
     },
     "priceMap": {
       "clickHint": "Click on a district for detailed statistics.",
-      "subtitle": "Bratislava â Overview",
+      "subtitle": "Bratislava – Overview",
       "title": "Price map",
       "h1": "Price map"
     },
@@ -485,7 +485,7 @@
     },
     "report": {
       "submit": "Submit report",
-      "subtitle": "Help us keep the portal trustworthy â tell us what's wrong.",
+      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
       "success": "Report submitted",
       "title": "Report a listing",
       "h1": "Report a listing"
@@ -525,8 +525,8 @@
       "title": "Add listing",
       "stepLabel": "Step {step} of {total}: {stepTitle}",
       "asideTitle": "Steps",
-      "back": "â Back",
-      "next": "Next â",
+      "back": "← Back",
+      "next": "Next →",
       "publish": "Publish listing",
       "publishing": "Publishing…",
       "submitFailed": "Publishing failed, please try again.",
@@ -540,7 +540,7 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
-        "area": "Area (mÂ²)",
+        "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
         "roomsPlaceholder": "e.g. 3",
@@ -551,8 +551,8 @@
         "yearBuilt": "Year built",
         "yearBuiltPlaceholder": "e.g. 1995",
         "description": "Property description",
-        "descriptionPlaceholder": "Describe the property, its features and amenitiesâ¦",
-        "price": "Asking price (â¬)",
+        "descriptionPlaceholder": "Describe the property, its features and amenities…",
+        "price": "Asking price (€)",
         "priceSalePlaceholder": "e.g. 250000",
         "priceRentPlaceholder": "Monthly rent, e.g. 800",
         "priceNegotiable": "Price is negotiable",
@@ -576,9 +576,9 @@
       "photos": {
         "intro": "Upload photos (5 minimum, 30 maximum recommended).",
         "cta": "Click or drag photos here",
-        "formats": "JPG, PNG, WEBP Â· up to 10 MB each",
-        "selected_one": "â {count} photo selected",
-        "selected_other": "â {count} photos selected"
+        "formats": "JPG, PNG, WEBP · up to 10 MB each",
+        "selected_one": "✓ {count} photo selected",
+        "selected_other": "✓ {count} photos selected"
       },
       "summary": {
         "type": "Type",
@@ -645,7 +645,7 @@
       "checkInbox": "Check your inbox",
       "checkInboxBody": "We sent a verification email to {email}. Click the link to activate your account.",
       "backToSignIn": "Back to sign in",
-      "creating": "Creating accountâ¦",
+      "creating": "Creating account…",
       "submit": "Create account",
       "displayNameRequired": "Display name is required",
       "emailRequired": "Email is required",
@@ -670,7 +670,7 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Enter a valid email address",
       "submit": "Send reset link",
-      "submitting": "Sendingâ¦",
+      "submitting": "Sending…",
       "checkInbox": "Check your inbox",
       "checkInboxBody": "If an account exists for {email}, we've sent instructions to reset your password.",
       "backToSignIn": "Back to sign in",
@@ -694,7 +694,7 @@
       "passwordTooShort": "Password must be at least 8 characters",
       "passwordsMismatch": "Passwords do not match",
       "submit": "Update password",
-      "submitting": "Savingâ¦",
+      "submitting": "Saving…",
       "requestNew": "Request a new reset link",
       "goToSignIn": "Go to sign in",
       "genericError": "Could not reset password. Please try again."
@@ -805,7 +805,7 @@
   },
   "cookieBanner": {
     "title": "We use cookies",
-    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it â we won't set them unless you accept.",
+    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it — we won't set them unless you accept.",
     "accept": "Accept all",
     "reject": "Reject optional",
     "manage": "Cookie settings"
@@ -813,7 +813,7 @@
   "priceAlerts": {
     "h1": "Price Alerts",
     "subtitle": "Price changes and back-on-market alerts for the listings you've favorited.",
-    "backToFavorites": "â Back to favorites",
+    "backToFavorites": "← Back to favorites",
     "unread": "{count, plural, =0 {No unread alerts} one {# unread alert} other {# unread alerts}}",
     "markAllRead": "Mark all read",
     "markRead": "Mark read",
@@ -831,7 +831,7 @@
     "placeholderBody": "This section is not available right now."
   },
   "agencyListings": {
-    "back": "â Back to Dashboard",
+    "back": "← Back to Dashboard",
     "title": "Agency Listings",
     "subtitle": "Manage all property listings",
     "createListing": "Create Listing",
@@ -869,7 +869,7 @@
     }
   },
   "agencyBranding": {
-    "back": "â Back to Dashboard",
+    "back": "← Back to Dashboard",
     "title": "Agency Branding",
     "subtitle": "Customize your agency's appearance",
     "saving": "Saving...",
@@ -900,7 +900,7 @@
   "agencyInquiries": {
     "title": "Agency inquiries",
     "subtitle": "Inquiries received for your agency's listings.",
-    "loading": "Loading inquiriesâ¦",
+    "loading": "Loading inquiries…",
     "loadError": "Failed to load inquiries.",
     "empty": "No inquiries match this filter.",
     "status": {
@@ -914,7 +914,7 @@
   },
   "import": {
     "page": {
-      "back": "â Back to Dashboard",
+      "back": "← Back to Dashboard",
       "title": "Import Listings",
       "subtitle": "Bulk import properties from various sources",
       "tabCsv": "CSV Import",
@@ -1121,7 +1121,7 @@
     "labelCity": "City",
     "labelPostalCode": "Postal code",
     "labelStreet": "Street",
-    "labelArea": "Area (mÂ²)",
+    "labelArea": "Area (m²)",
     "labelRooms": "Rooms",
     "propertyTypeApartment": "Apartment",
     "propertyTypeHouse": "House",
@@ -1130,7 +1130,7 @@
     "propertyTypeOther": "Other",
     "transactionSale": "For sale",
     "transactionRent": "For rent",
-    "saving": "Savingâ¦",
+    "saving": "Saving…",
     "errorTitleRequired": "Title is required",
     "errorDescriptionRequired": "Description is required",
     "errorCityRequired": "City is required",
