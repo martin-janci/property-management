@@ -11097,20 +11097,22 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
+        "PR #3009",
         "rotating-expert-review ppt-web-ui 2026-10-01"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:48-51 — handleSubmit catch only calls console.error; no toast, no error state surfaced; failed updateRulesMutation.mutateAsync looks identical to success.",
-        "RegistryRulesPage.tsx:46-47 — success path also silent (code comment acknowledges 'could show a toast notification here'); user has no confirmation either way, inviting duplicate submits and lost edits."
+        "RegistryRulesPage.tsx:46-47 — success path also silent (code comment acknowledges 'could show a toast notification here'); user has no confirmation either way, inviting duplicate submits and lost edits.",
+        "resolved: PR #3009 merged 2026-10-01 — fix(UC-57): surface RegistryRulesPage save success + failure via toast"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
-      "plan": "plans/code-review-ppt-web-ui-registry-rules-save-silent-fail.md"
+      "updated_at": "2026-10-02",
+      "plan": "plans/_archive/code-review-ppt-web-ui-registry-rules-save-silent-fail.md"
     },
     {
       "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
@@ -11143,19 +11145,21 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3011",
         "rotating-expert-review ppt-web-ui 2026-10-01"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-72 — listFacilities() rejection caught, logged to console.error, swallowed; no error state, isLoading flips false, user sees 'empty' list indistinguishable from an actually empty building.",
-        "FacilitiesPage.tsx:48-51,110-124 — component carries no error useState and FacilityList receives no error prop; there is no code path capable of rendering an error state. Prior PendingBookings fix (PendingBookingsPage.test.tsx:6 header) called out the same anti-pattern."
+        "FacilitiesPage.tsx:48-51,110-124 — component carries no error useState and FacilityList receives no error prop; there is no code path capable of rendering an error state. Prior PendingBookings fix (PendingBookingsPage.test.tsx:6 header) called out the same anti-pattern.",
+        "resolved: PR #3011 merged 2026-10-01 — code-review-ppt-web-ui-facilities-fetch-no-error-ui: distinct error state for facilities fetch failure"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-02",
       "plan": null
     },
     {
@@ -11223,19 +11227,20 @@
       "title": "ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
         "churn 14d"
       ],
       "evidence": [
-        "4 commits in 14d touched core.tsx — three were route-auth refactors (PR #2994 ProtectedRoute wrap, PR #2995 Home CTA role gate, PR #3002 dashboard role gate). Signals route-table instability or an incomplete pattern migration."
+        "4 commits in 14d touched core.tsx — three were route-auth refactors (PR #2994 ProtectedRoute wrap, PR #2995 Home CTA role gate, PR #3002 dashboard role gate). Signals route-table instability or an incomplete pattern migration.",
+        "repeated-churn: file still a top hotspot (4 touches in 14d, runs_seen=2); confirms workflow-automation + route refactors keep landing here"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-02",
       "plan": null
     },
     {
@@ -11284,21 +11289,44 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Issue #3006 (post-merge review of PR #3004)"
+        "Issue #3006 (post-merge review of PR #3004)",
+        "PR #3010"
       ],
       "evidence": [
         "frontend/packages/api-client/src/lib/fetch.ts contains two near-identical retry-aware auth implementations after PR #3004 — fetchJsonInner and authenticatedFetchInner — both re-implementing header injection and 401→MFA→retry-once. A third copy of header-injection lives in the generated clients auth/interceptors.ts.",
         "The three copies already drift: getAuthHeaders() (JSON path) sets only Authorization; authenticatedFetchInner (raw path) sets Authorization and X-Tenant-ID. Any future change (rename X-Tenant-ID, add a required header, change MFA marker key, bound the retry) must be made in three places that already disagree.",
-        "Proposed in #3006: factor applyAuthHeaders + shouldRetryOnMfa401 into shared helpers; add a test asserting authenticatedFetchJson and authenticatedFetch emit the same auth/tenant headers."
+        "Proposed in #3006: factor applyAuthHeaders + shouldRetryOnMfa401 into shared helpers; add a test asserting authenticatedFetchJson and authenticatedFetch emit the same auth/tenant headers.",
+        "resolved: PR #3010 merged 2026-10-01 — refactor(api-client): unify triplicated auth-header + MFA-retry logic (closes issue #3006)"
       ],
       "files": [
         "frontend/packages/api-client/src/lib/fetch.ts",
         "frontend/packages/api-client/src/auth/interceptors.ts"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
+      "title": "@ppt/api-client fetch.ts — 3 commits in 14d (new hotspot, post-refactor churn)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-analysis 2026-10-02",
+        "PR #3010"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/lib/fetch.ts touched 3× in last 14d; latest change was PR #3010 (unify auth-header + MFA-retry). First-run hotspot — watch for repeated-churn next run."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/lib/fetch.ts"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
       "plan": null
     }
   ]

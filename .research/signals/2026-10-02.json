@@ -1,0 +1,171 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-analysis 2026-10-02",
+      "score_delta": 0,
+      "evidence": "4 touches in last 14d — same file was flagged last run (runs_seen=1 → 2 this run). Cumulative re-emit — score_delta withheld.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "routes/groups/core.tsx now runs_seen=2 — second consecutive run as a top-3 code hotspot (workflow-automation + route-group refactors keep landing here).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
+      "type": "churn-hotspot",
+      "source": "churn-analysis 2026-10-02",
+      "score_delta": 1,
+      "evidence": "3 touches in last 14d — first run as a hotspot; post PR #3010 (unify auth-header + MFA-retry). Watch for repeated-churn next cycle.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-2975",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2975",
+      "score_delta": 0,
+      "evidence": "dependabot npm-minor-patch group PR closed-not-merged 2026-10-01 (superseded by #3008 which stayed open) — dep-update-noise.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2973",
+      "type": "closed-not-merged-pr",
+      "source": "PR #2973",
+      "score_delta": 0,
+      "evidence": "dependabot gradle-minor-patch group PR closed-not-merged 2026-10-01 (superseded by #3007 which stayed open) — dep-update-noise.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-02.md && head -1 matches ^# 2026-10-02$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score>8; decay N/A (no 14d-stale open items)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new",
+      "expected": "empty"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/ (ex. _archive) → 0",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached names outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hosts",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed: none",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files _archive now vs HEAD",
+      "observed": "10>=9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "[]",
+      "expected": "≤1/≤1/≤1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op gate",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

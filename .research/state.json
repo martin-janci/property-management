@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-01T04:46:44Z",
+  "last_run_iso": "2026-10-02T00:38:24Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3005,
-  "last_issue_seen": 3006,
-  "last_commit_sha": "dfa61369412117ab548e604cfc31e484d99fc7d3",
+  "last_pr_seen": 3011,
+  "last_issue_seen": 3012,
+  "last_commit_sha": "86a03199a35ac49516b0a4bdb2530b13c4ac56ba",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -538,8 +538,8 @@
       "recent_churn": 83
     },
     "frontend/apps/ppt-web/src/routes/groups/core.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-10-01",
+      "runs_seen": 2,
+      "last_seen": "2026-10-02",
       "recent_churn": 4
     },
     "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx": {
@@ -550,6 +550,11 @@
     "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx": {
       "runs_seen": 1,
       "last_seen": "2026-10-01",
+      "recent_churn": 3
+    },
+    "frontend/packages/api-client/src/lib/fetch.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-02",
       "recent_churn": 3
     }
   },
@@ -668,6 +673,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
+    "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
     "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
     "churn-hotspot-mobile-native-listing-detail-kt",
     "churn-hotspot-mobile-native-search-screen-kt",
@@ -679,6 +685,8 @@
     "closed-not-merged-pr-2387",
     "closed-not-merged-pr-2489",
     "closed-not-merged-pr-2705",
+    "closed-not-merged-pr-2973",
+    "closed-not-merged-pr-2975",
     "closed-not-merged-pr-507",
     "closed-not-merged-pr-512",
     "closed-not-merged-pr-599",
@@ -973,6 +981,7 @@
     "repeated-churn-backend/servers/api-server/src/routes/voice_webhooks.rs",
     "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
     "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
+    "repeated-churn-frontend/apps/ppt-web/src/routes/groups/core.tsx",
     "resolution-check-2026-08-31-drift-2894",
     "resolution-check-2026-08-31-drift-2895",
     "risky-churn-pr-963-main-rs",
@@ -1090,8 +1099,8 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 85,
-    "vectors_created": 397,
+    "runs": 86,
+    "vectors_created": 398,
     "plans_created": 32,
     "quiet_days": 5,
     "auto_fix_count": 0
