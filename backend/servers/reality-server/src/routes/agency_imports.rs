@@ -4,7 +4,6 @@
 //! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
 use crate::state::AppState;
-use common::url_validation::validate_external_url;
 use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
@@ -12,6 +11,7 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
+use common::url_validation::validate_external_url;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use utoipa::ToSchema;
