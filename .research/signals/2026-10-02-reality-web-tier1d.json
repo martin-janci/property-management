@@ -1,0 +1,66 @@
+{
+  "generated": "2026-10-02",
+  "source_run": "dispatcher Tier-1d demand-driven finding generator (backlog starved: claimable=15 < floor=36, deterministic refill found nothing)",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "OLDEST-UNREVIEWED. Churn hotspots were not handed in this run (demand-driven refill). review_cursor oldest-first is reality-web (2026-08-29), then reality-server (2026-08-31), api-core (2026-09-01). reality-web carries 0 OPEN code-review-finding rows in backlog.json (not saturated) -> selected. Prior reality-web Tier-1d run (signals/2026-09-30-reality-web-tier1d.json) flagged listings-page-param-NaN and comparison-url-unvalidated-cast; these three findings are disjoint from those (different files, completeness/data-loss class vs input-validation class).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "All three are frontend-only React/Next.js edits in reality-web, each confined to a single page component (+ its sibling data/SDK hook wiring) under frontend/apps/reality-web/src/app/[locale]/. No backend, migration, or openapi changes are required for the report page (reality-server already exposes a report-submission endpoint per done backlog rows code-review-reality-server-submit-report-no-rate-limit / report-contact-unvalidated). The sell and profile pages need the generated @ppt/reality-api-client hook wired in (create-listing mutation / current-user + my-listings queries), both already generated from the existing OpenAPI spec. Verifies with pnpm --filter @ppt/reality-web typecheck + test + biome check; no cross-stack coupling.",
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-sell-wizard-no-persist",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — the final 'Publish' button's onClick runs `const stepErrors = validateStep(...); setErrors(stepErrors); if (Object.keys(stepErrors).length === 0) setSubmitted(true);` (also at line 730). It NEVER sends the collected listing to any API: `grep -c 'fetch|mutate|axios|useQuery|RealtorApi|await ' sell/page.tsx` returns 0 across the whole 848-line file. The form's initial data and step config are imported from `./_mock` (`INITIAL_FORM_DATA`, `SELL_STEPS`, line 16).",
+        "Full dataflow traced: all property fields are held in local `form` state; on Publish, `submitted` flips to true (page.tsx:730) and the component early-returns a success screen (`if (submitted)` at line 151, rendering `t('submittedTitle')`/`t('submittedBody')`). No create-listing mutation, no POST, no reality-api-client hook is invoked anywhere in the file.",
+        "Impact: data loss on a public, conversion-critical flow. A seller completes the entire multi-step wizard (address, price, area, rooms, description, contact details, terms acceptance), clicks Publish, and is shown a success confirmation — but nothing is ever persisted or transmitted. Every submission is silently discarded; no listing is created and no lead is captured.",
+        "Confidence HIGH (static-only but fully traced): the complete onClick -> setSubmitted -> success-screen path is confirmed by direct read, and the total absence of any network/mutation call is confirmed by `grep -c` returning 0 over the entire file. The `/[locale]/sell` route is public and reachable in production.",
+        "Fix (cloud-landable, frontend-only): wire the Publish handler to the generated create-listing mutation from @ppt/reality-api-client (make the handler async, await the mutation, set `submitted` only on success, and render a submit-error state on failure — mirroring the already-correct await+try/catch+setSaveError pattern in the sibling edit page account/listings/[id]/edit/page.tsx:195-217). Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-report-page-no-submit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — `handleSubmit` is `(e) => { e.preventDefault(); if (!problem || !description.trim() || !gdprAccepted) return; setSubmitted(true); }`. It validates the form and the GDPR checkbox, then flips local `submitted` state and renders a success screen (`if (submitted)` at line 43) WITHOUT ever POSTing the report. No fetch / mutation / reality-api-client call exists in the file; problem options are imported from `./_mock` (`REPORT_PROBLEMS`, line 11).",
+        "This is an integration gap, not a backend-not-ready case: reality-server already exposes a report-submission endpoint (see done backlog rows `code-review-reality-server-submit-report-no-rate-limit`, `code-review-reality-server-report-contact-unvalidated`, which review the server-side submit-report handler). The reality-web page simply never calls it.",
+        "Impact: trust/safety. A user reporting a problematic listing (fraud, scam, wrong data) fills the form, accepts GDPR, submits, and sees a confirmation — but the report is silently dropped and never reaches moderators. Users believe abuse has been reported when it has not.",
+        "Confidence MEDIUM (static-only): the handler body and the absence of any network call are confirmed by direct read; the matching server endpoint's exact contract was inferred from existing backlog rows rather than re-read this run.",
+        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from @ppt/reality-api-client, setting `submitted` only on success and surfacing a submit-error branch on failure. Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — the profile route renders entirely from hardcoded fixtures imported from `./_mock`: `const profile = MOCK_PROFILE` (line 65), `MOCK_LISTINGS.map(...)` (268), `MOCK_ACTIVITY.map(...)` (346), `MOCK_REVIEWS.map(...)` (384). There is no `useQuery`/SDK call and no auth-context read to fetch the current user's real profile, listings, activity, or reviews.",
+        "The file's own header comment (lines 8-11) acknowledges this is a placeholder: '...instead of seeing the placeholder MOCK_PROFILE ... replace MOCK_* with live data via the SDK.' The route is nonetheless a shipped, user-reachable page.",
+        "Impact: completeness / correctness. Every authenticated user who opens their profile sees the same fabricated identity, listing set, activity log, and reviews rather than their own data — misleading and unusable for its stated purpose. On a public portal this also risks displaying fictitious listings/reviews as if real.",
+        "Confidence MEDIUM (static-only): the mock-only data sourcing is confirmed by direct read; classified MEDIUM (not HIGH) because the file comment marks it as a known, intentional placeholder pending SDK wiring rather than a regression.",
+        "Fix (cloud-landable, frontend-only): replace the MOCK_* references with the generated current-user / my-listings / my-reviews hooks from @ppt/reality-api-client, with loading and empty states. If the live endpoints are not all available yet, split into a smaller finding for the covered subset. Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

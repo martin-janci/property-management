@@ -94,27 +94,6 @@
       }
     },
     {
-      "id": "gh-issue-3006-unify-auth-header-mfa-retry",
-      "action": "Unify triplicated auth-header + MFA-retry logic in @ppt/api-client fetch primitives (gdprClient, paymentMatching, remaining consumers) — surfaced by post-merge review of PR #3004; mitigates risk of per-client auth-header drift",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "post-merge-review 2026-10-01 (PR #3004) → issue #3006",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T04:30:00Z",
-      "issue_ref": {
-        "number": 3006,
-        "url": "https://github.com/martin-janci/property-management/issues/3006",
-        "labels": [
-          "refactor",
-          "frontend",
-          "security"
-        ]
-      }
-    },
-    {
       "id": "pm-scrum-master-stalled-accounting-pay-by-square-2559",
       "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot — one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months",
       "owner_role": "pm-tech-lead",
@@ -398,23 +377,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
-      "action": "RegistryRulesPage save silently swallows errors and gives no success feedback",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T06:28:31Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-ppt-web-ui-registry-rules-save-silent-fail.md",
-        "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
       "action": "Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives",
       "owner_role": "pm-tech-lead",
@@ -429,23 +391,6 @@
         "plan": null,
         "score": 2,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
-      "action": "FacilitiesPage swallows listFacilities error — empty indistinguishable from fetch failure",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T06:28:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
       }
     },
     {
