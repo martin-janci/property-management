@@ -270,6 +270,18 @@ if [ "$PLAN_ONLY" -eq 1 ]; then
 fi
 
 # --- execute ------------------------------------------------------------------
+# utoipa-swagger-ui's build script downloads from github.com, which the cloud
+# runner's egress proxy blocks (#2966). Point it at an npm-sourced bundle when
+# needed; a no-op when GitHub is reachable or the caller already set the var.
+if [ -z "${SWAGGER_UI_DOWNLOAD_URL:-}" ] && printf '%s' "$PLAN_LINES" | grep -q 'cargo '; then
+  SWAGGER_UI_DOWNLOAD_URL="$("$ROOT/scripts/swagger-ui-offline.sh")"
+  if [ -n "$SWAGGER_UI_DOWNLOAD_URL" ]; then
+    export SWAGGER_UI_DOWNLOAD_URL
+  else
+    unset SWAGGER_UI_DOWNLOAD_URL
+  fi
+fi
+
 run_one() {
   # cargo invocations serialize on a host-wide lock; note on stderr if we wait
   local cmd="$1"
