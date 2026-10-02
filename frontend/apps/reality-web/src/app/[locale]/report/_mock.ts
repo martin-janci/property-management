@@ -1,10 +1,9 @@
-export type ReportProblem =
-  | 'fraud'
-  | 'wrong_price'
-  | 'wrong_photos'
-  | 'duplicate'
-  | 'sold_not_removed'
-  | 'other';
+import type { ReportProblemType } from '@ppt/reality-api-client';
+
+// The radio value IS the wire value posted to reality-server as
+// `problem_type`, so it must be one of the canonical `ReportProblemType`
+// variants — no client-side remapping needed on submit.
+export type ReportProblem = ReportProblemType;
 
 export interface ReportProblemOption {
   value: ReportProblem;
@@ -14,29 +13,30 @@ export interface ReportProblemOption {
 
 export const REPORT_PROBLEMS: ReportProblemOption[] = [
   {
-    value: 'fraud',
+    value: 'fraudulent_listing',
     label: 'Podozrenie z podvodu',
     description: 'Podozrivý inzerát, žiadosť o platbu vopred, falošná identita makléra',
   },
   {
-    value: 'wrong_price',
+    value: 'price_manipulation',
     label: 'Nesprávna cena',
     description: 'Cena nezodpovedá skutočnosti alebo je zámer zavádzať',
   },
   {
-    value: 'wrong_photos',
+    value: 'incorrect_information',
     label: 'Falošné fotografie',
     description: 'Fotografie nepatria k danej nehnuteľnosti',
   },
   {
-    value: 'duplicate',
+    value: 'duplicate_listing',
     label: 'Duplicitný inzerát',
     description: 'Rovnaká nehnuteľnosť je inzerovaná viackrát',
   },
   {
-    value: 'sold_not_removed',
-    label: 'Predaná / neprenajímaná',
-    description: 'Nehnuteľnosť je už predaná alebo prenajatá, inzerát nebol odstránený',
+    value: 'already_sold',
+    label: 'Predaná / neprenájmaná',
+    description:
+      'Nehnuteľnosť je už predaná alebo prenajatá, inzerát nebol odstránený',
   },
   {
     value: 'other',
