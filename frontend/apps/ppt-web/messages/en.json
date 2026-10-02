@@ -573,6 +573,11 @@
       "bookFacility": "Book Facility",
       "empty": "No bookings found.",
       "allCaughtUp": "All caught up! No pending bookings to review."
+    },
+    "errors": {
+      "fetchFailedTitle": "Couldn't load facilities",
+      "fetchFailedDescription": "Something went wrong while loading facilities. Please try again.",
+      "retry": "Try again"
     }
   },
   "faults": {
@@ -4809,6 +4814,16 @@
       "triggerContext": "Trigger Context",
       "retryExecution": "Retry Execution",
       "close": "Close"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
     }
   }
 }

@@ -528,6 +528,8 @@
       "back": "← Späť",
       "next": "Ďalej →",
       "publish": "Zverejniť inzerát",
+      "publishing": "Zverejňujem…",
+      "submitFailed": "Zverejnenie zlyhalo, skúste znova.",
       "submittedTitle": "Váš inzerát bol odoslaný!",
       "submittedBody": "Po overení bude zverejnený do 2 hodín.",
       "submittedCta": "Pridať ďalší inzerát",

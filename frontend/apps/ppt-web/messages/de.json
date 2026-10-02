@@ -554,6 +554,11 @@
       "bookFacility": "Einrichtung buchen",
       "empty": "Keine Buchungen gefunden.",
       "allCaughtUp": "Alles erledigt! Keine ausstehenden Buchungen zu prüfen."
+    },
+    "errors": {
+      "fetchFailedTitle": "Einrichtungen konnten nicht geladen werden",
+      "fetchFailedDescription": "Beim Laden der Einrichtungen ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen"
     }
   },
   "faults": {
@@ -2519,6 +2524,16 @@
       "triggerContext": "Auslöserkontext",
       "retryExecution": "Ausführung wiederholen",
       "close": "Schließen"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
     }
   }
 }

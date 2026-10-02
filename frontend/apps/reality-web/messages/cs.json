@@ -528,6 +528,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",

@@ -554,6 +554,11 @@
       "bookFacility": "Létesítmény foglalása",
       "empty": "Nem található foglalás.",
       "allCaughtUp": "Minden rendben! Nincsenek jóváhagyásra váró foglalások."
+    },
+    "errors": {
+      "fetchFailedTitle": "A létesítmények betöltése nem sikerült",
+      "fetchFailedDescription": "Hiba történt a létesítmények betöltése közben. Kérjük, próbálja újra.",
+      "retry": "Újrapróbálkozás"
     }
   },
   "faults": {
@@ -2492,6 +2497,16 @@
       "triggerContext": "Kiváltó környezete",
       "retryExecution": "Végrehajtás újrapróbálása",
       "close": "Bezárás"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
     }
   }
 }
