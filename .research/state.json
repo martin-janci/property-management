@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-01T04:46:44Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3005,
-  "last_issue_seen": 3006,
-  "last_commit_sha": "dfa61369412117ab548e604cfc31e484d99fc7d3",
+  "last_run_iso": "2026-10-02T02:35:22Z",
+  "last_run_ms": 60000,
+  "last_pr_seen": 3011,
+  "last_issue_seen": 3012,
+  "last_commit_sha": "fcbafd1",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -538,8 +538,8 @@
       "recent_churn": 83
     },
     "frontend/apps/ppt-web/src/routes/groups/core.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-10-01",
+      "runs_seen": 2,
+      "last_seen": "2026-10-02",
       "recent_churn": 4
     },
     "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx": {
@@ -1076,7 +1076,10 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-reality-web-sell-wizard-no-persist",
+    "code-review-reality-web-report-page-no-submit",
+    "code-review-reality-web-profile-mock-data"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1085,14 +1088,14 @@
     "reality-server": "2026-08-31",
     "ppt-web-ui": "2026-10-01",
     "ppt-web-core": "2026-09-27",
-    "reality-web": "2026-08-29",
+    "reality-web": "2026-10-02",
     "mobile-rn": "2026-10-01",
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 85,
-    "vectors_created": 397,
-    "plans_created": 32,
+    "runs": 86,
+    "vectors_created": 400,
+    "plans_created": 33,
     "quiet_days": 5,
     "auto_fix_count": 0
   },
@@ -1107,7 +1110,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 6,
+    "next_index": 7,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
@@ -1115,11 +1118,11 @@
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
-      "pm-data": "2026-07-23",
+      "pm-data": "2026-10-02",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 8
+    "next_index": 9
   }
 }

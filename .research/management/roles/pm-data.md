@@ -1,47 +1,47 @@
-# Role: pm-data — 2026-07-23
+# Role: pm-data — 2026-10-02
 
-> Data/analytics lens. Rotating role this run (pm_cursor rotation[6]). Static read-only. Previous run: 2026-05-28 (56 days ago).
+> Data/analytics lens. Rotating role this run (pm_cursor rotation[6]). Static read-only. Previous run: 2026-07-23 (71 days ago — longest-stale slot in rotation).
 
-**Summary:** Delivery has largely converged on MVP (47/49 stories done) yet almost none of the recently shipped features are instrumented for KPI/analytics. Epic 6 announcements, Epic 10A OAuth, Epic 10B platform admin, Epic 80 disputes, Epic 84 e-signature all lack basic event tracking. The recent test-backfill wave (BIT-268/BIT-557/BIT-559 in PRs #2447/#2453/#2465) raised code coverage but did NOT add analytics events; the pipeline for platform-admin audit_read is well-defined (SupportDataPage) but has not been generalized to feature-level KPIs. Two carried-over 2026-05-28 decisions (support-staff audit event schema + FaultStatusCount unification) are still open.
+**Summary:** Business KPI counters (`faults_created_total`, `votes_cast_total`, `organizations_created_total`, `auth_login_total`) are declared via `describe_counter!` in `backend/servers/api-server/src/observability.rs:272-282`, but a repo-wide grep finds no emit site. They will export nothing. No canonical domain-event schema or tracking plan exists; the only `fault_reported`/`vote_cast`/`payment_completed` matches are in a db test file. Only `reality-server` listing-view analytics (`portal_track_listing_view`) is genuinely instrumented. This run was static and limited to ~5 reads; dashboard, soft-delete, and timezone/currency normalisation checks were not performed.
 
-## Cross-reference to shipped test-backfill wave
+## Carried-over 2026-07-23 items still open
 
-- **Is data flowing to analytics correctly?** No — the test wave verifies code paths execute, but there is no analytics-event emission assertion helper anywhere in the workspace. Silent metric drift is possible.
-- **Missing metrics for disputes epic:** Epic 80 (all 3 stories done) has zero KPI — no filed/mediation/resolved funnel, no TTR percentiles, no evidence-per-dispute counter. PR #2450 hardened access but did not add an audit event for who accessed / added evidence to which dispute; #2483 follow-up (add_evidence IDOR) also needs an audit_write event when the fix lands.
-- **Missing metrics for layout epic:** Layout & Content Manager (PRs #2424–#2432, #2443, #2464, #2478) shipped end-to-end with zero KPI hooks — no `published_by`, `layout_version`, or `target_tenant_count` events on the publish path.
+- FaultStatusCount canonical definition — still not landed
+- Retention/TTL policy for `support_tooling_events` + audit trail — still not published
+- Dispute lifecycle KPIs (filed → mediation → resolved, TTR p50/p95) — still absent
 
 ## Next actions
 
 | Action | Priority | Dependency | Definition of done |
 |---|---|---|---|
-| Backfill dispute add_evidence access-audit event to support-data event stream once #2483/PR #2490 lands (parity with support-data audit_read pattern) | medium | pm-security (gh-issue-2483) | audit_write event emitted on evidence upload; visible in SupportDataPage |
-| Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) — Layout & Content Manager shipped end-to-end with zero KPI hooks | medium | none | event schema + emission wired in publish_layout handler; documented in support-data catalogue |
-| Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) — Epic 80 all-done, no dashboard exists | medium | pm-scrum-master (dashboard scope) | metric definitions + filed/resolved counters + p50/p95 TTR emitted; shared taxonomy with owner/portfolio KPIs |
-| Instrument announcement fan-out with delivered/read/ack per targeting scope; also feed #2484 real-SQL integration data-quality check | medium | pm-qa (gh-issue-2484 test rework) | metrics visible per scope (all/building/units/roles); #2484 test exercises real SQL and asserts count matches emitted metric |
-| Publish data-retention policy for support-data / analytics events / audit trail (append-only support_tooling_events has no TTL) | medium | pm-security (GDPR classification) | policy doc merged; PII-carrying tables get lifecycle SQL jobs |
-| Formalize support-staff read audit event schema (who viewed which tenant's diagnostics / revoked sessions) — carried-over decision from 2026-05-28 | medium | pm-security | event schema + emit at all support-data read/revoke sites |
+| Wire emit sites for the 4 declared KPI counters, or remove the dead `describe_counter!` blocks | high | none | Counters increment in `create_fault`, `cast_vote`, `create_org`, and login handlers; `/metrics` shows non-zero values |
+| Author a canonical domain-event catalogue (name, trigger, props, owner) | high | pm-tech-lead | `docs/data/event-catalog.md` merged, covering fault, vote, payment, booking, dispute, announcement events |
+| Define a fault-SLA metric: histogram of time to triage + resolve, labelled by priority | medium | none | One `FaultStatusCount` definition in a shared module; support-data and owner/portfolio KPIs both use it |
+| Add a metrics-assertion test helper and require it for KPI-touching handlers | medium | pm-qa | Helper in shared test utils; at least 3 handlers assert emission |
+| Add Stripe webhook `payment_completed`/`payment_failed` counters with idempotency labels | medium | pm-security | Counters emitted on the webhook path; no PII in labels |
+| Carry over: publish retention policy for `support_tooling_events` + audit trail; add dispute lifecycle KPIs (filed→mediation→resolved, TTR p50/p95) | medium | pm-security | Policy doc merged; dispute metric definitions documented |
 
 ## Risks
 
 | Risk | Probability | Impact | Mitigation |
 |---|---|---|---|
-| Shipped MVP features (Epic 6/10A/10B/80/84) lack KPI instrumentation — product decisions run blind on exactly the features that just went live | high | medium | Sequence the 7 pm-data KPI tasks now on the action-list; establish minimum-analytics DoD for future stories |
-| FaultStatusCount vs owner/portfolio fault KPIs diverge (2026-05-28 open decision) — dashboards will disagree | high | medium | Land single-source-of-truth definitions in shared module; deprecate duplicates |
-| Append-only support_tooling_events + audit trail have no TTL / retention policy — long-term storage + GDPR risk | medium | medium | Publish retention policy; add lifecycle jobs if PII-carrying |
-| Test-backfill wave proves code paths execute but does NOT verify analytics events fire — silent metric drift possible | medium | low | Add analytics-event assertion helper; require metric-touching tests to use it |
-| Mobile (RN + KMP) event tracking parity with web unknown — funnels may be blind on ~50% of traffic | medium | medium | Audit + backfill (action data-mobile-native-analytics-parity-2026-07-23) |
-
-## Open questions
-
-- What KPI dashboard tool does PPT use for internal metrics — Grafana over Postgres, a third-party (Amplitude/PostHog/Segment), or bespoke platform-admin pages?
-- Are dispute lifecycle KPIs required by any customer contract / regulatory obligation, or purely product-internal?
-- Is there a Data Protection Impact Assessment on `support_tooling_events` (support staff reading tenant data)?
-- For webhook events (booking / airbnb / esignature / layout), do we emit analytics on delivery + retry + failure, or only log?
-- Are the seed-data recipes stable enough to reason about analytics test fidelity (pm-data DoD depends on repeatable seeds)?
+| Declared-but-never-emitted KPI counters make dashboards look healthy while showing zero — teams may wrongly assume tracking exists | high | high | Wire the emit sites or remove the describes; add CI check that every described metric has an emit site |
+| No event catalogue means web, mobile, and reality surfaces will name/shape events inconsistently; funnels will diverge | high | medium | Publish the catalogue; make it a story DoD item |
+| 2026-07-23 open items unresolved: FaultStatusCount definitions diverge, `support_tooling_events` has no TTL (GDPR) | medium | medium | Decide the canonical definition and retention policy this sprint |
+| Delivery signals #3009–#3011 (toast, auth-header refactor, error-state UI) added no client-side error/UX telemetry; MFA-retry unification has no retry/failure counter | medium | low | Add `auth_refresh` + `mfa_retry` counters in the shared api-client or the server |
+| Dispatcher git-stash bug #3012 may lose uncommitted agent work; no pipeline-health metric exists to detect it | medium | low | Log and count dispatcher isolation failures |
 
 ## Decisions needed
 
-- Analytics platform choice (bespoke vs Amplitude/PostHog/Segment) — owner: pm-tech-lead + pm-data
-- GDPR / retention policy for `support_tooling_events` (TTL vs indefinite) — owner: pm-security + pm-data
-- Minimum-analytics DoD for new stories (blocking gate or advisory?) — owner: pm-scrum-master + pm-data
-- FaultStatusCount canonical definition (support-data vs owner/portfolio KPI) — owner: pm-data (carried over from 2026-05-28)
+- Analytics platform choice (Prometheus-only vs product analytics SDK) — owner: pm-tech-lead
+- Minimum-analytics DoD for stories: blocking gate or advisory — owner: pm-scrum-master
+- `FaultStatusCount` canonical definition — owner: pm-data
+- Retention + TTL policy for `support_tooling_events` and audit data — owner: pm-security
+
+## Open questions
+
+- Which analytics platform is in use (Prometheus/Grafana only, or also PostHog/Amplitude)? Is a client-side event SDK present in ppt-web or mobile?
+- Is there a metrics scrape and dashboard config (Grafana JSON) anywhere in the repo or infra? Not verified this run.
+- Do payments and bookings have any emit sites? The Stripe webhook is in the backend CLAUDE.md but was not read.
+- Are timezone (UTC) and currency (minor units, ISO code) normalisation enforced at the schema level? Not checked this run.
+- Is soft-delete (`deleted_at`) coverage consistent across critical tables? Not checked; only announcement comments confirmed soft-deleted.

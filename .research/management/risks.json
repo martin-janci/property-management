@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-01T04:30:00Z",
+  "generated": "2026-10-02T02:35:22Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -207,6 +207,66 @@
       "mitigation": "Add alert if `dev` HEAD has no research commit for >36h (mirrors routine's Phase 1 stale-routine check)",
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-cross-tenant-idors-unpatched",
+      "risk": "Cross-tenant IDORs #2944/#2945/#2946 stay unpatched behind #2966",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Unblock #2966 egress; prioritise review of all three retries",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-stash-contamination-3012",
+      "risk": "#3012 git-stash sharing across worktrees may corrupt parallel implementer work",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Serialize or isolate stash per worktree before next parallel claim batch",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-review-wedge-buffer-decay",
+      "risk": "Review pipeline wedged (11/11 active in review); buffer decays while nothing claims",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Drain review queue before refilling planner",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-dead-kpi-counters-show-zero",
+      "risk": "Declared-but-never-emitted KPI counters make dashboards look healthy while showing zero",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Wire emit sites or remove the describe_counter! blocks; add CI check that every described metric has an emit site",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-no-event-catalogue-divergence",
+      "risk": "No canonical event catalogue — web/mobile/reality name and shape events inconsistently; funnels diverge",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Publish docs/data/event-catalog.md; make it a story DoD item",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-fault-sla-divergence",
+      "risk": "FaultStatusCount definitions diverge between support-data and owner/portfolio KPIs; support_tooling_events has no TTL (GDPR)",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Decide canonical definition + retention policy this sprint",
+      "owner_role": "pm-data",
+      "trigger": null,
       "status": "open"
     }
   ]

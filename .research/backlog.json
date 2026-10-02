@@ -11294,21 +11294,94 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "Issue #3006 (post-merge review of PR #3004)"
+        "Issue #3006 (post-merge review of PR #3004)",
+        "PR #3010"
       ],
       "evidence": [
         "frontend/packages/api-client/src/lib/fetch.ts contains two near-identical retry-aware auth implementations after PR #3004 — fetchJsonInner and authenticatedFetchInner — both re-implementing header injection and 401→MFA→retry-once. A third copy of header-injection lives in the generated clients auth/interceptors.ts.",
         "The three copies already drift: getAuthHeaders() (JSON path) sets only Authorization; authenticatedFetchInner (raw path) sets Authorization and X-Tenant-ID. Any future change (rename X-Tenant-ID, add a required header, change MFA marker key, bound the retry) must be made in three places that already disagree.",
-        "Proposed in #3006: factor applyAuthHeaders + shouldRetryOnMfa401 into shared helpers; add a test asserting authenticatedFetchJson and authenticatedFetch emit the same auth/tenant headers."
+        "Proposed in #3006: factor applyAuthHeaders + shouldRetryOnMfa401 into shared helpers; add a test asserting authenticatedFetchJson and authenticatedFetch emit the same auth/tenant headers.",
+        "resolved: PR #3010 merged 2026-10-02 — refactor(api-client): unify triplicated auth-header + MFA-retry logic (closes #3006)"
       ],
       "files": [
         "frontend/packages/api-client/src/lib/fetch.ts",
         "frontend/packages/api-client/src/auth/interceptors.ts"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sell-wizard-no-persist",
+      "title": "reality-web /sell wizard discards every submission — no API call on Publish",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review-reality-web-tier1d 2026-10-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — Publish onClick: setErrors + setSubmitted(true); never POSTs the collected listing",
+        "grep -c 'fetch(|axios|mutate|useQuery|@ppt/reality-api-client' returns 0 across the 848-line file",
+        "Form fields are held in local state; on Publish, `submitted` flips to true (page.tsx:730) and the component early-returns a success screen (if (submitted) at line 151)",
+        "Impact: data loss on a public, conversion-critical flow. Seller completes the entire wizard, sees success, nothing is persisted or transmitted",
+        "Fix (frontend-only, cloud-landable): wire Publish to the generated create-listing mutation from @ppt/reality-api-client (await + try/catch + submit-error state), mirroring the account/listings/[id]/edit/page.tsx:195-217 pattern"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": "plans/code-review-reality-web-sell-wizard-no-persist.md"
+    },
+    {
+      "id": "code-review-reality-web-report-page-no-submit",
+      "title": "reality-web /report page handleSubmit never POSTs — collected reports are discarded",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review-reality-web-tier1d 2026-10-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit: e.preventDefault(); if (!problem || !description.trim() || !gdprAccepted) return; setSubmitted(true); — no network call",
+        "The success screen at submitted=true renders a confirmation while the user's abuse/content/listing report is silently discarded",
+        "reality-server already exposes a report-submission endpoint (per prior done backlog rows code-review-reality-server-submit-report-no-rate-limit and report-contact-unvalidated)",
+        "Fix (frontend-only): wire the report POST through the generated reality-api-client; keep local validation; render error state on failure"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data",
+      "title": "reality-web /profile page renders MOCK_* data in production — not wired to current-user/my-listings",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review-reality-web-tier1d 2026-10-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17 imports MOCK_ACTIVITY, MOCK_LISTINGS, MOCK_PROFILE, MOCK_REVIEWS from './_mock' and renders them directly",
+        "File header comment (lines 8-11) acknowledges this is a placeholder: 'instead of seeing the placeholder MOCK_PROFILE ... replace MOCK_* with live data via the SDK'",
+        "Impact: any authenticated realtor hitting /{locale}/profile sees fabricated data (not their own) — including a public URL",
+        "Fix: wire current-user + my-listings queries from @ppt/reality-api-client; replace MOCK_PROFILE/MOCK_LISTINGS/MOCK_ACTIVITY/MOCK_REVIEWS with their live equivalents"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
       "plan": null
     }
   ]

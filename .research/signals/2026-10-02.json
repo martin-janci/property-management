@@ -1,0 +1,178 @@
+{
+  "generated": "2026-10-02T02:35:22Z",
+  "trigger_payload": "buffer-low: claimable=15/72 — refill planner",
+  "phase_1_summary": {
+    "merged_prs": 3,
+    "merged_pr_range": "#3009-#3011",
+    "open_prs_touched": 7,
+    "issues_touched": 2,
+    "commits_on_dev": 16,
+    "non_dispatcher_commits": 3,
+    "routine_lag_hours": 21
+  },
+  "signals": [
+    {
+      "id": "code-review-reality-web-sell-wizard-no-persist",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d demand-driven refill (reality-web segment) 2026-10-02",
+      "segment": "reality-web",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — Publish onClick runs validateStep + setSubmitted(true); grep -cE 'fetch(|axios|mutate|useQuery|@ppt/reality-api-client' returns 0 across the 848-line file; every seller submission silently discarded. Fix (frontend-only): wire Publish to createListing() from @/lib/realtor-api (already exported at realtor-api.ts:117), mirror account/listings/[id]/edit/page.tsx:195-217 await+try/catch pattern.",
+      "promoted_to_plan": "plans/code-review-reality-web-sell-wizard-no-persist.md"
+    },
+    {
+      "id": "code-review-reality-web-report-page-no-submit",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d demand-driven refill (reality-web segment) 2026-10-02",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit calls setSubmitted(true) with no network call; user-submitted abuse/content/listing reports are silently discarded while reality-server already exposes a report-submission endpoint. Fix: wire the POST through reality-api-client."
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d demand-driven refill (reality-web segment) 2026-10-02",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17 imports MOCK_ACTIVITY / MOCK_LISTINGS / MOCK_PROFILE / MOCK_REVIEWS from './_mock' and renders them directly; file header 8-11 acknowledges 'replace MOCK_* with live data via the SDK'. Impact: any authenticated realtor hitting /{locale}/profile sees fabricated data on a public URL."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "type": "churn-hotspot",
+      "source": "14d repo churn scan 2026-10-02",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "cumulative re-emit: 4 commits in the 14d window (same count as previous run, no new churn this cycle); seen in state.seen_signals — score not re-applied per Dedup rule."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-02.md && head -1",
+      "observed": "# 2026-10-02",
+      "expected": "# 2026-10-02"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state advancement",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal double-count scan",
+      "observed": "true (3 new ids absent from prev seen; 1 cumulative churn-hotspot re-emit with score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq cap <= 8; decay no eligible items",
+      "observed": "cap=true; 0 decay-eligible items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep brief for each new plan + adversarial pass marker",
+      "observed": "OK code-review-reality-web-sell-wizard-no-persist (passed)",
+      "expected": "OK"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count+metadata+headings+capability+mode+files-on-disk",
+      "observed": "1 new plan; 4/4 metadata, 11/11 headings, 2 capability ticks, Mode: cloud-ok, 3/3 files resolve",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed line + cursor equality",
+      "observed": "none failed; cursors advanced per phase",
+      "expected": "no stale cursors"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plan slugs resolve to plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count new=9 head=9 (>=)",
+      "observed": "9 >= 9",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency + kill-switch",
+      "observed": "0 actions this run (no candidate matched allowlist shapes)",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor advanced",
+      "observed": "all JSON parses; pm_cursor 6->7; coverage_cursor 8->9 (epic-83 re-checked)",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep staged diff for Telegram token values",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no eligible signal in this run matched the Phase 5 allowlist (screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise-lockfile-drift / stalled-review). The 3 new Tier-1d code-review-findings are bug/high but Phase 5's shape-allowlist does not include code-review-finding (only mechanical safe shapes qualify)."
+}

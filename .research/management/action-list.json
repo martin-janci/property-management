@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "generated": "2026-10-02T02:35:22Z",
   "items": [
     {
       "id": "pm-devops-unblock-api-server-utoipa-swagger-egress",
@@ -361,7 +362,7 @@
       "action": "Follow-up: unify triplicated auth-header + MFA-retry logic in @ppt/api-client fetch primitives (PR #3004) (Closes #3006)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-10-01T04:27:36Z (#3006)",
       "deadline": null,
       "dependency": null,
@@ -374,7 +375,9 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
+      },
+      "resolved_at": "2026-10-02",
+      "resolved_by": "PR #3010"
     },
     {
       "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
@@ -531,7 +534,83 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "pm-scrum-master-drain-review-queue-2026-10-02",
+      "action": "Drain review queue: 11 tasks sit in review (0 claimed this cycle); prioritize cross-tenant IDOR retries (gh-issue-2944/2945/2946)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-02"
+    },
+    {
+      "id": "pm-scrum-master-triage-dependabot-bulk-2026-10-02",
+      "action": "Triage dependabot bulk (#3008/#3007/#2981/#2972/#2962/#2961/#2957) — merge npm/cargo minors; defer KMP/compose until #2652 unblocks",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-02"
+    },
+    {
+      "id": "pm-data-wire-emit-sites-declared-kpi-counters",
+      "action": "Wire emit sites for the 4 declared KPI counters (faults_created_total, votes_cast_total, organizations_created_total, auth_login_total) in api-server/src/observability.rs:272-282 — currently described-but-never-emitted",
+      "owner_role": "pm-data",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-02"
+    },
+    {
+      "id": "pm-data-domain-event-catalogue",
+      "action": "Author canonical domain-event catalogue (docs/data/event-catalog.md) covering fault, vote, payment, booking, dispute, announcement events",
+      "owner_role": "pm-data",
+      "priority": "high",
+      "dependency": "pm-tech-lead",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-02"
+    },
+    {
+      "id": "pm-data-fault-sla-histogram-metric",
+      "action": "Define a fault-SLA metric (histogram of time to triage + resolve, labelled by priority); single shared FaultStatusCount definition reused by support-data + owner/portfolio KPIs",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-02"
+    },
+    {
+      "id": "pm-data-metrics-assertion-test-helper",
+      "action": "Add a metrics-assertion test helper to shared test utils; require ≥3 KPI handlers to assert emission",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-02"
+    },
+    {
+      "id": "pm-data-stripe-webhook-payment-counters",
+      "action": "Add Stripe webhook payment_completed/failed counters with idempotency labels (no PII in labels)",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "pm-security",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-02"
     }
-  ],
-  "generated": "2026-10-01T04:30:00Z"
+  ]
 }
