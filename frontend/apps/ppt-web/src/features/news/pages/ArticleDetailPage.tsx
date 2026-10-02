@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useOrganization } from '../../../hooks';
+import { getApiClient } from '../../../lib/api';
 import { ArticleComments, ArticleReactions } from '../components';
 import type { ArticleCommentWithAuthor, NewsArticle, ReactionCounts, ReactionType } from '../types';
 
@@ -37,19 +38,26 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
     setError(null);
 
     try {
-      const params = new URLSearchParams({ organization_id: organizationId });
+      // Route through the shared axios client so every request is authenticated
+      // (Bearer token via the request interceptor). Raw `fetch()` here sent no
+      // Authorization header and 401'd behind <ProtectedRoute> (#2982). Article
+      // load must succeed; reactions/comments stay best-effort, so we use
+      // `allSettled` and only surface a failure for the article itself.
+      const params = { organization_id: organizationId };
+      const client = getApiClient();
 
-      const [articleRes, reactionsRes, commentsRes] = await Promise.all([
-        fetch(`/api/v1/news/${articleId}?${params}`),
-        fetch(`/api/v1/news/${articleId}/reactions/counts?${params}`),
-        fetch(`/api/v1/news/${articleId}/comments?${params}`),
+      const [articleRes, reactionsRes, commentsRes] = await Promise.allSettled([
+        client.get(`/news/${articleId}`, { params }),
+        client.get(`/news/${articleId}/reactions/counts`, { params }),
+        client.get(`/news/${articleId}/comments`, { params }),
       ]);
 
-      if (!articleRes.ok) {
-        throw new Error(articleRes.status === 404 ? 'Article not found' : 'Failed to load article');
+      if (articleRes.status === 'rejected') {
+        const status = (articleRes.reason as { status?: number } | undefined)?.status;
+        throw new Error(status === 404 ? 'Article not found' : 'Failed to load article');
       }
 
-      const articleData = await articleRes.json();
+      const articleData = articleRes.value.data;
 
       // Convert snake_case to camelCase
       setArticle({
@@ -79,12 +87,12 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
         authorAvatarUrl: articleData.author_avatar_url,
       });
 
-      if (reactionsRes.ok) {
-        setReactionCounts(await reactionsRes.json());
+      if (reactionsRes.status === 'fulfilled') {
+        setReactionCounts(reactionsRes.value.data);
       }
 
-      if (commentsRes.ok) {
-        const commentsData = await commentsRes.json();
+      if (commentsRes.status === 'fulfilled') {
+        const commentsData = commentsRes.value.data;
         setComments(
           commentsData.map((c: Record<string, unknown>) => ({
             id: c.id,
@@ -109,11 +117,7 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       }
 
       // Record view (fire and forget)
-      fetch(`/api/v1/news/${articleId}/view`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ organization_id: organizationId }),
-      }).catch(() => {
+      client.post(`/news/${articleId}/view`, { organization_id: organizationId }).catch(() => {
         // Silently ignore view tracking errors
       });
     } catch (err) {
@@ -132,28 +136,19 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       if (!organizationId || !articleId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${articleId}/reactions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            organization_id: organizationId,
-            reaction_type: reactionType,
-          }),
+        const response = await getApiClient().post(`/news/${articleId}/reactions`, {
+          organization_id: organizationId,
+          reaction_type: reactionType,
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to update reaction');
-        }
-
-        const result = await response.json();
+        const result = response.data;
         setUserReaction(result.added ? reactionType : null);
 
         // Reload reaction counts
-        const params = new URLSearchParams({ organization_id: organizationId });
-        const countsRes = await fetch(`/api/v1/news/${articleId}/reactions/counts?${params}`);
-        if (countsRes.ok) {
-          setReactionCounts(await countsRes.json());
-        }
+        const countsRes = await getApiClient().get(`/news/${articleId}/reactions/counts`, {
+          params: { organization_id: organizationId },
+        });
+        setReactionCounts(countsRes.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update reaction');
       }
@@ -166,21 +161,13 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       if (!organizationId || !articleId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${articleId}/comments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            organization_id: organizationId,
-            content,
-            parent_id: parentId,
-          }),
+        const response = await getApiClient().post(`/news/${articleId}/comments`, {
+          organization_id: organizationId,
+          content,
+          parent_id: parentId,
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to post comment');
-        }
-
-        const newCommentData = await response.json();
+        const newCommentData = response.data;
         const newComment: ArticleCommentWithAuthor = {
           id: newCommentData.id,
           articleId: newCommentData.article_id,
@@ -213,20 +200,12 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       if (!organizationId || !articleId) return;
 
       try {
-        const response = await fetch(`/api/v1/news/${articleId}/comments/${commentId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            organization_id: organizationId,
-            content,
-          }),
+        const response = await getApiClient().put(`/news/${articleId}/comments/${commentId}`, {
+          organization_id: organizationId,
+          content,
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to update comment');
-        }
-
-        const updatedData = await response.json();
+        const updatedData = response.data;
         setComments((prev) =>
           prev.map((c) =>
             c.id === commentId
@@ -250,14 +229,9 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
       if (!organizationId || !articleId) return;
 
       try {
-        const params = new URLSearchParams({ organization_id: organizationId });
-        const response = await fetch(`/api/v1/news/${articleId}/comments/${commentId}?${params}`, {
-          method: 'DELETE',
+        await getApiClient().delete(`/news/${articleId}/comments/${commentId}`, {
+          params: { organization_id: organizationId },
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to delete comment');
-        }
 
         setComments((prev) => prev.filter((c) => c.id !== commentId));
       } catch (err) {

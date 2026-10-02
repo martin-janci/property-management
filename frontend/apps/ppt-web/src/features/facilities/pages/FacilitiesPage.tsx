@@ -6,7 +6,7 @@
 
 import type { FacilitySummary, FacilityType, ListFacilitiesQuery } from '@ppt/api-client';
 import { listFacilities } from '@ppt/api-client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FacilityList } from '../components';
 
@@ -49,31 +49,40 @@ export function FacilitiesPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [filters, setFilters] = useState<Omit<ListFacilitiesQuery, 'limit' | 'offset'>>({});
 
-  useEffect(() => {
+  const fetchFacilities = useCallback(async () => {
     if (!buildingId) return;
 
-    const fetchFacilities = async () => {
-      setIsLoading(true);
-      try {
-        const offset = (page - 1) * PAGE_SIZE;
-        const response = await listFacilities(buildingId, {
-          ...filters,
-          limit: PAGE_SIZE,
-          offset,
-        });
-        setFacilities(response.items);
-        setTotal(response.total);
-      } catch (error) {
-        console.error('Failed to fetch facilities:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFacilities();
+    setIsLoading(true);
+    setIsError(false);
+    try {
+      const offset = (page - 1) * PAGE_SIZE;
+      const response = await listFacilities(buildingId, {
+        ...filters,
+        limit: PAGE_SIZE,
+        offset,
+      });
+      setFacilities(response.items);
+      setTotal(response.total);
+    } catch (error) {
+      // A fetch failure must be distinguishable from an empty result — clear
+      // any stale rows and flag the error so the list renders a dedicated
+      // error state (with retry) instead of the "No facilities found"
+      // placeholder, which would otherwise hide the outage from the user.
+      console.error('Failed to fetch facilities:', error);
+      setFacilities([]);
+      setTotal(0);
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
   }, [buildingId, filters, page]);
+
+  useEffect(() => {
+    fetchFacilities();
+  }, [fetchFacilities]);
 
   const handleTypeFilter = (type?: FacilityType) => {
     setFilters((prev) => ({ ...prev, facility_type: type }));
@@ -113,8 +122,10 @@ export function FacilitiesPage() {
         page={page}
         pageSize={PAGE_SIZE}
         isLoading={isLoading}
+        isError={isError}
         isManager={isManager}
         onPageChange={handlePageChange}
+        onRetry={fetchFacilities}
         onTypeFilter={handleTypeFilter}
         onBookableFilter={handleBookableFilter}
         onView={handleView}

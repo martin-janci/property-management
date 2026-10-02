@@ -107,7 +107,9 @@
     "callback": {
       "title": "A bejelentkezés sikertelen",
       "invalidState": "Érvénytelen állapot-token. Kérjük, próbáljon meg újra bejelentkezni.",
-      "returnHome": "Vissza a főoldalra"
+      "returnHome": "Vissza a főoldalra",
+      "loading": "Betöltés...",
+      "completingLogin": "Bejelentkezés befejezése..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "Összes ingatlan",
-    "emptyTitle": "Nem található hirdetés",
     "emptyDescription": "Módosítsa a szűrőket vagy a keresési feltételeket, hogy több ingatlant találjon.",
+    "emptyTitle": "Nem található hirdetés",
+    "errorDescription": "Hiba történt az ingatlanok betöltésekor. Kérjük, próbálja újra.",
+    "errorTitle": "A hirdetéseket nem sikerült betölteni",
     "filters": "Szűrők",
     "gridView": "Rácsnézet",
     "listView": "Listanézet",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Kiadó ingatlanok",
     "propertiesForSale": "Eladó ingatlanok",
     "resultsCount": "{count} hirdetés található",
+    "retry": "Újrapróbálkozás",
     "sortNewest": "Legújabb",
     "sortOldest": "Legrégebbi",
     "sortPriceHigh": "Ár: legdrágábbtól",
@@ -526,6 +531,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -1020,6 +1027,8 @@
       "feedName": "Feed neve (opcionális)",
       "feedNamePlaceholder": "Az én ingatlan-feedem",
       "fetchError": "Nem sikerült lekérni a feedet. Ellenőrizze az URL-t, és próbálja újra.",
+      "updateError": "Nem sikerült frissíteni a feedet. Próbálja újra.",
+      "removeError": "Nem sikerült eltávolítani a feedet. Próbálja újra.",
       "format": "Formátum",
       "itemsFound": "Talált elemek",
       "availableFields": "Elérhető mezők",

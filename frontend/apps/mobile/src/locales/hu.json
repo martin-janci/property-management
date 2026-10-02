@@ -131,6 +131,12 @@
     "galleryButton": "Galeria",
     "submitButton": "Jelentes bekuldese",
     "successSubmit": "Hibajelentes sikeresen elkuldve",
+    "photosNotUploadedTitle": "Bejelentes mentve — a fenykepek nem lettek csatolva",
+    "photosNotUploadedWarning": "A hibajelentes mentve lett, de a csatolt fenykepeket nem sikerult feltolteni, ezert nem kerultek bele. Kerjuk, adja hozza oket ujra a hiba reszleteibol.",
+    "successSubmitWithPhotos": "Hibajelentes elkuldve {{count}} fenykeppel.",
+    "photosPartialTitle": "Jelentes elkuldve — nehany fenykep nem lett csatolva",
+    "photosPartialWarning": "A hibajelentes elkuldve, es {{total}} fenykepbol {{uploaded}} lett csatolva. {{failed}} feltoltese nem sikerult — ujra hozzaadhatja oket a hiba reszleteibol.",
+    "uploadingPhotos": "Fenykepek feltoltese…",
     "failedSubmit": "Nem sikerult elkuldeni a hibajelentest",
     "cameraPermissionDenied": "Kamera engedelyre van szukseg",
     "photoLibraryPermissionDenied": "Fotokozyvtar engedelyre van szukseg",
@@ -299,7 +305,9 @@
     "syncFailed": "Nehany elem szinkronizalasa sikertelen",
     "syncProgress": "Szinkronizalas {{current}}/{{total}}",
     "itemSynced": "{{item}} sikeresen szinkronizalva",
-    "itemFailed": "{{item}} szinkronizalasa sikertelen"
+    "itemFailed": "{{item}} szinkronizalasa sikertelen",
+    "droppedTitle": "Módosítások elvetve",
+    "droppedMessage": "{{count}} offline módosítást nem sikerült menteni, és elvetésre kerültek, mert a szerver elutasította azokat."
   },
   "help": {
     "title": "Sugocentrum",

@@ -107,7 +107,9 @@
     "callback": {
       "title": "Login Failed",
       "invalidState": "Invalid state token. Please try logging in again.",
-      "returnHome": "Return Home"
+      "returnHome": "Return Home",
+      "loading": "Loading...",
+      "completingLogin": "Completing login..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "All Properties",
-    "emptyTitle": "No listings found",
     "emptyDescription": "Try adjusting your filters or search criteria to find more properties.",
+    "emptyTitle": "No listings found",
+    "errorDescription": "Something went wrong while loading properties. Please try again.",
+    "errorTitle": "Couldn’t load listings",
     "filters": "Filters",
     "gridView": "Grid view",
     "listView": "List view",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Properties for Rent",
     "propertiesForSale": "Properties for Sale",
     "resultsCount": "{count} listings found",
+    "retry": "Try again",
     "sortNewest": "Newest First",
     "sortOldest": "Oldest First",
     "sortPriceHigh": "Price: High to Low",
@@ -523,6 +528,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -1027,6 +1034,8 @@
       "feedName": "Feed Name (Optional)",
       "feedNamePlaceholder": "My Property Feed",
       "fetchError": "Failed to fetch feed. Please check the URL and try again.",
+      "updateError": "Failed to update the feed. Please try again.",
+      "removeError": "Failed to remove the feed. Please try again.",
       "format": "Format",
       "itemsFound": "Items Found",
       "availableFields": "Available Fields",

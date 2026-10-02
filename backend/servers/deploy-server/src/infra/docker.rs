@@ -87,6 +87,21 @@ impl DockerClient {
         &self.docker
     }
 
+    /// Read one label off an image that is already present locally.
+    ///
+    /// Returns `Ok(None)` when the image carries no such label — that is a
+    /// fact about the image (pre-T6, or built outside the pipeline), not an
+    /// error. The image must have been pulled first: a 404 from the daemon
+    /// surfaces as `DeployError::Docker`, because a caller asking about an
+    /// image it has not pulled is a bug, not a policy decision.
+    pub async fn image_label(&self, image: &str, label: &str) -> Result<Option<String>> {
+        let inspect = self.docker.inspect_image(image).await?;
+        Ok(inspect
+            .config
+            .and_then(|cfg| cfg.labels)
+            .and_then(|labels| labels.get(label).cloned()))
+    }
+
     pub async fn is_running(&self, name: &str) -> Result<bool> {
         match self.docker.inspect_container(name, None).await {
             Ok(c) => Ok(c.state.and_then(|s| s.running).unwrap_or(false)),

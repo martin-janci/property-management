@@ -22,6 +22,7 @@ import { apiRequest, useApiQuery, useTenantId } from '../../hooks/useApi';
 import { bytesToMb, compressImagesIfNeeded, generateIdempotencyKey } from '../../utils';
 import { colors } from '../shared/screenStyles';
 import type { FaultCategory, FaultPriority } from './FaultsListScreen';
+import { uploadFaultPhotos } from './faultAttachments';
 
 interface ReportFaultScreenProps {
   onSuccess?: () => void;
@@ -101,6 +102,9 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
   // (issue #1767) — drives a stronger "upload may be slow/fail" warning.
   const [photosStillOverLimit, setPhotosStillOverLimit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // True while the fault has been created and its photos are streaming to
+  // storage via the presigned-upload pipeline (issue #2999).
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [queuedOffline, setQueuedOffline] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -270,6 +274,67 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
     }
   }, [t]);
 
+  // Surface a completion alert for the QUEUED (offline / request-failed) paths.
+  // The fault create hasn't reached the server yet, so there's no fault id to
+  // attach photos to and no presigned upload can run — the picked photos can't
+  // be included in an offline replay (the queue only carries a JSON body). When
+  // photos were selected we tell the user they were NOT uploaded rather than
+  // dropping them silently (issue #2989); online, photos ARE uploaded via
+  // finishOnlineCreate below (issue #2999).
+  const finishWithAlert = (title: string, message: string) => {
+    if (photos.length > 0) {
+      Alert.alert(t('faults.photosNotUploadedTitle'), t('faults.photosNotUploadedWarning'), [
+        { text: t('common.ok'), onPress: onSuccess },
+      ]);
+      return;
+    }
+    Alert.alert(title, message, [{ text: t('common.ok'), onPress: onSuccess }]);
+  };
+
+  // Complete a successful ONLINE create: upload the picked photos to storage via
+  // the presigned-URL pipeline, register each against the new fault, then alert
+  // the user with an outcome that reflects what actually got attached (issue
+  // #2999). Uploads are best-effort per photo — a partial failure still keeps
+  // whatever succeeded, and the alert says so instead of implying all or none.
+  const finishOnlineCreate = async (faultId: string) => {
+    if (photos.length === 0) {
+      Alert.alert(t('common.done'), t('faults.successSubmit'), [
+        { text: t('common.ok'), onPress: onSuccess },
+      ]);
+      return;
+    }
+
+    setIsUploadingPhotos(true);
+    let outcome: { total: number; uploaded: number; failed: number };
+    try {
+      outcome = await uploadFaultPhotos(faultId, photos);
+    } finally {
+      setIsUploadingPhotos(false);
+    }
+
+    if (outcome.failed === 0) {
+      Alert.alert(
+        t('common.done'),
+        t('faults.successSubmitWithPhotos', { count: outcome.uploaded }),
+        [{ text: t('common.ok'), onPress: onSuccess }]
+      );
+    } else if (outcome.uploaded === 0) {
+      Alert.alert(t('faults.photosNotUploadedTitle'), t('faults.photosNotUploadedWarning'), [
+        { text: t('common.ok'), onPress: onSuccess },
+      ]);
+    } else {
+      Alert.alert(
+        t('faults.photosPartialTitle'),
+        t('faults.photosPartialWarning', {
+          uploaded: outcome.uploaded,
+          total: outcome.total,
+          failed: outcome.failed,
+        }),
+        [{ text: t('common.ok'), onPress: onSuccess }]
+      );
+    }
+  };
+
   // Persist the create to the offline queue for replay on reconnect.
   const queueForLater = async (payload: CreateFaultVariables, message: string) => {
     await addToQueue({
@@ -279,7 +344,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
       body: payload,
     });
     setQueuedOffline(true);
-    Alert.alert(t('faults.queuedTitle'), message, [{ text: t('common.ok'), onPress: onSuccess }]);
+    finishWithAlert(t('faults.queuedTitle'), message);
   };
 
   const handleSubmit = async () => {
@@ -294,10 +359,11 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
       idempotencyKeyRef.current = generateIdempotencyKey();
     }
 
-    // NOTE: `photos` holds local device URIs (compressed in-place when over
-    // 10 MB). Uploading attachments needs the presigned-URL pipeline
-    // (POST /faults/{id}/attachments), which has no shared mobile helper yet —
-    // tracked as a follow-up. The fault itself is created/queued here.
+    // `photos` holds local device URIs (compressed in-place when over 10 MB).
+    // Online, once the fault exists they're uploaded via the presigned-URL
+    // pipeline in finishOnlineCreate (issue #2999). Offline/queued creates can't
+    // carry attachments (the queue only replays a JSON body), so those paths
+    // warn that the photos weren't uploaded (issue #2989).
     const payload: CreateFaultVariables = {
       building_id: buildingId,
       title: title.trim(),
@@ -316,14 +382,17 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
         return;
       }
 
-      await apiRequest<CreateFaultResult>('/api/v1/faults', { method: 'POST', body: payload });
+      const created = await apiRequest<CreateFaultResult>('/api/v1/faults', {
+        method: 'POST',
+        body: payload,
+      });
       // Refresh the faults list so the new report shows on return.
       queryClient.invalidateQueries({ queryKey: ['faults', 'list'] });
       // The key has been consumed; a subsequent report gets a fresh one.
       idempotencyKeyRef.current = null;
-      Alert.alert(t('common.done'), t('faults.successSubmit'), [
-        { text: t('common.ok'), onPress: onSuccess },
-      ]);
+      // Upload the picked photos to storage and attach them to the new fault,
+      // then alert with the real outcome (issue #2999).
+      await finishOnlineCreate(created.id);
     } catch (error) {
       // The request failed mid-flight. We can't tell a dropped connection from
       // a server error here, so queue for replay: a transient/5xx error retries
@@ -588,7 +657,14 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
           disabled={isSubmitting || isCompressing}
         >
           {isSubmitting ? (
-            <ActivityIndicator color={colors.surface} />
+            isUploadingPhotos ? (
+              <View style={styles.uploadingRow}>
+                <ActivityIndicator color={colors.surface} />
+                <Text style={styles.submitButtonText}>{t('faults.uploadingPhotos')}</Text>
+              </View>
+            ) : (
+              <ActivityIndicator color={colors.surface} />
+            )
           ) : (
             <Text style={styles.submitButtonText}>
               {isOffline ? t('faults.submitButtonOffline') : t('faults.submitButton')}
@@ -864,6 +940,11 @@ const styles = StyleSheet.create({
     color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
+  },
+  uploadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   bottomSpacer: {
     height: 40,

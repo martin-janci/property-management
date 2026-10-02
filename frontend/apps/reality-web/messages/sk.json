@@ -107,7 +107,9 @@
     "callback": {
       "title": "Prihlásenie zlyhalo",
       "invalidState": "Neplatný stavový token. Skúste sa prihlásiť znova.",
-      "returnHome": "Späť na domovskú stránku"
+      "returnHome": "Späť na domovskú stránku",
+      "loading": "Načítava sa...",
+      "completingLogin": "Dokončuje sa prihlásenie..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "Všetky nehnuteľnosti",
-    "emptyTitle": "Neboli nájdené žiadne ponuky",
     "emptyDescription": "Skúste upraviť filtre alebo vyhľadávacie kritériá a nájdite viac nehnuteľností.",
+    "emptyTitle": "Neboli nájdené žiadne ponuky",
+    "errorDescription": "Pri načítavaní nehnuteľníostí sa vyskytla chyba. Skúste to znova.",
+    "errorTitle": "Ponuky sa nepodarilo načítať",
     "filters": "Filtre",
     "gridView": "Zobrazenie mriežky",
     "listView": "Zobrazenie zoznamu",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Nehnuteľnosti na prenájom",
     "propertiesForSale": "Nehnuteľnosti na predaj",
     "resultsCount": "Nájdených {count} ponúk",
+    "retry": "Skúsiť znova",
     "sortNewest": "Najnovšie",
     "sortOldest": "Najstaršie",
     "sortPriceHigh": "Cena: od najvyššej",
@@ -523,6 +528,8 @@
       "back": "← Späť",
       "next": "Ďalej →",
       "publish": "Zverejniť inzerát",
+      "publishing": "Zverejňujem…",
+      "submitFailed": "Zverejnenie zlyhalo, skúste znova.",
       "submittedTitle": "Váš inzerát bol odoslaný!",
       "submittedBody": "Po overení bude zverejnený do 2 hodín.",
       "submittedCta": "Pridať ďalší inzerát",
@@ -1027,6 +1034,8 @@
       "feedName": "Názov feedu (voliteľné)",
       "feedNamePlaceholder": "Môj feed nehnuteľností",
       "fetchError": "Nepodarilo sa načítať feed. Skontrolujte URL a skúste to znova.",
+      "updateError": "Nepodarilo sa aktualizovať feed. Skúste to znova.",
+      "removeError": "Nepodarilo sa odstrániť feed. Skúste to znova.",
       "format": "Formát",
       "itemsFound": "Nájdené položky",
       "availableFields": "Dostupné polia",

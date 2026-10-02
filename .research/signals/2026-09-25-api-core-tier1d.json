@@ -1,0 +1,72 @@
+{
+  "generated": "2026-09-25T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven generator (claim buffer starved: only mobile-native/KMP backlog remains, structurally unlandable in cloud runner AGP egress-blocked #2652). Fresh LANDABLE code-review findings requested. 2026-09-25",
+  "segment_reviewed": "api-core",
+  "selection_reason": "CHURN-ALIGNED + OLDEST-UNMINED-LANDABLE. review_cursor: {api-handlers:2026-08-31, api-core:2026-09-01, reality-server:2026-08-31, ppt-web-ui:2026-09-06, ppt-web-core:2026-08-29, reality-web:2026-08-29, mobile-rn:2026-09-09, mobile-native-kmp:2026-09-10}. Deduped against today's already-generated signal corpus: api-handlers, ppt-web-core, reality-web were ALL mined earlier today (signals/2026-09-25-{api-handlers,ppt-web-core,reality-web}-tier1d.json) so they are skipped to keep findings FRESH. reality-server (cursor 2026-08-31) and ppt-web-ui (2026-09-06) were mined 2026-09-24 and 2026-09-23 respectively. Among the landable segments not recently mined, api-core (cursor 2026-09-01) is the oldest AND is churn-aligned: Phase-1 hotspot_history shows the single most-recent application-code churn (last_seen 2026-09-20) in backend/servers/api-server/src/services/push_fanout.rs, which lives in this segment. mobile-native-kmp skipped per task (saturated, structurally unlandable). api-core = backend/servers/api-server/src/ EXCLUDING routes/ (i.e. services/, bin/, and top-level main.rs/lib.rs/state.rs/etc.); the skill's segment-map path backend/api-server/src/ predates the repo's backend/servers/*/ layout. SATURATION CHECK PASSED: backlog.json holds 0 OPEN code-review-finding rows for api-core (all 19 existing code-review rows across all segments are status=done), well under the >=3-open skip rule. Static analysis only (read + grep, no build/test) per skill contract.",
+  "experts_used": ["rust"],
+  "landable_in_cloud": true,
+  "landability_note": "TENSION NOTED: signals/2026-09-24-reality-server-tier1d.json asserts the api-server crate is hard to build end-to-end in the cloud runner (utoipa-swagger-ui build-script egress-403, issue #2966). However (a) the current task explicitly lists backend Rust among the landable-preferred segments and the current dispatcher directive overrides the stale note, and (b) all three findings below are small, self-contained, statically-obvious changes (two constant-string/enum-value corrections in one service file, one supervisor/restart wrapper for background workers in main.rs) that a specialist can land and unit-test in isolation even if a full swagger-ui-linked build is blocked in one runner. If #2966 truly blocks api-server compilation in the assigned runner, these rows should be routed to a runner where api-server builds, not dropped.",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "api-core (backend/servers/api-server/src/ excl. routes/, 37 files, ~20.7k LOC under services/) is a broadly mature, heavily-hardened segment. Verified CLEAN this pass (so future rotations are not re-mined speculatively): (1) UNWRAP/EXPECT PANICS - essentially all non-test unwrap/expect hits are inside #[cfg(test)] mods (scheduler/mod.rs 41 hits all after the test boundary @1440; jwt.rs, oauth.rs, auth_policy.rs, totp.rs likewise). The only production expect() are infallible reqwest client builds (push_fanout.rs:433/626/1042) and OS-CSPRNG fills (totp.rs:153, oauth.rs:918) - both idiomatic. Decimal::from_str(\"0.8\").unwrap() in accounting.rs are on hardcoded literal constants. (2) BOOT-TIME PANICS legit fail-fast: main.rs JWT_SECRET length/presence checks and totp.rs:76/94/109 TOTP_ENCRYPTION_KEY validation all have a documented RUST_ENV=development fallback branch. (3) STRIPE WEBHOOK SIGNATURE (stripe.rs:202) is textbook-correct: constant-time ct_eq compare with length pre-check, overflow-proof timestamp tolerance via shared portals::timestamp_within_tolerance (#2330), HMAC over {t}.{body}. (4) FAIL-CLOSED patterns are deliberate and documented: notification_pipeline.rs:385 resolve_push_quiet_gate holds the push on a DB error (issue #980); push_fanout.rs deliver loops handle per-device errors without aborting the batch and purge stale FCM/APNs tokens best-effort with a user-scoped DELETE. (5) NO SQL injection (no format! into query strings), NO unsafe, NO todo!()/unimplemented!() in production paths, NO decrypted secret/token values logged. (6) voice_commands.rs SSML is built via format!(\"<speak>{}</speak>\", response) at 7 sites but every interpolated value is an integer count or a UUID prefix or a static localized string - no raw user slot text reaches SSML, so no XML/SSML-injection materializes. The three net-new findings below are the substantive gaps: two are on the live voice-assistant webhook path (services/voice_commands.rs) - a hardcoded placeholder manager email shipped to residents, and a success-flag inconsistency that mis-records an unavailable feature as a success in command history/metrics; the third is a background-worker resilience gap (no panic supervision on the scheduler + notification workers).",
+  "signals": [
+    {
+      "id": "code-review-api-core-voice-contact-manager-placeholder-email",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 api-core services/voice_commands.rs)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:531-556 - action_contact_manager is a LIVE voice-assistant webhook handler (dispatched from process_command via voice_intent::CONTACT_MANAGER at :172) that returns hardcoded PLACEHOLDER email addresses to residents: :537 'spravca@example.com' (sk), :538 'spravce@example.com' (cs), :539 'manager@example.com' (en). The same placeholder is echoed into the response card content (:549 content: \"manager@example.com\") and into the structured data payload (:554 \"manager_email\": \"manager@example.com\").",
+        "example.com is the IETF-reserved documentation domain (RFC 2606) and can never receive mail. A resident who asks the voice assistant to contact the manager is told, spoken aloud (the string is also wrapped into SSML at :546) and shown on-card, to email a non-functional address - i.e. the feature actively hands out wrong contact information rather than resolving the real property-manager / organization contact from the device's organization_id (available on the VoiceAssistantDevice: device.organization_id is used elsewhere in this file, e.g. action_check_announcements :409).",
+        "This is INCONSISTENT with the rest of this file, which was explicitly hardened against exactly this class of 'fabricated response on a live webhook' bug: action_check_balance (:262-268), action_check_announcements (:400-411) and action_check_meter (:472-495) all carry code-review comments ('code review: fabricated success/empty success') documenting a prior fix where a made-up answer was replaced by a real repository query. action_contact_manager was left with a hardcoded fake address and never wired to a contacts/organization lookup.",
+        "Fix (landable in isolation): resolve the manager/organization contact via a repository lookup keyed on device.organization_id (or device.unit_id -> building -> manager), and fall back to an honest 'contact details are not available via voice; please use the app' message (mirroring action_check_balance's fail-honestly branch) rather than emitting a reserved-domain placeholder. Confidence medium: the placeholder is statically certain and on a reachable production path; the user-facing impact severity (misdirected contact) is clear but not runtime-confirmed against a live skill, hence medium not high."
+      ]
+    },
+    {
+      "id": "code-review-api-core-scheduler-no-panic-supervision",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 api-core services/scheduler/mod.rs + main.rs)",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs",
+        "backend/servers/api-server/src/main.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:262-288 - Scheduler::start() spawns a SINGLE tokio task whose body is `loop { ticker.tick().await; self.run_scheduled_tasks().await; }`. run_scheduled_tasks (:290-405) sequentially awaits ~20 scheduled jobs (publish_scheduled_announcements, dispatch_announcement_notifications, activate_scheduled_votes, close_expired_votes, cleanup_sessions, expire_signature_requests, send_meter_reminders, send_payment_reminders, transition_overdue_invoices, fire_due_report_schedules, retention prunes, ...). Each job's Result::Err is caught and logged (if let Err(e) = ...), but a PANIC inside any awaited job (e.g. a slice/index panic, an unwrap in a called repository, an arithmetic overflow in debug) is NOT caught - there is no catch_unwind and no per-job tokio::spawn isolation - so it unwinds the whole loop task and the loop exits permanently.",
+        "backend/servers/api-server/src/main.rs:692 - the JoinHandle is bound to `let _scheduler_handle = scheduler.start();` and never awaited, polled, or supervised. Nothing calls .is_finished() or restarts the task, so if the loop panics ALL scheduled background work (announcement publishing, vote lifecycle transitions, invoice overdue transitions, payment/meter/signature reminders, session cleanup, data-retention prunes) silently stops for the entire process lifetime with no alert - a single transient panic degrades the system until an operator notices and restarts.",
+        "The SAME unsupervised pattern applies to the sibling background workers started immediately after: main.rs:704 `let _push_fanout_handle = push_fanout_worker.start();`, :715 `let _quiet_hours_drain_handle = quiet_hours_drain_worker.start();`, :727 `let _notification_digest_handle = notification_digest_worker.start();`. All four spawn-and-forget with a `_`-prefixed handle and no restart-on-exit supervision.",
+        "Fix (landable in isolation): wrap each scheduled job invocation so a panic is contained to that tick (e.g. run each job inside its own tokio::spawn and log JoinError on panic, or AssertUnwindSafe + .catch_unwind() around run_scheduled_tasks), AND/OR supervise the top-level worker handles (a small supervisor task that awaits each JoinHandle and re-spawns on unexpected exit, incrementing a metric). Confidence medium: the missing panic isolation and unsupervised handle are statically certain; whether a panic is actually reachable inside a specific job depends on downstream repository code outside this segment, so exploitability is not runtime-confirmed - but the blast radius (all background jobs stop) makes this a substantive resilience gap."
+      ]
+    },
+    {
+      "id": "code-review-api-core-voice-book-facility-false-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-25 api-core services/voice_commands.rs)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:447-466 - action_book_facility returns VoiceActionResult { success: true, ... } (:459) while its response_text (:451-455) tells the user 'Facility booking is not yet available via voice assistant. Please use the mobile app or web portal.' The handler reports SUCCESS for a feature it explicitly did not perform.",
+        "This success flag is persisted and used for analytics, not just returned to the caller: process_command (:212-231) derives `success` from result and writes it into the voice_command history row via create_voice_command(..., success, ...) (:227). So every 'book facility' attempt is recorded as a successful command even though nothing was booked, corrupting per-intent success-rate metrics and masking demand for the unimplemented feature.",
+        "This directly CONTRADICTS the fail-honestly convention established elsewhere in the same file for the identical 'feature not wired yet' situation: action_check_balance (:262-283) carries a code-review comment ('code review: fabricated success ... Fail honestly instead') and correctly returns success: false (:276) for its 'not yet available via voice' message. action_book_facility uses the same not-available wording but returns success: true - the outlier.",
+        "Fix (trivial, landable in isolation): change :459 to success: false to match action_check_balance, so the unavailable-feature path is recorded honestly in command history and metrics. Confidence medium: the mismatch is statically certain and the metrics-corruption path (create_voice_command persists the flag) is traced; low severity (score_delta 1) as it is a data-quality/consistency bug, not a security or crash issue."
+      ]
+    }
+  ]
+}

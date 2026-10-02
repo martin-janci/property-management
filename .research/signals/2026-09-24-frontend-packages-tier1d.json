@@ -1,0 +1,46 @@
+{
+  "generated": "2026-09-24T00:00:00Z",
+  "source_run": "dispatcher Phase 1.5 Tier-1d demand-driven static code review (claim buffer starved = 0; cloud-landable frontend/web segment required) 2026-09-24",
+  "segment_reviewed": "frontend-packages",
+  "selection_reason": "override of skill's automatic segment rotation, per Tier-1d dispatch instruction to steer toward a cloud-landable frontend/web segment. The two normally-oldest frontend segments were BOTH already mined earlier this same 2026-09-24 cycle: reality-web (.research/signals/2026-09-24-reality-web-tier1d.json, 0 net-new findings, cursor-advance recommended) and ppt-web-core (.research/signals/2026-09-24-ppt-web-core-tier1d.json, 3 findings); ppt-web-ui was mined 2026-09-23. Reviewing any of those again would duplicate. The skill's 8-segment map has NO segment covering frontend/packages/* (the shared @ppt/* libraries), so it is structurally under-reviewed despite being imported by every app and fully cloud-landable. Picked frontend/packages/* (focus: non-generated @ppt/shared) as the highest-value non-duplicate frontend target.",
+  "experts_used": [
+    "frontend"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "frontend/packages/@ppt/shared is a pure-TypeScript library (no native/AGP toolchain, no utoipa-swagger-ui build); findings here ARE landable in the cloud runner, unlike backend api-server (#2966 utoipa-swagger-ui egress-403) and mobile-native KMP (AGP egress-gated).",
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Static read+grep sweep of frontend/packages/{ui-kit,shared,sitemap,screen-map,dev-panel}. Most surfaces are clean: no `as any`/`as unknown` outside tests, only legitimate error-boundary console.error (ui-kit/AccessibilityProvider) and a CLI generator console.log (sitemap/json/generate.ts), all localStorage access try/catch-guarded, errors.ts retry-after parser NaN-guarded, and validation.ts date validators correctly guard Invalid Date via `Number.isNaN(d.getTime())`. Two net-new correctness findings both land in @ppt/shared (imported by ppt-web, mobile, reality-web) and both stem from the SAME root cause the codebase guards against elsewhere but omits here: unvalidated runtime data trusted against a TS type. Capped at 2 (both medium); no filler nits emitted.",
+  "signals": [
+    {
+      "id": "code-review-frontend-packages-auth-exp-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "frontend-packages",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/packages/shared/src/auth.ts:60-81 decodeJwt() does `JSON.parse(jsonPayload) as JwtPayload` — a cast, not validation — so the decoded payload is trusted against the type without checking any claim is actually present or well-typed. JwtPayload declares `exp: number` (auth.ts:26 — required, non-optional), but a token whose payload omits `exp` (or carries a non-numeric exp) yields `payload.exp === undefined` at runtime while satisfying the compiler via the `as` cast.",
+        "frontend/packages/shared/src/auth.ts:90-98 isTokenExpired() then evaluates `payload.exp <= now + bufferSeconds` = `undefined <= number` = `false`, so an exp-less token is reported NOT expired (valid forever) — the exact inverse of the documented contract ('returns true if expired or invalid'). This is a client-side token-expiry BYPASS: auto-logout-on-expiry never fires and the app keeps using/refreshing a token it should reject. Same root defect leaks into getTokenExpiration() (auth.ts:106-113 -> `new Date(undefined*1000)` = Invalid Date object instead of the documented null) and getTokenRemainingTime() (auth.ts:121-129 -> `Math.max(0, undefined - now)` = NaN instead of the documented 0/-1). Fix: validate typeof payload.exp === 'number' && Number.isFinite(payload.exp) in decodeJwt (return null otherwise), mirroring the Number.isNaN(getTime()) guard the sibling validation.ts date validators already use.",
+        "Reachable via any tampered/legacy localStorage token or any backend that ever issues an exp-less JWT; @ppt/shared is imported by ppt-web and mobile."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-frontend-packages-formatdate-rangeerror",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "frontend-packages",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/packages/shared/src/formatting.ts:93-98 toDate() does an unguarded `new Date(input)`, which returns an Invalid Date for a malformed or nullish timestamp string. Every date formatter feeds that straight into Intl without a NaN guard: formatDate (103-111), formatDetailedDate (116-124), formatDateTime (129-139), formatTime (144-151), formatRelativeTime (163-197) call `new Intl.DateTimeFormat(...).format(toDate(date))`, and formatISODate (156-158) calls `toDate(date).toISOString().split('T')[0]`.",
+        "`Intl.DateTimeFormat.prototype.format(<Invalid Date>)` throws `RangeError: Invalid time value`, and `<Invalid Date>.toISOString()` throws the same RangeError. So passing a malformed or absent API timestamp (e.g. an optional/nullable `createdAt` that arrives as '' , null-coerced, or a wrong-typed value) to any of these throws synchronously during render and crashes the component subtree unless an error boundary catches it — no graceful fallback string.",
+        "This is the same Invalid-Date hazard that the sibling frontend/packages/shared/src/validation.ts:300-350 date validators explicitly guard with `Number.isNaN(d.getTime())`; the formatters omit that guard. Fix: in toDate (or each formatter) detect `Number.isNaN(d.getTime())` and return a safe placeholder (e.g. '' or '—') instead of throwing. @ppt/shared formatters are used across ppt-web, reality-web and mobile."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

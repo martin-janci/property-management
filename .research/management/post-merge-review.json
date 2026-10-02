@@ -1,9 +1,100 @@
 {
-  "generated": "2026-09-21T12:25:38Z",
+  "generated": "2026-10-01T14:30:09Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-01T14:30:09Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (Tier-1d demand-driven, buffer-starvation trigger: claimable=15 < floor=36). Window=14d (merged>=2026-09-17), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI UNAVAILABLE in env; direct git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did not touch assignments.json/action-list.json/archives; review-only). Enumeration via list_pull_requests(closed, base=dev, sort=updated desc, perPage=50); merged detected by non-null merged_at (MCP 'merged' bool unreliable). ZERO net-new PRs to review: every in-window merge already carries post-merge-reviewed. In-window merges (merged_at>=2026-09-17), all reviewed by prior runs: #3004,#3002,#3001 @09-30 (today's 02:34Z run — #3004=>issue #3006, #3002+#3001 clean); #2983,#2989,#2994,#2968,#2984,#2985,#2986,#2988,#2970,#2971,#2990,#2991,#2993,#2995,#2996 @09-27; #2980,#2979 @09-26. Newest merge into dev is #3001/#3004 @2026-09-30T12:36Z; no merges on 10-01. Top-of-list dependabot PRs (#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939,#2958,#2591,#2933,#2808,#2934) are closed-unmerged (no merged_at), not merges into dev. #463 @2026-05-24 and #2955/#2956 @09-08 predate the window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass (hard rule: never re-review a post-merge-reviewed PR).",
+      "focus_prs": []
+    },
+    {
+      "run_at": "2026-10-01T02:34:27Z",
+      "prs_scanned": 3,
+      "clean": [
+        3002,
+        3001
+      ],
+      "with_issues": [
+        {
+          "pr": 3004,
+          "issue": 3006,
+          "findings": 1,
+          "specialist": "react-web",
+          "note": "ppt-web (cloud-landable). PR #3004 (gh-issue-3000) added authenticatedFetch raw-Response primitive in @ppt/api-client lib/fetch.ts and routed gdprFetch + paymentMatching.uploadStatement through it; PR itself well-shaped (multipart boundary preserved, base-URL unified on client.getConfig(), strong IG3 tests). MEDIUM better-approach finding #3006: lib/fetch.ts now holds TWO near-duplicate retry-aware auth primitives (fetchJsonInner + new authenticatedFetchInner) plus a third header-injection copy in generated auth/interceptors.ts, and they ALREADY diverge — getAuthHeaders()/authenticatedFetchJson sets only Authorization; authenticatedFetchInner sets Authorization + X-Tenant-ID. Proposal: extract applyAuthHeaders() + shouldRetryOnMfa401() consumed by both, forcing one explicit decision on the header set (JSON path's missing X-Tenant-ID looks unintentional) aligned with the interceptor."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (Tier-1d demand-driven, buffer-starvation trigger). Window=14d (merged>=2026-09-17), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI + git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; review-only). Enumeration via list_pull_requests(closed, base=dev, sort=updated desc, perPage=50); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false). 3 net-new merges in window lacking post-merge-reviewed: #3004, #3002 (both ppt-web, CLOUD-LANDABLE — prioritised) and #3001 (mobile RN, CLOUD-UNVERIFIABLE). All other in-window merges (#2983,#2989,#2994,#2968,#2984,#2985,#2986,#2988,#2970,#2971,#2990,#2991,#2993,#2995,#2996 @09-27; #2980,#2979 @09-26) already carry post-merge-reviewed from prior runs; dependabot top-of-list PRs (2974/2965/2964/2963/2959/2958/...) are closed-unmerged (no merged_at). Reviewed all 3 inline (no subagent fan-out needed at this size). #3002 CLEAN: role gate well-shaped — real ProtectedRoute exercised, MANAGER_ROLES/isManagerRole single source of truth consistent with Home CTA #2995, bare /dashboard fans out by role, IG3 resident-denied test fails on dev. #3001 CLEAN: mobile presign→PUT→register faultAttachments pipeline well-structured (per-photo best-effort, HEIC→JPEG transcode fallback, thorough faultAttachments.test.ts + ReportFaultScreen.test.ts); no cloud-workable defect, cloud-unverifiable so not expanded. #3004 => 1 follow-up issue #3006 (react-web). All 3 PRs labeled post-merge-reviewed; breadcrumb comment on #3004 pointing at #3006.",
+      "focus_prs": [
+        3004,
+        3002,
+        3001
+      ]
+    },
+    {
+      "run_at": "2026-09-30T08:30:50Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-16), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI absent). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch touched). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-16 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new. Cross-checked list_pull_requests (closed, base=dev) sort=updated desc perPage=50 AND sort=created desc perPage=30: every in-window merge (merged_at>=2026-09-16) already carries post-merge-reviewed from the 09-26 and 09-27/09-28 runs — #2979,#2980 (09-26) and the 09-27 batch #2968,#2970,#2971,#2983,#2984,#2985,#2986,#2988,#2989,#2990,#2991,#2993,#2994,#2995,#2996. Unlabeled top-of-list PRs 2974/2965/2964/2963/2959/2958 are dependabot PRs closed unmerged (no merged_at), not merges into dev. All 09-08-and-earlier merges predate the window. ZERO PRs net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
+      "focus_prs": []
+    },
+    {
+      "run_at": "2026-09-26T14:32:57Z",
+      "prs_scanned": 2,
+      "clean": [
+        2980
+      ],
+      "with_issues": [
+        {
+          "pr": 2979,
+          "issue": 2982,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "PR #2979 fixed ai-chat+OCR raw-fetch->getApiClient; review found same bug class remains: features/news/pages/* issue authenticated mutations (publish/archive/pin/delete/create/comments/reactions) via raw fetch with NO Authorization header (HIGH, 401 in prod, larger surface than #2978); paymentMatching.uploadStatement + gdprClient/notification-analytics bypass interceptors (MEDIUM). messaging/documents presigned-URL fetches correctly excluded. #2979 itself well-shaped (multipart Content-Type correct for axios 1.x xhr adapter; IG3 tests fail-on-prefix)."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-12), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. GitHub MCP for all GH I/O (gh CLI absent; direct git push/fetch proxy-403). DISPATCHER_OWNED_COMMIT semantics: wrote post-merge-review.json + last-merged-review.txt only, deferred commit/push to orchestrator Phase 6 (no git add/commit/push). Search index synced this run: search_pull_requests 'is:merged base:dev merged:>=2026-09-12' => 2 (#2980,#2979); cross-checked list_pull_requests(closed,base=dev,sort=updated/created). #2980 = security-only Cargo.lock bump (rustls 0.23.x->0.23.45 past RUSTSEC-2026-0285, chacha20 0.10.1->0.10.2 off yanked, aws-lc/h2), no source changes => CLEAN. #2979 => 1 follow-up issue #2982. Both PRs labeled post-merge-reviewed; breadcrumb comment on #2979. Higher-numbered rows (2974/2965/2964/2963/2959/2958/2939/2936/2934/2933/2867/2865/2808/2749/2591) have no merged_at (dependabot closed-unmerged) — not merges. All 09-08-and-earlier merges already carry post-merge-reviewed and predate window.",
+      "focus_prs": [
+        2979,
+        2980
+      ]
+    },
+    {
+      "run_at": "2026-09-25T12:25:47Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-11), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI proxy-403 unreliable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives; no MCP issues opened). Enumeration: search_pull_requests 'is:merged base:dev merged:>=2026-09-11' => total_count=0 (search index unsynced in runner, as in prior runs). Cross-checked list_pull_requests (state=closed, base=dev): sort=created desc perPage=40 AND sort=updated desc perPage=25. Newest genuine merge into dev is #2956@2026-09-08T20:33Z (then #2955@09-08, #2952/#2950@09-07) — all already carry post-merge-reviewed from prior runs and all predate the 09-11 window start. #463 (merged 2026-05-24, updated 09-22 by unrelated activity) is likewise already post-merge-reviewed and far out of window. Higher-numbered rows 2965/2964/2963/2959/2958/2939/2936/2933/2808/2591 have no merged_at (open or closed-unmerged dependabot PRs), not merges into dev. ZERO PRs merged into dev within the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
+      "focus_prs": []
+    },
+    {
+      "run_at": "2026-09-24T10:30:03Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-10), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives; no MCP issues opened). Enumeration: search_pull_requests 'is:merged base:dev merged:>=2026-09-10' => total_count=0 (search index unsynced in runner). Cross-checked list_pull_requests (state=closed, base=dev): sort=updated desc page1 newest merge is #2956@2026-09-08T20:33Z; sort=created desc perPage=40 confirms newest merged_at is #2956@09-08 (#2955@09-08, #2952/#2950@09-07 next) — all already carry post-merge-reviewed from prior runs and all predate the 09-10 window start. Higher-numbered PRs 2958/2959/2963/2964/2965 (and 2933/2934/2936/2939) are OPEN dependabot PRs (no merged_at), not merges. ZERO PRs merged into dev in the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
+      "focus_prs": []
+    },
+    {
+      "run_at": "2026-09-23T08:29:00Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-09), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-09 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new; and the unfiltered 'is:pr is:merged base:dev merged:>=2026-09-09' => total_count=0, i.e. ZERO PRs merged into dev anywhere in the 14d window. Cross-checked list_pull_requests (closed, base=dev, updated desc, perPage=50): newest merge into dev is #2955/#2956 @2026-09-08 (both already carry post-merge-reviewed from prior runs), everything below is older/out-of-window; the four most-recent in-window-adjacent merges (2955@09-08,2956@09-08,2950@09-07,2952@09-07) are all past-reviewed. Top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2936,2934,2867,2865,2749) closed unmerged (no merged_at). Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-09-21T12:25:38Z",
       "prs_scanned": 0,
@@ -33,7 +124,7 @@
         2943,
         2940
       ],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-06), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 semantics so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration via list_pull_requests (state=closed, base=dev, sort=updated desc, perPage=50). All 8 in-window merges (merged_at>=2026-09-06: 2955@09-08,2956@09-08,2950@09-07,2952@09-07,2941@09-06,2942@09-06,2943@09-06,2940@09-06) already carry post-merge-reviewed from prior runs. #2938 (merged 2026-09-05T16:23:55Z) is now just OUT of the 14d window and was already reviewed anyway. Top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2934,2867,2865,2749) were closed unmerged (no merged_at). Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened. No-op pass. (Auto-impl pipeline still infra-blocked: api-server utoipa-swagger-ui build-script egress-403 #2966 + mobile-native/KMP unbuildable in cloud runner \u2014 but no new findings this pass regardless.)",
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-06), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 semantics so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration via list_pull_requests (state=closed, base=dev, sort=updated desc, perPage=50). All 8 in-window merges (merged_at>=2026-09-06: 2955@09-08,2956@09-08,2950@09-07,2952@09-07,2941@09-06,2942@09-06,2943@09-06,2940@09-06) already carry post-merge-reviewed from prior runs. #2938 (merged 2026-09-05T16:23:55Z) is now just OUT of the 14d window and was already reviewed anyway. Top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2934,2867,2865,2749) were closed unmerged (no merged_at). Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened. No-op pass. (Auto-impl pipeline still infra-blocked: api-server utoipa-swagger-ui build-script egress-403 #2966 + mobile-native/KMP unbuildable in cloud runner — but no new findings this pass regardless.)",
       "focus_prs": []
     },
     {
@@ -242,302 +333,6 @@
         2917,
         2876
       ]
-    },
-    {
-      "run_at": "2026-08-30T20:27:52Z",
-      "prs_scanned": 15,
-      "clean": [
-        2899,
-        2898,
-        2896,
-        2891,
-        2889,
-        2890,
-        2893,
-        2892,
-        2888,
-        2887,
-        2884,
-        2886,
-        2883,
-        2882,
-        2881
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-16), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Enumerated merged-into-dev PRs via GitHub MCP (gh CLI proxy-403); 15 net-new never-reviewed PRs (all others already carry post-merge-reviewed). Reviewed all 15 by static diff analysis (no build/DB in cloud runner). ALL 15 CLEAN: these are themselves code-review fast-follow fixes -- each is a small, well-scoped change with a regression test and good reuse (shared validators, canonical role helpers, EmptyState/i18n bundles). Checklist (correctness/security/perf/tests/regressions/conventions/json-key-case) found nothing actionable. Notable strong fixes: #2882 gates CF-Connecting-IP behind TRUST_CF_CONNECTING_IP (closes residual #2789 spoof class, fail-safe default); #2893 stops PM-introspection outages poisoning the negative token cache; #2887 fails loudly (503) instead of dropping OCR meter images; #2886 coerces types for workflow Eq/Ne/In/NotIn. 0 follow-up issues opened. All 15 PRs labeled post-merge-reviewed to block re-review. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push; untouched assignments.json/action-list.json/archives).",
-      "focus_prs": [
-        2899,
-        2898,
-        2896,
-        2891,
-        2889,
-        2890,
-        2893,
-        2892,
-        2888,
-        2887,
-        2884,
-        2886,
-        2883,
-        2882,
-        2881
-      ]
-    },
-    {
-      "run_at": "2026-08-29T18:26:08Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Tier-1d demand-driven post-merge review (claim buffer starved, backlog+retry-remint dry). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to the orchestrator's Phase 6 (NO git add/commit/push; did NOT touch assignments.json/action-list.json or any archive/ledger). gh CLI proxy-403 -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (api-server build pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-15), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. NO-OP PASS: label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-15 -label:post-merge-reviewed -label:no-review-needed) returned ZERO rows -- all 86 merged-into-dev PRs in the window already carry post-merge-reviewed. Newest merge is #2874 (merged 2026-08-28); the last three runs THIS SAME DAY (00:30Z reviewed #2868-#2874 all CLEAN + labeled; 10:26Z no-op) already drained every net-new never-reviewed PR, and nothing has merged into dev since. 0 net-new never-reviewed PRs -> 0 reviewed, 0 issues opened, 0 labels applied, 0 breadcrumb comments. No open from-merged-review issue re-touched. Buffer stays starved of landable post-merge vectors: the only unreviewed work would be future merges, so no actionable follow-up exists this pass.",
-      "focus_prs": []
-    },
-    {
-      "run_at": "2026-08-29T10:26:25Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        2874,
-        2872,
-        2871,
-        2870,
-        2869,
-        2868,
-        2864,
-        2863,
-        2860,
-        2858,
-        2856,
-        2855,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833
-      ],
-      "note": "Tier-1d demand-driven post-merge review (claim buffer starved). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push, did NOT touch assignments.json/action-list.json). gh CLI unavailable/unauthenticated -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, static/diff review only (api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403; no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-15), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. NO-OP PASS: label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-15 -label:post-merge-reviewed -label:no-review-needed) returned ZERO rows -- every one of the 86 merged-into-dev PRs in the window already carries post-merge-reviewed. The prior run THIS SAME DAY (2026-08-29T00:30Z) reviewed the last six unlabeled net-new PRs (#2868-#2874, all merged 2026-08-28, all rust-backend/react landable, all CLEAN, 0 issues) and applied their labels; nothing has merged into dev since. 0 net-new never-reviewed PRs -> 0 reviewed, 0 issues opened, 0 labels applied, 0 breadcrumb comments. No open from-merged-review issue re-touched. Buffer stays starved of landable post-merge vectors: the only unreviewed work would be future merges, so no actionable follow-up exists this pass.",
-      "focus_prs": []
-    },
-    {
-      "run_at": "2026-08-29T00:30:00Z",
-      "prs_scanned": 6,
-      "clean": [
-        2874,
-        2872,
-        2871,
-        2870,
-        2869,
-        2868
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        2864,
-        2863,
-        2860,
-        2858,
-        2856,
-        2855,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833,
-        2830,
-        2829,
-        2828,
-        2827,
-        2826,
-        2825,
-        2821
-      ],
-      "note": "Tier post-merge review, window merged-to-dev 14d (>=2026-08-15), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6 (no git add/commit/push, no branch change). gh CLI not installed -> GitHub MCP (mcp__github__*) for all GH I/O. Task tool not used; 6 PR diffs reviewed inline (static/diff review only, no compile: api-server pulls utoipa-swagger-ui whose build-script fetch is proxy-403, no Postgres in cloud runner). Label-based enumeration of merged-into-dev PRs since 2026-08-15: exactly SIX lacked post-merge-reviewed -- #2874,#2872,#2871,#2870,#2869,#2868 (all merged 2026-08-28); everything from #2864 down already labeled. Prior run (2026-08-27T20:27Z) reviewed #2863+#2864. ALL SIX CLEAN, net-new actionable issues = 0: #2874 rust-backend: chacha20 0.10.0->0.10.2 Cargo.lock-only bump clearing cargo-deny yanked advisory (gh-issue-2873); pure lockfile, no semver-visible change. #2872 rust-backend (api-server auth_policy.rs): extracts private enforce_email_verification(policy,target) seam shared by check_membership_grant + check_capability_grant_for_user; behavior-preserving (identical require_email_verification/email_verified_at gate) + 2 IG3 #[sqlx::test]s locking the membership path (strict-org rejects unverified / allows verified) mirroring the existing capability-path tests -- prevents the two gates drifting. #2871 rust-backend (moderation.rs): dedupes 6 verbatim ModerationCaseResponse inline constructions into ModerationCaseResponse::from_case(case,now,owner_name,prev_violations,assigned_to_name); age_hours math + owner/assignee presentation identical to originals (report_content keeps 'Unknown' owner label, others 'User'; now injected for testability), 6 unit tests lock age granularity + field passthrough + Unknown-vs-User label distinction. No semantic change. #2870 rust-backend (moderation report_content): caps optional free-text `reason` at MAX_REPORT_REASON_LEN=5000 via new validate_optional_text_field (absent/empty allowed, over-cap 400 BAD_REQUEST) before DB write -- closes unbounded-row DoS on an all-authenticated-users endpoint; boundary tests (at-cap ok, cap+1 err, None/empty ok). Consistent with existing validate_text_field char-count convention. #2869 rust-backend (decide_appeal): validate_appeal_decision against APPEAL_DECISIONS=[upheld,rejected] (case-sensitive, matches repo's exact-string map) + caps rationale via validate_text_field(MAX_RATIONALE_LEN) -> 400 instead of silent wrong/irreversible rejection on typo/casing; tests cover known tokens + typo/casing/empty. Note: validate_text_field is non-empty-requiring, so decide_appeal now requires a non-empty rationale -- judged intended hardening consistent with sibling decision endpoints & the FE dialog which already supplies a rationale, not a regression. #2868 react/ppt-web (ContentModerationPage.tsx): dedupes take-action + decide-appeal onSuccess/onError toast+dialog-reset into one useCallback decisionMutationCallbacks(dialog,reset,logLabel); behavior-preserving, dep arrays correct (handlers now depend on decisionMutationCallbacks which transitively covers showToast+t), 4 Vitest cases drive onSuccess/onError via mocked mutate options and assert localized toast + dialog open-on-error/close-on-success for BOTH mutations. All 6 PRs carried zero pre-existing labels; labeled post-merge-reviewed via issue_write.update (no clobber) so they will not resurface. No issues opened => no breadcrumb comments needed.",
-      "focus_prs": [
-        2874,
-        2872,
-        2871,
-        2870,
-        2869,
-        2868
-      ]
-    },
-    {
-      "run_at": "2026-08-27T20:27:31Z",
-      "prs_scanned": 2,
-      "clean": [
-        2864,
-        2863
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [
-        2860,
-        2858,
-        2856,
-        2855,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833,
-        2829,
-        2826,
-        2825,
-        2821
-      ],
-      "note": "Tier-1d demand-driven post-merge review (claim buffer starved: honest claimable=6, all mobile-native/KMP-gated & unlandable in cloud runner). DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6 (did NOT touch assignments.json/action-list.json, no git add/commit/push). gh CLI proxy-403'd -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, 2 PR diffs reviewed inline + in-tree source verification (static/diff review only: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-13), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run (2026-08-27T02:00Z) reviewed #2858+#2860 and opened #2861+#2862. Label-based enumeration of merged-into-dev PRs: exactly TWO lacked post-merge-reviewed -- #2864 (merged 2026-08-27T08:30Z) and #2863 (merged 2026-08-27T06:25Z). NOTE: these two PRs ARE the auto-impl fixes for the follow-up issues the prior run filed (#2864 Closes #2861, #2863 Closes #2862) -- i.e. this is a follow-up-of-follow-up loop closure. BOTH CLEAN: verified the fixes fully & correctly address the filed findings. #2864 (rust-backend, db+api-server): adds `ORDER BY granted_at ASC, organization_id ASC, role ASC` to MembershipRepository::list_for_user -- a TOTAL order over the (user_id,organization_id,role) PK (used granted_at not the issue-proposed created_at because user_memberships has no created_at col; correct), fixing the ROOT-CAUSE non-determinism finding #1 at source so every .first() caller is deterministic; removes the now-dead single-org check_capability_grant (finding #2, grep-confirmed zero callers); refreshes the stale grant_capability doc-comment to the strictest-across-all-orgs semantics (finding #3). All 3 residual findings from #2861 resolved. 2 IG3 #[sqlx::test]s in new membership_test.rs (orders_by_granted_at inserts later row first + asserts earlier sorts first [fails on pre-fix no-ORDER-BY]; tiebreaks_deterministically same granted_at two roles + repeatability). Verified in-tree: check_principal_kind_change (auth_policy.rs:247-261) loads the .first() membership's policy into `let _policy` and DISCARDS it -- a documented best-effort liveness probe, not a security decision, so the .first() pick was never fail-open; determinism fix is a robustness nicety, no latent semantic bug to file. mod.rs `pub mod membership_test;` matches existing convention (accounting_test, granular_notification_test also unconditional; inner content #[cfg(test)]-gated) -- not a finding. #2863 (react-web, ppt-web/compliance): guards the overdue-truncation notice on `(stats?.overdue_count ?? 0) > OVERDUE_PAGE_LIMIT && cases.length === OVERDUE_PAGE_LIMIT` -- the exact fix proposed in #2862, suppressing the false-positive 'first 200 of 200 -- refine filters' at the exact-200 boundary where nothing is truncated; the `?? cases.length` count fallback is now unreachable (retained dead-safe). Boundary Vitest added (overdue_count===200 + 200 rows => queryByText(/first 200 of/i) not present) -- fails on old guard, passes with fix; existing 350>200 true-positive test untouched. NET-NEW actionable issues: 0. Both PRs labeled post-merge-reviewed via issue_write.update (both carried no pre-existing labels, no clobber) so they will not resurface; no breadcrumb comment needed (no issue opened). Deduped: no open from-merged-review issue for #2863/#2864.",
-      "focus_prs": [
-        2863,
-        2864
-      ]
-    },
-    {
-      "run_at": "2026-08-27T02:00:00Z",
-      "prs_scanned": 2,
-      "clean": [],
-      "with_issues": [
-        {
-          "pr": 2858,
-          "issue": 2861,
-          "findings": 3,
-          "specialist": "pm-rust-backend",
-          "note": "capability-grant email-verification fix (#2857): core fix correct+order-independent (strictest_policy_across all memberships, equivalent-or-stricter than old first()-org path; no-membership platform case still Ok) with 2 IG3 sqlx tests. 3 residual follow-ups: (1) medium correctness/robustness -- ROOT CAUSE MembershipRepository::list_for_user (membership.rs:130-142) still has NO ORDER BY; fix only made ONE caller order-independent. check_principal_kind_change (auth_policy.rs:270-284) still gates on memberships.first(); liveness-only so not fail-open, but non-deterministic (flaky if exactly one org policy row corrupt). Proposed: add ORDER BY created_at,organization_id at the repo source -> fixes the whole .first() class. (2) low dead-code -- single-org check_capability_grant (auth_policy.rs:207-224) now has ZERO production callers (grep confirms only its own def); superseded, remove or cover+annotate. (3) low docs -- capabilities.rs:292-297 doc still says the helper 'picks the grantee's first active membership', the exact behavior #2858 removed (adjacent-file drift)."
-        }
-      ],
-      "skipped_already_reviewed": [
-        2856,
-        2855,
-        2854,
-        2853,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833,
-        2830,
-        2829,
-        2828,
-        2827,
-        2826,
-        2825,
-        2821
-      ],
-      "note": "Tier-1d demand-driven post-merge review (claim buffer starved). DISPATCHER_OWNED_COMMIT semantics -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI proxy-403'd -> GitHub MCP (mcp__github__*) for all GH I/O; Task tool not used, 2 PR diffs reviewed inline + in-tree source verification (static/diff review only, no compile: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-13), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Prior run (2026-08-26T15:00Z) reviewed through #2856. Label-based enumeration of merged-into-dev PRs: exactly TWO lacked post-merge-reviewed -- #2858 (merged 2026-08-26T20:29Z) and #2860 (merged 2026-08-27T00:32Z); BOTH merged AFTER the prior cursor (the dispatcher note said only #2860 was new, but #2858 was also net-new & unlabeled -- reviewed both). #2858 -> opened #2861 (3 findings, above). #2860 (follow-up implementing #2859: backend overdue_only IG3 sqlx test locking list<->overdue_count invariant [solid] + FE 200-cap truncation notice) -> opened #2862: 1 low correctness edge -- ContentModerationPage.tsx:412 guards the truncation notice on `cases.length === OVERDUE_PAGE_LIMIT` WITHOUT checking overdue_count > 200, so an org with EXACTLY 200 overdue cases shows a false-positive 'first 200 of 200 -- refine filters' though nothing is truncated; new Vitest only covers the 350>200 true-positive, boundary untested. Proposed: guard on (stats?.overdue_count ?? 0) > OVERDUE_PAGE_LIMIT + drop the ?? cases.length fallback + add exactly-200 no-notice regression test. Verified in-tree: no upstream guard prevents the boundary. Both PRs labeled post-merge-reviewed + breadcrumb comments (#2858->#2861, #2860->#2862). Deduped: searched from-merged-review issues, none pre-existing for #2858/#2860.",
-      "focus_prs": [
-        2858,
-        2860
-      ]
-    },
-    {
-      "run_at": "2026-08-26T15:00:00Z",
-      "prs_scanned": 2,
-      "clean": [
-        2855
-      ],
-      "with_issues": [
-        {
-          "pr": 2856,
-          "issue": 2859,
-          "findings": 2,
-          "specialist": "pm-rust-backend",
-          "note": "server-side overdue moderation filter: (1) medium test-gap -- new overdue_only SQL predicate in list_moderation_cases has no #[sqlx::test]; FE test mocks the hook, only backend test change is a call-signature bump in aml_dsa_cross_org_idor_tests.rs; no list<->overdue_count invariant test. (2) low correctness -- overdue view hard-caps at limit=200 (=MAX_PAGE_LIMIT) with no pagination, so orgs with >200 breaches re-exhibit the badge-vs-list mismatch #2853 fixed; suggest an explicit 'showing first 200' affordance."
-        }
-      ],
-      "skipped_already_reviewed": [
-        2856,
-        2854,
-        2853,
-        2852,
-        2851,
-        2850,
-        2849,
-        2848,
-        2847,
-        2846,
-        2845,
-        2844,
-        2843,
-        2842,
-        2841,
-        2840,
-        2839,
-        2838,
-        2837,
-        2836,
-        2835,
-        2834,
-        2833,
-        2830,
-        2829,
-        2828,
-        2827,
-        2826,
-        2825,
-        2821,
-        2818,
-        2817
-      ],
-      "note": "Tier-1d demand-driven post-merge review. DISPATCHER_OWNED_COMMIT=1 -- wrote post-merge-review.json + last-merged-review.txt only; deferring commit/push to orchestrator Phase 6. gh CLI unavailable -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no compile: api-server build pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, and no Postgres in cloud runner). Window merged-to-dev 14d (>=2026-08-12), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Enumerated 40 closed-into-dev PRs (updated desc): only #2855 and #2856 lacked post-merge-reviewed; both merged 2026-08-26, both landable FE/BE TS+Rust (preferred over mobile-native). Reviewed both; labeled both post-merge-reviewed. #2855 (DsaReportsPage window.alert->localized toast) CLEAN: 3 regression tests, i18n across 6 locales, DsaTransparencyReportCard hardcoded labels explicitly out-of-scope. #2856 -> opened follow-up #2859 (2 findings). Verified in-tree that #2856's react-query key includes params (toggle refetches) and MAX_PAGE_LIMIT=200 matches FE OVERDUE_PAGE_LIMIT=200 -- those are correct; findings are the untested predicate + the 200-cap truncation. Deduped: no open from-merged-review issue for #2856 (#2853 closed source issue; #2857 unrelated security follow-up)."
     }
   ]
 }

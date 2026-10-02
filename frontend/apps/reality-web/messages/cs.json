@@ -107,7 +107,9 @@
     "callback": {
       "title": "Přihlášení selhalo",
       "invalidState": "Neplatný stavový token. Zkuste se přihlásit znovu.",
-      "returnHome": "Zpět na domovskou stránku"
+      "returnHome": "Zpět na domovskou stránku",
+      "loading": "Načítání...",
+      "completingLogin": "Dokončování přihlášení..."
     }
   },
   "common": {
@@ -357,8 +359,10 @@
   },
   "listings": {
     "allProperties": "Všechny nemovitosti",
-    "emptyTitle": "Nebyly nalezeny žádné nabídky",
     "emptyDescription": "Zkuste upravit filtry nebo vyhledávací kritéria a najděte více nemovitostí.",
+    "emptyTitle": "Nebyly nalezeny žádné nabídky",
+    "errorDescription": "Při načítání nemovitostí došlo k chybě. Zkuste to znovu.",
+    "errorTitle": "Nabídky se nepodařilo načíst",
     "filters": "Filtry",
     "gridView": "Zobrazení mřížky",
     "listView": "Zobrazení seznamu",
@@ -368,6 +372,7 @@
     "propertiesForRent": "Nemovitosti k pronájmu",
     "propertiesForSale": "Nemovitosti k prodeji",
     "resultsCount": "Nalezeno {count} nabídek",
+    "retry": "Zkusit znovu",
     "sortNewest": "Nejnovější",
     "sortOldest": "Nejstarší",
     "sortPriceHigh": "Cena: od nejvyšší",
@@ -523,6 +528,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -1027,6 +1034,8 @@
       "feedName": "Název feedu (volitelné)",
       "feedNamePlaceholder": "Můj feed nemovitostí",
       "fetchError": "Nepodařilo se načíst feed. Zkontrolujte URL a zkuste to znovu.",
+      "updateError": "Nepodařilo se aktualizovat feed. Zkuste to znovu.",
+      "removeError": "Nepodařilo se odstranit feed. Zkuste to znovu.",
       "format": "Formát",
       "itemsFound": "Nalezené položky",
       "availableFields": "Dostupná pole",

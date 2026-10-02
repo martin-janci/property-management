@@ -5,6 +5,8 @@
  * Part of Story 43.3: Execution Monitoring.
  */
 
+import { useTranslation } from 'react-i18next';
+
 interface ExecutionStatsProps {
   stats: {
     totalExecutions: number;
@@ -24,6 +26,7 @@ function formatDuration(ms: number): string {
 }
 
 export function ExecutionStats({ stats, isLoading }: ExecutionStatsProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -50,25 +53,33 @@ export function ExecutionStats({ stats, isLoading }: ExecutionStatsProps) {
     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
       {/* Total Executions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <p className="text-xs text-gray-500 uppercase font-medium">Total</p>
+        <p className="text-xs text-gray-500 uppercase font-medium">
+          {t('automation.execution.statTotal')}
+        </p>
         <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalExecutions}</p>
       </div>
 
       {/* Successful */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <p className="text-xs text-gray-500 uppercase font-medium">Successful</p>
+        <p className="text-xs text-gray-500 uppercase font-medium">
+          {t('automation.execution.statSuccessful')}
+        </p>
         <p className="text-2xl font-bold text-green-600 mt-1">{stats.successfulExecutions}</p>
       </div>
 
       {/* Failed */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <p className="text-xs text-gray-500 uppercase font-medium">Failed</p>
+        <p className="text-xs text-gray-500 uppercase font-medium">
+          {t('automation.execution.statFailed')}
+        </p>
         <p className="text-2xl font-bold text-red-600 mt-1">{stats.failedExecutions}</p>
       </div>
 
       {/* Success Rate */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <p className="text-xs text-gray-500 uppercase font-medium">Success Rate</p>
+        <p className="text-xs text-gray-500 uppercase font-medium">
+          {t('automation.execution.statSuccessRate')}
+        </p>
         <div className="flex items-baseline gap-1 mt-1">
           <p
             className={`text-2xl font-bold ${successRate >= 90 ? 'text-green-600' : successRate >= 70 ? 'text-yellow-600' : 'text-red-600'}`}
@@ -86,7 +97,9 @@ export function ExecutionStats({ stats, isLoading }: ExecutionStatsProps) {
 
       {/* Average Duration */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <p className="text-xs text-gray-500 uppercase font-medium">Avg Duration</p>
+        <p className="text-xs text-gray-500 uppercase font-medium">
+          {t('automation.execution.statAvgDuration')}
+        </p>
         <p className="text-2xl font-bold text-gray-900 mt-1">
           {stats.averageDuration !== undefined ? formatDuration(stats.averageDuration) : '-'}
         </p>

@@ -32,10 +32,20 @@ const categoryIcons: Record<string, string> = {
   general: '⚙️',
 };
 
+const categoryLabelKeys: Record<string, string> = {
+  faults: 'automation.templatePreview.categoryFaults',
+  payments: 'automation.templatePreview.categoryPayments',
+  communications: 'automation.templatePreview.categoryCommunications',
+  documents: 'automation.templatePreview.categoryDocuments',
+  maintenance: 'automation.templatePreview.categoryMaintenance',
+  general: 'automation.templatePreview.categoryGeneral',
+};
+
 export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePreviewModalProps) {
   const { t } = useTranslation();
   const categoryColor = categoryColors[template.category] ?? categoryColors.general;
   const categoryIcon = categoryIcons[template.category] ?? categoryIcons.general;
+  const categoryLabel = t(categoryLabelKeys[template.category] ?? categoryLabelKeys.general);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -48,14 +58,12 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-xl font-bold text-gray-900">{template.name}</h2>
-                  <span
-                    className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${categoryColor}`}
-                  >
-                    {template.category}
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${categoryColor}`}>
+                    {categoryLabel}
                   </span>
                   {template.isPopular && (
                     <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                      Popular
+                      {t('automation.templatePreview.popular')}
                     </span>
                   )}
                 </div>
@@ -92,13 +100,14 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
               <span className="text-lg">⚡</span>
-              Trigger
+              {t('automation.templatePreview.trigger')}
             </h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-700">
                 {template.triggerType === 'time_based' && (
                   <>
-                    <span className="font-medium">Time Based</span> - Runs on a schedule
+                    <span className="font-medium">{t('automation.templatePreview.timeBased')}</span>{' '}
+                    - {t('automation.templatePreview.timeBasedSuffix')}
                     {template.triggerDetails?.schedule && (
                       <span className="text-gray-500"> ({template.triggerDetails.schedule})</span>
                     )}
@@ -106,19 +115,29 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
                 )}
                 {template.triggerType === 'event_based' && (
                   <>
-                    <span className="font-medium">Event Based</span> - Runs when{' '}
-                    {template.triggerDetails?.eventType ?? 'an event occurs'}
+                    <span className="font-medium">
+                      {t('automation.templatePreview.eventBased')}
+                    </span>{' '}
+                    -{' '}
+                    {t('automation.templatePreview.eventBasedSuffix', {
+                      event:
+                        template.triggerDetails?.eventType ??
+                        t('automation.templatePreview.eventFallback'),
+                    })}
                   </>
                 )}
                 {template.triggerType === 'condition_based' && (
                   <>
-                    <span className="font-medium">Condition Based</span> - Runs when conditions are
-                    met
+                    <span className="font-medium">
+                      {t('automation.templatePreview.conditionBased')}
+                    </span>{' '}
+                    - {t('automation.templatePreview.conditionBasedSuffix')}
                   </>
                 )}
                 {template.triggerType === 'manual' && (
                   <>
-                    <span className="font-medium">Manual</span> - Runs when triggered manually
+                    <span className="font-medium">{t('automation.templatePreview.manual')}</span> -{' '}
+                    {t('automation.templatePreview.manualSuffix')}
                   </>
                 )}
               </p>
@@ -130,7 +149,7 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <span className="text-lg">🔀</span>
-                Conditions
+                {t('automation.templatePreview.conditions')}
               </h3>
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                 {template.conditionsPreview.map((condition, index) => (
@@ -139,7 +158,9 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
                     className="flex items-center gap-2"
                   >
                     {index > 0 && (
-                      <span className="text-xs font-medium text-gray-400 uppercase">AND</span>
+                      <span className="text-xs font-medium text-gray-400 uppercase">
+                        {t('automation.templatePreview.and')}
+                      </span>
                     )}
                     <p className="text-sm text-gray-700">{condition}</p>
                   </div>
@@ -152,7 +173,9 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
               <span className="text-lg">🎯</span>
-              Actions ({template.actionsCount ?? 0})
+              {t('automation.templatePreview.actionsWithCount', {
+                count: template.actionsCount ?? 0,
+              })}
             </h3>
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               {template.actionsPreview && template.actionsPreview.length > 0 ? (
@@ -168,7 +191,7 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500">No actions configured</p>
+                <p className="text-sm text-gray-500">{t('automation.templatePreview.noActions')}</p>
               )}
             </div>
           </div>
@@ -176,7 +199,9 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
           {/* Tags */}
           {template.tags && template.tags.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Tags</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">
+                {t('automation.templatePreview.tags')}
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {template.tags.map((tag) => (
                   <span
@@ -193,7 +218,7 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
           {/* Usage Stats */}
           {template.usageCount !== undefined && (
             <div className="text-sm text-gray-500">
-              Used {template.usageCount} time{template.usageCount !== 1 ? 's' : ''} by other users
+              {t('automation.templatePreview.usedTimes', { count: template.usageCount })}
             </div>
           )}
         </div>
@@ -205,14 +230,14 @@ export function TemplatePreviewModal({ template, onClose, onUse }: TemplatePrevi
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
           >
-            Cancel
+            {t('automation.templatePreview.cancel')}
           </button>
           <button
             type="button"
             onClick={() => onUse(template)}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
-            Use This Template
+            {t('automation.templatePreview.useThisTemplate')}
           </button>
         </div>
       </div>

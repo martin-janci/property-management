@@ -1,0 +1,49 @@
+# Version Drift
+#
+# One assertion: every version carrier in the repo declares exactly what the
+# repo-root `VERSION` file says.
+#
+# The carrier inventory is NOT repeated here. `scripts/update-version.sh --list`
+# is the single inventory and `--check` is the single assertion — the same command
+# `just check-version` runs locally and the same one whose post-condition
+# `.github/workflows/version-bump.yml` relies on. Add a carrier to
+# `carrier_paths()` in that script and this gate covers it with no edit here.
+#
+# Why this gate exists: `VERSION` sat at 0.3.218 from 2026-06-16 while
+# `package.json` stayed at 0.3.0 and three freshly added packages sat at 0.1.0 /
+# 0.3.11. Nothing noticed, because nothing looked. A carrier that is intentionally
+# unversioned belongs in `UNVERSIONED_ALLOWLIST` in the script, where the decision
+# is recorded, not in a silent exception here.
+#
+# Make this a required status check on `dev`
+# (`.github/workflows/scripts/branch-protection-payload.py`) once it has run green
+# once — until then it is advisory.
+
+name: Version Drift
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+
+concurrency:
+  group: version-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  version-drift:
+    name: Version carriers match VERSION
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Show the carrier inventory
+        run: ./scripts/update-version.sh --list
+
+      # Writes nothing; exits non-zero and names every carrier that disagrees.
+      - name: Assert every carrier equals VERSION
+        run: ./scripts/update-version.sh --check

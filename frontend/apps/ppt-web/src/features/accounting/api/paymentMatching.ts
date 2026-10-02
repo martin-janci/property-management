@@ -4,19 +4,19 @@
  * The JSON reads/decisions go through the generated `@ppt/api-client` functions
  * now that the accounting bank-statement / payment-matching endpoints are modelled
  * in TypeSpec (#1623) — so request/response types come from the contract and auth
- * headers are injected by the centralized request interceptor (#1616). Only the
- * multipart statement upload stays a raw fetch (the generated client serialises
- * JSON bodies, and the upload isn't modelled), but it draws auth from the SAME
- * token / active-org providers — never the bespoke localStorage keys the original
- * reality-web page invented (which sent `Bearer null`).
+ * headers are injected by the centralized request interceptor (#1616). The
+ * multipart statement upload stays a raw request (the generated client serialises
+ * JSON bodies, and the upload isn't modelled), but it now goes through the shared
+ * `authenticatedFetch` client (#3000) — so Authorization / X-Tenant-ID, base-URL
+ * resolution and MFA retry are handled centrally, never hand-rolled here (the
+ * original reality-web page invented localStorage keys that sent `Bearer null`).
  */
 
 import {
   type AccountingBankStatement,
   type AccountingBankStatementLine,
   type AccountingPaymentMatch,
-  getOrg,
-  getToken,
+  authenticatedFetch,
   paymentMatchesApiConfirm,
   paymentMatchesApiReject,
   statementLinesApiListMatches,
@@ -60,16 +60,14 @@ export async function rejectMatch(matchId: string): Promise<void> {
 export async function uploadStatement(file: File): Promise<void> {
   const formData = new FormData();
   formData.append('file', file);
-  const token = getToken();
-  const org = getOrg();
-  const headers: Record<string, string> = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-  if (org) headers['X-Tenant-ID'] = org;
-
-  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/accounting/statements`, {
+  // Route the multipart upload through the shared authenticated client, exactly
+  // like the generated SDK the JSON reads use: Authorization + X-Tenant-ID come
+  // from the registered token/org providers and the base URL matches. No headers
+  // are passed here so the browser keeps the multipart boundary, and the shared
+  // client never forces a JSON `Content-Type`.
+  const res = await authenticatedFetch('/api/v1/accounting/statements', {
     method: 'POST',
     body: formData,
-    headers,
   });
   if (!res.ok) throw new Error('Upload failed');
 }

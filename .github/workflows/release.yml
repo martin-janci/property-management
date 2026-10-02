@@ -13,6 +13,16 @@ permissions:
   # it the API returns 403 and the loop spins until the 15-minute timeout.
   actions: read
 
+env:
+  IMAGE_PREFIX: ghcr.io/martin-janci
+  # The tag-triggered image workflows. These are separate from the
+  # paths-filtered docker-build.yml / docker-frontend.yml on purpose: GitHub
+  # applies `on.push.paths` to tag pushes as well, so while the `v*` trigger
+  # lived under the paths-filtered `push:` key no tag run was ever created —
+  # which is why this workflow's wait step could only ever time out.
+  BACKEND_WORKFLOW: docker-build-tag.yml
+  FRONTEND_WORKFLOW: docker-frontend-tag.yml
+
 jobs:
   trigger:
     runs-on: ubuntu-latest
@@ -23,10 +33,11 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           echo "Waiting for image builds for tag $TAG"
           done=false
-          for i in $(seq 1 90); do
-            backend=$(gh run list --workflow=docker-build.yml --branch="$TAG" --limit 1 \
+          # `_`, not `i`: the counter is unused (shellcheck SC2034).
+          for _ in $(seq 1 90); do
+            backend=$(gh run list --workflow="$BACKEND_WORKFLOW" --branch="$TAG" --limit 1 \
               --json status,conclusion -q '.[0]' 2>/dev/null || echo "{}")
-            frontend=$(gh run list --workflow=docker-frontend.yml --branch="$TAG" --limit 1 \
+            frontend=$(gh run list --workflow="$FRONTEND_WORKFLOW" --branch="$TAG" --limit 1 \
               --json status,conclusion -q '.[0]' 2>/dev/null || echo "{}")
             backend_status=$(echo "$backend" | jq -r '.status // ""')
             backend_conclusion=$(echo "$backend" | jq -r '.conclusion // ""')
@@ -59,6 +70,72 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve and verify the image manifest
+        id: manifest
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          # Image refs carry the BARE semver (`0.3.58`), the git tag carries the
+          # `v` (`v0.3.58`). The shared tag contract
+          # (.github/actions/docker-image-tags/action.yml) publishes
+          # `type=semver,pattern={{version}}` and nothing `v`-prefixed, so the
+          # `v` is stripped here — in the single consumer — rather than adding a
+          # second `v{{version}}` docker tag. Publishing both would give every
+          # release two names for one digest, and would then have to be mirrored
+          # for `X.Y` and `latest` too; the contract deliberately declares
+          # exactly one immutable human-readable release tag per image.
+          VERSION="${TAG#v}"
+          echo "tag=$TAG version=$VERSION"
+
+          # Image names ALL carry the `ppt-` prefix in GHCR (matches the
+          # matrices in docker-backend-images.yml + docker-frontend-images.yml).
+          # The service KEYS in the JSON manifest stay short (`reality-web`,
+          # etc.) so consumers of /api/release don't need to know about the
+          # registry naming.
+          #
+          # NOTE: `admin-web` and `accounting-server` images are published but
+          # are deliberately not in this manifest yet — the deploy-server's
+          # release schema does not carry them (tracked as F-P14 / T8-T9).
+          IMAGES=$(jq -nc \
+            --arg api "$IMAGE_PREFIX/ppt-api-server:$VERSION" \
+            --arg reality "$IMAGE_PREFIX/ppt-reality-server:$VERSION" \
+            --arg pptweb "$IMAGE_PREFIX/ppt-web:$VERSION" \
+            --arg realityweb "$IMAGE_PREFIX/ppt-reality-web:$VERSION" \
+            '{"api-server":$api,"reality-server":$reality,"ppt-web":$pptweb,"reality-web":$realityweb}')
+
+          # Assert every ref actually resolves BEFORE a prod candidate is
+          # registered. A promote tears down the live colour first, so an
+          # unresolvable ref used to surface as a mid-deploy 404 with prod
+          # already down.
+          echo "Verifying every manifest ref resolves in the registry:"
+          missing=()
+          while IFS= read -r ref; do
+            if docker buildx imagetools inspect "$ref" >/dev/null 2>&1; then
+              echo "  ok      $ref"
+            else
+              echo "  MISSING $ref"
+              missing+=("$ref")
+            fi
+          done < <(printf '%s' "$IMAGES" | jq -r '.[]')
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            for ref in "${missing[@]}"; do
+              echo "::error::release manifest ref does not resolve: $ref"
+            done
+            echo "::error::refusing to register a prod-candidate for $TAG"
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "images=$IMAGES" >> "$GITHUB_OUTPUT"
+
       - name: Get OIDC token for ppt-deploy
         uses: actions/github-script@v9
         id: oidc
@@ -70,21 +147,13 @@ jobs:
       - name: POST /api/release with image manifest
         env:
           DEPLOY_URL: https://onyx.rlt.sk
-          IMAGE_PREFIX: ghcr.io/martin-janci
           OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+          TAG: ${{ steps.manifest.outputs.tag }}
+          IMAGES: ${{ steps.manifest.outputs.images }}
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          # Image names ALL carry the `ppt-` prefix in GHCR (matches
-          # docker-build.yml + docker-frontend.yml's matrix). The service KEYS
-          # in the JSON manifest stay short (`reality-web`, etc.) so consumers
-          # of /api/release don't need to know about the registry naming.
-          IMAGES=$(jq -n \
-            --arg api "$IMAGE_PREFIX/ppt-api-server:$TAG" \
-            --arg reality "$IMAGE_PREFIX/ppt-reality-server:$TAG" \
-            --arg pptweb "$IMAGE_PREFIX/ppt-web:$TAG" \
-            --arg realityweb "$IMAGE_PREFIX/ppt-reality-web:$TAG" \
-            '{"api-server":$api,"reality-server":$reality,"ppt-web":$pptweb,"reality-web":$realityweb}')
-          curl -fsS -X POST "$DEPLOY_URL/api/release" \
-            -H "Authorization: Bearer $OIDC_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"tag\":\"$TAG\",\"images\":$IMAGES}"
+          set -euo pipefail
+          jq -nc --arg tag "$TAG" --argjson images "$IMAGES" '{tag:$tag,images:$images}' \
+            | curl -fsS -X POST "$DEPLOY_URL/api/release" \
+                -H "Authorization: Bearer $OIDC_TOKEN" \
+                -H "Content-Type: application/json" \
+                --data-binary @-
