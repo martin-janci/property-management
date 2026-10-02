@@ -16,10 +16,10 @@
 //! The fix (mirroring PR #2976 / #2977) threads the caller's `tenant_id` into
 //! both queries:
 //!   * read  — `... AND organization_id = $org`, so a foreign building's row
-//!             does not match (surfaced as 404, never the foreign row);
+//!     does not match (surfaced as 404, never the foreign row);
 //!   * write — persists `organization_id` and guards the target building with
-//!             `WHERE EXISTS (SELECT 1 FROM buildings WHERE id = $building AND
-//!             organization_id = $org)`, so a cross-tenant upsert writes no row.
+//!     `WHERE EXISTS (SELECT 1 FROM buildings WHERE id = $building AND
+//!     organization_id = $org)`, so a cross-tenant upsert writes no row.
 //!
 //! KNOWN LIMITATION (pre-existing, tracked as BIT-567): the property-metrics
 //! repo queries also project columns that are absent from the
