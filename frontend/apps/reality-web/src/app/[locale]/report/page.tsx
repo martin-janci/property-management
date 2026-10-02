@@ -318,7 +318,7 @@ export default function ReportPage() {
                 marginBottom: 6,
               }}
             >
-              Prílohy (volitené)
+              Prílohy (voliteľné)
             </label>
             {/* TODO: replace with @ppt/ui-kit/FileUpload once available */}
             <label
