@@ -34,9 +34,8 @@ export const REPORT_PROBLEMS: ReportProblemOption[] = [
   },
   {
     value: 'already_sold',
-    label: 'Predaná / neprenájmaná',
-    description:
-      'Nehnuteľnosť je už predaná alebo prenajatá, inzerát nebol odstránený',
+    label: 'Predaná / neprenajímaná',
+    description: 'Nehnuteľnosť je už predaná alebo prenajatá, inzerát nebol odstránený',
   },
   {
     value: 'other',
