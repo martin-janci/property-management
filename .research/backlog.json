@@ -11319,22 +11319,24 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
+        "PR #3013",
         "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — Publish onClick validates with validateStep, sets errors, then only setSubmitted(true) when errors are empty. No fetch / mutation / @ppt/reality-api-client hook anywhere in the 848-line file (`grep -c 'fetch|mutate|axios|useQuery|RealtorApi|await ' sell/page.tsx` returns 0).",
         "Form data (`INITIAL_FORM_DATA`, `SELL_STEPS`) imported from `./_mock`. After Publish, the component early-returns the success screen (`if (submitted)` at :151) rendering `t('submittedTitle')`/`t('submittedBody')`.",
         "Impact: data loss on a public, conversion-critical flow. The seller completes the entire multi-step wizard (address/price/area/rooms/description/contact/terms), clicks Publish, sees a success confirmation, but nothing is persisted or transmitted. Zero listings created, zero leads captured.",
-        "Fix (cloud-landable, frontend-only): wire Publish to the generated create-listing mutation from `@ppt/reality-api-client` — await it, set `submitted` only on success, render a submit-error branch on failure — mirroring `account/listings/[id]/edit/page.tsx:195-217`."
+        "Fix (cloud-landable, frontend-only): wire Publish to the generated create-listing mutation from `@ppt/reality-api-client` — await it, set `submitted` only on success, render a submit-error branch on failure — mirroring `account/listings/[id]/edit/page.tsx:195-217`.",
+        "resolved: PR #3013 merged 2026-10-02 — wire /sell wizard Publish to createListing"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
       ],
       "created_at": "2026-10-02",
       "updated_at": "2026-10-02",
-      "plan": "plans/code-review-reality-web-sell-wizard-no-persist.md"
+      "plan": "plans/_archive/code-review-reality-web-sell-wizard-no-persist.md"
     },
     {
       "id": "code-review-reality-web-report-page-no-submit",
@@ -11342,15 +11344,17 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3014",
         "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit `(e) => { e.preventDefault(); if (!problem || !description.trim() || !gdprAccepted) return; setSubmitted(true); }` validates the form + GDPR checkbox then flips local `submitted` without POSTing. Success screen rendered at :43. Problem options sourced from `./_mock`.",
         "Server side already exists (see done rows `code-review-reality-server-submit-report-no-rate-limit`, `code-review-reality-server-report-contact-unvalidated`). This is a frontend integration gap, not a missing backend.",
         "Impact: trust/safety — users reporting fraud/scam/wrong-data see confirmation but the report never reaches moderators. Abuse-report funnel is non-functional.",
-        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from `@ppt/reality-api-client`; show submit-error on failure."
+        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from `@ppt/reality-api-client`; show submit-error on failure.",
+        "resolved: PR #3014 merged 2026-10-02 — wire /report submit to reality-server abuse-report endpoint"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"

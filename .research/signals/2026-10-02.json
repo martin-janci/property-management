@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-02T03:21:51Z",
+  "generated": "2026-10-02T18:36:18Z",
   "cursor_at_start": {
     "last_pr_seen": 3005,
     "last_issue_seen": 3006,
@@ -7,13 +7,14 @@
     "last_run_iso": "2026-10-01T04:46:44Z"
   },
   "cursor_at_end": {
-    "last_pr_seen": 3011,
+    "last_pr_seen": 3014,
     "last_issue_seen": 3012,
-    "last_commit_sha": "31c8bade6e74e62f4e5bb5afca3bbcbbfd97d05c"
+    "last_commit_sha": "68813f534ed967096db9f4dc1b0ab5bb8a568428",
+    "last_run_iso": "2026-10-02T18:36:18Z"
   },
   "window": {
-    "merged_prs": 3,
-    "open_prs_touched": 7,
+    "merged_prs": 5,
+    "open_prs_touched": 8,
     "closed_unmerged_prs": 2,
     "issues_new_or_updated": 2,
     "commits": 18,
@@ -200,165 +201,76 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-10-02.md && head -1 ... | grep -q '^# 2026-10-02$'",
+      "command": "test -f briefs/2026-10-02.md && head -1 ... | grep -q",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq (last_pr_seen advanced or seen_signals grew or stats changed)",
-      "observed": "true",
+      "command": "jq cursors advanced",
+      "observed": "true (last_pr_seen 3011->3014)",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "command": "jq [ids] unique",
       "observed": "true",
       "expected": "true"
     },
     {
-      "goal": "G4",
+      "goal": "G5-cap",
       "passed": true,
-      "command": "jq (no non-cumulative-type re-emit with score_delta != 0)",
+      "command": "jq [score>8] length==0",
       "observed": "true",
       "expected": "true"
     },
     {
-      "goal": "G5 (cap)",
+      "goal": "G7-count",
       "passed": true,
-      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G5 (decay)",
-      "passed": true,
-      "command": "no open items with updated_at <= 2026-09-18 (14d threshold)",
-      "observed": "0",
-      "expected": "0 or all decayed/dropped"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "every new plan has an 'adversarial pass:' annotation in the brief",
-      "observed": "annotated",
-      "expected": "annotated"
-    },
-    {
-      "goal": "G7 (count)",
-      "passed": true,
-      "command": "git diff --cached A -- plans/ | grep -c '.md$'",
-      "observed": "1",
-      "expected": "≤2"
-    },
-    {
-      "goal": "G7 (metadata)",
-      "passed": true,
-      "command": "4 **Key:** fields at top of plan",
-      "observed": "all 4 present",
-      "expected": "all 4 present"
-    },
-    {
-      "goal": "G7 (headings)",
-      "passed": true,
-      "command": "11 required ## headings",
-      "observed": "all 11 present (+ optional Dependencies)",
-      "expected": "11"
-    },
-    {
-      "goal": "G7 (capability tick)",
-      "passed": true,
-      "command": "grep -c '^- [x]' plan",
-      "observed": "2",
-      "expected": "≥1"
-    },
-    {
-      "goal": "G7 (mode)",
-      "passed": true,
-      "command": "grep -E '^Mode: (local-only|cloud-ok)'",
-      "observed": "cloud-ok",
-      "expected": "match"
-    },
-    {
-      "goal": "G7 (files)",
-      "passed": true,
-      "command": "each file bullet exists on disk",
-      "observed": "both resolve",
-      "expected": "all resolve"
+      "command": "git diff --cached --name-only -- plans/",
+      "observed": "0 new plans this refresh pass",
+      "expected": "<=2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
       "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "secrets grep on staged diff",
-      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "regenerated backlog.md diff vs staged",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "brief 'Phases that failed:' line",
-      "observed": "- Phases that failed: none",
-      "expected": "none or match"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "all prior plan slugs still exist in plans/ or plans/_archive/",
-      "observed": "all present",
-      "expected": "all present"
+      "command": "diff backlog.md <(regen)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "git ls-files -- plans/_archive/ count >= HEAD count",
-      "observed": ">=",
+      "command": "ls-files _archive >= ls-tree HEAD _archive",
+      "observed": "10 >= 9",
       "expected": ">="
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "regenerated IDEAS_TRIAGE.md diff vs staged",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto_fix_actions length <= 3 and per-type cap <= 1 (kill switch unset but no eligible candidate)",
-      "observed": "0 actions",
-      "expected": "<= caps"
+      "command": "diff IDEAS_TRIAGE.md <(regen)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped — pm_cursor + coverage_cursor unchanged — gate is no-op",
-      "observed": "skip-noop",
+      "command": "phase 1.6 skipped this refresh — pm_cursor + coverage_cursor unchanged, no-op gate",
+      "observed": "no-op",
       "expected": "no-op"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "no literal Telegram token value in staged diff",
-      "observed": "0 matches",
-      "expected": "0"
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no eligible candidate (no screen-map-drift / orphan / fixme-in-merged-code / stalled-review / dep-noise-lockfile-drift signal with confidence=high + score>=3 + on allowlist)"
+  "auto_fix_skipped_reason": "no eligible candidate (no screen-map-drift / orphan / fixme-in-merged-code / stalled-review / dep-noise-lockfile-drift signal with confidence=high + score>=3 + on allowlist)",
+  "refresh_note": "2nd pass this day — refresh triggered by buffer-low payload at 18:35Z; folds PRs #3013 + #3014 into Shipped and flips their backlog items done",
+  "refresh_goal_checks_only_for_second_pass": "This signals file was first written by the 03:30Z routine run; goal_checks here are REPLACED with the refresh-pass checks at 18:37Z. The original Phase 1.5/1.6 data (findings, PM skip rationale) is preserved unchanged under phase_1_5 / phase_1_6."
 }

@@ -1,12 +1,12 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-02 03:23 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-02 18:37 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
 | 6 | test-gap | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | `backend/servers/reality-server/src/routes/inquiries.rs (+1)` | PR #497 (+2) | 2026-05-26 | done | plans/_archive/test-gap-inquiry-idor-regression.md |
 | 5 | security | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature | `backend/servers/api-server/src/routes/voice_webhooks.rs (+1)` | standing-scan-2026-07-28 | 2026-07-28 | dropped | — |
-| 3 | bug | reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) | 2026-10-02 | ready | plans/code-review-reality-web-sell-wizard-no-persist.md |
+| 3 | bug | reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | PR #3013 (+1) | 2026-10-02 | done | plans/_archive/code-review-reality-web-sell-wizard-no-persist.md |
 | 3 | bug | RegistryRulesPage save silently swallows errors and gives no success feedback | `frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx` | rotating-expert-review ppt-web-ui 2026-10-01 | 2026-10-01 | done | plans/code-review-ppt-web-ui-registry-rules-save-silent-fail.md |
 | 3 | bug | logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation | `frontend/apps/ppt-web/src/lib/queryKeys.ts (+3)` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache) | 2026-09-26 | ready | plans/code-review-ppt-web-core-authed-roots-session-leak.md |
 | 3 | bug | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded | `mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt (+3)` | rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp) (+1) | 2026-09-20 | ready | plans/code-review-mobile-native-kmp-create-listing-not-wired.md |
@@ -43,7 +43,7 @@
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
 | 2 | refactor | Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives | `frontend/packages/api-client/src/lib/fetch.ts (+1)` | Issue #3006 (post-merge review of PR #3004) (+1) | 2026-10-02 | done | — |
-| 2 | bug | reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) | 2026-10-02 | open | — |
+| 2 | bug | reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | PR #3014 (+1) | 2026-10-02 | done | — |
 | 2 | bug | reality-web /profile route renders MOCK_* fixtures — every signed-in user sees the same fabricated identity, listings, activity, reviews | `frontend/apps/reality-web/src/app/[locale]/profile/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) | 2026-10-02 | open | — |
 | 2 | bug | reality-web FeaturedListings favorite-toggle swallows mutation errors — heart UI diverges from server state silently | `frontend/apps/reality-web/src/components/home/FeaturedListings.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) | 2026-10-02 | open | — |
 | 2 | bug | reality-web PriceAlerts mark-read mutations swallow errors — row stays unread with no user feedback on failure | `frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) | 2026-10-02 | open | — |
