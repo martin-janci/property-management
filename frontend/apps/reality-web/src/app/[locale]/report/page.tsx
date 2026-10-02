@@ -5,6 +5,8 @@
  * Screen-map: docs/screens/reality/report-listing.md
  */
 
+import { SubmitReportError, useSubmitReport } from '@ppt/reality-api-client';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
@@ -13,14 +15,35 @@ import { REPORT_PROBLEMS, type ReportProblem } from './_mock';
 // TODO: replace problem cards with @ppt/ui-kit/RadioCards once available
 // TODO: replace file attachment with @ppt/ui-kit/FileUpload once available
 
+// reality-server's `POST /api/v1/reports` requires a UUID `listing_id` that
+// resolves to an active listing. A deep link from a listing ("report this
+// listing") passes `?listing=<uuid>`; otherwise we fish a UUID out of the
+// free-text reference the reporter pasted.
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+// Status copy. This page ships its user-facing text hardcoded in Slovak
+// (only the title/subtitle go through next-intl today), so the submit
+// states follow the same pattern until the page is fully i18n-extracted.
+const MSG = {
+  submitting: 'Odosiela sa…',
+  errorNoListing:
+    'Nevedeli sme určiť, ktorého inzerátu sa hlásenie týka. Otvorte nahlásenie z detailu inzerátu alebo vložte odkaz či ID inzerátu vyššie.',
+  errorRateLimit: 'Priveľa nahlásení z tohto zariadenia. Skúste to o chvíľu znova.',
+  errorNotFound: 'Inzerát sa nenašiel. Skontrolujte odkaz alebo ID a skúste to znova.',
+  errorGeneric: 'Nahlásenie sa nepodarilo odoslať. Skúste to prosím znova.',
+} as const;
+
 export default function ReportPage() {
   const t = useTranslations('pages.report');
+  const searchParams = useSearchParams();
+  const submitReport = useSubmitReport();
   const [problem, setProblem] = useState<ReportProblem | null>(null);
   const [listingRef, setListingRef] = useState('');
   const [description, setDescription] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [gdprAccepted, setGdprAccepted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -34,10 +57,52 @@ export default function ReportPage() {
     outline: 'none',
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Resolve the target listing UUID: a `?listing=`/`?listingId=` deep-link
+  // param wins, otherwise accept a UUID embedded in the free-text reference
+  // (bare id or a listing URL). Returns null when none is present.
+  const resolveListingId = (): string | null => {
+    const fromQuery = searchParams.get('listing') ?? searchParams.get('listingId');
+    const queryMatch = fromQuery?.match(UUID_RE);
+    if (queryMatch) return queryMatch[0];
+    const refMatch = listingRef.match(UUID_RE);
+    if (refMatch) return refMatch[0];
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!problem || !description.trim() || !gdprAccepted) return;
-    setSubmitted(true);
+
+    const listingId = resolveListingId();
+    if (!listingId) {
+      setFormError(MSG.errorNoListing);
+      return;
+    }
+
+    // Preserve whatever the reporter typed in the reference field inside the
+    // description when it isn't the resolved UUID — the endpoint has no
+    // separate free-text reference field, so moderators would otherwise lose
+    // the original URL/ID.
+    const trimmedRef = listingRef.trim();
+    const fullDescription =
+      trimmedRef && trimmedRef !== listingId
+        ? `${description.trim()}\n\n[ref: ${trimmedRef}]`
+        : description.trim();
+
+    try {
+      await submitReport.mutateAsync({
+        listing_id: listingId,
+        problem_type: problem,
+        description: fullDescription,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      const status = err instanceof SubmitReportError ? err.status : 0;
+      if (status === 429) setFormError(MSG.errorRateLimit);
+      else if (status === 404) setFormError(MSG.errorNotFound);
+      else setFormError(MSG.errorGeneric);
+    }
   };
 
   if (submitted) {
@@ -316,30 +381,49 @@ export default function ReportPage() {
             </span>
           </label>
 
+          {/* Error */}
+          {formError && (
+            <div
+              role="alert"
+              style={{
+                padding: '12px 14px',
+                borderRadius: 8,
+                background: 'var(--ppt-color-danger-light, #fef2f2)',
+                border: '1px solid var(--ppt-color-danger, #ef4444)',
+                color: 'var(--ppt-color-danger-hover, #b91c1c)',
+                fontSize: '0.9375rem',
+              }}
+            >
+              {formError}
+            </div>
+          )}
+
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={!problem || !description.trim() || !gdprAccepted}
-            style={{
-              alignSelf: 'flex-start',
-              padding: '13px 32px',
-              background:
-                problem && description.trim() && gdprAccepted
-                  ? 'var(--ppt-color-danger, #ef4444)'
-                  : 'var(--ppt-border-default, #e5e7eb)',
-              color:
-                problem && description.trim() && gdprAccepted
-                  ? '#fff'
-                  : 'var(--ppt-fg-muted, #9ca3af)',
-              border: 'none',
-              borderRadius: 8,
-              fontWeight: 700,
-              cursor: problem && description.trim() && gdprAccepted ? 'pointer' : 'not-allowed',
-              fontSize: '1rem',
-            }}
-          >
-            Odoslať nahlásenie
-          </button>
+          {(() => {
+            const canSubmit = Boolean(problem) && description.trim() !== '' && gdprAccepted;
+            const enabled = canSubmit && !submitReport.isPending;
+            return (
+              <button
+                type="submit"
+                disabled={!enabled}
+                style={{
+                  alignSelf: 'flex-start',
+                  padding: '13px 32px',
+                  background: enabled
+                    ? 'var(--ppt-color-danger, #ef4444)'
+                    : 'var(--ppt-border-default, #e5e7eb)',
+                  color: enabled ? '#fff' : 'var(--ppt-fg-muted, #9ca3af)',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  cursor: enabled ? 'pointer' : 'not-allowed',
+                  fontSize: '1rem',
+                }}
+              >
+                {submitReport.isPending ? MSG.submitting : 'Odoslať nahlásenie'}
+              </button>
+            );
+          })()}
         </form>
       </main>
 
