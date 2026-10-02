@@ -38,7 +38,7 @@ import {
   TemplateLibraryPage,
   TwoFactorAuthPage,
 } from '../lazyRoutes';
-import { MANAGER_ROLES } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 // Sessions management page (#966) — lazy-loaded.
 const SessionsPage = lazy(() =>
@@ -97,7 +97,7 @@ export function Home() {
             <button
               type="button"
               onClick={() =>
-                navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')
+                navigate(isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident')
               }
               className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
             >
@@ -155,17 +155,65 @@ export function authRoutes() {
   );
 }
 
+/**
+ * Bare-`/dashboard` role fan-out.
+ *
+ * Rendered inside a <ProtectedRoute> (auth-only), so it runs with an
+ * authenticated user whose role is resolved. Managers land on the manager
+ * shell; every other role lands on the resident dashboard. Using
+ * {@link isManagerRole} keeps this in lockstep with the manager route's
+ * MANAGER_ROLES gate and the Home "Open dashboard" CTA.
+ */
+export function DashboardIndexRedirect() {
+  const { user } = useAuth();
+  return (
+    <Navigate
+      to={isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident'}
+      replace
+    />
+  );
+}
+
 /** Dashboard routes (Epic 124). */
 export function dashboardRoutes() {
   return (
     <>
-      {/* Bare /dashboard 404'd previously — redirect it to the manager
-          dashboard so users typing the obvious URL get something useful (the
-          ProtectedRoute / role check on the target page handles auth +
-          role-based fan-out). */}
-      <Route path="/dashboard" element={<Navigate to="/dashboard/manager" replace />} />
-      <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
-      <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
+      {/* Bare /dashboard 404'd previously — redirect it to the role-appropriate
+          dashboard so users typing the obvious URL get something useful. The
+          redirect is wrapped in <ProtectedRoute> (auth-only) so it runs with a
+          resolved, authenticated user; it then fans out by role via
+          <DashboardIndexRedirect> — managers to /dashboard/manager, everyone
+          else to /dashboard/resident. This keeps the manager shell role-gated
+          (below) without denying residents who type the bare /dashboard URL. */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardIndexRedirect />
+          </ProtectedRoute>
+        }
+      />
+      {/* Manager dashboard shell. Auth is not enough (#2998): the manager shell
+          is manager-only, so it is role-gated to MANAGER_ROLES — the same
+          single source of truth that drives isManagerRole / the Home CTA. A
+          resident who navigates here directly gets the ProtectedRoute
+          Access-Denied surface rather than the manager shell. */}
+      <Route
+        path="/dashboard/manager"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <ManagerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/resident"
+        element={
+          <ProtectedRoute>
+            <ResidentDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       {/* Dashboard layout customisation (Task 4, layout tenant-editor plan).
           Org-admin / super-admin only. */}
       <Route

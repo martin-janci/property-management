@@ -107,7 +107,9 @@
     "callback": {
       "title": "A bejelentkezés sikertelen",
       "invalidState": "Érvénytelen állapot-token. Kérjük, próbáljon meg újra bejelentkezni.",
-      "returnHome": "Vissza a főoldalra"
+      "returnHome": "Vissza a főoldalra",
+      "loading": "Betöltés...",
+      "completingLogin": "Bejelentkezés befejezése..."
     }
   },
   "common": {
@@ -529,6 +531,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",

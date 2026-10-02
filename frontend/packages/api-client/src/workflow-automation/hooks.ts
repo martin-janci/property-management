@@ -11,6 +11,7 @@ import type {
   AutomationRulesQuery,
   AutomationTemplate,
   AutomationTemplatesQuery,
+  CreateAutomationRuleInput,
   ExecutionLog,
   ExecutionLogsQuery,
   ExecutionStatsQuery,
@@ -56,7 +57,7 @@ export function useCreateAutomationRule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (rule: AutomationRule): Promise<AutomationRule> => {
+    mutationFn: async (rule: CreateAutomationRuleInput): Promise<AutomationRule> => {
       const response = await fetch(`${API_BASE}/rules`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

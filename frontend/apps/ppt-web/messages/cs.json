@@ -555,6 +555,11 @@
       "bookFacility": "Rezervovat prostor",
       "empty": "Nebyly nalezeny žádné rezervace.",
       "allCaughtUp": "Vše vyřízeno! Žádné čekající rezervace ke kontrole."
+    },
+    "errors": {
+      "fetchFailedTitle": "Prostory se nepodařilo načíst",
+      "fetchFailedDescription": "Při načítání prostorů došlo k chybě. Zkuste to znovu.",
+      "retry": "Zkusit znovu"
     }
   },
   "faults": {
@@ -2498,7 +2503,8 @@
       "back": "Zpět na pravidla",
       "title": "Vytvořit pravidlo automatizace",
       "subtitle": "Nastavte nový automatizovaný pracovní postup pro správu nemovitostí.",
-      "error": "Nepodařilo se vytvořit pravidlo automatizace. Zkuste to znovu."
+      "error": "Nepodařilo se vytvořit pravidlo automatizace. Zkuste to znovu.",
+      "incomplete": "Dokončete pravidlo: vyžaduje se název, spouštěč a alespoň jedna akce."
     },
     "editPage": {
       "back": "Zpět na pravidla",
@@ -2625,6 +2631,16 @@
       "triggerContext": "Kontext spouštěče",
       "retryExecution": "Opakovat spuštění",
       "close": "Zavřít"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
     }
   }
 }

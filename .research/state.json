@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-09-27T03:18:40Z",
+  "last_run_iso": "2026-10-02T03:30:05Z",
   "last_run_ms": 0,
-  "last_pr_seen": 2991,
-  "last_issue_seen": 2982,
-  "last_commit_sha": "8c5d5952345e4873b719751ab5364b07aa2cdd6d",
+  "last_pr_seen": 3011,
+  "last_issue_seen": 3012,
+  "last_commit_sha": "31c8baded0c145f08dc0fc42cc4a9b0fe7fb8d9d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -536,6 +536,21 @@
       "runs_seen": 1,
       "last_seen": "2026-09-26",
       "recent_churn": 83
+    },
+    "frontend/apps/ppt-web/src/routes/groups/core.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-01",
+      "recent_churn": 4
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-01",
+      "recent_churn": 4
+    },
+    "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-01",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -646,8 +661,11 @@
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/meters/hooks/useOcrMeterReading.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/i18n/protectedRouteI18n.test.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/lib/websocket.ts",
+    "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
     "churn-hotspot-frontend/packages/sitemap/src/json/sitemap.json",
@@ -755,8 +773,10 @@
     "code-review-ppt-web-core-api-onunauthorized-unwired",
     "code-review-ppt-web-core-authctx-init-stale-role",
     "code-review-ppt-web-core-authed-roots-session-leak",
+    "code-review-ppt-web-core-dashboard-routes-unguarded",
     "code-review-ppt-web-core-errorhandler-i18n-gap",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
+    "code-review-ppt-web-core-home-cta-role-drift",
     "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
     "code-review-ppt-web-core-logout-cache-purge-gap",
     "code-review-ppt-web-core-mutation-no-onerror",
@@ -785,6 +805,7 @@
     "code-review-ppt-web-ui-dsa-reports-no-i18n",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
     "code-review-ppt-web-ui-emergency-dir-raw-err-message",
+    "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
     "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
     "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
@@ -793,10 +814,12 @@
     "code-review-ppt-web-ui-moderation-no-i18n",
     "code-review-ppt-web-ui-notif-settings-hardcoded-errors",
     "code-review-ppt-web-ui-propinput-json-coerce",
+    "code-review-ppt-web-ui-registry-rules-save-silent-fail",
     "code-review-ppt-web-ui-role-gate-fail-open",
     "code-review-ppt-web-ui-savedirty-stale-closure",
     "code-review-ppt-web-ui-sessions-double-cast",
     "code-review-ppt-web-ui-untranslated-strings",
+    "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
     "code-review-reality-server-agency-members-unauth-idor",
     "code-review-reality-server-agent-review-self-review",
     "code-review-reality-server-alert-drainer-i18n-english-only",
@@ -909,6 +932,7 @@
     "hotfix-no-test-pr-963",
     "hotfix-no-test-pr-990",
     "hotfix-no-test-pr-992",
+    "issue-ingest-3006",
     "lag-warning-2026-05-23",
     "lag-warning-2026-06-10",
     "lag-warning-2026-07-05",
@@ -928,6 +952,7 @@
     "lag-warning-2026-08-28",
     "lag-warning-2026-09-20",
     "lag-warning-2026-09-23",
+    "lag-warning-2026-10-01",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -968,6 +993,9 @@
     "screen-map-drift-pr-2890-reality",
     "screen-map-drift-pr-2894-reality",
     "screen-map-drift-pr-2895-reality",
+    "screen-map-drift-pr-2994-ppt",
+    "screen-map-drift-pr-2995-ppt",
+    "screen-map-drift-pr-3002-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -976,6 +1004,7 @@
     "screen-map-drift-pr-922-ppt",
     "stale-routine-alert-2026-07-16",
     "stale-routine-alert-2026-09-23",
+    "stale-routine-alert-2026-10-01",
     "stalled-review-pr-1179",
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
@@ -1048,24 +1077,35 @@
     "untriaged-issue-950",
     "untriaged-issue-951",
     "untriaged-issue-952",
-    "code-review-ppt-web-core-dashboard-routes-unguarded",
-    "code-review-ppt-web-core-home-cta-role-drift"
+    "code-review-reality-web-sell-wizard-no-persist",
+    "code-review-reality-web-report-page-no-submit",
+    "code-review-reality-web-profile-mock-data",
+    "code-review-reality-web-featured-fav-silent-fail",
+    "code-review-reality-web-price-alert-markread-silent-fail",
+    "dep-update-noise-pr-2957",
+    "dep-update-noise-pr-2961",
+    "dep-update-noise-pr-2962",
+    "dep-update-noise-pr-2972",
+    "dep-update-noise-pr-2973",
+    "dep-update-noise-pr-2975",
+    "dep-update-noise-pr-3007",
+    "dep-update-noise-pr-3008"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-08-31",
+    "api-handlers": "2026-09-27",
     "api-core": "2026-09-01",
     "reality-server": "2026-08-31",
-    "ppt-web-ui": "2026-09-06",
+    "ppt-web-ui": "2026-10-01",
     "ppt-web-core": "2026-09-27",
-    "reality-web": "2026-08-29",
-    "mobile-rn": "2026-09-09",
+    "reality-web": "2026-10-02",
+    "mobile-rn": "2026-10-01",
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 84,
-    "vectors_created": 387,
-    "plans_created": 31,
+    "runs": 86,
+    "vectors_created": 402,
+    "plans_created": 33,
     "quiet_days": 5,
     "auto_fix_count": 0
   },
@@ -1080,19 +1120,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
-      "pm-security": "2026-07-21",
+      "pm-security": "2026-10-01",
       "pm-data": "2026-07-23",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }

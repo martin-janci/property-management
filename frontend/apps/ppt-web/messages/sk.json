@@ -557,6 +557,11 @@
       "bookFacility": "Rezervovať priestor",
       "empty": "Nenašli sa žiadne rezervácie.",
       "allCaughtUp": "Všetko vybavené! Žiadne čakajúce rezervácie na kontrolu."
+    },
+    "errors": {
+      "fetchFailedTitle": "Priestory sa nepodarilo načítať",
+      "fetchFailedDescription": "Pri načítavaní priestorov sa vyskytla chyba. Skúste to znova.",
+      "retry": "Skúsiť znova"
     }
   },
   "faults": {
@@ -2500,7 +2505,8 @@
       "back": "Späť na pravidlá",
       "title": "Vytvoriť pravidlo automatizácie",
       "subtitle": "Nastavte nový automatizovaný pracovný postup pre správu nehnuteľností.",
-      "error": "Nepodarilo sa vytvoriť pravidlo automatizácie. Skúste to znova."
+      "error": "Nepodarilo sa vytvoriť pravidlo automatizácie. Skúste to znova.",
+      "incomplete": "Dokončite pravidlo: vyžaduje sa názov, spúšťač a aspoň jedna akcia."
     },
     "editPage": {
       "back": "Späť na pravidlá",
@@ -2627,6 +2633,16 @@
       "triggerContext": "Kontext spúšťača",
       "retryExecution": "Opakovať spustenie",
       "close": "Zavrieť"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Pravidlá registra uložené",
+        "savedBody": "Vaše zmeny pravidiel registra boli použité.",
+        "saveFailed": "Pravidlá registra sa nepodarilo uložiť",
+        "saveFailedBody": "Vaše zmeny sa nepodarilo uložiť. Skúste to znova."
+      }
     }
   }
 }

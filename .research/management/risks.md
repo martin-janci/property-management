@@ -1,26 +1,27 @@
 # Risks
 
-_Generated: 2026-08-31T03:10:00Z — regenerated from `risks.json`._
+_Generated: 2026-10-01T04:30:00Z — refreshed from `risks.json` (routine Phase 1.6 upkeep, pm-security rotation)._
 
-| ID | Probability | Impact | Owner | Risk |
+19 open risks. Top new entries this run: `#2966 swagger-ui egress` (promoted to top risk), `#2946 portfolio_analytics IDOR` (persisting through 2 retries), `#3006 triplicated auth-header`.
+
+| ID | P | I | Owner | Risk |
 |---|---|---|---|---|
-| `pm-scrum-master-android-sso-csrf-half-wired-2026-07-30` | high | high | pm-mobile | PR #2568 CSRF state fix is non-functional (#2574) — SsoStateStore.mint() has no call site so every reality://sso callback is rejected |
-| `risk-analytics-blindspots-shipped-mvp-2026-07-23` | high | medium | pm-data | Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind (dispute funnel, OAuth token usage, listing view, onboarding-tour completion, l |
-| `risk-metric-definition-drift-2026-07-23` | high | medium | pm-data | FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs (open decision from 2026-05-28, still unresolved) — dashboards will disagree with each other |
-| `pm-scrum-master-84-x-partials-aging-2026-08-25` | high | medium | pm-frontend | 84-1 (direct-to-S3 wiring) + 84-2 (signer page) have been the same 2 partial stories for 3 upkeep windows (2026-07-30 / 08-06 / 08-25) — no dispatcher progress; backend is shipped, so aging risk is on |
-| `pm-qa-mobile-rn-lint-gap-hooks-i18n-2026-08-25` | high | medium | pm-frontend | 3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — |
-| `pm-devops-mobile-native-cloud-starvation` | high | medium | pm-devops | Buffer starvation becomes chronic — every new mobile-native/KMP finding adds an unclaimable item to the cloud dispatcher's pool, pushing the loop back to Tier-1d generator kicks (recurring GC3=FAIL re |
-| `risk-layout-webhook-replay-2026-07-23` | medium | high | pm-security | Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout |
-| `risk-announcement-fanout-test-fidelity-2026-07-23` | medium | high | pm-qa | Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it |
-| `risk-webhook-cross-integration-drift-2026-07-23` | medium | high | pm-integration | Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere |
-| `pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30` | medium | high | pm-backend | PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row |
-| `pm-qa-atomic-claim-no-concurrency-test-2026-08-25` | medium | high | pm-qa | PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race — the exact scenario the fix was written for is unverified; a regression could ship unde |
-| `pm-qa-voice-oauth-encryption-no-roundtrip-test-2026-08-25` | medium | high | pm-qa | PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest — a future field-rename or key-derivation change could silently store plaintext |
-| `risk-mobile-layout-cache-cross-tenant-2026-07-23` | medium | medium | pm-security | Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch |
-| `risk-data-retention-policy-missing-2026-07-23` | medium | medium | pm-data | Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk |
-| `pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30` | medium | medium | pm-tech-lead | Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting 2 days with no reviewer engagement — dispatcher stack is starving on reviewer capacity, not implementer capacity |
-| `pm-backend-disputes-kpis-window-validation-gap-2026-07-30` | medium | medium | pm-backend | Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it |
-| `pm-scrum-master-voice-webhooks-churn-persists-2026-08-25` | medium | medium | pm-tech-lead | backend/servers/api-server/src/routes/voice_webhooks.rs is on its 3rd hotspot window running; PR #2838 centralized token encryption but scheduler/OAuth-refresh/token-vend paths still cluster — repeate |
-| `pm-qa-csv-crlf-sanitizer-no-fuzz-2026-08-25` | medium | medium | pm-qa | PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs — formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class |
-| `risk-dispute-add-evidence-idor-lingers-2026-07-23` | low | high | pm-security | add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route |
-| `pm-devops-research-land-workflow-silent-break` | low | high | pm-devops | `research-land.yml` is the only path routine commits reach `dev` from cloud session branches. A silent workflow break would let `.research/` commits accumulate on session branches without landing |
+| `pm-devops-swagger-ui-egress-blocking-security-2026-10-01` | high | high | pm-devops | #2966 utoipa-swagger-ui egress 403 blocks every backend PR — stalls all 3 IDOR fixes |
+| `pm-security-portfolio-analytics-idor-persistent-2026-10-01` | medium | high | pm-security | #2946 IDOR on portfolio_analytics still open on retry 2/2 — tier-1 security defect |
+| `pm-tech-lead-auth-header-triplicate-drift-2026-10-01` | medium | medium | pm-tech-lead | #3006 triplicated auth-header + MFA-retry in @ppt/api-client — drift risk |
+| `pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30` | medium | medium | pm-tech-lead | Accounting trio #2555/#2558/#2559 idle 64d — reviewer starvation |
+| `risk-layout-webhook-replay-2026-07-23` | medium | high | pm-security | Layout publish webhook lacks replay protection (#2485) |
+| `risk-mobile-layout-cache-cross-tenant-2026-07-23` | medium | medium | pm-security | Mobile LAYOUT_CACHE_KEY not tenant-scoped (#2486) |
+| `risk-dispute-add-evidence-idor-lingers-2026-07-23` | low | high | pm-security | add_evidence sub-resource cross-tenant-writable until #2490 lands |
+| `risk-announcement-fanout-test-fidelity-2026-07-23` | medium | high | pm-qa | Announcement fan-out guard tested via pure-Rust re-model, not real SQL |
+| `risk-analytics-blindspots-shipped-mvp-2026-07-23` | high | medium | pm-data | Shipped MVP features lack KPI instrumentation |
+| `risk-data-retention-policy-missing-2026-07-23` | medium | medium | pm-data | Support-data audit trail has no TTL — GDPR risk |
+| `risk-metric-definition-drift-2026-07-23` | high | medium | pm-data | FaultStatusCount metric diverges from portfolio KPIs |
+| `risk-webhook-cross-integration-drift-2026-07-23` | medium | high | pm-integration | Webhook handlers across integrations lack consistent hardening |
+| `pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30` | medium | high | pm-backend | PR #2571 DELETE-by-file-key missing same-org reference-check |
+| `pm-scrum-master-android-sso-csrf-half-wired-2026-07-30` | high | high | pm-mobile | PR #2568 CSRF state fix is non-functional (#2574) |
+| `pm-backend-disputes-kpis-window-validation-gap-2026-07-30` | medium | medium | pm-backend | Dispute KPI endpoint quarantined-test-only in main |
+| `pm-scrum-master-voice-webhooks-churn-persists-2026-08-25` | medium | medium | pm-tech-lead | voice_webhooks.rs on 3rd hotspot window — latent design defect |
+| `pm-qa-mobile-rn-lint-gap-hooks-i18n-2026-08-25` | high | medium | pm-frontend | Missing eslint-plugin-react-hooks + i18n lint on mobile RN |
+| `pm-devops-mobile-native-cloud-starvation` | high | medium | pm-devops | Buffer starvation chronic — compounded by #2966 + #2652 |
+| `pm-devops-research-land-workflow-silent-break` | low | high | pm-devops | research-land.yml silent break would strand `.research/` commits |

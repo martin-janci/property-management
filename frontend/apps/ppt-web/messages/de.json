@@ -554,6 +554,11 @@
       "bookFacility": "Einrichtung buchen",
       "empty": "Keine Buchungen gefunden.",
       "allCaughtUp": "Alles erledigt! Keine ausstehenden Buchungen zu prüfen."
+    },
+    "errors": {
+      "fetchFailedTitle": "Einrichtungen konnten nicht geladen werden",
+      "fetchFailedDescription": "Beim Laden der Einrichtungen ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen"
     }
   },
   "faults": {
@@ -2391,7 +2396,8 @@
       "back": "Zurück zu den Regeln",
       "title": "Automatisierungsregel erstellen",
       "subtitle": "Richten Sie einen neuen automatisierten Workflow für Ihre Immobilienverwaltung ein.",
-      "error": "Automatisierungsregel konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+      "error": "Automatisierungsregel konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+      "incomplete": "Bitte vervollständigen Sie die Regel: Name, Auslöser und mindestens eine Aktion sind erforderlich."
     },
     "editPage": {
       "back": "Zurück zu den Regeln",
@@ -2518,6 +2524,16 @@
       "triggerContext": "Auslöserkontext",
       "retryExecution": "Ausführung wiederholen",
       "close": "Schließen"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
     }
   }
 }

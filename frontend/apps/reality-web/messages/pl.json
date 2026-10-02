@@ -107,7 +107,9 @@
     "callback": {
       "title": "Logowanie nie powiodło się",
       "invalidState": "Nieprawidłowy token stanu. Spróbuj zalogować się ponownie.",
-      "returnHome": "Powrót do strony głównej"
+      "returnHome": "Powrót do strony głównej",
+      "loading": "Ładowanie...",
+      "completingLogin": "Kończenie logowania..."
     }
   },
   "common": {
@@ -529,6 +531,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",

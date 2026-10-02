@@ -107,7 +107,9 @@
     "callback": {
       "title": "Přihlášení selhalo",
       "invalidState": "Neplatný stavový token. Zkuste se přihlásit znovu.",
-      "returnHome": "Zpět na domovskou stránku"
+      "returnHome": "Zpět na domovskou stránku",
+      "loading": "Načítání...",
+      "completingLogin": "Dokončování přihlášení..."
     }
   },
   "common": {
@@ -526,6 +528,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",

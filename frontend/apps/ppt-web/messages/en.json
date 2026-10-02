@@ -573,6 +573,11 @@
       "bookFacility": "Book Facility",
       "empty": "No bookings found.",
       "allCaughtUp": "All caught up! No pending bookings to review."
+    },
+    "errors": {
+      "fetchFailedTitle": "Couldn't load facilities",
+      "fetchFailedDescription": "Something went wrong while loading facilities. Please try again.",
+      "retry": "Try again"
     }
   },
   "faults": {
@@ -4681,7 +4686,8 @@
       "back": "Back to Rules",
       "title": "Create Automation Rule",
       "subtitle": "Set up a new automated workflow for your property management tasks.",
-      "error": "Failed to create automation rule. Please try again."
+      "error": "Failed to create automation rule. Please try again.",
+      "incomplete": "Please complete the rule: a name, a trigger, and at least one action are required."
     },
     "editPage": {
       "back": "Back to Rules",
@@ -4808,6 +4814,16 @@
       "triggerContext": "Trigger Context",
       "retryExecution": "Retry Execution",
       "close": "Close"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
     }
   }
 }

@@ -10796,7 +10796,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
       ],
@@ -10809,7 +10809,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2990
+      }
     },
     {
       "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
@@ -10867,7 +10872,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
@@ -10879,7 +10884,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2996
+      }
     },
     {
       "id": "code-review-mobile-rn-fault-photos-silently-dropped",
@@ -10982,7 +10992,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
       ],
@@ -10994,7 +11004,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2993
+      }
     },
     {
       "id": "code-review-reality-server-dup-url-validator",
@@ -11022,7 +11037,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
@@ -11039,7 +11054,12 @@
       ],
       "created_at": "2026-09-27",
       "updated_at": "2026-09-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2994
+      }
     },
     {
       "id": "code-review-ppt-web-core-home-cta-role-drift",
@@ -11047,7 +11067,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
@@ -11064,6 +11084,348 @@
       ],
       "created_at": "2026-09-27",
       "updated_at": "2026-09-27",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2995
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
+      "title": "RegistryRulesPage save silently swallows errors and gives no success feedback",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:48-51 — handleSubmit catch only calls console.error; no toast, no error state surfaced; failed updateRulesMutation.mutateAsync looks identical to success.",
+        "RegistryRulesPage.tsx:46-47 — success path also silent (code comment acknowledges 'could show a toast notification here'); user has no confirmation either way, inviting duplicate submits and lost edits."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": "plans/code-review-ppt-web-ui-registry-rules-save-silent-fail.md",
+      "reconciled": {
+        "at": "2026-10-02T00:26:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3009
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
+      "title": "workflow-automation pages emit English-literal toast titles while rest of file uses i18n",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:29-33,47-50,53-57 — toast title/message literals ('Create failed', 'Rule created', …) while rest of page uses t('automation.createPage.*').",
+        "EditRulePage.tsx:30-34,37-41; AutomationRulesPage.tsx:66-114 (six toast groups incl. rule.name interpolations); ExecutionMonitoringPage.tsx:81-92; TemplateLibraryPage.tsx:70-76 — same anti-pattern repeats across all five automation pages."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/EditRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
+      "title": "FacilitiesPage swallows listFacilities error — empty indistinguishable from fetch failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-72 — listFacilities() rejection caught, logged to console.error, swallowed; no error state, isLoading flips false, user sees 'empty' list indistinguishable from an actually empty building.",
+        "FacilitiesPage.tsx:48-51,110-124 — component carries no error useState and FacilityList receives no error prop; there is no code path capable of rendering an error state. Prior PendingBookings fix (PendingBookingsPage.test.tsx:6 header) called out the same anti-pattern."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-02T00:26:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3011
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "title": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2994"
+      ],
+      "evidence": [
+        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "title": "ppt-web Home CTA refactor (PR #2995) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2995"
+      ],
+      "evidence": [
+        "PR #2995 route-level Home CTA role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "title": "ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3002"
+      ],
+      "evidence": [
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "title": "ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "4 commits in 14d touched core.tsx — three were route-auth refactors (PR #2994 ProtectedRoute wrap, PR #2995 Home CTA role gate, PR #3002 dashboard role gate). Signals route-table instability or an incomplete pattern migration."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+      "title": "ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "4 commits in 14d culminating in PR #2996 (boundary-cast fix); workflow-automation feature pages churn together — see sibling churn-hotspot items."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
+      "title": "ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "3 commits in 14d (tied with EditRulePage, ExecutionMonitoringPage, AutomationRulesPage) — the workflow-automation feature is churning as a unit; see hardcoded-toasts code-review finding for a concrete follow-up."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
+      "title": "Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "Issue #3006 (post-merge review of PR #3004)",
+        "PR #3010"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/lib/fetch.ts contains two near-identical retry-aware auth implementations after PR #3004 — fetchJsonInner and authenticatedFetchInner — both re-implementing header injection and 401→MFA→retry-once. A third copy of header-injection lives in the generated clients auth/interceptors.ts.",
+        "The three copies already drift: getAuthHeaders() (JSON path) sets only Authorization; authenticatedFetchInner (raw path) sets Authorization and X-Tenant-ID. Any future change (rename X-Tenant-ID, add a required header, change MFA marker key, bound the retry) must be made in three places that already disagree.",
+        "Proposed in #3006: factor applyAuthHeaders + shouldRetryOnMfa401 into shared helpers; add a test asserting authenticatedFetchJson and authenticatedFetch emit the same auth/tenant headers.",
+        "resolved: PR #3010 merged 2026-10-01 (refactor(api-client): unify triplicated auth-header + MFA-retry logic) — closes #3006 (sole source). Added `frontend/packages/api-client/src/auth/apply-headers.ts` as the shared helper; interceptors.ts and raw `authenticatedFetch` now both route through it. JSON-path divergence (`authenticatedFetchJson` deliberately omits `X-Tenant-ID`) is now pinned by a test — intentional, documented."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/lib/fetch.ts",
+        "frontend/packages/api-client/src/auth/interceptors.ts"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sell-wizard-no-persist",
+      "title": "reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — Publish onClick validates with validateStep, sets errors, then only setSubmitted(true) when errors are empty. No fetch / mutation / @ppt/reality-api-client hook anywhere in the 848-line file (`grep -c 'fetch|mutate|axios|useQuery|RealtorApi|await ' sell/page.tsx` returns 0).",
+        "Form data (`INITIAL_FORM_DATA`, `SELL_STEPS`) imported from `./_mock`. After Publish, the component early-returns the success screen (`if (submitted)` at :151) rendering `t('submittedTitle')`/`t('submittedBody')`.",
+        "Impact: data loss on a public, conversion-critical flow. The seller completes the entire multi-step wizard (address/price/area/rooms/description/contact/terms), clicks Publish, sees a success confirmation, but nothing is persisted or transmitted. Zero listings created, zero leads captured.",
+        "Fix (cloud-landable, frontend-only): wire Publish to the generated create-listing mutation from `@ppt/reality-api-client` — await it, set `submitted` only on success, render a submit-error branch on failure — mirroring `account/listings/[id]/edit/page.tsx:195-217`."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": "plans/code-review-reality-web-sell-wizard-no-persist.md"
+    },
+    {
+      "id": "code-review-reality-web-report-page-no-submit",
+      "title": "reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit `(e) => { e.preventDefault(); if (!problem || !description.trim() || !gdprAccepted) return; setSubmitted(true); }` validates the form + GDPR checkbox then flips local `submitted` without POSTing. Success screen rendered at :43. Problem options sourced from `./_mock`.",
+        "Server side already exists (see done rows `code-review-reality-server-submit-report-no-rate-limit`, `code-review-reality-server-report-contact-unvalidated`). This is a frontend integration gap, not a missing backend.",
+        "Impact: trust/safety — users reporting fraud/scam/wrong-data see confirmation but the report never reaches moderators. Abuse-report funnel is non-functional.",
+        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from `@ppt/reality-api-client`; show submit-error on failure."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data",
+      "title": "reality-web /profile route renders MOCK_* fixtures — every signed-in user sees the same fabricated identity, listings, activity, reviews",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — `profile = MOCK_PROFILE`, `MOCK_LISTINGS.map(...)`, `MOCK_ACTIVITY.map(...)`, `MOCK_REVIEWS.map(...)`. No `useQuery` / SDK call and no auth-context read; the shipped route is a static mock.",
+        "File header comment (:8-11) acknowledges this is a placeholder pending SDK wiring.",
+        "Impact: completeness/correctness. On a public portal, displaying fictitious listings and reviews as if they were the current user's is misleading and risks user confusion over whose data they're seeing.",
+        "Fix: swap MOCK_* for the generated current-user / my-listings / my-reviews hooks from `@ppt/reality-api-client`, with loading + empty states. If some endpoints aren't live yet, split the covered subset into its own smaller finding."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-featured-fav-silent-fail",
+      "title": "reality-web FeaturedListings favorite-toggle swallows mutation errors — heart UI diverges from server state silently",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx:20-22 — `handleToggleFavorite` calls `toggleFavorite.mutate({ listingId, isFavorite })` fire-and-forget with no onError; the component never reads `toggleFavorite.isError`/`.error`.",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts:146-169 — `useToggleFavorite` throws on `!response.ok` with only an onSuccess invalidate; React Query captures the throw into `mutation.isError` state, so without a call-site handler the failure is fully silent (no toast, no rollback).",
+        "Impact: UX/correctness gap on a conversion-critical public homepage. A failed toggle (e.g. 401 unauthenticated, 5xx) leaves the heart desynced from server state until the next refetch.",
+        "Fix: wire an `onError` on the mutate call (or read `toggleFavorite.isError`) and surface a toast + optimistic-update rollback."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-price-alert-markread-silent-fail",
+      "title": "reality-web PriceAlerts mark-read mutations swallow errors — row stays unread with no user feedback on failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 — `markAllRead.mutate()` and `markRead.mutate(alert.id)` fired fire-and-forget with no onError; the component never reads `markRead.isError`/`.error`.",
+        "Same pattern as the FeaturedListings heart (above): the generated hooks throw on `!response.ok` but call-sites don't propagate.",
+        "Impact: users clicking 'Mark all read' or a single-row mark-read on a failure path see no feedback; the badge count stays stale until next refetch, giving the impression of a frozen UI.",
+        "Fix: attach onError to both mutate calls and surface a toast; consider sharing a toast-on-error wrapper with the FeaturedListings fix."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
       "plan": null
     }
   ]

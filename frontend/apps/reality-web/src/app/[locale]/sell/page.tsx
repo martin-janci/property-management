@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { Link } from '@/i18n/routing';
+import { createListing, type ListingDraft, RealtorApiError } from '@/lib/realtor-api';
 import { INITIAL_FORM_DATA, PROPERTY_TYPES, SELL_STEPS, type SellFormData } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
@@ -142,8 +143,49 @@ export default function SellPage() {
   const [form, setForm] = useState<SellFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<StepErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const update = (patch: Partial<SellFormData>) => setForm((f) => ({ ...f, ...patch }));
+
+  /**
+   * Persist the collected wizard data via the reality-server
+   * `POST /api/v1/listings` endpoint, then flip to the success screen only on
+   * a resolved 2xx. Mirrors the await+try/catch+finally pattern used by the
+   * sibling account/listings/[id]/edit page. Previously the Publish button
+   * flipped `submitted` without any network call, silently discarding every
+   * submission (#code-review-reality-web-sell-wizard-no-persist).
+   */
+  const handlePublish = async () => {
+    const stepErrors = validateStep(step, form, (k) => t(`validation.${k}`));
+    setErrors(stepErrors);
+    if (Object.keys(stepErrors).length > 0) return;
+
+    setSaving(true);
+    setSubmitError(null);
+    try {
+      const payload: ListingDraft = {
+        title: form.description.trim().slice(0, 80) || `${form.propertyType} ${form.city}`.trim(),
+        description: form.description,
+        propertyType: form.propertyType,
+        transactionType: form.transactionType,
+        price: Number(form.price),
+        currency: form.currency,
+        street: form.address || undefined,
+        city: form.city,
+        area: form.area === '' ? undefined : Number(form.area),
+        rooms: form.rooms === '' ? undefined : Number(form.rooms),
+        floor: form.floor === '' ? undefined : Number(form.floor),
+        isNegotiable: form.priceNegotiable,
+      };
+      await createListing(payload);
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err instanceof RealtorApiError ? err.message : t('submitFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const currentStepInfo = SELL_STEPS[step - 1];
   const currentStepTitle = currentStepInfo ? t(`steps.${currentStepInfo.key}.title`) : '';
@@ -677,6 +719,24 @@ export default function SellPage() {
               </div>
             )}
 
+            {/* Submit error banner — form-level failure from the publish POST. */}
+            {submitError && (
+              <div
+                role="alert"
+                style={{
+                  marginTop: 24,
+                  padding: '12px 14px',
+                  borderRadius: 8,
+                  background: 'var(--ppt-color-danger-light, #fef2f2)',
+                  border: '1px solid var(--ppt-color-danger-hover, #dc2626)',
+                  color: 'var(--ppt-color-danger-hover, #dc2626)',
+                  fontSize: '0.875rem',
+                }}
+              >
+                {submitError}
+              </div>
+            )}
+
             {/* Navigation */}
             <div
               style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, gap: 12 }}
@@ -723,26 +783,23 @@ export default function SellPage() {
               ) : (
                 <button
                   type="button"
-                  disabled={!form.termsAccepted}
-                  onClick={() => {
-                    const stepErrors = validateStep(step, form, (k) => t(`validation.${k}`));
-                    setErrors(stepErrors);
-                    if (Object.keys(stepErrors).length === 0) setSubmitted(true);
-                  }}
+                  disabled={!form.termsAccepted || saving}
+                  onClick={handlePublish}
                   style={{
                     padding: '11px 28px',
-                    background: form.termsAccepted
-                      ? 'var(--ppt-color-success, #10b981)'
-                      : 'var(--ppt-border-default, #e5e7eb)',
-                    color: form.termsAccepted ? '#fff' : 'var(--ppt-fg-muted, #9ca3af)',
+                    background:
+                      form.termsAccepted && !saving
+                        ? 'var(--ppt-color-success, #10b981)'
+                        : 'var(--ppt-border-default, #e5e7eb)',
+                    color: form.termsAccepted && !saving ? '#fff' : 'var(--ppt-fg-muted, #9ca3af)',
                     border: 'none',
                     borderRadius: 8,
                     fontWeight: 700,
-                    cursor: form.termsAccepted ? 'pointer' : 'not-allowed',
+                    cursor: form.termsAccepted && !saving ? 'pointer' : 'not-allowed',
                     fontSize: '0.9375rem',
                   }}
                 >
-                  {t('publish')}
+                  {saving ? t('publishing') : t('publish')}
                 </button>
               )}
             </div>
