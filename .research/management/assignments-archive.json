@@ -14563,6 +14563,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2743",
+      "branch": "auto-impl/gh-issue-2743-66ef5ab8",
+      "status": "merged",
+      "claimed_at": "2026-08-13T04:28:20Z",
+      "last_updated": "2026-10-03T18:27:43Z",
+      "status_changed_at": "2026-10-03T18:27:43Z",
+      "pr_number": 2744,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2744",
+      "merged_at": "2026-10-03T16:28:09Z",
+      "specialist": "pm-tech-lead",
+      "implementer_summary": "pr=2744 done: restored #1162 archive-routing (oversize archive -> PUSH_METHOD=git via size-guard exit4) + added already-landed guard in retry-remint.sh; self-test + test-retry-remint + test-mcp-push-size-guard all PASS; durable MCP-only sharding left as follow-up",
+      "reviewer_summary": "verdict=approve note=both-fixes-correct-well-tested-scoped-clean-ci-green (posted as comment; formal APPROVE blocked on self-PR)",
+      "last_reviewed_oid": "e3a6f01a38dba4a6f31f3235923067aff29004ca",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-2752",
       "branch": "auto-impl/gh-issue-2752-a16d6fa5",
       "status": "merged",
@@ -18236,5 +18260,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-02T20:36:31Z"
+  "archived_at": "2026-10-03T18:30:59Z"
 }
