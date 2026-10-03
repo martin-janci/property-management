@@ -390,6 +390,8 @@ pub use reserve_funds::ReserveFundRepository;
 
 // Epic 142: Violation Tracking & Enforcement
 pub mod violations;
+#[cfg(test)]
+mod violations_test;
 
 pub use violations::ViolationRepository;
 
