@@ -1,0 +1,60 @@
+{
+  "generated": "2026-10-03",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (buffer starved: honest claimable ~25 < floor 36; coverage.json exhausted; backlog.json no fresh candidates). Single static-review slice via ppt-dev-review skill, no compilation / no test execution. Writes working-tree only under DISPATCHER_OWNED_COMMIT=1 (no git add/commit/push; no touch of assignments.json).",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "OLDEST-ACTUALLY-MINED, CLOUD-LANDABLE. No CHURN_FILES handed in (git churn in ppt-web pages/components since the last rotation is only dispatcher bookkeeping commits, no feature hotspot) -> fall through to oldest-unreviewed. The literal state.json review_cursor oldest is api-core (2026-09-01), but that cursor is stale (same correction the 2026-10-03 api-handlers Tier-1d run applied): api-core was deep-mined by Tier-1d on 2026-10-01 (signals/2026-10-01-api-core-tier1d.json, recorded 'mature, heavily-hardened, mostly CLEAN'), and api-handlers + ppt-web-core were already mined EARLIER TODAY (2026-10-03-*-tier1d.json). Reconstructing least-recently-ACTUALLY-mined from the Tier-1d signal history and excluding (a) segments mined today and (b) mobile-native-kmp (structurally unlandable in the cloud runner), ppt-web-ui is the oldest at last-Tier-1d 2026-09-26 (next are reality-web/reality-server 2026-10-02, mobile-rn/api-core 2026-10-01). Saturation check: 0 OPEN code-review-finding items for ppt-web-ui in backlog.json (all 19 code-review items repo-wide are status=done/dropped) -> not saturated -> selected. I confirmed api-core separately by direct read en route (it is genuinely clean: the only residual smell is accounting.rs:155-212 Decimal::from_str(\"<literal>\").unwrap() x5 inside the per-invoice scoring loop, Low/efficiency — NOT emitted here to keep this file single-segment and because api-core is only 2 days post-deep-mine; noted for a future api-core rotation).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "Both findings are frontend-only, confined to ppt-web feature dirs (features/accounting/** and features/privacy/PrivacySettingsPage.tsx). Remedy = wrap the hardcoded user-facing strings in react-i18next t() and add the keys to the ppt-web locale bundles (sk/cs/de/en). No backend, no API/client regen, no migration. Verifiable via `pnpm --filter @ppt/web typecheck` + `pnpm --filter @ppt/web test` and a Biome check; an i18n-key-presence assertion can back IG3. Each feature is independently landable by a single frontend implementer.",
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Segment root per skill is frontend/ppt-web/src/pages + components; in this repo layout that surface is shared infra only (ErrorBoundary, Toast, ProtectedRoute, Login/AuthCallback) — the real ppt-web UI lives under src/features/ (49 feature dirs, 458 non-test tsx), so the review scoped to pages/ + components/ + features/ matching the segment's intent (same adapt-stale-path precedent the api-handlers run used for handlers/ -> routes/). This is a mature, well-hardened UI surface; most patterns scanned came up CLEAN this pass (recorded so future rotations do not re-mine speculatively): (a) console.log debug noise — NONE; every console.error hit is legitimate catch-block logging alongside a user-facing toast/error state. (b) `as any` / `as unknown as` across API boundaries — only one hit (iot/useIotWebSocket.ts window-as-Record SSR guard), benign. (c) dangerouslySetInnerHTML (XSS) — 2 sites (news/ArticleDetailPage.tsx:305, documents/DocumentSearchResult.tsx:86) and BOTH are correctly DOMPurify-sanitized with explicit tag allowlists + biome-ignore rationale — exemplary, not findings. (d) useMutation without error handling — the 4 hooks that lacked a local onError (messaging/ai-chat/sentiment/predictive-maintenance) all use the idiomatic TanStack pattern (return the mutation object; onSuccess for cache invalidation; the consuming component reads mutation.isError/.error) — correct, not swallowing (useAiChat even carries a comment about a prior false-success bug that was fixed). (e) TODO/stub click handlers — the 4 TODO-nav hits are either tracked (cite #627 / #1522) or live on deliberately-UNWIRED features. IMPORTANT FALSE-POSITIVE AVOIDED: the richest-looking lead, features/portfolio-performance/PortfolioDashboardPage.tsx (zero i18n + a bare `onClick={() => { /* TODO: navigate to property detail route */ }}` dead click), was DISCARDED on two independent grounds — (1) the dead-onClick is already backlog item `dx-portfolio-dashboard-stubs` with status=DROPPED (decayed, score 0), re-emitting would be noise; (2) portfolio-performance is one of 10 DELIBERATELY-UNWIRED features per frontend/apps/ppt-web/src/features/unwired-features.ts (PAP-55 board decision: 'KEEP THE CODE, do not expose half-built surfaces', protected by src/test/unwired-features.test.ts), so incompleteness/i18n gaps there are expected, not defects. The i18n scan was therefore re-scoped to WIRED (routed, customer-facing) features only. The 2 genuine net-new gaps below are both on shipped, routed pages in a 4-locale app (sk/cs/de/en) where i18n via react-i18next is the established norm (301 feature tsx files use useTranslation). `errors` (8 tsx, no i18n) was also found but NOT emitted: error-boundary / fallback copy is a defensible non-localization exception (i18n machinery may itself be unavailable when the boundary fires). Net-new confirmed: no OPEN/accepted backlog item covers accounting or privacy i18n (the only near-match, code-review-ppt-web-core-errorhandler-i18n-gap, is a different ppt-web-core errorhandler and is status=done).",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-accounting-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n-gap",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceList.tsx"
+      ],
+      "evidence": [
+        "The entire ppt-web `accounting` feature (all 4 non-test tsx files) uses ZERO react-i18next: `grep -c 'useTranslation|\\bt('` returns 0 for every file. Every user-facing string is hardcoded English.",
+        "This is a SHIPPED, routed surface — not a parked feature. routes/groups/accounting.tsx mounts `<Route path=\"/accounting/invoices\" element={<AccountingInvoiceManagementPage/>}/>` and `<Route path=\"/accounting/payment-matching\" element={<PaymentMatchingPage/>}/>`, and accountingRoutes() is wired in AppRoutes.tsx:53. accounting is NOT in features/unwired-features.ts, so it is a live customer surface.",
+        "Concrete hardcoded strings: AccountingInvoiceManagementPage.tsx:74 'Issued Invoices', :75 'Native accounting MVP', :90 'New Invoice'; PaymentMatchingPage.tsx:79 'Payment Matching', :80 'Review and confirm matches from bank statements', :87 'Bank Statements', :113 'Upload failed', :164 'Transactions', :181 'Select a statement to view items', :255 'Match Review', :414 'No active match suggestions'; AccountingInvoiceForm.tsx:251 placeholder=\"Item description\", :296 placeholder=\"%\".",
+        "The app ships 4 locales (sk/cs/de/en) and i18n via react-i18next is the established norm — 301 of the feature tsx files use useTranslation — so this feature is an outlier localization gap, not an app-wide 'i18n not adopted yet' situation. A Slovak/Czech/German manager sees an English-only accounting screen.",
+        "Net-new (grep of .research/backlog.json for accounting + i18n/translat/localiz/hardcod returned only code-review-ppt-web-core-errorhandler-i18n-gap, a different ppt-web-core errorhandler, status=done). Remedy: wrap strings in t() and add keys to the ppt-web locale bundles; frontend-only, no API/migration. Confidence medium: reachability traced from AppRoutes to the pages (certainly in production); severity Low because it is a localization gap, not a crash/security/data-loss path."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-privacy-settings-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n-gap",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx"
+      ],
+      "evidence": [
+        "features/privacy/PrivacySettingsPage.tsx uses ZERO react-i18next (no useTranslation / no t()); all user-facing copy is hardcoded English.",
+        "SHIPPED, routed surface: routes/groups/core.tsx:247 mounts `<Route path=\"/settings/privacy\" element={<PrivacySettingsPage/>}/>` (Epic 63). privacy is NOT in features/unwired-features.ts.",
+        "Concrete hardcoded strings include GDPR-facing legal copy: :160 'Privacy & Data Settings', :161 'Manage your privacy preferences and data in accordance with GDPR.', :184 'Privacy Preferences', :194 label 'Profile Visibility', :242 'Your Data', :254 'Export History', :276 'Delete Account'.",
+        "Localizing GDPR/consent + account-deletion copy matters more than a generic label in a 4-locale (sk/cs/de/en) app: a non-English user is shown English-only data-rights and delete-account controls. i18n is the house norm (301 feature tsx files use useTranslation), so this page is an outlier.",
+        "Net-new (no backlog item matches privacy + i18n/translat/localiz/hardcod). Remedy: wrap strings in t() and add keys to the ppt-web locale bundles; frontend-only, independently landable. Confidence medium; severity Low (localization gap, reachable in production via /settings/privacy)."
+      ]
+    }
+  ]
+}
