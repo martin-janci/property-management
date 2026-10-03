@@ -11319,22 +11319,24 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
-        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+        "PR #3013 merged 2026-10-02"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — Publish onClick validates with validateStep, sets errors, then only setSubmitted(true) when errors are empty. No fetch / mutation / @ppt/reality-api-client hook anywhere in the 848-line file (`grep -c 'fetch|mutate|axios|useQuery|RealtorApi|await ' sell/page.tsx` returns 0).",
         "Form data (`INITIAL_FORM_DATA`, `SELL_STEPS`) imported from `./_mock`. After Publish, the component early-returns the success screen (`if (submitted)` at :151) rendering `t('submittedTitle')`/`t('submittedBody')`.",
         "Impact: data loss on a public, conversion-critical flow. The seller completes the entire multi-step wizard (address/price/area/rooms/description/contact/terms), clicks Publish, sees a success confirmation, but nothing is persisted or transmitted. Zero listings created, zero leads captured.",
-        "Fix (cloud-landable, frontend-only): wire Publish to the generated create-listing mutation from `@ppt/reality-api-client` — await it, set `submitted` only on success, render a submit-error branch on failure — mirroring `account/listings/[id]/edit/page.tsx:195-217`."
+        "Fix (cloud-landable, frontend-only): wire Publish to the generated create-listing mutation from `@ppt/reality-api-client` — await it, set `submitted` only on success, render a submit-error branch on failure — mirroring `account/listings/[id]/edit/page.tsx:195-217`.",
+        "resolved: PR #3013 merged 2026-10-02 — code-review-reality-web-sell-wizard-no-persist: wire /sell wizard Publish to createListing"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
       ],
       "created_at": "2026-10-02",
-      "updated_at": "2026-10-02",
-      "plan": "plans/code-review-reality-web-sell-wizard-no-persist.md"
+      "updated_at": "2026-10-03",
+      "plan": "plans/_archive/code-review-reality-web-sell-wizard-no-persist.md"
     },
     {
       "id": "code-review-reality-web-report-page-no-submit",
@@ -11342,21 +11344,23 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+        "PR #3014 merged 2026-10-02"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit `(e) => { e.preventDefault(); if (!problem || !description.trim() || !gdprAccepted) return; setSubmitted(true); }` validates the form + GDPR checkbox then flips local `submitted` without POSTing. Success screen rendered at :43. Problem options sourced from `./_mock`.",
         "Server side already exists (see done rows `code-review-reality-server-submit-report-no-rate-limit`, `code-review-reality-server-report-contact-unvalidated`). This is a frontend integration gap, not a missing backend.",
         "Impact: trust/safety — users reporting fraud/scam/wrong-data see confirmation but the report never reaches moderators. Abuse-report funnel is non-functional.",
-        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from `@ppt/reality-api-client`; show submit-error on failure."
+        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from `@ppt/reality-api-client`; show submit-error on failure.",
+        "resolved: PR #3014 merged 2026-10-02 — code-review-reality-web-report-page-no-submit: wire /report submit to reality-server abuse-report endpoint"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
       ],
       "created_at": "2026-10-02",
-      "updated_at": "2026-10-02",
+      "updated_at": "2026-10-03",
       "plan": null
     },
     {
@@ -11431,6 +11435,164 @@
       ],
       "created_at": "2026-10-02",
       "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3013-reality",
+      "title": "PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3013"
+      ],
+      "evidence": [
+        "PR #3013 modified frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (handlePublish wiring, saving/submitError state) but did not touch docs/screens/reality/sell.md.",
+        "Screen doc describes the sell wizard flow; needs an Agent Log line for the publish-wiring change and a note that submit is now wired to POST /api/v1/listings.",
+        "Heuristic signal — not a code bug. Treat as reminder to update screen-map, not a promotable plan."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3014-reality",
+      "title": "PR #3014 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3014"
+      ],
+      "evidence": [
+        "PR #3014 modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx (handleSubmit wiring, new useSubmitReport hook) but did not touch docs/screens/reality/report-listing.md.",
+        "Screen doc should capture the new POST /api/v1/reports wiring, listing_id resolution rule (?listing= or UUID in reference), and attachments-not-transmitted follow-up (#3017).",
+        "Heuristic signal."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "title": "reality-web /sell page recent churn — PR #3013 publish-wiring change",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-03",
+        "PR #3013"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR this run). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "title": "reality-web /report page recent churn — PR #3014 submit-wiring change",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-03",
+        "PR #3014"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR this run). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+      "title": "reality-web FeaturedListings recent churn — PR #3015 error-surface fix",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-03",
+        "PR #3015"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR this run). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-create-handlers-return-200-not-201",
+      "title": "reality-server create handlers return 200 OK but utoipa spec claims 201 Created — OpenAPI contract vs runtime divergence across 9 endpoints",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-10-03"
+      ],
+      "evidence": [
+        "Nine creation handlers advertise 201 Created in #[utoipa::path] spec but return Ok(Json(...)); Axum serializes bare Json<T> as 200 OK. Sites: routes/favorites.rs:125+158 add_favorite, routes/inquiries.rs:295+396 send_contact_message and :410+564 request_viewing, routes/saved_searches.rs:106+122 create_saved_search, routes/realtors.rs:120+146 create_profile, routes/agencies.rs:81+107 create_agency and :400+445 invitation, routes/imports.rs:143+159 create import job and :334+351 create feed.",
+        "Peer handlers correctly use tuple form Ok((StatusCode::CREATED, Json(...))): routes/compare.rs:228-234, routes/articles.rs create_comment, routes/users.rs register, routes/reports.rs submit_report.",
+        "Impact: generated clients (@ppt/reality-api-client TS, Rust client, mobile-native Kotlin) that branch on 201 vs 200 for post-create disposition misread all nine endpoints. Fix: swap bare Json(..) for the tuple form; one line per handler."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/favorites.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/saved_searches.rs",
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
+      "title": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-10-03"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT(*) (line 166) → MAX_COMPARE_LISTINGS=4 guard → separate INSERT (line 221) with no row-level lock and no DB-side constraint. Two concurrent POSTs from the same user can both see count==3 and both insert, exceeding the documented cap.",
+        "Existing exists-check at line 205 only catches exact duplicates, not count violations.",
+        "Fix: wrap count+insert in a serializable transaction, or add a DB-side partial unique index / check constraint."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/compare.rs"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
       "plan": null
     }
   ]

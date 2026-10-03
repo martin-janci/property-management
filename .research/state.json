@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-02T03:30:05Z",
+  "last_run_iso": "2026-10-03T03:12:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3011,
-  "last_issue_seen": 3012,
-  "last_commit_sha": "31c8baded0c145f08dc0fc42cc4a9b0fe7fb8d9d",
+  "last_pr_seen": 3015,
+  "last_issue_seen": 3017,
+  "last_commit_sha": "7498145afb451447a34b9715a4dc5bc6282fa111",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -551,6 +551,21 @@
       "runs_seen": 1,
       "last_seen": "2026-10-01",
       "recent_churn": 3
+    },
+    "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-03",
+      "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/app/[locale]/report/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-03",
+      "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-03",
+      "recent_churn": 1
     }
   },
   "seen_signals": [
@@ -1089,13 +1104,25 @@
     "dep-update-noise-pr-2973",
     "dep-update-noise-pr-2975",
     "dep-update-noise-pr-3007",
-    "dep-update-noise-pr-3008"
+    "dep-update-noise-pr-3008",
+    "screen-map-drift-pr-3013-reality",
+    "screen-map-drift-pr-3014-reality",
+    "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+    "code-review-reality-server-create-handlers-return-200-not-201",
+    "code-review-reality-server-add-to-compare-toctou-max-cap",
+    "dep-update-noise-pr-2584",
+    "dep-update-noise-pr-2588",
+    "dep-update-noise-pr-2589",
+    "dep-update-noise-pr-2590",
+    "dep-update-noise-pr-2960"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-09-27",
     "api-core": "2026-09-01",
-    "reality-server": "2026-08-31",
+    "reality-server": "2026-10-03",
     "ppt-web-ui": "2026-10-01",
     "ppt-web-core": "2026-09-27",
     "reality-web": "2026-10-02",
@@ -1103,8 +1130,8 @@
     "mobile-native-kmp": "2026-09-10"
   },
   "stats": {
-    "runs": 86,
-    "vectors_created": 402,
+    "runs": 87,
+    "vectors_created": 409,
     "plans_created": 33,
     "quiet_days": 5,
     "auto_fix_count": 0
