@@ -341,22 +341,6 @@
       }
     },
     {
-      "id": "refactor-repeated-churn-integrations-webhook-retry1",
-      "action": "[cloud-build-blocked: api-server unbuildable in cloud runner (utoipa-swagger-ui egress 403, #2966) AND no ppt-bridge MCP configured — structurally unlandable in this runner; not implemented] backend api-server routes/integrations/webhook.rs — repeated-churn (runs_seen=3, 2799 lines this window) [retry 1/2]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-09-30T08:26:22Z",
-      "deadline": null,
-      "dependency": "#2966",
-      "depends_on": [
-        "pm-devops-unblock-api-server-utoipa-swagger-egress"
-      ],
-      "first_open_at": "2026-09-30T08:26:22Z",
-      "retry_of": "refactor-repeated-churn-integrations-webhook",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
       "action": "Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives",
       "owner_role": "pm-tech-lead",
