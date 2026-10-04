@@ -478,7 +478,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
   );
 }
 
-function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
+export function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
   const t = useTranslations('import.feed');
   const tFreq = useTranslations('import.feed.frequency');
   const [step, setStep] = useState<'url' | 'preview' | 'mapping'>('url');
@@ -487,6 +487,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
   const [frequency, setFrequency] = useState<SyncFrequency>('daily');
   const [fieldMapping, setFieldMapping] = useState<FeedFieldMapping>(DEFAULT_FIELD_MAPPING);
   const [previewData, setPreviewData] = useState<FeedPreview | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const previewMutation = useFeedPreview(agencyId);
   const createMutation = useCreateFeedSource(agencyId);
@@ -504,14 +505,20 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
   };
 
   const handleCreate = async () => {
-    await createMutation.mutateAsync({
-      name: name || t('defaultName'),
-      url,
-      format: previewData?.format,
-      fieldMapping,
-      syncFrequency: frequency,
-    });
-    onClose();
+    setCreateError(null);
+    try {
+      await createMutation.mutateAsync({
+        name: name || t('defaultName'),
+        url,
+        format: previewData?.format,
+        fieldMapping,
+        syncFrequency: frequency,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Failed to create feed source:', error);
+      setCreateError(t('createError'));
+    }
   };
 
   return (
@@ -646,6 +653,11 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
                   />
                 </div>
               ))}
+              {createError && (
+                <div className="error-message" role="alert" aria-live="assertive">
+                  {createError}
+                </div>
+              )}
             </div>
           )}
         </div>
