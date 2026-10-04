@@ -11594,6 +11594,53 @@
       "created_at": "2026-10-03",
       "updated_at": "2026-10-03",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-community-group-detail-mock-data",
+      "title": "ppt-web /community/groups/:groupId renders hardcoded mock group \u2014 every group shows fake \"Sample Group\" with no-op actions",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-04"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:74-114 GroupDetailPageRoute reads the groupId route param (L75) then discards it: it builds a hardcoded `mockGroup` (L84-97, name 'Sample Group', buildingId 'bld-1', memberCount 10, createdBy 'user-1') and passes it to <GroupDetailPage group={mockGroup}>. No useQuery/API fetch exists, so every community group detail page renders identical fabricated data regardless of which group the user opened \u2014 a shipped, user-facing route presenting fake data as real.",
+        "All mutating handlers are empty no-ops: onJoin={() => {}}, onLeave={() => {}}, onEdit={() => {}}, onPromoteMember={() => {}}, onRemoveMember={() => {}}, onBanMember={() => {}} (L105-111). Join/Leave/moderation controls render but do nothing when clicked.",
+        "Reachable in production: the route wrapper is mapped under the community group-detail path and the guard at L79 only handles a missing param. Fix: resolve the real group via the api-client (e.g. a useCommunityGroup(groupId) query with loading/error/empty states) and wire the handlers to the corresponding mutations."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-04",
+      "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-group-toast-i18n",
+      "title": "ppt-web route-group action toasts use hardcoded English \u2014 bypass react-i18next, render English on sk/cs/de locales",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-04"
+      ],
+      "evidence": [
+        "Route-group wrappers call showToast() with literal English title/message instead of t(...), so success/error feedback always renders in English regardless of the user's selected language: community.tsx:66 title:'Created' message:'Group created'; faults.tsx:368 title:'Created' message:'Fault reported'; meters.tsx:243 'Submitted'/'Reading submitted', :296-297 'Updated'/'Reading correction submitted', :337 'Done'/'Reading validated'; iot.tsx:194 'Sensor deleted', :198 'Failed to delete sensor', :255 'Sensor registered', :260 'Failed to register sensor', :333 'Sensor updated', :338 'Failed to update sensor'.",
+        "ppt-web is a localized app (react-i18next 16); user-facing toast copy must resolve through t('...') keys. These literals were introduced at the router layer and are not wrapped, so all four non-English locales (sk/cs/de) see English confirmations.",
+        "Fix: move the strings into i18n resource bundles and resolve via useTranslation()/t() in each route-group wrapper, matching the errors.catalogue.* pattern already used by lib/errorHandler.ts."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-10-04",
+      "updated_at": "2026-10-04",
+      "plan": null
     }
   ]
 }
