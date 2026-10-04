@@ -1,72 +1,81 @@
 {
   "generated": "2026-10-04T00:00:00Z",
-  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=27 < floor=36; backlog.json held no ready code-review vectors). Static single-segment rotating code review — NO compilation, NO test execution. Produces fresh CLOUD-LANDABLE frontend backlog vectors.",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=27 < floor=36). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-core segment.",
   "segment_reviewed": "ppt-web-core",
-  "selection_reason": "oldest-unreviewed. No CHURN_FILES were passed to this run, so churn-alignment was skipped and selection fell through to state.json review_cursor: ppt-web-core (2026-09-27) is the oldest segment, ahead of ppt-web-ui/mobile-rn (2026-10-01), reality-web (2026-10-02) and api-handlers/api-core/reality-server/mobile-native-kmp (2026-10-03). Saturation check: ppt-web-core has 0 open code-review-finding items in backlog.json (threshold is >=3), so no saturation-skip. ppt-web-core = frontend/apps/ppt-web/src/ excluding pages/ and components/ (lib, contexts, hooks, routes, feature hooks).",
+  "selection_reason": "oldest-unreviewed. CHURN_FILES empty this cycle, so fell through to review_cursor ordering in state.json: ppt-web-core (2026-09-27) is the oldest segment ahead of ppt-web-ui (2026-10-01), mobile-rn (2026-10-01), reality-web (2026-10-02), and the four 2026-10-03 segments. SATURATION CHECK (>=3 open code-review-finding rows => skip): backlog.json holds reality-web=4 (SATURATED, skipped), reality-server=3 (SATURATED, skipped), ppt-web-core=2 (code-review-ppt-web-core-community-group-detail-mock-data, code-review-ppt-web-core-route-group-toast-i18n) => under the cap, eligible. ppt-web-core wins as the oldest non-saturated segment. DEDUP: the 2 open ppt-web-core findings cover (a) community.tsx mockGroup mock-data and (b) hardcoded-English toast strings across route groups; this pass deliberately avoids both — community mock and raw-English-toast i18n gaps are NOT re-flagged. The core infra files (lib/api.ts, lib/errorHandler.ts, lib/websocket.ts, contexts/AuthContext.tsx, contexts/WebSocketContext.tsx, hooks/*) were read and verified clean on the frontend static recipe (DEV-gated console logging, exhaustive 401 refresh-and-replay + single-flight handling, categoryToQueryKeys map in exact sync with backend common::notifications::NotificationCategory's 8 variants). Findings concentrate in the less-mature routes/groups/ route-wrapper layer.",
   "experts_used": ["frontend"],
   "findings_count": 3,
   "static_only": true,
   "cloud_landable": true,
-  "reviewed_clean": "The core infrastructure (lib/api.ts axios client + 401 refresh-and-replay, lib/websocket.ts service, lib/queryKeys.ts, contexts/AuthContext.tsx token refresh + logout cache purge) is unusually well-defended and carries dense issue references — reads clean on every frontend static recipe. Verified AUTHED_QUERY_KEY_ROOTS logout purge list is COMPLETE: messagingKeys.all=['messages'], meterKeys=['meters'], reportKeys=['reports'], notificationTriggerKeys=['notification-triggers'] all present; attachmentKeys derive from messagingKeys.all so are covered; feature-local factory roots (predictive-maintenance, sentiment, ai-chat, notification-analytics) all listed. All JSON.parse sites (command-palette, disputes/useDraftStorage, layout/TenantSectionEditor, AuthContext, websocket, iot) are try/catch-guarded. No dangerouslySetInnerHTML, no `as any`, no unconditional console.log in prod (usePerformanceMetrics is DEV-gated at the function head). useAmlDashboard mutations have proper onError + i18n toasts. The 3 findings below are the residue after that sweep.",
+  "reviewed_clean": [
+    "frontend/apps/ppt-web/src/lib/api.ts",
+    "frontend/apps/ppt-web/src/lib/errorHandler.ts",
+    "frontend/apps/ppt-web/src/lib/websocket.ts",
+    "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+    "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+    "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+    "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+    "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx"
+  ],
   "signals": [
     {
-      "id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect",
+      "id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash",
       "type": "code-review-finding",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core IoT WebSocket reconnect has no cap/backoff)",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core dispute-detail missing empty-result guard behind non-null assertion)",
       "segment": "ppt-web-core",
       "score_delta": 2,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
       "files": [
-        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:88-95 — the `ws.onclose` handler unconditionally re-arms a reconnect: `reconnectTimer.current = setTimeout(() => { if (!cancelled.current) connect(); }, WS_RECONNECT_MS)` where WS_RECONNECT_MS = 5_000 (line 26). There is NO max-attempt cap and NO exponential backoff — when the IoT WS endpoint is persistently unreachable (Redis not configured, server redeploy, VPN/network outage) the hook reconnects every fixed 5s for the entire lifetime of the mounted telemetry chart, hammering a dead endpoint (and the server auth/upgrade path) indefinitely.",
-        "This directly contradicts the repo's own canonical WebSocket client: frontend/apps/ppt-web/src/lib/websocket.ts:600-620 deliberately added a maxReconnectAttempts cap (default 10) with the comment 'Without this the client would hammer a dead endpoint forever, spamming console + server logs and acting as a small DoS amplifier in dev', plus exponential backoff + jitter (lines 624-628). contexts/WebSocketContext.tsx:304-320 further re-arms that capped client on a regained-connectivity signal. The IoT hook implements neither half of that pattern.",
-        "Impact (production-reachable): the IoT telemetry page (Epic 14 / FR72) is a real authenticated route. The module docstring itself notes the backend 'returns heartbeat-only frames' or is unreachable 'when Redis is not configured' — i.e. the unreachable case is an expected, documented runtime state, exactly when the uncapped 5s loop fires continuously. Degraded battery/CPU on the client and needless upgrade-handshake load on api-server.",
-        "Confidence MEDIUM (static-only): the loop structure and absence of any attempt counter / backoff are confirmed by direct read; what is not runtime-confirmed is how aggressively the server rejects the repeated upgrades.",
-        "Fix (cloud-landable, frontend-only, single file): track an attempt counter + cap it (mirror lib/websocket.ts), and compute the delay as `Math.min(WS_RECONNECT_MS * 2 ** attempt, maxDelay) * (0.5 + Math.random() * 0.5)`; stop after N attempts and expose an offline flag. Verifies with `pnpm --filter @ppt/web typecheck && pnpm --filter @ppt/web test` + biome; no backend coupling."
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx:385 — DisputeDetailPageRoute renders `<DisputeDetailPage dispute={uiDispute!} ...>`, asserting non-null on a value typed `UiDisputeDetail | undefined` (declared `const uiDispute: UiDisputeDetail | undefined = dispute ? {...} : undefined;` at line 298-317).",
+        "The only early-return guard for a missing dispute is line 285: `if (!dispute && !isLoading && error) { return <error-page/> }`. It requires `error` to be TRUTHY. A query that settles with no dispute AND no error (e.g. a 200/empty body, a 204, or any state where `useDispute` resolves `data === undefined` without throwing) leaves isLoading=false, error=undefined, dispute=undefined — so the guard is skipped, `uiDispute` is undefined, and execution falls through to line 385 passing `undefined` into a prop typed non-null.",
+        "DisputeDetailPage then dereferences dispute fields (id, title, status, referenceNumber, ...) on undefined → runtime TypeError (blank/crashed detail screen). The `!` assertion is exactly what masks this from the type checker; the correct guard is error-independent, e.g. `if (!uiDispute && !isLoading) return <notFound/>` (or drop the `!` and render a not-found branch when `uiDispute` is undefined).",
+        "Confidence MEDIUM (static-only): the undefined→non-null-prop dataflow is confirmed by direct read; the one unconfirmed link is whether api-server can actually return a dispute-detail 200-without-body / whether useDispute can resolve undefined without error. Even if the backend always 4xxs on a missing dispute (driving `error` truthy), the guard still does NOT cover the no-error empty case, so the assertion is unsound by construction.",
+        "Fix (cloud-landable, frontend-only): replace the error-gated guard with `if (!uiDispute) { return <not-found/>; }` placed after the uiDispute mapping (and keep a separate `if (isLoading) return <skeleton/>` if DisputeDetailPage does not already own the loading state). Single-file ppt-web edit; verifies with pnpm --filter @ppt/web typecheck/test + biome; no backend coupling."
       ]
     },
     {
-      "id": "code-review-ppt-web-core-send-attachments-dup-on-retry",
+      "id": "code-review-ppt-web-core-reports-schedule-stub-data",
       "type": "code-review-finding",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core message send-with-attachments partial failure duplicates the message on retry)",
-      "segment": "ppt-web-core",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "expert": "frontend",
-      "files": [
-        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts"
-      ],
-      "evidence": [
-        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:260-273 — performSendWithAttachments() first does `const sendResponse = await api.sendMessage(threadId, { content })` (the message is now persisted server-side with a real id), THEN loops `for (const pending of data.attachments ?? []) await uploadAndLinkAttachment(...)`. uploadAndLinkAttachment (lines ~230-258) does a presigned-PUT to S3 then api.linkMessageAttachment; any of those can throw (network, 5xx, S3 PUT non-2xx — it explicitly `throw new Error(\"Failed to upload attachment ...\")`).",
-        "On a mid-loop failure the function rejects, so useSendMessageWithAttachments (lines 284-297) reports `isError` — but the message row ALREADY EXISTS on the server with content and only a partial set of attachments. There is no rollback (no delete of the just-sent message) and no idempotency key on api.sendMessage.",
-        "Impact (production-reachable, UC-05.9): the natural UI recovery from a failed send is to retry, which re-invokes performSendWithAttachments → api.sendMessage runs AGAIN and creates a SECOND message (new id) with the same content, then re-uploads all attachments. Result: the recipient sees a duplicate message, and the first (partial) message lingers. Flaky mobile/office networks make attachment-upload failure a routine, not rare, path.",
-        "Confidence MEDIUM (static-only): the send-then-upload ordering and the absence of rollback/idempotency are confirmed by direct read; the duplicate only manifests if the user (or an auto-retry) re-runs the mutation after a partial failure, which is the expected recovery.",
-        "Fix (frontend-first): either (a) upload+stage attachments to presigned URLs BEFORE calling sendMessage and link them in the same send, or (b) on partial failure delete the just-created message (api.deleteMessage already exists in this file, lines 348-361) before surfacing the error, or (c) pass a client-generated idempotency key so a retry dedupes. Option (b)/(c) is a contained useMessaging.ts change; verifies with `pnpm --filter @ppt/web test` (performSendWithAttachments is already unit-tested) + typecheck + biome."
-      ]
-    },
-    {
-      "id": "code-review-ppt-web-core-action-queue-counts-mismatch",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core action-queue filter returns stale priority counts)",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core report-schedule detail renders unconditional fabricated stub metadata)",
       "segment": "ppt-web-core",
       "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "bug",
+      "candidate_vector": "completeness",
       "expert": "frontend",
       "files": [
-        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts"
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/dashboard/hooks/useActionQueue.ts:86-114 — applyActionQueueFilters() filters `filteredItems` by type/priority/search and returns `{ items: filteredItems, total: filteredItems.length, counts: data.counts }`. It recomputes `total` from the filtered list but passes through the ORIGINAL unfiltered `data.counts` (the per-priority urgent/high/medium/low tallies).",
-        "The hook surfaces both: useActionQueue.ts:355-363 builds `stats = { total: query.data.total, ...query.data.counts }`. So after a priority filter (e.g. show only `low`), `stats.total` reflects the filtered count but `stats.urgent/high/medium` still show the full pre-filter tallies — the priority badges disagree with the visible list and with `total`.",
-        "Severity LOW / reachability caveat: the action-queue data path is currently DEV-mock-gated (isActionQueueMockEnabled, lines 76-78) — in production and non-mock dev modes the query returns emptyQueue() (line 301-303), so the mismatch is not user-visible on a prod build TODAY. It is still a genuine correctness bug in exported, unit-tested logic (applyActionQueueFilters is explicitly 'Exported for testing') that will ship the moment the real /api/v1/action-queue backend lands and the mock gate is removed.",
-        "Confidence MEDIUM (static-only): the counts/total divergence is confirmed by direct read of the return object and the stats assembly.",
-        "Fix (trivial, frontend-only): recompute counts from filteredItems in applyActionQueueFilters (same reduce already used in generateMockData lines 276-282) instead of forwarding data.counts. One-function edit; verifies with `pnpm --filter @ppt/web test` (the function has existing coverage) + typecheck + biome."
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx:290-303 — ScheduleDetailPageRoute (route /reports/schedules/:scheduleId) builds `const stubSchedule: ReportSchedule = { id: scheduleId, report_id: '', organization_id: '', name: `Schedule ${scheduleId}`, frequency: 'monthly', time: '08:00', timezone: 'UTC', format: 'pdf', recipients: [], is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }` and passes it to `<ScheduleDetailPage schedule={stubSchedule} ...>` (line 307).",
+        "This stub is built UNCONDITIONALLY — the route only issues `useReportExecutionHistory` (lines 236-248) for the execution list; there is NO query for the schedule itself. So the schedule header shown to the user (name, frequency, send time, timezone, output format, recipients, active flag, created/updated timestamps) is always client-fabricated placeholder data, not real backend state. The comment at lines 288-289 acknowledges it: 'schedule metadata will be enriched once the GET /api/v1/reports/schedules/:id endpoint is wired in a future story.'",
+        "User-facing impact: every scheduled-report detail page displays a generic 'Schedule {id}' name, a fixed 'monthly'/'08:00'/'UTC'/'pdf' configuration, and an empty recipients list regardless of the schedule's actual configuration — the execution history below it is real, so the mismatch is misleading (a weekly CSV schedule shows as monthly PDF). The `created_at`/`updated_at` are freshly stamped each render.",
+        "Confidence MEDIUM (static-only): the unconditional stub + absence of any schedule fetch is confirmed by direct read. Distinct from the existing open ppt-web-core finding (community.tsx mockGroup) — different file and different surface.",
+        "Fix: wire GET /api/v1/reports/schedules/:id (ppt-typespec → generated client) and drive ScheduleDetailPage from the fetched schedule with a loading/not-found guard; until the endpoint lands, at minimum gate the stub behind MSW/DEV so production does not present fabricated schedule metadata as real. Frontend-first; the endpoint is a backend/typespec dependency if the full fix is taken."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-create-lease-empty-pickers",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core create-lease form ships empty unit/tenant option lists)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx:600-602 — the CreateLeasePage route wrapper renders `<CreateLeasePage units={[]} tenants={[]} templates={templates} ...>`: the unit and tenant option lists are hardcoded empty arrays. The comment at lines 613-615 confirms 'The unit/tenant pickers are not yet wired to an endpoint, so the landlord/tenant identity fields are submitted blank for the backend to resolve from the unit/application context.'",
+        "The submit handler (lines 606-627) still forwards `unit_id: formData.unitId` and `tenant_user_id: formData.tenantId || undefined` to `createLease.mutateAsync`, but with `units={[]}`/`tenants={[]}` the form has no options to populate those fields — the manager cannot select a unit at all, so a core create-lease flow is effectively non-functional (a lease needs a unit) unless the user happens to type/paste a raw id the UI gives no affordance for.",
+        "`landlord_name`, `tenant_name`, `tenant_email` are hardcoded '' in the request body (lines 616-619), relying on the backend to backfill from unit/application context — a silent contract assumption that is undocumented at the API boundary and will produce blank-named leases if the backend does not resolve them.",
+        "Confidence MEDIUM (static-only): the empty option arrays and blank identity fields are confirmed by direct read; the functional impact depends on whether CreateLeasePage exposes any alternate unit-entry affordance (none visible from the route wrapper) and whether the backend reliably resolves the blank identity fields. NOTE: this finding is scoped to the empty-pickers / blank-identity completeness gap ONLY — the hardcoded-English toast strings in this same handler (lines 628, 631-634) are deliberately NOT re-flagged here, as they are already covered by the open backlog finding code-review-ppt-web-core-route-group-toast-i18n.",
+        "Fix (cloud-landable, frontend-first): populate `units` from the existing units query and `tenants` from the tenant-application/tenant list (both generated-client hooks already used elsewhere in leases.tsx), and pass the selected tenant's name/email through instead of '' so the create request is self-describing. Single-file ppt-web edit; verifies with pnpm --filter @ppt/web typecheck/test + biome."
       ]
     }
   ]
