@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-03 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-04 03:27 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -42,6 +42,7 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | MfaWrapper.verify fetches bare /api/v1/auth/mfa/verify, ignoring VITE_API_URL — silent fail in cross-origin deploys | `frontend/apps/ppt-web/src/App.tsx` | code-review 2026-10-04 (ppt-web-core) | 2026-10-04 | open | — |
 | 2 | bug | reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) (+1) | 2026-10-03 | done | — |
 | 2 | test-gap | PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (+1)` | PR #3013 | 2026-10-03 | open | — |
 | 2 | test-gap | PR #3014 touched reality-web /report route without updating docs/screens/reality/report-listing.md | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx (+1)` | PR #3014 | 2026-10-03 | open | — |
@@ -200,6 +201,8 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | AdvancedNotificationSettingsPage emits 5 hardcoded English error strings — sk/cs/de users see English on every mutation failure | `frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx` | code-review 2026-10-04 (ppt-web-core) | 2026-10-04 | open | — |
+| 1 | refactor | useSendMessageWithAttachments throws hardcoded English Error with raw HTTP status — surfaces as mutation.error.message in UI | `frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts` | code-review 2026-10-04 (ppt-web-core) | 2026-10-04 | open | — |
 | 1 | refactor | reality-web /sell page recent churn — PR #3013 publish-wiring change | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | open | — |
 | 1 | refactor | reality-web /report page recent churn — PR #3014 submit-wiring change | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | open | — |
 | 1 | refactor | reality-web FeaturedListings recent churn — PR #3015 error-surface fix | `frontend/apps/reality-web/src/components/home/FeaturedListings.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | open | — |

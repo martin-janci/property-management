@@ -688,7 +688,121 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-scrum-master-needs-human-review-sla-clearance-2026-10-04",
+      "action": "Clear the needs-human-review label from PR #3005 (webhook refactor-split) and PR #2744 (dispatcher archive-push fix). Both merged 2026-10-03; label needs explicit ack or escalation per decision-needed 2026-10-04",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-04",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-webhook-split-churn-rewatch-2026-10-04",
+      "action": "Re-measure 14-day churn window on backend/servers/api-server/src/routes/integrations/webhook/*.rs after PR #3005 split, to confirm the refactor did not just move the hotspot into one submodule",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-04 (post-refactor validation)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-reviewer-slot-accounting-trio-recheck-2026-10-04",
+      "action": "Accounting MVP trio #2555/#2559 now 67 days reviewer-starved - re-escalate reviewer-slot assignment or formally defer the trio to the next release train",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-04 (stalled-PR scan, carried + aged)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-data-portfolio-analytics-metric-correctness-check-2026-10-04",
+      "action": "Even before the #2946 IDOR fix lands, verify portfolio_analytics property metrics compute against the correct org_id - the computed-then-discarded org_id pattern can corrupt metric values independently of the auth leak. Hand-run cross-tenant comparison on seed data",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (rotating role)",
+      "deadline": null,
+      "dependency": "#2946",
+      "depends_on": [
+        "gh-issue-2946-retry2"
+      ],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-data-mobile-event-tracking-parity-audit-2026-10-04",
+      "action": "Audit mobile (RN + KMP) analytics-event parity vs web for shipped MVP epics (6/10A/10B/80/84) - identify funnel blindspots where mobile traffic is uninstrumented. Carried from 2026-07-23, now 73d older",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (rotating role, carried)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-data-min-analytics-dod-decision-forcing-2026-10-04",
+      "action": "Force a decision on the Minimum-Analytics DoD (binding gate vs formally dropped) - still open 73 days after proposal; indefinite advisory status is blocking adoption",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (rotating role, decision-forcing)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-data-analytics-platform-choice-decision-2026-10-04",
+      "action": "Pick the analytics platform (bespoke Postgres+Grafana vs Amplitude vs PostHog vs Segment). This decision blocks every KPI backfill action on the list - nothing can be instrumented until the destination is chosen",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (rotating role, blocking)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-data-layout-publish-analytics-events-2026-10-04",
+      "action": "Define + wire layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) - Layout & Content Manager shipped end-to-end with zero KPI hooks; carried from 2026-07-23",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (carried from 2026-07-23)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [
+        "pm-data-analytics-platform-choice-decision-2026-10-04"
+      ],
+      "first_open_at": "2026-10-04T00:00:00Z"
+    },
+    {
+      "id": "pm-data-dispute-lifecycle-kpi-set-2026-10-04",
+      "action": "Define dispute-lifecycle KPI set (filed -> mediation -> resolved funnel, TTR p50/p95, evidence-per-dispute) - Epic 80 all-done, no dashboard exists; carried from 2026-07-23",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (carried from 2026-07-23)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [
+        "pm-data-analytics-platform-choice-decision-2026-10-04"
+      ],
+      "first_open_at": "2026-10-04T00:00:00Z"
     }
   ],
-  "generated": "2026-10-01T04:30:00Z"
+  "generated": "2026-10-04T00:00:00Z"
 }

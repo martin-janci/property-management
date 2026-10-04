@@ -1,0 +1,190 @@
+{
+  "generated": "2026-10-04T03:24:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3005 (merged 2026-10-03T20:25:50Z)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit: PR #3005 split 2737 lines out of webhook.rs into 6 per-receiver submodules; final webhook.rs is now 77 lines (router + pub-use re-exports only)",
+        "churn this run: +15 / -2737 lines on the original file"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history (runs_seen bumped 3 → 4)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit: file touched again this run via the splitting refactor PR #3005; runs_seen now 4",
+        "post-refactor stabilization expected — next run should NOT re-fire if nobody else touches the file"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (ppt-web-core, 2026-10-04)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:72 — MfaWrapper.verify calls fetch('/api/v1/auth/mfa/verify') with a hardcoded relative path, ignoring VITE_API_URL that lib/api.ts (api.ts:77) and main.tsx client.setConfig both honour; in a cross-origin production deploy (VITE_API_URL = https://api.example.com) the fetch 404s or is CORS-blocked and the catch returns false, silently blocking every MFA verification"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-advanced-notif-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (ppt-web-core, 2026-10-04)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/advanced/AdvancedNotificationSettingsPage.tsx:83 — setUpdateError('Failed to update category preference. Please try again.') hardcoded English, mirrored at lines 122, 303, 319, 337; file otherwise uses useTranslation(), so sk/cs/de users see English error banners on mutation failures"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-attachment-upload-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (ppt-web-core, 2026-10-04)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:247 — throw new Error('Failed to upload attachment \\\"${file.name}\\\" (${putResponse.status})') inside useSendMessageWithAttachments; surfaces as mutation.error.message in the UI, hardcoded English plus raw HTTP status"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit discipline",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap<=8 and decay applied",
+      "observed": "no items > 8; 0 decay candidates",
+      "expected": "true + 0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotations",
+      "observed": "no new plans",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <= 2",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research staged",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "no diff",
+      "expected": "no diff"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "brief says Phases that failed: none; no cursor regressions",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence (no silent delete)",
+      "observed": "all prior plan slugs still in plans/ or _archive/",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows",
+      "observed": "STAGED=10 HEAD=10",
+      "expected": "staged >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "no diff",
+      "expected": "no diff"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions this run",
+      "expected": "<=3 total, <=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor advanced",
+      "observed": "EPICS=13 CC_NOW=9 CC_HEAD=8 PM_NOW=7 PM_HEAD=6",
+      "expected": "CC_NOW in [0,13) and CC advanced vs HEAD when PM advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

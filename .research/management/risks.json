@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-01T04:30:00Z",
+  "generated": "2026-10-04T00:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -208,6 +208,39 @@
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
       "status": "open"
+    },
+    {
+      "id": "pm-data-portfolio-analytics-metric-correctness-2026-10-04",
+      "risk": "portfolio_analytics computes org_id then discards it (#2946) - this is both a security IDOR AND a metric-correctness defect. Even without an attacker, the metric values on main may already be wrong (cross-org data commingled in reported numbers). The sec fix lands via dispatcher retry; the metric-correctness verification does not",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Independent of the #2946 auth fix, run a cross-tenant comparison of portfolio_analytics outputs on seed data; add a sqlx integration test asserting metric values per org match expected cardinality",
+      "owner_role": "pm-data",
+      "trigger": "any dashboard integration consuming portfolio_analytics before #2946 lands",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (rotating role)"
+    },
+    {
+      "id": "pm-data-mobile-event-tracking-parity-blindspot-2026-10-04",
+      "risk": "73 days after the first pm-data call, mobile (RN + KMP) analytics-event parity vs web is still unknown; funnels for Epic 6/10A/10B/80/84 may be blind on roughly half of production traffic. The problem has grown as more mobile features have shipped",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Run the mobile-analytics parity audit on the action-list; adopt a shared event taxonomy before writing any new tracking code so web/mobile stay in step",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-data 2026-10-04 (carried + aged)"
+    },
+    {
+      "id": "pm-data-analytics-platform-undecided-blocks-backfill-2026-10-04",
+      "risk": "No analytics-platform choice (Postgres+Grafana vs Amplitude vs PostHog vs Segment) has been made. Every pm-data KPI-backfill action on the list is structurally blocked - teams cannot instrument until the destination is picked",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Force the decision this cycle (pm-tech-lead + pm-data); unblock all 4 downstream KPI tasks (layout publish, dispute lifecycle, announcement fan-out, mobile parity)",
+      "owner_role": "pm-tech-lead",
+      "trigger": "3+ pm-data KPI tasks remain open with blocking dependency on this decision",
+      "status": "open",
+      "source": "pm-data 2026-10-04 (rotating role)"
     }
   ]
 }

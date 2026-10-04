@@ -112,3 +112,11 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-08-25, pm-qa):** Dispatcher-spawned fix PRs should require a failing-on-main regression test file in the same PR before entering the merge queue (enforced via CI diff-guard). The auto-review loop closed 7/7 in-window this run, but 5 of the 7 shipped without a regression test — the loop's compensating-transaction property masks a growing test-shadow debt. Owner: pm-tech-lead + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Adopt eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — 3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects a static lint would catch. Blocking-on-first-adoption vs warn-only-for-one-sprint is the open question. Owner: pm-frontend + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Shared proptest fuzz-corpus discipline for sanitizers (CSV, XSS, HTML, JSON) — PR #2827 closed one CSV bypass but the sanitizer test suite is per-input, not corpus-driven; a shared corpus crate under `backend/crates/` would prevent the next class-of-bug from being fixed one-input-at-a-time. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-10-04 (Phase 1.6 — pm-scrum-master + pm-data)
+
+- **NEW (2026-10-04, pm-scrum-master):** Define SLA for the `needs-human-review` label — PR #3005 (webhook refactor-split) and PR #2744 (dispatcher archive-push un-wedge) both merged on 2026-10-03 carrying the label; is 48h the ceiling, or does the label sit indefinitely once a PR is merged? This is audit-trail hygiene, not blocking anything. Owner: pm-tech-lead.
+- **NEW (2026-10-04, pm-data):** Promote Minimum-Analytics DoD to a binding gate, or formally drop it — the 2026-07-23 proposal is 73 days unresolved, and "advisory indefinitely" is the worst of both worlds (no adoption, no retirement). Owner: pm-scrum-master + pm-data.
+- **NEW (2026-10-04, pm-data):** Pick the analytics platform (bespoke Postgres+Grafana vs Amplitude vs PostHog vs Segment). This decision is now a strict upstream blocker for every pm-data KPI backfill action on the list — nothing can be instrumented until the destination is chosen. Owner: pm-tech-lead + pm-data.

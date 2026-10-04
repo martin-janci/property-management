@@ -1,28 +1,53 @@
-# Action list
+# Action List
 
-_Generated: 2026-10-01T04:30:00Z — regenerated from `action-list.json` (routine Phase 1.6 upkeep, pm-security rotation)._
+_Generated: 2026-10-04T00:00:00Z — maintained by pm-scrum-master; rows survive across runs, status flips to done when resolved._
 
-20 open items. Top of list is the two infra unblocks that gate most of the rest. New additions this run: `#2966 swagger-ui egress`, `#3006 auth-header unify`, two stalled-PR reviewer-slot items (`#2559` / `#2555`), `#2951 jest-expo`.
-
-| ID | Priority | Owner | Action |
-|---|---|---|---|
-| `pm-devops-unblock-api-server-utoipa-swagger-egress` | high | pm-devops | Unblock utoipa-swagger-ui crates.io / egress for api-server in cloud runner (#2966) — single largest buffer-starvation lever; gates all 3 IDOR retries |
-| `gh-issue-2946-retry2` | high | pm-security | Cross-tenant IDOR portfolio_analytics (Closes #2946) [retry 2/2] — draft PR gh-issue-2946-retry2 open; blocked by #2966 |
-| `gh-issue-2944-retry1` | high | pm-security | Cross-tenant IDOR violation comments/evidence/payments + internal-notes privilege leak (Closes #2944) [retry 1/2] |
-| `gh-issue-2945-retry1` | high | pm-security | Cross-tenant IDOR portfolio_properties handlers missing org verification (Closes #2945) [retry 1/2] |
-| `gh-issue-3006-unify-auth-header-mfa-retry` | medium | pm-tech-lead | Unify triplicated auth-header + MFA-retry logic in @ppt/api-client fetch primitives (post-merge review of PR #3004) |
-| `pm-scrum-master-stalled-accounting-pay-by-square-2559` | medium | pm-tech-lead | Stalled 64d: PR #2559 (PAY by Square accounting) needs reviewer slot |
-| `pm-scrum-master-stalled-invoice-lifecycle-2555` | medium | pm-tech-lead | Stalled 64d: PR #2555 (invoice lifecycle accounting) needs reviewer slot |
-| `pm-devops-unblock-mobile-native-cloud-builds` | high | pm-devops | Unblock mobile-native/KMP builds in cloud runner (#2652) |
-| `pm-devops-unblock-mobile-rn-jest-expo-version-rot` | medium | pm-devops | Resolve mobile RN jest-expo version rot (#2951) |
-| `code-review-ppt-web-core-authed-roots-session-leak` | medium | pm-backend | logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups |
-| `code-review-mobile-native-kmp-inquiries-response-contract` | medium | pm-backend | KMP InquiriesResponse page_size vs reality-server `limit` mismatch |
-| `code-review-mobile-native-kmp-httpclient-no-timeout` | low | pm-backend | KMP shared Ktor HttpClient has no HttpTimeout |
-| `code-review-mobile-native-kmp-cancellation-swallowed` | low | pm-backend | KMP repositories swallow CancellationException |
-| `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | low | pm-backend | getPortfolioAnalytics() truncates realtor portfolio at 100 listings |
-| `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1` | low | pm-backend | getPortfolioAnalytics() unbounded fan-out [retry 1/2] |
-| `code-review-mobile-native-kmp-ssoservice-untested` | low | pm-qa | KMP SsoService has zero direct tests |
-| `code-review-mobile-native-kmp-create-listing-not-wired` | low | pm-backend | KMP CreateListingScreen onSubmit is NotImplementedError stub |
-| `code-review-mobile-rn-meter-reading-no-numeric-validation` | low | pm-backend | RN meter-reading input accepts non-numeric |
-| `code-review-reality-server-dup-url-validator` | low | pm-tech-lead | reality-server duplicated URL-validation helper — merge into shared crate |
-| `refactor-repeated-churn-integrations-webhook-retry1` | low | pm-tech-lead | api-server routes/integrations/webhook.rs repeated-churn [retry 1/2] |
+| ID | Priority | Owner | Status | Action |
+|---|---|---|---|---|
+| `pm-devops-unblock-api-server-utoipa-swagger-egress` | high | pm-devops | open | Unblock utoipa-swagger-ui crates.io / egress for api-server in cloud runner (issue #2966) — every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED; this is the single largest buffer-starvation lever and gates all 3 IDOR retries (#2944/#2945/#2946) |
+| `gh-issue-2946-retry2` | high | pm-security | open | [CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_analytics property metrics computed org_id then discarded (Closes #2946) [retry 2/2 of failed gh-issue-2946] |
+| `gh-issue-2944-retry1` | high | pm-security | open | [CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR: violation comments/evidence/payments read without org scoping (+ internal-notes privilege leak) (Closes #2944) [retry 1/2 of failed gh-issue-2944] |
+| `gh-issue-2945-retry1` | high | pm-security | open | [CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_properties handlers missing org verification (Closes #2945) [retry 1/2 of failed gh-issue-2945] |
+| `pm-devops-unblock-mobile-native-cloud-builds` | high | pm-devops | open | Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low) |
+| `gh-issue-3012` | high | pm-tech-lead | open | dispatcher: `git stash` is shared across worktrees — parallel implementers contaminate each other (Closes #3012) |
+| `pm-data-analytics-platform-choice-decision-2026-10-04` | high | pm-tech-lead | open | Pick the analytics platform (bespoke Postgres+Grafana vs Amplitude vs PostHog vs Segment). This decision blocks every KPI backfill action on the list - nothing can be instrumented until the destination is chosen |
+| `pm-scrum-master-stalled-accounting-pay-by-square-2559` | medium | pm-tech-lead | open | Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot — one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months |
+| `pm-scrum-master-stalled-invoice-lifecycle-2555` | medium | pm-tech-lead | open | Stalled 64d: PR #2555 (invoice lifecycle accounting slice) needs reviewer slot — companion to #2559; both are the aging accounting MVP trio tracked since 2026-07-30 |
+| `pm-devops-unblock-mobile-rn-jest-expo-version-rot` | medium | pm-devops | open | Resolve mobile/React Native jest-expo version rot (#2951) — RN mobile unit tests failing on cloud runner; blocks mobile RN code-review items from landing |
+| `code-review-ppt-web-core-authed-roots-session-leak` | medium | pm-backend | open | logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation |
+| `code-review-mobile-native-kmp-inquiries-response-contract` | medium | pm-backend | open | mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call |
+| `gh-issue-3016` | medium | pm-tech-lead | open | Follow-up: /sell wizard still drops seller contact fields (name/phone/email) on publish (PR #3013) (Closes #3016) |
+| `gh-issue-3017` | medium | pm-tech-lead | open | Follow-up: /report page collects file attachments that are never transmitted (PR #3014) (Closes #3017) |
+| `pm-scrum-master-reviewer-slot-accounting-trio-recheck-2026-10-04` | medium | pm-tech-lead | open | Accounting MVP trio #2555/#2559 now 67 days reviewer-starved - re-escalate reviewer-slot assignment or formally defer the trio to the next release train |
+| `pm-data-portfolio-analytics-metric-correctness-check-2026-10-04` | medium | pm-data | open | Even before the #2946 IDOR fix lands, verify portfolio_analytics property metrics compute against the correct org_id - the computed-then-discarded org_id pattern can corrupt metric values independently of the auth leak. Hand-run cross-tenant comparison on seed data |
+| `pm-data-mobile-event-tracking-parity-audit-2026-10-04` | medium | pm-data | open | Audit mobile (RN + KMP) analytics-event parity vs web for shipped MVP epics (6/10A/10B/80/84) - identify funnel blindspots where mobile traffic is uninstrumented. Carried from 2026-07-23, now 73d older |
+| `pm-data-min-analytics-dod-decision-forcing-2026-10-04` | medium | pm-scrum-master | open | Force a decision on the Minimum-Analytics DoD (binding gate vs formally dropped) - still open 73 days after proposal; indefinite advisory status is blocking adoption |
+| `pm-data-layout-publish-analytics-events-2026-10-04` | medium | pm-data | open | Define + wire layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) - Layout & Content Manager shipped end-to-end with zero KPI hooks; carried from 2026-07-23 |
+| `pm-data-dispute-lifecycle-kpi-set-2026-10-04` | medium | pm-data | open | Define dispute-lifecycle KPI set (filed -> mediation -> resolved funnel, TTR p50/p95, evidence-per-dispute) - Epic 80 all-done, no dashboard exists; carried from 2026-07-23 |
+| `code-review-mobile-native-kmp-httpclient-no-timeout` | low | pm-backend | open | mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS |
+| `code-review-mobile-native-kmp-cancellation-swallowed` | low | pm-backend | open | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors |
+| `code-review-mobile-native-kmp-portfolio-analytics-caps-100` | low | pm-backend | open | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios |
+| `code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1` | low | pm-backend | open | mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2] |
+| `code-review-mobile-native-kmp-ssoservice-untested` | low | pm-qa | open | mobile-native-kmp: SsoService (deep-link token exchange, login, password reset, session restore) has zero direct tests |
+| `code-review-mobile-native-kmp-create-listing-not-wired` | low | pm-backend | open | KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded |
+| `code-review-mobile-rn-meter-reading-no-numeric-validation` | low | pm-backend | open | Mobile RN meter-reading input accepts non-numeric — silent write of garbage values |
+| `code-review-reality-server-dup-url-validator` | low | pm-tech-lead | open | reality-server carries a duplicated URL-validation helper — merge into shared crate |
+| `code-review-ppt-web-api-client-auth-fetch-triplication` | low | pm-tech-lead | open | Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives |
+| `code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english` | low | pm-tech-lead | open | workflow-automation pages emit English-literal toast titles while rest of file uses i18n |
+| `screen-map-drift-pr-2994-ppt` | low | pm-qa | open | ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt |
+| `screen-map-drift-pr-2995-ppt` | low | pm-qa | open | ppt-web Home CTA refactor (PR #2995) landed without touching docs/screens/ppt |
+| `screen-map-drift-pr-3002-ppt` | low | pm-qa | open | ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt |
+| `churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx` | low | pm-tech-lead | open | ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot) |
+| `churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx` | low | pm-tech-lead | open | ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot) |
+| `churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx` | low | pm-tech-lead | open | ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot) |
+| `code-review-reality-web-price-alert-markread-silent-fail` | low | pm-backend | open | reality-web PriceAlerts mark-read mutations swallow errors — row stays unread with no user feedback on failure |
+| `code-review-reality-web-profile-mock-data` | low | pm-backend | open | reality-web /profile route renders MOCK_* fixtures — every signed-in user sees the same fabricated identity, listings, activity, reviews |
+| `code-review-reality-server-create-handlers-return-200-not-201` | low | pm-backend | open | reality-server create handlers return 200 OK but utoipa spec claims 201 Created — OpenAPI contract vs runtime divergence across 9 endpoints |
+| `screen-map-drift-pr-3013-reality` | low | pm-qa | open | PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md |
+| `screen-map-drift-pr-3014-reality` | low | pm-qa | open | PR #3014 touched reality-web /report route without updating docs/screens/reality/report-listing.md |
+| `churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | low | pm-tech-lead | open | reality-web /report page recent churn — PR #3014 submit-wiring change |
+| `churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | low | pm-tech-lead | open | reality-web /sell page recent churn — PR #3013 publish-wiring change |
+| `churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx` | low | pm-tech-lead | open | reality-web FeaturedListings recent churn — PR #3015 error-surface fix |
+| `code-review-reality-server-add-to-compare-toctou-max-cap` | low | pm-backend | open | reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap |
+| `pm-scrum-master-needs-human-review-sla-clearance-2026-10-04` | low | pm-tech-lead | open | Clear the needs-human-review label from PR #3005 (webhook refactor-split) and PR #2744 (dispatcher archive-push fix). Both merged 2026-10-03; label needs explicit ack or escalation per decision-needed 2026-10-04 |
+| `pm-scrum-master-webhook-split-churn-rewatch-2026-10-04` | low | pm-tech-lead | open | Re-measure 14-day churn window on backend/servers/api-server/src/routes/integrations/webhook/*.rs after PR #3005 split, to confirm the refactor did not just move the hotspot into one submodule |
