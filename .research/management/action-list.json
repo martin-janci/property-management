@@ -688,6 +688,40 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-community-group-detail-mock-data",
+      "action": "ppt-web /community/groups/:groupId renders hardcoded mock group — every group shows fake \"Sample Group\" with no-op actions",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-04T14:31:10Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T14:31:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-group-toast-i18n",
+      "action": "ppt-web route-group action toasts use hardcoded English — bypass react-i18next, render English on sk/cs/de locales",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-04T14:31:10Z (score=1 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-04T14:31:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-01T04:30:00Z"
