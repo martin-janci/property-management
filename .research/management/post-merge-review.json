@@ -1,9 +1,18 @@
 {
-  "generated": "2026-10-03T22:28:52Z",
+  "generated": "2026-10-04T10:29:22Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-04T10:29:22Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (Tier-1d demand-driven, buffer-starvation trigger: claimable=25 < floor=36). Window=14d (merged>=2026-09-20), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL HTTP-403, direct git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did not touch assignments.json/action-list.json/archives; review-only). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-20 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new. Cross-checked list_pull_requests(closed, base=dev, sort=updated desc, perPage=40); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false even for merged PRs). Every in-window merge already carries post-merge-reviewed from prior runs: #2744,#3005 @10-03; #3015,#3014,#3013 @10-02; #3010,#3011,#3009 @10-01; #3001,#3002,#3004 @09-30; #2983,#2989,#2994,#2968,#2984,#2985,#2986,#2988,#2970,#2971,#2990,#2991,#2993,#2995,#2996 @09-27; #2980,#2979 @09-26. Last run's cursor PRs (#3015,#3005,#2744) confirmed still labeled. Top-of-list dependabot PRs (#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939,#2958,#2591,#2933) are closed-unmerged (no merged_at), not merges into dev. #463 @2026-05-24 predates the window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass (hard rule: never re-review a post-merge-reviewed PR).",
+      "focus_prs": []
+    },
     {
       "run_at": "2026-10-03T22:28:52Z",
       "prs_scanned": 3,
@@ -292,36 +301,6 @@
       "focus_prs": [
         2931,
         2932
-      ]
-    },
-    {
-      "run_at": "2026-09-03T02:28:15Z",
-      "prs_scanned": 3,
-      "clean": [
-        2927
-      ],
-      "with_issues": [
-        {
-          "pr": 2928,
-          "issue": 2929,
-          "findings": 1,
-          "specialist": "pm-backend",
-          "note": "snapshot-consistency regression test does not fail on pre-fix code (no concurrent writer); add contention-driven sqlx test via a report_summary_in_tx seam"
-        },
-        {
-          "pr": 2919,
-          "issue": 2930,
-          "findings": 1,
-          "specialist": "pm-backend",
-          "note": "self-review guard only unit-tests the pure helper; add DB-backed end-to-end 403 test asserting create_review wiring"
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-20), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable (proxy-403); GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no build/DB in cloud runner). Label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-20 -label:post-merge-reviewed -label:no-review-needed) returned 3 net-new never-reviewed PRs. Reviewed all 3 by full-diff static analysis against the checklist. #2928 (data_export report_summary snapshot consistency via REPEATABLE READ READ ONLY tx): production fix correct, BUT the added test report_summary_counts_agree_with_entries runs one report_summary call with NO concurrent writer, so it passes on the pre-fix two-pool-reads code too (does not fail-on-main) -> opened #2929 (tests, medium): contention-driven sqlx test via a report_summary_in_tx seam. #2919 (reality-server reject self-review on agent-review endpoint): fix correct + well-scoped, but only the pure reject_self_review helper is unit-tested; the create_review wiring (arg order principal.user_id vs realtor_profiles.user_id, guard placement, actual 403) is uncovered -> opened #2930 (tests, low; secondary pm-security): DB-backed end-to-end 403 self-review test + distinct-user-passes companion. #2927 (ppt-web EmergencyContactDirectoryPage update-error i18n test): CLEAN, pure test-coverage addition, no production risk. 2 follow-ups opened (#2929, #2930), both cloud-landable pm-backend test-gap work. All 3 PRs labeled post-merge-reviewed + breadcrumb comments on #2928/#2919. DISPATCHER_OWNED_COMMIT=1: wrote the two artifacts only; deferred commit to orchestrator Phase 6 (no git add/commit).",
-      "focus_prs": [
-        2928,
-        2919,
-        2927
       ]
     }
   ]
