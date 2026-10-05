@@ -11420,7 +11420,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
       ],
@@ -11435,7 +11435,12 @@
       ],
       "created_at": "2026-10-02",
       "updated_at": "2026-10-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T10:32:41Z",
+        "assignment_status": "merged",
+        "pr_number": 3021
+      }
     },
     {
       "id": "screen-map-drift-pr-3013-reality",
@@ -11597,7 +11602,7 @@
     },
     {
       "id": "code-review-ppt-web-core-community-group-detail-mock-data",
-      "title": "ppt-web /community/groups/:groupId renders hardcoded mock group \u2014 every group shows fake \"Sample Group\" with no-op actions",
+      "title": "ppt-web /community/groups/:groupId renders hardcoded mock group — every group shows fake \"Sample Group\" with no-op actions",
       "vector": "bug",
       "confidence": "high",
       "score": 2,
@@ -11606,7 +11611,7 @@
         "rotating-expert-review ppt-web-core 2026-10-04"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/routes/groups/community.tsx:74-114 GroupDetailPageRoute reads the groupId route param (L75) then discards it: it builds a hardcoded `mockGroup` (L84-97, name 'Sample Group', buildingId 'bld-1', memberCount 10, createdBy 'user-1') and passes it to <GroupDetailPage group={mockGroup}>. No useQuery/API fetch exists, so every community group detail page renders identical fabricated data regardless of which group the user opened \u2014 a shipped, user-facing route presenting fake data as real.",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:74-114 GroupDetailPageRoute reads the groupId route param (L75) then discards it: it builds a hardcoded `mockGroup` (L84-97, name 'Sample Group', buildingId 'bld-1', memberCount 10, createdBy 'user-1') and passes it to <GroupDetailPage group={mockGroup}>. No useQuery/API fetch exists, so every community group detail page renders identical fabricated data regardless of which group the user opened — a shipped, user-facing route presenting fake data as real.",
         "All mutating handlers are empty no-ops: onJoin={() => {}}, onLeave={() => {}}, onEdit={() => {}}, onPromoteMember={() => {}}, onRemoveMember={() => {}}, onBanMember={() => {}} (L105-111). Join/Leave/moderation controls render but do nothing when clicked.",
         "Reachable in production: the route wrapper is mapped under the community group-detail path and the guard at L79 only handles a missing param. Fix: resolve the real group via the api-client (e.g. a useCommunityGroup(groupId) query with loading/error/empty states) and wire the handlers to the corresponding mutations."
       ],
@@ -11619,7 +11624,7 @@
     },
     {
       "id": "code-review-ppt-web-core-route-group-toast-i18n",
-      "title": "ppt-web route-group action toasts use hardcoded English \u2014 bypass react-i18next, render English on sk/cs/de locales",
+      "title": "ppt-web route-group action toasts use hardcoded English — bypass react-i18next, render English on sk/cs/de locales",
       "vector": "bug",
       "confidence": "high",
       "score": 1,

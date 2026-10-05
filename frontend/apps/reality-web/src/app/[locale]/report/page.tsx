@@ -13,7 +13,8 @@ import { Footer, Header } from '@/components/ui';
 import { REPORT_PROBLEMS, type ReportProblem } from './_mock';
 
 // TODO: replace problem cards with @ppt/ui-kit/RadioCards once available
-// TODO: replace file attachment with @ppt/ui-kit/FileUpload once available
+// TODO(#3017): the attachment control is disabled pending an upload pipeline
+// — see the "Attachments" block below for why it collects nothing today.
 
 // reality-server's `POST /api/v1/reports` requires a UUID `listing_id` that
 // resolves to an active listing. A deep link from a listing ("report this
@@ -40,7 +41,6 @@ export default function ReportPage() {
   const [problem, setProblem] = useState<ReportProblem | null>(null);
   const [listingRef, setListingRef] = useState('');
   const [description, setDescription] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
   const [gdprAccepted, setGdprAccepted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -308,7 +308,16 @@ export default function ReportPage() {
             />
           </div>
 
-          {/* Attachments */}
+          {/* Attachments — intentionally NOT wired to submit (see #3017).
+              reality-server's POST /api/v1/reports accepts `attachments` as
+              pre-uploaded http(s) URLs, but no upload endpoint exists yet, so
+              the old control collected File objects that handleSubmit never
+              transmitted — a reporter saw a success screen while the evidence
+              was silently dropped. Until the upload pipeline lands, the
+              control is disabled with a "coming soon" hint and carries no file
+              input, so the page no longer implies evidence is submitted.
+              TODO(#3017): restore an active upload control wired to a presigned
+              upload, then pass the returned URLs as `attachments`. */}
           <div>
             <label
               style={{
@@ -318,10 +327,12 @@ export default function ReportPage() {
                 marginBottom: 6,
               }}
             >
-              Prílohy (voliteľné)
+              Prílohy (čoskoro)
             </label>
-            {/* TODO: replace with @ppt/ui-kit/FileUpload once available */}
-            <label
+            {/* TODO(#3017): replace with @ppt/ui-kit/FileUpload wired to a
+                presigned upload once available. */}
+            <div
+              aria-disabled="true"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -329,29 +340,21 @@ export default function ReportPage() {
                 padding: '14px 18px',
                 border: '2px dashed var(--ppt-border-default, #e5e7eb)',
                 borderRadius: 8,
-                cursor: 'pointer',
-                color: 'var(--ppt-fg-secondary)',
+                cursor: 'not-allowed',
+                color: 'var(--ppt-fg-muted, #9ca3af)',
                 fontSize: '0.9375rem',
+                opacity: 0.6,
+                userSelect: 'none',
               }}
             >
               <span style={{ fontSize: '1.25rem' }}>📎</span>
-              {attachments.length > 0
-                ? `${attachments.length} ${attachments.length === 1 ? 'súbor' : 'súbory'} vybrané`
-                : 'Priložiť screenshoty alebo dôkazy'}
-              <input
-                type="file"
-                multiple
-                accept="image/*,.pdf"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  if (e.target.files) setAttachments(Array.from(e.target.files));
-                }}
-              />
-            </label>
+              Pridávanie príloh bude čoskoro dostupné
+            </div>
             <p
               style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)', marginTop: 6 }}
             >
-              PNG, JPG, PDF · max. 5 MB na súbor · max. 5 súborov
+              Nahrávanie screenshotov zatiaľ nie je dostupné — prosím, opíšte dôkazy v popise
+              vyššie. Pripravujeme ho.
             </p>
           </div>
 

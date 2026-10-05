@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-04T00:31:16Z",
+  "archived_at": "2026-10-05T12:33:40Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4915,6 +4915,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
+      "action": "Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=2 conf=high vector=refactor) | gc1-reconcile 2026-10-05T04:40:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-01T06:28:31Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-10-05T04:40:55Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-api-401-no-request-replay",
       "action": "ppt-web lib/api.ts axios 401 interceptor never replays the failed request; AuthContext refreshes in the background without awaiting, so the request that hit an expired token always rejects and TanStack Query retries can race/exhaust before the rotated token lands (raw getApiClient() consumers get a hard rejection)",
       "owner_role": "pm-frontend",
@@ -7456,6 +7480,29 @@
         "merged_pr": 2890,
         "merged_at": "2026-08-30T16:40:38Z",
         "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-price-alert-markread-silent-fail",
+      "action": "reality-web PriceAlerts mark-read mutations swallow errors — row stays unread with no user feedback on failure",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-02T06:31:33Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-05T10:32:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-02T06:31:33Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "086a898f7e423283509822f0a6597c48fce0e0cc",
+        "subject": "code-review-reality-web-price-alert-markread-silent-fail: surface error when PriceAlerts mark-read fails (#3021)",
+        "at": "2026-10-05T10:32:41Z"
       }
     },
     {
@@ -17163,6 +17210,86 @@
         "merged_pr": 3010,
         "merged_at": "2026-10-01T20:29:50Z",
         "at": "2026-10-02T00:26:03Z"
+      }
+    },
+    {
+      "id": "gh-issue-3012",
+      "action": "dispatcher: `git stash` is shared across worktrees — parallel implementers contaminate each other (Closes #3012)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-01T14:25:11Z (#3012) | gc1-reconcile 2026-10-05T12:26:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-01T14:25:11Z",
+      "issue_ref": {
+        "number": 3012,
+        "url": "https://github.com/martin-janci/property-management/issues/3012",
+        "labels": [
+          "bug",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3018,
+        "merged_at": "2026-10-05T06:28:11Z",
+        "at": "2026-10-05T12:26:18Z"
+      }
+    },
+    {
+      "id": "gh-issue-3016",
+      "action": "Follow-up: /sell wizard still drops seller contact fields (name/phone/email) on publish (PR #3013) (Closes #3016)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-02T20:29:10Z (#3016) | dev-reconcile 2026-10-05T10:32:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-02T20:29:10Z",
+      "issue_ref": {
+        "number": 3016,
+        "url": "https://github.com/martin-janci/property-management/issues/3016",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b4f8851863f883930774be237126c96295e8cfc6",
+        "subject": "gh-issue-3016: drop dead seller contact fields from /sell wizard (#3022)",
+        "at": "2026-10-05T10:32:41Z"
+      }
+    },
+    {
+      "id": "gh-issue-3017",
+      "action": "Follow-up: /report page collects file attachments that are never transmitted (PR #3014) (Closes #3017)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-02T20:29:10Z (#3017) | gc1-reconcile 2026-10-05T12:26:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-02T20:29:10Z",
+      "issue_ref": {
+        "number": 3017,
+        "url": "https://github.com/martin-janci/property-management/issues/3017",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3019,
+        "merged_at": "2026-10-05T08:27:19Z",
+        "at": "2026-10-05T12:26:18Z"
       }
     },
     {

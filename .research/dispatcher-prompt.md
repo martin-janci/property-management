@@ -274,6 +274,26 @@ The trap removes the worktree on exit — `.gitignore` already excludes
 `.worktrees/` from the repo, and `/tmp/ppt-worktrees/` is outside the repo
 entirely, so no in-tree pollution either way.
 
+**NEVER `git stash` inside a `/tmp/ppt-worktrees/` worktree (issue #3012).**
+A `git worktree` shares the *common git directory* of the clone it was created
+from — the stash is stored there (`.git/refs/stash` plus the stash reflog),
+NOT per-worktree. So a `git stash` run from one implementer's worktree is
+visible to, and `stash pop`-able from, every other worktree of the same clone,
+including the sibling implementers the dispatcher spawns in parallel. Two
+implementers that each stash then pop will silently swap or drop each other's
+work (exactly the cross-worktree contamination #3012 reported). The worktree
+isolation above does NOT protect the stash — only the working tree and the
+branch are isolated.
+
+Safe alternative when a subagent must set uncommitted work aside: copy the
+affected paths to a scratch file *outside* the repo (e.g. under the session
+scratchpad or `/tmp/ppt-scratch-$$/`) and `git checkout -- <path>` / restore
+from the copy, instead of `git stash`. For isolating a pre-fix vs post-fix
+state (the IG3 "fails-before-fix" proof), use the two-separate-commits split
+(`test:` then `fix:`) and check each commit out independently — never stash
+the fix. Inject this prohibition into every Phase 4 / 5.6 / 5.7 subagent brief
+alongside the preamble.
+
 Phase 5.5 (merger) does NOT need worktree isolation — `gh pr merge` is a
 GitHub API call, no local checkout.
 
