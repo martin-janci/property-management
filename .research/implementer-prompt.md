@@ -63,9 +63,17 @@ output in the PR body.
   3. Run it on `HEAD` (after the fix lands) — confirm it passes. Capture the
      pass output verbatim.
   4. Record both runs in the PR body under an *IG3 — TDD evidence* heading.
-- **Why not `git stash`?** Stash only removes *uncommitted* work. Once the
-  fix is committed (which it must be, to be in the PR), stash won't isolate
-  it. The two-commit split is the reliable mechanism.
+- **Why not `git stash`?** Two reasons. (1) Stash only removes *uncommitted*
+  work — once the fix is committed (which it must be, to be in the PR), stash
+  won't isolate it. (2) **The stash is shared across worktrees (issue #3012).**
+  A `git worktree` shares the clone's common git directory, where the stash
+  lives (`.git/refs/stash` + the stash reflog) — it is NOT per-worktree. So a
+  `git stash` run inside a shared `/tmp/ppt-worktrees/<task>/` worktree is
+  visible to, and pop-able from, every sibling implementer's worktree, which
+  silently contaminates parallel runs. The two-commit split is the reliable,
+  worktree-safe mechanism. If you must set uncommitted work aside at all, copy
+  the paths to a scratch file *outside* the repo and restore from it — never
+  `git stash`.
 
 ### IG4 — All "Suggested approach" steps are addressed or explicitly skipped
 
