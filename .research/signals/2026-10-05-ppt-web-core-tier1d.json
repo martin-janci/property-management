@@ -1,0 +1,44 @@
+{
+  "generated": "2026-10-05",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable backlog below floor); single-segment static-analysis-only rotating code review, cloud-ok",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed. review_cursor.ppt-web-core = 2026-09-27 was the oldest date across all 8 segments (next oldest ppt-web-ui 2026-10-01). Cloud-verifiable web segment (not mobile-native/KMP, which the task forbids as structurally unlandable). backlog.json has 0 OPEN code-review-finding items with segment==ppt-web-core -> not saturated -> selected. No ppt-web-core Tier-1d run exists today.",
+  "experts_used": ["frontend"],
+  "landable_in_cloud": true,
+  "landability_note": "Both findings are frontend-only TypeScript edits confined to a single ppt-web source file each, no API/openapi regen, no migration. (1) lib/api.ts: wrap the awaited onUnauthorizedCallback() in try/catch so a throwing handler still rejects via transformError() (and still runs the retry path) per the handler's own documented contract. Verifiable with a Vitest case where onUnauthorized rejects and asserting the interceptor rejects with an ApiError, not the raw throw. (2) hooks/useWebSocket.ts: add handler presence to the subscribe effect's dependency set (or subscribe unconditionally with the ref-indirection already in place) so a handler that becomes defined after mount actually subscribes. Verifiable with a Vitest case that mounts with handler=undefined then re-renders with a defined handler and asserts subscribe() fired. Independently landable by separate implementers.",
+  "findings_count": 2,
+  "static_only": true,
+  "note": "Static analysis only (no compilation, no test execution) per skill. Segment root is frontend/apps/ppt-web/src/ core surface: hooks/, lib/, contexts/, routes/ (router) — EXCLUDING pages/ and components/ and features/ (those belong to ppt-web-ui). This is a mature, heavily-reviewed segment; most patterns scanned came up CLEAN this pass (recorded so future rotations do not re-mine speculatively): (a) console.* — all production console calls are gated behind import.meta.env.DEV (lib/api.ts retry log, lib/websocket.ts wsWarn/wsError wrappers, hooks/usePerformanceMetrics.ts logPerformanceMetrics early-returns on !DEV); no ungated leaks. (b) `as any`/`as unknown as` — every hit is inside *.test.ts(x) fixtures, none cross a production API boundary. (c) i18n — core has no user-facing literals; lib/errorHandler.ts resolves all copy through i18n.t('errors.catalogue.*') with a default fallback. (d) error swallowing — every empty catch {} is intentional and documented (localStorage guards in AuthContext.tokenStorage + lib/storage.ts, analytics sink isolation, websocket close-on-already-closed, PerformanceObserver feature-detect). (e) WebSocketContext.categoryToQueryKeys is in exact lockstep with backend common::notifications::NotificationCategory (all 8 snake_case variants announcements/faults/votes/messages/community/financial/documents/system present) — no stale-feed completeness gap. (f) AUTHED_QUERY_KEY_ROOTS logout purge — the `community`/`system` roots referenced only by categoryToQueryKeys back no real active query (community feature has no queryKey usage), so their absence from the purge list is a harmless no-op, not a leak. (g) non-null assertions in lib/websocket.ts (socket!.send, messageHandlers.get()!.add) are each guarded by a preceding isConnected()/has() check. (h) all setTimeout/setInterval have matching clear on cleanup. The two findings below are the genuine net-new latent defects, neither present in backlog.json (grep for api-unauthorized/onUnauthorized/useWebSocket-subscribe returned nothing).",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-api-unauthorized-throw-uncaught",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-05 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/lib/api.ts"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:253 — the response interceptor's 401 branch does `const rotatedToken = await onUnauthorizedCallback();` with NO try/catch around it. The UnauthorizedHandler contract documented on the same file (lines 54-58) explicitly states: 'Returning null/undefined (or throwing) means the session could not be recovered — the interceptor then rejects the original request and the handler is responsible for any session teardown.' For the null/undefined case the code correctly falls through to `return Promise.reject(transformError(error))` at :304, so consumers get a typed ApiError. For the THROW case the code does not honour the contract: the thrown value escapes the async error handler directly, so (a) it bypasses transformError() and raw getApiClient() consumers receive an untyped rejection instead of an ApiError (breaking isApiError()/getErrorMessage() call sites), and (b) the method/transient retry path at :276-301 is skipped entirely.",
+        "Reachability: latent today. The only wired handler is AuthContext.handleUnauthorized (contexts/AuthContext.tsx:657-669), which catches refreshToken() rejections internally and awaits logout(), so it currently resolves rather than throws. The gap is a contract-vs-implementation mismatch that will silently misbehave the moment any future onUnauthorized handler (or a synchronous throw inside the current one, e.g. if queryClient.removeQueries threw) rejects. Landable frontend-only remedy confined to api.ts: wrap the await in try/catch and, on throw, fall through to the same `Promise.reject(transformError(error))` path the null branch uses. Confidence medium: the propagation is confirmed by static read of the interceptor; whether a handler ever throws is deployment-dependent, so the trigger is latent rather than runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-late-handler-no-sub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-05 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/hooks/useWebSocket.ts"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 — the single-subscription effect guards with `if (!eventType || !handlerRef.current) return;` and has dependency list `[eventType, subscribe]`. `handler` is deliberately kept out of the deps (stored in handlerRef at :79-80 to avoid re-subscribing on handler identity churn). The failure mode: if a caller passes `useWebSocket(eventType, handler)` where `handler` is undefined on the render that first supplies a non-null `eventType` (e.g. `useWebSocket('notification.created', ready ? onEvent : undefined)`), the effect runs, hits the early-return because handlerRef.current is undefined, and creates NO subscription. When `handler` later becomes defined WITHOUT eventType or subscribe changing, the effect does not re-run (handler is not a dep and not surfaced via any other dep), so the subscription is never established — events for that eventType are silently dropped for the component's lifetime.",
+        "Contrast: the sibling useWebSocketSubscriptions (:142-159) keys its effect on eventTypesKey and reads handlers from subscriptionsRef, so a handler swap for an existing key is safe there; but useWebSocket has no equivalent re-arm when the handler transitions undefined->defined. Reachability: latent — most call sites pass a stable defined handler at mount, so it rarely bites. Landable frontend-only remedy confined to useWebSocket.ts: either subscribe unconditionally (the wrappedHandler already no-ops via `handlerRef.current?.(message)` when undefined) so the subscription exists regardless of initial handler presence, or add a boolean `hasHandler` derived value to the dependency list so the effect re-runs when the handler first appears. Verifiable with a Vitest render that starts handler=undefined then rerenders with a defined handler and asserts subscribe() was called. Confidence medium: the missed re-subscribe is confirmed by static read of the deps; triggering requires the initially-undefined-handler usage pattern, so it is latent."
+      ]
+    }
+  ]
+}
