@@ -1,0 +1,256 @@
+{
+  "run": "2026-10-05",
+  "generated_at": "2026-10-05T16:53:03Z",
+  "trigger_payload": "buffer-low: claimable=11/72 — refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-05",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "last_run_iso=2026-10-03T03:12:00Z — 61h ago (>36h threshold)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2 commits in last 14d touched frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx — PR #3021 (mark-read silent-fail fix)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit — 2 commits in last 14d (PR #3013 publish-wiring, PR #3022 contact-fields fix)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit — 2 commits in last 14d (PR #3014 submit-wiring, PR #3019 attachment-control fix)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit — 2 commits in last 14d; prior backlog item refactor-repeated-churn-integrations-webhook was dropped on 2026-09-20"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "hotspot-history",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit — runs_seen reaches 4 (prior last_seen 2026-09-20); prior backlog item dropped"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3019 touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx with no docs/screens/reality/report-listing.md update — follow-up to PR #3014 drift (same route) persists"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3022 touched frontend/apps/reality-web/src/app/[locale]/sell/page.tsx with no docs/screens/reality/sell.md update — follow-up to PR #3013 drift (same route) persists"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-dispute-draft-persist",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/hooks/useDraftStorage.ts:88-99 + FileDisputePage.tsx:23,124 persist DISPUTE_DRAFT_KEY to localStorage; AuthContext.tsx:186-195 tokenStorage.clear() clears only 4 auth keys; logout() at :614-638 does not sweep feature draft keys — abandoned dispute drafts survive logout on shared browsers (verified: traced UI → hook → storage → logout; confidence upgraded medium→high after reading diff)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-ai-ack-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx:48,81 — useAcknowledgeSentimentAlert + useAcknowledgeMaintenancePrediction mutations are fire-and-forget; hooks at features/sentiment/useSentiment.ts:91 and features/sentiment/usePredictiveMaintenance.ts:74 wire only onSuccess; failed acknowledges silently no-op"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-msg-delete-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx:207 + :188 — deleteMessage.mutate + markRead.mutate fire-and-forget; features/messaging/useMessaging.ts:353 useDeleteMessage wires only onSuccess; destructive DELETE failures leave thread unchanged with no feedback"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 ... grep ^# <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "compare staged vs HEAD state.json cursors / seen_signals / stats",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] | length == (unique | length)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emits with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "items.score cap 8 + decay applied to 2 items with updated_at<=today-14",
+      "observed": "cap=true; decay applied to 2 items (score 2->1)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation in brief for each new plan",
+      "observed": "brief Plans promoted line: adversarial pass: passed",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; 4 metadata + 11 headings; files resolve; mode declared",
+      "observed": "1 new plan; 4+11 checked; 4 files resolve; Mode: cloud-ok",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname grep over staged diff (ex-baseline)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase reported failure this run",
+      "observed": "no failures",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still present in plans/ or plans/_archive/",
+      "observed": "28 plans + 10 archived — nothing silently deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "10 >= 10",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff .research/IDEAS_TRIAGE.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions<=3; pr/issue/comment each<=1; idempotency vs history",
+      "observed": "auto_fix_actions=[]; no auto-fix fired this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is no-op; pm_cursor.next_index=6 (in 0..7)",
+      "observed": "skipped; pm_cursor.next_index=6",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot-token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

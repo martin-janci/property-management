@@ -10672,7 +10672,7 @@
       "title": "CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
@@ -10680,7 +10680,8 @@
       "evidence": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:389-404 — handleCreate does `await createMutation.mutateAsync({...}); onClose();` with no try/catch; createMutation.error is never read or rendered anywhere in the file (only createMutation.isPending is, at lines 557/559), so a failed CRM connection create (bad apiKey, network error, duplicate) just re-enables the Create button with no explanation",
         "frontend/apps/reality-web/src/components/import/FeedImport.tsx:480-489 — AddFeedModal.handleCreate has the identical shape: `await createMutation.mutateAsync(...); onClose();` with no try/catch; createMutation.error is never rendered (only previewMutation.error is, at FeedImport.tsx:554)",
-        "frontend/apps/reality-web/src/lib/query-provider.tsx has no MutationCache onError / global toast fallback, so nothing else catches these — this is the same bug class already fixed for favorites/saved-searches/inquiries in PR #2890 (see code-review-reality-web-mutation-no-onerror), recurring here because the import/ CRM+Feed wizards were built without the same onError/isError treatment"
+        "frontend/apps/reality-web/src/lib/query-provider.tsx has no MutationCache onError / global toast fallback, so nothing else catches these — this is the same bug class already fixed for favorites/saved-searches/inquiries in PR #2890 (see code-review-reality-web-mutation-no-onerror), recurring here because the import/ CRM+Feed wizards were built without the same onError/isError treatment",
+        "decayed 2026-10-05: no new signals in 14 days (score 2 -> 1); item is in dispatcher assignments (review status)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
@@ -10722,14 +10723,15 @@
       "title": "SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave does `await updateMutation.mutateAsync({...}); setIsEditing(false);` with no try/catch; on failure the mutateAsync rejection propagates as an unhandled promise rejection and setIsEditing(false) never runs, but nothing tells the user why the form didn't close",
-        "Only updateMutation.isPending is consumed in the file (SyncSchedule.tsx:161/163, disables the Save button + shows 'saving'); there is no isError/error branch anywhere — same silent-failure shape as the already-fixed code-review-reality-web-mutation-no-onerror (PR #2890), recurring in the import/schedule feature"
+        "Only updateMutation.isPending is consumed in the file (SyncSchedule.tsx:161/163, disables the Save button + shows 'saving'); there is no isError/error branch anywhere — same silent-failure shape as the already-fixed code-review-reality-web-mutation-no-onerror (PR #2890), recurring in the import/schedule feature",
+        "decayed 2026-10-05: no new signals in 14 days (score 2 -> 1); item is in dispatcher assignments (review status)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx"
@@ -11194,18 +11196,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2995"
+        "PR #2995",
+        "PR #3023"
       ],
       "evidence": [
-        "PR #2995 route-level Home CTA role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+        "PR #2995 route-level Home CTA role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate.",
+        "resolved: PR #3023 merged 2026-10-05 — docs(ppt-web): reconcile ppt/home screen-map with PR #2995 CTA fix"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11497,16 +11501,18 @@
       "status": "open",
       "sources": [
         "churn-scan-2026-10-03",
-        "PR #3013"
+        "PR #3013",
+        "PR #3022"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "cumulative re-emit 2026-10-05: another 2 commits in last 14d (PR #3013 publish-wiring + PR #3022 contact-fields fix) — no score bump"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11518,16 +11524,18 @@
       "status": "open",
       "sources": [
         "churn-scan-2026-10-03",
-        "PR #3014"
+        "PR #3014",
+        "PR #3019"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "cumulative re-emit 2026-10-05: another 2 commits in last 14d (PR #3014 submit-wiring + PR #3019 attachment-control fix) — no score bump"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11645,6 +11653,141 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "PR #3019 touched reality-web /report route without updating docs/screens/reality/report-listing.md (follow-up to PR #3014 drift)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 (gh-issue-3017: disable never-transmitted /report attachment control) touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx with no docs/screens/reality/report-listing.md update — mechanical drift signal, review-candidate per heuristic caveat"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "PR #3022 touched reality-web /sell route without updating docs/screens/reality/sell.md (follow-up to PR #3013 drift)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 (gh-issue-3016: drop dead seller contact fields from /sell wizard) touched frontend/apps/reality-web/src/app/[locale]/sell/page.tsx with no docs/screens/reality/sell.md update — mechanical drift signal, review-candidate per heuristic caveat"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+      "title": "reality-web PriceAlerts.tsx — 2 commits in last 14d (new hotspot, PR #3021 mark-read silent-fail fix)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit-log 2026-10-05",
+        "PR #3021"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx — 2 commits in last 14d; PR #3021 (code-review-reality-web-price-alert-markread-silent-fail) added onError handling. Low score 1 — review-candidate; not actionable yet."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-dispute-draft-persist",
+      "title": "ppt-web dispute-filing draft persists in localStorage across logout — abandoned drafts (neighbor names, legal grievances) readable by next user on shared browser",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-05"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/hooks/useDraftStorage.ts:88-99 — flush() writes {values, savedAt} to localStorage.setItem(key, …) with no TTL",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx:23,124 — DISPUTE_DRAFT_KEY = ppt-dispute-filing-draft wired into useDraftStorage at page mount",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:186-195 — tokenStorage.clear() removes only 4 auth keys; dispute draft key not in the list",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:614-638 — logout() invokes tokenStorage.clear() + AUTHED_QUERY_KEY_ROOTS cache purge; no localStorage sweep for feature-owned draft keys",
+        "verified reachable: no other call site clears DISPUTE_DRAFT_KEY except useDraftStorage.clear() fired on successful submit (mutation.onSuccess), so an abandoned draft survives logout on a shared browser; confidence upgraded to high after tracing the full UI → hook → storage → logout chain"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/hooks/useDraftStorage.ts",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": "plans/code-review-ppt-web-core-dispute-draft-persist.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-ai-ack-silent-fail",
+      "title": "ppt-web ai-dashboards acknowledge mutations are fire-and-forget — sentiment alert / maintenance prediction ack failures leave the row unchanged with zero user feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-05"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx:48 — onAcknowledge={(id) => acknowledge.mutate(id)} fires useAcknowledgeSentimentAlert with no onError; features/sentiment/hooks/useSentiment.ts:91 wires only onSuccess",
+        "same pattern at ai-dashboards.tsx:81 for useAcknowledgeMaintenancePrediction (usePredictiveMaintenance.ts:74 — also onError-less)",
+        "SentimentAlertsPanel receives only pendingAcknowledgeId for a spinner; a failed POST /ai/sentiment/alerts/{id}/acknowledge is silent (no toast, no inline error)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/useSentiment.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-msg-delete-silent-fail",
+      "title": "ppt-web messaging delete + markRead mutations are fire-and-forget — destructive DELETE /messages/{threadId}/{messageId} failures leave the thread unchanged with no feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-05"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx:207 — onDeleteMessage={(messageId) => deleteMessage.mutate({ threadId, messageId })} is fire-and-forget on a destructive action",
+        "features/messaging/hooks/useMessaging.ts:353 — useDeleteMessage wires only onSuccess; caller passes no onError option",
+        "same pattern at messaging.tsx:188 for markRead.mutate(threadId)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
       "plan": null
     }
   ]
