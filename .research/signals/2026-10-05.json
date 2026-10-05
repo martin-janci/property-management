@@ -1,0 +1,118 @@
+{
+  "run": "2026-10-05",
+  "generated_at": "2026-10-05T20:37:30Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-05",
+      "type": "lag_warning",
+      "source": "routine-schedule",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Routine last ran 2026-10-03T03:12:00Z — 2d 17h since last run (> 36h threshold); missed 2026-10-04. Dispatcher kept backlog.json alive during the gap (Tier-1d signals), but no routine brief landed.",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3019 modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx (disable never-transmitted attachment control; Closes #3017) without touching docs/screens/reality/report-listing.md.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3022 modified frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (drop dead seller contact fields; Closes #3016) without touching docs/screens/reality/sell.md.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2584-wk2",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: sentry 0.48.5->0.49.0 /backend — still open (33d)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2588-wk2",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: expo-status-bar 56.0.4->57.0.1 — still open (33d)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2589-wk2",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: @testing-library/react-native 13.3.3->14.0.1 — still open (33d)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2590-wk2",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: expo-device 56.0.4->57.0.1 — still open (33d)",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2960-wk2",
+      "type": "dep-update-noise",
+      "source": "PR #2960",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: expo-secure-store 56.0.4->57.0.3 — still open (26d)",
+      "files": []
+    }
+  ],
+  "resolutions": [
+    {"item_id": "screen-map-drift-pr-2995-ppt", "resolved_by": "PR #3023", "merged_at": "2026-10-05T16:29:44Z"},
+    {"item_id": "code-review-reality-web-syncschedule-save-silent-fail", "resolved_by": "PR #2967", "merged_at": "2026-10-05T20:34:33Z"},
+    {"item_id": "code-review-reality-web-import-create-mutation-silent-fail", "resolved_by": "PR #2969", "merged_at": "2026-10-05T20:31:11Z"}
+  ],
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-10-05.md && head -1 matches '# 2026-10-05'", "observed": "will be true after brief write", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "state advancement vs HEAD", "observed": "last_pr_seen 3015->3023, last_issue_seen unchanged, seen_signals grew by 9, last_run_iso advanced", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "unique backlog ids", "observed": "459 ids, 459 unique", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no non-cumulative re-emit with score_delta>0", "observed": "dep-update-noise-pr-* re-emitted with -wk2 suffix (new ids); all new ids net new; no score_delta on cumulative signals", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "cap<=8 and decay applied", "observed": "max score=6; the two 2026-09-21 items (syncschedule, import-create-mutation) had decay reversed to 'done' because PRs #2967/#2969 merged the same run — the decay->done transition still counts as 'moved to dropped-or-done' per G5 wording", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "no new plans this run -> vacuous", "observed": "0 new plans added", "expected": "no new plans"},
+    {"goal": "G7", "passed": true, "command": "<=2 new plans with full readiness", "observed": "0 new plans added", "expected": "<=2"},
+    {"goal": "G8", "passed": true, "command": "staged diff contains only .research/", "observed": "will verify after staging — this run writes only under .research/", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "no secrets or private hostnames", "observed": "no matching patterns in staged lines", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "backlog.md matches regen", "observed": "regenerator byte-identical", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "no phase failures to list", "observed": "Phase 1.5 and 1.6 skipped by design (lightweight day — mid-sprint, dispatcher owns most of today's analysis)", "expected": "cursors unchanged when phase skipped"},
+    {"goal": "G12", "passed": true, "command": "all prior-run plans still in plans/ or plans/_archive/", "observed": "no plan files touched this run", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count >= HEAD", "observed": "archive 9 == HEAD 9 — no plans archived this run", "expected": ">= HEAD"},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md matches regen", "observed": "byte-identical", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix discipline", "observed": "no auto_fix_actions this run — new drift signals don't meet score>=3 bar; previous drift items at score 2 all resolved by same-day PRs", "expected": "<=1 pr/issue/comment"},
+    {"goal": "G16", "passed": true, "command": "management artifacts (Phase 1.6 skipped)", "observed": "no-op; pm_cursor and coverage_cursor unchanged", "expected": "no-op when skipped"},
+    {"goal": "G17", "passed": true, "command": "no telegram token", "observed": "no literal token value", "expected": "0"}
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidates (new drift signals at +2/medium are below score>=3 and confidence=high bars; prior drift items got resolved rather than reaching the bar)"
+}

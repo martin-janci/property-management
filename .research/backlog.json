@@ -10673,21 +10673,23 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review reality-web 2026-09-21"
+        "rotating-expert-review reality-web 2026-09-21",
+        "PR #2969 merged 2026-10-05"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:389-404 — handleCreate does `await createMutation.mutateAsync({...}); onClose();` with no try/catch; createMutation.error is never read or rendered anywhere in the file (only createMutation.isPending is, at lines 557/559), so a failed CRM connection create (bad apiKey, network error, duplicate) just re-enables the Create button with no explanation",
         "frontend/apps/reality-web/src/components/import/FeedImport.tsx:480-489 — AddFeedModal.handleCreate has the identical shape: `await createMutation.mutateAsync(...); onClose();` with no try/catch; createMutation.error is never rendered (only previewMutation.error is, at FeedImport.tsx:554)",
-        "frontend/apps/reality-web/src/lib/query-provider.tsx has no MutationCache onError / global toast fallback, so nothing else catches these — this is the same bug class already fixed for favorites/saved-searches/inquiries in PR #2890 (see code-review-reality-web-mutation-no-onerror), recurring here because the import/ CRM+Feed wizards were built without the same onError/isError treatment"
+        "frontend/apps/reality-web/src/lib/query-provider.tsx has no MutationCache onError / global toast fallback, so nothing else catches these — this is the same bug class already fixed for favorites/saved-searches/inquiries in PR #2890 (see code-review-reality-web-mutation-no-onerror), recurring here because the import/ CRM+Feed wizards were built without the same onError/isError treatment",
+        "resolved: PR #2969 merged 2026-10-05 — surface create errors in import CRM + Feed wizards (decay reversed — PR landed same day)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
         "frontend/apps/reality-web/src/components/import/FeedImport.tsx"
       ],
       "created_at": "2026-09-21",
-      "updated_at": "2026-09-21",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -10723,19 +10725,21 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review reality-web 2026-09-21"
+        "rotating-expert-review reality-web 2026-09-21",
+        "PR #2967 merged 2026-10-05"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave does `await updateMutation.mutateAsync({...}); setIsEditing(false);` with no try/catch; on failure the mutateAsync rejection propagates as an unhandled promise rejection and setIsEditing(false) never runs, but nothing tells the user why the form didn't close",
-        "Only updateMutation.isPending is consumed in the file (SyncSchedule.tsx:161/163, disables the Save button + shows 'saving'); there is no isError/error branch anywhere — same silent-failure shape as the already-fixed code-review-reality-web-mutation-no-onerror (PR #2890), recurring in the import/schedule feature"
+        "Only updateMutation.isPending is consumed in the file (SyncSchedule.tsx:161/163, disables the Save button + shows 'saving'); there is no isError/error branch anywhere — same silent-failure shape as the already-fixed code-review-reality-web-mutation-no-onerror (PR #2890), recurring in the import/schedule feature",
+        "resolved: PR #2967 merged 2026-10-05 — surface SyncSchedule save failures (decay reversed — PR landed same day)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx"
       ],
       "created_at": "2026-09-21",
-      "updated_at": "2026-09-21",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11194,18 +11198,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #2995"
+        "PR #2995",
+        "PR #3023 merged 2026-10-05"
       ],
       "evidence": [
-        "PR #2995 route-level Home CTA role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+        "PR #2995 route-level Home CTA role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate.",
+        "resolved: PR #3023 merged 2026-10-05 — docs(ppt-web): reconcile ppt/home screen-map with PR #2995 CTA fix"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11645,6 +11651,50 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "PR #3019 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx (disable never-transmitted attachment control, closes #3017) but did not touch docs/screens/reality/report-listing.md.",
+        "Heuristic signal."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "PR #3022 touched reality-web /sell route without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 modified frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (drop dead seller contact fields, closes #3016) but did not touch docs/screens/reality/sell.md.",
+        "Heuristic signal."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
       "plan": null
     }
   ]
