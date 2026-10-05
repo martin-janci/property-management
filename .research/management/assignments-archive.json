@@ -17465,6 +17465,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "screen-map-drift-pr-2995-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-2995-ppt-cb9b7be0",
+      "status": "merged",
+      "claimed_at": "2026-10-05T12:21:40Z",
+      "last_updated": "2026-10-05T16:34:01Z",
+      "status_changed_at": "2026-10-05T16:34:01Z",
+      "pr_number": 3023,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3023",
+      "merged_at": "2026-10-05T16:29:44Z",
+      "specialist": "ppt-screens",
+      "implementer_summary": "pr=3023 status=done specialist=ppt-screens scope_drift=false code_reuse_warn=none note=home.md reconciled; validate 0 errors; draft PR vs dev",
+      "reviewer_summary": "verdict=approve note=docs-only screen-map reconcile; frontmatter untouched; role-routing matches core.tsx/MANAGER_ROLES; validate green; posted as COMMENT",
+      "last_reviewed_oid": "02faa3a330fd69607b2e34a623ceb5da5cfb4c5d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -18395,5 +18417,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-05T10:39:47Z"
+  "archived_at": "2026-10-05T16:36:14Z"
 }
