@@ -10673,7 +10673,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
@@ -10688,7 +10688,12 @@
       ],
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T22:29:55Z",
+        "assignment_status": "merged",
+        "pr_number": 2969
+      }
     },
     {
       "id": "code-review-reality-web-feedcard-mutation-silent-fail",
@@ -10723,7 +10728,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
@@ -10736,7 +10741,12 @@
       ],
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T22:29:55Z",
+        "assignment_status": "merged",
+        "pr_number": 2967
+      }
     },
     {
       "id": "code-review-ppt-web-core-authed-roots-session-leak",

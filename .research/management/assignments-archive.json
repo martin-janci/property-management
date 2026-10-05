@@ -17535,6 +17535,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "screen-map-drift-pr-3002-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-3002-ppt-63c199de",
+      "status": "merged",
+      "claimed_at": "2026-10-05T14:35:36Z",
+      "last_updated": "2026-10-05T22:32:43Z",
+      "status_changed_at": "2026-10-05T22:32:43Z",
+      "pr_number": 3027,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3027",
+      "merged_at": "2026-10-06T00:27:30+02:00",
+      "specialist": "generic",
+      "implementer_summary": "pr=3027 status=done specialist=generic scope_drift=true code_reuse_warn=none note=docs-only screen-map reconcile for PR #3002; updated dashboard-manager.md + dashboard-resident.md (Notes+AgentLog 2026-10-05); /screens validate 167 ok; drift benign pm-qa owner-hint",
+      "reviewer_summary": "verdict=approve note=docs-only screen-map reconcile with PR #3002 role-gate; accurate",
+      "last_reviewed_oid": "e7ef6fb30eb14a2cb44cb0a8ee2a744ea53a10a3",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-05T22:32:43Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -18465,5 +18489,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-05T20:36:44Z"
+  "archived_at": "2026-10-05T22:32:56Z"
 }

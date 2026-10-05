@@ -375,23 +375,6 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-3002-ppt",
-      "action": "ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T06:28:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
       "action": "ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot)",
       "owner_role": "pm-tech-lead",
