@@ -7324,6 +7324,30 @@
       "merge_attempted_at": "2026-08-30T04:35:02Z"
     },
     {
+      "task_id": "code-review-reality-web-import-create-mutation-silent-fail",
+      "branch": "auto-impl/code-review-reality-web-import-create-mu-8cc74cca",
+      "status": "merged",
+      "claimed_at": "2026-09-21T20:29:43Z",
+      "last_updated": "2026-10-05T20:36:27Z",
+      "status_changed_at": "2026-10-05T20:36:27Z",
+      "pr_number": 2969,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2969",
+      "merged_at": "2026-10-05T20:31:11Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=2969 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none(spurious-substring); CRM+Feed create wizards try/catch mutateAsync + inline role=alert error (RealtorManagement pattern); createError in 6 locales; regression tests IG3-satisfied; VERIFY OK 7351356 (biome+typecheck clean, 264 vitest); rebased onto dev 66896ba; reclaimed after sandbox-timeout",
+      "reviewer_summary": "verdict=approve note=re-review-clean-rebase-only-ci-green (self-authored draft; approve posted as PR comment, formal APPROVE blocked; needs human approve+merge)",
+      "last_reviewed_oid": "ce27600817728a5e32039558020c3c35a7869fd0",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-05T20:36:27Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-reality-web-inline-tenant-json-xss",
       "branch": "auto-impl/code-review-reality-web-inline-tenant-js-ec32e1f7",
       "status": "merged",
@@ -7674,6 +7698,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-syncschedule-save-silent-fail",
+      "branch": "auto-impl/code-review-reality-web-syncschedule-sav-dc8d1ee7",
+      "status": "merged",
+      "claimed_at": "2026-09-21T20:29:43Z",
+      "last_updated": "2026-10-05T20:36:27Z",
+      "status_changed_at": "2026-10-05T20:36:27Z",
+      "pr_number": 2967,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2967",
+      "merged_at": "2026-10-05T20:34:33Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=fix-correct-tested-scoped;comment(self-approval-blocked);CI-green",
+      "last_reviewed_oid": "806082c162febcc66b52e07ea99bd989d95d63ae",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-05T20:36:27Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-reality-web-viewsource-untrusted-cast",
@@ -18417,5 +18465,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-05T16:36:14Z"
+  "archived_at": "2026-10-05T20:36:44Z"
 }

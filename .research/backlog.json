@@ -11194,7 +11194,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #2995"
       ],
@@ -11206,7 +11206,12 @@
       ],
       "created_at": "2026-10-01",
       "updated_at": "2026-10-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T20:25:10Z",
+        "assignment_status": "merged",
+        "pr_number": 3023
+      }
     },
     {
       "id": "screen-map-drift-pr-3002-ppt",

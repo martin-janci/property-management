@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "pm-devops",
   "selected_at": "2026-10-05T14:32:35Z",
-  "last_action": "repick",
-  "reason": "prior target 'gh-issue-3012' exhausted; closest-to-done is 'pm-devops' (open=3 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
     "open": 3,
     "claimable": 1
