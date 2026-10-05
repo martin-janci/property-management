@@ -1,0 +1,224 @@
+{
+  "run_date": "2026-10-05",
+  "run_iso": "2026-10-05T03:21:00Z",
+  "cursor_before": {
+    "last_pr_seen": 3015,
+    "last_issue_seen": 3017,
+    "last_commit_sha": "7498145afb451447a34b9715a4dc5bc6282fa111",
+    "last_run_iso": "2026-10-03T03:12:00Z"
+  },
+  "cursor_after": {
+    "last_pr_seen": 3015,
+    "last_issue_seen": 3017,
+    "last_commit_sha": "e933cdc05e90a0938a4438cbed5a724d9559a828",
+    "last_run_iso": "2026-10-05T03:21:00Z"
+  },
+  "phases_run": [
+    "phase1",
+    "phase2",
+    "phase4",
+    "phase6"
+  ],
+  "phases_skipped": {
+    "phase1_5": "dispatcher Tier-1d already covered ppt-web-core (2 fresh signal files 2026-10-04 + 1 fresh 2026-10-05); re-running the same segment would duplicate findings. Routine review_cursor rotation stays unchanged.",
+    "phase1_6": "lightweight catch-up day (2 PRs merged, no new backlog vectors added); pm_cursor idx=6 and coverage_cursor idx=8 remain unchanged — matches 2026-10-03 skip rationale."
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-05",
+      "type": "lag_warning",
+      "source": "routine-timing",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-10-03T03:12:00Z was 48h00m ago; routine missed ~1 scheduled daily tick (threshold >36h).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "evidence": "dependabot: 'chore(deps): bump actions/setup-java from 5 to 6' — open 38 days, non-draft, 0 reviews. Logged in brief, not scored (dep-update-noise rule).",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/<today>.md && first-line matches",
+      "observed": "brief exists; H1 is \"# 2026-10-05\"",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff vs HEAD",
+      "observed": "seen_signals length changed; last_commit_sha advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit",
+      "observed": "0 offenders",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "custom jq against HEAD backlog.json",
+      "observed": "2 open items with updated_at<=today-14 all decayed (-1); no violations",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → vacuous pass",
+      "observed": "0 new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plan count <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths all under .research/",
+      "observed": "0 outside paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases to cross-check",
+      "observed": "vacuous",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug still present or archived",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count current >= HEAD",
+      "observed": "10 >= 10",
+      "expected": "≥HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "length=0",
+      "expected": "<=3 and per-category <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → pm_cursor unchanged → vacuous",
+      "observed": "pm_cursor.next_index=6 (unchanged)",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token values in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "gate-11-placeholder-rot",
+      "passed": true,
+      "command": "grep placeholder patterns in brief",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "pr_activity": {
+    "merged_by_date_since_last_run": [
+      {
+        "number": 2744,
+        "mergedAt": "2026-10-03T16:28:09Z",
+        "title": "fix(dispatcher): un-wedge oversize-archive push (#1162) + close retry-remint cross-id ghost (#2460)",
+        "note": "touches only .research/ scripts + tests; no code vectors"
+      },
+      {
+        "number": 3005,
+        "mergedAt": "2026-10-03T20:25:50Z",
+        "title": "refactor(api-server): split integrations webhook.rs into per-receiver submodules",
+        "note": "pure refactor; resolves the webhook.rs repeated-churn hotspot (runs_seen was 3)"
+      }
+    ],
+    "merged_by_number_cursor_delta": 0,
+    "cursor_blind_spot": "both merged PRs have numbers < last_pr_seen (3015); the number cursor misses them. Logged here for traceability — cursor stays at 3015 to preserve the monotonic 'highest-numbered PR evaluated' semantics."
+  },
+  "churn": {
+    "non_dispatcher_commits_in_window": 2,
+    "hotspots_this_run": [],
+    "note": "all code churn traced to PR #3005 (one-shot webhook split, now resolved) and PR #2744 (.research/-only). No file reached churn-hotspot threshold this run."
+  },
+  "resolution_check": {
+    "scanned": "all 25 open+ready items for PR-body match + evidence-gone grep against PRs #2744 and #3005",
+    "resolved_count": 0,
+    "note": "no open item id referenced verbatim in either PR body/title; neither PR touched any file cited by an open item."
+  },
+  "backlog_mutations": [
+    {
+      "id": "code-review-reality-web-import-create-mutation-silent-fail",
+      "op": "decay",
+      "score": "2 -> 1",
+      "reason": "open, updated_at 2026-09-21 is 14 days old"
+    },
+    {
+      "id": "code-review-reality-web-syncschedule-save-silent-fail",
+      "op": "decay",
+      "score": "2 -> 1",
+      "reason": "open, updated_at 2026-09-21 is 14 days old"
+    }
+  ]
+}

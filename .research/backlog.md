@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-03 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-05 03:21 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -42,6 +42,7 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | ppt-web /community/groups/:groupId renders hardcoded mock group — every group shows fake "Sample Group" with no-op actions | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review ppt-web-core 2026-10-04 | 2026-10-04 | open | — |
 | 2 | bug | reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) (+1) | 2026-10-03 | done | — |
 | 2 | test-gap | PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (+1)` | PR #3013 | 2026-10-03 | open | — |
 | 2 | test-gap | PR #3014 touched reality-web /report route without updating docs/screens/reality/report-listing.md | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx (+1)` | PR #3014 | 2026-10-03 | open | — |
@@ -62,9 +63,7 @@
 | 2 | bug | Mobile RN fault-report photos silently dropped when upload fails — no user-visible error | `frontend/apps/mobile/src` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn) | 2026-09-26 | done | — |
 | 2 | bug | Mobile RN offline queue drops permanent 4xx failures without user feedback | `frontend/apps/mobile/src` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn) | 2026-09-26 | done | — |
 | 2 | bug | reality-web listings page renders empty state on API error — no error UI, users see 'no results' | `frontend/apps/reality-web/src/app` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web) | 2026-09-26 | done | — |
-| 2 | bug | CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure | `frontend/apps/reality-web/src/components/import/CrmConnection.tsx (+1)` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 2 | bug | FeedCard pause-toggle and delete actions swallow mutation errors — a failed feed removal looks identical to success | `frontend/apps/reality-web/src/components/import/FeedImport.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | done | — |
-| 2 | bug | SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained | `frontend/apps/reality-web/src/components/import/SyncSchedule.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 2 | bug | api-server push_fanout: FCM HTTP v1 uses a static FCM_OAUTH_TOKEN loaded once at startup — Google's ~1h token TTL breaks Android push after first hour | `backend/servers/api-server/src/services/push_fanout.rs` | PR #2914 (+1) | 2026-09-01 | done | — |
 | 2 | perf | api-server push_fanout: ApnsHttpAdapter mints a fresh ES256 provider-authentication JWT on EVERY send (deliver_job:1383 -> :902) — no cache; Apple documents JWT reuse for up to 60min | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 api-core push_fanout) | 2026-09-01 | dropped | — |
 | 2 | bug | ppt-web-ui EmergencyContactDirectoryPage: 5 error handlers show raw `err.message` (English backend copy) — the t() i18n fallback is dead code on the common failure path | `frontend/apps/ppt-web/src/features/emergency/pages/EmergencyContactDirectoryPage.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-09-01 ppt-web-ui emergency-contacts) | 2026-09-01 | done | — |
@@ -200,6 +199,7 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | bug | ppt-web route-group action toasts use hardcoded English — bypass react-i18next, render English on sk/cs/de locales | `frontend/apps/ppt-web/src/routes/groups/community.tsx (+3)` | rotating-expert-review ppt-web-core 2026-10-04 | 2026-10-04 | open | — |
 | 1 | refactor | reality-web /sell page recent churn — PR #3013 publish-wiring change | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | open | — |
 | 1 | refactor | reality-web /report page recent churn — PR #3014 submit-wiring change | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | open | — |
 | 1 | refactor | reality-web FeaturedListings recent churn — PR #3015 error-surface fix | `frontend/apps/reality-web/src/components/home/FeaturedListings.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | open | — |
@@ -213,6 +213,8 @@
 | 1 | bug | Mobile RN meter-reading input accepts non-numeric — silent write of garbage values | `frontend/apps/mobile/src` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn) | 2026-09-26 | open | — |
 | 1 | refactor | reality-web SSO callback carries a hardcoded 'login' redirect string — bypasses i18n and locale-aware routing | `frontend/apps/reality-web/src/app` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web) | 2026-09-26 | done | — |
 | 1 | refactor | reality-server carries a duplicated URL-validation helper — merge into shared crate | `backend/servers/reality-server/src` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-server) | 2026-09-26 | open | — |
+| 1 | bug | CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure | `frontend/apps/reality-web/src/components/import/CrmConnection.tsx (+1)` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
+| 1 | bug | SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained | `frontend/apps/reality-web/src/components/import/SyncSchedule.tsx` | rotating-expert-review reality-web 2026-09-21 | 2026-09-21 | open | — |
 | 1 | dx | stalled review: PR #2558 feat(acc) UC-ACC-05.9 invoice PDF render endpoint (15d open, 13d idle) | — | PR #2558 | 2026-09-20 | done | — |
 | 1 | refactor | backend api-server routes/integrations/webhook.rs — repeated-churn (runs_seen=3, 2799 lines this window) | `backend/servers/api-server/src/routes/integrations/webhook.rs` | churn 2026-09-20 (routine catch-up 19d) | 2026-09-20 | dropped | — |
 | 1 | bug | ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch | `frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx` | rotating-expert-review [ppt-web-ui] | 2026-09-06 | done | — |
