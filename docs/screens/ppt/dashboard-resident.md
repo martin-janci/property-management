@@ -32,7 +32,9 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 ## Notes
 
 ### Specific (recent)
+- 2026-10-05 — `/dashboard/resident` is now the bare-`/dashboard` fan-out target for non-manager roles (PR #3002, closes #2998). The bare `/dashboard` redirect became role-aware via `DashboardIndexRedirect` (wrapped in an auth-only `<ProtectedRoute>`): managers → `/dashboard/manager`, everyone else → here. Residents typing the obvious `/dashboard` URL reach this screen instead of being caught by the now role-gated manager shell. Routing change only — `buildStatus`/`apiStatus` unchanged.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:395`.
 
 ## Agent Log
+- 2026-10-05 — agent: reconciled screen-map with PR #3002 — recorded that bare `/dashboard` now fans out non-manager roles to `/dashboard/resident`; routing only, no build/api status change.
 - 2026-05-18 — agent: created stub for unmapped route.
