@@ -1,0 +1,128 @@
+{
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3019 modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx (disable never-transmitted attachment control) without touching docs/screens/reality/report-listing.md. Second drift observation on this route (prior: screen-map-drift-pr-3014-reality from 2026-10-03). Heuristic — treat as review candidate.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3022 reshaped frontend/apps/reality-web/src/app/[locale]/sell/{page.tsx,_mock.ts,page.publish.test.tsx} (drop seller contact inputs from step 5, +12/-73 app code) without touching docs/screens/reality/sell.md. The page.tsx header still references the screen doc. Second drift observation on this route (prior: screen-map-drift-pr-3013-reality from 2026-10-03).",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2969",
+      "type": "stalled-review",
+      "source": "PR #2969",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "PR #2969 opened 2026-09-22 by martin-janci (code-review-reality-web-import-create-mutation-silent-fail); 13d open, no reviewDecision. Mirror case of the matching backlog item (score 2 before decay, now 1 after decay this run). Human decision: review / mark WIP / close.",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot PR #2866 (chore(deps): bump actions/setup-java from 5 to 6) open 39d, no reviewDecision — new to seen_signals this run. Log-only per routine policy.",
+      "files": []
+    },
+    {
+      "id": "lag-warning-2026-10-05",
+      "type": "lag_warning",
+      "source": "routine-scheduler",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Routine last ran 2026-10-03T03:12:00Z; now 2026-10-05T14:50:00Z — lag ≈ 59h (> 36h threshold). Cloud routine scheduler may have skipped a nominal daily tick; no stale_routine_alert (lag < 72h).",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-05",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 churn this run: 1 commit (PR #3021) touched components/favorites/PriceAlerts.tsx (+45/-2). First observation.",
+      "files": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-05",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Cumulative re-emit: 1 commit (PR #3022) touched sell/page.tsx (+12/-67). runs_seen advances 1 → 2 (repeated-churn eligible); score_delta=0 per dedup rule.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-05",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Cumulative re-emit: 1 commit (PR #3019) touched report/page.tsx (+25/-22). runs_seen advances 1 → 2 (repeated-churn eligible); score_delta=0 per dedup rule.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "churn-scan-2026-10-05",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Cumulative re-emit: PR #3005 split the 2799-line webhook.rs into 6 per-receiver submodules (behavior-preserving refactor). File now 77 lines; runs_seen advances 3 → 4. score_delta=0 per cumulative dedup; this is the explicit response to the past repeated-churn signal.",
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-10-05.md && head -1 ~ '^# 2026-10-05$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq cursor-advance diff vs HEAD", "observed": "true (last_pr_seen 3015→3022, last_commit_sha, +6 seen_signals, +1 hotspot_history)", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true (461 unique ids)", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "cumulative-type carve-out check", "observed": "3 cumulative re-emits (sell/report hotspots + webhook.rs repeated-churn) all with score_delta=0; no non-cumulative double-counts", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "jq score cap + decay check", "observed": "no score > 8; 2 open items at updated_at ≤ today-14 decayed by -1 (both remain open at score 1)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "adversarial-pass annotation on new plans/", "observed": "0 new plans this run — no annotation required", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans + readiness gates", "observed": "0 new plans this run (no open backlog item met score≥3 threshold)", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/'", "observed": "0 (all staged paths under .research/)", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "git diff --cached (excl. baseline docs) | grep secret-patterns", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md regenerated-from-json", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' honesty check", "observed": "no phase failures reported this run; Phase 1.5/1.6 skipped by policy (not failed) — surfaced in brief", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/", "observed": "27 plans intact; no silent deletes this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ count at HEAD", "observed": "9 == 9 (no promotion/archive moves this run)", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md regenerated-from-json", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix discipline (cap + idempotency + certainty + verify-all + G8)", "observed": "0 auto_fix_actions (no candidate matched allowlist + score≥3 + confidence=high this run)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + pm_cursor + coverage_cursor advancement", "observed": "Phase 1.6 skipped this run — gate is no-op (pm_cursor and coverage_cursor unchanged at idx 6/8)", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token value in staged diff", "observed": "0 matches", "expected": "0" }
+  ],
+  "auto_fix_actions": []
+}

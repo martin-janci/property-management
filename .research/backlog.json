@@ -10672,7 +10672,7 @@
       "title": "CRM/Feed 'create connection' wizards swallow mutateAsync errors — wizard hangs with zero user-facing feedback on failure",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
@@ -10680,14 +10680,15 @@
       "evidence": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:389-404 — handleCreate does `await createMutation.mutateAsync({...}); onClose();` with no try/catch; createMutation.error is never read or rendered anywhere in the file (only createMutation.isPending is, at lines 557/559), so a failed CRM connection create (bad apiKey, network error, duplicate) just re-enables the Create button with no explanation",
         "frontend/apps/reality-web/src/components/import/FeedImport.tsx:480-489 — AddFeedModal.handleCreate has the identical shape: `await createMutation.mutateAsync(...); onClose();` with no try/catch; createMutation.error is never rendered (only previewMutation.error is, at FeedImport.tsx:554)",
-        "frontend/apps/reality-web/src/lib/query-provider.tsx has no MutationCache onError / global toast fallback, so nothing else catches these — this is the same bug class already fixed for favorites/saved-searches/inquiries in PR #2890 (see code-review-reality-web-mutation-no-onerror), recurring here because the import/ CRM+Feed wizards were built without the same onError/isError treatment"
+        "frontend/apps/reality-web/src/lib/query-provider.tsx has no MutationCache onError / global toast fallback, so nothing else catches these — this is the same bug class already fixed for favorites/saved-searches/inquiries in PR #2890 (see code-review-reality-web-mutation-no-onerror), recurring here because the import/ CRM+Feed wizards were built without the same onError/isError treatment",
+        "decayed 2026-10-05: no new signals in 14d (routine run)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
         "frontend/apps/reality-web/src/components/import/FeedImport.tsx"
       ],
       "created_at": "2026-09-21",
-      "updated_at": "2026-09-21",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -10722,20 +10723,21 @@
       "title": "SyncSchedule.handleSave swallows updateMutation errors — Save Changes can fail with no feedback, leaving the form stuck open unexplained",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx:56-64 — handleSave does `await updateMutation.mutateAsync({...}); setIsEditing(false);` with no try/catch; on failure the mutateAsync rejection propagates as an unhandled promise rejection and setIsEditing(false) never runs, but nothing tells the user why the form didn't close",
-        "Only updateMutation.isPending is consumed in the file (SyncSchedule.tsx:161/163, disables the Save button + shows 'saving'); there is no isError/error branch anywhere — same silent-failure shape as the already-fixed code-review-reality-web-mutation-no-onerror (PR #2890), recurring in the import/schedule feature"
+        "Only updateMutation.isPending is consumed in the file (SyncSchedule.tsx:161/163, disables the Save button + shows 'saving'); there is no isError/error branch anywhere — same silent-failure shape as the already-fixed code-review-reality-web-mutation-no-onerror (PR #2890), recurring in the import/schedule feature",
+        "decayed 2026-10-05: no new signals in 14d (routine run)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx"
       ],
       "created_at": "2026-09-21",
-      "updated_at": "2026-09-21",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11422,19 +11424,21 @@
       "score": 2,
       "status": "done",
       "sources": [
-        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+        "PR #3021"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 — `markAllRead.mutate()` and `markRead.mutate(alert.id)` fired fire-and-forget with no onError; the component never reads `markRead.isError`/`.error`.",
         "Same pattern as the FeaturedListings heart (above): the generated hooks throw on `!response.ok` but call-sites don't propagate.",
         "Impact: users clicking 'Mark all read' or a single-row mark-read on a failure path see no feedback; the badge count stays stale until next refetch, giving the impression of a frozen UI.",
-        "Fix: attach onError to both mutate calls and surface a toast; consider sharing a toast-on-error wrapper with the FeaturedListings fix."
+        "Fix: attach onError to both mutate calls and surface a toast; consider sharing a toast-on-error wrapper with the FeaturedListings fix.",
+        "source added: PR #3021 landed 2026-10-05 (fast-path capture — item was pre-marked done 2026-10-02 by dispatcher)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
       ],
       "created_at": "2026-10-02",
-      "updated_at": "2026-10-02",
+      "updated_at": "2026-10-05",
       "plan": null,
       "reconciled": {
         "at": "2026-10-05T10:32:41Z",
@@ -11497,16 +11501,18 @@
       "status": "open",
       "sources": [
         "churn-scan-2026-10-03",
-        "PR #3013"
+        "PR #3013",
+        "PR #3022"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "churn re-observed 2026-10-05: PR #3022 drops contact fields from wizard — runs_seen=2 (repeated-churn eligible, no score added per cumulative dedup)"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11518,16 +11524,18 @@
       "status": "open",
       "sources": [
         "churn-scan-2026-10-03",
-        "PR #3014"
+        "PR #3014",
+        "PR #3019"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "churn re-observed 2026-10-05: PR #3019 disables never-transmitted attachment control — runs_seen=2 (repeated-churn eligible, no score added per cumulative dedup)"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-05",
       "plan": null
     },
     {
@@ -11645,6 +11653,89 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "screen-map drift: PR #3019 touched reality /report page without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx (disable never-transmitted attachment control, +25/-22) without touching docs/screens/reality/*.md. Second drift observation on this route (prior: screen-map-drift-pr-3014-reality from 2026-10-03).",
+        "Heuristic caveat: slug matching is file-basename based — treat as review candidate for the human screen-map pass; may be a false positive if the doc update was folded into another PR."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "screen-map drift: PR #3022 reshaped reality /sell wizard step 5 without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 modified frontend/apps/reality-web/src/app/[locale]/sell/{page.tsx,_mock.ts,page.publish.test.tsx} (drop seller contact inputs from wizard step 5, +12/-73 app code) without touching docs/screens/reality/sell.md. The page.tsx header still points to the screen doc ('Screen-map: docs/screens/reality/sell.md').",
+        "Second drift observation on this route (prior: screen-map-drift-pr-3013-reality from 2026-10-03)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2969",
+      "title": "stalled review: PR #2969 code-review-reality-web-import-create-mutation-silent-fail (13d open, no reviewDecision)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #2969"
+      ],
+      "evidence": [
+        "PR #2969 opened 13d ago (2026-09-22 by martin-janci); last updated this window, no reviewDecision. Mirror case of the matching backlog item code-review-reality-web-import-create-mutation-silent-fail (score 2, open) — the PR is unlanded. Human decision: pick up review / mark WIP / close."
+      ],
+      "files": [],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx",
+      "title": "reality-web PriceAlerts churn — PR #3021 error-surfacing wiring",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-05",
+        "PR #3021"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR this run). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ],
+      "created_at": "2026-10-05",
+      "updated_at": "2026-10-05",
       "plan": null
     }
   ]
