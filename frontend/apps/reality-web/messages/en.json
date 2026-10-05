@@ -995,6 +995,7 @@
       "mappingHint": "Map your CRM fields to listing properties",
       "creating": "Creating...",
       "createConnection": "Create Connection",
+      "createError": "Failed to create connection. Please try again.",
       "connectionFailed": "Connection failed",
       "connectionSuffix": "Connection",
       "status": {
@@ -1046,6 +1047,7 @@
       "mappingHint": "Map feed fields to listing properties",
       "creating": "Creating...",
       "createFeed": "Create Feed",
+      "createError": "Failed to create feed. Please try again.",
       "defaultName": "Property Feed",
       "status": {
         "active": "Active",
