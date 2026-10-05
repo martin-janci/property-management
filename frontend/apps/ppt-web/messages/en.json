@@ -4502,7 +4502,21 @@
       "deleteConfirm": "Are you sure you want to delete <1>{{name}}</1>?",
       "cancel": "Cancel",
       "delete": "Delete",
-      "deleting": "Deleting..."
+      "deleting": "Deleting...",
+      "deleteSuccessTitle": "Rule deleted",
+      "deleteSuccessMessage": "\"{{name}}\" was deleted.",
+      "deleteErrorTitle": "Delete failed",
+      "deleteErrorMessage": "The automation rule could not be deleted.",
+      "activatedTitle": "Rule activated",
+      "pausedTitle": "Rule paused",
+      "activatedMessage": "\"{{name}}\" was activated.",
+      "pausedMessage": "\"{{name}}\" was paused.",
+      "updateErrorTitle": "Update failed",
+      "updateErrorMessage": "The automation rule could not be updated.",
+      "runSuccessTitle": "Rule triggered",
+      "runSuccessMessage": "\"{{name}}\" is now running.",
+      "runErrorTitle": "Run failed",
+      "runErrorMessage": "The automation rule could not be run."
     },
     "ruleCard": {
       "unknownTrigger": "Unknown trigger",
@@ -4687,7 +4701,11 @@
       "title": "Create Automation Rule",
       "subtitle": "Set up a new automated workflow for your property management tasks.",
       "error": "Failed to create automation rule. Please try again.",
-      "incomplete": "Please complete the rule: a name, a trigger, and at least one action are required."
+      "incomplete": "Please complete the rule: a name, a trigger, and at least one action are required.",
+      "createFailedTitle": "Create failed",
+      "createdTitle": "Rule created",
+      "createdMessage": "The automation rule was created.",
+      "createErrorMessage": "The automation rule could not be created."
     },
     "editPage": {
       "back": "Back to Rules",
@@ -4697,7 +4715,11 @@
       "subtitle": "Modify your automation workflow settings.",
       "invalidId": "Invalid rule ID.",
       "loadError": "Failed to load automation rule. Please try again.",
-      "updateError": "Failed to update automation rule. Please try again."
+      "updateError": "Failed to update automation rule. Please try again.",
+      "updatedTitle": "Rule updated",
+      "updatedMessage": "The automation rule was updated.",
+      "updateFailedTitle": "Update failed",
+      "updateFailedMessage": "The automation rule could not be updated."
     },
     "templateLibrary": {
       "title": "Template Library",
@@ -4717,7 +4739,9 @@
       "categoryPayments": "Payments",
       "categoryCommunications": "Communications",
       "categoryDocuments": "Documents",
-      "categoryMaintenance": "Maintenance"
+      "categoryMaintenance": "Maintenance",
+      "useErrorTitle": "Could not use template",
+      "useErrorMessage": "A rule could not be created from this template."
     },
     "templateCard": {
       "popular": "Popular",
@@ -4813,7 +4837,11 @@
       "actionResults": "Action Results",
       "triggerContext": "Trigger Context",
       "retryExecution": "Retry Execution",
-      "close": "Close"
+      "close": "Close",
+      "retrySuccessTitle": "Execution retried",
+      "retrySuccessMessage": "The execution was queued for retry.",
+      "retryErrorTitle": "Retry failed",
+      "retryErrorMessage": "The execution could not be retried."
     }
   },
   "registry": {

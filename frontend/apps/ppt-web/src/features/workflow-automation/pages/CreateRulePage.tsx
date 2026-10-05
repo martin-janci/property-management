@@ -27,7 +27,7 @@ export function CreateRulePage() {
     if (!rule.name || !rule.trigger || !rule.actions || rule.actions.length === 0) {
       showToast({
         type: 'error',
-        title: 'Create failed',
+        title: t('automation.createPage.createFailedTitle'),
         message: t('automation.createPage.incomplete'),
       });
       return;
@@ -45,15 +45,15 @@ export function CreateRulePage() {
       await createRule.mutateAsync(payload);
       showToast({
         type: 'success',
-        title: 'Rule created',
-        message: 'The automation rule was created.',
+        title: t('automation.createPage.createdTitle'),
+        message: t('automation.createPage.createdMessage'),
       });
       navigate('/automations/rules');
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Create failed',
-        message: err instanceof Error ? err.message : 'The automation rule could not be created.',
+        title: t('automation.createPage.createFailedTitle'),
+        message: err instanceof Error ? err.message : t('automation.createPage.createErrorMessage'),
       });
     }
   };

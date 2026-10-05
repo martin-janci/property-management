@@ -2212,7 +2212,21 @@
       "deleteConfirm": "Möchten Sie <1>{{name}}</1> wirklich löschen?",
       "cancel": "Abbrechen",
       "delete": "Löschen",
-      "deleting": "Wird gelöscht..."
+      "deleting": "Wird gelöscht...",
+      "deleteSuccessTitle": "Regel gelöscht",
+      "deleteSuccessMessage": "„{{name}}“ wurde gelöscht.",
+      "deleteErrorTitle": "Löschen fehlgeschlagen",
+      "deleteErrorMessage": "Die Automatisierungsregel konnte nicht gelöscht werden.",
+      "activatedTitle": "Regel aktiviert",
+      "pausedTitle": "Regel pausiert",
+      "activatedMessage": "„{{name}}“ wurde aktiviert.",
+      "pausedMessage": "„{{name}}“ wurde pausiert.",
+      "updateErrorTitle": "Aktualisierung fehlgeschlagen",
+      "updateErrorMessage": "Die Automatisierungsregel konnte nicht aktualisiert werden.",
+      "runSuccessTitle": "Regel ausgelöst",
+      "runSuccessMessage": "„{{name}}“ wird jetzt ausgeführt.",
+      "runErrorTitle": "Ausführung fehlgeschlagen",
+      "runErrorMessage": "Die Automatisierungsregel konnte nicht ausgeführt werden."
     },
     "ruleCard": {
       "unknownTrigger": "Unbekannter Auslöser",
@@ -2397,7 +2411,11 @@
       "title": "Automatisierungsregel erstellen",
       "subtitle": "Richten Sie einen neuen automatisierten Workflow für Ihre Immobilienverwaltung ein.",
       "error": "Automatisierungsregel konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
-      "incomplete": "Bitte vervollständigen Sie die Regel: Name, Auslöser und mindestens eine Aktion sind erforderlich."
+      "incomplete": "Bitte vervollständigen Sie die Regel: Name, Auslöser und mindestens eine Aktion sind erforderlich.",
+      "createFailedTitle": "Erstellen fehlgeschlagen",
+      "createdTitle": "Regel erstellt",
+      "createdMessage": "Die Automatisierungsregel wurde erstellt.",
+      "createErrorMessage": "Die Automatisierungsregel konnte nicht erstellt werden."
     },
     "editPage": {
       "back": "Zurück zu den Regeln",
@@ -2407,7 +2425,11 @@
       "subtitle": "Ändern Sie die Einstellungen Ihres Automatisierungs-Workflows.",
       "invalidId": "Ungültige Regel-ID.",
       "loadError": "Automatisierungsregel konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
-      "updateError": "Automatisierungsregel konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut."
+      "updateError": "Automatisierungsregel konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+      "updatedTitle": "Regel aktualisiert",
+      "updatedMessage": "Die Automatisierungsregel wurde aktualisiert.",
+      "updateFailedTitle": "Aktualisierung fehlgeschlagen",
+      "updateFailedMessage": "Die Automatisierungsregel konnte nicht aktualisiert werden."
     },
     "templateLibrary": {
       "title": "Vorlagenbibliothek",
@@ -2427,7 +2449,9 @@
       "categoryPayments": "Zahlungen",
       "categoryCommunications": "Kommunikation",
       "categoryDocuments": "Dokumente",
-      "categoryMaintenance": "Wartung"
+      "categoryMaintenance": "Wartung",
+      "useErrorTitle": "Vorlage kann nicht verwendet werden",
+      "useErrorMessage": "Aus dieser Vorlage konnte keine Regel erstellt werden."
     },
     "templateCard": {
       "popular": "Beliebt",
@@ -2523,7 +2547,11 @@
       "actionResults": "Aktionsergebnisse",
       "triggerContext": "Auslöserkontext",
       "retryExecution": "Ausführung wiederholen",
-      "close": "Schließen"
+      "close": "Schließen",
+      "retrySuccessTitle": "Ausführung wiederholt",
+      "retrySuccessMessage": "Die Ausführung wurde zur Wiederholung eingereiht.",
+      "retryErrorTitle": "Wiederholung fehlgeschlagen",
+      "retryErrorMessage": "Die Ausführung konnte nicht wiederholt werden."
     }
   },
   "registry": {

@@ -2185,7 +2185,21 @@
       "deleteConfirm": "Biztosan törli a következőt: <1>{{name}}</1>?",
       "cancel": "Mégse",
       "delete": "Törlés",
-      "deleting": "Törlés..."
+      "deleting": "Törlés...",
+      "deleteSuccessTitle": "Szabály törölve",
+      "deleteSuccessMessage": "A(z) „{{name}}” törölve lett.",
+      "deleteErrorTitle": "A törlés sikertelen",
+      "deleteErrorMessage": "Az automatizálási szabályt nem sikerült törölni.",
+      "activatedTitle": "Szabály aktiválva",
+      "pausedTitle": "Szabály szüneteltetve",
+      "activatedMessage": "A(z) „{{name}}” aktiválva lett.",
+      "pausedMessage": "A(z) „{{name}}” szüneteltetve lett.",
+      "updateErrorTitle": "A frissítés sikertelen",
+      "updateErrorMessage": "Az automatizálási szabályt nem sikerült frissíteni.",
+      "runSuccessTitle": "Szabály elindítva",
+      "runSuccessMessage": "A(z) „{{name}}” most fut.",
+      "runErrorTitle": "A futtatás sikertelen",
+      "runErrorMessage": "Az automatizálási szabályt nem sikerült futtatni."
     },
     "ruleCard": {
       "unknownTrigger": "Ismeretlen kiváltó",
@@ -2370,7 +2384,11 @@
       "title": "Automatizálási szabály létrehozása",
       "subtitle": "Állítson be egy új automatizált munkafolyamatot az ingatlankezelési feladatokhoz.",
       "error": "Nem sikerült létrehozni az automatizálási szabályt. Kérjük, próbálja újra.",
-      "incomplete": "Kérjük, egészítse ki a szabályt: név, indító és legalább egy művelet szükséges."
+      "incomplete": "Kérjük, egészítse ki a szabályt: név, indító és legalább egy művelet szükséges.",
+      "createFailedTitle": "A létrehozás sikertelen",
+      "createdTitle": "Szabály létrehozva",
+      "createdMessage": "Az automatizálási szabály létrejött.",
+      "createErrorMessage": "Az automatizálási szabályt nem sikerült létrehozni."
     },
     "editPage": {
       "back": "Vissza a szabályokhoz",
@@ -2380,7 +2398,11 @@
       "subtitle": "Módosítsa az automatizálási munkafolyamat beállításait.",
       "invalidId": "Érvénytelen szabályazonosító.",
       "loadError": "Nem sikerült betölteni az automatizálási szabályt. Kérjük, próbálja újra.",
-      "updateError": "Nem sikerült frissíteni az automatizálási szabályt. Kérjük, próbálja újra."
+      "updateError": "Nem sikerült frissíteni az automatizálási szabályt. Kérjük, próbálja újra.",
+      "updatedTitle": "Szabály frissítve",
+      "updatedMessage": "Az automatizálási szabály frissült.",
+      "updateFailedTitle": "A frissítés sikertelen",
+      "updateFailedMessage": "Az automatizálási szabályt nem sikerült frissíteni."
     },
     "templateLibrary": {
       "title": "Sablonkönyvtár",
@@ -2400,7 +2422,9 @@
       "categoryPayments": "Fizetések",
       "categoryCommunications": "Kommunikáció",
       "categoryDocuments": "Dokumentumok",
-      "categoryMaintenance": "Karbantartás"
+      "categoryMaintenance": "Karbantartás",
+      "useErrorTitle": "A sablon nem használható",
+      "useErrorMessage": "Ebből a sablonból nem sikerült szabályt létrehozni."
     },
     "templateCard": {
       "popular": "Népszerű",
@@ -2496,7 +2520,11 @@
       "actionResults": "Műveleti eredmények",
       "triggerContext": "Kiváltó környezete",
       "retryExecution": "Végrehajtás újrapróbálása",
-      "close": "Bezárás"
+      "close": "Bezárás",
+      "retrySuccessTitle": "Végrehajtás újrapróbálva",
+      "retrySuccessMessage": "A végrehajtás újrapróbálásra lett ütemezve.",
+      "retryErrorTitle": "Az újrapróbálás sikertelen",
+      "retryErrorMessage": "A végrehajtást nem sikerült újrapróbálni."
     }
   },
   "registry": {

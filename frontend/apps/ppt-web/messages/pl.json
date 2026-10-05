@@ -2191,7 +2191,21 @@
       "deleteConfirm": "Czy na pewno chcesz usunąć <1>{{name}}</1>?",
       "cancel": "Anuluj",
       "delete": "Usuń",
-      "deleting": "Usuwanie..."
+      "deleting": "Usuwanie...",
+      "deleteSuccessTitle": "Reguła usunięta",
+      "deleteSuccessMessage": "Reguła „{{name}}” została usunięta.",
+      "deleteErrorTitle": "Usuwanie nie powiodło się",
+      "deleteErrorMessage": "Nie udało się usunąć reguły automatyzacji.",
+      "activatedTitle": "Reguła aktywowana",
+      "pausedTitle": "Reguła wstrzymana",
+      "activatedMessage": "Reguła „{{name}}” została aktywowana.",
+      "pausedMessage": "Reguła „{{name}}” została wstrzymana.",
+      "updateErrorTitle": "Aktualizacja nie powiodła się",
+      "updateErrorMessage": "Nie udało się zaktualizować reguły automatyzacji.",
+      "runSuccessTitle": "Reguła uruchomiona",
+      "runSuccessMessage": "Reguła „{{name}}” jest teraz uruchamiana.",
+      "runErrorTitle": "Uruchomienie nie powiodło się",
+      "runErrorMessage": "Nie udało się uruchomić reguły automatyzacji."
     },
     "ruleCard": {
       "unknownTrigger": "Nieznany wyzwalacz",
@@ -2376,7 +2390,11 @@
       "title": "Utwórz regułę automatyzacji",
       "subtitle": "Skonfiguruj nowy zautomatyzowany przepływ pracy do zarządzania nieruchomościami.",
       "error": "Nie udało się utworzyć reguły automatyzacji. Spróbuj ponownie.",
-      "incomplete": "Uzupełnij regułę: wymagana jest nazwa, wyzwalacz i co najmniej jedna akcja."
+      "incomplete": "Uzupełnij regułę: wymagana jest nazwa, wyzwalacz i co najmniej jedna akcja.",
+      "createFailedTitle": "Tworzenie nie powiodło się",
+      "createdTitle": "Reguła utworzona",
+      "createdMessage": "Reguła automatyzacji została utworzona.",
+      "createErrorMessage": "Nie udało się utworzyć reguły automatyzacji."
     },
     "editPage": {
       "back": "Powrót do reguł",
@@ -2386,7 +2404,11 @@
       "subtitle": "Zmodyfikuj ustawienia swojego przepływu pracy automatyzacji.",
       "invalidId": "Nieprawidłowy identyfikator reguły.",
       "loadError": "Nie udało się załadować reguły automatyzacji. Spróbuj ponownie.",
-      "updateError": "Nie udało się zaktualizować reguły automatyzacji. Spróbuj ponownie."
+      "updateError": "Nie udało się zaktualizować reguły automatyzacji. Spróbuj ponownie.",
+      "updatedTitle": "Reguła zaktualizowana",
+      "updatedMessage": "Reguła automatyzacji została zaktualizowana.",
+      "updateFailedTitle": "Aktualizacja nie powiodła się",
+      "updateFailedMessage": "Nie udało się zaktualizować reguły automatyzacji."
     },
     "templateLibrary": {
       "title": "Biblioteka szablonów",
@@ -2406,7 +2428,9 @@
       "categoryPayments": "Płatności",
       "categoryCommunications": "Komunikacja",
       "categoryDocuments": "Dokumenty",
-      "categoryMaintenance": "Konserwacja"
+      "categoryMaintenance": "Konserwacja",
+      "useErrorTitle": "Nie można użyć szablonu",
+      "useErrorMessage": "Nie udało się utworzyć reguły z tego szablonu."
     },
     "templateCard": {
       "popular": "Popularne",
@@ -2502,7 +2526,11 @@
       "actionResults": "Wyniki akcji",
       "triggerContext": "Kontekst wyzwalacza",
       "retryExecution": "Ponów wykonanie",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "retrySuccessTitle": "Wykonanie ponowione",
+      "retrySuccessMessage": "Wykonanie zostało skolejkowane do ponowienia.",
+      "retryErrorTitle": "Ponowienie nie powiodło się",
+      "retryErrorMessage": "Nie udało się ponowić wykonania."
     }
   },
   "registry": {
