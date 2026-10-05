@@ -480,23 +480,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-price-alert-markread-silent-fail",
-      "action": "reality-web PriceAlerts mark-read mutations swallow errors — row stays unread with no user feedback on failure",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-02T06:31:33Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-02T06:31:33Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-web-profile-mock-data",
       "action": "reality-web /profile route renders MOCK_* fixtures — every signed-in user sees the same fabricated identity, listings, activity, reviews",
       "owner_role": "pm-backend",
@@ -511,26 +494,6 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "gh-issue-3016",
-      "action": "Follow-up: /sell wizard still drops seller contact fields (name/phone/email) on publish (PR #3013) (Closes #3016)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-02T20:29:10Z (#3016)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-02T20:29:10Z",
-      "issue_ref": {
-        "number": 3016,
-        "url": "https://github.com/martin-janci/property-management/issues/3016",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
       }
     },
     {
