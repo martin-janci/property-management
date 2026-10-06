@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-01T04:30:00Z",
+  "generated": "2026-10-06T06:30:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -208,6 +208,28 @@
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
       "status": "open"
+    },
+    {
+      "id": "pm-data-silent-dropped-input-no-contract-test-2026-10-06",
+      "risk": "The reality-web UI has shipped at least three screens that silently drop user-entered data on the floor (dead /report attachment control — #3017/#3019; dead /sell seller-contact fields — #3016/#3022; silent PriceAlerts mark-read failure — #3021). All three were spotted by post-merge churn-hotspot review, not by test. The frontend has no end-to-end data-contract assertion that \"form field X ends up in network payload Y\" — same class will keep recurring on new wizard screens",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Introduce a vitest helper (frontend/packages/testing-helpers) that mounts a form, submits it against an msw handler, and diff-asserts form-schema vs captured request body; pilot on /sell + /report; add CI gate for any new wizard page under reality-web",
+      "owner_role": "pm-qa",
+      "trigger": "Any new reality-web wizard page merges without a data-contract assertion test",
+      "status": "open",
+      "source": "pm-data 2026-10-06 (rotation idx 6; 3 silent-dropped-input PRs this run: #3019, #3021, #3022)"
+    },
+    {
+      "id": "pm-data-review-feedback-telemetry-dark-2026-10-06",
+      "risk": "assignments.json carries a growing corpus of reviewer_summary.verdict=changes notes (12 open at this snapshot) that holds structured signal about recurring defect classes — scope-drift, i18n drift, screen-map staleness, self-approval-blocked etc. — but nothing aggregates it. The dispatcher sees per-PR noise; project-management sees nothing. Trend data is dark",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Add a daily jq-based bucket counter (reviewer note → tag), emit a 1-line summary into project-state.md; retire if signal is thin after 2 weeks",
+      "owner_role": "pm-data",
+      "trigger": "assignments.json verdict=changes count >= 10 and no aggregation report exists",
+      "status": "open",
+      "source": "pm-data 2026-10-06"
     }
   ]
 }

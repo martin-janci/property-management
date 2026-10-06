@@ -1,0 +1,254 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-06",
+      "type": "lag_warning",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine last ran 2026-10-03T03:12:00Z — 72h / 3d ago; stale_routine_alert threshold reached (>=3d). Cloud scheduler may be lagging."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3019 touched frontend/apps/reality-web/src/app/[locale]/report/page.{tsx,test.tsx} without updating docs/screens/reality/report-listing.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3022 touched frontend/apps/reality-web/src/app/[locale]/sell/{page.tsx,_mock.ts,page.publish.test.tsx} without updating docs/screens/reality/sell.md"
+      ]
+    },
+    {
+      "id": "fixme-in-merged-code-pr-3019-report-page",
+      "type": "fixme-in-merged-code",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx — PR #3019 added three TODO(#3017) markers tracking the disabled attachment control pending an upload pipeline"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "type": "stalled-review",
+      "source": "PR #2902",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #2902 'screen-map-drift-pr-2894-reality: reconcile saved-searches screen-map with PR #2894 i18n' open since 2026-08-31 — ~36 days old, still draft, no reviewDecision"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/cs.json",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-06",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/messages/cs.json — 2 commits in last-window (new hotspot; shared i18n churn with sibling locales via PRs c09a2a7, 5571cfa)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/de.json",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-06",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/messages/de.json — 2 commits in last-window (new hotspot; shared i18n churn with sibling locales via PRs c09a2a7, 5571cfa)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-06",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/messages/en.json — 2 commits in last-window (new hotspot; shared i18n churn with sibling locales via PRs c09a2a7, 5571cfa)"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-crm-delete-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-06 (routine Phase 1.5)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:168-172 — handleDelete awaits deleteMutation.mutateAsync with no try/catch and no error state; failed deletes close the confirm dialog and vanish, same silent-fail pattern already fixed in SyncSchedule/PriceAlerts/AddFeedModal"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-report-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-06 (routine Phase 1.5)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:28-35,139-165,224-358 — only h1/subtitle go through next-intl; legend 'Dôvod nahlásenia', field labels, GDPR consent, submit button, success screen, and MSG error map are hardcoded Slovak so cs/de/en visitors see untranslated SK text on the public report form"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-crm-sync-no-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-web 2026-10-06 (routine Phase 1.5)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:215 and frontend/apps/reality-web/src/components/import/FeedImport.tsx:218 — syncMutation.mutate() fire-and-forget with no onError callback and no surfaced error UI; a failed Sync Now gives the user no feedback"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches ^# <today>",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals vs seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "cap=true, decay-eligible=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plan adversarial pass annotations",
+      "observed": "0 new plans this run",
+      "expected": "all new plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count + metadata/headings",
+      "observed": "0 new plans",
+      "expected": "<=2 and all gates"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only touches .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private-hosts in staged (excluding baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures recorded",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan still exists or archived",
+      "observed": "all accounted for",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "10 >= 10",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "empty",
+      "expected": "<=3 total, <=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm/coverage cursors advanced",
+      "observed": "EPICS=13, pm 6->7, coverage 8->9",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}

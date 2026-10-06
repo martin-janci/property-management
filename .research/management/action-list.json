@@ -362,7 +362,7 @@
       "action": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
+      "status": "closed",
       "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
@@ -372,7 +372,9 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
+      },
+      "closed_at": "2026-10-06T06:30:00Z",
+      "closed_reason": "superseded by PR #3027 (ppt-web dashboard screen-maps reconciled with PR #3002 role-gate); draft PR #3024 verdict=changes abandoned"
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
@@ -498,7 +500,7 @@
       "action": "reality-web /report page recent churn — PR #3014 submit-wiring change",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "closed",
       "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -508,14 +510,16 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "closed_at": "2026-10-06T06:30:00Z",
+      "closed_reason": "resolved by PR #3019 (reality-web /report never-transmitted attachment control disabled; Closes #3017)"
     },
     {
       "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
       "action": "reality-web /sell page recent churn — PR #3013 publish-wiring change",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "closed",
       "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -525,7 +529,9 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "closed_at": "2026-10-06T06:30:00Z",
+      "closed_reason": "resolved by PR #3022 (reality-web /sell wizard dead seller-contact fields removed; Closes #3016)"
     },
     {
       "id": "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
@@ -594,7 +600,31 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-data-reviewer-feedback-classifier-2026-10-06",
+      "action": "pm-data: build a lightweight classifier/counter over reviewer_summary.verdict=changes notes in assignments.json (and -archive); emit a weekly top-N buckets report so the dispatcher sees recurring defect classes (scope-drift, i18n, test-fidelity, screen-map stale) instead of only per-PR notes",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-data 2026-10-06 (rotation idx 6; signal: 3 of 12 open reviewer notes this run match a repeating pattern — scope-drift twice, screen-map-stale once)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-06T06:30:00Z"
+    },
+    {
+      "id": "pm-data-silent-dropped-input-contract-tests-2026-10-06",
+      "action": "pm-data: fold a data-contract-fuzz test pattern into the frontend test base — covers the \"UI collects field X but no network request carries it\" class (shape of #3016/#3017 fixed this run via #3022/#3019); DoD: a vitest helper that asserts form-schema fields map to submitted payload keys, applied to /report and /sell as the pilot",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-data 2026-10-06 (3-of-6 PRs this run are silent-dropped-input / silent-failure fixes: #3019, #3021, #3022)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-06T06:30:00Z"
     }
   ],
-  "generated": "2026-10-01T04:30:00Z"
+  "generated": "2026-10-06T06:30:00Z"
 }

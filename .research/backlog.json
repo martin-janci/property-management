@@ -11229,18 +11229,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3002"
+        "PR #3002",
+        "PR #3027 merged 2026-10-05"
       ],
       "evidence": [
-        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate.",
+        "resolved: PR #3027 merged 2026-10-05 — screen-map-drift-pr-3002-ppt reconcile; dashboard-manager.md + dashboard-resident.md updated"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-06",
       "plan": null
     },
     {
@@ -11660,6 +11662,211 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2902",
+      "title": "PR #2902 screen-map-drift-pr-2894-reality has sat as a draft for ~36 days with no review activity",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2902"
+      ],
+      "evidence": [
+        "PR #2902 'screen-map-drift-pr-2894-reality: reconcile saved-searches screen-map with PR #2894 i18n' open since 2026-08-31 — ~36 days old, still draft, no reviewDecision"
+      ],
+      "files": [
+        "docs/screens/reality/saved-searches.md"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "PR #3019 touched reality-web /report route again without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 touched frontend/apps/reality-web/src/app/[locale]/report/page.{tsx,test.tsx} without updating docs/screens/reality/report-listing.md",
+        "Follow-up to PR #3014 drift already in backlog — same screen doc still untouched"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "PR #3022 touched reality-web /sell wizard again without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 touched frontend/apps/reality-web/src/app/[locale]/sell/{page.tsx,_mock.ts,page.publish.test.tsx} without updating docs/screens/reality/sell.md",
+        "Follow-up to PR #3013 drift already in backlog — same screen doc still untouched"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "fixme-in-merged-code-pr-3019-report-page",
+      "title": "PR #3019 landed 3 TODO(#3017) markers in reality-web /report page.tsx — track upload-pipeline follow-up",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx — PR #3019 added three TODO(#3017) markers tracking the disabled attachment control pending an upload pipeline; issue #3017 is now closed but the implementation remains to be done"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/cs.json",
+      "title": "reality-web messages/cs.json — 2 commits this run (new hotspot; shared i18n churn)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-06"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/messages/cs.json — 2 commits in last-window (new hotspot; shared i18n churn with sibling locales via PRs c09a2a7, 5571cfa)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/messages/cs.json"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/de.json",
+      "title": "reality-web messages/de.json — 2 commits this run (new hotspot; shared i18n churn)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-06"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/messages/de.json — 2 commits in last-window (new hotspot; shared i18n churn with sibling locales via PRs c09a2a7, 5571cfa)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/messages/de.json"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/messages/en.json",
+      "title": "reality-web messages/en.json — 2 commits this run (new hotspot; shared i18n churn)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-06"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/messages/en.json — 2 commits in last-window (new hotspot; shared i18n churn with sibling locales via PRs c09a2a7, 5571cfa)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/messages/en.json"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-crm-delete-silent-fail",
+      "title": "reality-web CrmConnection.handleDelete swallows errors — failed deletes close the confirm dialog and vanish",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-06 (routine Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:168-172 — handleDelete awaits deleteMutation.mutateAsync with no try/catch and no error state; failed deletes close the confirm dialog and vanish, same silent-fail pattern already fixed in SyncSchedule/PriceAlerts/AddFeedModal"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-report-hardcoded-sk",
+      "title": "reality-web /report page is hardcoded Slovak outside h1/subtitle — cs/de/en visitors see untranslated SK",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-06 (routine Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:28-35,139-165,224-358 — only h1/subtitle go through next-intl; legend 'Dôvod nahlásenia', field labels, GDPR consent, submit button, success screen, and MSG error map are hardcoded Slovak so cs/de/en visitors see untranslated SK text on the public report form"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-crm-sync-no-error",
+      "title": "reality-web Crm/Feed syncMutation fires fire-and-forget — a failed Sync Now gives the user no feedback",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-06 (routine Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:215 and frontend/apps/reality-web/src/components/import/FeedImport.tsx:218 — syncMutation.mutate() fire-and-forget with no onError callback and no surfaced error UI; a failed Sync Now gives the user no feedback"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx"
+      ],
+      "created_at": "2026-10-06",
+      "updated_at": "2026-10-06",
       "plan": null
     }
   ]

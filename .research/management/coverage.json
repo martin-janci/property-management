@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-01T04:30:00Z",
+  "generated": "2026-10-06T06:30:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -30,11 +30,12 @@
         "Screen-map buildStatus=planned (frontend component not yet built; only api-client generated)",
         "apiStatus=complete",
         "Verified shipped 2026-07-08 (dispatcher verify-first): admin-web OrganizationsPage.tsx + route platform/organizations + api-client hooks + test; merged via PR#2164/#2175; screen-map ppt/admin-organizations buildStatus=shipped. Prior partial was a slug/platform mismatch (coverage pointed at ppt-web; impl is admin-web).",
-        "2026-10-01 upkeep: PR #2994 (ppt-web dashboard ProtectedRoute) + PR #3002 (manager-dashboard role gate) hardened admin/manager dashboard RBAC — defensive layer on top of shipped surface; no regression."
+        "2026-10-01 upkeep: PR #2994 (ppt-web dashboard ProtectedRoute) + PR #3002 (manager-dashboard role gate) hardened admin/manager dashboard RBAC — defensive layer on top of shipped surface; no regression.",
+        "2026-10-06 upkeep: PR #3023 + PR #3027 (screen-map reconciles for ppt/home CTA + ppt-web dashboard role-gate) catch docs/screens up with the shipped RBAC hardening from PR #2995/#3002; docs-only, no surface change."
       ],
       "gaps": [],
       "epic": "epic-10b",
-      "last_checked": "2026-10-01",
+      "last_checked": "2026-10-06",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-organizations",
@@ -1143,11 +1144,12 @@
       "owner_role": "pm-integration",
       "evidence": [
         "confirmed done 2026-07-13 (tests #2240/#2203, IntegrationsPage routed)",
-        "no regressions since"
+        "no regressions since",
+        "2026-10-06 upkeep (coverage_cursor idx 8): no PRs in 2026-10-03..10-06 window touched Airbnb/Booking/portal-webhook surfaces; status stays done."
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-06",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-integrations",
@@ -1171,11 +1173,12 @@
       "evidence": [
         "PR #2315: fetch_property happy-path tests via BookingCredentials::with_url base-URL seam (MockOtaServer)",
         "PR #2194: property-mapping wizard wired in ppt-web",
-        "booking/mod.rs + ota_xml.rs fully tested"
+        "booking/mod.rs + ota_xml.rs fully tested",
+        "2026-10-06 upkeep (coverage_cursor idx 8): no PRs in 2026-10-03..10-06 window touched Airbnb/Booking/portal-webhook surfaces; status stays done."
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-06",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-integrations",
@@ -1199,11 +1202,12 @@
       "evidence": [
         "PR #2286: signed-timestamp replay/freshness window (5 min) + stale/future/tampered regression tests",
         "PR #2294: PortalWebhooksPage manager surface + useSyndicationDashboard",
-        "HMAC verification + empty-secret fail-closed (#2267)"
+        "HMAC verification + empty-secret fail-closed (#2267)",
+        "2026-10-06 upkeep (coverage_cursor idx 8): no PRs in 2026-10-03..10-06 window touched Airbnb/Booking/portal-webhook surfaces; status stays done."
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-06",
       "screen_refs": []
     },
     {
@@ -1284,11 +1288,12 @@
       "evidence": [
         "PR #2287: reality-web /favorites/alerts page, 6 locales",
         "PR #2288: KMP FavoritesRepository + PriceTrackingViewModel + tests",
-        "PR #2285: reality/favorites screen-map shipped"
+        "PR #2285: reality/favorites screen-map shipped",
+        "2026-10-06 upkeep: PR #3021 (reality-web PriceAlerts mark-read error surfacing) hardens UX on the alerts feed shipped by #2287; no backend/story-shape change."
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-06",
       "screen_refs": [
         {
           "screen_id": "reality/favorites",
