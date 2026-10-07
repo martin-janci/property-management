@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-07T18:37:33Z",
+  "generated": "2026-10-07T20:38:03Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -12,7 +12,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/2902",
       "merged_at": null,
       "specialist": "nextjs-web",
-      "implementer_summary": "pr=2902 status=done specialist=nextjs-web docs-only reconcile; HELD: branch CONTAMINATED by prior bad auto-rebase (17 files incl .research/** state, CONFLICTING, non-mechanical); labeled needs-human-review 2026-08-31T22:29Z \u2014 operator close+re-cut recommended",
+      "implementer_summary": "pr=2902 status=done specialist=nextjs-web docs-only reconcile; HELD: branch CONTAMINATED by prior bad auto-rebase (17 files incl .research/** state, CONFLICTING, non-mechanical); labeled needs-human-review 2026-08-31T22:29Z — operator close+re-cut recommended",
       "reviewer_summary": "verdict=changes note=scope-drift: head reverts .research/management/** state ledger (assignments.json/backlog.json/archives) + unrelated frontend test; branch stale-behind-dev; do-not-merge, needs human reset to docs-only",
       "last_reviewed_oid": "2b7560088500d79e2fecac86ebe9a3e091d1a68a",
       "scope_drift": true,
@@ -204,7 +204,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3028",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3028 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=advisory-lock fixes compare TOCTOU; fmt+scope+reuse clean, clippy/verify blocked by utoipa-swagger-ui egress (#2966) \u2014 draft flagged for human verify+merge",
+      "implementer_summary": "pr=3028 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=advisory-lock fixes compare TOCTOU; fmt+scope+reuse clean, clippy/verify blocked by utoipa-swagger-ui egress (#2966) — draft flagged for human verify+merge",
       "reviewer_summary": "verdict=approve note=TOCTOU fix: per-user pg_advisory_xact_lock + lock_timeout + concurrency regression test, CI green",
       "last_reviewed_oid": "d8f02fe94537197c38357d628dda0fcb26a10bbf",
       "scope_drift": false,
