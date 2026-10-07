@@ -11229,18 +11229,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3002"
+        "PR #3002",
+        "PR #3027"
       ],
       "evidence": [
-        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate.",
+        "resolved: PR #3027 merged 2026-10-05 — screen-map-drift-pr-3002-ppt: reconcile ppt-web dashboard screen-maps with PR #3002 role-gate"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11660,6 +11662,75 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-origin",
+      "title": "ppt-web MfaWrapper.verify uses raw fetch('/api/v1/auth/mfa/verify') — breaks every MFA-required mutation under cross-origin VITE_API_URL deployments",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-07"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:67-81 — MfaWrapper.verify uses raw fetch('/api/v1/auth/mfa/verify', {...}) with the bearer header manually injected from getAccessToken(). Bypasses the generated client's baseUrl set in main.tsx:18-20 to VITE_API_URL.",
+        "Impact: In any deployment where the SPA origin differs from the api-server origin (the normal split-origin topology that VITE_API_URL exists for), the MFA verify request lands on the SPA origin, 404s / returns index.html. response.ok becomes false, the modal reports verificationFailed forever, and every mfa_required mutation (manager/admin writes) is permanently blocked. Also bypasses the shared axios 401-refresh.",
+        "Severity (adversarial-pass): originally graded Medium (+2) by the review subagent; routine upgraded to High (+3). Rationale: blocks every manager/admin write that triggers mfa_required (admin console actions, high-privilege org changes) under the standard split-origin topology — not latent, not conditional on new features. One-line fix.",
+        "Fix: Replace the raw fetch with getApiClient().post('/auth/mfa/verify', { code }) and return status >= 200 && status < 300 — the baseURL + bearer + 401-refresh then flow through the single shared client."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": "plans/code-review-ppt-web-core-mfa-verify-hardcoded-origin.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-predictions-equipment-id-dropped",
+      "title": "ppt-web useMaintenancePredictions drops equipmentId from URL — AI dashboards show unfiltered predictions regardless of selected equipment",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-07"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:42-57 — useMaintenancePredictions accepts PredictionsQuery { equipmentId?, limit? } (types.ts:52-55) but builds the URL as `const params = new URLSearchParams(); if (query?.limit) params.set('limit', String(query.limit));` — equipmentId is NEVER added. The queryKey includes equipmentId (so cache keys differ per selection), but the GET /ai/equipment/predictions request is identical regardless of equipment.",
+        "Impact: routes/groups/ai-dashboards.tsx:60-63 calls the hook with `{ equipmentId: selectedEquipmentId, limit: 50 }` expecting predictions scoped to that equipment. The server receives `?limit=50` only and returns predictions for ALL equipment. The user sees unfiltered data labelled as filtered; per-equipment detail view shows wrong rows.",
+        "Fix: Add `if (query?.equipmentId) params.set('equipment_id', query.equipmentId);` alongside the existing `limit` line (match snake_case axis used by useEquipmentList in the same file)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ai-chat-pagination-cache-key",
+      "title": "ppt-web useAiChatSessions / useAiChatMessages queryKey omits limit/offset — pagination will silently serve the first page forever once a second page is requested",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-07"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:37-78 — useAiChatSessions(limit=50, offset=0) and useAiChatMessages(sessionId, limit=100, offset=0) send `{ params: { limit, offset } }` to the server but set queryKey as aiChatKeys.sessions() / aiChatKeys.messages(sessionId ?? '') — the key omits limit and offset. TanStack Query treats both pages as the same cache entry.",
+        "Impact: Latent today (only consumer ChatInterface.tsx uses defaults), but a trap for the next Load-more / infinite-scroll change: pagination will silently return the first page forever and the second-page spinner will appear to succeed with no new rows. Same shape in useNeedingMaintenance(daysAhead) in usePredictiveMaintenance.ts:59-70.",
+        "Fix: Include pagination inputs in cache keys — aiChatKeys.sessions = (limit, offset) => ['ai-chat', 'sessions', { limit, offset }] and likewise for messages — and pass them from the hooks."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
       "plan": null
     }
   ]

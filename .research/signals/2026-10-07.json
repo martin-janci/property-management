@@ -1,0 +1,193 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-07",
+      "type": "lag_warning",
+      "source": "routine-health",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Last routine run: 2026-10-03T03:12:00Z (approx 96h / 4d ago). Threshold is 36h.",
+        "stale_routine_alert: cloud routine lag >= 3 days; scheduler may be paused or misfired. Dispatcher is still ticking separately (dbd2734 2026-10-05, c83cae1 2026-10-07) via .research/management/assignments.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-origin",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-10-07",
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "score_delta": 3,
+      "severity": "High",
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:67-81 — MfaWrapper.verify uses raw fetch('/api/v1/auth/mfa/verify', {...}) with the bearer header manually injected from getAccessToken(). Bypasses the generated client's baseUrl set in main.tsx:18-20 to VITE_API_URL.",
+        "Impact: In any deployment where the SPA origin differs from the api-server origin (the normal split-origin topology that VITE_API_URL exists for), the MFA verify request lands on the SPA origin, 404s, and every mfa_required manager/admin mutation is permanently blocked.",
+        "Severity (adversarial-pass): originally graded Medium (+2) by the review subagent; routine upgraded to High (+3) because the bug blocks every manager/admin write that triggers mfa_required under the standard split-origin topology — not latent, not conditional on new features. One-line fix via getApiClient().",
+        "Fix: replace with getApiClient().post('/auth/mfa/verify', { code })."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-predictions-equipment-id-dropped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-10-07",
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "score_delta": 2,
+      "severity": "Medium",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts:42-57 — useMaintenancePredictions accepts { equipmentId?, limit? } but only serialises limit into URLSearchParams; equipmentId is dropped.",
+        "routes/groups/ai-dashboards.tsx:60-63 calls with { equipmentId: selectedEquipmentId, limit: 50 } expecting a scoped query. Server receives ?limit=50 only and returns predictions for all equipment; UI labels the unfiltered result as filtered.",
+        "Fix: add params.set('equipment_id', query.equipmentId) alongside the existing limit line (snake_case matches useEquipmentList)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ai-chat-pagination-cache-key",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-10-07",
+      "candidate_vector": "bug",
+      "confidence": "high",
+      "score_delta": 1,
+      "severity": "Low",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts:37-78 — useAiChatSessions / useAiChatMessages send { params: { limit, offset } } but queryKey omits those inputs. TanStack cache collapses pages.",
+        "Latent today (only ChatInterface.tsx uses defaults). Same shape in useNeedingMaintenance(daysAhead) in usePredictiveMaintenance.ts:59-70.",
+        "Fix: aiChatKeys.sessions = (limit, offset) => ['ai-chat','sessions',{limit, offset}] and likewise for messages; pass through from hooks."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/ai-chat/hooks/useAiChat.ts",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-07.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap; decay vacuously ok (no items > 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plans/<slug>.md + adversarial pass:",
+      "observed": "ok",
+      "expected": "ok"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/ count + metadata + headings + capability + Mode + files-exist",
+      "observed": "1 new plan with all 15 sections, 2 capabilities ticked, Mode: cloud-ok, Files path exists on disk",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret-scan on staged diff with four doc exclusions",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md <(regen)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep failed-phase vs cursor rollback",
+      "observed": "no phases failed; cursors advanced consistently",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan still in plans/ or _archive/",
+      "observed": "no missing slug",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= head",
+      "observed": "10 >= 10",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md <(regen)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline — none fired this run",
+      "observed": "auto_fix_actions=[], auto_fix_skipped_reason=no candidate",
+      "expected": "pass"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + coverage_cursor advanced",
+      "observed": "EPICS=13 CC_NOW=9 CC_HEAD=8 PM_NOW=7 PM_HEAD=6; both advanced",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "secret-scan Telegram token patterns",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlist signal met high-confidence + score>=3 bar this run"
+}
