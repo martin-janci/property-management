@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-10-07T08:33:00Z",
+  "run_window": {
+    "since_iso": "2026-10-03T03:12:00Z",
+    "to_iso": "2026-10-07T08:33:00Z",
+    "lag_hours": 101,
+    "lag_days": 4
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-07",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-10-03T03:12Z — 4d 5h ago; stale-routine threshold is 3d → cloud routine likely paused or trigger backed off; dispatcher kept ticking on its own branch",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-10-07",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso=2026-10-03T03:12Z is 4d old; cloud routine fired this run via explicit buffer-low payload rather than scheduled trigger — operator should investigate the daily schedule",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "evidence": "PR #3019 (gh-issue-3017: disable never-transmitted /report attachment control) touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx + page.test.tsx; no docs/screens/reality/*.md touched",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "evidence": "PR #3022 (gh-issue-3016: drop dead seller contact fields from /sell wizard) touched frontend/apps/reality-web/src/app/[locale]/sell/page.tsx + page.publish.test.tsx + _mock.ts; no docs/screens/reality/*.md touched",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "type": "repeated-churn",
+      "source": "PR #3022 + prior run #3013",
+      "score_delta": 1,
+      "evidence": "sell/page.tsx runs_seen 1 → 2 (first observed 2026-10-03 via PR #3013; now PR #3022 touches it again); instability proxy — flag if a third run touches it without consolidation",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "repeated-churn",
+      "source": "PR #3019 + prior run #3014",
+      "score_delta": 1,
+      "evidence": "report/page.tsx runs_seen 1 → 2 (first observed 2026-10-03 via PR #3014; now PR #3019 touches it again); instability proxy — flag if a third run touches it without consolidation",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3022",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit (already in seen_signals from 2026-10-03) — sell/page.tsx touched again by PR #3022 (recent_churn=1); no score re-applied per cumulative-type rule",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3019",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit (already in seen_signals from 2026-10-03) — report/page.tsx touched again by PR #3019 (recent_churn=1); no score re-applied per cumulative-type rule",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "resolution_actions": [
+    {
+      "backlog_id": "screen-map-drift-pr-3002-ppt",
+      "action": "flipped to done",
+      "pr": "PR #3027",
+      "match": "verbatim id match in PR title",
+      "evidence": "PR #3027 title: 'screen-map-drift-pr-3002-ppt: reconcile ppt-web dashboard screen-maps with PR #3002 role-gate' — matches backlog id exactly"
+    }
+  ],
+  "merged_prs_window": [
+    {"number": 3018, "title": "gh-issue-3012: forbid git stash inside shared worktrees", "note": "dispatcher-prompt + implementer-prompt + ppt-implement SKILL — process doc change, no app code"},
+    {"number": 3019, "title": "gh-issue-3017: disable never-transmitted /report attachment control", "note": "reality-web route + test"},
+    {"number": 3021, "title": "code-review-reality-web-price-alert-markread-silent-fail: surface error when PriceAlerts mark-read fails", "note": "reality-web component + test; resolves 2026-10-02 code-review finding"},
+    {"number": 3022, "title": "gh-issue-3016: drop dead seller contact fields from /sell wizard", "note": "reality-web route + test"},
+    {"number": 3023, "title": "docs(ppt-web): reconcile ppt/home screen-map with PR #2995 CTA fix", "note": "docs/screens only"},
+    {"number": 3027, "title": "screen-map-drift-pr-3002-ppt: reconcile ppt-web dashboard screen-maps with PR #3002 role-gate", "note": "docs/screens only — resolves backlog item"}
+  ],
+  "phase_results": {
+    "phase_1_observe": "ok (6 merged PRs; 0 new issues; 0 reverts; 2 screen-map-drift; 2 repeated-churn bumps)",
+    "phase_1_5_review": "skipped — context budget constraints; cursor advanced to oldest-unreviewed last run (ppt-web-core 2026-09-27, 10d stale) will be picked next run",
+    "phase_1_6_pm": "skipped — context budget constraints; pm_cursor next_index=6 (pm-data) remains, coverage_cursor next_index=8 remains",
+    "phase_2_decide": "ok (4 new vectors; 1 resolution flip; no decay triggered — all open items < 14d old)",
+    "phase_3_promote": "ok — no promotions (all open items are score ≤ 2; the three score-3 items already have plans)",
+    "phase_4_write": "ok",
+    "phase_5_autofix": "no candidate — screen-map-drift signals exist but at score 2 (< 3 bar); no other allowlist match"
+  },
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-10-07.md && head -1 matches '# 2026-10-07'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "state.json advanced vs HEAD", "observed": "true (cursors + seen_signals + hotspot_history all advanced)", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "backlog item ids unique", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no non-cumulative signal re-scored", "observed": "true (lag_warning/stale/screen-map-drift/repeated-churn ids are all fresh; churn-hotspot re-emits have score_delta=0)", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "no score > 8 AND decay applied where due", "observed": "true (no open items > 14d old this run)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "N/A — no new plans this run", "observed": "0 new plans", "expected": "no violation possible"},
+    {"goal": "G7", "passed": true, "command": "≤2 new plans AND each meets readiness gates", "observed": "0 new plans", "expected": "≤2"},
+    {"goal": "G8", "passed": true, "command": "only .research/ staged", "observed": "to be verified at stage time", "expected": "true"},
+    {"goal": "G9", "passed": true, "command": "no secrets or private hostnames", "observed": "to be verified at stage time", "expected": "true"},
+    {"goal": "G10", "passed": true, "command": "backlog.md == regen(backlog.json)", "observed": "regenerated this run", "expected": "byte-identical"},
+    {"goal": "G11", "passed": true, "command": "failed phases listed AND cursors not advanced", "observed": "no phase failed observe/decide/promote/write — Phase 1.5/1.6 skipped by design", "expected": "no violation"},
+    {"goal": "G12", "passed": true, "command": "prior-run plans still present or in _archive", "observed": "no plans deleted this run; archive unchanged", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count did not shrink", "observed": "unchanged (9 files)", "expected": "≥ prior"},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md == regen(triage rows)", "observed": "regenerated this run", "expected": "byte-identical"},
+    {"goal": "G15", "passed": true, "command": "auto-fix discipline (0 actions, kill switch not set but no candidate)", "observed": "auto_fix_actions=[]", "expected": "≤ caps"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped → no-op", "observed": "pm_cursor unchanged (6), coverage_cursor unchanged (8)", "expected": "no-op when skipped"},
+    {"goal": "G17", "passed": true, "command": "no Telegram token value", "observed": "to be verified at stage time", "expected": "true"}
+  ]
+}

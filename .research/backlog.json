@@ -11229,18 +11229,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3002"
+        "PR #3002",
+        "PR #3027"
       ],
       "evidence": [
-        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate.",
+        "resolved: PR #3027 merged 2026-10-07 — screen-map-drift-pr-3002-ppt: reconcile ppt-web dashboard screen-maps with PR #3002 role-gate"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11660,6 +11662,94 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "PR #3019 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 (gh-issue-3017: disable never-transmitted /report attachment control) modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx + page.test.tsx with no touch to docs/screens/reality/report-listing.md",
+        "best-effort heuristic — route-basename vs screen-slug match; this is a REVIEW candidate, not a promotable plan"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "PR #3022 touched reality-web /sell route without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 (gh-issue-3016: drop dead seller contact fields from /sell wizard) modified frontend/apps/reality-web/src/app/[locale]/sell/page.tsx + page.publish.test.tsx + _mock.ts with no touch to docs/screens/reality/sell.md",
+        "best-effort heuristic — route-basename vs screen-slug match; this is a REVIEW candidate, not a promotable plan"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "title": "Repeated churn in frontend/apps/reality-web/src/app/[locale]/sell/page.tsx — runs_seen=2 (2026-10-03 → 2026-10-07)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3022",
+        "churn-hotspot runs_seen=2"
+      ],
+      "evidence": [
+        "PR #3022 (gh-issue-3016 /sell wizard) touched frontend/apps/reality-web/src/app/[locale]/sell/page.tsx; prior run also touched this file (2026-10-03) — hotspot_history runs_seen=2",
+        "instability proxy — flag if a third run touches it without consolidation"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "title": "Repeated churn in frontend/apps/reality-web/src/app/[locale]/report/page.tsx — runs_seen=2 (2026-10-03 → 2026-10-07)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3019",
+        "churn-hotspot runs_seen=2"
+      ],
+      "evidence": [
+        "PR #3019 (gh-issue-3017 /report attachment control) touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx; prior run also touched this file (2026-10-03) — hotspot_history runs_seen=2",
+        "instability proxy — flag if a third run touches it without consolidation"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
       "plan": null
     }
   ]
