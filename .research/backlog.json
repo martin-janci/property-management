@@ -11229,7 +11229,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3002"
       ],
@@ -11241,7 +11241,12 @@
       ],
       "created_at": "2026-10-01",
       "updated_at": "2026-10-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-07T12:26:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3027
+      }
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",

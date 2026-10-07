@@ -594,6 +594,26 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "gh-issue-3029",
+      "action": "Follow-up: SyncSchedule save-error banner is driven by persistent mutation state, so it reappears on re-edit (PR #2967) (Closes #3029)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-07T12:26:43Z (#3029)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-07T12:26:43Z",
+      "issue_ref": {
+        "number": 3029,
+        "url": "https://github.com/martin-janci/property-management/issues/3029",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-01T04:30:00Z"

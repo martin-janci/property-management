@@ -6434,6 +6434,30 @@
       "merge_attempted_at": "2026-08-21T18:31:56Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
+      "branch": "auto-impl/code-review-ppt-web-ui-workflow-automati-b1aacc81",
+      "status": "merged",
+      "claimed_at": "2026-10-05T02:32:52Z",
+      "last_updated": "2026-10-07T12:32:18Z",
+      "status_changed_at": "2026-10-07T12:32:18Z",
+      "pr_number": 3020,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3020",
+      "merged_at": "2026-10-07T10:39:34Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3020 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=i18n workflow-automation toast titles/messages 5 pages via automation.* keys; +28 keys x6 locales; VERIFY OK 4778 ppt-web tests; drift benign owner-unmapped",
+      "reviewer_summary": "verdict=approve note=re-review-clean-after-rebase: i18n workflow-automation toasts, 28 keys x6 locales, CI green",
+      "last_reviewed_oid": "b788c97ce10f2a255ca0bd240cb1ebca0c54f43a",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-reality-server-agency-members-unauth-idor",
       "branch": "auto-impl/code-review-reality-server-agency-member-b424e568",
       "status": "failed",
@@ -15783,6 +15807,54 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-devops-unblock-api-server-utoipa-swagger-egress",
+      "branch": "auto-impl/pm-devops-unblock-api-server-utoipa-swag-00fdef37",
+      "status": "merged",
+      "claimed_at": "2026-10-05T12:21:40Z",
+      "last_updated": "2026-10-07T12:32:18Z",
+      "status_changed_at": "2026-10-07T12:32:18Z",
+      "pr_number": 3026,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3026",
+      "merged_at": "2026-10-07T10:39:46Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3026 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=enabled utoipa-swagger-ui vendored feature; build script uses embedded v5.17.14 asset offline (no github egress); fmt+clippy --workspace --all-targets green offline, workspace tests need CI postgres",
+      "reviewer_summary": "verdict=approve note=build-infra-unblock vendored swagger-ui; clean CI green; scope-drift (manifest+lockfile only) justified; posted as COMMENT (self-approve blocked bot==author)",
+      "last_reviewed_oid": "12e047f5127ac1f0eaf0ef38c38af253b32a38c4",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "pm-devops-unblock-mobile-rn-jest-expo-version-rot",
+      "branch": "auto-impl/pm-devops-unblock-mobile-rn-jest-expo-ve-247cc3c3",
+      "status": "merged",
+      "claimed_at": "2026-10-05T12:21:40Z",
+      "last_updated": "2026-10-07T12:32:18Z",
+      "status_changed_at": "2026-10-07T12:32:18Z",
+      "pr_number": 3025,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3025",
+      "merged_at": "2026-10-07T10:39:57Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3025 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=breakage did NOT reproduce on dev (pnpm -F mobile test green: 58 suites/704 tests via #2997 stubs); pinned jest-expo 56.0.5 + documented SDK-56-preset-on-SDK-57 skew; VERIFY OK",
+      "reviewer_summary": "verdict=approve note=minimal jest-expo exact pin + doc + lockfile sync; verified green; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "29535d11a4527015362d1d3e4a6762c1c8d8d6af",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test",
       "branch": "auto-impl/pm-qa-aml-dashboard-dialog-state-per-ass-a07eb3b6",
       "status": "failed",
@@ -18489,5 +18561,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-05T22:32:56Z"
+  "archived_at": "2026-10-07T12:34:55Z"
 }
