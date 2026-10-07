@@ -11744,6 +11744,75 @@
       "created_at": "2026-10-07",
       "updated_at": "2026-10-07",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-registry-api-no-auth-token",
+      "title": "Registry pages construct API client without accessToken/tenantId — unauthenticated calls, no token rotation",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-07 (routine Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:18-21 — module-scope `const registryApi = createRegistryApi({ baseUrl: API_BASE_URL })` with no accessToken/tenantId; comment on L20 openly admits 'accessToken and tenantId would come from auth context' (TODO never done).",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:19 — same pattern. createRegistryApi in @ppt/api-client/src/registry/api.ts bakes Authorization header (Bearer scheme) from config.accessToken at construction, so every pets/vehicles/rules call goes out with NO bearer header and NO X-Tenant-ID — identical bug class to the PR #3004 raw-fetch regressions, via the builder path.",
+        "Even if backend returns 401, client never rebuilds on token rotation (compare: useBuildings.ts:28-33 keys the memo on getToken()). Fix: hoist the api/hooks construction into a hook that reads access token + tenant from AuthContext and re-constructs when either changes."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx",
+        "frontend/packages/api-client/src/registry/api.ts"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": "plans/code-review-ppt-web-core-registry-api-no-auth-token.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-registries-root-logout-leak",
+      "title": "'registries' queryKey root missing from AUTHED_QUERY_KEY_ROOTS — resident PII (pets, vehicles) leaks across logout",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-07 (routine Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/registry/hooks.ts:23 — `registryKeys.all = ['registries'] as const` (note the plural 'registries', not 'registry').",
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts:354-380 — AUTHED_QUERY_KEY_ROOTS allowlist does NOT contain 'registries'. On a shared workstation, user A's pet/vehicle registry rows (names, license plates, pet medical notes — tenant-scoped PII) persist in the TanStack cache after logout and are visible to user B on next login.",
+        "Same bug class as the already-reported `code-review-ppt-web-core-authed-roots-session-leak` finding, different feature folder, missed by that fix. Fix: add 'registries' to AUTHED_QUERY_KEY_ROOTS and add a regression case to queryKeys.test.ts' auto-discovery assertion."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts",
+        "frontend/packages/api-client/src/registry/hooks.ts",
+        "frontend/apps/ppt-web/src/lib/queryKeys.test.ts"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": "plans/code-review-ppt-web-core-registries-root-logout-leak.md"
+    },
+    {
+      "id": "code-review-ppt-web-core-book-facility-silent-and-i18n",
+      "title": "BookFacilityPage swallows availability-fetch errors and uses hardcoded English error strings",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-07 (routine Phase 1.5)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:49-56 — fetchAvailability catch is console.error only, no state update: when checkAvailability fails the user sees an empty slot grid with no error indicator and no retry affordance, making a broken booking screen look like a facility with zero free slots.",
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx:35,71 — hardcoded English strings 'Failed to load facility details' and 'Failed to create booking' are stored in state and rendered to the user even though useTranslation() is already imported (L15); bypasses the app's react-i18next pipeline for a user-facing error path."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
     }
   ]
 }

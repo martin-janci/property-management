@@ -1,11 +1,13 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-07 16:40 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-07 17:00 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
 | 6 | test-gap | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | `backend/servers/reality-server/src/routes/inquiries.rs (+1)` | PR #497 (+2) | 2026-05-26 | done | plans/_archive/test-gap-inquiry-idor-regression.md |
 | 5 | security | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature | `backend/servers/api-server/src/routes/voice_webhooks.rs (+1)` | standing-scan-2026-07-28 | 2026-07-28 | dropped | — |
+| 3 | security | Registry pages construct API client without accessToken/tenantId — unauthenticated calls, no token rotation | `frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx (+2)` | rotating-expert-review ppt-web-core 2026-10-07 (routine Phase 1.5) | 2026-10-07 | ready | plans/code-review-ppt-web-core-registry-api-no-auth-token.md |
+| 3 | security | 'registries' queryKey root missing from AUTHED_QUERY_KEY_ROOTS — resident PII (pets, vehicles) leaks across logout | `frontend/apps/ppt-web/src/lib/queryKeys.ts (+2)` | rotating-expert-review ppt-web-core 2026-10-07 (routine Phase 1.5) | 2026-10-07 | ready | plans/code-review-ppt-web-core-registries-root-logout-leak.md |
 | 3 | bug | reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) (+1) | 2026-10-03 | done | plans/_archive/code-review-reality-web-sell-wizard-no-persist.md |
 | 3 | bug | RegistryRulesPage save silently swallows errors and gives no success feedback | `frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx` | rotating-expert-review ppt-web-ui 2026-10-01 | 2026-10-01 | done | plans/code-review-ppt-web-ui-registry-rules-save-silent-fail.md |
 | 3 | bug | logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation | `frontend/apps/ppt-web/src/lib/queryKeys.ts (+3)` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache) | 2026-09-26 | ready | plans/code-review-ppt-web-core-authed-roots-session-leak.md |
@@ -46,6 +48,7 @@
 | 2 | refactor | reality-web /report page recent churn — PR #3014 submit-wiring change | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | PR #3014 (+3) | 2026-10-07 | open | — |
 | 2 | test-gap | PR #3019 touched reality-web /report route without updating docs/screens/reality/report-listing.md | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx (+1)` | PR #3019 | 2026-10-07 | open | — |
 | 2 | test-gap | PR #3022 touched reality-web /sell route without updating docs/screens/reality/sell.md | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (+1)` | PR #3022 | 2026-10-07 | open | — |
+| 2 | bug | BookFacilityPage swallows availability-fetch errors and uses hardcoded English error strings | `frontend/apps/ppt-web/src/features/facilities/pages/BookFacilityPage.tsx` | rotating-expert-review ppt-web-core 2026-10-07 (routine Phase 1.5) | 2026-10-07 | open | — |
 | 2 | bug | ppt-web /community/groups/:groupId renders hardcoded mock group — every group shows fake "Sample Group" with no-op actions | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review ppt-web-core 2026-10-04 | 2026-10-04 | open | — |
 | 2 | bug | reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) (+1) | 2026-10-03 | done | — |
 | 2 | test-gap | PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (+1)` | PR #3013 | 2026-10-03 | open | — |

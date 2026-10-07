@@ -62,57 +62,90 @@
       "confidence": "high",
       "candidate_vector": "dep-update",
       "evidence": "Dependabot PR #3030: chore(deps): bump the npm-minor-patch group across 1 directory with 28 updates. No score."
+    },
+    {
+      "id": "code-review-ppt-web-core-registry-api-no-auth-token",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "RegistryPage.tsx:18-21 + RegistryRulesPage.tsx:19 construct createRegistryApi without accessToken/tenantId — Authorization + X-Tenant-ID missing on every call.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-registries-root-logout-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "registryKeys.all=['registries'] (plural) not in AUTHED_QUERY_KEY_ROOTS — pet/vehicle PII leaks across logout.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-book-facility-silent-and-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "BookFacilityPage.tsx fetchAvailability catch is console.error only (no error state) + hardcoded English error strings bypass t().",
+      "expert": "frontend"
     }
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 matches '# <today>'",
+      "command": "brief exists for today",
       "observed": "pass",
       "expected": "pass"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare staged vs HEAD state.json",
+      "command": "state advanced vs HEAD",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq backlog ids unique",
+      "command": "backlog ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq signals not double-counting non-cumulative types",
+      "command": "no non-cumulative signal re-counted",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq max score <= 8; decay check",
-      "observed": "true (no open items older than 14 days)",
-      "expected": "true"
+      "command": "score cap 8 + decay",
+      "observed": "max=6; no open>14d",
+      "expected": "pass"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run — vacuously passes",
-      "observed": "0 new plans",
-      "expected": "all new plans annotated"
+      "command": "new plans annotated with adversarial pass",
+      "observed": "2 plans annotated 'adversarial pass: passed' in brief",
+      "expected": "all present"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "0 new plans ≤ 2",
-      "observed": "0",
-      "expected": "<= 2"
+      "command": "<=2 new plans, 15 sections, mode declared, capability tick, files resolve",
+      "observed": "2 plans, all gates pass",
+      "expected": "pass"
     },
     {
       "goal": "G8",
@@ -124,23 +157,23 @@
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets in staged diff",
-      "observed": "0 matches",
+      "command": "no secrets in staged diff (after Authorization: Bearer scrubbed)",
+      "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md regen",
+      "command": "backlog.md byte-identical",
       "observed": "identical",
       "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases that failed listed with non-advanced cursors",
-      "observed": "Phase 1.5 + 1.6 skipped (deliberate), cursor unchanged",
-      "expected": "cursor matches HEAD for skipped phases"
+      "command": "failed phases list + cursor not advanced",
+      "observed": "Phase 1.6 skipped — pm_cursor + coverage_cursor unchanged",
+      "expected": "cursor stable"
     },
     {
       "goal": "G12",
@@ -153,35 +186,35 @@
       "goal": "G13",
       "passed": true,
       "command": "archive count >= HEAD archive count",
-      "observed": "unchanged",
-      "expected": ">= HEAD"
+      "observed": "equal",
+      "expected": ">=HEAD"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "command": "IDEAS_TRIAGE.md byte-identical",
       "observed": "identical",
       "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps + idempotency",
+      "command": "auto_fix caps + idempotency",
       "observed": "0 actions",
       "expected": "pass"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "pm_cursor + coverage_cursor in range; Phase 1.6 skipped so no-op",
-      "observed": "pm_cursor.next_index=6 (in 0..7), coverage_cursor.next_index=8 unchanged (Phase 1.6 skipped)",
-      "expected": "no-op when Phase 1.6 skipped"
+      "command": "pm_cursor range; Phase 1.6 skipped so no-op",
+      "observed": "pm_cursor.next_index=6, Phase 1.6 skipped",
+      "expected": "no-op"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no telegram token in staged diff",
-      "observed": "0 matches",
+      "command": "no telegram token value",
+      "observed": "0",
       "expected": "0"
     }
   ],
