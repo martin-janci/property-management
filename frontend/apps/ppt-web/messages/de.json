@@ -340,7 +340,19 @@
     "notifications": "Benachrichtigungen",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "saved": "Gespeichert",
+    "deleted": "Gelöscht",
+    "submitted": "Übermittelt",
+    "done": "Fertig",
+    "createFailed": "Erstellen fehlgeschlagen",
+    "updateFailed": "Aktualisierung fehlgeschlagen",
+    "saveFailed": "Speichern fehlgeschlagen",
+    "deleteFailed": "Löschen fehlgeschlagen",
+    "submitFailed": "Übermittlung fehlgeschlagen",
+    "pleaseTryAgain": "Bitte versuchen Sie es erneut."
   },
   "nav": {
     "home": "Startseite",
@@ -642,7 +654,11 @@
         "titleTooLong": "Titel darf maximal 255 Zeichen haben",
         "descriptionRequired": "Beschreibung ist erforderlich"
       }
-    }
+    },
+    "reported": "Störung gemeldet",
+    "reportFailed": "Störung konnte nicht gemeldet werden",
+    "updated": "Störung aktualisiert",
+    "updateFailed": "Störung konnte nicht aktualisiert werden"
   },
   "buildings": {
     "title": "Gebäude",
@@ -1510,7 +1526,11 @@
         "expired": "Abgelaufen",
         "cancelled": "Abgebrochen"
       }
-    }
+    },
+    "created": "Mietvertrag erstellt",
+    "createFailed": "Mietvertrag konnte nicht erstellt werden",
+    "violationRecorded": "Verstoß erfasst",
+    "violationCreateFailed": "Verstoß konnte nicht erfasst werden"
   },
   "settings": {
     "notifications": {
@@ -1892,7 +1912,13 @@
         "state": "Status",
         "actions": "Aktionen"
       }
-    }
+    },
+    "sensorDeleted": "Sensor gelöscht",
+    "sensorDeleteFailed": "Sensor konnte nicht gelöscht werden",
+    "sensorRegistered": "Sensor registriert",
+    "sensorRegisterFailed": "Sensor konnte nicht registriert werden",
+    "sensorUpdated": "Sensor aktualisiert",
+    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden"
   },
   "commandPalette": {
     "commands": {
@@ -2563,5 +2589,26 @@
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
     }
+  },
+  "community": {
+    "groupCreated": "Gruppe erstellt"
+  },
+  "meters": {
+    "readingSubmitted": "Ablesung übermittelt",
+    "submitFailed": "Ablesung konnte nicht übermittelt werden",
+    "correctionSubmitted": "Ablesungskorrektur übermittelt",
+    "updateFailed": "Ablesung konnte nicht aktualisiert werden",
+    "readingValidated": "Ablesung validiert",
+    "validationFailedTitle": "Validierung fehlgeschlagen",
+    "validationFailed": "Ablesung konnte nicht validiert werden"
+  },
+  "personMonths": {
+    "unitsUpdated": "{{count}} Einheit(en) aktualisiert",
+    "bulkFailedTitle": "Sammeleingabe fehlgeschlagen",
+    "bulkFailed": "Personenmonate konnten nicht gespeichert werden",
+    "entryRemoved": "Eintrag entfernt",
+    "deleteFailed": "Eintrag konnte nicht gelöscht werden",
+    "saved": "Personenmonat gespeichert",
+    "saveFailed": "Personenmonat konnte nicht gespeichert werden"
   }
 }

@@ -59,11 +59,16 @@ function GroupsPageRoute() {
 function CreateGroupPageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   return (
     <CreateGroupPage
       onSubmit={() => {
-        showToast({ type: 'success', title: 'Created', message: 'Group created' });
+        showToast({
+          type: 'success',
+          title: t('common.created', { defaultValue: 'Created' }),
+          message: t('community.groupCreated', { defaultValue: 'Group created' }),
+        });
         navigate('/community/groups');
       }}
       onCancel={() => navigate('/community/groups')}
