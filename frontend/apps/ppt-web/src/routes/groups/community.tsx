@@ -4,10 +4,10 @@
  * Owns the community route-wrapper components and the `<Route>` table fragment.
  * Extracted from App.tsx to isolate community work.
  */
-import type { CommunityGroup } from '@ppt/api-client';
+import { useGroup, useGroupMembers, useJoinGroup, useLeaveGroup } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { Spinner, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   CreateGroupPage,
@@ -71,38 +71,72 @@ function CreateGroupPageRoute() {
   );
 }
 
-function GroupDetailPageRoute() {
-  const { groupId } = useParams<{ groupId: string }>();
+/**
+ * Data-wired inner component for the group-detail route.
+ *
+ * Fetches the real group + members for `groupId` from the Community API and
+ * derives the current viewer's membership/role from the member list. Renders a
+ * loading spinner while fetching and a not-found state when the group is
+ * missing or the request errors — never a fabricated placeholder group.
+ *
+ * Exported for the route-wiring test, which exercises the loading / not-found /
+ * loaded branches and the join/leave wiring in isolation (mirrors
+ * `ViewAnnouncementPageInner`).
+ */
+export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
-  if (!groupId) {
-    return <div>{t('errors.groupNotFound', 'Group not found')}</div>;
+  const { data: group, isLoading, error } = useGroup(groupId);
+  const { data: members = [] } = useGroupMembers(groupId);
+  const joinGroup = useJoinGroup();
+  const leaveGroup = useLeaveGroup();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
-  // Mock group data
-  const mockGroup: CommunityGroup = {
-    id: groupId,
-    buildingId: 'bld-1',
-    name: 'Sample Group',
-    description: 'A sample community group',
-    category: 'general',
-    visibility: 'public',
-    memberCount: 10,
-    postCount: 0,
-    isOfficial: false,
-    createdBy: 'user-1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  if (error || !group) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <p className="text-gray-500">{t('community.groups.notFound', 'Group not found')}</p>
+        <button
+          type="button"
+          onClick={() => navigate('/community/groups')}
+          className="mt-4 text-sm text-blue-600 hover:text-blue-800"
+        >
+          {t('community.groups.backToGroups', 'Back to Groups')}
+        </button>
+      </div>
+    );
+  }
+
+  const currentUserId = user?.id;
+  const currentMember = currentUserId
+    ? members.find((member) => member.userId === currentUserId)
+    : undefined;
+  const isMember = currentMember?.status === 'active';
+  const isOwner = currentMember?.role === 'owner';
+  const isAdmin = currentMember?.role === 'admin';
 
   return (
     <GroupDetailPage
-      group={mockGroup}
-      members={[]}
+      group={group}
+      members={members}
+      currentUserId={currentUserId}
+      isMember={isMember}
+      isAdmin={isAdmin}
+      isOwner={isOwner}
+      isJoining={joinGroup.isPending}
+      isLeaving={leaveGroup.isPending}
       onNavigateBack={() => navigate('/community/groups')}
-      onJoin={() => {}}
-      onLeave={() => {}}
+      onJoin={() => joinGroup.mutate(groupId)}
+      onLeave={() => leaveGroup.mutate(groupId)}
       onEdit={() => {}}
       onDelete={() => navigate('/community/groups')}
       onNavigateToSettings={() => {}}
@@ -111,6 +145,17 @@ function GroupDetailPageRoute() {
       onBanMember={() => {}}
     />
   );
+}
+
+function GroupDetailPageRoute() {
+  const { groupId } = useParams<{ groupId: string }>();
+  const { t } = useTranslation();
+
+  if (!groupId) {
+    return <div>{t('errors.groupNotFound', 'Group not found')}</div>;
+  }
+
+  return <GroupDetailPageInner groupId={groupId} />;
 }
 
 function EventsPageRoute() {
