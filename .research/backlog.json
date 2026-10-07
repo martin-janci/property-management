@@ -11229,18 +11229,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3002"
+        "PR #3002",
+        "PR #3027"
       ],
       "evidence": [
-        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate.",
+        "resolved: PR #3027 (screen-map-drift-pr-3002-ppt: reconcile ppt-web dashboard screen-maps with PR #3002 role-gate) merged 2026-10-05 — updated docs/screens/ppt/dashboard-manager.md + dashboard-resident.md"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11660,6 +11662,90 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook/airbnb.rs",
+      "title": "integrations/webhook/airbnb.rs: new sub-receiver extracted from webhook.rs — 703-line single-commit shape, watch for post-split churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3005",
+        "churn-window since 2026-10-03T03:12:00Z"
+      ],
+      "evidence": [
+        "churn-hotspot: 703 lines of changes this run; file is brand new (created by PR #3005 webhook.rs split); runs_seen=1 (first observation)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook/airbnb.rs"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook/subscriptions.rs",
+      "title": "integrations/webhook/subscriptions.rs: new sub-receiver extracted from webhook.rs — 647-line single-commit shape, watch for post-split churn",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3005",
+        "churn-window since 2026-10-03T03:12:00Z"
+      ],
+      "evidence": [
+        "churn-hotspot: 647 lines of changes this run; file is brand new (created by PR #3005 webhook.rs split); runs_seen=1 (first observation)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook/subscriptions.rs"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "reality-web /sell page refactor (PR #3022) landed without touching docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 (gh-issue-3016 fix for seller contact fields) touched frontend/apps/reality-web/src/app/[locale]/sell/{page.tsx,_mock.ts,page.publish.test.tsx} but did not update docs/screens/reality/sell.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "reality-web /report page refactor (PR #3019) landed without touching docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 (gh-issue-3017 fix disabling attachment control) touched frontend/apps/reality-web/src/app/[locale]/report/{page.tsx,page.test.tsx} but did not update docs/screens/reality/report-listing.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
       "plan": null
     }
   ]

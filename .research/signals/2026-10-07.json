@@ -1,0 +1,196 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-07",
+      "type": "lag_warning",
+      "source": "routine-timer",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-10-03T03:12:00Z — now 2026-10-07, lag ~4d 0h — above 36h threshold; cloud routine was quiet for 4 days",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "churn-window since 2026-10-03T03:12:00Z",
+      "score_delta": 0,
+      "evidence": "churn this run: 2752 lines across PR #3005 (refactor-split); file retained as 3321-byte dispatcher shim after submodule extraction; cumulative re-emit (already in seen_signals, score not re-applied)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook/airbnb.rs",
+      "type": "churn-hotspot",
+      "source": "churn-window since 2026-10-03T03:12:00Z",
+      "score_delta": 1,
+      "evidence": "new submodule extracted from webhook.rs by PR #3005 — 703 lines in a single refactor commit; first observation; score +1 to track the sub-receiver independently going forward",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook/subscriptions.rs",
+      "type": "churn-hotspot",
+      "source": "churn-window since 2026-10-03T03:12:00Z",
+      "score_delta": 1,
+      "evidence": "new submodule extracted from webhook.rs by PR #3005 — 647 lines in a single refactor commit; first observation; score +1 to track the sub-receiver independently going forward",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen pre-run=3",
+      "score_delta": 0,
+      "evidence": "runs_seen advancing 3→4; cumulative re-emit — score not re-applied; recent_churn=2752; next time this file churns it will be in post-split shim-form only",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "evidence": "PR #3022 (gh-issue-3016: drop dead seller contact fields from /sell wizard) touched frontend/apps/reality-web/src/app/[locale]/sell/{page.tsx,_mock.ts,page.publish.test.tsx} without updating docs/screens/reality/sell.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "evidence": "PR #3019 (gh-issue-3017: disable never-transmitted /report attachment control) touched frontend/apps/reality-web/src/app/[locale]/report/{page.tsx,page.test.tsx} without updating docs/screens/reality/report-listing.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-07.md && head -1 ... grep ^# 2026-10-07$",
+      "observed": "brief present + H1 matches",
+      "expected": "brief present + H1 matches"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq against HEAD state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | unique len",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative resignalled with delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [select(.score>8)]|length",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items with updated_at <= 2026-09-23",
+      "observed": "0 decay candidates",
+      "expected": "all decay candidates lost 1 or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no plans promoted",
+      "observed": "skipped",
+      "expected": "skipped"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases-that-failed cross-check cursors",
+      "observed": "Phase 1.5/1.6 skipped; review/pm/coverage cursors unchanged vs HEAD",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present",
+      "observed": "all 33 prior slugs present (none archived this run)",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= head",
+      "observed": "now=10, head=10",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline",
+      "observed": "length=0, no auto-fix fired",
+      "expected": "within caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op",
+      "observed": "pm_cursor idx=6 unchanged, coverage_cursor idx=8 unchanged, no new management artifacts written",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram token values",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
