@@ -557,6 +557,40 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-documents-default-org-sentinel",
+      "action": "ppt-web documents routes fabricate a 'default-org' sentinel instead of gating when the user has no organizationId",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-07T16:42:28Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-07T16:42:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-leases-hardcoded-eur-currency",
+      "action": "ppt-web lease mappers hardcode EUR for all monetary values, so PLN/HUF markets mislabel amounts",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-07T16:42:28Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-07T16:42:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-01T04:30:00Z"
