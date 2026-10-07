@@ -6,6 +6,14 @@
 // churn source. Setting TZ from a setupFile is too late (ICU is already cached).
 process.env.TZ = 'UTC';
 
+// jest-expo is intentionally exact-pinned to 56.0.5 in package.json (NOT a
+// caret range) even though the app is on Expo SDK 57 / react-native 0.87.
+// The SDK-56 preset is kept green against RN 0.87 purely by the two
+// moduleNameMapper stubs below (assets-registry + DebuggingOverlay). An exact
+// pin stops a non-frozen `pnpm install` from floating jest-expo within 56.x and
+// silently reintroducing the preset-boot crash this suite hit before
+// (#2951 / #2997). Do NOT bump jest-expo or drop the stubs without re-running
+// `pnpm --filter mobile test`.
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'jest-expo',
