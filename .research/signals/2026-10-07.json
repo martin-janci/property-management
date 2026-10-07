@@ -1,0 +1,190 @@
+{
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3019 (merged 2026-10-05) modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx without touching docs/screens/reality/report-listing.md."
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3022 (merged 2026-10-05) modified frontend/apps/reality-web/src/app/[locale]/sell/page.tsx without touching docs/screens/reality/sell.md."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-07",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2 commits in observation window (2026-10-05 PR #2967 silent-fail fix + sibling import-feature commits). First observation."
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "type": "repeated-churn",
+      "source": "churn-scan-2026-10-07",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "runs_seen 1→2: PR #3022 touched /sell/page.tsx again after PR #3013 (contact-fields drop)."
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "repeated-churn",
+      "source": "churn-scan-2026-10-07",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "runs_seen 1→2: PR #3019 touched /report/page.tsx again after PR #3014 (attachment-control disable)."
+    },
+    {
+      "id": "lag-warning-2026-10-07",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-03T03:12:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Routine last ran 2026-10-03 03:12Z — ~102h/4d ago. Payload buffer-low: claimable=16/72 — refill planner."
+    },
+    {
+      "id": "dep-update-noise-pr-3030",
+      "type": "dep-update-noise",
+      "source": "PR #3030",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "Dependabot PR #3030: chore(deps): bump the npm-minor-patch group across 1 directory with 28 updates. No score."
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# <today>'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals not double-counting non-cumulative types",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq max score <= 8; decay check",
+      "observed": "true (no open items older than 14 days)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuously passes",
+      "observed": "0 new plans",
+      "expected": "all new plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans ≤ 2",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files all under .research/",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed listed with non-advanced cursors",
+      "observed": "Phase 1.5 + 1.6 skipped (deliberate), cursor unchanged",
+      "expected": "cursor matches HEAD for skipped phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior plans silently deleted",
+      "observed": "all prior slugs present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD archive count",
+      "observed": "unchanged",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions",
+      "expected": "pass"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm_cursor + coverage_cursor in range; Phase 1.6 skipped so no-op",
+      "observed": "pm_cursor.next_index=6 (in 0..7), coverage_cursor.next_index=8 unchanged (Phase 1.6 skipped)",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no high-confidence signal with score>=3 matched the allowlist action shapes this run; screen-map-drift signals at +2 are below the +3 bar."
+}

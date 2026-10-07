@@ -11518,20 +11518,23 @@
       "title": "reality-web /sell page recent churn — PR #3013 publish-wiring change",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
+        "PR #3013",
+        "PR #3022",
         "churn-scan-2026-10-03",
-        "PR #3013"
+        "churn-scan-2026-10-07"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "repeated-churn runs_seen=1→2: PR #3022 touched /sell page.tsx again (gh-issue-3016 contact-fields drop)."
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11539,20 +11542,23 @@
       "title": "reality-web /report page recent churn — PR #3014 submit-wiring change",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
+        "PR #3014",
+        "PR #3019",
         "churn-scan-2026-10-03",
-        "PR #3014"
+        "churn-scan-2026-10-07"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "repeated-churn runs_seen=1→2: PR #3019 touched /report page.tsx again (gh-issue-3017 attachment-control disable)."
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11670,6 +11676,73 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "PR #3019 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 (merged 2026-10-05) modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx (disabled never-transmitted attachment control, closes gh-issue-3017) without touching docs/screens/reality/report-listing.md.",
+        "Follow-up to prior screen-map-drift-pr-3014-reality — the attachment control change should be reflected in the screen doc alongside the earlier submit-wiring note.",
+        "Heuristic signal."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "PR #3022 touched reality-web /sell route without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 (merged 2026-10-05) modified frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (dropped dead seller contact fields from /sell wizard, closes gh-issue-3016) without touching docs/screens/reality/sell.md.",
+        "Follow-up to prior screen-map-drift-pr-3013-reality — the field removal should be reflected in the screen doc so the field inventory stays accurate.",
+        "Heuristic signal."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+      "title": "reality-web SyncSchedule.tsx recent churn — PR #2967 silent-fail fix + follow-up #3029 persistent-mutation-flag concern",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-07",
+        "PR #2967"
+      ],
+      "evidence": [
+        "2 commits in current observation window (2026-10-05 PR #2967 silent-fail surfacing fix + sibling pair in import feature). First observation — may stabilize or stack."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
       "plan": null
     }
   ]
