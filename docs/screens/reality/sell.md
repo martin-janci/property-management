@@ -7,7 +7,7 @@ implementations:
     component: SellWizard
     buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
   mobile-native:
     component: MSell
     buildStatus: in-progress
@@ -98,9 +98,12 @@ UC-31 listing creation. Critical conversion funnel — every drop-off step costs
 - Address combobox should geocode + reverse-geocode to enable map display on the listing.
 - Energy class chip-group A–G uses same color treatment as listing-detail building passport.
 - Mobile (KMP) uses a single-column step-by-step flow with `MSell` component.
+- **(reality-web) Publish is now wired to the API (PR #3013).** The step-5 "Publikovať" button calls `createListing()` from `@/lib/realtor-api` and only shows the success screen on a resolved 2xx; failures render an inline `role="alert"` error banner and keep the wizard open, and the button is disabled + shows a "publishing…" label while in flight. apiStatus raised `stub → partial` for reality-web: listing creation persists, but photo/video upload (step 3) and several step-2 detail fields are still mock-only (not in the POST payload), so it is not yet `complete`. mobile-native `MSell` remains `stub`.
+- **Endpoint path mismatch to verify (reality-web).** `createListing()` POSTs to `/api/v1/listings`, but the reality-server create route is `POST /api/v1/my/listings` (`create_listing`); `/api/v1/listings` only serves GET search/featured/categories/suggestions/{id} + POST {id}/view. `endpoints: []` left unchanged pending confirmation of the correct route/operationId; a future agent should reconcile the client path and then record the endpoint ID here.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-10-07 — agent: reconciled with PR #3013 (sell-wizard persist fix). reality-web Publish now calls `createListing()` with await+try/catch/finally; adds saving/submitError states, inline error banner, and a `page.publish.test.tsx` regression test; i18n keys `sell.form.publishing` + `sell.form.submitFailed` added across locales. Frontmatter: reality-web apiStatus stub → partial (mobile-native untouched). Noted client/server path mismatch (`/api/v1/listings` POST vs server `/api/v1/my/listings`). Docs-only; `/screens validate` clean.
 - 2026-05-09 — agent: bootstrapped from bundle (pages/sell.html — 5-step wizard with stepper + progress aside + mobile-new-pages.html MSell frame); 8 sharedComponents; sibling listing-edit
