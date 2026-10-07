@@ -149,3 +149,80 @@ export function getMyRealtorAnalytics(period?: string): Promise<RealtorAnalytics
   const query = period ? `?period=${encodeURIComponent(period)}` : '';
   return request<RealtorAnalytics>(`/api/v1/realtors/me/stats${query}`);
 }
+
+/**
+ * One of the authenticated user's own portal listings.
+ *
+ * camelCase wire mirror of reality-server's `PortalListingResponse`
+ * (`backend/servers/reality-server/src/routes/portal_listings.rs`). Note there
+ * is no image field on this contract, and `price` / `sizeSqm` are Decimals that
+ * can arrive as a number or a string depending on the serializer, so callers
+ * must coerce before formatting.
+ */
+export interface MyListing {
+  id: string;
+  title: string;
+  description?: string | null;
+  propertyType: string;
+  transactionType: string;
+  price: number | string;
+  currency: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  sizeSqm?: number | string | null;
+  rooms?: number | null;
+  floor?: number | null;
+  totalFloors?: number | null;
+  status: string;
+  isNegotiable: boolean;
+  isPublished: boolean;
+  slug?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MyListingsResponse {
+  listings: MyListing[];
+  total: number;
+}
+
+/** Lists the authenticated caller's own listings (`GET /api/v1/my/listings`). */
+export function listMyListings(status?: string): Promise<MyListingsResponse> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  return request<MyListingsResponse>(`/api/v1/my/listings${query}`);
+}
+
+/**
+ * A single realtor review.
+ *
+ * snake_case wire mirror of reality-server's `RealtorReview`
+ * (`backend/servers/reality-server/src/routes/agent_reviews.rs`) — this
+ * endpoint is not camelCased, unlike the rest of realtor-api, so the fields are
+ * kept as-is.
+ */
+export interface RealtorReview {
+  id: string;
+  realtor_id: string;
+  reviewer_user_id: string;
+  reviewer_name: string;
+  rating: number;
+  body?: string | null;
+  verified_buyer: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RealtorReviewsResponse {
+  reviews: RealtorReview[];
+  total: number;
+  avg_rating?: number | null;
+}
+
+/** Lists reviews for a realtor (`GET /api/v1/realtors/{id}/reviews`). */
+export function getRealtorReviews(realtorId: string, limit = 20): Promise<RealtorReviewsResponse> {
+  return request<RealtorReviewsResponse>(
+    `/api/v1/realtors/${encodeURIComponent(realtorId)}/reviews?limit=${limit}`
+  );
+}
