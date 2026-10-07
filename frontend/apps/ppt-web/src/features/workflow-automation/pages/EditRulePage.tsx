@@ -29,15 +29,15 @@ export function EditRulePage() {
       await updateRule.mutateAsync({ id, data: updatedRule });
       showToast({
         type: 'success',
-        title: 'Rule updated',
-        message: 'The automation rule was updated.',
+        title: t('automation.editPage.updatedTitle'),
+        message: t('automation.editPage.updatedMessage'),
       });
       navigate('/automations/rules');
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update failed',
-        message: err instanceof Error ? err.message : 'The automation rule could not be updated.',
+        title: t('automation.editPage.updateFailedTitle'),
+        message: err instanceof Error ? err.message : t('automation.editPage.updateFailedMessage'),
       });
     }
   };

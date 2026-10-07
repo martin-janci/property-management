@@ -2321,7 +2321,21 @@
       "deleteConfirm": "Naozaj chcete odstrániť <1>{{name}}</1>?",
       "cancel": "Zrušiť",
       "delete": "Odstrániť",
-      "deleting": "Odstraňuje sa..."
+      "deleting": "Odstraňuje sa...",
+      "deleteSuccessTitle": "Pravidlo odstránené",
+      "deleteSuccessMessage": "Pravidlo „{{name}}“ bolo odstránené.",
+      "deleteErrorTitle": "Odstránenie zlyhalo",
+      "deleteErrorMessage": "Pravidlo automatizácie sa nepodarilo odstrániť.",
+      "activatedTitle": "Pravidlo aktivované",
+      "pausedTitle": "Pravidlo pozastavené",
+      "activatedMessage": "Pravidlo „{{name}}“ bolo aktivované.",
+      "pausedMessage": "Pravidlo „{{name}}“ bolo pozastavené.",
+      "updateErrorTitle": "Aktualizácia zlyhala",
+      "updateErrorMessage": "Pravidlo automatizácie sa nepodarilo aktualizovať.",
+      "runSuccessTitle": "Pravidlo spustené",
+      "runSuccessMessage": "Pravidlo „{{name}}“ sa teraz spúšťa.",
+      "runErrorTitle": "Spustenie zlyhalo",
+      "runErrorMessage": "Pravidlo automatizácie sa nepodarilo spustiť."
     },
     "ruleCard": {
       "unknownTrigger": "Neznámy spúšťač",
@@ -2506,7 +2520,11 @@
       "title": "Vytvoriť pravidlo automatizácie",
       "subtitle": "Nastavte nový automatizovaný pracovný postup pre správu nehnuteľností.",
       "error": "Nepodarilo sa vytvoriť pravidlo automatizácie. Skúste to znova.",
-      "incomplete": "Dokončite pravidlo: vyžaduje sa názov, spúšťač a aspoň jedna akcia."
+      "incomplete": "Dokončite pravidlo: vyžaduje sa názov, spúšťač a aspoň jedna akcia.",
+      "createFailedTitle": "Vytvorenie zlyhalo",
+      "createdTitle": "Pravidlo vytvorené",
+      "createdMessage": "Pravidlo automatizácie bolo vytvorené.",
+      "createErrorMessage": "Pravidlo automatizácie sa nepodarilo vytvoriť."
     },
     "editPage": {
       "back": "Späť na pravidlá",
@@ -2516,7 +2534,11 @@
       "subtitle": "Upravte nastavenia svojho automatizovaného pracovného postupu.",
       "invalidId": "Neplatné ID pravidla.",
       "loadError": "Nepodarilo sa načítať pravidlo automatizácie. Skúste to znova.",
-      "updateError": "Nepodarilo sa aktualizovať pravidlo automatizácie. Skúste to znova."
+      "updateError": "Nepodarilo sa aktualizovať pravidlo automatizácie. Skúste to znova.",
+      "updatedTitle": "Pravidlo aktualizované",
+      "updatedMessage": "Pravidlo automatizácie bolo aktualizované.",
+      "updateFailedTitle": "Aktualizácia zlyhala",
+      "updateFailedMessage": "Pravidlo automatizácie sa nepodarilo aktualizovať."
     },
     "templateLibrary": {
       "title": "Knižnica šablón",
@@ -2536,7 +2558,9 @@
       "categoryPayments": "Platby",
       "categoryCommunications": "Komunikácia",
       "categoryDocuments": "Dokumenty",
-      "categoryMaintenance": "Údržba"
+      "categoryMaintenance": "Údržba",
+      "useErrorTitle": "Šablónu nemožno použiť",
+      "useErrorMessage": "Z tejto šablóny sa nepodarilo vytvoriť pravidlo."
     },
     "templateCard": {
       "popular": "Obľúbené",
@@ -2632,7 +2656,11 @@
       "actionResults": "Výsledky akcií",
       "triggerContext": "Kontext spúšťača",
       "retryExecution": "Opakovať spustenie",
-      "close": "Zavrieť"
+      "close": "Zavrieť",
+      "retrySuccessTitle": "Spustenie zopakované",
+      "retrySuccessMessage": "Spustenie bolo zaradené na opakovanie.",
+      "retryErrorTitle": "Opakovanie zlyhalo",
+      "retryErrorMessage": "Spustenie sa nepodarilo zopakovať."
     }
   },
   "registry": {

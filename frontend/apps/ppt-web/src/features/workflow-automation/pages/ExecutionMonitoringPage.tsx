@@ -80,15 +80,15 @@ export function ExecutionMonitoringPage() {
       await retryExecution.mutateAsync(log.id);
       showToast({
         type: 'success',
-        title: 'Execution retried',
-        message: 'The execution was queued for retry.',
+        title: t('automation.execution.retrySuccessTitle'),
+        message: t('automation.execution.retrySuccessMessage'),
       });
       setSelectedLog(null);
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Retry failed',
-        message: err instanceof Error ? err.message : 'The execution could not be retried.',
+        title: t('automation.execution.retryErrorTitle'),
+        message: err instanceof Error ? err.message : t('automation.execution.retryErrorMessage'),
       });
     }
   };
