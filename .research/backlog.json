@@ -11133,13 +11133,15 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review ppt-web-ui 2026-10-01"
+        "rotating-expert-review ppt-web-ui 2026-10-01",
+        "PR #3020"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:29-33,47-50,53-57 — toast title/message literals ('Create failed', 'Rule created', …) while rest of page uses t('automation.createPage.*').",
-        "EditRulePage.tsx:30-34,37-41; AutomationRulesPage.tsx:66-114 (six toast groups incl. rule.name interpolations); ExecutionMonitoringPage.tsx:81-92; TemplateLibraryPage.tsx:70-76 — same anti-pattern repeats across all five automation pages."
+        "EditRulePage.tsx:30-34,37-41; AutomationRulesPage.tsx:66-114 (six toast groups incl. rule.name interpolations); ExecutionMonitoringPage.tsx:81-92; TemplateLibraryPage.tsx:70-76 — same anti-pattern repeats across all five automation pages.",
+        "resolved: PR #3020 merged 2026-10-07 — i18n workflow-automation toast titles/messages"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
@@ -11149,7 +11151,7 @@
         "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11229,18 +11231,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3002"
+        "PR #3002",
+        "PR #3027"
       ],
       "evidence": [
-        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate.",
+        "resolved: PR #3027 merged 2026-10-07 — reconcile dashboard screen-maps with role-gate"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11512,16 +11516,18 @@
       "status": "open",
       "sources": [
         "churn-scan-2026-10-03",
-        "PR #3013"
+        "PR #3013",
+        "PR #3022"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "re-emit 2026-10-07: PR #3022 touched (dead seller-contact fields removed) — hotspot runs_seen=1→2; dead-code drop, not instability"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11533,16 +11539,18 @@
       "status": "open",
       "sources": [
         "churn-scan-2026-10-03",
-        "PR #3014"
+        "PR #3014",
+        "PR #3019"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "re-emit 2026-10-07: PR #3019 touched (disable never-transmitted attachment control) — hotspot runs_seen=1→2; follow-up stabilization of PR #3014"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-07",
       "plan": null
     },
     {
@@ -11660,6 +11668,134 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "PR #3019 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx + report/page.test.tsx with no docs/screens/reality/*.md update. Screen-map not reconciled with /report attachment-control disable."
+      ],
+      "files": [
+        "docs/screens/reality/report-listing.md",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "PR #3022 touched reality-web /sell wizard without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 touched frontend/apps/reality-web/src/app/[locale]/sell/page.tsx + sell/_mock.ts + sell/page.publish.test.tsx with no docs/screens/reality/*.md update. Screen-map not reconciled with /sell dead-field drop."
+      ],
+      "files": [
+        "docs/screens/reality/sell.md",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-syncschedule-stale-error-banner",
+      "title": "SyncSchedule save-error banner is driven by persistent mutation flag — stale banner leaks across edit sessions after a failed save (PR #2967 regression)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "issue #3029",
+        "PR #2967"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx — banner render-guarded on updateMutation.isError (persistent React Query flag) rather than local useState; after a failed save, Cancel → re-open Edit shows a stale 'Couldn't save changes' banner.",
+        "Sibling PR #2969 used local const [createError, setCreateError] in CrmConnection.tsx / FeedImport.tsx — align SyncSchedule with that pattern (useState, setSaveError(null) at top of handleSave, clear on Cancel / entering edit).",
+        "SyncSchedule.test.tsx missing the re-open-after-failure path."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.test.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-nonauth-swallowed",
+      "title": "ppt-web rentals routes swallow non-auth mutation errors — createConnection/syncPlatforms/checkIn/checkOut have no error toast on network/5xx",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (Phase 1.5 ppt-web-core 2026-10-07)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311 createConnection useMutation onError only forwards to handleRentalsAuthError(error, logout) which returns false for non-auth errors; result: silent failure on network/5xx.",
+        "Same pattern at :323 syncPlatforms, :417 checkIn, :427 checkOut — call sites (337, 451) wire .mutate() with no toast / onError override."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-query-no-error-surface",
+      "title": "ppt-web rentals routes drop useQuery isError/error — failing fetch renders empty state indistinguishable from an actually-empty result",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (Phase 1.5 ppt-web-core 2026-10-07)"
+      ],
+      "evidence": [
+        "rentals.tsx:233,293,352,399,484 — every useQuery destructures only { data, isLoading } and drops isError/error; no retry UI, no ErrorBoundary.",
+        "Compare routes/groups/announcements.tsx:62-80 for the house pattern (toast on error, isError/onRetry exposed to page)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-disputes-notimplemented-i18n-label",
+      "title": "ppt-web disputes route interpolates 11 hardcoded English action labels into translated toast — sk/cs/de users see mixed-language text",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (Phase 1.5 ppt-web-core 2026-10-07)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx:396-406 — 11 hardcoded English labels ('Add evidence', 'Propose resolution', 'Vote on resolution', 'Accept resolution', 'Implement resolution', 'Complete resolution term', 'Create action', 'Complete action', 'Send reminder', 'Escalate', 'Delete evidence') interpolated into t('disputes.actionPendingImpl', { action: label }) at :355-358."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx"
+      ],
+      "created_at": "2026-10-07",
+      "updated_at": "2026-10-07",
       "plan": null
     }
   ]

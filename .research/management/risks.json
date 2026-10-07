@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-01T04:30:00Z",
+  "generated": "2026-10-07T12:40:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -207,6 +207,36 @@
       "mitigation": "Add alert if `dev` HEAD has no research commit for >36h (mirrors routine's Phase 1 stale-routine check)",
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
+      "status": "open"
+    },
+    {
+      "id": "pm-data-engagement-event-specs-missing",
+      "risk": "Epics 6/7A/8A shipped with no engagement/delivery event specs — adoption and notification KPIs cannot be measured and late-added tracking will not cover earlier usage.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Spec events first (announcements/documents/notifications docs under docs/data/); then backend emits them; backfill from read/acknowledge timestamps where available.",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-fcm-stub-inflates-sent-count",
+      "risk": "Notification sent counts overstated — the FCM stub silently swallows failures (issue #484, still open), so any delivery KPI built on the current counter is wrong. 8a-3 is marked done despite open gates #480 and #484.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Define delivered as a separate confirmed-status metric. Either close/defer #480 and #484, or revert 8a-3 and mark the delivery KPI provisional.",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-buffer-starvation-backend-heavy",
+      "risk": "Dispatcher buffer starvation (claimable 16/72) persists because most remaining open work is backend/KMP, which cloud cannot build until #3026 is confirmed clean and #2652 lands.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Confirm the #3026 vendored build in the cloud runner; unblock KMP (#2652); in the meantime prioritise frontend-only and docs items.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
       "status": "open"
     }
   ]

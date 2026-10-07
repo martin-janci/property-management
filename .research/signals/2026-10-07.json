@@ -1,0 +1,256 @@
+{
+  "generated": "2026-10-07T12:40:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-07",
+      "type": "lag_warning",
+      "source": "routine-lag-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-10-03T03:12:00Z; lag=105h / 4d — cloud routine missed 3 scheduled runs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "churn-14d-top3",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #3005 refactor split: webhook.rs -2737 / +15 (net -2722 lines); 6 new submodules under integrations/webhook/*.rs added — airbnb.rs (+703), booking.rs (+420), subscriptions.rs (+647), portal.rs (+539), esignature.rs (+282), payment.rs (+227). Hotspot runs_seen=3→4. Refactor-driven split, not instability — note and do not promote."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-14d-top10",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #3022 drop seller contact fields +15/-18; also _mock.ts +46/-0, page.publish.test.tsx +18/-0. Hotspot runs_seen=1→2 — re-emit; dead-code removal, not instability."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-14d-top10",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #3019 disable never-transmitted attachment control +25/-22; also page.test.tsx +25/-22. Hotspot runs_seen=1→2 — re-emit; stabilization follow-up to PR #3014."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3019 touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx + report/page.test.tsx WITHOUT touching docs/screens/reality/report-listing.md — screen-map not reconciled with /report attachment-control disable."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3022 touched frontend/apps/reality-web/src/app/[locale]/sell/page.tsx + sell/_mock.ts + sell/page.publish.test.tsx WITHOUT touching docs/screens/reality/sell.md — screen-map not reconciled with /sell dead-field drop."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-syncschedule-stale-error-banner",
+      "type": "code-review-finding",
+      "source": "issue #3029 (ppt-review-merged follow-up on PR #2967)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx — error banner is driven by updateMutation.isError (persistent React Query flag) rather than local state; after a failed save, Cancel then re-open-Edit renders a stale 'Couldn't save changes' banner before the user does anything. Sibling PR #2969 solved the same class in CrmConnection.tsx/FeedImport.tsx with a local saveError state; align with that pattern.",
+        "SyncSchedule.test.tsx missing the re-open-after-failure path — stale banner untested in both directions."
+      ],
+      "expert": "ppt-review-merged"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-nonauth-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (Phase 1.5 ppt-web-core 2026-10-07)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311 — createConnection useMutation onError only forwards to handleRentalsAuthError(error, logout), which returns false for anything NOT in SESSION_LOST_CODES; non-auth errors (network/5xx) are swallowed.",
+        "rentals.tsx:323 syncPlatforms + :417 checkIn + :427 checkOut — same pattern; call sites (337, 451) wire .mutate() with no toast on failure, no onError override."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-query-no-error-surface",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (Phase 1.5 ppt-web-core 2026-10-07)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:233,293,352,399,484 — every useQuery drops isError/error; failing fetch (network/5xx) renders a 'not loading, empty data' state indistinguishable from an actually-empty result; no retry button.",
+        "Compare routes/groups/announcements.tsx:62-80 — surfaces error via toast + isError/onRetry; rentals.tsx misses the house pattern."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-disputes-notimplemented-i18n-label",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (Phase 1.5 ppt-web-core 2026-10-07)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx:396-406 — 11 hardcoded English action labels passed as `action` interpolation into t('disputes.actionPendingImpl', { action: label }) at line 355-358; in sk/cs/de locales the surrounding toast is translated but the interpolated label is not."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-07.md && head -1 ... | grep ^# 2026-10-07",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emits with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open item updated_at <= today-14 (oldest open is 2026-09-26, >14d from today)",
+      "observed": "true (vacuous)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0 or passed/annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "at most 2 new plans",
+      "observed": "0 new plans",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-host grep over staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "placeholder rot grep in brief/plans",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or in _archive",
+      "observed": "no changes to plans/",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count ≥ HEAD count",
+      "observed": "10 ≥ 10",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline — Phase 5 did not fire",
+      "observed": "0 actions, no_candidate reason",
+      "expected": "cap honored"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + pm_cursor in 0..7 + coverage_cursor advanced",
+      "observed": "pm=7 cov=9 both advanced; 13 epics",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — screen-map-drift signals this run both target screen-maps that already exist (sell.md, report-listing.md); the allowlist action is stub creation, not update, so no eligible shape"
+}

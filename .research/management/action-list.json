@@ -6,7 +6,7 @@
       "action": "Unblock utoipa-swagger-ui crates.io / egress for api-server in cloud runner (issue #2966) — every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED; this is the single largest buffer-starvation lever and gates all 3 IDOR retries (#2944/#2945/#2946)",
       "owner_role": "pm-devops",
       "priority": "high",
-      "status": "open",
+      "status": "done",
       "source": "pm-scrum-master 2026-10-01 (buffer-low signal: claimable=9/72)",
       "deadline": null,
       "dependency": null,
@@ -19,7 +19,8 @@
           "infra",
           "ci"
         ]
-      }
+      },
+      "resolution": "resolved by PR #3026 (vendor swagger-ui) — merged 2026-10-07; cloud-build egress replaced by vendored asset"
     },
     {
       "id": "gh-issue-2946-retry2",
@@ -142,7 +143,7 @@
       "action": "Resolve mobile/React Native jest-expo version rot (#2951) — RN mobile unit tests failing on cloud runner; blocks mobile RN code-review items from landing",
       "owner_role": "pm-devops",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "pm-scrum-master 2026-10-01 (standing blocker)",
       "deadline": null,
       "dependency": null,
@@ -155,7 +156,8 @@
           "infra",
           "mobile"
         ]
-      }
+      },
+      "resolution": "resolved by PR #3025 (exact-pin jest-expo 56.0.5) — merged 2026-10-07; RN 0.87 test suite green"
     },
     {
       "id": "code-review-ppt-web-core-authed-roots-session-leak",
@@ -594,7 +596,33 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-data-announcements-engagement-events-doc",
+      "action": "Write docs/data/announcements-engagement-events.md — define events for announcement published/read/acknowledged/comment-created/pin/unpin with trigger, properties (no PII), owner, and KPIs (read rate, acknowledgment rate, time-to-ack). Build on POST /{id}/read and /acknowledge endpoints and existing readCount/acknowledgedCount stats.",
+      "owner_role": "pm-data",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "depends_on": [
+        "UNRESOLVED:rust-backend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-07 (pm-data)",
+      "first_open_at": "2026-10-07T12:40:00Z"
+    },
+    {
+      "id": "pm-scrum-master-triage-3029-syncschedule-stale-banner",
+      "action": "Backlog triage of issue #3029 (SyncSchedule stale error banner, PR #2967 regression) — item now exists at code-review-reality-web-syncschedule-stale-error-banner; add to planner once a frontend specialist slot opens.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-scrum-master 2026-10-07 (follow-up triage)",
+      "first_open_at": "2026-10-07T12:40:00Z"
     }
   ],
-  "generated": "2026-10-01T04:30:00Z"
+  "generated": "2026-10-07T12:40:00Z"
 }

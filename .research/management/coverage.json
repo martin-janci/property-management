@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-01T04:30:00Z",
+  "generated": "2026-10-07T12:40:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -1143,11 +1143,12 @@
       "owner_role": "pm-integration",
       "evidence": [
         "confirmed done 2026-07-13 (tests #2240/#2203, IntegrationsPage routed)",
-        "no regressions since"
+        "no regressions since",
+        "2026-10-07 upkeep: PR #3005 split integrations/webhook.rs into per-receiver submodules (airbnb/booking/subscriptions/portal/esignature/payment) — confirms per-platform integration structure for 83-1-airbnb-integration"
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-07",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-integrations",
@@ -1171,11 +1172,12 @@
       "evidence": [
         "PR #2315: fetch_property happy-path tests via BookingCredentials::with_url base-URL seam (MockOtaServer)",
         "PR #2194: property-mapping wizard wired in ppt-web",
-        "booking/mod.rs + ota_xml.rs fully tested"
+        "booking/mod.rs + ota_xml.rs fully tested",
+        "2026-10-07 upkeep: PR #3005 split integrations/webhook.rs into per-receiver submodules (airbnb/booking/subscriptions/portal/esignature/payment) — confirms per-platform integration structure for 83-2-booking-integration"
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-07",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-integrations",
@@ -1199,11 +1201,12 @@
       "evidence": [
         "PR #2286: signed-timestamp replay/freshness window (5 min) + stale/future/tampered regression tests",
         "PR #2294: PortalWebhooksPage manager surface + useSyndicationDashboard",
-        "HMAC verification + empty-secret fail-closed (#2267)"
+        "HMAC verification + empty-secret fail-closed (#2267)",
+        "2026-10-07 upkeep: PR #3005 split integrations/webhook.rs into per-receiver submodules (airbnb/booking/subscriptions/portal/esignature/payment) — confirms per-platform integration structure for 83-3-portal-webhooks"
       ],
       "gaps": [],
       "epic": "epic-83",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-07",
       "screen_refs": []
     },
     {
