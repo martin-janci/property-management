@@ -79,6 +79,24 @@ async fn create_saved_search_returns_2xx(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
+// Regression: the utoipa contract documents `201 Created` for this
+// resource-creation POST; the handler must agree (it previously returned 200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_saved_search_returns_201(pool: PgPool) {
+    let user = seed_user(&pool, "create-201").await;
+    let token = mint_token(user);
+    let app = saved_searches_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        "/api/v1/saved-searches",
+        Some(&token),
+        json!({ "name": "My Search", "criteria": { "city": "Bratislava" } }),
+    )
+    .await;
+    assert_eq!(status, 201, "create_saved_search must return 201 Created");
+}
+
 // ── list_search_alerts (GET /alerts) ─────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

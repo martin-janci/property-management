@@ -115,6 +115,28 @@ async fn send_contact_message_returns_2xx(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
+// Regression: the utoipa contract documents `201 Created` for this
+// inquiry-creation POST; the handler must agree (it previously returned 200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn send_contact_message_returns_201(pool: PgPool) {
+    let owner = seed_user(&pool, "contact-owner-201").await;
+    let listing_id = seed_listing(&pool, "contact-201", owner).await;
+    let app = inquiries_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/contact/{listing_id}"),
+        None,
+        json!({
+            "name": "Jane Buyer",
+            "email": "jane@example.com",
+            "message": "Is this property still available?"
+        }),
+    )
+    .await;
+    assert_eq!(status, 201, "send_contact_message must return 201 Created");
+}
+
 // ── request_viewing (POST /viewing/{listing_id}) ─────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -134,6 +156,27 @@ async fn request_viewing_returns_2xx(pool: PgPool) {
     )
     .await;
     assert!(status.is_success(), "expected 2xx, got {status}");
+}
+
+// Regression: the utoipa contract documents `201 Created` for this
+// inquiry-creation POST; the handler must agree (it previously returned 200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn request_viewing_returns_201(pool: PgPool) {
+    let owner = seed_user(&pool, "viewing-owner-201").await;
+    let listing_id = seed_listing(&pool, "viewing-201", owner).await;
+    let app = inquiries_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/viewing/{listing_id}"),
+        None,
+        json!({
+            "name": "Jane Buyer",
+            "email": "jane@example.com"
+        }),
+    )
+    .await;
+    assert_eq!(status, 201, "request_viewing must return 201 Created");
 }
 
 // ── list_my_inquiries (GET /) ────────────────────────────────────────────────

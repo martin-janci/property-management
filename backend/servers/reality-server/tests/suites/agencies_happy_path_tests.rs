@@ -145,6 +145,47 @@ async fn create_agency_returns_2xx(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
+// Regression: the utoipa contract documents `201 Created` for this
+// resource-creation POST; the handler must agree (it previously returned 200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_agency_returns_201(pool: PgPool) {
+    let user = seed_user(&pool, "create-201").await;
+    let token = mint_token(user);
+    let app = agencies_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        "/api/v1/agencies",
+        Some(&token),
+        json!({ "name": "Brand New Agency 201", "email": "new201@agencies-hp.test" }),
+    )
+    .await;
+    assert_eq!(status, 201, "create_agency must return 201 Created");
+}
+
+// ── create_invitation (POST /{id}/invitations) ───────────────────────────────
+
+// Regression: the utoipa contract documents `201 Created` for this
+// resource-creation POST; the handler must agree (it previously returned 200).
+// `create_invitation` gates on active agency membership (invite-authz).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_invitation_returns_201(pool: PgPool) {
+    let user = seed_user(&pool, "invite-caller").await;
+    let agency_id = seed_agency(&pool, "invite").await;
+    seed_membership(&pool, agency_id, user).await;
+    let token = mint_token(user);
+    let app = agencies_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/agencies/{agency_id}/invitations"),
+        Some(&token),
+        json!({ "email": "invitee@agencies-hp.test", "role": "agent" }),
+    )
+    .await;
+    assert_eq!(status, 201, "create_invitation must return 201 Created");
+}
+
 // ── update_agency (PUT /{id}) ────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

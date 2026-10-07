@@ -178,6 +178,25 @@ async fn add_favorite_returns_2xx(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
+// Regression: the utoipa contract documents `201 Created` for this
+// resource-creation POST; the handler must agree (it previously returned 200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_favorite_returns_201(pool: PgPool) {
+    let user = seed_user(&pool, "add-201").await;
+    let listing_id = seed_listing(&pool, "add-201", user).await;
+    let token = mint_token(user);
+    let app = favorites_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/favorites/{listing_id}"),
+        Some(&token),
+        json!({}),
+    )
+    .await;
+    assert_eq!(status, 201, "add_favorite must return 201 Created");
+}
+
 // ── remove_favorite (DELETE /{listing_id}) ───────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
