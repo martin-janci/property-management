@@ -1,9 +1,35 @@
 {
-  "generated": "2026-10-05T10:38:43Z",
+  "generated": "2026-10-07T08:32:59Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-07T08:32:59Z",
+      "prs_scanned": 4,
+      "clean": [
+        3027,
+        3023,
+        2969
+      ],
+      "with_issues": [
+        {
+          "pr": 2967,
+          "issue": 3029,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "reality-web. PR #2967 (code-review-reality-web-syncschedule-save-silent-fail, merged 10-05) correctly fixes the silent save failure: handleSave wraps updateMutation.mutateAsync in try/catch, keeps the edit form open on failure, renders inline role=alert banner, saveError i18n added to all 6 locales, 3 regression tests. 1 low-sev correctness/UX finding + 1 low test-gap -> issue #3029: the banner is gated on the PERSISTENT React Query flag updateMutation.isError (stays true until next mutate()/reset()), and Cancel (setIsEditing(false)) does not reset the mutation -> Cancel then re-open Edit re-shows the stale 'Couldn't save changes' banner before any new attempt. Sibling PR #2969 (merged same day) solved the identical class in CrmConnection/FeedImport the clean way: local createError state reset at top of each handleCreate. Proposal: port the local-saveError pattern to SyncSchedule + clear on cancel/re-edit + add a reopen-after-failure test. The reopen path is also untested in SyncSchedule.test.tsx."
+        }
+      ],
+      "skipped_already_reviewed": [],
+      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-23), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI token INVALID in env; direct git transfer proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred the commit to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did NOT touch assignments.json/action-list.json/backlog.json/archives; review-only). Enumeration via list_pull_requests(closed, base=dev, sort=updated desc, perPage=40); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false). 4 net-new merges in window lacking post-merge-reviewed/no-review-needed: #3027, #3023 (ppt-web screen-map docs), #2967, #2969 (reality-web import error-surfacing). All reviewed inline (<=5, no subagent fan-out). #3027 (screen-map-drift-pr-3002-ppt, merged 10-05) CLEAN: docs-only — reconciles ppt/dashboard-manager + dashboard-resident screen-maps with PR #3002 role-gate (Specific+Agent Log notes, no frontmatter/code change). #3023 (screen-map-drift-pr-2995-ppt, merged 10-05) CLEAN: docs-only — ppt/home screen-map reconciled with PR #2995 CTA-role-drift fix (isManagerRole/MANAGER_ROLES note). #2969 (code-review-reality-web-import-create-mutation-silent-fail, merged 10-05) CLEAN: AddConnectionModal (CrmConnection) + AddFeedModal (FeedImport) wrap create mutateAsync in try/catch, local createError state reset per-attempt, inline role=alert aria-live=assertive banner, createError i18n in all 6 locales, comprehensive wizard-flow tests (error-shown/stays-open/success-closes) for both modals; modals exported for test. Right shape. #2967 => 1 follow-up issue #3029 (react-web, low): persistent updateMutation.isError banner re-shows on Cancel->re-edit (sibling #2969 uses the cleaner reset-per-attempt local state). All 4 PRs labeled post-merge-reviewed via issue_write update (needs-human-review preserved on #2967/#2969; #3027/#3023 had none). Breadcrumb comment on #2967 -> #3029. Dependabot top-of-list PRs (#2975,#2973,#2974,#2965) are closed-unmerged (no merged_at). All other in-window merges already carry post-merge-reviewed from prior runs (#3022,#3021,#3019,#3018 @10-05; #2744,#3005 @10-03; #3015,#3014,#3013 @10-02; #3010,#3011,#3009 @10-01; #3001,#3002,#3004 @09-30; 09-27 batch; #2980,#2979 @09-26).",
+      "focus_prs": [
+        3027,
+        3023,
+        2969,
+        2967
+      ]
+    },
     {
       "run_at": "2026-10-05T10:38:43Z",
       "prs_scanned": 4,
@@ -276,36 +302,6 @@
       ],
       "skipped_already_reviewed": [],
       "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-24), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable -> GitHub MCP (mcp__github__*) for all GH I/O; full-diff static review (cloud build-blocked for api-server/mobile-native only; these 3 are ppt-web frontend). Label-based enumeration (search_pull_requests is:merged base:dev merged:>=2026-08-24 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 3 net-new never-reviewed PRs (total_count=3); every other in-window merge already carries post-merge-reviewed. All 3 are the ppt-web-core auth/session code-review PRs merged 2026-09-06 by the dispatcher: #2941 validate JWT exp at cold boot, #2942 single-flight refresh + 401 replay, #2943 logout-purge allowlist coverage test. 3 < 5-parallel-cap, reviewed inline (no subagent fan-out). 2 CLEAN: #2941 (isAccessTokenExpired reuses decodeJwtPayload, 30s skew buffer, expired->silent-refresh via shared refreshTokenInternal preserving #574 role re-derivation, expired+no-refresh purges stale tokens, opaque tokens trusted as legacy-backstop; 5 new tests incl regression case) and #2942 (interceptor awaits single-flight onUnauthorized returning rotated token then replays original request once guarded by __authRetried, concurrent 401s share one refresh via AuthContext isRefreshing/refreshPromise, explicit header set covers raw getApiClient consumers, replay-all-methods justified since 401 rejected pre-apply; 4 new tests w/ IG3 regression evidence: 3/4 fail on reverted prod files). 1 ISSUE opened: #2948 on #2943 (test-coverage low)."
-    },
-    {
-      "run_at": "2026-09-05T08:31:50Z",
-      "prs_scanned": 6,
-      "clean": [
-        2935,
-        2673,
-        2586,
-        2585,
-        2583
-      ],
-      "with_issues": [
-        {
-          "pr": 2558,
-          "issue": 2937,
-          "findings": 2,
-          "specialist": "pm-rust-backend",
-          "note": "invoice PDF render endpoint GET /api/v1/invoices/{id}/pdf (UC-ACC-05.9), new accounting-server/src/pdf.rs. Endpoint itself CORRECT: authz require_role(READ_MIN_ROLE) + all reads via _rls fns inside one RLS tx (tenant isolation -> cross-tenant/unknown id = None -> 404), tx committed before rendering pure loaded data, money taken from STORED rounded row values (#1522), Content-Disposition filename sanitized to alnum+dash (no header injection), draft/cancelled watermarks. Findings: (1) tests(medium) -- the actual work is untested: pdf.rs has 4 unit tests but only on pure helpers (vat_summary/pdf_filename/doc_type_title); render_invoice_pdf itself is never invoked and get_invoice_pdf has NO HTTP test (authz 403 / RLS 404 / 200+application/pdf+Content-Disposition all unexercised). Asymmetry vs the sibling it copied: api-server financial.rs has render_invoice_pdf_produces_a_valid_pdf + _handles_no_line_items that assert real %PDF bytes. Proposed: renderer smoke test (font-guarded like api-server, covering empty-items + non-VAT-payer recap-skip branches) + a #[sqlx::test] HTTP test (IG3). (2) perf(low, class-wide/pre-existing) -- genpdf::fonts::from_files re-parses TTFs from disk per request and the full sync genpdf render runs inline on the async executor (no spawn_blocking); SAME pattern in api-server financial.rs+voting.rs so NOT a regression #2558 introduced, flagged once class-wide. Proposed: cache FontFamily per font_dir (OnceCell) + spawn_blocking, as a shared helper. Filed #2937."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-22), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable (proxy-403) + git push proxy-blocked -> GitHub MCP (mcp__github__*) for all GH I/O; static/diff review only (no build/DB in cloud runner: api-server pulls utoipa-swagger-ui whose build-script GitHub fetch is proxy-403, no Postgres). Label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-22 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 6 net-new never-reviewed PRs (total_count=6); every other in-window merge already carries post-merge-reviewed. All 6 are OLD PRs (created Jul-Aug) that only just merged into dev in-window (5 of them merged after the prior 2026-09-04 run's cursor). 6 < 5-parallel-review-cap threshold for real targets, reviewed inline (no subagent fan-out) by full-diff static analysis against the checklist. 5 CLEAN dependabot dependency bumps (manifest+lock ONLY, no source adaptation needed or missed, consistent workspace bumps, all CI-gated green): #2585 base64 0.22->0.23 (workspace Cargo.toml + api-server Cargo.toml both bumped in lock-step, no code touch); #2586 validator 0.20->0.21 (drops transitive once_cell, derive validation still compiles); #2583 rust_xlsxwriter 0.96->0.97 (pulls zip 8.6.0, lock+manifest only); #2673 ktor 3.5.1->3.5.2 (libs.versions.toml patch, mobile-native Gradle-gated); #2935 npm-minor-patch group 40 updates (package.json across all apps/pkgs + pnpm-lock.yaml; incl RN 0.86->0.87, expo ~57.0.8->~57.0.18, next 16.2->16.3, vite 8.1->8.2, biome 2.5.5->2.5.11 -- grouped minor/patch, frontend.yml build+test green). Aside (not filed): CLAUDE.md tech-stack table still says React Native 0.85 / Expo 55 while mobile package.json was already RN 0.86 / Expo 57 BEFORE this bump -- pre-existing doc drift, not #2935's doing. 1 ISSUE opened: #2937 on #2558 (real feature: invoice PDF render endpoint) -- 2 findings (endpoint itself correct: authz+RLS tenant isolation, snapshot tx, stored-value money, sanitized filename): test-gap (renderer+handler untested vs api-server sibling which tests its renderer) [medium] + class-wide sync-render/per-request-font-load perf note [low]. Breadcrumb comment left on #2558 -> #2937. All 6 PRs labeled post-merge-reviewed (dependabot PRs kept their existing dependencies/rust|java|javascript labels, no clobber; #2558 had none) so they will not resurface. DISPATCHER_OWNED_COMMIT=1 semantics per dispatcher instruction: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6 (no git add/commit/push; untouched assignments.json/action-list.json/archives).",
-      "focus_prs": [
-        2558,
-        2935,
-        2673,
-        2586,
-        2585,
-        2583
-      ]
     }
   ]
 }
