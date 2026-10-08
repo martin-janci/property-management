@@ -52,8 +52,22 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
   const [preferredTime, setPreferredTime] = useState(schedule?.preferredTime || '09:00');
   const [preferredDay, setPreferredDay] = useState(schedule?.preferredDay || 1);
   const [enabled, setEnabled] = useState(schedule?.enabled ?? true);
+  // Local error state (not the persistent mutation flag) so a prior failure
+  // never bleeds into a fresh edit session — matches CrmConnection/FeedImport.
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const startEditing = () => {
+    setSaveError(null);
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setSaveError(null);
+    setIsEditing(false);
+  };
 
   const handleSave = async () => {
+    setSaveError(null);
     try {
       await updateMutation.mutateAsync({
         frequency,
@@ -63,7 +77,8 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
       });
       setIsEditing(false);
     } catch {
-      // Keep the form open; the error surfaces via updateMutation.error below.
+      // Keep the form open and surface the failure via local saveError state.
+      setSaveError(t('saveError'));
     }
   };
 
@@ -80,7 +95,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
             <p className="subtitle">{t('subtitle', { name: connectionName })}</p>
           </div>
           {!isEditing && (
-            <button type="button" className="edit-button" onClick={() => setIsEditing(true)}>
+            <button type="button" className="edit-button" onClick={startEditing}>
               {t('editSchedule')}
             </button>
           )}
@@ -153,15 +168,15 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
               </div>
             )}
 
-            {updateMutation.isError && (
+            {saveError && (
               <div className="error-message" role="alert">
-                {t('saveError')}
+                {saveError}
               </div>
             )}
 
             {/* Actions */}
             <div className="form-actions">
-              <button type="button" className="cancel-button" onClick={() => setIsEditing(false)}>
+              <button type="button" className="cancel-button" onClick={cancelEditing}>
                 {t('cancel')}
               </button>
               <button
