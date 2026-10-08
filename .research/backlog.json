@@ -3757,7 +3757,7 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-15",
-      "plan": "plans/code-review-reality-web-realtor-mgmt-untranslated.md",
+      "plan": "plans/_archive/code-review-reality-web-realtor-mgmt-untranslated.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "done",
@@ -4297,7 +4297,7 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
-      "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md",
+      "plan": "plans/_archive/bug-revoke-all-sessions-cookie-blindness.md",
       "reconciled": {
         "at": "2026-07-11T18:05:18Z",
         "assignment_status": "merged",
@@ -4322,7 +4322,7 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
-      "plan": "plans/security-forgot-password-no-rate-limit.md",
+      "plan": "plans/_archive/security-forgot-password-no-rate-limit.md",
       "reconciled": {
         "at": "2026-07-12T00:07:12Z",
         "assignment_status": "merged",
@@ -4925,7 +4925,7 @@
       ],
       "created_at": "2026-07-23",
       "updated_at": "2026-07-23",
-      "plan": "plans/code-review-api-handlers-community-cross-tenant-idor.md",
+      "plan": "plans/_archive/code-review-api-handlers-community-cross-tenant-idor.md",
       "reconciled": {
         "at": "2026-07-24T00:06:07Z",
         "assignment_status": "merged",
@@ -5131,7 +5131,7 @@
       ],
       "created_at": "2026-07-27",
       "updated_at": "2026-07-27",
-      "plan": "plans/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md",
+      "plan": "plans/_archive/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md",
       "reconciled": {
         "at": "2026-07-29T21:27:28Z",
         "assignment_status": "merged",
@@ -6927,7 +6927,7 @@
       ],
       "created_at": "2026-08-06",
       "updated_at": "2026-08-06",
-      "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md",
+      "plan": "plans/_archive/code-review-ppt-web-core-ws-pong-timeout-drop.md",
       "reconciled": {
         "at": "2026-08-07T00:11:53Z",
         "assignment_status": "merged",
@@ -8062,7 +8062,7 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": "plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md",
+      "plan": "plans/_archive/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md",
       "reconciled": {
         "at": "2026-08-15T10:24:40Z",
         "assignment_status": "merged",
@@ -8091,7 +8091,7 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": "plans/code-review-api-handlers-voice-google-verify-fail-open.md",
+      "plan": "plans/_archive/code-review-api-handlers-voice-google-verify-fail-open.md",
       "reconciled": {
         "at": "2026-08-15T08:24:53Z",
         "assignment_status": "merged",
@@ -8689,7 +8689,7 @@
       ],
       "created_at": "2026-08-19",
       "updated_at": "2026-08-19",
-      "plan": "plans/code-review-reality-server-submit-report-no-rate-limit.md",
+      "plan": "plans/_archive/code-review-reality-server-submit-report-no-rate-limit.md",
       "reconciled": {
         "at": "2026-08-20T10:27:25Z",
         "assignment_status": "merged",
@@ -9194,7 +9194,7 @@
       ],
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
-      "plan": "plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md",
+      "plan": "plans/_archive/code-review-ppt-web-ui-content-mod-unsafe-cast.md",
       "reconciled": {
         "at": "2026-08-25T08:23:14Z",
         "assignment_status": "merged",
@@ -9428,7 +9428,7 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": "plans/code-review-api-core-client-ip-cf-spoof.md",
+      "plan": "plans/_archive/code-review-api-core-client-ip-cf-spoof.md",
       "reconciled": {
         "at": "2026-08-30T06:23:27Z",
         "assignment_status": "merged",
@@ -11120,7 +11120,7 @@
       ],
       "created_at": "2026-10-01",
       "updated_at": "2026-10-01",
-      "plan": "plans/code-review-ppt-web-ui-registry-rules-save-silent-fail.md",
+      "plan": "plans/_archive/code-review-ppt-web-ui-registry-rules-save-silent-fail.md",
       "reconciled": {
         "at": "2026-10-02T00:26:11Z",
         "assignment_status": "merged",
@@ -11696,6 +11696,233 @@
         "assignment_status": "merged",
         "pr_number": 3036
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "title": "ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-14d"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "title": "reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-14d"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts — 2 commits in last 14d (new hotspot)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+      "title": "reality-web components/import/SyncSchedule.tsx recent churn — 2 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-14d"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx — 2 commits in last 14d (new hotspot)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3036-ppt",
+      "title": "ppt-web route-group i18n PR #3036 touched 6 routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3036"
+      ],
+      "evidence": [
+        "PR #3036 (code-review-ppt-web-core-route-group-toast-i18n) touched 6 ppt-web route files without updating docs/screens/ppt/"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3034-ppt",
+      "title": "ppt-web community-group-detail PR #3034 touched 2 routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3034"
+      ],
+      "evidence": [
+        "PR #3034 (community-group-detail mock→API) touched 2 ppt-web route files without updating docs/screens/ppt/"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3033-reality",
+      "title": "reality-web /profile PR #3033 touched 3 routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3033"
+      ],
+      "evidence": [
+        "PR #3033 (reality /profile mock→real-data) touched 3 reality-web route files without updating docs/screens/reality/"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "reality-web /report PR #3019 touched 2 routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 (disable /report attachment control) touched 2 reality-web route files without updating docs/screens/reality/report-listing.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "reality-web /sell PR #3022 touched 3 routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 (drop dead seller contact fields in /sell wizard) touched 3 reality-web route files without updating docs/screens/reality/sell.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-group-join-leave-silent",
+      "title": "ppt-web community groups: join/leave mutations have no error handling — 403/409/5xx silent",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:143 — onJoin fires joinGroup.mutate with no onError, no visible error UI",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:144 — onLeave fires leaveGroup.mutate with same silent-failure pattern",
+        "frontend/packages/api-client/src/community/hooks.ts:110 — useJoinGroup/useLeaveGroup wire only onSuccess (invalidation); 403 (private)/409 (already-member)/5xx never surface"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/packages/api-client/src/community/hooks.ts"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-group-delete-stub",
+      "title": "ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:146 — onDelete={() => navigate(\"/community/groups\")} navigates away without any delete API call",
+        "No useDeleteGroup hook exists in frontend/packages/api-client — the record remains on the server while the UI acts as if deleted"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-silent",
+      "title": "ppt-web rentals: 4 mutations swallow non-auth errors (connection create, platform sync, guest check-in/out)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311 — createConnection.onError discards handleRentalsAuthError return; non-auth 400/409/5xx produce no toast",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:323 — syncPlatforms.onError same unhandled-non-auth-error pattern",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:417 — checkIn.onError silently drops non-auth failures (guest check-in flow)",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:427 — checkOut.onError silently drops non-auth failures (guest check-out flow)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
     }
   ]
 }
