@@ -693,6 +693,86 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "gh-issue-3039",
+      "action": "Follow-up: /sell wizard Publish POSTs to a GET-only route (405) — createListing() path mismatch (PR #3031) (Closes #3039)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-08T12:28:23Z (#3039)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T12:28:23Z",
+      "issue_ref": {
+        "number": 3039,
+        "url": "https://github.com/martin-janci/property-management/issues/3039",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3040",
+      "action": "Follow-up: group-detail not-found uses untranslated keys instead of the existing errors.groupNotFound (PR #3034) (Closes #3040)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-08T12:28:23Z (#3040)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T12:28:23Z",
+      "issue_ref": {
+        "number": 3040,
+        "url": "https://github.com/martin-janci/property-management/issues/3040",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3041",
+      "action": "Follow-up: reality-web /profile ships hardcoded Slovak copy in a multi-locale (next-intl) app (PR #3033) (Closes #3041)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-08T12:28:23Z (#3041)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T12:28:23Z",
+      "issue_ref": {
+        "number": 3041,
+        "url": "https://github.com/martin-janci/property-management/issues/3041",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3042",
+      "action": "Follow-up: register POST /api/v1/reports in @ppt/sitemap + surface report id on /report success (PR #3032) (Closes #3042)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-08T12:28:23Z (#3042)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T12:28:23Z",
+      "issue_ref": {
+        "number": 3042,
+        "url": "https://github.com/martin-janci/property-management/issues/3042",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-01T04:30:00Z"
