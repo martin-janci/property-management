@@ -66,6 +66,10 @@ const REQUIRED_TOAST_KEYS: string[] = [
   'common.pleaseTryAgain',
   // community.tsx
   'community.groupCreated',
+  'community.groupJoined',
+  'community.joinFailed',
+  'community.groupLeft',
+  'community.leaveFailed',
   // faults.tsx
   'faults.reported',
   'faults.reportFailed',

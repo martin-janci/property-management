@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { Spinner, useToast } from '../../components';
 import { useAuth } from '../../contexts';
+import { getErrorMessage } from '../../lib/api';
 import {
   CreateGroupPage,
   EventsPage,
@@ -92,6 +93,7 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const { data: group, isLoading, error } = useGroup(groupId);
   const { data: members = [] } = useGroupMembers(groupId);
@@ -129,6 +131,47 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   const isOwner = currentMember?.role === 'owner';
   const isAdmin = currentMember?.role === 'admin';
 
+  // Join/leave are real mutations that can fail with 403 (not permitted),
+  // 409 (conflict — e.g. already a member, or an owner trying to leave) or
+  // 5xx. Surface both outcomes as a toast instead of failing silently.
+  const handleJoin = () => {
+    joinGroup.mutate(groupId, {
+      onSuccess: () => {
+        showToast({
+          type: 'success',
+          title: t('common.success'),
+          message: t('community.groupJoined', { defaultValue: 'You joined the group.' }),
+        });
+      },
+      onError: (err) => {
+        showToast({
+          type: 'error',
+          title: t('community.joinFailed', { defaultValue: 'Could not join the group' }),
+          message: getErrorMessage(err),
+        });
+      },
+    });
+  };
+
+  const handleLeave = () => {
+    leaveGroup.mutate(groupId, {
+      onSuccess: () => {
+        showToast({
+          type: 'success',
+          title: t('common.success'),
+          message: t('community.groupLeft', { defaultValue: 'You left the group.' }),
+        });
+      },
+      onError: (err) => {
+        showToast({
+          type: 'error',
+          title: t('community.leaveFailed', { defaultValue: 'Could not leave the group' }),
+          message: getErrorMessage(err),
+        });
+      },
+    });
+  };
+
   return (
     <GroupDetailPage
       group={group}
@@ -140,8 +183,8 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
       isJoining={joinGroup.isPending}
       isLeaving={leaveGroup.isPending}
       onNavigateBack={() => navigate('/community/groups')}
-      onJoin={() => joinGroup.mutate(groupId)}
-      onLeave={() => leaveGroup.mutate(groupId)}
+      onJoin={handleJoin}
+      onLeave={handleLeave}
       onEdit={() => {}}
       onDelete={() => navigate('/community/groups')}
       onNavigateToSettings={() => {}}

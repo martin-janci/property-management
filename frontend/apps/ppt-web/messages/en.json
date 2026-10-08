@@ -4895,6 +4895,10 @@
     }
   },
   "community": {
-    "groupCreated": "Group created"
+    "groupCreated": "Group created",
+    "groupJoined": "You joined the group.",
+    "joinFailed": "Could not join the group",
+    "groupLeft": "You left the group.",
+    "leaveFailed": "Could not leave the group"
   }
 }

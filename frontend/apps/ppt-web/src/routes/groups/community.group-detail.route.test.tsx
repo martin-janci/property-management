@@ -37,6 +37,7 @@ let groupResult: { data: CommunityGroup | undefined; isLoading: boolean; error: 
 let membersResult: { data: GroupMember[] } = { data: [] };
 const joinMutate = vi.fn();
 const leaveMutate = vi.fn();
+const showToastMock = vi.fn();
 
 vi.mock('@ppt/api-client', () => ({
   useGroup: () => groupResult,
@@ -67,7 +68,11 @@ vi.mock('../../contexts', () => ({
 
 vi.mock('../../components', () => ({
   Spinner: () => <div data-testid="spinner">loading</div>,
-  useToast: () => ({ showToast: vi.fn() }),
+  useToast: () => ({ showToast: showToastMock }),
+}));
+
+vi.mock('../../lib/api', () => ({
+  getErrorMessage: (err: unknown) => (err instanceof Error ? err.message : String(err)),
 }));
 
 // Stub the (lazy) presentational page so we can assert what the wrapper feeds it.
@@ -136,8 +141,9 @@ function makeMember(overrides: Partial<GroupMember> = {}): GroupMember {
 
 describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
   beforeEach(() => {
-    joinMutate.mockClear();
-    leaveMutate.mockClear();
+    joinMutate.mockReset();
+    leaveMutate.mockReset();
+    showToastMock.mockClear();
     navigateMock.mockClear();
     groupResult = { data: undefined, isLoading: false, error: null };
     membersResult = { data: [] };
@@ -180,7 +186,9 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'join' }));
     expect(joinMutate).toHaveBeenCalledTimes(1);
-    expect(joinMutate).toHaveBeenCalledWith('grp-1');
+    // First positional arg is the route groupId; the mutation may also receive
+    // an options object ({ onError, onSuccess }) for toast wiring.
+    expect(joinMutate.mock.calls[0]?.[0]).toBe('grp-1');
   });
 
   it('wires Leave to useLeaveGroup().mutate with the route groupId', async () => {
@@ -190,7 +198,7 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'leave' }));
     expect(leaveMutate).toHaveBeenCalledTimes(1);
-    expect(leaveMutate).toHaveBeenCalledWith('grp-1');
+    expect(leaveMutate.mock.calls[0]?.[0]).toBe('grp-1');
   });
 
   it('derives membership and owner role from the member list', () => {
@@ -210,5 +218,59 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
 
     expect(screen.getByTestId('is-member')).toHaveTextContent('false');
     expect(screen.getByTestId('is-owner')).toHaveTextContent('false');
+  });
+
+  // Regression: join/leave used to call `.mutate(groupId)` with no options, so
+  // a 403/409/5xx rejection failed silently — the user saw nothing. The route
+  // container must now wire `onError`/`onSuccess` and surface a toast.
+  it('surfaces an error toast when joining the group fails (403/409/5xx)', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [] };
+    joinMutate.mockImplementation((_id: string, opts?: { onError?: (e: unknown) => void }) =>
+      opts?.onError?.(new Error('You are not allowed to join this group'))
+    );
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'join' }));
+
+    expect(showToastMock).toHaveBeenCalledTimes(1);
+    expect(showToastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        message: 'You are not allowed to join this group',
+      })
+    );
+  });
+
+  it('surfaces an error toast when leaving the group fails (403/409/5xx)', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [makeMember()] };
+    leaveMutate.mockImplementation((_id: string, opts?: { onError?: (e: unknown) => void }) =>
+      opts?.onError?.(new Error('Owners cannot leave the group'))
+    );
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'leave' }));
+
+    expect(showToastMock).toHaveBeenCalledTimes(1);
+    expect(showToastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        message: 'Owners cannot leave the group',
+      })
+    );
+  });
+
+  it('surfaces a success toast when joining the group succeeds', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [] };
+    joinMutate.mockImplementation((_id: string, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.()
+    );
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'join' }));
+
+    expect(showToastMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 });
