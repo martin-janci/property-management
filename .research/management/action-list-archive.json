@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-07T14:37:06Z",
+  "archived_at": "2026-10-08T00:34:08Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -19594,6 +19594,29 @@
         "commit": "095999b18509984ad0e3731c95c6373f6e816054",
         "subject": "screen-map-drift-pr-3002-ppt: reconcile ppt-web dashboard screen-maps with PR #3002 role-gate (#3027)",
         "at": "2026-10-05T22:29:55Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3014-reality",
+      "action": "PR #3014 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=2 conf=medium vector=test-gap) | dev-reconcile 2026-10-08T00:27:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-03T04:25:31Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "618c1f96f3a8b13a392688e4ce3b19b2f52e62a3",
+        "subject": "screen-map-drift-pr-3014-reality: reconcile report-listing screen-map with PR #3014 (#3032)",
+        "at": "2026-10-08T00:27:55Z"
       }
     },
     {
