@@ -103,4 +103,42 @@ describe('ProfilePage — real identity, not a shared fixture', () => {
       expect(screen.getByText(REAL_USER.name)).toBeInTheDocument();
     });
   });
+
+  // Issue #3041: reality-web is a next-intl app (sk/cs/de/en/pl/hu), but this
+  // page used to ship hardcoded Slovak copy, so a cs/de/en visitor saw Slovak
+  // throughout /profile. All user-facing copy must now route through next-intl.
+  // The test setup mock (src/test/setup.tsx) stubs `useTranslations` as the
+  // identity `(key) => key`, so a translated string renders as its MESSAGE KEY
+  // and the old hardcoded Slovak literals must be absent.
+  describe('i18n — copy routed through next-intl, not hardcoded Slovak', () => {
+    it('renders the empty-listings state from a message key, not Slovak literals', async () => {
+      stubFetch(); // default stub => no listings => listings tab shows empty state
+      render(<ProfilePage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('listings.emptyTitle')).toBeInTheDocument();
+      });
+      expect(screen.getByText('listings.emptyBody')).toBeInTheDocument();
+
+      // The pre-i18n hardcoded Slovak empty-state copy must be gone.
+      expect(screen.queryByText('Zatiaľ nemáte žiadne inzeráty')).not.toBeInTheDocument();
+      expect(screen.queryByText('Keď pridáte inzerát, zobrazí sa tu.')).not.toBeInTheDocument();
+    });
+
+    it('renders tab labels from message keys, not hardcoded Slovak', async () => {
+      stubFetch();
+      render(<ProfilePage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('tabs.listings')).toBeInTheDocument();
+      });
+      expect(screen.getByText('tabs.activity')).toBeInTheDocument();
+      expect(screen.getByText('tabs.reviews')).toBeInTheDocument();
+      expect(screen.getByText('tabs.settings')).toBeInTheDocument();
+
+      // Old hardcoded Slovak tab labels must be gone.
+      expect(screen.queryByText('Moje inzeráty')).not.toBeInTheDocument();
+      expect(screen.queryByText('Nastavenia')).not.toBeInTheDocument();
+    });
+  });
 });
