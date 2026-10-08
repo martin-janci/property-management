@@ -11394,7 +11394,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
       ],
@@ -11409,7 +11409,12 @@
       ],
       "created_at": "2026-10-02",
       "updated_at": "2026-10-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3033
+      }
     },
     {
       "id": "code-review-reality-web-featured-fav-silent-fail",
@@ -11473,7 +11478,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3013"
       ],
@@ -11488,7 +11493,12 @@
       ],
       "created_at": "2026-10-03",
       "updated_at": "2026-10-03",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3031
+      }
     },
     {
       "id": "screen-map-drift-pr-3014-reality",
@@ -11496,7 +11506,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3014"
       ],
@@ -11511,7 +11521,12 @@
       ],
       "created_at": "2026-10-03",
       "updated_at": "2026-10-03",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3032
+      }
     },
     {
       "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
@@ -11631,7 +11646,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review ppt-web-core 2026-10-04"
       ],
@@ -11645,7 +11660,12 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3034
+      }
     },
     {
       "id": "code-review-ppt-web-core-route-group-toast-i18n",
@@ -11653,7 +11673,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review ppt-web-core 2026-10-04"
       ],
@@ -11670,7 +11690,12 @@
       ],
       "created_at": "2026-10-04",
       "updated_at": "2026-10-04",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3036
+      }
     }
   ]
 }
