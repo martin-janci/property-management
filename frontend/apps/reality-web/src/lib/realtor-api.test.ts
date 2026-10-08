@@ -13,7 +13,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createListing, type ListingDraft, getListing } from './realtor-api';
+import { createListing, getListing, type ListingDraft } from './realtor-api';
 
 // Deterministic base URL so the regression assertion pins the exact path
 // (getApiBase() otherwise resolves to http://localhost:8081 under jsdom).
