@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-08T22:36:26Z",
+  "generated": "2026-10-08T22:39:20Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -12,7 +12,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/2902",
       "merged_at": null,
       "specialist": "nextjs-web",
-      "implementer_summary": "pr=2902 status=done specialist=nextjs-web docs-only reconcile; HELD: branch CONTAMINATED by prior bad auto-rebase (17 files incl .research/** state, CONFLICTING, non-mechanical); labeled needs-human-review 2026-08-31T22:29Z \u2014 operator close+re-cut recommended",
+      "implementer_summary": "pr=2902 status=done specialist=nextjs-web docs-only reconcile; HELD: branch CONTAMINATED by prior bad auto-rebase (17 files incl .research/** state, CONFLICTING, non-mechanical); labeled needs-human-review 2026-08-31T22:29Z — operator close+re-cut recommended",
       "reviewer_summary": "verdict=changes note=scope-drift: head reverts .research/management/** state ledger (assignments.json/backlog.json/archives) + unrelated frontend test; branch stale-behind-dev; do-not-merge, needs human reset to docs-only",
       "last_reviewed_oid": "2b7560088500d79e2fecac86ebe9a3e091d1a68a",
       "scope_drift": true,
@@ -204,7 +204,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3028",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3028 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=advisory-lock fixes compare TOCTOU; fmt+scope+reuse clean, clippy/verify blocked by utoipa-swagger-ui egress (#2966) \u2014 draft flagged for human verify+merge",
+      "implementer_summary": "pr=3028 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=advisory-lock fixes compare TOCTOU; fmt+scope+reuse clean, clippy/verify blocked by utoipa-swagger-ui egress (#2966) — draft flagged for human verify+merge",
       "reviewer_summary": "verdict=approve note=TOCTOU fix: per-user pg_advisory_xact_lock + lock_timeout + concurrency regression test, CI green",
       "last_reviewed_oid": "d8f02fe94537197c38357d628dda0fcb26a10bbf",
       "scope_drift": false,
@@ -262,28 +262,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-3041",
-      "branch": "auto-impl/gh-issue-3041-3f51fd25",
-      "status": "review",
-      "claimed_at": "2026-10-08T14:38:04Z",
-      "last_updated": "2026-10-08T22:36:26Z",
-      "status_changed_at": "2026-10-08T18:55:21Z",
-      "pr_number": 3047,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3047",
-      "merged_at": null,
-      "specialist": "nextjs-web",
-      "implementer_summary": "pr=3047 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=routed reality-web /profile copy through next-intl; all 6 locales key-complete; IG3 two-commit split; verify green 295 tests",
-      "reviewer_summary": "verdict=approve head_oid=243b187e688f20dd1929bcd8aacdc1b995816838 note=i18n-clean-ci-green-scopedrift-benign",
-      "last_reviewed_oid": "243b187e688f20dd1929bcd8aacdc1b995816838",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-10-08T22:36:26Z"
     },
     {
       "task_id": "code-review-ppt-web-core-group-join-leave-silent",

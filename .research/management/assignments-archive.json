@@ -15901,6 +15901,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-3041",
+      "branch": "auto-impl/gh-issue-3041-3f51fd25",
+      "status": "merged",
+      "claimed_at": "2026-10-08T14:38:04Z",
+      "last_updated": "2026-10-08T22:39:20Z",
+      "status_changed_at": "2026-10-08T22:39:20Z",
+      "pr_number": 3047,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3047",
+      "merged_at": "2026-10-09T00:38:35+02:00",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3047 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=routed reality-web /profile copy through next-intl; all 6 locales key-complete; IG3 two-commit split; verify green 295 tests",
+      "reviewer_summary": "verdict=approve head_oid=243b187e688f20dd1929bcd8aacdc1b995816838 note=i18n-clean-ci-green-scopedrift-benign",
+      "last_reviewed_oid": "243b187e688f20dd1929bcd8aacdc1b995816838",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-08T22:36:26Z"
+    },
+    {
       "task_id": "gh-issue-3042",
       "branch": "auto-impl/gh-issue-3042-0a31aac5",
       "status": "merged",
@@ -18769,5 +18791,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-08T20:33:05Z"
+  "archived_at": "2026-10-08T22:39:20Z"
 }
