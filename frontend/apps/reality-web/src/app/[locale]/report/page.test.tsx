@@ -112,6 +112,33 @@ describe('ReportPage — abuse-report submit wiring', () => {
     expect(await screen.findByText('Nahlásenie bolo odoslané')).toBeInTheDocument();
   });
 
+  // #3042: the server returns `201 { report: { id } }` but the success card
+  // used to ignore it, so the "ID R-…" acknowledgement was aspirational and
+  // the reporter had no reference to quote in a follow-up. The success card
+  // must now read `report.id` back and render it. On `dev` (before the fix)
+  // the id is never surfaced, so the `findByTestId` below times out — this is
+  // the IG3 regression guard.
+  it('surfaces the created report id on the success card', async () => {
+    const REPORT_ID = 'c0ffee00-dead-beef-cafe-0123456789ab';
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          report: { id: REPORT_ID, listing_id: LISTING_ID, status: 'received' },
+        }),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderPage();
+    fillForm(container);
+    fireEvent.click(screen.getByRole('button'));
+
+    const ref = await screen.findByTestId('report-reference-id');
+    expect(ref).toHaveTextContent(REPORT_ID);
+  });
+
   it('surfaces an error alert on a 429 rate-limit instead of a fake success', async () => {
     const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
       Promise.resolve({ ok: false, status: 429, json: async () => ({}) })
