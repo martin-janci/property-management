@@ -217,6 +217,7 @@ function MeterDetailPageRoute() {
 /** Route wrapper: submit a reading for a meter, live. */
 function SubmitReadingPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { meterId } = useParams<{ meterId: string }>();
   const { data, isLoading } = useMeter(meterId);
@@ -240,13 +241,20 @@ function SubmitReadingPageRoute() {
             reading_date: formData.readingDate,
             source: 'manual',
           });
-          showToast({ type: 'success', title: 'Submitted', message: 'Reading submitted' });
+          showToast({
+            type: 'success',
+            title: t('common.submitted', { defaultValue: 'Submitted' }),
+            message: t('meters.readingSubmitted', { defaultValue: 'Reading submitted' }),
+          });
           navigate(`/meters/${meter.id}`);
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Submit failed',
-            message: err instanceof Error ? err.message : 'Could not submit reading',
+            title: t('common.submitFailed', { defaultValue: 'Submit failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('meters.submitFailed', { defaultValue: 'Could not submit reading' }),
           });
         }
       }}
@@ -257,6 +265,7 @@ function SubmitReadingPageRoute() {
 /** Route wrapper: edit an existing reading, live (resubmits a corrected reading). */
 function EditReadingPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { meterId, readingId } = useParams<{ meterId: string; readingId: string }>();
   const meterQuery = useMeter(meterId);
@@ -293,15 +302,20 @@ function EditReadingPageRoute() {
           });
           showToast({
             type: 'success',
-            title: 'Updated',
-            message: 'Reading correction submitted',
+            title: t('common.updated', { defaultValue: 'Updated' }),
+            message: t('meters.correctionSubmitted', {
+              defaultValue: 'Reading correction submitted',
+            }),
           });
           navigate(`/meters/${meter.id}`);
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Update failed',
-            message: err instanceof Error ? err.message : 'Could not update reading',
+            title: t('common.updateFailed', { defaultValue: 'Update failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('meters.updateFailed', { defaultValue: 'Could not update reading' }),
           });
         }
       }}
@@ -312,6 +326,7 @@ function EditReadingPageRoute() {
 /** Route wrapper: manager pending-validations queue, live. */
 function PendingValidationsPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { organizationId } = useOrganization();
   const { data, isLoading } = usePendingReadings({ organization_id: organizationId });
@@ -334,12 +349,19 @@ function PendingValidationsPageRoute() {
               notes: result.rejectionReason ?? result.notes,
             },
           });
-          showToast({ type: 'success', title: 'Done', message: 'Reading validated' });
+          showToast({
+            type: 'success',
+            title: t('common.done', { defaultValue: 'Done' }),
+            message: t('meters.readingValidated', { defaultValue: 'Reading validated' }),
+          });
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Validation failed',
-            message: err instanceof Error ? err.message : 'Could not validate reading',
+            title: t('meters.validationFailedTitle', { defaultValue: 'Validation failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('meters.validationFailed', { defaultValue: 'Could not validate reading' }),
           });
         }
       }}

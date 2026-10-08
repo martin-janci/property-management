@@ -191,12 +191,16 @@ function SensorListPageRoute() {
     }
     try {
       await deleteSensor.mutateAsync(sensor.id);
-      showToast({ type: 'success', title: 'Sensor deleted', message: sensor.name });
+      showToast({
+        type: 'success',
+        title: t('iot.sensorDeleted', { defaultValue: 'Sensor deleted' }),
+        message: sensor.name,
+      });
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to delete sensor',
-        message: error instanceof Error ? error.message : 'Unexpected error',
+        title: t('iot.sensorDeleteFailed', { defaultValue: 'Failed to delete sensor' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
   };
@@ -217,6 +221,7 @@ function SensorListPageRoute() {
 
 /** Route wrapper for registering a new sensor (FR71). */
 function RegisterSensorPageRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -252,13 +257,17 @@ function RegisterSensorPageRoute() {
     };
     try {
       await createSensor.mutateAsync(payload);
-      showToast({ type: 'success', title: 'Sensor registered', message: payload.name });
+      showToast({
+        type: 'success',
+        title: t('iot.sensorRegistered', { defaultValue: 'Sensor registered' }),
+        message: payload.name,
+      });
       navigate('/iot/sensors');
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to register sensor',
-        message: error instanceof Error ? error.message : 'Unexpected error',
+        title: t('iot.sensorRegisterFailed', { defaultValue: 'Failed to register sensor' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
   };
@@ -297,6 +306,7 @@ function sensorToFormValues(sensor: Sensor): Partial<SensorFormValues> {
 
 /** Route wrapper for editing an existing sensor (FR71). */
 function EditSensorPageRoute() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -330,13 +340,17 @@ function EditSensorPageRoute() {
     };
     try {
       await updateSensor.mutateAsync({ id: sensorId, data: payload });
-      showToast({ type: 'success', title: 'Sensor updated', message: payload.name ?? '' });
+      showToast({
+        type: 'success',
+        title: t('iot.sensorUpdated', { defaultValue: 'Sensor updated' }),
+        message: payload.name ?? '',
+      });
       navigate('/iot/sensors');
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Failed to update sensor',
-        message: error instanceof Error ? error.message : 'Unexpected error',
+        title: t('iot.sensorUpdateFailed', { defaultValue: 'Failed to update sensor' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
   };

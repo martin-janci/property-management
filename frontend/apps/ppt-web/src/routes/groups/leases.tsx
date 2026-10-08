@@ -589,6 +589,7 @@ function LeaseDetailPageRoute() {
 /** Route wrapper: create lease. Templates selector is live; unit/tenant pending. */
 function CreateLeasePageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { organizationId } = useOrganization();
   const { data: templatesData } = useLeaseTemplates(organizationId);
@@ -625,13 +626,20 @@ function CreateLeasePageRoute() {
             rent_due_day: formData.paymentDayOfMonth,
             notes: formData.notes,
           });
-          showToast({ type: 'success', title: 'Created', message: 'Lease created' });
+          showToast({
+            type: 'success',
+            title: t('common.created', { defaultValue: 'Created' }),
+            message: t('leases.created', { defaultValue: 'Lease created' }),
+          });
           navigate('/leases/list');
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Create failed',
-            message: err instanceof Error ? err.message : 'Could not create lease',
+            title: t('common.createFailed', { defaultValue: 'Create failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('leases.createFailed', { defaultValue: 'Could not create lease' }),
           });
         }
       }}
@@ -736,6 +744,7 @@ function ViolationsPageRoute() {
 /** Route wrapper: create violation, live. Lease selector is live. */
 function CreateViolationPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { organizationId } = useOrganization();
   const leasesQuery = useLeases({ organization_id: organizationId });
@@ -758,13 +767,22 @@ function CreateViolationPageRoute() {
             occurred_at: toDateTime(formData.violationDate),
           };
           await createViolation.mutateAsync(body);
-          showToast({ type: 'success', title: 'Created', message: 'Violation recorded' });
+          showToast({
+            type: 'success',
+            title: t('common.created', { defaultValue: 'Created' }),
+            message: t('leases.violationRecorded', { defaultValue: 'Violation recorded' }),
+          });
           navigate('/leases/violations');
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Create failed',
-            message: err instanceof Error ? err.message : 'Could not record violation',
+            title: t('common.createFailed', { defaultValue: 'Create failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('leases.violationCreateFailed', {
+                    defaultValue: 'Could not record violation',
+                  }),
           });
         }
       }}
