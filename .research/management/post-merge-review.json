@@ -1,9 +1,49 @@
 {
-  "generated": "2026-10-07T08:32:59Z",
+  "generated": "2026-10-08T10:30:55Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-08T10:30:55Z",
+      "prs_scanned": 8,
+      "clean": [
+        3036,
+        3020,
+        3025,
+        3026
+      ],
+      "with_issues": [
+        {
+          "pr": 3031,
+          "issue": 3039,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "/sell createListing POSTs /api/v1/listings (GET-only) -> 405; real route /api/v1/my/listings"
+        },
+        {
+          "pr": 3034,
+          "issue": 3040,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "group-detail not-found uses untranslated community.groups.* keys; reuse errors.groupNotFound"
+        },
+        {
+          "pr": 3033,
+          "issue": 3041,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "reality-web /profile hardcoded Slovak copy in next-intl app"
+        },
+        {
+          "pr": 3032,
+          "issue": 3042,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "register POST /api/v1/reports in @ppt/sitemap + surface report id"
+        }
+      ]
+    },
     {
       "run_at": "2026-10-07T08:32:59Z",
       "prs_scanned": 4,
@@ -283,25 +323,6 @@
         2950,
         2952
       ]
-    },
-    {
-      "run_at": "2026-09-07T12:33:00Z",
-      "prs_scanned": 3,
-      "clean": [
-        2941,
-        2942
-      ],
-      "with_issues": [
-        {
-          "pr": 2943,
-          "issue": 2948,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "Test-only PR adding queryKeys.test.ts to enforce AUTHED_QUERY_KEY_ROOTS logout-purge coverage. Correct + good IG3 guard (removing 'notification-triggers' fails). 1 finding, test-coverage(low): only the central queryKeys factory is AUTO-derived via Object.entries; feature-local (aiChatKeys/notificationAnalyticsKeys/predictiveKeys/sentimentKeys) and consumed api-client (meterKeys/messagingKeys/notificationTriggerKeys/reportKeys) factories are HARDCODED lists in the test -> a new standalone *Keys factory (esp. an api-client one, the exact #712/#2650 miss category) still escapes coverage, only partially meeting the task's 'caught automatically' requirement. Proposed: import.meta.glob('../features/**/hooks/*.{ts,tsx}',{eager:true}) to auto-collect feature *Keys; a colocated registry array for the api-client subset (or derive AUTHED_QUERY_KEY_ROOTS from it) so allowlist+test can't disagree; plus a rootOf .all-is-tuple guard for clearer failures. Filed #2948."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-24), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable -> GitHub MCP (mcp__github__*) for all GH I/O; full-diff static review (cloud build-blocked for api-server/mobile-native only; these 3 are ppt-web frontend). Label-based enumeration (search_pull_requests is:merged base:dev merged:>=2026-08-24 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 3 net-new never-reviewed PRs (total_count=3); every other in-window merge already carries post-merge-reviewed. All 3 are the ppt-web-core auth/session code-review PRs merged 2026-09-06 by the dispatcher: #2941 validate JWT exp at cold boot, #2942 single-flight refresh + 401 replay, #2943 logout-purge allowlist coverage test. 3 < 5-parallel-cap, reviewed inline (no subagent fan-out). 2 CLEAN: #2941 (isAccessTokenExpired reuses decodeJwtPayload, 30s skew buffer, expired->silent-refresh via shared refreshTokenInternal preserving #574 role re-derivation, expired+no-refresh purges stale tokens, opaque tokens trusted as legacy-backstop; 5 new tests incl regression case) and #2942 (interceptor awaits single-flight onUnauthorized returning rotated token then replays original request once guarded by __authRetried, concurrent 401s share one refresh via AuthContext isRefreshing/refreshPromise, explicit header set covers raw getApiClient consumers, replay-all-methods justified since 401 rejected pre-apply; 4 new tests w/ IG3 regression evidence: 3/4 fail on reverted prod files). 1 ISSUE opened: #2948 on #2943 (test-coverage low)."
     }
   ]
 }
