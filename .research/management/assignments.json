@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-08T22:42:53Z",
+  "generated": "2026-10-08T22:46:54Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -240,28 +240,6 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
-    },
-    {
-      "task_id": "gh-issue-3039",
-      "branch": "auto-impl/gh-issue-3039-ff35ac81",
-      "status": "review",
-      "claimed_at": "2026-10-08T14:38:04Z",
-      "last_updated": "2026-10-08T20:30:58Z",
-      "status_changed_at": "2026-10-08T16:40:58Z",
-      "pr_number": 3044,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3044",
-      "merged_at": null,
-      "specialist": "nextjs-web",
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=ab5305553a815f454c8060b56e1e0198367755a1 note=fix-correct-screenmap-gate-now-green-all-ci-pass",
-      "last_reviewed_oid": "ab5305553a815f454c8060b56e1e0198367755a1",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": null
     }
   ]
 }
