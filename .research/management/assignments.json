@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-08T04:30:37Z",
+  "generated": "2026-10-08T08:36:26Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -174,7 +174,7 @@
       "branch": "auto-impl/screen-map-drift-pr-2994-ppt-26c73c5b",
       "status": "review",
       "claimed_at": "2026-10-05T12:21:40Z",
-      "last_updated": "2026-10-08T04:30:37Z",
+      "last_updated": "2026-10-08T08:33:47Z",
       "status_changed_at": "2026-10-07T12:37:38Z",
       "pr_number": 3024,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3024",
@@ -186,10 +186,10 @@
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 0,
+      "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": "2026-10-08T00:33:31Z",
+      "merge_attempted_at": "2026-10-08T08:33:47Z",
       "quarantined_at": null,
       "quarantine_reason": null
     },
