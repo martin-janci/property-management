@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-08T22:39:20Z",
+  "generated": "2026-10-08T22:42:53Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -261,28 +261,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-ppt-web-core-group-join-leave-silent",
-      "branch": "auto-impl/code-review-ppt-web-core-group-join-leav-e79fabfc",
-      "status": "review",
-      "claimed_at": "2026-10-08T18:39:02Z",
-      "last_updated": "2026-10-08T20:30:58Z",
-      "status_changed_at": "2026-10-08T19:01:10Z",
-      "pr_number": 3048,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3048",
-      "merged_at": null,
-      "specialist": "react-web",
-      "implementer_summary": "pr=3048 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wired GroupDetailPageInner join/leave mutations to onError/onSuccess toasts, +4 i18n keys x6 locales; TDD 2-commit split; verify GREEN biome+typecheck+5066 tests; drift=owner_role mislabel ppt-web-only",
-      "reviewer_summary": "verdict=approve head_oid=e78b825f00682090d8c69d70b9bd687c1a09abe5 note=fix-correct-reuses-getErrorMessage-i18n-complete-ci-green",
-      "last_reviewed_oid": "e78b825f00682090d8c69d70b9bd687c1a09abe5",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
       "merge_attempted_at": null
     }
   ]
