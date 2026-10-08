@@ -11696,6 +11696,186 @@
         "assignment_status": "merged",
         "pr_number": 3036
       }
+    },
+    {
+      "id": "screen-map-drift-pr-3036-ppt",
+      "title": "PR #3036 touched 6 ppt-web routes/groups/*.tsx without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3036"
+      ],
+      "evidence": [
+        "PR #3036 (code-review-ppt-web-core-route-group-toast-i18n) touched 6 ppt-web route group files without updating any docs/screens/ppt/*.md.",
+        "Routes touched: routes/groups/{community,faults,iot,leases,meters,person-months}.tsx"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3034-ppt",
+      "title": "PR #3034 touched ppt-web routes/groups/community.tsx without docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3034"
+      ],
+      "evidence": [
+        "PR #3034 (code-review-ppt-web-core-community-group-detail-mock-data) wired real API into group-detail but shipped no docs/screens/ppt update."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3033-reality",
+      "title": "PR #3033 touched reality-web /profile route without docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3033"
+      ],
+      "evidence": [
+        "PR #3033 (replace /profile shared mock identity with real data) touched app/[locale]/profile/page.tsx without updating docs/screens/reality/*.md."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "PR #3022 touched reality-web /sell route without docs/screens/reality update (reconciled by PR #3031 after the fact)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022",
+        "PR #3031"
+      ],
+      "evidence": [
+        "PR #3022 (drop dead seller contact fields from /sell wizard) touched reality-web /sell route without updating docs/screens/reality/sell.md in the same PR.",
+        "Separate reconciliation PR #3031 landed after the fact — captures the drift pattern (process signal, not an outstanding doc bug)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "PR #3019 touched reality-web /report route without docs/screens/reality update (reconciled by PR #3032 after the fact)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019",
+        "PR #3032"
+      ],
+      "evidence": [
+        "PR #3019 (disable never-transmitted /report attachment control) touched reality-web /report route without updating docs/screens/reality/report-listing.md in the same PR.",
+        "Separate reconciliation PR #3032 landed after the fact — captures the drift pattern (process signal, not an outstanding doc bug)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "title": "ppt-web routes/groups/community.tsx — 2 non-dispatcher commits in the 5d catch-up window (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 5d catch-up"
+      ],
+      "evidence": [
+        "PR #3034 wired real API into group-detail; PR #3036 routed toast titles through i18n. Both touched routes/groups/community.tsx in the same 5d window."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-pages-no-i18n",
+      "title": "reality-web /[locale]/realtor/* — entire authenticated realtor section renders hardcoded English in a 6-locale portal",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-08"
+      ],
+      "evidence": [
+        "5 realtor page.tsx files under /[locale]/realtor/ ship zero next-intl imports (grep -c returns 0 on each); user-visible strings are literal English. Sibling pages (favorites/page.tsx, components/realtor/ListingForm.tsx) correctly use useTranslations — plumbing exists, these pages never adopted it.",
+        "Fix is frontend-only, cloud-landable: add useTranslations('realtor') blocks and extend messages/{en,sk,cs,de,pl,hu}.json."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-account-pages-no-i18n",
+      "title": "reality-web /[locale]/account/* + /[locale]/profile — authenticated account screens render hardcoded English in a 6-locale portal",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-08"
+      ],
+      "evidence": [
+        "5 account/profile page.tsx files render user-facing English with no next-intl import. Error handling itself is correct (AuthApiError 401 distinguished, RealtorApiError branches); the gap is purely untranslated literals.",
+        "Fix is frontend-only, cloud-landable: introduce useTranslations('account'/'profile') blocks and extend messages/{en,sk,cs,de,pl,hu}.json."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,299 @@
+{
+  "generated": "2026-10-08T03:18:00Z",
+  "last_run_iso": "2026-10-03T03:12:00Z",
+  "lag_hours": 120,
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-08",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-10-03T03:12:00Z; now=2026-10-08T03:18:00Z (5d 0h since previous run). Threshold for lag_warning is >36h."
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-10-08",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "state.json last_run_iso is 5d old; cloud routine schedule may be degraded. Dispatcher continued to tick (separate loop)."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3036-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3036",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "evidence": [
+        "PR #3036 (code-review-ppt-web-core-route-group-toast-i18n) touched 6 ppt-web route group files without updating any docs/screens/ppt/*.md."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3034-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3034",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "evidence": [
+        "PR #3034 (community-group-detail mock-data wiring) touched routes/groups/community.tsx without updating docs/screens/ppt/community-group-detail.md."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3033-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3033",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "evidence": [
+        "PR #3033 (replace /profile shared mock identity) touched reality-web /profile route without updating docs/screens/reality/profile*.md."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "evidence": [
+        "PR #3022 (drop dead seller contact fields from /sell wizard) touched reality-web /sell route without updating docs/screens/reality/sell.md in the same PR (reconciliation PR #3031 landed separately)."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "evidence": [
+        "PR #3019 (disable never-transmitted /report attachment control) touched reality-web /report route without updating docs/screens/reality/report-listing.md in the same PR (reconciliation PR #3032 landed separately)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 5d window",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "evidence": [
+        "2 non-dispatcher commits in the 5d window touched routes/groups/community.tsx (PR #3034 mock-data wiring, PR #3036 route-group toast i18n) — new hotspot vs 2026-10-03 state."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-08 reality-web (dispatcher Tier-1d adopted into routine Phase 1.5)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "evidence": [
+        "Entire authenticated realtor section renders hardcoded English with 0 next-intl imports in a 6-locale portal (sk/cs/de/en/pl/hu). Pages live under /[locale]/realtor/* so locale is selectable yet no useTranslations call. Siblings (favorites/page.tsx) are correctly translated; plumbing exists. Fix is frontend-only — add useTranslations('realtor') blocks and extend messages/{en,sk,cs,de,pl,hu}.json."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-account-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-08 reality-web (dispatcher Tier-1d adopted into routine Phase 1.5)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "evidence": [
+        "Same whole-section i18n gap in /[locale]/account/* and /[locale]/profile — 5 page.tsx files render user-facing English literals with no next-intl import. Error handling is correct (AuthApiError, RealtorApiError distinguished); gap is purely untranslated strings. Fix is frontend-only, cloud-landable."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == \"# <today>\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "cursors/seen_signals changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative seen signal re-emitted with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; no open item older than 14d without decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has brief adversarial-pass line",
+      "observed": "0 new plans — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, each with 15 sections and 1 real file",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases failed listed and cursors held",
+      "observed": "no phases failed",
+      "expected": "ok"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no silently-deleted prior-run plans",
+      "observed": "all prior slugs resolvable",
+      "expected": "ok"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "10 >= 10",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps and idempotency",
+      "observed": "no actions",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; cursors advanced",
+      "observed": "pm_cursor 6->7, coverage_cursor 8->9",
+      "expected": "ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token values",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "phase_1_5": {
+    "segment_reviewed": "reality-web",
+    "selection_reason": "adopted from dispatcher Tier-1d signals produced earlier today for the same segment (churn-aligned on realtor-api.ts and import/*); 0 open code-review-finding items for this segment in backlog.json",
+    "experts_used": [
+      "frontend"
+    ],
+    "findings_count": 2,
+    "next_segment": "ppt-web-core (oldest unreviewed after this run — last 2026-09-27)",
+    "skipped": false
+  },
+  "phase_1_6": {
+    "mode": "lightweight-rotation",
+    "role_ran": "pm-data",
+    "role_index_before": 6,
+    "role_index_after": 7,
+    "coverage_cursor_before": 8,
+    "coverage_cursor_after": 9,
+    "note": "Catch-up run with 5d lag — pm-data role analysis deferred; cursors advanced to keep rotation moving. Management artifacts left byte-identical (project-state.md, action-list.json, risks.json already valid)."
+  }
+}
