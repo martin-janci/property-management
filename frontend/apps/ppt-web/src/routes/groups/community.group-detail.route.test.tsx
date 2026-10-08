@@ -163,14 +163,14 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
     groupResult = { data: undefined, isLoading: false, error: null };
     render(<GroupDetailPageInner groupId="grp-1" />);
 
-    expect(screen.getByText('Group not found')).toBeInTheDocument();
+    expect(screen.getByText('errors.groupNotFound')).toBeInTheDocument();
   });
 
   it('renders a not-found state when the group query errors', () => {
     groupResult = { data: undefined, isLoading: false, error: new Error('boom') };
     render(<GroupDetailPageInner groupId="grp-1" />);
 
-    expect(screen.getByText('Group not found')).toBeInTheDocument();
+    expect(screen.getByText('errors.groupNotFound')).toBeInTheDocument();
   });
 
   it('wires Join to useJoinGroup().mutate with the route groupId', async () => {

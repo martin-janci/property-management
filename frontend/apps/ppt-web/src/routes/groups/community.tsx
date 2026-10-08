@@ -109,13 +109,13 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   if (error || !group) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <p className="text-gray-500">{t('community.groups.notFound', 'Group not found')}</p>
+        <p className="text-gray-500">{t('errors.groupNotFound')}</p>
         <button
           type="button"
           onClick={() => navigate('/community/groups')}
           className="mt-4 text-sm text-blue-600 hover:text-blue-800"
         >
-          {t('community.groups.backToGroups', 'Back to Groups')}
+          {t('common.back')}
         </button>
       </div>
     );
