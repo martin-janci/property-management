@@ -2700,7 +2700,11 @@
     }
   },
   "community": {
-    "groupCreated": "Skupina vytvorená"
+    "groupCreated": "Skupina vytvorená",
+    "groupJoined": "Pripojili ste sa do skupiny.",
+    "joinFailed": "Nepodarilo sa pripojiť do skupiny",
+    "groupLeft": "Opustili ste skupinu.",
+    "leaveFailed": "Nepodarilo sa opustiť skupinu"
   },
   "meters": {
     "readingSubmitted": "Odpočet odoslaný",

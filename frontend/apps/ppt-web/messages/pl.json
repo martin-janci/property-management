@@ -2566,7 +2566,11 @@
     }
   },
   "community": {
-    "groupCreated": "Grupa utworzona"
+    "groupCreated": "Grupa utworzona",
+    "groupJoined": "Dołączono do grupy.",
+    "joinFailed": "Nie udało się dołączyć do grupy",
+    "groupLeft": "Opuszczono grupę.",
+    "leaveFailed": "Nie udało się opuścić grupy"
   },
   "leases": {
     "created": "Umowa najmu utworzona",

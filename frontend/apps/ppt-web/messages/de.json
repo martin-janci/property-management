@@ -2591,7 +2591,11 @@
     }
   },
   "community": {
-    "groupCreated": "Gruppe erstellt"
+    "groupCreated": "Gruppe erstellt",
+    "groupJoined": "Sie sind der Gruppe beigetreten.",
+    "joinFailed": "Beitritt zur Gruppe fehlgeschlagen",
+    "groupLeft": "Sie haben die Gruppe verlassen.",
+    "leaveFailed": "Verlassen der Gruppe fehlgeschlagen"
   },
   "meters": {
     "readingSubmitted": "Ablesung übermittelt",
