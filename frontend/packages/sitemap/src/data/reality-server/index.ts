@@ -197,6 +197,30 @@ export const realityServerEndpoints: ApiEndpoint[] = [
     feature: 'Epic-33',
   },
 
+  // Reports (UC-23: Report a Listing)
+  {
+    operationId: 'reports_submit',
+    server: 'reality-server',
+    method: 'POST',
+    path: '/api/v1/reports',
+    description: 'Submit an abuse / problem report about a listing',
+    tags: ['Reports'],
+    requestBody: {
+      ref: 'Reports.SubmitRequest',
+      contentType: 'application/json',
+      required: true,
+    },
+    responses: [
+      { statusCode: 201, description: 'Report submitted' },
+      { statusCode: 400, description: 'Invalid request' },
+      { statusCode: 404, description: 'Listing not found' },
+      { statusCode: 429, description: 'Too many requests' },
+    ],
+    // Anonymous-friendly: a session cookie is sent when present (faster SLA),
+    // but it is not required.
+    auth: { required: false },
+  },
+
   // SSO
   {
     operationId: 'sso_login',
