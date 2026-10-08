@@ -17,9 +17,11 @@
  * explicit empty state instead of fabricated activity rows.
  */
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { Link } from '@/i18n/routing';
 import { useAuth } from '@/lib/auth-context';
 import {
   getMyRealtorAnalytics,
@@ -38,67 +40,61 @@ type ProfileTab = 'listings' | 'activity' | 'reviews' | 'settings';
 // TODO: replace listing cards with @ppt/ui-kit/ListingCard once available
 // TODO: replace status badges with @ppt/ui-kit/StatusPill once available
 
-const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+// Status -> badge palette. The human-readable label is resolved at render time
+// through next-intl (`pages.profile.status.<status>`); keep this map colours-only.
+const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   active: {
     bg: 'var(--ppt-color-success-light, #d1fae5)',
     color: 'var(--ppt-color-success-dark, #047857)',
-    label: 'Aktívny',
   },
   sold: {
     bg: 'var(--ppt-color-info-light, #dbeafe)',
     color: 'var(--ppt-color-info-dark, #1e40af)',
-    label: 'Predaný',
   },
   rented: {
     bg: 'var(--ppt-color-warning-light, #fef3c7)',
     color: 'var(--ppt-color-warning-dark, #b45309)',
-    label: 'Prenajatý',
   },
   draft: {
     bg: 'var(--ppt-bg-app, #f3f4f6)',
     color: 'var(--ppt-fg-secondary, #4b5563)',
-    label: 'Koncept',
   },
   paused: {
     bg: 'var(--ppt-bg-app, #f3f4f6)',
     color: 'var(--ppt-fg-secondary, #4b5563)',
-    label: 'Pozastavený',
   },
   archived: {
     bg: 'var(--ppt-bg-app, #f3f4f6)',
     color: 'var(--ppt-fg-muted, #9ca3af)',
-    label: 'Archivovaný',
   },
 };
 
+// Statuses that have a translated label; anything else falls back to the raw
+// status string so an unknown value never crashes next-intl with a missing key.
+const KNOWN_STATUSES = new Set(Object.keys(STATUS_COLORS));
+
 const CURRENCY_SYMBOLS: Record<string, string> = { EUR: '€', CZK: 'Kč' };
 
-const TABS: { id: ProfileTab; label: string }[] = [
-  { id: 'listings', label: 'Moje inzeráty' },
-  { id: 'activity', label: 'Aktivita' },
-  { id: 'reviews', label: 'Hodnotenia' },
-  { id: 'settings', label: 'Nastavenia' },
-];
+const TAB_IDS: ProfileTab[] = ['listings', 'activity', 'reviews', 'settings'];
 
-function formatPrice(price: number | string, currency: string): string {
+function formatPrice(price: number | string, currency: string, locale: string): string {
   const value = Number(price);
   const symbol = CURRENCY_SYMBOLS[currency] ?? '';
-  const amount = Number.isFinite(value) ? value.toLocaleString('sk-SK') : String(price);
+  const amount = Number.isFinite(value) ? value.toLocaleString(locale) : String(price);
   return symbol ? `${symbol}${amount}` : `${amount} ${currency}`;
 }
 
-function formatReviewDate(iso: string): string {
+function formatReviewDate(iso: string, locale: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString('sk-SK', { year: 'numeric', month: 'long' });
+  return date.toLocaleDateString(locale, { year: 'numeric', month: 'long' });
 }
 
-function statusStyle(status: string): { bg: string; color: string; label: string } {
+function statusStyle(status: string): { bg: string; color: string } {
   return (
     STATUS_COLORS[status] ?? {
       bg: 'var(--ppt-bg-app, #f3f4f6)',
       color: 'var(--ppt-fg-secondary, #4b5563)',
-      label: status,
     }
   );
 }
@@ -122,6 +118,7 @@ export default function ProfilePage() {
 }
 
 function ProfilePageContent() {
+  const t = useTranslations('pages.profile');
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>('listings');
 
@@ -130,7 +127,7 @@ function ProfilePageContent() {
   const [reviews, setReviews] = useState<RealtorReviewsResponse | null>(null);
 
   const [listings, setListings] = useState<MyListing[] | null>(null);
-  const [listingsError, setListingsError] = useState<string>();
+  const [listingsError, setListingsError] = useState(false);
 
   // The caller's own listings (works for any signed-in portal user).
   useEffect(() => {
@@ -142,7 +139,7 @@ function ProfilePageContent() {
       .catch(() => {
         if (!cancelled) {
           setListings([]);
-          setListingsError('Nepodarilo sa načítať inzeráty.');
+          setListingsError(true);
         }
       });
     return () => {
@@ -187,13 +184,16 @@ function ProfilePageContent() {
 
   const statItems: { label: string; value: string | number }[] = [];
   if (stats) {
-    statItems.push({ label: 'Aktívne inzeráty', value: stats.activeListings });
-    statItems.push({ label: 'Všetky inzeráty', value: stats.totalListings });
+    statItems.push({ label: t('stats.activeListings'), value: stats.activeListings });
+    statItems.push({ label: t('stats.totalListings'), value: stats.totalListings });
   }
   if (reviews) {
-    statItems.push({ label: 'Hodnotenia', value: reviews.total });
+    statItems.push({ label: t('stats.reviews'), value: reviews.total });
     if (typeof reviews.avg_rating === 'number') {
-      statItems.push({ label: 'Priem. hodnotenie', value: `${reviews.avg_rating.toFixed(1)} ★` });
+      statItems.push({
+        label: t('stats.avgRating'),
+        value: `${reviews.avg_rating.toFixed(1)} ★`,
+      });
     }
   }
 
@@ -365,30 +365,30 @@ function ProfilePageContent() {
             style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', display: 'flex', gap: 0 }}
           >
             {/* TODO: replace with @ppt/ui-kit/SegmentedControl once available */}
-            {TABS.map((tab) => (
+            {TAB_IDS.map((tabId) => (
               <button
-                key={tab.id}
+                key={tabId}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => setActiveTab(tabId)}
                 style={{
                   padding: '14px 20px',
                   background: 'none',
                   border: 'none',
                   borderBottom:
-                    activeTab === tab.id
+                    activeTab === tabId
                       ? '2px solid var(--ppt-color-primary, #2563eb)'
                       : '2px solid transparent',
                   color:
-                    activeTab === tab.id
+                    activeTab === tabId
                       ? 'var(--ppt-color-primary, #2563eb)'
                       : 'var(--ppt-fg-secondary)',
-                  fontWeight: activeTab === tab.id ? 700 : 400,
+                  fontWeight: activeTab === tabId ? 700 : 400,
                   cursor: 'pointer',
                   fontSize: '0.9375rem',
                   whiteSpace: 'nowrap',
                 }}
               >
-                {tab.label}
+                {t(`tabs.${tabId}`)}
               </button>
             ))}
           </div>
@@ -396,13 +396,10 @@ function ProfilePageContent() {
 
         {/* Tab content */}
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
-          {activeTab === 'listings' && <ListingsTab listings={listings} error={listingsError} />}
+          {activeTab === 'listings' && <ListingsTab listings={listings} hasError={listingsError} />}
 
           {activeTab === 'activity' && (
-            <EmptyState
-              title="Aktivita zatiaľ nie je k dispozícii"
-              body="Prehľad vašej aktivity bude dostupný, keď pripravíme príslušný prehľad."
-            />
+            <EmptyState title={t('activity.emptyTitle')} body={t('activity.emptyBody')} />
           )}
 
           {activeTab === 'reviews' && <ReviewsTab reviews={reviews} />}
@@ -410,11 +407,16 @@ function ProfilePageContent() {
           {activeTab === 'settings' && (
             <div style={{ maxWidth: 560 }}>
               <p style={{ color: 'var(--ppt-fg-secondary)' }}>
-                Nastavenia profilu sú dostupné v sekcii{' '}
-                <a href="/account/profile" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
-                  Môj účet
-                </a>
-                .
+                {t.rich('settings.description', {
+                  account: (chunks) => (
+                    <Link
+                      href="/account/profile"
+                      style={{ color: 'var(--ppt-color-primary, #2563eb)' }}
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                })}
               </p>
             </div>
           )}
@@ -426,24 +428,22 @@ function ProfilePageContent() {
   );
 }
 
-function ListingsTab({ listings, error }: { listings: MyListing[] | null; error?: string }) {
+function ListingsTab({ listings, hasError }: { listings: MyListing[] | null; hasError: boolean }) {
+  const t = useTranslations('pages.profile');
+  const locale = useLocale();
+
   if (listings === null) {
-    return <p style={{ color: 'var(--ppt-fg-muted, #9ca3af)' }}>Načítavam inzeráty…</p>;
+    return <p style={{ color: 'var(--ppt-fg-muted, #9ca3af)' }}>{t('listings.loading')}</p>;
   }
-  if (error) {
+  if (hasError) {
     return (
       <p role="alert" style={{ color: 'var(--ppt-color-danger-dark, #b91c1c)' }}>
-        {error}
+        {t('listings.error')}
       </p>
     );
   }
   if (listings.length === 0) {
-    return (
-      <EmptyState
-        title="Zatiaľ nemáte žiadne inzeráty"
-        body="Keď pridáte inzerát, zobrazí sa tu."
-      />
-    );
+    return <EmptyState title={t('listings.emptyTitle')} body={t('listings.emptyBody')} />;
   }
 
   return (
@@ -456,6 +456,9 @@ function ListingsTab({ listings, error }: { listings: MyListing[] | null; error?
     >
       {listings.map((listing) => {
         const badge = statusStyle(listing.status);
+        const badgeLabel = KNOWN_STATUSES.has(listing.status)
+          ? t(`status.${listing.status}`)
+          : listing.status;
         const area = listing.sizeSqm != null ? Number(listing.sizeSqm) : null;
         return (
           /* TODO: replace with @ppt/ui-kit/ListingCard once available */
@@ -508,7 +511,7 @@ function ListingsTab({ listings, error }: { listings: MyListing[] | null; error?
                     color: badge.color,
                   }}
                 >
-                  {badge.label}
+                  {badgeLabel}
                 </span>
               </div>
               <p
@@ -522,12 +525,12 @@ function ListingsTab({ listings, error }: { listings: MyListing[] | null; error?
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontWeight: 700, color: 'var(--ppt-fg-primary)' }}>
-                  {formatPrice(listing.price, listing.currency)}
+                  {formatPrice(listing.price, listing.currency, locale)}
                 </span>
                 <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
                   {area != null ? `${area} m²` : null}
                   {area != null && listing.rooms != null ? ' · ' : null}
-                  {listing.rooms != null ? `${listing.rooms} izby` : null}
+                  {listing.rooms != null ? t('listings.rooms', { count: listing.rooms }) : null}
                 </span>
               </div>
             </div>
@@ -539,13 +542,11 @@ function ListingsTab({ listings, error }: { listings: MyListing[] | null; error?
 }
 
 function ReviewsTab({ reviews }: { reviews: RealtorReviewsResponse | null }) {
+  const t = useTranslations('pages.profile');
+  const locale = useLocale();
+
   if (!reviews || reviews.reviews.length === 0) {
-    return (
-      <EmptyState
-        title="Zatiaľ žiadne hodnotenia"
-        body="Hodnotenia od klientov sa zobrazia tu, keď ich dostanete."
-      />
-    );
+    return <EmptyState title={t('reviews.emptyTitle')} body={t('reviews.emptyBody')} />;
   }
 
   return (
@@ -590,7 +591,7 @@ function ReviewsTab({ reviews }: { reviews: RealtorReviewsResponse | null }) {
             </p>
           )}
           <span style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
-            {formatReviewDate(review.created_at)}
+            {formatReviewDate(review.created_at, locale)}
           </span>
         </div>
       ))}

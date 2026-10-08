@@ -485,7 +485,39 @@
         "reviews": "Opinie",
         "settings": "Ustawienia"
       },
-      "title": "Mój profil"
+      "title": "Mój profil",
+      "stats": {
+        "activeListings": "Aktywne ogłoszenia",
+        "totalListings": "Wszystkie ogłoszenia",
+        "reviews": "Opinie",
+        "avgRating": "Śr. ocena"
+      },
+      "status": {
+        "active": "Aktywne",
+        "sold": "Sprzedane",
+        "rented": "Wynajęte",
+        "draft": "Szkic",
+        "paused": "Wstrzymane",
+        "archived": "Zarchiwizowane"
+      },
+      "listings": {
+        "loading": "Ładowanie ogłoszeń…",
+        "error": "Nie udało się załadować ogłoszeń.",
+        "emptyTitle": "Nie masz jeszcze żadnych ogłoszeń",
+        "emptyBody": "Gdy dodasz ogłoszenie, pojawi się tutaj.",
+        "rooms": "{count} pokoje"
+      },
+      "activity": {
+        "emptyTitle": "Aktywność nie jest jeszcze dostępna",
+        "emptyBody": "Przegląd Twojej aktywności będzie dostępny, gdy przygotujemy odpowiedni widok."
+      },
+      "reviews": {
+        "emptyTitle": "Brak opinii",
+        "emptyBody": "Opinie od klientów pojawią się tutaj, gdy je otrzymasz."
+      },
+      "settings": {
+        "description": "Ustawienia profilu znajdziesz w sekcji <account>Moje konto</account>."
+      }
     },
     "report": {
       "submit": "Wyślij zgłoszenie",
