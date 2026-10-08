@@ -27,6 +27,8 @@ const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 // states follow the same pattern until the page is fully i18n-extracted.
 const MSG = {
   submitting: 'Odosiela sa…',
+  referenceLabel: 'Referenčné číslo',
+  referenceHint: 'Uveďte ho pri ďalšej komunikácii — pomôže nám vaše hlásenie rýchlo dohľadať.',
   errorNoListing:
     'Nevedeli sme určiť, ktorého inzerátu sa hlásenie týka. Otvorte nahlásenie z detailu inzerátu alebo vložte odkaz či ID inzerátu vyššie.',
   errorRateLimit: 'Priveľa nahlásení z tohto zariadenia. Skúste to o chvíľu znova.',
@@ -43,6 +45,7 @@ export default function ReportPage() {
   const [description, setDescription] = useState('');
   const [gdprAccepted, setGdprAccepted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const inputStyle: React.CSSProperties = {
@@ -91,11 +94,16 @@ export default function ReportPage() {
         : description.trim();
 
     try {
-      await submitReport.mutateAsync({
+      // Read the created report id back from the 201 `{ report }` envelope so
+      // the success card can surface a reference the reporter can quote in a
+      // follow-up. The server returns a raw UUID today (no "R-…" scheme is
+      // defined server-side yet), so we surface the id verbatim.
+      const result = await submitReport.mutateAsync({
         listing_id: listingId,
         problem_type: problem,
         description: fullDescription,
       });
+      setReportId(result.report?.id ?? null);
       setSubmitted(true);
     } catch (err) {
       const status = err instanceof SubmitReportError ? err.status : 0;
@@ -149,20 +157,66 @@ export default function ReportPage() {
               Váš podnet sme prijali. Náš tím ho preverí do 24 hodín. Ďakujeme, že pomáhate
               udržiavať portál bezpečným.
             </p>
-            <a
-              href="/listings"
-              style={{
-                display: 'inline-block',
-                padding: '12px 28px',
-                background: 'var(--ppt-color-primary, #2563eb)',
-                color: '#fff',
-                borderRadius: 8,
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}
-            >
-              Späť na ponuky
-            </a>
+            {reportId && (
+              <div
+                style={{
+                  display: 'inline-block',
+                  maxWidth: 480,
+                  margin: '0 auto 28px',
+                  padding: '14px 18px',
+                  borderRadius: 10,
+                  background: 'var(--ppt-bg-surface)',
+                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--ppt-fg-secondary)',
+                    marginBottom: 4,
+                  }}
+                >
+                  {MSG.referenceLabel}
+                </div>
+                <code
+                  data-testid="report-reference-id"
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-primary)',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {reportId}
+                </code>
+                <p
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--ppt-fg-muted, #9ca3af)',
+                    margin: '8px 0 0',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {MSG.referenceHint}
+                </p>
+              </div>
+            )}
+            <div>
+              <a
+                href="/listings"
+                style={{
+                  display: 'inline-block',
+                  padding: '12px 28px',
+                  background: 'var(--ppt-color-primary, #2563eb)',
+                  color: '#fff',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                Späť na ponuky
+              </a>
+            </div>
           </div>
         </main>
         <Footer />
