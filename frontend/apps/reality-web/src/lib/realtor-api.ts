@@ -115,7 +115,10 @@ export interface ListingResponse extends ListingDraft {
 }
 
 export function createListing(data: ListingDraft): Promise<ListingResponse> {
-  return request<ListingResponse>('/api/v1/listings', {
+  // Create goes to the authenticated owner route (`portal_listings::create_listing`,
+  // POST /api/v1/my/listings). `/api/v1/listings` is GET-only (public search),
+  // so POSTing there returns 405 Method Not Allowed (#3039).
+  return request<ListingResponse>('/api/v1/my/listings', {
     method: 'POST',
     body: JSON.stringify(data),
   });
