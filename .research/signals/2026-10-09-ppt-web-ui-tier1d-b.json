@@ -1,0 +1,46 @@
+{
+  "generated": "2026-10-09T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: 18 < 36; no deterministic refill source available). Static single-segment rotating code review via ppt-dev-review skill — no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend (React/Vite ppt-web) backlog vectors for the ppt-web-ui segment. This is the SECOND same-day ppt-web-ui run; the earlier 2026-10-09-ppt-web-ui-tier1d.json mined privacy/sentiment/oauth-grants feature pages. NOTE ON YIELD: ppt-web-ui is heavily pre-mined (6 findings in the last 48h + 33 historical done). Every strong candidate surfaced this pass was already filed and was dropped as a duplicate: Toast persistent-overflow (code-review-ppt-web-ui-toast-persistent-overflow-leak, 2026-10-08), ConnectionStatus interactive role=status (code-review-ppt-web-ui-connstatus-interactive-on-status-role, 2026-10-08), ConfirmationDialog default-label i18n (code-review-ppt-web-ui-confirm-dialog-i18n, backlog done), PortfolioListPage mock data (code-review-ppt-web-ui-portfoliolist-mock-data, 2026-08-16), hardcoded en-US currency/date locale (code-review-ppt-web-ui-hardcoded-en-us-locale, 2026-09-20 + date-number-formatters-no-locale, 2026-08-24). ArticleDetailPage and DocumentSearchResult dangerouslySetInnerHTML are both correctly DOMPurify-allowlist-sanitized (non-issues). Subscription feature (BillingPage/PaymentMethodsPage/...) is UNWIRED (no route mounts it) so i18n gaps there are not cloud-landable. Only the two findings below are net-new, wired, and qualifying.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed. REVIEW_CURSOR.ppt-web-ui = 2026-10-01, tied oldest with mobile-rn (also 2026-10-01); tiebreak by the skill's segment-map table order -> ppt-web-ui wins. No CHURN_FILES passed (Tier-1d generator invocation). Not saturated: 0 open code-review-finding rows for ppt-web-ui in backlog.json (skill saturation floor is >=3 status==open; reality-server has 3 open and would be skipped).",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-docsearchresult-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/documents/components/DocumentSearchResult.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearchResult.tsx (Story 39.1, rendered by DocumentSearch on the WIRED DocumentsPage — routes/groups/documents.tsx:26/68, routes/lazyRoutes.tsx:12) has NO useTranslation at all (`grep -c useTranslation` = 0) and hardcodes every visible English string: the RLS audience labels SCOPE_LABEL = {organization:'All members', building:'Building', unit:'Unit', user:'Private', public:'Public'} (:14-20) shown in the AudienceBadge and its `Visible to: ${SCOPE_LABEL[scope]}` tooltip (:25,:39); the highlight field labels getFieldLabel 'Title'/'Description'/'Document Content (OCR)'/'AI Summary' (:94-101); the 'Has Summary' badge (:138); `${Math.round(score*100)}% match` (:114) and the `Relevance score: ${score.toFixed(2)}` tooltip (:113).",
+        "ppt-web ships sk/cs/de/en, so Slovak/Czech/German users see English-only labels on the document-search results surface. This is NET-NEW: the only prior documents-feature i18n finding (code-review-ppt-web-ui-documents-i18n-hardcoded, 2026-09-16) targeted hardcoded SLOVAK error/empty/loading literals in 7 DIFFERENT files (MoveFolderDialog/DocumentsBrowse/FolderTree/DocumentDetail/FolderTreePage/DocumentPreviewModal/PdfPreview) — it does not name DocumentSearchResult.tsx and concerns a different (sk, not en) string set.",
+        "Secondary: the same component also hardcodes `toLocaleDateString('en-US', ...)` for the result date (:64-71), so dates render with US ordering regardless of active locale (the broad hardcoded-en-US-locale finding of 2026-09-20 listed KPICard/RecentPaymentsList/PolicyCard, not this file).",
+        "Fix (frontend-only, cloud-landable): add useTranslation and route all labels through t('documents.search.*') / t('documents.audience.*') keys across the en/sk/cs/de bundles, and derive the date locale from i18n.language (reuse the shared formatDate util introduced by PR #2917). Low severity, i18n gap on a wired customer-facing surface."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-2fa-qr-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": ["frontend/apps/ppt-web/src/features/auth/pages/TwoFactorAuthPage.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/auth/pages/TwoFactorAuthPage.tsx (Epic 9 Stories 9.1/9.2, TOTP 2FA enrollment — a security-critical wired flow using @ppt/api-client useMfa* hooks) renders the setup QR via QrCodeCanvas, whose effect calls `QRCode.toCanvas(canvasRef.current, uri, { width: 200, margin: 2 }).catch(() => {})` (:44-48). The empty catch SILENTLY swallows any QR-generation failure: the <canvas> is left blank with no error text, no aria-live announcement and no guidance. Most users scan the QR, so a silent render failure strands them on the enable step.",
+        "There IS a graceful fallback — the TOTP secret is always shown as copyable text below the QR (manualEntrySecret, :332-344) — so this is a degraded-UX / missing-feedback gap rather than a hard dead-end, which is why this is scored Low rather than Medium.",
+        "Related same-file weakness: the error paths surface RAW error text to the user via `message: String(err)` on setup (:139-140) and `setFormError(String(err) ...)` on verify/disable/regen (:158,:183,:209), echoing backend/exception strings untranslated on a security page. (The raw-error-to-user pattern is already filed for other surfaces — errorboundary-raw-message-prod, emergency-dir-raw-err-message, loginpage-raw-error-message — but is net-new for the 2FA page; no prior ppt-web-ui signal or backlog row touches features/auth 2FA.)",
+        "Fix (frontend-only, cloud-landable): on QR failure set an error state that renders a translated 'QR unavailable — use the manual key below' notice (and log via the app error channel) instead of an empty catch; map known MFA error statuses to translated t('auth.twoFactor.*') copy instead of String(err). Add a Vitest case asserting the fallback notice renders when QRCode.toCanvas rejects. Low severity, silent-failure + i18n on a security surface."
+      ]
+    }
+  ]
+}
