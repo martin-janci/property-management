@@ -16033,6 +16033,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-3052",
+      "branch": "auto-impl/gh-issue-3052-8a46d2d0",
+      "status": "merged",
+      "claimed_at": "2026-10-09T08:33:23Z",
+      "last_updated": "2026-10-09T16:33:50Z",
+      "status_changed_at": "2026-10-09T16:33:50Z",
+      "pr_number": 3056,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3056",
+      "merged_at": "2026-10-09T14:27:21Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3056 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=mapped /sell area->sizeSqm + required postalCode (reality-web, also fixes realtor new/edit 422); IG3 split 13/13; VERIFY OK 298 tests; Closes #3052",
+      "reviewer_summary": "verdict=approve head_oid=52cc5a14bc4647d0bf212dbf2cc4e0798c894a76 note=contract-verified-area->sizeSqm+required-postalCode-correct;all-CI-green;approve-posted-as-COMMENT(bot-is-PR-author,cannot-formal-APPROVE)",
+      "last_reviewed_oid": "52cc5a14bc4647d0bf212dbf2cc4e0798c894a76",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -18879,5 +18901,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-09T06:37:57Z"
+  "archived_at": "2026-10-09T16:34:18Z"
 }
