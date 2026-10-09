@@ -239,7 +239,7 @@ function mapViolationStatus(status: ApiViolationStatus): UiViolationStatus {
 }
 
 /** Transform an API lease summary → UI `LeaseSummary`. */
-function mapLeaseSummaryToUi(s: ApiLeaseSummary): UiLeaseSummary {
+export function mapLeaseSummaryToUi(s: ApiLeaseSummary): UiLeaseSummary {
   return {
     id: s.id,
     unitId: s.unit_id,
@@ -293,7 +293,7 @@ function mapTemplateToUi(t: ApiLeaseTemplate): UiLeaseTemplate {
 }
 
 /** Transform an API statistics payload → UI `LeaseStatistics`. */
-function mapStatisticsToUi(s: ApiLeaseStatistics): UiLeaseStatistics {
+export function mapStatisticsToUi(s: ApiLeaseStatistics): UiLeaseStatistics {
   return {
     totalLeases: s.total_leases,
     activeLeases: s.active_leases,
@@ -338,7 +338,7 @@ function mapAmendmentToUi(a: ApiLeaseAmendment): UiLeaseAmendment {
 }
 
 /** Transform an API lease payment → UI `LeasePayment`. */
-function mapPaymentToUi(p: ApiLeasePayment): UiLeasePayment {
+export function mapPaymentToUi(p: ApiLeasePayment): UiLeasePayment {
   return {
     id: p.id,
     leaseId: p.lease_id,
@@ -367,7 +367,7 @@ function mapReminderToUi(r: ApiLeaseReminder): UiLeaseReminder {
 }
 
 /** Transform the core API lease entity → UI `Lease`. */
-function mapLeaseToUi(l: ApiLease): UiLease {
+export function mapLeaseToUi(l: ApiLease): UiLease {
   return {
     id: l.id,
     organizationId: l.organization_id,
