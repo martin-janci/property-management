@@ -1,0 +1,37 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-04",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer below floor; no churn input, oldest-unreviewed segment)",
+  "experts_used": [
+    "frontend"
+  ],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-usews-handler-sub-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:84-95 — the single-event useWebSocket(eventType, handler) subscribe effect guards with `if (!eventType || !handlerRef.current) return;` but its dependency array is `[eventType, subscribe]` (handler intentionally kept out via handlerRef). If `handler` is undefined on the first render (a conditionally-supplied handler) while `eventType` is already set, the effect runs, hits the early return, and never re-runs when the handler later becomes defined — so no subscription is ever created and events are silently dropped. The sibling useWebSocketSubscriptions avoids this by keying its effect on a memoized `eventTypesKey`; the single-event hook has no equivalent re-subscribe trigger."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-no-user-rehydrate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:424-438 — refreshTokenInternal persists the rotated tokens then only re-hydrates the session (setUser) inside `if (storedUser)`. If the refresh succeeds while tokenStorage.getUser() returns null (user record evicted/cleared but the refresh token survived — e.g. partial storage loss), it returns a valid access token yet never calls setUser, so `user` stays null and isAuthenticated stays false despite a freshly-valid session. On cold-boot init (line 481) this leaves the app anonymous with working tokens until a full re-login, rather than recovering the session."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
