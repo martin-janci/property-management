@@ -33,6 +33,7 @@ import type {
   ViolationStatus as ApiViolationStatus,
   ViolationSummary as ApiViolationSummary,
   CreateViolationRequest,
+  SharedSupportedCurrency,
 } from '@ppt/api-client';
 import {
   useApplication,
@@ -109,7 +110,49 @@ const ViolationDetailPage = lazy(() =>
   import('../../features/leases').then((m) => ({ default: m.ViolationDetailPage }))
 );
 
-const DEFAULT_CURRENCY = 'EUR';
+/**
+ * Supported ISO 4217 codes the UI can label amounts with (mirrors
+ * `SharedSupportedCurrency` from the generated API client).
+ */
+const SUPPORTED_CURRENCIES: ReadonlySet<SharedSupportedCurrency> = new Set([
+  'EUR',
+  'CZK',
+  'CHF',
+  'GBP',
+  'PLN',
+  'USD',
+  'HUF',
+  'RON',
+  'BGN',
+  'HRK',
+  'SEK',
+  'DKK',
+  'NOK',
+]);
+
+const FALLBACK_CURRENCY: SharedSupportedCurrency = 'EUR';
+
+/**
+ * Resolve the currency used to label lease monetary values.
+ *
+ * The backend lease wire shapes (`Lease`, `LeaseSummary`, `LeasePayment`,
+ * `LeaseStatistics`, ...) carry no currency field, so the UI cannot derive a
+ * per-lease currency from the payload. Until the API models currency per
+ * entity, a single deployment-level default is used: `VITE_DEFAULT_CURRENCY`
+ * (an ISO 4217 code) when set to a supported value, otherwise EUR. This lets
+ * PLN/HUF/CZK market deployments label amounts correctly instead of baking in
+ * EUR for every market.
+ */
+export function resolveDefaultCurrency(): SharedSupportedCurrency {
+  const configured = import.meta.env.VITE_DEFAULT_CURRENCY;
+  if (typeof configured === 'string') {
+    const code = configured.trim().toUpperCase();
+    if ((SUPPORTED_CURRENCIES as ReadonlySet<string>).has(code)) {
+      return code as SharedSupportedCurrency;
+    }
+  }
+  return FALLBACK_CURRENCY;
+}
 
 // ============================================================================
 // API → UI mappers (snake_case wire shapes, Decimal-as-string → camelCase)
@@ -252,7 +295,7 @@ export function mapLeaseSummaryToUi(s: ApiLeaseSummary): UiLeaseSummary {
     startDate: s.start_date,
     endDate: s.end_date,
     rentAmount: Number(s.monthly_rent),
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
     daysUntilExpiry: s.days_until_expiry,
   };
 }
@@ -303,7 +346,7 @@ export function mapStatisticsToUi(s: ApiLeaseStatistics): UiLeaseStatistics {
     occupancyRate: s.occupancy_rate,
     totalMonthlyRent: Number(s.total_monthly_rent),
     overduePayments: 0,
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
   };
 }
 
@@ -344,7 +387,7 @@ export function mapPaymentToUi(p: ApiLeasePayment): UiLeasePayment {
     leaseId: p.lease_id,
     dueDate: p.due_date,
     amount: Number(p.amount),
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
     status: mapPaymentStatus(p),
     paidAmount: p.paid_amount != null ? Number(p.paid_amount) : undefined,
     paidAt: p.paid_at ?? undefined,
@@ -378,7 +421,7 @@ export function mapLeaseToUi(l: ApiLease): UiLease {
     startDate: l.start_date,
     endDate: l.end_date,
     rentAmount: Number(l.monthly_rent),
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
     depositAmount: Number(l.security_deposit),
     paymentDayOfMonth: l.rent_due_day,
     notes: l.notes ?? undefined,
@@ -518,7 +561,7 @@ function LeasesDashboardPageRoute() {
         occupancyRate: 0,
         totalMonthlyRent: 0,
         overduePayments: 0,
-        currency: DEFAULT_CURRENCY,
+        currency: resolveDefaultCurrency(),
       };
   const expirationOverview: UiExpirationOverview = expiringQuery.data
     ? mapExpirationToUi(expiringQuery.data)

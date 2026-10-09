@@ -25,6 +25,7 @@ import {
   mapLeaseToUi,
   mapPaymentToUi,
   mapStatisticsToUi,
+  resolveDefaultCurrency,
 } from './leases';
 
 const apiSummary: ApiLeaseSummary = {
@@ -90,6 +91,25 @@ const apiLease: ApiLease = {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+});
+
+describe('resolveDefaultCurrency', () => {
+  it('falls back to EUR when VITE_DEFAULT_CURRENCY is unset', () => {
+    vi.stubEnv('VITE_DEFAULT_CURRENCY', '');
+    expect(resolveDefaultCurrency()).toBe('EUR');
+  });
+
+  it('honours a supported ISO 4217 code (case-insensitive, trimmed)', () => {
+    vi.stubEnv('VITE_DEFAULT_CURRENCY', 'pln');
+    expect(resolveDefaultCurrency()).toBe('PLN');
+    vi.stubEnv('VITE_DEFAULT_CURRENCY', ' HUF ');
+    expect(resolveDefaultCurrency()).toBe('HUF');
+  });
+
+  it('ignores an unsupported code and falls back to EUR', () => {
+    vi.stubEnv('VITE_DEFAULT_CURRENCY', 'XYZ');
+    expect(resolveDefaultCurrency()).toBe('EUR');
+  });
 });
 
 describe('lease mappers honour the configured default currency', () => {
