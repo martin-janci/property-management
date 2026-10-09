@@ -86,7 +86,13 @@ export interface ListingDraft {
   street?: string;
   postalCode?: string;
   country?: string;
-  area?: number;
+  /**
+   * Living/usable area in m². Serializes to the server's `sizeSqm` field
+   * (`CreatePortalListingRequest.size_sqm`); sending the old `area` key made
+   * the server ignore the measure and, combined with a missing `postalCode`,
+   * 422'd the create (#3052).
+   */
+  sizeSqm?: number;
   rooms?: number;
   floor?: number;
   /**
