@@ -481,7 +481,39 @@
         "reviews": "Hodnotenia",
         "settings": "Nastavenia"
       },
-      "title": "Môj profil"
+      "title": "Môj profil",
+      "stats": {
+        "activeListings": "Aktívne inzeráty",
+        "totalListings": "Všetky inzeráty",
+        "reviews": "Hodnotenia",
+        "avgRating": "Priem. hodnotenie"
+      },
+      "status": {
+        "active": "Aktívny",
+        "sold": "Predaný",
+        "rented": "Prenajatý",
+        "draft": "Koncept",
+        "paused": "Pozastavený",
+        "archived": "Archivovaný"
+      },
+      "listings": {
+        "loading": "Načítavam inzeráty…",
+        "error": "Nepodarilo sa načítať inzeráty.",
+        "emptyTitle": "Zatiaľ nemáte žiadne inzeráty",
+        "emptyBody": "Keď pridáte inzerát, zobrazí sa tu.",
+        "rooms": "{count} izby"
+      },
+      "activity": {
+        "emptyTitle": "Aktivita zatiaľ nie je k dispozícii",
+        "emptyBody": "Prehľad vašej aktivity bude dostupný, keď pripravíme príslušný prehľad."
+      },
+      "reviews": {
+        "emptyTitle": "Zatiaľ žiadne hodnotenia",
+        "emptyBody": "Hodnotenia od klientov sa zobrazia tu, keď ich dostanete."
+      },
+      "settings": {
+        "description": "Nastavenia profilu sú dostupné v sekcii <account>Môj účet</account>."
+      }
     },
     "report": {
       "submit": "Odoslať nahlásenie",
@@ -540,6 +572,8 @@
         "addressPlaceholder": "Ulica a číslo",
         "city": "Mesto / Obec",
         "cityPlaceholder": "Napr. Bratislava",
+        "postalCode": "PSČ",
+        "postalCodePlaceholder": "Napr. 811 01",
         "area": "Plocha (m²)",
         "areaPlaceholder": "Napr. 65",
         "rooms": "Počet izieb",
@@ -598,6 +632,7 @@
         "required": "Povinné",
         "addressRequired": "Adresa je povinná",
         "cityRequired": "Mesto je povinné",
+        "postalCodeRequired": "PSČ je povinné",
         "areaRequired": "Plocha je povinná",
         "areaPositive": "Plocha musí byť väčšia ako 0",
         "roomsRequired": "Počet izieb je povinný",

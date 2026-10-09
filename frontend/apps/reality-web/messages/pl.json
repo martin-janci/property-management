@@ -485,7 +485,39 @@
         "reviews": "Opinie",
         "settings": "Ustawienia"
       },
-      "title": "Mój profil"
+      "title": "Mój profil",
+      "stats": {
+        "activeListings": "Aktywne ogłoszenia",
+        "totalListings": "Wszystkie ogłoszenia",
+        "reviews": "Opinie",
+        "avgRating": "Śr. ocena"
+      },
+      "status": {
+        "active": "Aktywne",
+        "sold": "Sprzedane",
+        "rented": "Wynajęte",
+        "draft": "Szkic",
+        "paused": "Wstrzymane",
+        "archived": "Zarchiwizowane"
+      },
+      "listings": {
+        "loading": "Ładowanie ogłoszeń…",
+        "error": "Nie udało się załadować ogłoszeń.",
+        "emptyTitle": "Nie masz jeszcze żadnych ogłoszeń",
+        "emptyBody": "Gdy dodasz ogłoszenie, pojawi się tutaj.",
+        "rooms": "{count} pokoje"
+      },
+      "activity": {
+        "emptyTitle": "Aktywność nie jest jeszcze dostępna",
+        "emptyBody": "Przegląd Twojej aktywności będzie dostępny, gdy przygotujemy odpowiedni widok."
+      },
+      "reviews": {
+        "emptyTitle": "Brak opinii",
+        "emptyBody": "Opinie od klientów pojawią się tutaj, gdy je otrzymasz."
+      },
+      "settings": {
+        "description": "Ustawienia profilu znajdziesz w sekcji <account>Moje konto</account>."
+      }
     },
     "report": {
       "submit": "Wyślij zgłoszenie",
@@ -543,6 +575,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -601,6 +635,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",

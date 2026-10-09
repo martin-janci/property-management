@@ -1,11 +1,18 @@
 /**
  * SyncSchedule Component Tests
  *
- * Regression coverage for the silent save failure: handleSave used to await
- * updateMutation.mutateAsync without a catch, so a failed "Save Changes"
- * produced an unhandled rejection — no user feedback and the form stayed
- * open (setIsEditing(false) never reached) with no explanation. The fix
- * wraps the mutation in try/catch and surfaces updateMutation.isError inline.
+ * Regression coverage for the save-error banner behaviour.
+ *
+ * Original bug (PR #2967): handleSave awaited updateMutation.mutateAsync
+ * without a catch, so a failed "Save Changes" produced an unhandled rejection
+ * — no user feedback and the form stayed open with no explanation.
+ *
+ * Follow-up bug (issue #3029): the fix surfaced the banner via the persistent
+ * React Query flag updateMutation.isError, which stays true until the next
+ * mutate/reset. Cancel → re-open Edit therefore re-rendered the stale banner
+ * before the user had attempted anything. The banner is now driven by local
+ * saveError state that is cleared whenever an edit session starts, so a prior
+ * failure never bleeds into a fresh one.
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -43,19 +50,24 @@ describe('SyncSchedule — save error handling', () => {
     mockSchedule();
   });
 
-  it('surfaces an inline error when the update mutation reports failure', () => {
+  it('surfaces an inline error only after a save fails (not on edit open)', async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('Network error'));
     mockUseUpdateSyncSchedule.mockReturnValue({
-      mutateAsync: vi.fn().mockRejectedValue(new Error('Network error')),
+      mutateAsync,
       isPending: false,
-      isError: true,
+      isError: false,
     } as unknown as ReturnType<typeof useUpdateSyncSchedule>);
 
     render(<SyncSchedule {...baseProps} />);
     fireEvent.click(screen.getByRole('button', { name: /editSchedule/i }));
 
+    // No banner before the user attempts to save.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /saveChanges/i }));
+
     // Mocked useTranslations returns the key verbatim.
-    const alert = screen.getByRole('alert');
-    expect(alert).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('saveError');
   });
 
@@ -96,6 +108,32 @@ describe('SyncSchedule — save error handling', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /editSchedule/i })).toBeInTheDocument();
     });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('clears the stale error banner when re-entering edit after a failed save (#3029)', async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('Server error'));
+    mockUseUpdateSyncSchedule.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      // Simulate the persistent mutation flag staying true after a rejection —
+      // the old render guard would re-show the banner on re-edit because of it.
+      isError: true,
+    } as unknown as ReturnType<typeof useUpdateSyncSchedule>);
+
+    render(<SyncSchedule {...baseProps} />);
+
+    // Fail a save to raise the banner.
+    fireEvent.click(screen.getByRole('button', { name: /editSchedule/i }));
+    fireEvent.click(screen.getByRole('button', { name: /saveChanges/i }));
+    await screen.findByRole('alert');
+
+    // Cancel out of the failed edit session…
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    // …and re-open a fresh edit session.
+    fireEvent.click(screen.getByRole('button', { name: /editSchedule/i }));
+
+    // The prior failure must not bleed into the new session.
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

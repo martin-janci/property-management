@@ -340,7 +340,19 @@
     "notifications": "Powiadomienia",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Utworzono",
+    "updated": "Zaktualizowano",
+    "saved": "Zapisano",
+    "deleted": "Usunięto",
+    "submitted": "Przesłano",
+    "done": "Gotowe",
+    "createFailed": "Tworzenie nie powiodło się",
+    "updateFailed": "Aktualizacja nie powiodła się",
+    "saveFailed": "Zapisywanie nie powiodło się",
+    "deleteFailed": "Usuwanie nie powiodło się",
+    "submitFailed": "Przesyłanie nie powiodło się",
+    "pleaseTryAgain": "Spróbuj ponownie."
   },
   "nav": {
     "home": "Strona główna",
@@ -644,7 +656,11 @@
         "titleTooLong": "Tytuł może mieć maksymalnie 255 znaków",
         "descriptionRequired": "Opis jest wymagany"
       }
-    }
+    },
+    "reported": "Usterka zgłoszona",
+    "reportFailed": "Nie udało się zgłosić usterki",
+    "updated": "Usterka zaktualizowana",
+    "updateFailed": "Nie udało się zaktualizować usterki"
   },
   "buildings": {
     "title": "Budynki",
@@ -1871,7 +1887,13 @@
         "state": "Stan",
         "actions": "Akcje"
       }
-    }
+    },
+    "sensorDeleted": "Czujnik usunięty",
+    "sensorDeleteFailed": "Nie udało się usunąć czujnika",
+    "sensorRegistered": "Czujnik zarejestrowany",
+    "sensorRegisterFailed": "Nie udało się zarejestrować czujnika",
+    "sensorUpdated": "Czujnik zaktualizowany",
+    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika"
   },
   "commandPalette": {
     "commands": {
@@ -2542,5 +2564,36 @@
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
     }
+  },
+  "community": {
+    "groupCreated": "Grupa utworzona",
+    "groupJoined": "Dołączono do grupy.",
+    "joinFailed": "Nie udało się dołączyć do grupy",
+    "groupLeft": "Opuszczono grupę.",
+    "leaveFailed": "Nie udało się opuścić grupy"
+  },
+  "leases": {
+    "created": "Umowa najmu utworzona",
+    "createFailed": "Nie udało się utworzyć umowy najmu",
+    "violationRecorded": "Naruszenie zarejestrowane",
+    "violationCreateFailed": "Nie udało się zarejestrować naruszenia"
+  },
+  "meters": {
+    "readingSubmitted": "Odczyt przesłany",
+    "submitFailed": "Nie udało się przesłać odczytu",
+    "correctionSubmitted": "Korekta odczytu przesłana",
+    "updateFailed": "Nie udało się zaktualizować odczytu",
+    "readingValidated": "Odczyt zweryfikowany",
+    "validationFailedTitle": "Weryfikacja nie powiodła się",
+    "validationFailed": "Nie udało się zweryfikować odczytu"
+  },
+  "personMonths": {
+    "unitsUpdated": "Zaktualizowano jednostki: {{count}}",
+    "bulkFailedTitle": "Wprowadzanie zbiorcze nie powiodło się",
+    "bulkFailed": "Nie udało się zapisać osobomiesięcy",
+    "entryRemoved": "Wpis usunięty",
+    "deleteFailed": "Nie udało się usunąć wpisu",
+    "saved": "Osobomiesiąc zapisany",
+    "saveFailed": "Nie udało się zapisać osobomiesiąca"
   }
 }

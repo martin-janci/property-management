@@ -1,9 +1,81 @@
 {
-  "generated": "2026-10-07T08:32:59Z",
+  "generated": "2026-10-09T12:41:05Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-09T12:41:05Z",
+      "prs_scanned": 8,
+      "clean": [
+        3051,
+        3050,
+        3048,
+        3047,
+        3045,
+        3046,
+        3043
+      ],
+      "with_issues": [
+        {
+          "pr": 3044,
+          "issue": 3057,
+          "findings": 3,
+          "specialist": "frontend",
+          "note": "gh-issue-3039 fixed /sell Publish 405 by POSTing to /api/v1/my/listings (correct, tested). But Publish still fails end-to-end: required `postalCode` is never collected by the wizard -> now 422 instead of 405 (HIGH); `area` is sent but server reads `sizeSqm` so floor area silently dropped (MED); create route still unregistered in @ppt/sitemap so endpoints:[] on sell screen-map (LOW). PR author flagged (a)/(b) as out-of-scope follow-ups in sell.md. Fetch-level regression test pins URL/method only, not the server contract, so it stays green while prod Publish is broken."
+        }
+      ],
+      "skipped_already_reviewed": [
+        3032,
+        3034,
+        3031,
+        3033,
+        3026,
+        3025,
+        3020
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review. repo=martin-janci/property-management, window=14d (merged>=2026-09-25), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL blocked from Claude Code sessions; direct git transfer + gh api writes proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only; deferred commit to orchestrator Phase 6 (no git add/commit/push; did NOT touch assignments.json/action-list.json/backlog.json/archives; review-only). Enumeration via search_pull_requests(is:merged base:dev merged:>=2026-09-25, sort=updated desc, perPage=15); total_count=52 in window, capped at 15 most-recent. 7 already carried post-merge-reviewed (3032/3034/3031/3033/3026/3025/3020) -> skipped. 8 net-new reviewed inline (<=5 cap honoured; no subagent fan-out tool available to this agent). 7 CLEAN: #3051 (lease currency from VITE_DEFAULT_CURRENCY config, tests), #3050 (rentals 4 mutations surface non-auth errors via toast, tests + en.json keys), #3048 (community group join/leave error+success toasts, full 6-locale i18n + tests), #3047 (reality-web /profile routed through next-intl across 6 locales + tests; minor: new `rooms` key lacks ICU plural for sk/cs/pl/hu -> low, not filed), #3045 (reuse errors.groupNotFound/common.back in group-detail not-found + source-guard test), #3046 (register reports_submit in @ppt/sitemap + surface report id on /report success, tests; /report MSG copy stays hardcoded Slovak per acknowledged pre-existing pattern), #3043 (reset SyncSchedule save-error banner on re-edit via local saveError state + reopen-after-failure test; closes #3029). 1 WITH ISSUE: #3044 -> #3057 (frontend)."
+    },
+    {
+      "run_at": "2026-10-08T10:30:55Z",
+      "prs_scanned": 8,
+      "clean": [
+        3036,
+        3020,
+        3025,
+        3026
+      ],
+      "with_issues": [
+        {
+          "pr": 3031,
+          "issue": 3039,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "/sell createListing POSTs /api/v1/listings (GET-only) -> 405; real route /api/v1/my/listings"
+        },
+        {
+          "pr": 3034,
+          "issue": 3040,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "group-detail not-found uses untranslated community.groups.* keys; reuse errors.groupNotFound"
+        },
+        {
+          "pr": 3033,
+          "issue": 3041,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "reality-web /profile hardcoded Slovak copy in next-intl app"
+        },
+        {
+          "pr": 3032,
+          "issue": 3042,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "register POST /api/v1/reports in @ppt/sitemap + surface report id"
+        }
+      ]
+    },
     {
       "run_at": "2026-10-07T08:32:59Z",
       "prs_scanned": 4,
@@ -256,52 +328,6 @@
         2955,
         2956
       ]
-    },
-    {
-      "run_at": "2026-09-08T14:30:38Z",
-      "prs_scanned": 2,
-      "clean": [],
-      "with_issues": [
-        {
-          "pr": 2950,
-          "issue": 2953,
-          "findings": 1,
-          "specialist": "react-native",
-          "note": "gh-issue-2947 fix purges @ppt/access_log, @ppt/qr_scan_history, @ppt/feedback_drafts, @ppt/pending_feedback, @ppt/faq_votes via new TENANT_SCOPED_EXACT_KEYS registry in resetLocalData() -- correct and well-tested for what it covers. 1 finding, security(high): auditing the same NFCCredentialManager.ts this PR references turned up two still-uncovered, MORE sensitive keys neither resetLocalData() nor AuthContext.login()/logout() touch: (1) LEGACY_CREDENTIALS_KEY='@ppt/nfc_credentials' (raw unencrypted legacy credential blob in AsyncStorage, not in TENANT_SCOPED_EXACT_KEYS) -- if migration hasn't run yet this session, the prior tenant's blob survives resetLocalData() and the next tenant's loadStoredCredentials() silently adopts it as its own; (2) CREDENTIALS_KEY='ppt_nfc_credentials'+chunk slots in expo-secure-store (written by storeCredentials()) are never cleared on session change at all -- resetLocalData() only touches AsyncStorage. Between logout and the next tenant's first fetchCredentials(), the prior tenant's actual NFC building-access credential material (not just the log) remains loadable -- same shared-device leak class this PR fixed for the log, but for the credential itself. Proposed: expose NFCCredentialManager.clearAllLocalCredentials() (wrapping the existing private clearStoredCredentials() + AsyncStorage.removeItem(LEGACY_CREDENTIALS_KEY)) and call it from resetLocalData() or alongside it in AuthContext login/logout; add a regression test mirroring resetLocalData.test.ts's new it.each block. Filed #2953."
-        },
-        {
-          "pr": 2952,
-          "issue": 2954,
-          "findings": 2,
-          "specialist": "react-web",
-          "note": "gh-issue-2948 generalizes queryKeys.test.ts to auto-discover feature-local *Keys factories via import.meta.glob('../features/**/hooks/*.{ts,tsx}',{eager:true}) instead of a hand-maintained import list -- correct fix for the 'reviewer must remember' gap, incidentally also now covers messagingKeys which the old hardcoded list missed. 2 low findings: (1) test-gaps -- rootOf(name,factory)'s shape assertions run inside the it.each-table-building .map(), i.e. at describe-evaluation time not inside an it() callback, so a malformed factory would throw during suite collection and abort the WHOLE file's tests instead of failing just its own named row; proposed moving the assertion inside the it.each callback. (2) correctness -- the glob '../features/**/hooks/*.{ts,tsx}' only matches files directly under a hooks/ dir (trailing single '*', not '**'), so a factory in a nested features/<x>/hooks/queries/<y>.ts would silently escape discovery again -- no such nested layout exists today (latent, not live) but is exactly the failure mode this PR closes; proposed widening to 'hooks/**/*.{ts,tsx}'. Filed #2954."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher post-merge review. Window=14d (merged>=2026-08-25), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable (proxy-403) -> GitHub MCP (mcp__github__*) for all GH I/O; full-diff static review only. Label-based enumeration (search_pull_requests: is:merged base:dev merged:>=2026-08-25 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 2 net-new never-reviewed PRs (total_count=2) out of 89 total merges in-window; every other in-window merge already carries post-merge-reviewed. Both are follow-up test/fix PRs from the prior run's chain (#2943 -> #2948 -> #2952; #2947 -> #2950). 2 < 5-parallel-cap, reviewed inline (no subagent fan-out). 2 ISSUES opened: #2953 on #2950 (security, high -- NFC credential material itself not purged on session change even though the PR fixed the access-log sibling) and #2954 on #2952 (test-coverage/correctness, both low -- assertion-timing suite-crash risk + glob-depth gap in the new auto-discovery mechanism). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6.",
-      "focus_prs": [
-        2950,
-        2952
-      ]
-    },
-    {
-      "run_at": "2026-09-07T12:33:00Z",
-      "prs_scanned": 3,
-      "clean": [
-        2941,
-        2942
-      ],
-      "with_issues": [
-        {
-          "pr": 2943,
-          "issue": 2948,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "Test-only PR adding queryKeys.test.ts to enforce AUTHED_QUERY_KEY_ROOTS logout-purge coverage. Correct + good IG3 guard (removing 'notification-triggers' fails). 1 finding, test-coverage(low): only the central queryKeys factory is AUTO-derived via Object.entries; feature-local (aiChatKeys/notificationAnalyticsKeys/predictiveKeys/sentimentKeys) and consumed api-client (meterKeys/messagingKeys/notificationTriggerKeys/reportKeys) factories are HARDCODED lists in the test -> a new standalone *Keys factory (esp. an api-client one, the exact #712/#2650 miss category) still escapes coverage, only partially meeting the task's 'caught automatically' requirement. Proposed: import.meta.glob('../features/**/hooks/*.{ts,tsx}',{eager:true}) to auto-collect feature *Keys; a colocated registry array for the api-client subset (or derive AUTHED_QUERY_KEY_ROOTS from it) so allowlist+test can't disagree; plus a rootOf .all-is-tuple guard for clearer failures. Filed #2948."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-08-24), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. gh CLI unavailable -> GitHub MCP (mcp__github__*) for all GH I/O; full-diff static review (cloud build-blocked for api-server/mobile-native only; these 3 are ppt-web frontend). Label-based enumeration (search_pull_requests is:merged base:dev merged:>=2026-08-24 -label:post-merge-reviewed -label:no-review-needed) surfaced EXACTLY 3 net-new never-reviewed PRs (total_count=3); every other in-window merge already carries post-merge-reviewed. All 3 are the ppt-web-core auth/session code-review PRs merged 2026-09-06 by the dispatcher: #2941 validate JWT exp at cold boot, #2942 single-flight refresh + 401 replay, #2943 logout-purge allowlist coverage test. 3 < 5-parallel-cap, reviewed inline (no subagent fan-out). 2 CLEAN: #2941 (isAccessTokenExpired reuses decodeJwtPayload, 30s skew buffer, expired->silent-refresh via shared refreshTokenInternal preserving #574 role re-derivation, expired+no-refresh purges stale tokens, opaque tokens trusted as legacy-backstop; 5 new tests incl regression case) and #2942 (interceptor awaits single-flight onUnauthorized returning rotated token then replays original request once guarded by __authRetried, concurrent 401s share one refresh via AuthContext isRefreshing/refreshPromise, explicit header set covers raw getApiClient consumers, replay-all-methods justified since 401 rejected pre-apply; 4 new tests w/ IG3 regression evidence: 3/4 fail on reverted prod files). 1 ISSUE opened: #2948 on #2943 (test-coverage low)."
     }
   ]
 }

@@ -481,7 +481,39 @@
         "reviews": "Hodnocení",
         "settings": "Nastavení"
       },
-      "title": "Můj profil"
+      "title": "Můj profil",
+      "stats": {
+        "activeListings": "Aktivní inzeráty",
+        "totalListings": "Všechny inzeráty",
+        "reviews": "Hodnocení",
+        "avgRating": "Prům. hodnocení"
+      },
+      "status": {
+        "active": "Aktivní",
+        "sold": "Prodáno",
+        "rented": "Pronajato",
+        "draft": "Koncept",
+        "paused": "Pozastaveno",
+        "archived": "Archivováno"
+      },
+      "listings": {
+        "loading": "Načítám inzeráty…",
+        "error": "Nepodařilo se načíst inzeráty.",
+        "emptyTitle": "Zatím nemáte žádné inzeráty",
+        "emptyBody": "Jakmile přidáte inzerát, zobrazí se tady.",
+        "rooms": "{count} pokoje"
+      },
+      "activity": {
+        "emptyTitle": "Aktivita zatím není k dispozici",
+        "emptyBody": "Přehled vaší aktivity bude dostupný, jakmile připravíme příslušný přehled."
+      },
+      "reviews": {
+        "emptyTitle": "Zatím žádná hodnocení",
+        "emptyBody": "Hodnocení od klientů se zobrazí zde, jakmile je obdržíte."
+      },
+      "settings": {
+        "description": "Nastavení profilu najdete v sekci <account>Můj účet</account>."
+      }
     },
     "report": {
       "submit": "Odeslat nahlášení",
@@ -540,6 +572,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -598,6 +632,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",

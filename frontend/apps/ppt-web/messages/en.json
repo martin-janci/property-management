@@ -354,7 +354,19 @@
     "unknownError": "An error occurred. Please try again.",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Created",
+    "updated": "Updated",
+    "saved": "Saved",
+    "deleted": "Deleted",
+    "submitted": "Submitted",
+    "done": "Done",
+    "createFailed": "Create failed",
+    "updateFailed": "Update failed",
+    "saveFailed": "Save failed",
+    "deleteFailed": "Delete failed",
+    "submitFailed": "Submit failed",
+    "pleaseTryAgain": "Please try again."
   },
   "nav": {
     "home": "Home",
@@ -705,7 +717,11 @@
       "security": "Security",
       "cleaning": "Cleaning",
       "other": "Other"
-    }
+    },
+    "reported": "Fault reported",
+    "reportFailed": "Failed to report fault",
+    "updated": "Fault updated",
+    "updateFailed": "Failed to update fault"
   },
   "buildings": {
     "title": "Buildings",
@@ -1866,7 +1882,14 @@
       "processing": "Processing image with OCR...",
       "processingFailed": "OCR processing failed. Please enter the value manually.",
       "uploadForOcr": "Upload photo for automatic reading"
-    }
+    },
+    "readingSubmitted": "Reading submitted",
+    "submitFailed": "Could not submit reading",
+    "correctionSubmitted": "Reading correction submitted",
+    "updateFailed": "Could not update reading",
+    "readingValidated": "Reading validated",
+    "validationFailedTitle": "Validation failed",
+    "validationFailed": "Could not validate reading"
   },
   "personMonths": {
     "title": "Person Months",
@@ -1957,7 +1980,14 @@
       "failedToSave": "Failed to save person-month data",
       "failedToDelete": "Failed to delete person-month data",
       "failedToExport": "Failed to export data"
-    }
+    },
+    "unitsUpdated": "{{count}} unit(s) updated",
+    "bulkFailedTitle": "Bulk entry failed",
+    "bulkFailed": "Could not save person-months",
+    "entryRemoved": "Entry removed",
+    "deleteFailed": "Could not delete entry",
+    "saved": "Person-month saved",
+    "saveFailed": "Could not save person-month"
   },
   "insurance": {
     "title": "Insurance",
@@ -2486,7 +2516,9 @@
       "created": "Booking created",
       "updated": "Last updated",
       "pendingRegistrations": "{{count}} guest(s) pending registration",
-      "pendingRegistrationsDesc": "These guests need to be registered with authorities before check-in."
+      "pendingRegistrationsDesc": "These guests need to be registered with authorities before check-in.",
+      "checkInFailed": "Failed to check in",
+      "checkOutFailed": "Failed to check out"
     },
     "status": {
       "pending": "Pending",
@@ -2585,7 +2617,9 @@
       "addConnectionDesc": "Select a rental unit and platform to create a new connection.",
       "selectUnit": "Select Rental Unit",
       "selectPlatform": "Select Platform",
-      "create": "Create Connection"
+      "create": "Create Connection",
+      "createFailed": "Failed to create connection",
+      "syncFailed": "Failed to sync platform"
     },
     "guest": {
       "personalInfo": "Personal Information",
@@ -3207,7 +3241,11 @@
         "expired": "Expired",
         "cancelled": "Cancelled"
       }
-    }
+    },
+    "created": "Lease created",
+    "createFailed": "Could not create lease",
+    "violationRecorded": "Violation recorded",
+    "violationCreateFailed": "Could not record violation"
   },
   "help": {
     "title": "Help Center",
@@ -4131,7 +4169,13 @@
         "state": "State",
         "actions": "Actions"
       }
-    }
+    },
+    "sensorDeleted": "Sensor deleted",
+    "sensorDeleteFailed": "Failed to delete sensor",
+    "sensorRegistered": "Sensor registered",
+    "sensorRegisterFailed": "Failed to register sensor",
+    "sensorUpdated": "Sensor updated",
+    "sensorUpdateFailed": "Failed to update sensor"
   },
   "commandPalette": {
     "commands": {
@@ -4853,5 +4897,12 @@
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
     }
+  },
+  "community": {
+    "groupCreated": "Group created",
+    "groupJoined": "You joined the group.",
+    "joinFailed": "Could not join the group",
+    "groupLeft": "You left the group.",
+    "leaveFailed": "Could not leave the group"
   }
 }

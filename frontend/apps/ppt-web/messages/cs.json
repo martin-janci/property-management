@@ -340,7 +340,19 @@
     "notifications": "Oznámení",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Vytvořeno",
+    "updated": "Aktualizováno",
+    "saved": "Uloženo",
+    "deleted": "Odstraněno",
+    "submitted": "Odesláno",
+    "done": "Hotovo",
+    "createFailed": "Vytvoření selhalo",
+    "updateFailed": "Aktualizace selhala",
+    "saveFailed": "Uložení selhalo",
+    "deleteFailed": "Odstranění selhalo",
+    "submitFailed": "Odeslání selhalo",
+    "pleaseTryAgain": "Zkuste to znovu."
   },
   "nav": {
     "home": "Domů",
@@ -643,7 +655,11 @@
         "titleTooLong": "Název musí mít maximálně 255 znaků",
         "descriptionRequired": "Popis je povinný"
       }
-    }
+    },
+    "reported": "Závada nahlášena",
+    "reportFailed": "Nepodařilo se nahlásit závadu",
+    "updated": "Závada aktualizována",
+    "updateFailed": "Nepodařilo se aktualizovat závadu"
   },
   "buildings": {
     "title": "Budovy",
@@ -1561,7 +1577,11 @@
         "expired": "Vypršelo",
         "cancelled": "Zrušeno"
       }
-    }
+    },
+    "created": "Nájemní smlouva vytvořena",
+    "createFailed": "Nepodařilo se vytvořit nájemní smlouvu",
+    "violationRecorded": "Porušení zaznamenáno",
+    "violationCreateFailed": "Nepodařilo se zaznamenat porušení"
   },
   "settings": {
     "notifications": {
@@ -1943,7 +1963,13 @@
         "state": "Stav",
         "actions": "Akce"
       }
-    }
+    },
+    "sensorDeleted": "Senzor odstraněn",
+    "sensorDeleteFailed": "Nepodařilo se odstranit senzor",
+    "sensorRegistered": "Senzor zaregistrován",
+    "sensorRegisterFailed": "Nepodařilo se zaregistrovat senzor",
+    "sensorUpdated": "Senzor aktualizován",
+    "sensorUpdateFailed": "Nepodařilo se aktualizovat senzor"
   },
   "commandPalette": {
     "commands": {
@@ -2670,5 +2696,30 @@
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
     }
+  },
+  "community": {
+    "groupCreated": "Skupina vytvořena",
+    "groupJoined": "Připojili jste se do skupiny.",
+    "joinFailed": "Nepodařilo se připojit do skupiny",
+    "groupLeft": "Opustili jste skupinu.",
+    "leaveFailed": "Nepodařilo se opustit skupinu"
+  },
+  "meters": {
+    "readingSubmitted": "Odečet odeslán",
+    "submitFailed": "Nepodařilo se odeslat odečet",
+    "correctionSubmitted": "Oprava odečtu odeslána",
+    "updateFailed": "Nepodařilo se aktualizovat odečet",
+    "readingValidated": "Odečet ověřen",
+    "validationFailedTitle": "Ověření selhalo",
+    "validationFailed": "Nepodařilo se ověřit odečet"
+  },
+  "personMonths": {
+    "unitsUpdated": "Aktualizované jednotky: {{count}}",
+    "bulkFailedTitle": "Hromadné zadání selhalo",
+    "bulkFailed": "Nepodařilo se uložit osoby-měsíce",
+    "entryRemoved": "Záznam odstraněn",
+    "deleteFailed": "Nepodařilo se odstranit záznam",
+    "saved": "Osoba-měsíc uložen",
+    "saveFailed": "Nepodařilo se uložit osobu-měsíc"
   }
 }

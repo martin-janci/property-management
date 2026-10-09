@@ -485,7 +485,39 @@
         "reviews": "Értékelések",
         "settings": "Beállítások"
       },
-      "title": "Profilom"
+      "title": "Profilom",
+      "stats": {
+        "activeListings": "Aktív hirdetések",
+        "totalListings": "Összes hirdetés",
+        "reviews": "Értékelések",
+        "avgRating": "Átl. értékelés"
+      },
+      "status": {
+        "active": "Aktív",
+        "sold": "Eladva",
+        "rented": "Kiadva",
+        "draft": "Piszkozat",
+        "paused": "Szüneteltetve",
+        "archived": "Archiválva"
+      },
+      "listings": {
+        "loading": "Hirdetések betöltése…",
+        "error": "Nem sikerült betölteni a hirdetéseket.",
+        "emptyTitle": "Még nincsenek hirdetései",
+        "emptyBody": "Amikor hozzáad egy hirdetést, itt jelenik meg.",
+        "rooms": "{count} szoba"
+      },
+      "activity": {
+        "emptyTitle": "A tevékenység még nem érhető el",
+        "emptyBody": "A tevékenységének áttekintése elérhető lesz, amint elkészítjük a megfelelő nézetet."
+      },
+      "reviews": {
+        "emptyTitle": "Még nincsenek értékelések",
+        "emptyBody": "Az ügyfelek értékelései itt jelennek meg, amint megkapja őket."
+      },
+      "settings": {
+        "description": "A profilbeállítások a <account>Fiókom</account> szakaszban érhetők el."
+      }
     },
     "report": {
       "submit": "Bejelentés elküldése",
@@ -543,6 +575,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -601,6 +635,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
