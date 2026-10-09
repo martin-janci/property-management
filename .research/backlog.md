@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-08 04:30 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-09 14:42 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -42,14 +42,20 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | test-gap | ppt-web group-detail i18n (PR #3045) touched 2 routes with no docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/community.tsx (+1)` | PR #3045 | 2026-10-09 | open | — |
+| 2 | test-gap | reality-web /profile (PR #3047) touched route with no docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/profile/page.tsx` | PR #3047 | 2026-10-09 | open | — |
+| 2 | test-gap | ppt-web group-detail toast i18n (PR #3048) touched 2 routes with no docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/community.tsx (+1)` | PR #3048 | 2026-10-09 | open | — |
+| 2 | test-gap | ppt-web rentals mutations (PR #3050) touched route with no docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/rentals.tsx` | PR #3050 | 2026-10-09 | open | — |
+| 2 | test-gap | ppt-web leases currency (PR #3051) touched route with no docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/leases.tsx` | PR #3051 | 2026-10-09 | open | — |
+| 2 | test-gap | reality-web /sell + /account/listings edit (PR #3056) touched 2 routes with no docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (+1)` | PR #3056 | 2026-10-09 | open | — |
 | 2 | test-gap | ppt-web route-group i18n PR #3036 touched 6 routes with no docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/` | PR #3036 | 2026-10-08 | open | — |
 | 2 | test-gap | ppt-web community-group-detail PR #3034 touched 2 routes with no docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/` | PR #3034 | 2026-10-08 | open | — |
 | 2 | test-gap | reality-web /profile PR #3033 touched 3 routes with no docs/screens/reality update | `frontend/apps/reality-web/src/app/` | PR #3033 | 2026-10-08 | open | — |
 | 2 | test-gap | reality-web /report PR #3019 touched 2 routes with no docs/screens/reality update | `frontend/apps/reality-web/src/app/` | PR #3019 | 2026-10-08 | open | — |
 | 2 | test-gap | reality-web /sell PR #3022 touched 3 routes with no docs/screens/reality update | `frontend/apps/reality-web/src/app/` | PR #3022 | 2026-10-08 | open | — |
-| 2 | bug | ppt-web community groups: join/leave mutations have no error handling — 403/409/5xx silent | `frontend/apps/ppt-web/src/routes/groups/community.tsx (+1)` | rotating-expert-review | 2026-10-08 | open | — |
-| 2 | bug | ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review | 2026-10-08 | open | — |
-| 2 | bug | ppt-web rentals: 4 mutations swallow non-auth errors (connection create, platform sync, guest check-in/out) | `frontend/apps/ppt-web/src/routes/groups/rentals.tsx` | rotating-expert-review | 2026-10-08 | open | — |
+| 2 | bug | ppt-web community groups: join/leave mutations have no error handling — 403/409/5xx silent | `frontend/apps/ppt-web/src/routes/groups/community.tsx (+1)` | rotating-expert-review | 2026-10-08 | done | — |
+| 2 | bug | ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review | 2026-10-08 | dropped | — |
+| 2 | bug | ppt-web rentals: 4 mutations swallow non-auth errors (connection create, platform sync, guest check-in/out) | `frontend/apps/ppt-web/src/routes/groups/rentals.tsx` | rotating-expert-review | 2026-10-08 | done | — |
 | 2 | bug | ppt-web /community/groups/:groupId renders hardcoded mock group — every group shows fake "Sample Group" with no-op actions | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review ppt-web-core 2026-10-04 | 2026-10-04 | done | — |
 | 2 | bug | reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) (+1) | 2026-10-03 | done | — |
 | 2 | test-gap | PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (+1)` | PR #3013 | 2026-10-03 | done | — |
@@ -209,8 +215,9 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
-| 1 | refactor | ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | git-log-14d | 2026-10-08 | open | — |
-| 1 | refactor | reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot) | `frontend/apps/reality-web/src/lib/realtor-api.ts` | git-log-14d | 2026-10-08 | open | — |
+| 1 | refactor | ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | git-log-14d | 2026-10-09 | open | — |
+| 1 | refactor | reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot) | `frontend/apps/reality-web/src/lib/realtor-api.ts` | git-log-14d | 2026-10-09 | open | — |
+| 1 | refactor | ppt-web community.group-detail route test — 2 commits in 14d (new hotspot, churning alongside community.tsx) | `frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx` | commits 2026-10-08→2026-10-09 | 2026-10-09 | open | — |
 | 1 | refactor | reality-web components/import/SyncSchedule.tsx recent churn — 2 commits in 14d (new hotspot) | `frontend/apps/reality-web/src/components/import/SyncSchedule.tsx` | git-log-14d | 2026-10-08 | open | — |
 | 1 | bug | ppt-web route-group action toasts use hardcoded English — bypass react-i18next, render English on sk/cs/de locales | `frontend/apps/ppt-web/src/routes/groups/community.tsx (+3)` | rotating-expert-review ppt-web-core 2026-10-04 | 2026-10-04 | done | — |
 | 1 | refactor | reality-web /sell page recent churn — PR #3013 publish-wiring change | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | open | — |

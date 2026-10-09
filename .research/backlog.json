@@ -11708,13 +11708,14 @@
         "git-log-14d"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)"
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)",
+        "2 more commits 2026-10-08→2026-10-09 (PR #3045, #3048) — runs_seen advances 1→2; cumulative re-emit, score unchanged"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/community.tsx"
       ],
       "created_at": "2026-10-08",
-      "updated_at": "2026-10-08",
+      "updated_at": "2026-10-09",
       "plan": null
     },
     {
@@ -11728,13 +11729,14 @@
         "git-log-14d"
       ],
       "evidence": [
-        "frontend/apps/reality-web/src/lib/realtor-api.ts — 2 commits in last 14d (new hotspot)"
+        "frontend/apps/reality-web/src/lib/realtor-api.ts — 2 commits in last 14d (new hotspot)",
+        "2 more commits 2026-10-08→2026-10-09 (PR #3044, #3056) — runs_seen advances 1→2; cumulative re-emit, score unchanged"
       ],
       "files": [
         "frontend/apps/reality-web/src/lib/realtor-api.ts"
       ],
       "created_at": "2026-10-08",
-      "updated_at": "2026-10-08",
+      "updated_at": "2026-10-09",
       "plan": null
     },
     {
@@ -11938,6 +11940,149 @@
         "assignment_status": "merged",
         "pr_number": 3050
       }
+    },
+    {
+      "id": "screen-map-drift-pr-3045-ppt",
+      "title": "ppt-web group-detail i18n (PR #3045) touched 2 routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3045"
+      ],
+      "evidence": [
+        "PR #3045 touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ community.group-detail.route.test.tsx) without updating docs/screens/ppt/*"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3047-reality",
+      "title": "reality-web /profile (PR #3047) touched route with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3047"
+      ],
+      "evidence": [
+        "PR #3047 touched frontend/apps/reality-web/src/app/[locale]/profile/page.tsx (+ test) without updating docs/screens/reality/*"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3048-ppt",
+      "title": "ppt-web group-detail toast i18n (PR #3048) touched 2 routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3048"
+      ],
+      "evidence": [
+        "PR #3048 touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ community.group-detail.route.test.tsx) without updating docs/screens/ppt/*"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3050-ppt",
+      "title": "ppt-web rentals mutations (PR #3050) touched route with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3050"
+      ],
+      "evidence": [
+        "PR #3050 touched frontend/apps/ppt-web/src/routes/groups/rentals.tsx (+ auth-guard test) without updating docs/screens/ppt/*"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3051-ppt",
+      "title": "ppt-web leases currency (PR #3051) touched route with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3051"
+      ],
+      "evidence": [
+        "PR #3051 touched frontend/apps/ppt-web/src/routes/groups/leases.tsx (+ mapper test) without updating docs/screens/ppt/*"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3056-reality",
+      "title": "reality-web /sell + /account/listings edit (PR #3056) touched 2 routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3056"
+      ],
+      "evidence": [
+        "PR #3056 touched reality-web /sell page + /account/listings/[id]/edit + lib/realtor-api.ts + ListingForm without updating docs/screens/reality/*"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx",
+      "title": "ppt-web community.group-detail route test — 2 commits in 14d (new hotspot, churning alongside community.tsx)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commits 2026-10-08→2026-10-09"
+      ],
+      "evidence": [
+        "2 commits in last 14d: PR #3045 (group-detail i18n), PR #3048 (toast i18n)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
     }
   ]
 }

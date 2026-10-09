@@ -1,0 +1,216 @@
+{
+  "generated": "2026-10-09T14:42:05Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3045-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3045",
+      "score_delta": 2,
+      "evidence": "PR #3045 touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ community.group-detail.route.test.tsx) without updating docs/screens/ppt/*",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3047-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3047",
+      "score_delta": 2,
+      "evidence": "PR #3047 touched frontend/apps/reality-web/src/app/[locale]/profile/page.tsx without updating docs/screens/reality/*",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3048-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3048",
+      "score_delta": 2,
+      "evidence": "PR #3048 touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ community.group-detail.route.test.tsx) without updating docs/screens/ppt/*",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3050-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3050",
+      "score_delta": 2,
+      "evidence": "PR #3050 touched frontend/apps/ppt-web/src/routes/groups/rentals.tsx without updating docs/screens/ppt/*",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3051-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3051",
+      "score_delta": 2,
+      "evidence": "PR #3051 touched frontend/apps/ppt-web/src/routes/groups/leases.tsx without updating docs/screens/ppt/*",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3056-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3056",
+      "score_delta": 2,
+      "evidence": "PR #3056 touched reality-web /sell page + /account/listings/[id]/edit + lib/realtor-api.ts + ListingForm without updating docs/screens/reality/*",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "type": "churn-hotspot",
+      "source": "commits 2026-10-08→2026-10-09",
+      "score_delta": 0,
+      "evidence": "re-emit (cumulative): 2 additional commits in window (PR #3045, #3048) — runs_seen advances 1→2",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "type": "churn-hotspot",
+      "source": "commits 2026-10-08→2026-10-09",
+      "score_delta": 0,
+      "evidence": "re-emit (cumulative): 2 additional commits in window (PR #3044, #3056) — runs_seen advances 1→2",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx",
+      "type": "churn-hotspot",
+      "source": "commits 2026-10-08→2026-10-09",
+      "score_delta": 1,
+      "evidence": "ppt-web group-detail route test — 2 commits in last 14d (new hotspot; test file churning alongside community.tsx)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — all signals this run have confidence=medium (drift) or belong to analytical cumulative set (churn-hotspot); none meet confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/<today>.md + head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signal re-emit score_delta==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score max<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq items.status=open and updated_at<=today-14 length",
+      "observed": "0",
+      "expected": "0 (no decay candidates this run)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → trivially pass",
+      "observed": "0 new plans",
+      "expected": "0 new plans or each annotated"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/ grep .md count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached names outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs fresh regen from backlog.json",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed: cursor consistency",
+      "observed": "none failed → cursors advanced on all phases that ran",
+      "expected": "cursor advance only on succeeded phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "0 LOST",
+      "expected": "0 LOST"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged >= archive count HEAD",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs fresh regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions this run",
+      "expected": "<=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + pm_cursor/coverage_cursor sanity",
+      "observed": "artifacts parse; pm_cursor.next_index=6 unchanged (Phase 1.6 skipped → GC7 clause no-op)",
+      "expected": "parse + 0..7 + advance on run"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
