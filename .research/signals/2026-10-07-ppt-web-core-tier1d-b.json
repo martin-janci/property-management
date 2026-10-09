@@ -1,0 +1,48 @@
+{
+  "generated": "2026-10-07T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=16 < floor=36; deterministic refills found nothing). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-core segment. Second Tier-1d slice for this segment today (suffix -b); findings verified net-new against 2026-10-07-ppt-web-core-tier1d.json and prior ppt-web-core signal files.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-core = 2026-09-27, oldest of 8 segments; no churn files provided; no saturation — 0 open code-review-finding items in backlog.json for this segment)",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-logout-cache-root-allowlist-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/lib/queryKeys.ts", "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"],
+      "evidence": ["frontend/apps/ppt-web/src/contexts/AuthContext.tsx:624 — logout() purges user-scoped TanStack Query cache by iterating a HAND-MAINTAINED allowlist (AUTHED_QUERY_KEY_ROOTS at lib/queryKeys.ts:354) and calling removeQueries per root, deliberately NOT queryClient.clear() (#712). Any new feature that introduces a query-key root but forgets to append it here leaves that user's cached data in memory for the NEXT session on the same tab — a cross-session data-leak. This allowlist has ALREADY drifted once: the inline comment records that 'notification-triggers' was missed by PR #2650 and leaked into the next session until patched. There is no automated guard. Fix (cloud-landable, frontend-only): add a Vitest unit test that imports the queryKeys factory + the @ppt/api-client key factories and asserts every top-level root is present in AUTHED_QUERY_KEY_ROOTS, so a new root fails CI instead of silently leaking. Optionally derive the factory roots programmatically. No backend/DB work."]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-notifications-token-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/lib/websocket.ts"],
+      "evidence": ["frontend/apps/ppt-web/src/lib/websocket.ts:94-102 — buildWebSocketUrl() embeds the full long-lived JWT access token as a ?token=<jwt> query parameter on the shared notification WebSocket URL (WS_NOTIFICATIONS_PATH). This is the app-wide realtime client (WebSocketContext/useWebSocket), distinct from the IoT-feature socket already filed as code-review-ppt-web-core-iot-ws-token-in-url (features/iot/hooks/useIotWebSocket.ts). Access tokens in URLs leak into server/proxy access logs, APM traces, and browser history/Referer, where the bearer can be replayed for its full TTL. The browser-can't-set-WS-Authorization-header constraint is real and documented, but the standard mitigation is a short-lived single-use WS ticket (POST /auth/ws-ticket -> opaque ~30s token) rather than the primary access token. Hardening vector: issue an ephemeral WS ticket and pass that in the query param. Frontend change plus a small backend ticket endpoint; flag as frontend-primary, may need a backend companion task."]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-backend-msg",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/lib/errorHandler.ts"],
+      "evidence": ["frontend/apps/ppt-web/src/lib/errorHandler.ts:216-228 — parseErrorResponse() returns `message: data.message || errorInfo.message`, i.e. the RAW backend ErrorResponse.message is surfaced directly as the user-facing ParsedApiError.message, bypassing the i18n `errors.catalogue.*` bundle that errorCopy() resolves for the user's selected language (sk/cs/de/en). The module header frames backend `message` strings as developer-facing/untranslated, but they are rendered to end users as the primary error body whenever the backend populates `message` (which it does for most 4xx). Result: English/dev-English error text appears inside a non-English UI — an i18n gap. Fix (frontend-only, cloud-landable): prefer the resolved errorInfo.message for KNOWN_ERROR_CODES and only fall back to the raw backend message for unknown codes, or route the raw message through a translation key. Low severity, UX/i18n consistency."]
+    }
+  ]
+}

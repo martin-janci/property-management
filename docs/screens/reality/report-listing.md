@@ -35,7 +35,8 @@ designSources:
 useCases:
   - UC-23
   - UC-31
-endpoints: []
+endpoints:
+  - reports_submit
 epics: []
 diagrams: []
 owner: reality-frontend
@@ -78,6 +79,11 @@ UC-23 anti-fraud action surface. Complement to `reality/security` (educational).
 
 ### Specific (recent)
 
+- reality-web `/report` submit now POSTs to `POST /api/v1/reports` (UC-23) via `useSubmitReport` (`@ppt/reality-api-client`, mirrors `useCreateInquiry`); pending (`Odosiela sa…`), success, and error states — distinct copy for 429 rate-limit, 404 listing-not-found, and generic — are live (PR #3014). Before #3014 the form only set local `submitted=true` and every report was silently dropped client-side.
+- `listing_id` (UUID) is resolved from a `?listing=`/`?listingId=` deep-link param first, otherwise from a UUID embedded in the free-text reference field; if none is found the POST is blocked with a user-facing message instead of faking success. The raw reference text is preserved inside the description so moderators don't lose it.
+- Attachments control is disabled with a "coming soon" hint and is **not** transmitted (follow-up #3017/#3019): the endpoint accepts pre-uploaded http(s) attachment URLs but no upload pipeline exists yet. This is why reality-web `apiStatus` stays `partial`, not `complete`.
+- Success card surfaces the created report reference id (PR for #3042): the 201 `{ report }` id is read back from `useSubmitReport` and rendered on the success card (`data-testid="report-reference-id"`) with a "quote this in a follow-up" hint. The server returns a raw UUID — no `R-2026-XXXX` scheme exists server-side yet, so the id is shown verbatim; the checklist's "ID R-…" wording is still aspirational on the *format* only.
+- Sitemap: `POST /api/v1/reports` (backend `reality-server/src/routes/reports.rs`) is now registered in `@ppt/sitemap` `realityServerEndpoints` as operationId `reports_submit` (#3042), so it is referenced from this doc's `endpoints:`.
 - Listing-reference auto-prefill happens when user clicks "Nahlásiť tento inzerát" from listing-detail; manual entry needed when accessed from footer.
 - Anonymous reports allowed (Email optional) but processed slower.
 - Attach moderation-queue admin UI is out of scope (separate `ppt/moderation-queue` future map).
@@ -86,4 +92,6 @@ UC-23 anti-fraud action surface. Complement to `reality/security` (educational).
 
 <!-- newest entries on top -->
 
+- 2026-10-08 — agent: closed follow-up #3042. Registered `POST /api/v1/reports` in `@ppt/sitemap` `realityServerEndpoints` (operationId `reports_submit`) and added it to `endpoints:` here. reality-web `/report` success card now reads the 201 `report.id` back from `useSubmitReport` and renders it as a reference (raw UUID — no server-side `R-…` scheme yet). Added a regression test (surfaces id on success). apiStatus/buildStatus unchanged: attachment upload (#3017) is still the only gap keeping reality-web at `partial`.
+- 2026-10-07 — agent: reconciled with PR #3014 (reality-web `/report` submit wired to `POST /api/v1/reports`) + follow-up #3017/#3019 (attachment control disabled). Frontmatter statuses unchanged after review: reality-web `apiStatus` stays `partial` (core submit + 429/404/generic error + pending states are now live, but attachment upload is unwired and the server report id is not surfaced — pre-PR the page had no API call at all, so this is an accuracy gain, not an enum change) and `buildStatus` stays `in-progress`. mobile-native (`MReport`) untouched by #3014. `endpoints: []` left empty on purpose: `POST /api/v1/reports` is not in `@ppt/sitemap` `realityServerEndpoints`, so adding its operationId would fail `/screens validate` — sitemap registration is the prerequisite (out of this docs-only scope).
 - 2026-05-09 — agent: bootstrapped from bundle (pages/report.html + mobile-new-pages.html MReport frame); UC-23/31; parent reality/listing-detail

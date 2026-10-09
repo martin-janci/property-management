@@ -341,7 +341,19 @@
     "unknownError": "Nastala chyba. Prosím skúste znova.",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Vytvorené",
+    "updated": "Aktualizované",
+    "saved": "Uložené",
+    "deleted": "Odstránené",
+    "submitted": "Odoslané",
+    "done": "Hotovo",
+    "createFailed": "Vytvorenie zlyhalo",
+    "updateFailed": "Aktualizácia zlyhala",
+    "saveFailed": "Uloženie zlyhalo",
+    "deleteFailed": "Odstránenie zlyhalo",
+    "submitFailed": "Odoslanie zlyhalo",
+    "pleaseTryAgain": "Skúste to znova."
   },
   "nav": {
     "home": "Domov",
@@ -557,6 +569,11 @@
       "bookFacility": "Rezervovať priestor",
       "empty": "Nenašli sa žiadne rezervácie.",
       "allCaughtUp": "Všetko vybavené! Žiadne čakajúce rezervácie na kontrolu."
+    },
+    "errors": {
+      "fetchFailedTitle": "Priestory sa nepodarilo načítať",
+      "fetchFailedDescription": "Pri načítavaní priestorov sa vyskytla chyba. Skúste to znova.",
+      "retry": "Skúsiť znova"
     }
   },
   "faults": {
@@ -640,7 +657,11 @@
         "titleTooLong": "Názov musí mať maximálne 255 znakov",
         "descriptionRequired": "Popis je povinný"
       }
-    }
+    },
+    "reported": "Porucha nahlásená",
+    "reportFailed": "Nepodarilo sa nahlásiť poruchu",
+    "updated": "Porucha aktualizovaná",
+    "updateFailed": "Nepodarilo sa aktualizovať poruchu"
   },
   "buildings": {
     "title": "Budovy",
@@ -1558,7 +1579,11 @@
         "expired": "Vypršané",
         "cancelled": "Zrušené"
       }
-    }
+    },
+    "created": "Nájomná zmluva vytvorená",
+    "createFailed": "Nepodarilo sa vytvoriť nájomnú zmluvu",
+    "violationRecorded": "Porušenie zaznamenané",
+    "violationCreateFailed": "Nepodarilo sa zaznamenať porušenie"
   },
   "settings": {
     "notifications": {
@@ -1940,7 +1965,13 @@
         "state": "Stav",
         "actions": "Akcie"
       }
-    }
+    },
+    "sensorDeleted": "Senzor odstránený",
+    "sensorDeleteFailed": "Nepodarilo sa odstrániť senzor",
+    "sensorRegistered": "Senzor zaregistrovaný",
+    "sensorRegisterFailed": "Nepodarilo sa zaregistrovať senzor",
+    "sensorUpdated": "Senzor aktualizovaný",
+    "sensorUpdateFailed": "Nepodarilo sa aktualizovať senzor"
   },
   "commandPalette": {
     "commands": {
@@ -2316,7 +2347,21 @@
       "deleteConfirm": "Naozaj chcete odstrániť <1>{{name}}</1>?",
       "cancel": "Zrušiť",
       "delete": "Odstrániť",
-      "deleting": "Odstraňuje sa..."
+      "deleting": "Odstraňuje sa...",
+      "deleteSuccessTitle": "Pravidlo odstránené",
+      "deleteSuccessMessage": "Pravidlo „{{name}}“ bolo odstránené.",
+      "deleteErrorTitle": "Odstránenie zlyhalo",
+      "deleteErrorMessage": "Pravidlo automatizácie sa nepodarilo odstrániť.",
+      "activatedTitle": "Pravidlo aktivované",
+      "pausedTitle": "Pravidlo pozastavené",
+      "activatedMessage": "Pravidlo „{{name}}“ bolo aktivované.",
+      "pausedMessage": "Pravidlo „{{name}}“ bolo pozastavené.",
+      "updateErrorTitle": "Aktualizácia zlyhala",
+      "updateErrorMessage": "Pravidlo automatizácie sa nepodarilo aktualizovať.",
+      "runSuccessTitle": "Pravidlo spustené",
+      "runSuccessMessage": "Pravidlo „{{name}}“ sa teraz spúšťa.",
+      "runErrorTitle": "Spustenie zlyhalo",
+      "runErrorMessage": "Pravidlo automatizácie sa nepodarilo spustiť."
     },
     "ruleCard": {
       "unknownTrigger": "Neznámy spúšťač",
@@ -2501,7 +2546,11 @@
       "title": "Vytvoriť pravidlo automatizácie",
       "subtitle": "Nastavte nový automatizovaný pracovný postup pre správu nehnuteľností.",
       "error": "Nepodarilo sa vytvoriť pravidlo automatizácie. Skúste to znova.",
-      "incomplete": "Dokončite pravidlo: vyžaduje sa názov, spúšťač a aspoň jedna akcia."
+      "incomplete": "Dokončite pravidlo: vyžaduje sa názov, spúšťač a aspoň jedna akcia.",
+      "createFailedTitle": "Vytvorenie zlyhalo",
+      "createdTitle": "Pravidlo vytvorené",
+      "createdMessage": "Pravidlo automatizácie bolo vytvorené.",
+      "createErrorMessage": "Pravidlo automatizácie sa nepodarilo vytvoriť."
     },
     "editPage": {
       "back": "Späť na pravidlá",
@@ -2511,7 +2560,11 @@
       "subtitle": "Upravte nastavenia svojho automatizovaného pracovného postupu.",
       "invalidId": "Neplatné ID pravidla.",
       "loadError": "Nepodarilo sa načítať pravidlo automatizácie. Skúste to znova.",
-      "updateError": "Nepodarilo sa aktualizovať pravidlo automatizácie. Skúste to znova."
+      "updateError": "Nepodarilo sa aktualizovať pravidlo automatizácie. Skúste to znova.",
+      "updatedTitle": "Pravidlo aktualizované",
+      "updatedMessage": "Pravidlo automatizácie bolo aktualizované.",
+      "updateFailedTitle": "Aktualizácia zlyhala",
+      "updateFailedMessage": "Pravidlo automatizácie sa nepodarilo aktualizovať."
     },
     "templateLibrary": {
       "title": "Knižnica šablón",
@@ -2531,7 +2584,9 @@
       "categoryPayments": "Platby",
       "categoryCommunications": "Komunikácia",
       "categoryDocuments": "Dokumenty",
-      "categoryMaintenance": "Údržba"
+      "categoryMaintenance": "Údržba",
+      "useErrorTitle": "Šablónu nemožno použiť",
+      "useErrorMessage": "Z tejto šablóny sa nepodarilo vytvoriť pravidlo."
     },
     "templateCard": {
       "popular": "Obľúbené",
@@ -2627,7 +2682,46 @@
       "actionResults": "Výsledky akcií",
       "triggerContext": "Kontext spúšťača",
       "retryExecution": "Opakovať spustenie",
-      "close": "Zavrieť"
+      "close": "Zavrieť",
+      "retrySuccessTitle": "Spustenie zopakované",
+      "retrySuccessMessage": "Spustenie bolo zaradené na opakovanie.",
+      "retryErrorTitle": "Opakovanie zlyhalo",
+      "retryErrorMessage": "Spustenie sa nepodarilo zopakovať."
     }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Pravidlá registra uložené",
+        "savedBody": "Vaše zmeny pravidiel registra boli použité.",
+        "saveFailed": "Pravidlá registra sa nepodarilo uložiť",
+        "saveFailedBody": "Vaše zmeny sa nepodarilo uložiť. Skúste to znova."
+      }
+    }
+  },
+  "community": {
+    "groupCreated": "Skupina vytvorená",
+    "groupJoined": "Pripojili ste sa do skupiny.",
+    "joinFailed": "Nepodarilo sa pripojiť do skupiny",
+    "groupLeft": "Opustili ste skupinu.",
+    "leaveFailed": "Nepodarilo sa opustiť skupinu"
+  },
+  "meters": {
+    "readingSubmitted": "Odpočet odoslaný",
+    "submitFailed": "Nepodarilo sa odoslať odpočet",
+    "correctionSubmitted": "Oprava odpočtu odoslaná",
+    "updateFailed": "Nepodarilo sa aktualizovať odpočet",
+    "readingValidated": "Odpočet overený",
+    "validationFailedTitle": "Overenie zlyhalo",
+    "validationFailed": "Nepodarilo sa overiť odpočet"
+  },
+  "personMonths": {
+    "unitsUpdated": "Aktualizované jednotky: {{count}}",
+    "bulkFailedTitle": "Hromadné zadanie zlyhalo",
+    "bulkFailed": "Nepodarilo sa uložiť osoby-mesiace",
+    "entryRemoved": "Záznam odstránený",
+    "deleteFailed": "Nepodarilo sa odstrániť záznam",
+    "saved": "Osoba-mesiac uložená",
+    "saveFailed": "Nepodarilo sa uložiť osobu-mesiac"
   }
 }

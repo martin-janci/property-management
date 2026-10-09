@@ -29,6 +29,7 @@ export interface SellFormData {
   propertyType: PropertyType;
   address: string;
   city: string;
+  postalCode: string;
   area: number | '';
   rooms: number | '';
   floor: number | '';
@@ -39,9 +40,6 @@ export interface SellFormData {
   price: number | '';
   currency: string;
   priceNegotiable: boolean;
-  contactName: string;
-  contactPhone: string;
-  contactEmail: string;
   termsAccepted: boolean;
 }
 
@@ -50,6 +48,7 @@ export const INITIAL_FORM_DATA: SellFormData = {
   propertyType: 'apartment',
   address: '',
   city: '',
+  postalCode: '',
   area: '',
   rooms: '',
   floor: '',
@@ -60,9 +59,6 @@ export const INITIAL_FORM_DATA: SellFormData = {
   price: '',
   currency: 'EUR',
   priceNegotiable: false,
-  contactName: '',
-  contactPhone: '',
-  contactEmail: '',
   termsAccepted: false,
 };
 
