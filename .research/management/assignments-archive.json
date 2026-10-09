@@ -5394,6 +5394,28 @@
       "merge_attempted_at": "2026-08-30T04:35:02Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-leases-hardcoded-eur-currency",
+      "branch": "auto-impl/code-review-ppt-web-core-leases-hardcode-b0b3ffaa",
+      "status": "merged",
+      "claimed_at": "2026-10-09T02:32:47Z",
+      "last_updated": "2026-10-09T06:37:17Z",
+      "status_changed_at": "2026-10-09T06:37:17Z",
+      "pr_number": 3051,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3051",
+      "merged_at": "2026-10-09T06:37:17Z",
+      "specialist": "react-web",
+      "implementer_summary": "[reconciled-from-GH: PR opened by async implementer]",
+      "reviewer_summary": "verdict=approve note=clean-ppt-web-currency-fix-well-tested-ci-green-posted-as-COMMENT(self-approve-blocked)",
+      "last_reviewed_oid": "a4dd14d7612d15ce25eeb41e2f3639d8673fa739",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-09T06:37:17Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-logout-cache-purge-gap",
       "branch": "auto-impl/code-review-ppt-web-core-logout-cache-pu-def4e967",
       "status": "merged",
@@ -5568,6 +5590,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-03T22:17:21Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-rentals-mutation-silent",
+      "branch": "auto-impl/code-review-ppt-web-core-rentals-mutatio-8518a542",
+      "status": "merged",
+      "claimed_at": "2026-10-09T02:32:47Z",
+      "last_updated": "2026-10-09T06:37:17Z",
+      "status_changed_at": "2026-10-09T06:37:17Z",
+      "pr_number": 3050,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3050",
+      "merged_at": "2026-10-09T06:37:17Z",
+      "specialist": "react-web",
+      "implementer_summary": "[reconciled-from-GH: PR opened by async implementer]",
+      "reviewer_summary": "verdict=approve note=clean-scoped-fix-ci-green-4-tdd-tests-posted-as-COMMENT(self-approve-blocked)",
+      "last_reviewed_oid": "aa8d8d4a5d0d107b5b06f723ec1979f203d5b25d",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-09T06:37:17Z"
     },
     {
       "task_id": "code-review-ppt-web-core-route-error-boundary-gap",
@@ -18835,5 +18879,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-08T22:46:55Z"
+  "archived_at": "2026-10-09T06:37:57Z"
 }

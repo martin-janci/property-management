@@ -471,40 +471,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-leases-hardcoded-eur-currency",
-      "action": "ppt-web lease mappers hardcode EUR for all monetary values, so PLN/HUF markets mislabel amounts",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-07T16:42:28Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-07T16:42:28Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-rentals-mutation-silent",
-      "action": "ppt-web rentals: 4 mutations swallow non-auth errors (connection create, platform sync, guest check-in/out)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-08T10:28:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "screen-map-drift-pr-3019-reality",
       "action": "reality-web /report PR #3019 touched 2 routes with no docs/screens/reality update",
       "owner_role": "pm-qa",
