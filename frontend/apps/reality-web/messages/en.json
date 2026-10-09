@@ -107,7 +107,9 @@
     "callback": {
       "title": "Login Failed",
       "invalidState": "Invalid state token. Please try logging in again.",
-      "returnHome": "Return Home"
+      "returnHome": "Return Home",
+      "loading": "Loading...",
+      "completingLogin": "Completing login..."
     }
   },
   "common": {
@@ -479,7 +481,39 @@
         "reviews": "Reviews",
         "settings": "Settings"
       },
-      "title": "My profile"
+      "title": "My profile",
+      "stats": {
+        "activeListings": "Active listings",
+        "totalListings": "All listings",
+        "reviews": "Reviews",
+        "avgRating": "Avg. rating"
+      },
+      "status": {
+        "active": "Active",
+        "sold": "Sold",
+        "rented": "Rented",
+        "draft": "Draft",
+        "paused": "Paused",
+        "archived": "Archived"
+      },
+      "listings": {
+        "loading": "Loading listings…",
+        "error": "Failed to load listings.",
+        "emptyTitle": "You don't have any listings yet",
+        "emptyBody": "When you add a listing, it will appear here.",
+        "rooms": "{count} rooms"
+      },
+      "activity": {
+        "emptyTitle": "Activity isn't available yet",
+        "emptyBody": "An overview of your activity will be available once we prepare the relevant report."
+      },
+      "reviews": {
+        "emptyTitle": "No reviews yet",
+        "emptyBody": "Reviews from clients will appear here once you receive them."
+      },
+      "settings": {
+        "description": "Profile settings are available in the <account>My account</account> section."
+      }
     },
     "report": {
       "submit": "Submit report",
@@ -526,6 +560,8 @@
       "back": "← Back",
       "next": "Next →",
       "publish": "Publish listing",
+      "publishing": "Publishing…",
+      "submitFailed": "Publishing failed, please try again.",
       "submittedTitle": "Your listing has been submitted!",
       "submittedBody": "After review it will be published within 2 hours.",
       "submittedCta": "Add another listing",
@@ -536,6 +572,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -594,6 +632,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
@@ -991,6 +1030,7 @@
       "mappingHint": "Map your CRM fields to listing properties",
       "creating": "Creating...",
       "createConnection": "Create Connection",
+      "createError": "Failed to create connection. Please try again.",
       "connectionFailed": "Connection failed",
       "connectionSuffix": "Connection",
       "status": {
@@ -1042,6 +1082,7 @@
       "mappingHint": "Map feed fields to listing properties",
       "creating": "Creating...",
       "createFeed": "Create Feed",
+      "createError": "Failed to create feed. Please try again.",
       "defaultName": "Property Feed",
       "status": {
         "active": "Active",
@@ -1066,6 +1107,7 @@
       "cancel": "Cancel",
       "saving": "Saving...",
       "saveChanges": "Save Changes",
+      "saveError": "Couldn't save changes. Please try again.",
       "status": "Status",
       "enabled": "Enabled",
       "disabled": "Disabled",

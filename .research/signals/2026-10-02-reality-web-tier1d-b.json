@@ -1,0 +1,49 @@
+{
+  "generated": "2026-10-02",
+  "source_run": "dispatcher Tier-1d demand-driven finding generator (backlog starved: claimable=15 < floor=36; coverage done; backlog+retry pools empty)",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "CHURN-ALIGNED to reality-web (recent churn in src/middleware.ts and src/app/[locale]/auth/callback/page.tsx; reality-web is also oldest-unreviewed per review_cursor @ 2026-08-29). A sibling Tier-1d run already emitted 3 reality-web findings earlier today (signals/2026-10-02-reality-web-tier1d.json: sell-wizard-no-persist, report-page-no-submit, profile-mock-data) — those cover pages that never submit at all. These two findings are a DIFFERENT class (mutations that ARE wired but have zero error surface) and touch different files, so they are disjoint from that file AND from the two existing OPEN backlog rows (code-review-reality-web-import-create-mutation-silent-fail, code-review-reality-web-syncschedule-save-silent-fail, both in components/import/). The churn files themselves (middleware.ts, auth/callback) were read and found well-hardened with recent security fixes — no finding there. The next-oldest segment reality-server was also spot-checked (unwrap/expect all guarded or test-only; portal_listings update/delete ownership-gated via SECURITY DEFINER repo paths; enum + privileged-status validation present) and found clean, so no Rust finding was manufactured.",
+  "experts_used": [
+    "frontend"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "Both are frontend-only React edits confined to single reality-web component files; no backend, migration, or openapi changes. The generated mutation hooks already exist in @ppt/reality-api-client. Fix pattern already present in-repo (e.g. components/agency/RealtorManagement.tsx:570-580 uses try/catch + setInviteError + i18n; app/[locale]/saved-searches/page.tsx:140 and app/[locale]/inquiries/page.tsx:140 both read mutation.isError). Verifies with pnpm --filter @ppt/reality-web typecheck + test + biome check.",
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-web-featured-fav-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx:20-22 — handleToggleFavorite calls toggleFavorite.mutate({ listingId, isFavorite }) fire-and-forget with no onError callback, and the component never reads toggleFavorite.isError/.error. The heart control (passed to every ListingCard via onToggleFavorite on the public homepage) therefore has no failure feedback.",
+        "Hook contract traced: frontend/packages/api-client... actually frontend/packages/reality-api-client/src/listings/hooks.ts:146-169 — useToggleFavorite's mutationFn does `if (!response.ok) throw new Error('Failed to toggle favorite')` and defines ONLY onSuccess (invalidateQueries); there is no onError. React Query captures the thrown rejection into mutation.isError state rather than surfacing it, so with no call-site handler the failure is fully silent — no toast, no console error, no rollback.",
+        "Impact: on the homepage and all featured ListingCards, a favorite toggle that fails (e.g. 401 when unauthenticated, or a network error) shows nothing to the user; the heart UI diverges from server state until the next listings refetch. UX/correctness gap on a conversion-critical public surface.",
+        "Inconsistency confirms this is a gap, not a convention: sibling mutation call sites DO handle errors — components/agency/RealtorManagement.tsx:570-580 (try/catch + setInviteError + i18n t('inviteError')), app/[locale]/saved-searches/page.tsx:140 and app/[locale]/inquiries/page.tsx:140 (render on mutation.isError).",
+        "Confidence MEDIUM (static-only): component -> hook path fully read; route is public and reachable; classified medium severity because the action is non-destructive (favorite toggle) rather than data loss.",
+        "Fix (cloud-landable, frontend-only): surface toggleFavorite.isError (inline message/toast) or add an onError to the mutate call; optionally add optimistic rollback. Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-price-alert-markread-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 — markAllRead.mutate() and markRead.mutate(alert.id) are fired with no onError, and the component never reads markRead.isError/markAllRead.isError. Note the asymmetry: the QUERY path is fully handled (isLoading skeleton at :85, error state at :105, empty state at :123), but the two mutations have no failure surface at all.",
+        "Hook contract traced: frontend/packages/reality-api-client/src/favorites/hooks.ts:293-328 — both useMarkFavoriteAlertRead and useMarkAllFavoriteAlertsRead do `if (!response.ok) throw new Error(...)` and define only onSuccess (invalidateQueries FAVORITE_ALERTS_KEY); neither defines onError. The thrown rejection is swallowed into mutation.isError with no call-site reader, so a failed mark-read is silent.",
+        "Impact: a user clicking 'Mark read' / 'Mark all read' on a failed request sees the button re-enable with the alert still unread and no error shown — they cannot tell the action failed. Trust/clarity gap on the price-alert surface (Story 84.3).",
+        "Confidence MEDIUM (static-only): component -> hook path fully read; lower impact than the favorite toggle since the operation is non-destructive and retryable.",
+        "Fix (cloud-landable, frontend-only): render an inline error when markRead.isError || markAllRead.isError (mirror the existing isError branches in saved-searches/page.tsx:140 and inquiries/page.tsx:140). Single-package reality-web edit; verifies with typecheck/test + biome."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

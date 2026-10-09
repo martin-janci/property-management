@@ -1,0 +1,50 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-registry-page-full-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:91,95,129,148,152,186 — all pet/vehicle view/edit/create navigation uses window.location.href, forcing a full browser reload in the SPA (re-downloads the JS bundle, drops the in-memory TanStack Query cache and auth/org context) instead of react-router navigate()",
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:100,114,157,171 — delete/approve confirmations use window.confirm() with hardcoded English strings (no i18n), so non-English managers see English prompts"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-docsearch-raw-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearch.tsx:236 — renders the raw backend error object to the user ('Error searching documents: {error.message}'), leaking internal error detail and bypassing i18n",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearch.tsx:201,210,229,241 — hardcoded English UI strings ('Date Range', 'to', 'Has AI summary', 'Found N document(s) in Nms') not wrapped in t(...)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-news-detail-raw-err-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/news/pages/ArticleDetailPage.tsx:124,153,192,221,238 — article/comment handlers set the raw backend err.message into user-visible error state (err instanceof Error ? err.message : 'Failed to ...'), leaking internal error text to end users",
+        "frontend/apps/ppt-web/src/features/news/pages/ArticleDetailPage.tsx:124,153,192,221,238,245,248 — all fallback and status strings are hardcoded English with no i18n ('Failed to load article', 'Please select an organization', 'Loading article...'); the page also hand-rolls getApiClient() + useState fetching instead of TanStack Query, so it has no shared error/retry handling"
+      ],
+      "expert": "completeness"
+    }
+  ]
+}

@@ -354,7 +354,19 @@
     "unknownError": "An error occurred. Please try again.",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Created",
+    "updated": "Updated",
+    "saved": "Saved",
+    "deleted": "Deleted",
+    "submitted": "Submitted",
+    "done": "Done",
+    "createFailed": "Create failed",
+    "updateFailed": "Update failed",
+    "saveFailed": "Save failed",
+    "deleteFailed": "Delete failed",
+    "submitFailed": "Submit failed",
+    "pleaseTryAgain": "Please try again."
   },
   "nav": {
     "home": "Home",
@@ -573,6 +585,11 @@
       "bookFacility": "Book Facility",
       "empty": "No bookings found.",
       "allCaughtUp": "All caught up! No pending bookings to review."
+    },
+    "errors": {
+      "fetchFailedTitle": "Couldn't load facilities",
+      "fetchFailedDescription": "Something went wrong while loading facilities. Please try again.",
+      "retry": "Try again"
     }
   },
   "faults": {
@@ -700,7 +717,11 @@
       "security": "Security",
       "cleaning": "Cleaning",
       "other": "Other"
-    }
+    },
+    "reported": "Fault reported",
+    "reportFailed": "Failed to report fault",
+    "updated": "Fault updated",
+    "updateFailed": "Failed to update fault"
   },
   "buildings": {
     "title": "Buildings",
@@ -1861,7 +1882,14 @@
       "processing": "Processing image with OCR...",
       "processingFailed": "OCR processing failed. Please enter the value manually.",
       "uploadForOcr": "Upload photo for automatic reading"
-    }
+    },
+    "readingSubmitted": "Reading submitted",
+    "submitFailed": "Could not submit reading",
+    "correctionSubmitted": "Reading correction submitted",
+    "updateFailed": "Could not update reading",
+    "readingValidated": "Reading validated",
+    "validationFailedTitle": "Validation failed",
+    "validationFailed": "Could not validate reading"
   },
   "personMonths": {
     "title": "Person Months",
@@ -1952,7 +1980,14 @@
       "failedToSave": "Failed to save person-month data",
       "failedToDelete": "Failed to delete person-month data",
       "failedToExport": "Failed to export data"
-    }
+    },
+    "unitsUpdated": "{{count}} unit(s) updated",
+    "bulkFailedTitle": "Bulk entry failed",
+    "bulkFailed": "Could not save person-months",
+    "entryRemoved": "Entry removed",
+    "deleteFailed": "Could not delete entry",
+    "saved": "Person-month saved",
+    "saveFailed": "Could not save person-month"
   },
   "insurance": {
     "title": "Insurance",
@@ -2481,7 +2516,9 @@
       "created": "Booking created",
       "updated": "Last updated",
       "pendingRegistrations": "{{count}} guest(s) pending registration",
-      "pendingRegistrationsDesc": "These guests need to be registered with authorities before check-in."
+      "pendingRegistrationsDesc": "These guests need to be registered with authorities before check-in.",
+      "checkInFailed": "Failed to check in",
+      "checkOutFailed": "Failed to check out"
     },
     "status": {
       "pending": "Pending",
@@ -2580,7 +2617,9 @@
       "addConnectionDesc": "Select a rental unit and platform to create a new connection.",
       "selectUnit": "Select Rental Unit",
       "selectPlatform": "Select Platform",
-      "create": "Create Connection"
+      "create": "Create Connection",
+      "createFailed": "Failed to create connection",
+      "syncFailed": "Failed to sync platform"
     },
     "guest": {
       "personalInfo": "Personal Information",
@@ -3202,7 +3241,11 @@
         "expired": "Expired",
         "cancelled": "Cancelled"
       }
-    }
+    },
+    "created": "Lease created",
+    "createFailed": "Could not create lease",
+    "violationRecorded": "Violation recorded",
+    "violationCreateFailed": "Could not record violation"
   },
   "help": {
     "title": "Help Center",
@@ -4126,7 +4169,13 @@
         "state": "State",
         "actions": "Actions"
       }
-    }
+    },
+    "sensorDeleted": "Sensor deleted",
+    "sensorDeleteFailed": "Failed to delete sensor",
+    "sensorRegistered": "Sensor registered",
+    "sensorRegisterFailed": "Failed to register sensor",
+    "sensorUpdated": "Sensor updated",
+    "sensorUpdateFailed": "Failed to update sensor"
   },
   "commandPalette": {
     "commands": {
@@ -4497,7 +4546,21 @@
       "deleteConfirm": "Are you sure you want to delete <1>{{name}}</1>?",
       "cancel": "Cancel",
       "delete": "Delete",
-      "deleting": "Deleting..."
+      "deleting": "Deleting...",
+      "deleteSuccessTitle": "Rule deleted",
+      "deleteSuccessMessage": "\"{{name}}\" was deleted.",
+      "deleteErrorTitle": "Delete failed",
+      "deleteErrorMessage": "The automation rule could not be deleted.",
+      "activatedTitle": "Rule activated",
+      "pausedTitle": "Rule paused",
+      "activatedMessage": "\"{{name}}\" was activated.",
+      "pausedMessage": "\"{{name}}\" was paused.",
+      "updateErrorTitle": "Update failed",
+      "updateErrorMessage": "The automation rule could not be updated.",
+      "runSuccessTitle": "Rule triggered",
+      "runSuccessMessage": "\"{{name}}\" is now running.",
+      "runErrorTitle": "Run failed",
+      "runErrorMessage": "The automation rule could not be run."
     },
     "ruleCard": {
       "unknownTrigger": "Unknown trigger",
@@ -4681,7 +4744,12 @@
       "back": "Back to Rules",
       "title": "Create Automation Rule",
       "subtitle": "Set up a new automated workflow for your property management tasks.",
-      "error": "Failed to create automation rule. Please try again."
+      "error": "Failed to create automation rule. Please try again.",
+      "incomplete": "Please complete the rule: a name, a trigger, and at least one action are required.",
+      "createFailedTitle": "Create failed",
+      "createdTitle": "Rule created",
+      "createdMessage": "The automation rule was created.",
+      "createErrorMessage": "The automation rule could not be created."
     },
     "editPage": {
       "back": "Back to Rules",
@@ -4691,7 +4759,11 @@
       "subtitle": "Modify your automation workflow settings.",
       "invalidId": "Invalid rule ID.",
       "loadError": "Failed to load automation rule. Please try again.",
-      "updateError": "Failed to update automation rule. Please try again."
+      "updateError": "Failed to update automation rule. Please try again.",
+      "updatedTitle": "Rule updated",
+      "updatedMessage": "The automation rule was updated.",
+      "updateFailedTitle": "Update failed",
+      "updateFailedMessage": "The automation rule could not be updated."
     },
     "templateLibrary": {
       "title": "Template Library",
@@ -4711,7 +4783,9 @@
       "categoryPayments": "Payments",
       "categoryCommunications": "Communications",
       "categoryDocuments": "Documents",
-      "categoryMaintenance": "Maintenance"
+      "categoryMaintenance": "Maintenance",
+      "useErrorTitle": "Could not use template",
+      "useErrorMessage": "A rule could not be created from this template."
     },
     "templateCard": {
       "popular": "Popular",
@@ -4807,7 +4881,28 @@
       "actionResults": "Action Results",
       "triggerContext": "Trigger Context",
       "retryExecution": "Retry Execution",
-      "close": "Close"
+      "close": "Close",
+      "retrySuccessTitle": "Execution retried",
+      "retrySuccessMessage": "The execution was queued for retry.",
+      "retryErrorTitle": "Retry failed",
+      "retryErrorMessage": "The execution could not be retried."
     }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
+    }
+  },
+  "community": {
+    "groupCreated": "Group created",
+    "groupJoined": "You joined the group.",
+    "joinFailed": "Could not join the group",
+    "groupLeft": "You left the group.",
+    "leaveFailed": "Could not leave the group"
   }
 }

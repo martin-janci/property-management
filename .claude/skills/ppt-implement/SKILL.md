@@ -121,8 +121,14 @@ Exit codes:
 - `2` — at least one path is outside scope. The guard prints the
   offending paths plus a remediation hint (`git stash push -- <path>`
   or `git reset HEAD <path>`) on stderr. The caller MUST NOT commit
-  — instead, stash the off-scope paths, commit the rest, and surface
-  the stash ref in the dispatcher log so the next agent picks them up.
+  — instead, set the off-scope paths aside, commit the rest, and surface
+  them in the dispatcher log so the next agent picks them up.
+  **Inside a shared `/tmp/ppt-worktrees/` worktree, do NOT use `git stash`
+  for this (issue #3012):** the stash lives in the clone's common git dir and
+  is shared across sibling worktrees, so stashing here contaminates parallel
+  implementers. Prefer `git reset HEAD -- <path>` to unstage, or copy the
+  off-scope paths to a scratch file outside the repo and `git checkout --
+  <path>`, then record their location in the dispatcher log.
 - `64` — usage error.
 
 The companion `test-commit-scope-guard.sh` covers the PR #496
@@ -227,6 +233,22 @@ fall into three buckets:
 The script is intentionally narrower than the verify gate: it checks
 goal-shape (test:+fix: commit pair, archive move, OOS path respect) rather
 than build/test correctness. Step 3 owns the latter.
+
+### IG3 "fails-before-fix" proof — never `git stash` in a shared worktree (issue #3012)
+
+IG3 wants evidence that the new test fails without the fix and passes with it.
+Prove it with the **two-commit split** (`test:` commit, then `fix:` commit) and
+check each commit out independently — this is exactly what `goal-check.sh`'s
+IG3 check looks for. **Do NOT `git stash` the fix to produce the "before"
+state.** When you run inside the dispatcher's shared `/tmp/ppt-worktrees/`
+worktrees, `git stash` writes to the clone's *common* git directory
+(`.git/refs/stash` + the stash reflog), which is shared across every sibling
+worktree — a stash from one implementer is pop-able from another, silently
+contaminating parallel runs (#3012). If you genuinely need to set uncommitted
+work aside, copy the affected paths to a scratch file *outside* the repo (the
+session scratchpad or `/tmp/ppt-scratch-$$/`) and restore from that copy with
+`git checkout -- <path>`, instead of stashing. See `.research/implementer-prompt.md`
+IG3 for the canonical proof recipe.
 
 ## Step 4 — (Optional) Remote verify
 

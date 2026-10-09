@@ -1,0 +1,58 @@
+{
+  "generated": "2026-10-02",
+  "source_run": "dispatcher Tier-1d demand-driven finding generator (backlog starved: claimable=20 < floor=36, deterministic refill found nothing). Second same-day pass on the oldest-unreviewed segment (-b variant), mirroring the dispatcher's existing same-day double-up convention (cf. 2026-10-02-reality-web-tier1d-b.json). Static single-segment code review, no compilation / no test execution.",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "OLDEST-UNREVIEWED. No churn files handed in this demand-driven refill run; state.json review_cursor ranks reality-server (2026-08-31) oldest, ahead of api-core (2026-09-01). reality-server carries 0 OPEN code-review-finding rows in backlog.json (all 19 code-review-finding rows are status=done) -> not saturated. A first 2026-10-02 reality-server pass already landed (2026-10-02-reality-server-tier1d.json) covering the pagination/offset-overflow class in inquiries.rs/articles.rs; these two findings are DISJOINT from that run (SSO auth-flow class: in-memory PKCE state durability + upstream error-detail disclosure) and from the done rows (rate-limit / contact-validation / i18n classes).",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "Both are backend-only Rust edits confined to reality-server. Finding B2 (error-detail redaction) is a mechanical few-line change across the sso.rs error branches and is fully cloud-landable with no infra. Finding B1 (in-memory PKCE state) is cloud-landable as a code change only if a durable store is already available to reality-server; state.rs:406-410 documents that reality-server has NO Redis yet and that a durable mobile-token store is a tracked follow-up, so the web-PKCE durability fix likely blocks on the same infra follow-up -> flag for triage rather than immediate auto-fix.",
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-pending-state-in-memory",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/state.rs:855 declares `pub sso_sessions: Arc<Mutex<HashMap<String, PendingSsoSession>>>` (initialized empty at state.rs:1010). This map holds the per-login OAuth CSRF `state` id plus the PKCE `code_verifier` for the web SSO flow between `/api/v1/sso/login` and `/api/v1/sso/callback`.",
+        "backend/servers/reality-server/src/routes/sso.rs:275-285 (sso_callback): the callback does `state.sso_sessions.lock().await.remove(&session_id).ok_or_else(|| invalid_state)`. Because the pending session lives only in this process's memory, ANY deployment with more than one reality-server replica behind a load balancer will route `/sso/login` and `/sso/callback` to different instances on a fraction of logins -> the callback's `remove` misses -> every such login fails with HTTP 400 `invalid_state`. A rolling deploy / restart between login and callback drops ALL in-flight logins the same way. reality-server is the PUBLIC multi-region portal (REGION sk/cz/eu per backend/servers/CLAUDE.md), i.e. exactly the deployment shape where >1 replica is expected.",
+        "This is an UNACKNOWLEDGED instance of a constraint the codebase already documents elsewhere: state.rs:406-410 explicitly notes the mobile SSO token store is an in-process `Mutex<HashMap>`, is 'not durable', and that a Redis-backed store is a tracked follow-up because 'reality-server has no Redis'. The web-PKCE `sso_sessions` map at state.rs:855 shares that single-instance limitation but carries NO such comment, and its failure mode is worse than durability loss: it is user-facing login breakage under horizontal scale, not just a cold-start reset.",
+        "Reachability: unauthenticated public web SSO login path; triggered by normal operation as soon as reality-server runs >1 replica or is restarted mid-login. No attacker required. Severity bounded to availability of the login flow (no data exposure, no auth bypass) -> MEDIUM.",
+        "Confidence MEDIUM (static-only): the in-memory type, the empty init, and the remove-or-invalid_state branch are confirmed by direct read; the production replica count / LB affinity config was not inspected on this cloud runner, so whether it bites today depends on deployment topology.",
+        "Fix direction: back the pending-session map with the same durable/shared store the mobile-token follow-up (state.rs:406-410) calls for (Redis or DB with the existing PENDING_SSO_SESSION_TTL_MINUTES=10 TTL, sso.rs:26), or enforce sticky sessions at the LB as an interim mitigation and add a comment at state.rs:855 documenting the constraint. Likely shares the infra follow-up blocking the mobile-token store."
+      ],
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/state.rs",
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-sso-error-detail-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs returns raw internal error strings to the client in the SsoError `error_description` field at 10 sites: sso_callback (303 token_exchange_failed, 313 user_info_failed, 325 user_create_failed, 337 session_create_failed), create_mobile_sso_token (460 invalid_token, 477 user_info_failed, 489 token_create_failed), validate_mobile_sso_token (541 invalid_token, 553 user_create_failed, 565 session_create_failed). Each passes `&e.to_string()` straight into `SsoError::new(code, &e.to_string())`, which is serialized as JSON back to the HTTP caller.",
+        "For `user_create_failed` (325, 553) and `session_create_failed` (337, 565) the `e` is the underlying anyhow/sqlx error, so a DB-layer error message (constraint names, column/table hints, connection detail) can be reflected verbatim to an unauthenticated public caller. For `token_exchange_failed` (303) and `user_info_failed` (313, 477) the `e` is the upstream PM-OAuth HTTP error, which can reveal internal PM OAuth hostnames / endpoint paths / status text.",
+        "Contrast with the adjacent correct pattern in the SAME file: sso.rs:368-378 (build_portal_session_cookie failure) logs the detail server-side via `tracing::error!(error = e, ...)` and returns a GENERIC 'Failed to build session cookie' to the client. listings.rs:739-744 / 780-785 do the same ('Internal server error' to client, `tracing::error!(error = %e, ...)` server-side). The SSO error branches skip that redaction and leak `e` directly.",
+        "Reachability: sso_callback is reachable unauthenticated (it is the public OAuth redirect target); the mobile token endpoints are reachable by anyone who can POST. Info-disclosure only (no RCE / no direct auth bypass) -> MEDIUM.",
+        "Confidence MEDIUM (static-only): the `&e.to_string()` arguments and the JSON SsoError serialization are confirmed by direct read; the exact sensitivity of each leaked string depends on the upstream/DB error text, which was not runtime-captured.",
+        "Fix (cloud-landable, backend-only): mirror the existing redaction pattern -- `tracing::error!(error = %e, \"<context>\")` server-side and return a stable generic `error_description` per code (e.g. 'Authentication failed', 'Could not complete sign-in'), at all 10 sites. One-to-two line change per branch, no new deps."
+      ],
+      "expert": "security",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ]
+    }
+  ]
+}

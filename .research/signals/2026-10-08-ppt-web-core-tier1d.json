@@ -1,0 +1,48 @@
+{
+  "generated": "2026-10-08T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=12 < floor=36; Tier 1b/1c empty). Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-core segment.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (review_cursor ppt-web-core=2026-09-27, oldest of 8 segments; no segment saturated — 0 open code-review-finding items in backlog)",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"],
+      "evidence": ["useIotWebSocket.ts:88-95 onclose reconnects on a fixed WS_RECONNECT_MS=5000 timer with no max-attempts cap and no exponential backoff. A persistently failing endpoint (expired/invalid token, server down, Redis unconfigured) produces an infinite 5s reconnect storm that never backs off and never gives up — unlike the shared lib/websocket.ts which deliberately uses maxReconnectAttempts + exponential backoff (see its own comments). Fix: reuse the shared WebSocketService or add backoff + attempt cap. Frontend-only, cloud-landable."]
+    },
+    {
+      "id": "code-review-ppt-web-core-needing-maint-querykey-arg",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/predictive-maintenance/hooks/usePredictiveMaintenance.ts"],
+      "evidence": ["usePredictiveMaintenance.ts:59-70 useNeedingMaintenance(daysAhead=30) builds its queryKey from predictiveKeys.needingMaintenance() which takes NO arguments, yet the queryFn varies the request by days_ahead=${daysAhead}. Two callers with different daysAhead collide on the same cache key, so the second silently receives the first horizon's cached data and the param is effectively ignored after the first fetch. Fix: include daysAhead in the query key (predictiveKeys.needingMaintenance = (d: number) => [...all, 'needing-maintenance', d]). Sibling hooks (useEquipmentList / useMaintenancePredictions) already key on their query arg. Frontend-only, cloud-landable."]
+    },
+    {
+      "id": "code-review-ppt-web-core-doc-download-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts"],
+      "evidence": ["useDocumentDownload.ts:47-48 download-failure toast uses hardcoded Slovak strings ('Stiahnutie zlyhalo' / 'Dokument sa nepodarilo stiahnuť.') instead of react-i18next t('...'). Bypasses the app's i18n (de/cs/en) and ships Slovak text to all locales. Fix: wrap both strings in t() with keys in the documents namespace. Frontend-only, cloud-landable."]
+    }
+  ]
+}
