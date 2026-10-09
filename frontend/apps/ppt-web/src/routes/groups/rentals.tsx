@@ -27,7 +27,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { ProtectedRoute } from '../../components';
+import { ProtectedRoute, type Toast, useToast } from '../../components';
 import { AuthError, type AuthErrorCode, useAuth } from '../../contexts';
 import type {
   BookingListParams,
@@ -225,6 +225,39 @@ export function handleRentalsAuthError(error: unknown, logout: () => void): bool
   return false;
 }
 
+/**
+ * `onError` handler shared by the rentals mutations (create connection, sync
+ * platforms, guest check-in/out).
+ *
+ * Previously each mutation's `onError` called {@link handleRentalsAuthError}
+ * alone and discarded its boolean result. That silently swallowed every
+ * *non-auth* failure — a network drop, a 4xx validation error, a 5xx — so a
+ * failed "Create connection" / "Sync" / "Check in" / "Check out" left the UI
+ * unchanged with no feedback, and the user had no idea the action never
+ * happened (code-review-ppt-web-core-rentals-mutation-silent).
+ *
+ * This wrapper keeps the session-loss path (redirect to /login) and, for every
+ * other error, surfaces an error toast — matching how the rest of the app's
+ * mutations report failures. The `title` / `fallbackMessage` are passed already
+ * translated so this helper stays pure and unit-testable.
+ */
+export function handleRentalsMutationError(
+  error: unknown,
+  opts: {
+    logout: () => void;
+    showToast: (toast: Omit<Toast, 'id'>) => void;
+    title: string;
+    fallbackMessage: string;
+  }
+): void {
+  if (handleRentalsAuthError(error, opts.logout)) return;
+  opts.showToast({
+    type: 'error',
+    title: opts.title,
+    message: error instanceof Error ? error.message : opts.fallbackMessage,
+  });
+}
+
 /** Route wrapper for the rentals dashboard. */
 function RentalsDashboardPageRoute() {
   const navigate = useNavigate();
@@ -289,6 +322,8 @@ function PlatformConnectionsPageRoute() {
   const auth = useRentalsAuth();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
@@ -308,7 +343,15 @@ function PlatformConnectionsPageRoute() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
-    onError: (error) => handleRentalsAuthError(error, logout),
+    onError: (error) =>
+      handleRentalsMutationError(error, {
+        logout,
+        showToast,
+        title: t('rentals.connections.createFailed', {
+          defaultValue: 'Failed to create connection',
+        }),
+        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+      }),
   });
 
   const syncPlatforms = useMutation({
@@ -320,7 +363,13 @@ function PlatformConnectionsPageRoute() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
-    onError: (error) => handleRentalsAuthError(error, logout),
+    onError: (error) =>
+      handleRentalsMutationError(error, {
+        logout,
+        showToast,
+        title: t('rentals.connections.syncFailed', { defaultValue: 'Failed to sync platform' }),
+        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+      }),
   });
 
   const connections = (data?.data ?? []).map(mapApiConnectionToUi);
@@ -395,6 +444,7 @@ function BookingDetailPageRoute() {
   const { logout } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservation', bookingId, auth?.xTenantId],
@@ -414,7 +464,13 @@ function BookingDetailPageRoute() {
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
-    onError: (error) => handleRentalsAuthError(error, logout),
+    onError: (error) =>
+      handleRentalsMutationError(error, {
+        logout,
+        showToast,
+        title: t('rentals.bookingDetail.checkInFailed', { defaultValue: 'Failed to check in' }),
+        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+      }),
   });
   const checkOut = useMutation({
     mutationFn: () =>
@@ -424,7 +480,13 @@ function BookingDetailPageRoute() {
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
-    onError: (error) => handleRentalsAuthError(error, logout),
+    onError: (error) =>
+      handleRentalsMutationError(error, {
+        logout,
+        showToast,
+        title: t('rentals.bookingDetail.checkOutFailed', { defaultValue: 'Failed to check out' }),
+        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+      }),
   });
 
   if (!bookingId) {
