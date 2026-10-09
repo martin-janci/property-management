@@ -1,0 +1,216 @@
+{
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3045-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3045",
+      "score_delta": 2,
+      "evidence": "PR #3045 (gh-issue-3040) touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ community.group-detail.route.test.tsx) without updating any docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "screen-map-drift-pr-3047-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3047",
+      "score_delta": 2,
+      "evidence": "PR #3047 (gh-issue-3041) touched frontend/apps/reality-web/src/app/[locale]/profile/page.tsx (+ i18n messages) without updating any docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "screen-map-drift-pr-3048-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3048",
+      "score_delta": 2,
+      "evidence": "PR #3048 (code-review-ppt-web-core-group-join-leave-silent) touched frontend/apps/ppt-web/src/routes/groups/community.tsx (+ i18n messages, routeGroupToastI18n.test.ts) without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "screen-map-drift-pr-3050-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3050",
+      "score_delta": 2,
+      "evidence": "PR #3050 (code-review-ppt-web-core-rentals-mutation-silent) touched frontend/apps/ppt-web/src/routes/groups/rentals.tsx (+ rentals.auth-guard.test.tsx, messages/en.json) without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "screen-map-drift-pr-3051-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3051",
+      "score_delta": 2,
+      "evidence": "PR #3051 (code-review-ppt-web-core-leases-hardcoded-eur-currency) touched frontend/apps/ppt-web/src/routes/groups/leases.tsx (+ leases.mappers.test.tsx) without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "type": "churn-hotspot",
+      "source": "code churn 2026-10-08 → 2026-10-09",
+      "score_delta": 0,
+      "evidence": "re-emit (cumulative): community.tsx touched 2× this run via PR #3045 (gh-issue-3040 group-detail i18n) and PR #3048 (code-review-ppt-web-core-group-join-leave-silent); hotspot_history.runs_seen 1 → 2",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "dep-update-noise-pr-3038",
+      "type": "dep-update-noise",
+      "source": "PR #3038",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump the npm-minor-patch group across 1 directory with 29 updates (open, mergeable_state pending)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "dep-update-noise-pr-3037",
+      "type": "dep-update-noise",
+      "source": "PR #3037",
+      "score_delta": 0,
+      "evidence": "dependabot: chore(deps): bump tokio from 1.53.1 to 1.53.2 in /backend in the tokio group",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "at": "2026-10-09T10:41:30Z"
+    },
+    {
+      "id": "closed-not-merged-pr-3030",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3030",
+      "score_delta": 0,
+      "evidence": "dependabot npm-minor-patch (28 updates) closed unmerged on 2026-10-08T10:20:59Z — superseded by newer bump PR #3038 (29 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "at": "2026-10-09T10:41:30Z"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-09.md && head -1 ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced since HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no items >8; no items older than 14d to decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans → adversarial pass check N/A",
+      "observed": "0 new plans",
+      "expected": "applies only when new plans added"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "exit 0 (byte-identical with ts=2026-10-09 10:40)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases + cursors not advanced",
+      "observed": "phase-1.5-skipped-token-budget, phase-1.6-skipped-token-budget — review_cursor/pm_cursor/coverage_cursor unchanged vs HEAD",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan silently deleted",
+      "observed": "0 lost slugs vs HEAD",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "staged=22 head=22",
+      "expected": "staged >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen(triage rows)",
+      "observed": "exit 0 (byte-identical with ts=2026-10-09 10:41)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline (zero this run)",
+      "observed": "0 actions, kill switch not set but no candidate met bar",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; Phase 1.6 skipped → gate no-op",
+      "observed": "pm_cursor=6 (unchanged vs HEAD=6); coverage_cursor=8 (unchanged); artifacts parse ok",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token leak",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

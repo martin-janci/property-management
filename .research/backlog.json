@@ -11705,16 +11705,19 @@
       "score": 1,
       "status": "open",
       "sources": [
+        "PR #3045",
+        "PR #3048",
         "git-log-14d"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)"
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)",
+        "re-emit 2026-10-09: community.tsx touched 2× via PR #3045 + PR #3048; hotspot_history.runs_seen 1→2"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/community.tsx"
       ],
       "created_at": "2026-10-08",
-      "updated_at": "2026-10-08",
+      "updated_at": "2026-10-09",
       "plan": null
     },
     {
@@ -11917,21 +11920,128 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3050",
         "rotating-expert-review"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311 — createConnection.onError discards handleRentalsAuthError return; non-auth 400/409/5xx produce no toast",
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:323 — syncPlatforms.onError same unhandled-non-auth-error pattern",
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:417 — checkIn.onError silently drops non-auth failures (guest check-in flow)",
-        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:427 — checkOut.onError silently drops non-auth failures (guest check-out flow)"
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:427 — checkOut.onError silently drops non-auth failures (guest check-out flow)",
+        "resolved: PR #3050 merged 2026-10-09 — code-review-ppt-web-core-rentals-mutation-silent: ppt-web rentals — surface non-auth errors from 4 mutations"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
       ],
       "created_at": "2026-10-08",
-      "updated_at": "2026-10-08",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3045-ppt",
+      "title": "ppt-web community group-detail PR #3045 touched 2 routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3045"
+      ],
+      "evidence": [
+        "PR #3045 (gh-issue-3040: reuse errors.groupNotFound/common.back) touched community.tsx + community.group-detail.route.test.tsx without updating docs/screens/ppt/community-group-detail.md"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3047-reality",
+      "title": "reality-web /profile PR #3047 touched locale/profile route with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3047"
+      ],
+      "evidence": [
+        "PR #3047 (gh-issue-3041: route reality-web /profile copy through next-intl) touched src/app/[locale]/profile/page.tsx + i18n messages without updating docs/screens/reality/profile.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.test.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3048-ppt",
+      "title": "ppt-web community PR #3048 touched community.tsx with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3048"
+      ],
+      "evidence": [
+        "PR #3048 (code-review-ppt-web-core-group-join-leave-silent: surface mutation errors) touched community.tsx + routeGroupToastI18n.test.ts + i18n messages without updating docs/screens/ppt/community-group-detail.md"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/i18n/routeGroupToastI18n.test.ts"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3050-ppt",
+      "title": "ppt-web rentals PR #3050 touched rentals.tsx with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3050"
+      ],
+      "evidence": [
+        "PR #3050 (code-review-ppt-web-core-rentals-mutation-silent: surface 4 mutation errors) touched rentals.tsx + rentals.auth-guard.test.tsx + messages/en.json without updating docs/screens/ppt/rentals-dashboard.md"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.auth-guard.test.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3051-ppt",
+      "title": "ppt-web leases PR #3051 touched leases.tsx with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3051"
+      ],
+      "evidence": [
+        "PR #3051 (code-review-ppt-web-core-leases-hardcoded-eur-currency: source lease currency from config) touched leases.tsx + leases.mappers.test.tsx + vite-env.d.ts without updating docs/screens/ppt/leases-list.md"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/leases.mappers.test.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
       "plan": null
     }
   ]
