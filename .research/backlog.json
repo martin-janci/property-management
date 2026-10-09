@@ -11783,7 +11783,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3034"
       ],
@@ -11795,7 +11795,12 @@
       ],
       "created_at": "2026-10-08",
       "updated_at": "2026-10-08",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-09T20:36:43Z",
+        "assignment_status": "merged",
+        "pr_number": 3054
+      }
     },
     {
       "id": "screen-map-drift-pr-3033-reality",
@@ -11803,7 +11808,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3033"
       ],
@@ -11815,7 +11820,12 @@
       ],
       "created_at": "2026-10-08",
       "updated_at": "2026-10-08",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-09T20:36:43Z",
+        "assignment_status": "merged",
+        "pr_number": 3055
+      }
     },
     {
       "id": "screen-map-drift-pr-3019-reality",
@@ -11843,7 +11853,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3022"
       ],
@@ -11855,7 +11865,12 @@
       ],
       "created_at": "2026-10-08",
       "updated_at": "2026-10-08",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-09T20:36:43Z",
+        "assignment_status": "merged",
+        "pr_number": 3053
+      }
     },
     {
       "id": "code-review-ppt-web-core-group-join-leave-silent",

@@ -5284,6 +5284,28 @@
       "merge_attempted_at": "2026-09-27T14:30:58Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-documents-default-org-sentinel",
+      "branch": "auto-impl/code-review-ppt-web-core-documents-defau-c90abdc1",
+      "status": "merged",
+      "claimed_at": "2026-10-09T02:32:47Z",
+      "last_updated": "2026-10-09T20:34:03Z",
+      "status_changed_at": "2026-10-09T20:34:03Z",
+      "pr_number": 3049,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3049",
+      "merged_at": "2026-10-09T20:34:03Z",
+      "specialist": "react-web",
+      "implementer_summary": "[reconciled-from-GH: PR opened by async implementer]",
+      "reviewer_summary": "verdict=approve note=re-review-after-dev-merge-clean (review-not-posted: self-author gh-422)",
+      "last_reviewed_oid": "dc2d5258bad2dd096aa30396c7ba2750eaf2f4b9",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-09T18:41:00Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-errorhandler-i18n-gap",
       "branch": "auto-impl/code-review-ppt-web-core-errorhandler-i1-0cf2f586",
       "status": "merged",
@@ -17971,6 +17993,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "screen-map-drift-pr-3022-reality",
+      "branch": "auto-impl/screen-map-drift-pr-3022-reality-2e05c533",
+      "status": "merged",
+      "claimed_at": "2026-10-09T08:33:23Z",
+      "last_updated": "2026-10-09T20:34:03Z",
+      "status_changed_at": "2026-10-09T20:34:03Z",
+      "pr_number": 3053,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3053",
+      "merged_at": "2026-10-09T20:34:03Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3053 status=done specialist=nextjs-web scope_drift=true(owner=pm-qa->docs) code_reuse_warn=none note=docs-only /sell screen-map reconcile PR#3022 (step5 seller-contact removed); validate 167/0/0",
+      "reviewer_summary": "verdict=approve note=docs-only-sell-reconcile-ci-green (review-not-posted: self-author gh-422)",
+      "last_reviewed_oid": "71d10ba2030a47d3974f7b90bde888b8f1af963a",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-09T18:41:00Z"
+    },
+    {
       "task_id": "screen-map-drift-pr-3033-reality",
       "branch": "auto-impl/screen-map-drift-pr-3033-reality-abac3c8b",
       "status": "merged",
@@ -17991,6 +18035,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-10-09T16:33:50Z"
+    },
+    {
+      "task_id": "screen-map-drift-pr-3034-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-3034-ppt-e14ab54c",
+      "status": "merged",
+      "claimed_at": "2026-10-09T08:33:23Z",
+      "last_updated": "2026-10-09T20:34:03Z",
+      "status_changed_at": "2026-10-09T20:34:03Z",
+      "pr_number": 3054,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3054",
+      "merged_at": "2026-10-09T20:34:03Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3054 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=docs-only community-group-detail screen-map reconcile PR#3034; apiStatus stub->partial; validate 167/0/0",
+      "reviewer_summary": "verdict=approve note=clean-docs-only-community-group-reconcile (review-not-posted: self-author gh-422)",
+      "last_reviewed_oid": "a08808c60eb9d84714dd0ebe1121917f0ccb8ab0",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
@@ -18923,5 +18989,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-09T18:43:20Z"
+  "archived_at": "2026-10-09T20:41:21Z"
 }
