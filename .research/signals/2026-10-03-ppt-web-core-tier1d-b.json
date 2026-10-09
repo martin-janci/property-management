@@ -1,0 +1,71 @@
+{
+  "generated": "2026-10-03T00:00:00Z",
+  "source_run": "dispatcher Phase 2.6 Tier-1d demand-driven vector generator (claim buffer starved: claimable=25 < floor=36; deterministic refill sources dry). Static single-segment rotating code review, no compilation / no test execution. Produces fresh cloud-landable frontend backlog vectors. Single-writer contract: DISPATCHER_OWNED_COMMIT=1 — this file is written into the working tree only; the dispatcher folds it into its own Phase 6 commit. This is the SECOND (-b) ppt-web-core Tier-1d run today: the earlier 2026-10-03-ppt-web-core-tier1d.json reviewed feature-core/localStorage surfaces (dispute-draft cross-user leak, analytics dataLayer collision, cmd-palette recent leak) and deliberately avoided routes/; this -b run reviews the route-group composition + guard layer, which is net-new and non-overlapping.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed. Automatic selection: (1) churn-alignment considered first and found NO match — the skill's segment roots predate a repo restructure (backend/servers/..., routes/ not handlers/, frontend/apps/...), so no current git-churn path (top code churn is backend/servers/api-server/src/routes/integrations/webhook.rs, voice_webhooks.rs, services/push_fanout.rs — all api-server) literally starts with any segment root; churn alignment therefore yields no segment. (2) Fell through to oldest-unreviewed: state.json review_cursor dates ascending make ppt-web-core (2026-09-27) the oldest, ahead of ppt-web-ui/mobile-rn (2026-10-01), reality-web (2026-10-02), and api-handlers/api-core/reality-server/mobile-native-kmp (all 2026-10-03, already reviewed by today's earlier Phase 1.5 routine run recorded in signals/2026-10-03.json). (3) SATURATION CHECK: backlog.json holds 0 OPEN code-review-finding rows for ppt-web-core (24 historical: 22 done, 1 dropped, 1 ready) so the >=3-open skip rule does not trigger. ppt-web-core is cloud-landable single-package frontend (dispatcher-preferred over egress-blocked backend/mobile-native fix paths).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "contexts/AuthContext.tsx tokenStorage (lines 119-195): every localStorage get/set/clear is wrapped in try/catch returning null / no-op on failure, so private-mode/SSR access throws are handled; refreshToken() (508-521) implements a correct singleflight via isRefreshing + refreshPromise refs so concurrent 401s coalesce into one refresh; localStorage token persistence is a documented MVP decision ('httpOnly cookies later', line 116) so not re-flagged.",
+    "lib/api.ts: axios instance with retry/backoff that correctly refuses to auto-retry non-idempotent methods (270-301, already credited by prior finding api-retry-nonidempotent), DEV-guarded console.warn (288-292), and transformError on reject — clean.",
+    "lib/websocket.ts / contexts/WebSocketContext.tsx: console.warn/error routed through a logger wrapper; reconnect budget + maxRetriesExceeded handling; useEffect cleanups (return () => ...) tear down sockets/listeners; comments explicitly avoid cleartext ws:// token leak outside dev — clean.",
+    "hooks/usePerformanceMetrics.ts logPerformanceMetrics(): all console.log calls are gated behind `if (!import.meta.env.DEV) return;` (line 196) — not a committed-console-log finding.",
+    "routes/groups/financial.tsx: all 10 useQuery calls carry `enabled: !!orgId` and all mutations (sendInvoice/downloadPdf/match/autoMatch) have onError toast handlers using t() — error-handling and auth-gating of the data layer are correct (the route-wrapper guard gap is finding-1, a separate concern).",
+    "routes/groups/{messaging,disputes,faults,reports,outages,announcements}.tsx: mutateAsync call sites are wrapped in try/catch with t()-localized success/error toasts — error handling is present and i18n-correct in these files (contrast with finding-2 files)."
+  ],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-mgmt-routes-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 ppt-web-core systemic route-guard gap)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:273-275 — `<AppRoutes />` is rendered inside RouteErrorBoundary + Suspense but NOT inside any global `<ProtectedRoute>` / auth gate. Auth gating in this app is strictly per-route via `<ProtectedRoute>`, so any route-group that mounts its `<Route>` elements without that wrapper is reachable unauthenticated.",
+        "11 of 24 route groups mount their `<Route>` elements with ZERO `<ProtectedRoute>` wrapper (grep -c 'ProtectedRoute' over routes/groups/*.tsx): accounting(0), ai-dashboards(0), announcements(0), community(0), disputes(0), faults(0), financial(0), iot(0), messaging(0), neighbors(0), outages(0). The remaining groups DO wrap: buildings(19), core(38), documents(16), leases(21), meters(13), notifications(3), person-months(9), rentals(15), reports(5), voting(7). Example confirmed by read: financial.tsx:466-473 `financialRoutes()` mounts /financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports as bare `<Route ... element={<...PageRoute/>} />` — no guard; FinancialDashboardPageRoute (financial.tsx:66-100) only reads useAuth().user for orgId, it performs no isAuthenticated check and no redirect.",
+        "This directly CORRECTS and EXTENDS the prior finding code-review-ppt-web-core-dashboard-routes-unguarded (status=done), which asserted the dashboard routes were 'the LONE authed-surface routes with the guard omitted.' That claim is false on the current tree: a whole class of management surfaces (invoices, payments, disputes, fault triage, IoT sensors/alerts, messaging, announcements) share the same gap. ProtectedRoute (components/ProtectedRoute.tsx:120-124) is the established mechanism: it redirects unauthenticated users to /login via `<Navigate to={redirectTo} replace />` AND stores a return URL (storeReturnUrl). The unguarded groups instead render the page chrome and (for org-gated queries) fire with enabled:!!orgId disabled — no login redirect, no return-URL capture, inconsistent access control across peer management features.",
+        "Impact: defense-in-depth / UX consistency gap rather than confirmed data exposure — the reality/management API is the real enforcement boundary (org-scoped + RLS) and financial queries are enabled:!!orgId gated, so an unauthenticated direct navigation to e.g. /financial/invoices renders empty chrome without a /login redirect instead of the consistent redirect every ProtectedRoute-wrapped peer performs. Several unguarded pages (e.g. the dashboard class per the prior finding) still fire authenticated api-client fetches for anonymous visitors.",
+        "Confidence MEDIUM (static-only): route-table -> wrapper -> App.tsx (no global guard) dataflow is confirmed by direct read and matches the mechanism the prior done-finding traced to high confidence; not upgraded to high only because I did not exhaustively read every lazy target page in all 11 groups to rule out an internal self-guard (the dashboard precedent showed the target pages do NOT self-guard).",
+        "Fix (cloud-landable, frontend-only): wrap the `<Route>` elements in the 11 unguarded route-group files in `<ProtectedRoute>` (with `requiredRoles={[...MANAGER_ROLES]}` where the feature is operator-only, matching core.tsx:236's pattern), mirroring the guarded peer groups (voting/buildings/leases). Single-package edit under frontend/apps/ppt-web/src/routes/groups/, verifiable via `pnpm --filter @ppt/web typecheck` + a Vitest/RTL route test (pattern exists in rentals.auth-guard.test.tsx / ProtectedRoute routing tests) asserting an unauthenticated render of /financial/invoices redirects to /login. No backend coupling."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-route-toasts-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-03 ppt-web-core hardcoded toast-string i18n gap)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "evidence": [
+        "~28 user-facing toast title/message strings are hardcoded English literals instead of being wrapped in `t(...)`, across 6 route-group files. Confirmed sites (grep for `title: '[A-Z]` / `message: '[A-Z]` in routes/groups/*.tsx, excluding tests): leases.tsx:628 ('Created'/'Lease created'), :633 ('Create failed'), :761 ('Created'/'Violation recorded'), :766 ('Create failed'); person-months.tsx:249 ('Saved'), :255 ('Bulk entry failed'), :301 ('Deleted'/'Entry removed'), :305 ('Delete failed'), :377 ('Saved'/'Person-month saved'), :382 ('Save failed'); meters.tsx:243 ('Submitted'/'Reading submitted'), :248 ('Submit failed'), :296 ('Updated'/'Reading correction submitted'), :303 ('Update failed'), :337 ('Done'/'Reading validated'), :341 ('Validation failed'); faults.tsx:368 ('Created'/'Fault reported'), :373 ('Failed to report fault'), :505 ('Updated'/'Fault updated'), :510 ('Failed to update fault'); iot.tsx:194 ('Sensor deleted'), :198 ('Failed to delete sensor'), :255 ('Sensor registered'), :260 ('Failed to register sensor'), :333 ('Sensor updated'), :338 ('Failed to update sensor'); community.tsx:66 ('Created'/'Group created').",
+        "This is inconsistent with the app's own established i18n convention used by the SIBLING route groups: announcements.tsx, disputes.tsx (e.g. disputes.tsx:369 t('disputes.statusUpdated','Status updated')), financial.tsx (t('financial.invoices.sent',...)), messaging.tsx (t('messaging.deleteSuccess',...)), reports.tsx and outages.tsx all localize their toast titles/messages via `t('<key>', '<defaultValue>')`. The 6 files above regressed to bare English literals, so a sk/cs/de user sees untranslated 'Create failed' / 'Reading submitted' toasts on these management flows.",
+        "Dedup: net-new in location vs the 3 prior ppt-web-core i18n findings (all status=done): notfound-i18n-gap (NotFound page), errorhandler-i18n-gap (lib/errorHandler.ts), iot-sensor-delete-confirm-hardcoded (a confirm() DIALOG string in iot.tsx, distinct from the TOAST title/message strings here). This finding is the broader route-group toast-string sweep across leases/person-months/meters/faults/community and the iot toast (not confirm) handlers.",
+        "Impact: localization gap on manager-facing success/error feedback across lease, person-month, meter-reading, fault, IoT-sensor and community-group create/update/delete flows — visible untranslated text for all non-English locales (sk/cs/de). Low severity (UX/i18n, no functional break).",
+        "Fix (cloud-landable, frontend-only): replace the literals with `t('<feature>.<action>', '<English default>')` keyed into the existing message catalogs (frontend/apps/ppt-web/messages/{en,sk,cs,de}.json), matching the sibling groups' pattern. Verifiable via `pnpm --filter @ppt/web typecheck` + `biome check`; the repo's i18n lint/test already covers missing-key detection. Single-package edit, no backend coupling."
+      ]
+    }
+  ]
+}

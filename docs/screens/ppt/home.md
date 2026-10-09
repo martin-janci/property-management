@@ -104,10 +104,12 @@ PPT manager landing — the daily-use surface for property managers. Action-queu
 - Activity timeline `border-bottom: 1px dashed` per item — last item drops the border. Watch for hairline rendering on retina + dark mode (alpha doubling already handled).
 - Trend strings ("3 new since yesterday", "↓ 3 from last week") need `Intl.RelativeTimeFormat` for sk/cs/de/en/pl/hu — and pluralization rules.
 - All metrics on the right rail are **read-only summaries** — links go elsewhere; no editing happens here.
+- The Home "Open dashboard" CTA routes by **manager-role membership**, not an exact role string: it branches on `isManagerRole(user?.role)` against `MANAGER_ROLES` (the same single source of truth the manager route guards use via `<ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>`), so every manager-equivalent role (`manager`, `org_admin`, `property_manager`, `technical_manager`, `super_admin`) reaches `/dashboard/manager` and non-managers (`resident`/`owner`/undefined) reach `/dashboard/resident`. CTA target and route guard must stay aligned — don't reintroduce a literal `role === 'manager'` check (PR #2995).
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-10-05 — agent: reconciled with PR #2995 (ppt-web Home CTA role drift fix). The Home "Open dashboard" CTA now routes via `isManagerRole(user?.role)` (MANAGER_ROLES membership) instead of the literal `user?.role === 'manager'`, so `org_admin`/`property_manager`/`technical_manager`/`super_admin` now land on `/dashboard/manager` instead of being misrouted to `/dashboard/resident`. Client-side routing only — no frontmatter change (buildStatus `shipped` / apiStatus `partial` unchanged).
 - 2026-05-09 — agent: design analyzed (ui_kits/ppt-web/manager-dashboard.html); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (5 sections), all 4 states, design-specific notes; linked UC-15/03/02/04/17; declared 6 sharedComponents; added 3 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)

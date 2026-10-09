@@ -31,6 +31,7 @@ import {
 } from '@ppt/api-client';
 import { useQuery } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import type { PersonMonth as UiPersonMonth } from '../../features/person-months/components/PersonMonthCard';
@@ -188,6 +189,7 @@ function PersonMonthsPageRoute() {
 /** Bulk entry for every unit (`/buildings/:buildingId/person-months/bulk`). */
 function BulkEntryPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { buildingId = '' } = useParams<{ buildingId: string }>();
 
@@ -246,14 +248,20 @@ function BulkEntryPageRoute() {
           setResults(mapResult(res, data));
           showToast({
             type: res.failed > 0 ? 'warning' : 'success',
-            title: 'Saved',
-            message: `${res.successful} unit(s) updated`,
+            title: t('common.saved', { defaultValue: 'Saved' }),
+            message: t('personMonths.unitsUpdated', {
+              count: res.successful,
+              defaultValue: '{{count}} unit(s) updated',
+            }),
           });
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Bulk entry failed',
-            message: err instanceof Error ? err.message : 'Could not save person-months',
+            title: t('personMonths.bulkFailedTitle', { defaultValue: 'Bulk entry failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('personMonths.bulkFailed', { defaultValue: 'Could not save person-months' }),
           });
         }
       }}
@@ -264,6 +272,7 @@ function BulkEntryPageRoute() {
 /** Unit history + yearly summary (`/buildings/:buildingId/units/:unitId/person-months`). */
 function UnitPersonMonthsPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { buildingId = '', unitId = '' } = useParams<{ buildingId: string; unitId: string }>();
   const [year, setYear] = useState(currentYear);
@@ -298,12 +307,19 @@ function UnitPersonMonthsPageRoute() {
       onDelete={async (pm) => {
         try {
           await deleteEntry.mutateAsync(pm.id);
-          showToast({ type: 'success', title: 'Deleted', message: 'Entry removed' });
+          showToast({
+            type: 'success',
+            title: t('common.deleted', { defaultValue: 'Deleted' }),
+            message: t('personMonths.entryRemoved', { defaultValue: 'Entry removed' }),
+          });
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Delete failed',
-            message: err instanceof Error ? err.message : 'Could not delete entry',
+            title: t('common.deleteFailed', { defaultValue: 'Delete failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('personMonths.deleteFailed', { defaultValue: 'Could not delete entry' }),
           });
         }
       }}
@@ -321,6 +337,7 @@ function UnitPersonMonthsPageRoute() {
  */
 function EditPersonMonthPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const {
     buildingId = '',
@@ -374,13 +391,20 @@ function EditPersonMonthPageRoute() {
             count: data.personCount,
             source: 'manual',
           });
-          showToast({ type: 'success', title: 'Saved', message: 'Person-month saved' });
+          showToast({
+            type: 'success',
+            title: t('common.saved', { defaultValue: 'Saved' }),
+            message: t('personMonths.saved', { defaultValue: 'Person-month saved' }),
+          });
           backToUnit();
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Save failed',
-            message: err instanceof Error ? err.message : 'Could not save person-month',
+            title: t('common.saveFailed', { defaultValue: 'Save failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('personMonths.saveFailed', { defaultValue: 'Could not save person-month' }),
           });
         }
       }}

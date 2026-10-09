@@ -340,7 +340,19 @@
     "notifications": "Értesítések",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Létrehozva",
+    "updated": "Frissítve",
+    "saved": "Mentve",
+    "deleted": "Törölve",
+    "submitted": "Elküldve",
+    "done": "Kész",
+    "createFailed": "A létrehozás sikertelen",
+    "updateFailed": "A frissítés sikertelen",
+    "saveFailed": "A mentés sikertelen",
+    "deleteFailed": "A törlés sikertelen",
+    "submitFailed": "A beküldés sikertelen",
+    "pleaseTryAgain": "Kérjük, próbálja újra."
   },
   "nav": {
     "home": "Főoldal",
@@ -554,6 +566,11 @@
       "bookFacility": "Létesítmény foglalása",
       "empty": "Nem található foglalás.",
       "allCaughtUp": "Minden rendben! Nincsenek jóváhagyásra váró foglalások."
+    },
+    "errors": {
+      "fetchFailedTitle": "A létesítmények betöltése nem sikerült",
+      "fetchFailedDescription": "Hiba történt a létesítmények betöltése közben. Kérjük, próbálja újra.",
+      "retry": "Újrapróbálkozás"
     }
   },
   "faults": {
@@ -637,7 +654,11 @@
         "titleTooLong": "A cím legfeljebb 255 karakter lehet",
         "descriptionRequired": "Leírás megadása kötelező"
       }
-    }
+    },
+    "reported": "Hiba bejelentve",
+    "reportFailed": "A hiba bejelentése sikertelen",
+    "updated": "Hiba frissítve",
+    "updateFailed": "A hiba frissítése sikertelen"
   },
   "buildings": {
     "title": "Épületek",
@@ -1860,7 +1881,13 @@
         "state": "Állapot",
         "actions": "Műveletek"
       }
-    }
+    },
+    "sensorDeleted": "Érzékelő törölve",
+    "sensorDeleteFailed": "Az érzékelő törlése sikertelen",
+    "sensorRegistered": "Érzékelő regisztrálva",
+    "sensorRegisterFailed": "Az érzékelő regisztrálása sikertelen",
+    "sensorUpdated": "Érzékelő frissítve",
+    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen"
   },
   "commandPalette": {
     "commands": {
@@ -2180,7 +2207,21 @@
       "deleteConfirm": "Biztosan törli a következőt: <1>{{name}}</1>?",
       "cancel": "Mégse",
       "delete": "Törlés",
-      "deleting": "Törlés..."
+      "deleting": "Törlés...",
+      "deleteSuccessTitle": "Szabály törölve",
+      "deleteSuccessMessage": "A(z) „{{name}}” törölve lett.",
+      "deleteErrorTitle": "A törlés sikertelen",
+      "deleteErrorMessage": "Az automatizálási szabályt nem sikerült törölni.",
+      "activatedTitle": "Szabály aktiválva",
+      "pausedTitle": "Szabály szüneteltetve",
+      "activatedMessage": "A(z) „{{name}}” aktiválva lett.",
+      "pausedMessage": "A(z) „{{name}}” szüneteltetve lett.",
+      "updateErrorTitle": "A frissítés sikertelen",
+      "updateErrorMessage": "Az automatizálási szabályt nem sikerült frissíteni.",
+      "runSuccessTitle": "Szabály elindítva",
+      "runSuccessMessage": "A(z) „{{name}}” most fut.",
+      "runErrorTitle": "A futtatás sikertelen",
+      "runErrorMessage": "Az automatizálási szabályt nem sikerült futtatni."
     },
     "ruleCard": {
       "unknownTrigger": "Ismeretlen kiváltó",
@@ -2364,7 +2405,12 @@
       "back": "Vissza a szabályokhoz",
       "title": "Automatizálási szabály létrehozása",
       "subtitle": "Állítson be egy új automatizált munkafolyamatot az ingatlankezelési feladatokhoz.",
-      "error": "Nem sikerült létrehozni az automatizálási szabályt. Kérjük, próbálja újra."
+      "error": "Nem sikerült létrehozni az automatizálási szabályt. Kérjük, próbálja újra.",
+      "incomplete": "Kérjük, egészítse ki a szabályt: név, indító és legalább egy művelet szükséges.",
+      "createFailedTitle": "A létrehozás sikertelen",
+      "createdTitle": "Szabály létrehozva",
+      "createdMessage": "Az automatizálási szabály létrejött.",
+      "createErrorMessage": "Az automatizálási szabályt nem sikerült létrehozni."
     },
     "editPage": {
       "back": "Vissza a szabályokhoz",
@@ -2374,7 +2420,11 @@
       "subtitle": "Módosítsa az automatizálási munkafolyamat beállításait.",
       "invalidId": "Érvénytelen szabályazonosító.",
       "loadError": "Nem sikerült betölteni az automatizálási szabályt. Kérjük, próbálja újra.",
-      "updateError": "Nem sikerült frissíteni az automatizálási szabályt. Kérjük, próbálja újra."
+      "updateError": "Nem sikerült frissíteni az automatizálási szabályt. Kérjük, próbálja újra.",
+      "updatedTitle": "Szabály frissítve",
+      "updatedMessage": "Az automatizálási szabály frissült.",
+      "updateFailedTitle": "A frissítés sikertelen",
+      "updateFailedMessage": "Az automatizálási szabályt nem sikerült frissíteni."
     },
     "templateLibrary": {
       "title": "Sablonkönyvtár",
@@ -2394,7 +2444,9 @@
       "categoryPayments": "Fizetések",
       "categoryCommunications": "Kommunikáció",
       "categoryDocuments": "Dokumentumok",
-      "categoryMaintenance": "Karbantartás"
+      "categoryMaintenance": "Karbantartás",
+      "useErrorTitle": "A sablon nem használható",
+      "useErrorMessage": "Ebből a sablonból nem sikerült szabályt létrehozni."
     },
     "templateCard": {
       "popular": "Népszerű",
@@ -2490,7 +2542,52 @@
       "actionResults": "Műveleti eredmények",
       "triggerContext": "Kiváltó környezete",
       "retryExecution": "Végrehajtás újrapróbálása",
-      "close": "Bezárás"
+      "close": "Bezárás",
+      "retrySuccessTitle": "Végrehajtás újrapróbálva",
+      "retrySuccessMessage": "A végrehajtás újrapróbálásra lett ütemezve.",
+      "retryErrorTitle": "Az újrapróbálás sikertelen",
+      "retryErrorMessage": "A végrehajtást nem sikerült újrapróbálni."
     }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
+    }
+  },
+  "community": {
+    "groupCreated": "Csoport létrehozva",
+    "groupJoined": "Csatlakozott a csoporthoz.",
+    "joinFailed": "Nem sikerült csatlakozni a csoporthoz",
+    "groupLeft": "Elhagyta a csoportot.",
+    "leaveFailed": "Nem sikerült elhagyni a csoportot"
+  },
+  "leases": {
+    "created": "Bérleti szerződés létrehozva",
+    "createFailed": "Nem sikerült létrehozni a bérleti szerződést",
+    "violationRecorded": "Szabálysértés rögzítve",
+    "violationCreateFailed": "Nem sikerült rögzíteni a szabálysértést"
+  },
+  "meters": {
+    "readingSubmitted": "Leolvasás elküldve",
+    "submitFailed": "Nem sikerült elküldeni a leolvasást",
+    "correctionSubmitted": "Leolvasás-javítás elküldve",
+    "updateFailed": "Nem sikerült frissíteni a leolvasást",
+    "readingValidated": "Leolvasás jóváhagyva",
+    "validationFailedTitle": "A jóváhagyás sikertelen",
+    "validationFailed": "Nem sikerült jóváhagyni a leolvasást"
+  },
+  "personMonths": {
+    "unitsUpdated": "{{count}} egység frissítve",
+    "bulkFailedTitle": "A tömeges bevitel sikertelen",
+    "bulkFailed": "Nem sikerült menteni a személy-hónapokat",
+    "entryRemoved": "Bejegyzés eltávolítva",
+    "deleteFailed": "Nem sikerült törölni a bejegyzést",
+    "saved": "Személy-hónap elmentve",
+    "saveFailed": "Nem sikerült menteni a személy-hónapot"
   }
 }

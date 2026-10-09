@@ -69,9 +69,9 @@ export function TemplateLibraryPage() {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Could not use template',
+        title: t('automation.templateLibrary.useErrorTitle'),
         message:
-          err instanceof Error ? err.message : 'A rule could not be created from this template.',
+          err instanceof Error ? err.message : t('automation.templateLibrary.useErrorMessage'),
       });
     }
   };

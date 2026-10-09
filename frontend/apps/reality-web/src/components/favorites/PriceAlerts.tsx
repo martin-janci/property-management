@@ -17,6 +17,7 @@ import {
   useMarkFavoriteAlertRead,
 } from '@ppt/reality-api-client';
 import { useLocale, useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { Link } from '@/i18n/routing';
 import { formatPrice } from '@/lib/format';
 
@@ -77,10 +78,37 @@ function AlertBody({ alert, locale }: { alert: FavoriteAlert; locale: string }) 
 
 export function PriceAlerts() {
   const t = useTranslations('priceAlerts');
+  // Generic, already-localized error copy (all six locales) reused for the
+  // mark-read failure banner — avoids a new per-surface translation key.
+  const tError = useTranslations('error');
   const locale = useLocale();
   const { data, isLoading, error } = useFavoriteAlerts();
   const markRead = useMarkFavoriteAlertRead();
   const markAllRead = useMarkAllFavoriteAlertsRead();
+  // A failed mark-read mutation must surface a visible error instead of
+  // silently leaving the row unread (follows the reality-web try/catch +
+  // inline role="alert" pattern used in RealtorManagement / import wizards).
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleMarkRead = async (alertId: string) => {
+    setActionError(null);
+    try {
+      await markRead.mutateAsync(alertId);
+    } catch (err) {
+      console.error('Failed to mark price alert read:', err);
+      setActionError(tError('description'));
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    setActionError(null);
+    try {
+      await markAllRead.mutateAsync();
+    } catch (err) {
+      console.error('Failed to mark all price alerts read:', err);
+      setActionError(tError('description'));
+    }
+  };
 
   if (isLoading) {
     return (
@@ -167,11 +195,17 @@ export function PriceAlerts() {
           type="button"
           className="mark-all"
           disabled={unreadCount === 0 || markAllRead.isPending}
-          onClick={() => markAllRead.mutate()}
+          onClick={handleMarkAllRead}
         >
           {t('markAllRead')}
         </button>
       </div>
+
+      {actionError && (
+        <div className="action-error" role="alert" aria-live="assertive">
+          {actionError}
+        </div>
+      )}
 
       <ul className="alerts-list">
         {alerts.map((alert) => (
@@ -187,7 +221,7 @@ export function PriceAlerts() {
                 type="button"
                 className="mark-read"
                 disabled={markRead.isPending && markRead.variables === alert.id}
-                onClick={() => markRead.mutate(alert.id)}
+                onClick={() => handleMarkRead(alert.id)}
               >
                 {t('markRead')}
               </button>
@@ -219,6 +253,15 @@ export function PriceAlerts() {
         }
         .mark-all:disabled { opacity: 0.5; cursor: not-allowed; }
         .mark-all:hover:not(:disabled) { background: var(--ppt-bg-app); }
+        .action-error {
+          margin-bottom: 16px;
+          padding: 12px 16px;
+          border: 1px solid var(--ppt-color-danger-hover);
+          border-radius: 8px;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-color-danger-hover);
+          font-size: 14px;
+        }
         .alerts-list {
           list-style: none;
           margin: 0;

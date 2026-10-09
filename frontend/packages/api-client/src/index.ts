@@ -43,9 +43,11 @@ export * from './integrations';
 export * from './iot';
 export * from './layout';
 export * from './leases';
-// Shared authenticated-fetch error type — carries HTTP `status` so callers can
-// branch on 401/403 (see `./lib/fetch`).
-export { ApiError } from './lib/fetch';
+// Shared authenticated-fetch helpers. `ApiError` carries HTTP `status` so callers
+// can branch on 401/403; `authenticatedFetch` is the raw-`Response` primitive for
+// callers that can't use the generated SDK — multipart uploads and endpoints
+// whose callers read the `Response` themselves (see `./lib/fetch`).
+export { ApiError, authenticatedFetch } from './lib/fetch';
 export * from './messaging';
 export * from './meters';
 export * from './mfa';

@@ -1,0 +1,58 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-05",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claim buffer starved: claimable=21 < floor=36). review_cursor.ppt-web-core = 2026-09-27 is the oldest across all 8 segments; it is also the top recent-churn segment (838 changed lines since 2026-09-28, a router group-split refactor) so churn-aligned and oldest-unreviewed agree. backlog.json has 2 OPEN ppt-web-core code-review-finding items (< 3) -> not saturated -> selected. A sibling Tier-1d run (2026-10-05-ppt-web-core-tier1d.json) exists for today; all findings below are net-new and disjoint from that run's 2 findings and from 2026-10-04-ppt-web-core.json's 2 findings. Cloud-verifiable web segment (not mobile-native/KMP).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-route-groups-no-auth-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37-68 — AppRoutes mounts every feature route-group fragment directly as children of <Routes> with no wrapping <ProtectedRoute>; App.tsx:274 renders <AppRoutes/> ungated (it cannot be blanket-wrapped because authRoutes()/Home share the same <Routes>). Protection is therefore strictly per-route.",
+        "11 of 21 route groups import NO ProtectedRoute and render page elements directly, so unauthenticated direct URL navigation renders the authenticated page shell instead of redirecting to login: financial.tsx:469-473 (/financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports), plus accounting.tsx, disputes.tsx, faults.tsx, iot.tsx, messaging.tsx, neighbors.tsx, outages.tsx, announcements.tsx, community.tsx, ai-dashboards.tsx (grep: ProtectedRoute count = 0 in each).",
+        "The unguarded wrappers call useAuth() only to read the org id (e.g. financial.tsx:67-68 `const { user } = useAuth(); const orgId = user?.organizationId ?? ''`) and never redirect when user is null — so the page renders with orgId='' for anon users.",
+        "Contrast the gated half of the table which wraps each route: buildings.tsx:50, leases.tsx, meters.tsx, rentals.tsx, documents.tsx, voting.tsx, person-months.tsx, reports.tsx:327, notifications.tsx, core.tsx:204/222/282. ProtectedRoute.tsx:121-122 is the redirect-to-/login guard (`if (!isAuthenticated) return <Navigate to={redirectTo} replace/>`) that the 11 unguarded groups bypass.",
+        "Impact: client-side access-control / defense-in-depth gap inconsistent across the route table (incl. financial + accounting). Server-side API auth is the only backstop; the authenticated shell (nav, layout, any render-time side effects) still paints for anon users before data calls 401. Likely introduced/kept during the group-split refactor (AppRoutes.tsx comment claims 'behaviour identical to the previous inline table')."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:88-95 — ws.onclose unconditionally schedules a reconnect via setTimeout(connect, WS_RECONNECT_MS=5000) with no attempt counter, no exponential backoff, and no max-attempt cap.",
+        "useIotWebSocket.ts:56-59 — connect() re-reads getToken() but never triggers a token refresh; when the JWT is expired/revoked the backend rejects the WS upgrade, onclose fires, and the hook reconnects every 5s indefinitely with the same dead token (unbounded reconnect storm against /api/v1/iot/sensors/ws).",
+        "Contrast lib/websocket.ts:608-630 which caps at DEFAULT_MAX_RECONNECT_ATTEMPTS=10 and uses exponential backoff (minReconnectDelay * 2**attempts, capped) with jitter, then gives up. The IoT hook rolls its own socket and loses both protections."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-token-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:31-37 — buildWsUrl embeds the raw JWT in the WS URL query string (`?token=<jwt>&organization_id=...` via URLSearchParams) and connects at :59.",
+        "Access tokens in URLs leak through reverse-proxy / server access logs, APM request traces, and browser history, widening the token-exfiltration surface. Hardening note: prefer a short-lived single-use WS ticket or a Sec-WebSocket-Protocol subprotocol carrying the token (the browser WebSocket API cannot set an Authorization header, which is why the query param was chosen — but a per-connection ticket avoids logging the long-lived JWT)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

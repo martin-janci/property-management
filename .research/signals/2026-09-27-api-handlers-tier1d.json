@@ -1,0 +1,62 @@
+{
+  "generated": "2026-09-27",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (backlog starved: claimable=9 < floor=36, refill sources empty)",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed after saturation-skip. No CHURN_FILES were passed from Phase 1 (automated refill sources empty), so selection fell to review_cursor oldest-first. reality-web (2026-08-29) is the uniquely oldest cursor entry BUT is saturated (exactly 3 OPEN code-review-finding items in backlog.json: import-create-mutation-silent-fail, syncschedule-save-silent-fail, callback-hardcoded-login-string) and was already mined earlier today (2026-09-27-reality-web-tier1d.json), so per the skill's >=3-open saturation rule it was skipped. Next in ascending-cursor order: api-handlers=2026-08-31 (tie with reality-server=2026-08-31; api-handlers wins the tie as the security-critical fallback segment) has 0 OPEN code-review-finding items -> not saturated -> selected. No api-handlers Tier-1d run exists today.",
+  "experts_used": ["rust", "security"],
+  "landable_in_cloud": true,
+  "landability_note": "All three findings are backend-only Rust edits confined to a single route file each (swap `e.to_string()` for a static client-safe message while keeping the existing `tracing::error!(... e ...)` server-side log). Independently landable by separate implementers; each verifiable via `cargo build -p api-server` + a handler test asserting the error body no longer contains raw sqlx text. No migration, no client regen.",
+  "findings_count": 3,
+  "static_only": true,
+  "note": "Static analysis only (no compilation, no test execution) per skill. Segment root is backend/servers/api-server/src/routes/ (the skill's segment-map path backend/api-server/src/handlers/ is stale for this repo layout). Segment is highly mature: the security-critical hot files (auth/mod.rs, integrations/oauth*.rs, voice_webhooks.rs Google-ID-token verify, layout/webhook.rs HMAC signing, emergency/broadcasts.rs) are all well-hardened -- crash-path scans (unwrap/expect/panic!/parse().unwrap on user input) surfaced only test-module hits or documented-invariant expects, and JWT/CSRF/HMAC paths fail closed. The one genuine, systemic, backlog-consistent defect class remaining is CWE-209 information disclosure: raw `e.to_string()` (sqlx/Postgres error text -- table/column/constraint names, sometimes value fragments) forwarded verbatim into the client-facing ErrorResponse body. 262 occurrences across 82 route files. This class has established per-file remediation precedent in the backlog (code-review-api-core-resolved-rs-leaks-db-error DONE, code-review-api-handlers-ai-upstream-error-leak DONE, code-review-api-handlers-compliance-raw-db-error-leak DONE, plus code-review-api-handlers-compliance-raw-db-leak-regression DONE proving whack-a-mole regressions). The three findings below target the highest-count UNFIXED handlers in the three most sensitive data domains (financial, external government integration, private messaging); each is net-new (no existing finding references these files). A shared `map_db_error`/response-sanitizer at the ErrorResponse layer would fix the whole class at the source and stop regressions, but the per-file items are the accepted, independently-landable granularity for this backlog.",
+  "signals": [
+    {
+      "id": "code-review-api-handlers-budgets-raw-db-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": ["backend/servers/api-server/src/routes/budgets.rs"],
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs -- the financial budget handler leaks raw database error text to the API client in 37 distinct error branches. Confirmed pattern at :260, :291, :327, :363, :402, :441, :480, :519, :558, :585, :612, :645, :677, :704, :740, :775, :803, :830, :861, :888, :924, :960, :1000, :1033 (and 13 more): every repo call is `match ... .await { Ok(..) => .., Err(e) => { tracing::error!(\"...: {:?}\", e); rls.release().await; (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))).into_response() } }`. The `e.to_string()` for a sqlx::Error::Database is the raw Postgres message -- table/column/constraint names and sometimes value fragments -- and it is placed directly in the JSON response body returned to the caller (CWE-209 information disclosure).",
+        "This is the top offender by count (37 leak sites; next are messaging.rs=33, regional_compliance.rs=31, government_portal.rs=28) and is a financial-data handler, so the leaked schema detail is the most sensitive. create_budget (:255-264) and list_budgets (:283-292) are both confirmed client-reachable via the mounted budget_router.",
+        "Same defect class already accepted+fixed per-file in this repo: code-review-api-handlers-compliance-raw-db-error-leak (compliance.rs:272,:322, status=done) and its regression code-review-api-handlers-compliance-raw-db-leak-regression (:319, done). budgets.rs has NO existing finding -- net-new. Landable backend-only remedy: replace `e.to_string()` in the response with a static client-safe string (e.g. ErrorResponse::new(\"DB_ERROR\", \"Failed to persist budget\")) while keeping the existing server-side `tracing::error!(... {:?}, e)` for operators. Verifiable via `cargo build -p api-server` + a handler test forcing the repo call to Err and asserting the response body contains no raw sqlx text. Confidence medium: leak is confirmed by static read+grep; production reachability of each error branch is inferred, not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-gov-portal-raw-db-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": ["backend/servers/api-server/src/routes/government_portal.rs"],
+      "evidence": [
+        "backend/servers/api-server/src/routes/government_portal.rs -- the external government-integration handler leaks raw database error text to the API client in 28 error branches, first confirmed at :96, :117, :147 as `Json(ErrorResponse::new(\"DATABASE_ERROR\", e.to_string()))` returned with StatusCode::INTERNAL_SERVER_ERROR. As with budgets.rs, `e.to_string()` on a sqlx::Error::Database emits the raw Postgres message (table/column/constraint identifiers) straight into the client-facing JSON body (CWE-209).",
+        "This is the government-portal surface (list_connections :84, list_submissions :360, list_attachments :747, list_schedules :842, plus create/update handlers), i.e. the segment's external-integration boundary -- leaking internal DB schema detail here is the highest external-sensitivity instance of the class. Handlers are client-reachable via the nested government_portal router.",
+        "Net-new: no existing code-review finding references government_portal.rs. Distinct from the budgets.rs finding (different file/domain/owner, independently landable). Same fix shape and precedent as compliance.rs (done): swap the response `e.to_string()` for a static client-safe message, keep the server-side tracing::error! log. Verifiable via `cargo build -p api-server` + a test asserting the error body carries no raw sqlx text. Confidence medium: leak confirmed by static read+grep; per-branch reachability inferred."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-messaging-raw-db-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-09-27 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "files": ["backend/servers/api-server/src/routes/messaging.rs"],
+      "evidence": [
+        "backend/servers/api-server/src/routes/messaging.rs -- the private-messaging handler leaks raw database error text to the API client in 33 error branches, confirmed at :621-623 and :632-634 as `.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new(\"DB_ERROR\", e.to_string()))))?` on the thread-detail path (list_messages / count_thread_messages_rls). `e.to_string()` on a sqlx error surfaces raw Postgres schema detail into the client body (CWE-209).",
+        "Messaging carries private inter-tenant conversation data, so schema/error disclosure on this surface is a meaningful info-disclosure risk. Adjacent observation in the same handler (not the primary finding): the read-receipt write at :640 `let _ = repo.mark_thread_read_rls(rls.conn(), id, user_id).await;` silently discards its Result -- a failed mark-as-read is invisible to caller and operator (no tracing on the error), a minor reliability gap worth folding into the same fix PR.",
+        "Net-new: no existing code-review finding references messaging.rs. Distinct file/domain from the budgets.rs and government_portal.rs findings; independently landable. Same accepted fix shape/precedent as compliance.rs (done): replace response `e.to_string()` with a static client-safe message (keep server-side tracing::error!), and while in-file add a `tracing::warn!` on the ignored mark_thread_read error. Verifiable via `cargo build -p api-server` + a handler test asserting no raw sqlx text in the error body. Confidence medium: leak confirmed by static read+grep; reachability inferred."
+      ]
+    }
+  ]
+}

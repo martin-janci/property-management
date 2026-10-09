@@ -1,0 +1,126 @@
+name: Docker Backend Images (reusable)
+
+# Reusable build + push of every backend service image.
+#
+# It has no event trigger of its own on purpose: the callers own the triggers,
+# so the paths-filtered branch trigger (docker-build.yml) and the deliberately
+# UNFILTERED tag trigger (docker-build-tag.yml) can never drift apart. They must
+# be separate workflows because GitHub applies `on.push.paths` to tag pushes as
+# well: a tag push carries an empty commit list, so a paths filter can never
+# match it, and a release tag therefore used to build nothing at all — starving
+# the images release.yml waits for.
+
+on:
+  workflow_call:
+    inputs:
+      force_push:
+        description: >-
+          Publish even when the ref is neither main, dev nor a `v*` tag. Wired
+          to the caller's workflow_dispatch `push` input: the deploy-server's
+          `worktree open` path dispatches this build for a feature branch and
+          then pulls `ppt-<svc>:<branch>` (see
+          backend/servers/deploy-server/src/api/worktree.rs), so a dispatch must
+          still be able to publish a branch tag.
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/martin-janci
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # One boolean for "are we publishing?", shared by the build step and the
+      # post-push manifest check. Same condition the two build steps carried
+      # before this workflow was factored out, so that the manifest check and
+      # the push can never disagree about whether an image exists.
+      PUSH_IMAGES: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v') || inputs.force_push) }}
+    strategy:
+      matrix:
+        # accounting-server is a first-class workspace member
+        # (backend/servers/accounting-server, bin `accounting-server`, port
+        # 8082) and had no published image at all until now.
+        target: [api-server, reality-server, accounting-server]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        if: env.PUSH_IMAGES == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The tag set lives in exactly one place, shared with docker-frontend.yml.
+      - name: Docker metadata
+        id: meta
+        uses: ./.github/actions/docker-image-tags
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/ppt-${{ matrix.target }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/backend/Dockerfile
+          target: ${{ matrix.target }}
+          platforms: linux/amd64
+          push: ${{ env.PUSH_IMAGES }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Shared cache scope: every matrix job builds the same workspace and
+          # produces all server binaries in one cargo invocation, so they should
+          # share a single GHA cache scope. Separate scopes blew past the 10 GB
+          # per-repo limit and caused evictions.
+          cache-from: type=gha,scope=backend-shared
+          cache-to: type=gha,mode=max,scope=backend-shared
+          # Version identity (T6). These three feed the OCI labels in
+          # docker/backend/Dockerfile and, via `option_env!`, the `commit` /
+          # `built_at` fields of each server's /health payload — so a running
+          # container and its image agree, with no git call at runtime.
+          build-args: |
+            BUILDPLATFORM=linux/amd64
+            APP_VERSION=${{ steps.meta.outputs.app_version }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.meta.outputs.build_date }}
+
+      - name: Verify pushed manifest
+        if: env.PUSH_IMAGES == 'true'
+        env:
+          IMAGE_REF: ${{ env.IMAGE_PREFIX }}/ppt-${{ matrix.target }}:${{ steps.meta.outputs.version }}
+          EXPECTED_VERSION: ${{ steps.meta.outputs.app_version }}
+        run: |
+          set -euo pipefail
+          # No `|| true` and no `2>/dev/null`: a tag we just pushed that does
+          # not resolve is a build failure. Silencing it is what let release.yml
+          # poll forever for images that were never published.
+          docker buildx imagetools inspect "$IMAGE_REF"
+
+          # And the image must be able to say which version it is. The label is
+          # the only thing a deployer can read without starting the container,
+          # so an image whose `org.opencontainers.image.version` is missing — or
+          # is a branch name instead of the release version — is a broken image,
+          # not a cosmetic problem. See F-P9.
+          got="$(docker buildx imagetools inspect "$IMAGE_REF" --format '{{json .Image}}' \
+            | jq -r '[ .. | objects | .config? | objects
+                       | (.Labels // .labels) | objects
+                       | ."org.opencontainers.image.version"? // empty ] | first // ""')"
+          if [ "$got" != "$EXPECTED_VERSION" ]; then
+            echo "::error::$IMAGE_REF has org.opencontainers.image.version='$got', expected '$EXPECTED_VERSION'"
+            exit 1
+          fi
+          echo "$IMAGE_REF org.opencontainers.image.version=$got"

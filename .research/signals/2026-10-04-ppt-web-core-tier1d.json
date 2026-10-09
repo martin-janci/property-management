@@ -1,0 +1,82 @@
+{
+  "generated": "2026-10-04T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=27 < floor=36). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-core segment.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed. CHURN_FILES empty this cycle, so fell through to review_cursor ordering in state.json: ppt-web-core (2026-09-27) is the oldest segment ahead of ppt-web-ui (2026-10-01), mobile-rn (2026-10-01), reality-web (2026-10-02), and the four 2026-10-03 segments. SATURATION CHECK (>=3 open code-review-finding rows => skip): backlog.json holds reality-web=4 (SATURATED, skipped), reality-server=3 (SATURATED, skipped), ppt-web-core=2 (code-review-ppt-web-core-community-group-detail-mock-data, code-review-ppt-web-core-route-group-toast-i18n) => under the cap, eligible. ppt-web-core wins as the oldest non-saturated segment. DEDUP: the 2 open ppt-web-core findings cover (a) community.tsx mockGroup mock-data and (b) hardcoded-English toast strings across route groups; this pass deliberately avoids both — community mock and raw-English-toast i18n gaps are NOT re-flagged. The core infra files (lib/api.ts, lib/errorHandler.ts, lib/websocket.ts, contexts/AuthContext.tsx, contexts/WebSocketContext.tsx, hooks/*) were read and verified clean on the frontend static recipe (DEV-gated console logging, exhaustive 401 refresh-and-replay + single-flight handling, categoryToQueryKeys map in exact sync with backend common::notifications::NotificationCategory's 8 variants). Findings concentrate in the less-mature routes/groups/ route-wrapper layer.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "reviewed_clean": [
+    "frontend/apps/ppt-web/src/lib/api.ts",
+    "frontend/apps/ppt-web/src/lib/errorHandler.ts",
+    "frontend/apps/ppt-web/src/lib/websocket.ts",
+    "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+    "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+    "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+    "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+    "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx"
+  ],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core dispute-detail missing empty-result guard behind non-null assertion)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/disputes.tsx:385 — DisputeDetailPageRoute renders `<DisputeDetailPage dispute={uiDispute!} ...>`, asserting non-null on a value typed `UiDisputeDetail | undefined` (declared `const uiDispute: UiDisputeDetail | undefined = dispute ? {...} : undefined;` at line 298-317).",
+        "The only early-return guard for a missing dispute is line 285: `if (!dispute && !isLoading && error) { return <error-page/> }`. It requires `error` to be TRUTHY. A query that settles with no dispute AND no error (e.g. a 200/empty body, a 204, or any state where `useDispute` resolves `data === undefined` without throwing) leaves isLoading=false, error=undefined, dispute=undefined — so the guard is skipped, `uiDispute` is undefined, and execution falls through to line 385 passing `undefined` into a prop typed non-null.",
+        "DisputeDetailPage then dereferences dispute fields (id, title, status, referenceNumber, ...) on undefined → runtime TypeError (blank/crashed detail screen). The `!` assertion is exactly what masks this from the type checker; the correct guard is error-independent, e.g. `if (!uiDispute && !isLoading) return <notFound/>` (or drop the `!` and render a not-found branch when `uiDispute` is undefined).",
+        "Confidence MEDIUM (static-only): the undefined→non-null-prop dataflow is confirmed by direct read; the one unconfirmed link is whether api-server can actually return a dispute-detail 200-without-body / whether useDispute can resolve undefined without error. Even if the backend always 4xxs on a missing dispute (driving `error` truthy), the guard still does NOT cover the no-error empty case, so the assertion is unsound by construction.",
+        "Fix (cloud-landable, frontend-only): replace the error-gated guard with `if (!uiDispute) { return <not-found/>; }` placed after the uiDispute mapping (and keep a separate `if (isLoading) return <skeleton/>` if DisputeDetailPage does not already own the loading state). Single-file ppt-web edit; verifies with pnpm --filter @ppt/web typecheck/test + biome; no backend coupling."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-reports-schedule-stub-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core report-schedule detail renders unconditional fabricated stub metadata)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.tsx:290-303 — ScheduleDetailPageRoute (route /reports/schedules/:scheduleId) builds `const stubSchedule: ReportSchedule = { id: scheduleId, report_id: '', organization_id: '', name: `Schedule ${scheduleId}`, frequency: 'monthly', time: '08:00', timezone: 'UTC', format: 'pdf', recipients: [], is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }` and passes it to `<ScheduleDetailPage schedule={stubSchedule} ...>` (line 307).",
+        "This stub is built UNCONDITIONALLY — the route only issues `useReportExecutionHistory` (lines 236-248) for the execution list; there is NO query for the schedule itself. So the schedule header shown to the user (name, frequency, send time, timezone, output format, recipients, active flag, created/updated timestamps) is always client-fabricated placeholder data, not real backend state. The comment at lines 288-289 acknowledges it: 'schedule metadata will be enriched once the GET /api/v1/reports/schedules/:id endpoint is wired in a future story.'",
+        "User-facing impact: every scheduled-report detail page displays a generic 'Schedule {id}' name, a fixed 'monthly'/'08:00'/'UTC'/'pdf' configuration, and an empty recipients list regardless of the schedule's actual configuration — the execution history below it is real, so the mismatch is misleading (a weekly CSV schedule shows as monthly PDF). The `created_at`/`updated_at` are freshly stamped each render.",
+        "Confidence MEDIUM (static-only): the unconditional stub + absence of any schedule fetch is confirmed by direct read. Distinct from the existing open ppt-web-core finding (community.tsx mockGroup) — different file and different surface.",
+        "Fix: wire GET /api/v1/reports/schedules/:id (ppt-typespec → generated client) and drive ScheduleDetailPage from the fetched schedule with a loading/not-found guard; until the endpoint lands, at minimum gate the stub behind MSW/DEV so production does not present fabricated schedule metadata as real. Frontend-first; the endpoint is a backend/typespec dependency if the full fix is taken."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-create-lease-empty-pickers",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-04 ppt-web-core create-lease form ships empty unit/tenant option lists)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx:600-602 — the CreateLeasePage route wrapper renders `<CreateLeasePage units={[]} tenants={[]} templates={templates} ...>`: the unit and tenant option lists are hardcoded empty arrays. The comment at lines 613-615 confirms 'The unit/tenant pickers are not yet wired to an endpoint, so the landlord/tenant identity fields are submitted blank for the backend to resolve from the unit/application context.'",
+        "The submit handler (lines 606-627) still forwards `unit_id: formData.unitId` and `tenant_user_id: formData.tenantId || undefined` to `createLease.mutateAsync`, but with `units={[]}`/`tenants={[]}` the form has no options to populate those fields — the manager cannot select a unit at all, so a core create-lease flow is effectively non-functional (a lease needs a unit) unless the user happens to type/paste a raw id the UI gives no affordance for.",
+        "`landlord_name`, `tenant_name`, `tenant_email` are hardcoded '' in the request body (lines 616-619), relying on the backend to backfill from unit/application context — a silent contract assumption that is undocumented at the API boundary and will produce blank-named leases if the backend does not resolve them.",
+        "Confidence MEDIUM (static-only): the empty option arrays and blank identity fields are confirmed by direct read; the functional impact depends on whether CreateLeasePage exposes any alternate unit-entry affordance (none visible from the route wrapper) and whether the backend reliably resolves the blank identity fields. NOTE: this finding is scoped to the empty-pickers / blank-identity completeness gap ONLY — the hardcoded-English toast strings in this same handler (lines 628, 631-634) are deliberately NOT re-flagged here, as they are already covered by the open backlog finding code-review-ppt-web-core-route-group-toast-i18n.",
+        "Fix (cloud-landable, frontend-first): populate `units` from the existing units query and `tenants` from the tenant-application/tenant list (both generated-client hooks already used elsewhere in leases.tsx), and pass the selected tenant's name/email through instead of '' so the create request is self-describing. Single-file ppt-web edit; verifies with pnpm --filter @ppt/web typecheck/test + biome."
+      ]
+    }
+  ]
+}
