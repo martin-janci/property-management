@@ -1,0 +1,156 @@
+{
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-10-09.md && head -1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state advanced vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "unique ids in backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative double-count", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap <= 8", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — gate n/a", "observed": "0 new plans", "expected": "<=2" },
+    { "goal": "G7", "passed": true, "command": "git diff --cached --name-only --diff-filter=A plans/ | grep -c .md", "observed": "0", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "staged files outside .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets/hostnames in staged diff", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regen", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no failed phases — gate n/a", "observed": "0 failed", "expected": "0" },
+    { "goal": "G12", "passed": true, "command": "every prior plan still present or archived", "observed": "OK", "expected": "OK" },
+    { "goal": "G13", "passed": true, "command": "archive count this run >= HEAD", "observed": "22>=22", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regen", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix caps + idempotency", "observed": "true", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid; cursor advance", "observed": "epics=13 CC 8→9 PM 6→7", "expected": "valid + advanced" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token in diff", "observed": "0", "expected": "0" }
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/profile/page.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 churn 2026-10-08→2026-10-09 — PR #3047 (+125 LOC) i18n rework. First observation."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit — PR #3046 added +84 LOC; now runs_seen=2 (previous: 2026-10-03 +1)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit — PRs #3045 + #3048 (+51 LOC total); now runs_seen=2 (previous: 2026-10-08 +3)"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen bumps 1→2 — repeated hotspot across 2026-10-03 and 2026-10-09; stacks +1 onto backlog item"
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "runs_seen bumps 1→2 — repeated hotspot across 2026-10-08 and 2026-10-09; stacks +1 onto backlog item"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3045-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3045",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3045 (gh-issue-3040) modified frontend/apps/ppt-web/src/routes/groups/community.tsx without updating docs/screens/ppt/*.md. HEURISTIC CAVEAT — i18n key reuse is behavior-neutral, so this may be a false positive drift; review-candidate per spec."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3047-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3047",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3047 (gh-issue-3041) modified frontend/apps/reality-web/src/app/[locale]/profile/page.tsx (routed all /profile copy through next-intl + locale-aware formatting) without updating docs/screens/reality/profile.md."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3048-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3048",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3048 (code-review-ppt-web-core-group-join-leave-silent) modified frontend/apps/ppt-web/src/routes/groups/community.tsx (surfaced join/leave errors as toasts) without updating docs/screens/ppt/*.md."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-report-raw-anchor-locale-loss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (frontend) 2026-10-09 reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "report/page.tsx:206 uses <a href=\"/listings\"> and :434 uses <a href=\"/privacy\"> — raw anchors bypass next-intl Link, so users on /en, /cs, /de, /pl, /hu are dropped onto Slovak-default pages after submitting a report. Sibling profile/page.tsx:24 already imports Link from @/i18n/routing for exactly this reason."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-report-slovak-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (frontend) 2026-10-09 reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "report/page.tsx bakes user-facing Slovak literals (legend 'Dôvod nahlásenia', labels/button copy, success h1, GDPR copy, MSG.* error strings on lines 29-37) while only h1/subtitle flow through next-intl — 5 of 6 shipped locales (en/cs/de/pl/hu) see mixed-language UI; the file's own doc comment flags this as an unresolved i18n gap."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-report-mock-filename-is-prod-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (frontend) 2026-10-09 reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "report/_mock.ts is misnamed — exports REPORT_PROBLEMS, the live problem_type enum options whose string values ARE the wire payload posted to POST /api/v1/reports (file comment: 'The radio value IS the wire value posted to reality-server'). Any automated stub/mock-retirement sweep could delete production routing data."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3030",
+      "type": "dep-update-noise",
+      "source": "PR #3030",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot npm-minor-patch group PR closed unmerged 2026-10-08 (superseded by #3038) — logged, not scored."
+      ]
+    }
+  ]
+}

@@ -11554,20 +11554,22 @@
       "title": "reality-web /report page recent churn — PR #3014 submit-wiring change",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
         "churn-scan-2026-10-03",
-        "PR #3014"
+        "PR #3014",
+        "PR #3046"
       ],
       "evidence": [
-        "Top-3 churn this run (1 PR this run). First observation."
+        "Top-3 churn this run (1 PR this run). First observation.",
+        "repeated-churn 2026-10-09 — PR #3046 wired report submit (+84 LOC); runs_seen=2"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-03",
+      "updated_at": "2026-10-09",
       "plan": null
     },
     {
@@ -11702,19 +11704,22 @@
       "title": "ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "git-log-14d"
+        "git-log-14d",
+        "PR #3045",
+        "PR #3048"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)"
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)",
+        "repeated-churn 2026-10-09 — PRs #3045 + #3048 (+51 LOC total); runs_seen=2"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/community.tsx"
       ],
       "created_at": "2026-10-08",
-      "updated_at": "2026-10-08",
+      "updated_at": "2026-10-09",
       "plan": null
     },
     {
@@ -11932,6 +11937,147 @@
       ],
       "created_at": "2026-10-08",
       "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/profile/page.tsx",
+      "title": "reality-web /profile page recent churn — PR #3047 i18n rework",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-09",
+        "PR #3047"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR, +125 LOC). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3045-ppt",
+      "title": "ppt-web route change (group-detail not-found i18n) without screen-map update — PR #3045",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3045"
+      ],
+      "evidence": [
+        "PR #3045 (gh-issue-3040) modified frontend/apps/ppt-web/src/routes/groups/community.tsx without updating docs/screens/ppt/*.md. Best-effort heuristic — key reuse is behavior-neutral so this may be a false-positive drift; review-candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3047-reality",
+      "title": "reality-web route change (/profile next-intl rework) without screen-map update — PR #3047",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3047"
+      ],
+      "evidence": [
+        "PR #3047 (gh-issue-3041) modified frontend/apps/reality-web/src/app/[locale]/profile/page.tsx (routed all /profile copy through next-intl) without updating docs/screens/reality/profile.md."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3048-ppt",
+      "title": "ppt-web route change (group join/leave toast i18n) without screen-map update — PR #3048",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3048"
+      ],
+      "evidence": [
+        "PR #3048 (code-review-ppt-web-core-group-join-leave-silent) modified frontend/apps/ppt-web/src/routes/groups/community.tsx (surfaced join/leave mutation errors as toasts) without updating docs/screens/ppt/*.md."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-report-raw-anchor-locale-loss",
+      "title": "reality-web /report raw <a> anchors drop locale prefix on submit",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 dev-review 2026-10-09 (reality-web)"
+      ],
+      "evidence": [
+        "report/page.tsx:206 uses <a href=\"/listings\"> and :434 uses <a href=\"/privacy\"> — raw anchors bypass next-intl Link, so users on /en, /cs, /de, /pl, /hu are dropped onto Slovak-default pages after submitting a report. Sibling profile/page.tsx:24 already imports Link from @/i18n/routing for exactly this reason."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-report-slovak-hardcoded-strings",
+      "title": "reality-web /report ships hardcoded Slovak strings in multi-locale app",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 dev-review 2026-10-09 (reality-web)"
+      ],
+      "evidence": [
+        "report/page.tsx bakes user-facing Slovak literals (legend 'Dôvod nahlásenia', labels 'Odkaz na inzerát'/'Popis problému'/'Prílohy', button 'Odoslať nahlásenie', success h1 'Nahlásenie bolo odoslané', 'Späť na ponuky', GDPR copy, and MSG.* error strings on lines 29-37) while only h1/subtitle flow through next-intl — 5 of 6 shipped locales (en/cs/de/pl/hu) see mixed-language UI; the file's own doc comment flags this as an unresolved i18n gap."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-report-mock-filename-is-prod-data",
+      "title": "reality-web report/_mock.ts is misnamed — exports live problem_type enum",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 dev-review 2026-10-09 (reality-web)"
+      ],
+      "evidence": [
+        "report/_mock.ts exports REPORT_PROBLEMS, the live problem_type enum options whose string values ARE the wire payload posted to POST /api/v1/reports (file comment admits 'The radio value IS the wire value posted to reality-server'). Any automated stub/mock-retirement sweep could delete production routing data. Labels/descriptions are also Slovak-only, compounding the hardcoded-strings finding."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/_mock.ts"
+      ],
+      "created_at": "2026-10-09",
+      "updated_at": "2026-10-09",
       "plan": null
     }
   ]
