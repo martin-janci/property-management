@@ -363,11 +363,16 @@ export function resetApiClient(): void {
 // Convenience Exports
 // ============================================================================
 
-/**
- * Default export: the API client instance.
- * Use getApiClient() for type-safe access.
- */
-export default getApiClient();
+// NOTE: intentionally NO default export.
+//
+// A default export here (`export default getApiClient()`) would be evaluated
+// eagerly at module-load time — i.e. *before* AuthProvider calls
+// `configureApiClient()`. Any `import api from './lib/api'` consumer would then
+// capture that pre-configuration instance, which lacks the token getter and the
+// 401 refresh-and-replay handler, and is orphaned the moment
+// `configureApiClient()` swaps `apiInstance` for a freshly configured one.
+// Always access the client lazily via `getApiClient()` so every caller sees the
+// configured singleton.
 
 /**
  * Type guard to check if an error is an ApiError.

@@ -5,7 +5,7 @@
  * Part of Story 43.1: Automation Rule Builder.
  */
 
-import type { AutomationRule } from '@ppt/api-client';
+import type { AutomationRule, CreateAutomationRuleInput } from '@ppt/api-client';
 import { useCreateAutomationRule } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -20,19 +20,40 @@ export function CreateRulePage() {
   const createRule = useCreateAutomationRule();
 
   const handleSave = async (rule: Partial<AutomationRule>) => {
+    // The builder yields a Partial; validate the client-required fields at the
+    // boundary and construct a typed CreateAutomationRuleInput instead of a
+    // blanket `as AutomationRule` cast (which silently pretends server-owned
+    // fields like id/createdAt exist and masks missing required fields).
+    if (!rule.name || !rule.trigger || !rule.actions || rule.actions.length === 0) {
+      showToast({
+        type: 'error',
+        title: t('automation.createPage.createFailedTitle'),
+        message: t('automation.createPage.incomplete'),
+      });
+      return;
+    }
+
+    const payload: CreateAutomationRuleInput = {
+      name: rule.name,
+      description: rule.description,
+      isEnabled: rule.isEnabled ?? true,
+      trigger: rule.trigger,
+      actions: rule.actions,
+    };
+
     try {
-      await createRule.mutateAsync(rule as AutomationRule);
+      await createRule.mutateAsync(payload);
       showToast({
         type: 'success',
-        title: 'Rule created',
-        message: 'The automation rule was created.',
+        title: t('automation.createPage.createdTitle'),
+        message: t('automation.createPage.createdMessage'),
       });
       navigate('/automations/rules');
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Create failed',
-        message: err instanceof Error ? err.message : 'The automation rule could not be created.',
+        title: t('automation.createPage.createFailedTitle'),
+        message: err instanceof Error ? err.message : t('automation.createPage.createErrorMessage'),
       });
     }
   };

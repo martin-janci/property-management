@@ -340,7 +340,19 @@
     "notifications": "Powiadomienia",
     "actions": "Actions",
     "deleting": "Deleting...",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "created": "Utworzono",
+    "updated": "Zaktualizowano",
+    "saved": "Zapisano",
+    "deleted": "Usunięto",
+    "submitted": "Przesłano",
+    "done": "Gotowe",
+    "createFailed": "Tworzenie nie powiodło się",
+    "updateFailed": "Aktualizacja nie powiodła się",
+    "saveFailed": "Zapisywanie nie powiodło się",
+    "deleteFailed": "Usuwanie nie powiodło się",
+    "submitFailed": "Przesyłanie nie powiodło się",
+    "pleaseTryAgain": "Spróbuj ponownie."
   },
   "nav": {
     "home": "Strona główna",
@@ -556,6 +568,11 @@
       "bookFacility": "Zarezerwuj obiekt",
       "empty": "Nie znaleziono rezerwacji.",
       "allCaughtUp": "Wszystko załatwione! Brak oczekujących rezerwacji do sprawdzenia."
+    },
+    "errors": {
+      "fetchFailedTitle": "Nie udało się załadować obiektów",
+      "fetchFailedDescription": "Podczas ładowania obiektów wystąpił błąd. Spróbuj ponownie.",
+      "retry": "Spróbuj ponownie"
     }
   },
   "faults": {
@@ -639,7 +656,11 @@
         "titleTooLong": "Tytuł może mieć maksymalnie 255 znaków",
         "descriptionRequired": "Opis jest wymagany"
       }
-    }
+    },
+    "reported": "Usterka zgłoszona",
+    "reportFailed": "Nie udało się zgłosić usterki",
+    "updated": "Usterka zaktualizowana",
+    "updateFailed": "Nie udało się zaktualizować usterki"
   },
   "buildings": {
     "title": "Budynki",
@@ -1866,7 +1887,13 @@
         "state": "Stan",
         "actions": "Akcje"
       }
-    }
+    },
+    "sensorDeleted": "Czujnik usunięty",
+    "sensorDeleteFailed": "Nie udało się usunąć czujnika",
+    "sensorRegistered": "Czujnik zarejestrowany",
+    "sensorRegisterFailed": "Nie udało się zarejestrować czujnika",
+    "sensorUpdated": "Czujnik zaktualizowany",
+    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika"
   },
   "commandPalette": {
     "commands": {
@@ -2186,7 +2213,21 @@
       "deleteConfirm": "Czy na pewno chcesz usunąć <1>{{name}}</1>?",
       "cancel": "Anuluj",
       "delete": "Usuń",
-      "deleting": "Usuwanie..."
+      "deleting": "Usuwanie...",
+      "deleteSuccessTitle": "Reguła usunięta",
+      "deleteSuccessMessage": "Reguła „{{name}}” została usunięta.",
+      "deleteErrorTitle": "Usuwanie nie powiodło się",
+      "deleteErrorMessage": "Nie udało się usunąć reguły automatyzacji.",
+      "activatedTitle": "Reguła aktywowana",
+      "pausedTitle": "Reguła wstrzymana",
+      "activatedMessage": "Reguła „{{name}}” została aktywowana.",
+      "pausedMessage": "Reguła „{{name}}” została wstrzymana.",
+      "updateErrorTitle": "Aktualizacja nie powiodła się",
+      "updateErrorMessage": "Nie udało się zaktualizować reguły automatyzacji.",
+      "runSuccessTitle": "Reguła uruchomiona",
+      "runSuccessMessage": "Reguła „{{name}}” jest teraz uruchamiana.",
+      "runErrorTitle": "Uruchomienie nie powiodło się",
+      "runErrorMessage": "Nie udało się uruchomić reguły automatyzacji."
     },
     "ruleCard": {
       "unknownTrigger": "Nieznany wyzwalacz",
@@ -2370,7 +2411,12 @@
       "back": "Powrót do reguł",
       "title": "Utwórz regułę automatyzacji",
       "subtitle": "Skonfiguruj nowy zautomatyzowany przepływ pracy do zarządzania nieruchomościami.",
-      "error": "Nie udało się utworzyć reguły automatyzacji. Spróbuj ponownie."
+      "error": "Nie udało się utworzyć reguły automatyzacji. Spróbuj ponownie.",
+      "incomplete": "Uzupełnij regułę: wymagana jest nazwa, wyzwalacz i co najmniej jedna akcja.",
+      "createFailedTitle": "Tworzenie nie powiodło się",
+      "createdTitle": "Reguła utworzona",
+      "createdMessage": "Reguła automatyzacji została utworzona.",
+      "createErrorMessage": "Nie udało się utworzyć reguły automatyzacji."
     },
     "editPage": {
       "back": "Powrót do reguł",
@@ -2380,7 +2426,11 @@
       "subtitle": "Zmodyfikuj ustawienia swojego przepływu pracy automatyzacji.",
       "invalidId": "Nieprawidłowy identyfikator reguły.",
       "loadError": "Nie udało się załadować reguły automatyzacji. Spróbuj ponownie.",
-      "updateError": "Nie udało się zaktualizować reguły automatyzacji. Spróbuj ponownie."
+      "updateError": "Nie udało się zaktualizować reguły automatyzacji. Spróbuj ponownie.",
+      "updatedTitle": "Reguła zaktualizowana",
+      "updatedMessage": "Reguła automatyzacji została zaktualizowana.",
+      "updateFailedTitle": "Aktualizacja nie powiodła się",
+      "updateFailedMessage": "Nie udało się zaktualizować reguły automatyzacji."
     },
     "templateLibrary": {
       "title": "Biblioteka szablonów",
@@ -2400,7 +2450,9 @@
       "categoryPayments": "Płatności",
       "categoryCommunications": "Komunikacja",
       "categoryDocuments": "Dokumenty",
-      "categoryMaintenance": "Konserwacja"
+      "categoryMaintenance": "Konserwacja",
+      "useErrorTitle": "Nie można użyć szablonu",
+      "useErrorMessage": "Nie udało się utworzyć reguły z tego szablonu."
     },
     "templateCard": {
       "popular": "Popularne",
@@ -2496,7 +2548,52 @@
       "actionResults": "Wyniki akcji",
       "triggerContext": "Kontekst wyzwalacza",
       "retryExecution": "Ponów wykonanie",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "retrySuccessTitle": "Wykonanie ponowione",
+      "retrySuccessMessage": "Wykonanie zostało skolejkowane do ponowienia.",
+      "retryErrorTitle": "Ponowienie nie powiodło się",
+      "retryErrorMessage": "Nie udało się ponowić wykonania."
     }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
+    }
+  },
+  "community": {
+    "groupCreated": "Grupa utworzona",
+    "groupJoined": "Dołączono do grupy.",
+    "joinFailed": "Nie udało się dołączyć do grupy",
+    "groupLeft": "Opuszczono grupę.",
+    "leaveFailed": "Nie udało się opuścić grupy"
+  },
+  "leases": {
+    "created": "Umowa najmu utworzona",
+    "createFailed": "Nie udało się utworzyć umowy najmu",
+    "violationRecorded": "Naruszenie zarejestrowane",
+    "violationCreateFailed": "Nie udało się zarejestrować naruszenia"
+  },
+  "meters": {
+    "readingSubmitted": "Odczyt przesłany",
+    "submitFailed": "Nie udało się przesłać odczytu",
+    "correctionSubmitted": "Korekta odczytu przesłana",
+    "updateFailed": "Nie udało się zaktualizować odczytu",
+    "readingValidated": "Odczyt zweryfikowany",
+    "validationFailedTitle": "Weryfikacja nie powiodła się",
+    "validationFailed": "Nie udało się zweryfikować odczytu"
+  },
+  "personMonths": {
+    "unitsUpdated": "Zaktualizowano jednostki: {{count}}",
+    "bulkFailedTitle": "Wprowadzanie zbiorcze nie powiodło się",
+    "bulkFailed": "Nie udało się zapisać osobomiesięcy",
+    "entryRemoved": "Wpis usunięty",
+    "deleteFailed": "Nie udało się usunąć wpisu",
+    "saved": "Osobomiesiąc zapisany",
+    "saveFailed": "Nie udało się zapisać osobomiesiąca"
   }
 }

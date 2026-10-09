@@ -1,0 +1,33 @@
+{
+  "generated": "2026-10-05",
+  "source_run": "dispatcher Tier-1d demand-driven finding generator (backlog starved: claimable=17 < floor=36, no existing refill source had candidates)",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "OLDEST-UNREVIEWED. Churn hotspots were not handed in this demand-driven run. review_cursor.ppt-web-core = 2026-09-27 is the oldest date across all 8 segments (api-handlers/api-core/reality-server/mobile-native-kmp = 2026-10-03, reality-web = 2026-10-02, ppt-web-ui/mobile-rn = 2026-10-01). backlog.json carries 0 OPEN code-review-finding rows for ppt-web-core (not saturated by the skill's backlog-based rule) -> selected. Two earlier Tier-1d runs today (signals/2026-10-05-ppt-web-core-tier1d.json: api.ts 401-branch uncaught, useWebSocket late-handler; -tier1d-b.json: AppRoutes auth-guard, iot-ws reconnect+token-in-url) and 2026-08-29-...-routes-fetch-i18n.json (person-months raw fetch, iot.tsx hardcoded confirm) were checked for overlap; this finding is disjoint (routes/groups/rentals.tsx query error handling, a different route-group file and a different defect class).",
+  "experts_used": [
+    "frontend"
+  ],
+  "landable_in_cloud": true,
+  "landability_note": "Frontend-only React edit confined to a single file (frontend/apps/ppt-web/src/routes/groups/rentals.tsx) plus, if desired, a small shared error-state surface it already has access to. No backend, migration, or openapi changes. The fix destructures isError/error from the existing useQuery calls and renders an error state (or routes 401s through the existing handleRentalsAuthError/logout path the sibling mutations already use). Verifies with pnpm --filter @ppt/web typecheck + test + biome check; no cross-stack coupling.",
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-rentals-query-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx — every data-fetching route wrapper destructures only `{ data, isLoading }` from useQuery and never reads `isError`/`error`: RentalsDashboardPageRoute (lines 233-248, two queries: reservations + connections), PlatformConnectionsPageRoute (293-300), BookingsPageRoute (352-354), BookingDetailPageRoute (query feeding line 434), GuestRegistrationPageRoute (484-487). The sibling useMutation calls in the same file DO handle failure (`onError: (error) => handleRentalsAuthError(error, logout)` at lines 311/323/417/427), so query and mutation error handling diverge.",
+        "There is no mitigating global or boundary-level handler: main.tsx:28-35 constructs `new QueryClient({ defaultOptions: { queries: { staleTime, retry: 1 } } })` with no `queryCache` onError and no `throwOnError`, and TanStack Query v5 does NOT surface resolved-but-errored queries to an ErrorBoundary by default. The top-level <ErrorBoundary> in main.tsx:50 only catches render-time throws, not these async query rejections. No `errorElement`/ErrorBoundary wraps the rentals routes (grep of routes/ for ErrorBoundary|errorElement returns nothing).",
+        "Impact 1 (misleading data): on a failed reservations/connections fetch, RentalsDashboardPageRoute renders a dashboard computed from `data?.data?.data ?? []` (line 250) — statistics show 0 bookings / 0 revenue / currency defaulted to 'EUR' (lines 256-265) as if the account genuinely has no rentals, instead of an error surface.",
+        "Impact 2 (infinite spinner): BookingDetailPageRoute guards with `if (isLoading || !data || !data.data)` (line 434) and returns a spinner. After a query error `isLoading` is false but `data` is undefined, so the `!data` branch keeps the page on a perpetual loading spinner with no error/retry affordance.",
+        "Impact 3 (auth divergence): a 401 on any of these queries is swallowed — unlike the mutations, the queries never call `handleRentalsAuthError(error, logout)`, so an expired/revoked session on the rentals dashboard neither surfaces an error nor triggers logout/redirect; the user just sees an empty or perpetually-loading page.",
+        "Confidence MEDIUM (static-only): the missing isError handling, the empty-default computation, and the `isLoading || !data` spinner guard are confirmed by direct read; the QueryClient defaults and absence of a route-level ErrorBoundary are confirmed from main.tsx and a grep of routes/. Not upgraded to HIGH because the exact runtime render of each page component (under frontend/apps/ppt-web/src/features/.../pages, outside this segment) was not re-read this run.",
+        "Fix (cloud-landable, frontend-only): destructure `isError`/`error` from each useQuery and render an error state (the app already has parseApiError in lib/errorHandler.ts and shared error surfaces), and route query failures through the same `handleRentalsAuthError(error, logout)` path the mutations use so 401s log out consistently. Single-file ppt-web edit; verifies with pnpm --filter @ppt/web typecheck + test + biome check."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

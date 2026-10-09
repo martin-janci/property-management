@@ -1,0 +1,67 @@
+{
+  "generated": "2026-10-08T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable backlog starved: claimable=22 < floor=36). Static single-segment rotating code review via ppt-dev-review skill — no compilation / no test execution (file reading + grep only). Produces fresh cloud-landable frontend (React/Vite ppt-web) backlog vectors for the ppt-web-ui segment. Net-new, non-overlapping with the earlier same-day 2026-10-08-ppt-web-ui-tier1d.json run (which mined Toast/ConnectionStatus/LoginPage); this run mines the community route group, a Phase-1 churn hotspot.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned: frontend/apps/ppt-web/src/routes/groups/community.tsx is a top code churn hotspot since 2026-10-01 (3 touches, alongside the workflow-automation pages). ppt-web-ui is tied-oldest cursor (2026-10-01) and has 0 OPEN code-review-finding rows in backlog.json (not saturated; saturation floor is >=3 status==open). Earlier same-day sibling run covered unrelated files (Toast/ConnectionStatus/LoginPage), so community.tsx is unmined today.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-community-feed-noop-create",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/features/community/pages/FeedPage.tsx"
+      ],
+      "evidence": [
+        "community.tsx FeedPageRoute (:21-41) is mounted on the live route '/community' (traced: routes/AppRoutes.tsx:19 imports communityRoutes, :51 renders it; community.tsx:206 maps '/community' -> <FeedPageRoute/>). The wrapper passes posts={[]} and total={0} hardcoded with no useQuery/data fetch, and wires EVERY action callback to an empty no-op: onCreatePost={() => {}}, onLikePost, onCommentPost, onSharePost, onEditPost, onDeletePost, onFilterChange, onLoadMore (:26-38).",
+        "FeedPage's contract expects real behaviour: features/community/pages/FeedPage.tsx declares posts: CommunityPost[] (:14) and onCreatePost: (data: CreatePostRequest) => void (:23), and the in-page create-post form submits via onSubmit={onCreatePost} (:110). Because onCreatePost is () => {}, a resident who fills in and submits a new community post has their input silently discarded — no API call, no error, no toast. The feed itself is permanently empty (posts=[]) with no fetch.",
+        "Fix (frontend-only, cloud-landable): wire FeedPageRoute to the Community API hooks (useFeed/useCreatePost/useLikePost/... from @ppt/api-client, mirroring the data-wired GroupDetailPageInner pattern already in this same file :91-153) so posts are fetched and onCreatePost persists. Silent loss of user-authored content on a shipped route = high severity."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-list-routes-empty",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "evidence": [
+        "Three more live community routes render hardcoded-empty data with no backend wiring: GroupsPageRoute (:43-57) passes groups={[]} total={0}; EventsPageRoute (:166-182) passes events={[]} total={0}; MarketplacePageRoute (:184-200) passes items={[]} total={0}. All are mounted via communityRoutes() in AppRoutes.tsx:51 (paths '/community/groups', '/community/events', '/community/marketplace').",
+        "None of the three fetch data (no useQuery / @ppt/api-client list hook) and their action/filter handlers are all no-ops: onJoinGroup/onLeaveGroup/onFilterChange, onRsvp/onEditEvent/onDeleteEvent/onExportCalendar, onContactSeller/onEditItem/onDeleteItem/onMarkSold/onFilterChange. Each page therefore shows a permanent empty state and every button does nothing — shipped non-functional UI for Epic 42 community features.",
+        "Contrast: the same file's GroupDetailPageInner (:91-153) IS correctly data-wired (useGroup/useGroupMembers/useJoinGroup/useLeaveGroup with loading + not-found states). Fix: apply that pattern to the three list routes (fetch list data, wire join/rsvp/contact/filter handlers). Frontend-only, cloud-landable."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-groupdetail-delete-noop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [ppt-web-ui]",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "evidence": [
+        "GroupDetailPageInner (:91-153, live at '/community/groups/:groupId') reads data correctly but wires its destructive/admin mutations to no-ops. onDelete={() => navigate('/community/groups')} (:146) navigates AWAY as if the group were deleted but never calls any delete mutation — the group still exists; the manager is misled into thinking the delete succeeded. No useDeleteGroup hook is imported (only useJoinGroup/useLeaveGroup are, :7).",
+        "Likewise onEdit (:145), onNavigateToSettings (:147), onPromoteMember (:148), onRemoveMember (:149), onBanMember (:150) are all () => {} — the group-admin UI (promote/remove/ban/settings) renders but performs nothing.",
+        "Fix (frontend-only, cloud-landable): import and call the corresponding Community API mutations (useDeleteGroup, usePromoteMember, useRemoveMember, useBanMember, etc.) and gate navigation on mutation success with a confirm + toast; at minimum onDelete must invoke an actual delete before navigating. Misleading destructive action on a shipped route."
+      ]
+    }
+  ]
+}

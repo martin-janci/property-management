@@ -340,6 +340,7 @@ function FaultsPageRoute() {
 
 function CreateFaultPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: buildingsData } = useBuildings();
   const createFault = useCreateFault();
@@ -365,13 +366,20 @@ function CreateFaultPageRoute() {
             category: data.category,
             priority: data.priority,
           });
-          showToast({ type: 'success', title: 'Created', message: 'Fault reported' });
+          showToast({
+            type: 'success',
+            title: t('common.created', { defaultValue: 'Created' }),
+            message: t('faults.reported', { defaultValue: 'Fault reported' }),
+          });
           navigate(created?.id ? `/faults/${created.id}` : '/faults');
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Failed to report fault',
-            message: err instanceof Error ? err.message : 'Please try again.',
+            title: t('faults.reportFailed', { defaultValue: 'Failed to report fault' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
           });
         }
       }}
@@ -502,13 +510,20 @@ function EditFaultPageRoute() {
             location_description: formData.locationDescription,
             category: formData.category,
           });
-          showToast({ type: 'success', title: 'Updated', message: 'Fault updated' });
+          showToast({
+            type: 'success',
+            title: t('common.updated', { defaultValue: 'Updated' }),
+            message: t('faults.updated', { defaultValue: 'Fault updated' }),
+          });
           navigate(`/faults/${faultId}`);
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Failed to update fault',
-            message: err instanceof Error ? err.message : 'Please try again.',
+            title: t('faults.updateFailed', { defaultValue: 'Failed to update fault' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
           });
         }
       }}

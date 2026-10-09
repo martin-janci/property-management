@@ -33,6 +33,7 @@ import type {
   ViolationStatus as ApiViolationStatus,
   ViolationSummary as ApiViolationSummary,
   CreateViolationRequest,
+  SharedSupportedCurrency,
 } from '@ppt/api-client';
 import {
   useApplication,
@@ -109,7 +110,49 @@ const ViolationDetailPage = lazy(() =>
   import('../../features/leases').then((m) => ({ default: m.ViolationDetailPage }))
 );
 
-const DEFAULT_CURRENCY = 'EUR';
+/**
+ * Supported ISO 4217 codes the UI can label amounts with (mirrors
+ * `SharedSupportedCurrency` from the generated API client).
+ */
+const SUPPORTED_CURRENCIES: ReadonlySet<SharedSupportedCurrency> = new Set([
+  'EUR',
+  'CZK',
+  'CHF',
+  'GBP',
+  'PLN',
+  'USD',
+  'HUF',
+  'RON',
+  'BGN',
+  'HRK',
+  'SEK',
+  'DKK',
+  'NOK',
+]);
+
+const FALLBACK_CURRENCY: SharedSupportedCurrency = 'EUR';
+
+/**
+ * Resolve the currency used to label lease monetary values.
+ *
+ * The backend lease wire shapes (`Lease`, `LeaseSummary`, `LeasePayment`,
+ * `LeaseStatistics`, ...) carry no currency field, so the UI cannot derive a
+ * per-lease currency from the payload. Until the API models currency per
+ * entity, a single deployment-level default is used: `VITE_DEFAULT_CURRENCY`
+ * (an ISO 4217 code) when set to a supported value, otherwise EUR. This lets
+ * PLN/HUF/CZK market deployments label amounts correctly instead of baking in
+ * EUR for every market.
+ */
+export function resolveDefaultCurrency(): SharedSupportedCurrency {
+  const configured = import.meta.env.VITE_DEFAULT_CURRENCY;
+  if (typeof configured === 'string') {
+    const code = configured.trim().toUpperCase();
+    if ((SUPPORTED_CURRENCIES as ReadonlySet<string>).has(code)) {
+      return code as SharedSupportedCurrency;
+    }
+  }
+  return FALLBACK_CURRENCY;
+}
 
 // ============================================================================
 // API → UI mappers (snake_case wire shapes, Decimal-as-string → camelCase)
@@ -239,7 +282,7 @@ function mapViolationStatus(status: ApiViolationStatus): UiViolationStatus {
 }
 
 /** Transform an API lease summary → UI `LeaseSummary`. */
-function mapLeaseSummaryToUi(s: ApiLeaseSummary): UiLeaseSummary {
+export function mapLeaseSummaryToUi(s: ApiLeaseSummary): UiLeaseSummary {
   return {
     id: s.id,
     unitId: s.unit_id,
@@ -252,7 +295,7 @@ function mapLeaseSummaryToUi(s: ApiLeaseSummary): UiLeaseSummary {
     startDate: s.start_date,
     endDate: s.end_date,
     rentAmount: Number(s.monthly_rent),
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
     daysUntilExpiry: s.days_until_expiry,
   };
 }
@@ -293,7 +336,7 @@ function mapTemplateToUi(t: ApiLeaseTemplate): UiLeaseTemplate {
 }
 
 /** Transform an API statistics payload → UI `LeaseStatistics`. */
-function mapStatisticsToUi(s: ApiLeaseStatistics): UiLeaseStatistics {
+export function mapStatisticsToUi(s: ApiLeaseStatistics): UiLeaseStatistics {
   return {
     totalLeases: s.total_leases,
     activeLeases: s.active_leases,
@@ -303,7 +346,7 @@ function mapStatisticsToUi(s: ApiLeaseStatistics): UiLeaseStatistics {
     occupancyRate: s.occupancy_rate,
     totalMonthlyRent: Number(s.total_monthly_rent),
     overduePayments: 0,
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
   };
 }
 
@@ -338,13 +381,13 @@ function mapAmendmentToUi(a: ApiLeaseAmendment): UiLeaseAmendment {
 }
 
 /** Transform an API lease payment → UI `LeasePayment`. */
-function mapPaymentToUi(p: ApiLeasePayment): UiLeasePayment {
+export function mapPaymentToUi(p: ApiLeasePayment): UiLeasePayment {
   return {
     id: p.id,
     leaseId: p.lease_id,
     dueDate: p.due_date,
     amount: Number(p.amount),
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
     status: mapPaymentStatus(p),
     paidAmount: p.paid_amount != null ? Number(p.paid_amount) : undefined,
     paidAt: p.paid_at ?? undefined,
@@ -367,7 +410,7 @@ function mapReminderToUi(r: ApiLeaseReminder): UiLeaseReminder {
 }
 
 /** Transform the core API lease entity → UI `Lease`. */
-function mapLeaseToUi(l: ApiLease): UiLease {
+export function mapLeaseToUi(l: ApiLease): UiLease {
   return {
     id: l.id,
     organizationId: l.organization_id,
@@ -378,7 +421,7 @@ function mapLeaseToUi(l: ApiLease): UiLease {
     startDate: l.start_date,
     endDate: l.end_date,
     rentAmount: Number(l.monthly_rent),
-    currency: DEFAULT_CURRENCY,
+    currency: resolveDefaultCurrency(),
     depositAmount: Number(l.security_deposit),
     paymentDayOfMonth: l.rent_due_day,
     notes: l.notes ?? undefined,
@@ -518,7 +561,7 @@ function LeasesDashboardPageRoute() {
         occupancyRate: 0,
         totalMonthlyRent: 0,
         overduePayments: 0,
-        currency: DEFAULT_CURRENCY,
+        currency: resolveDefaultCurrency(),
       };
   const expirationOverview: UiExpirationOverview = expiringQuery.data
     ? mapExpirationToUi(expiringQuery.data)
@@ -589,6 +632,7 @@ function LeaseDetailPageRoute() {
 /** Route wrapper: create lease. Templates selector is live; unit/tenant pending. */
 function CreateLeasePageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { organizationId } = useOrganization();
   const { data: templatesData } = useLeaseTemplates(organizationId);
@@ -625,13 +669,20 @@ function CreateLeasePageRoute() {
             rent_due_day: formData.paymentDayOfMonth,
             notes: formData.notes,
           });
-          showToast({ type: 'success', title: 'Created', message: 'Lease created' });
+          showToast({
+            type: 'success',
+            title: t('common.created', { defaultValue: 'Created' }),
+            message: t('leases.created', { defaultValue: 'Lease created' }),
+          });
           navigate('/leases/list');
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Create failed',
-            message: err instanceof Error ? err.message : 'Could not create lease',
+            title: t('common.createFailed', { defaultValue: 'Create failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('leases.createFailed', { defaultValue: 'Could not create lease' }),
           });
         }
       }}
@@ -736,6 +787,7 @@ function ViolationsPageRoute() {
 /** Route wrapper: create violation, live. Lease selector is live. */
 function CreateViolationPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { organizationId } = useOrganization();
   const leasesQuery = useLeases({ organization_id: organizationId });
@@ -758,13 +810,22 @@ function CreateViolationPageRoute() {
             occurred_at: toDateTime(formData.violationDate),
           };
           await createViolation.mutateAsync(body);
-          showToast({ type: 'success', title: 'Created', message: 'Violation recorded' });
+          showToast({
+            type: 'success',
+            title: t('common.created', { defaultValue: 'Created' }),
+            message: t('leases.violationRecorded', { defaultValue: 'Violation recorded' }),
+          });
           navigate('/leases/violations');
         } catch (err) {
           showToast({
             type: 'error',
-            title: 'Create failed',
-            message: err instanceof Error ? err.message : 'Could not record violation',
+            title: t('common.createFailed', { defaultValue: 'Create failed' }),
+            message:
+              err instanceof Error
+                ? err.message
+                : t('leases.violationCreateFailed', {
+                    defaultValue: 'Could not record violation',
+                  }),
           });
         }
       }}

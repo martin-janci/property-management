@@ -1,0 +1,270 @@
+{
+  "run": "2026-10-03",
+  "generated_at": "2026-10-03T03:12:00Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3013-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3013",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3013 touched frontend/apps/reality-web/src/app/[locale]/sell/page.tsx without updating docs/screens/reality/sell.md",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3014-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3014",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3014 touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx without updating docs/screens/reality/report-listing.md",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-03",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 churn this run: 1 commit touched sell/page.tsx (PR #3013)",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-03",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 churn this run: 1 commit touched report/page.tsx (PR #3014)",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-03",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 churn this run: 1 commit touched FeaturedListings.tsx (PR #3015)",
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-create-handlers-return-200-not-201",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-server 2026-10-03",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Multiple reality-server creation handlers advertise 201 Created in utoipa::path spec but return Ok(Json(...)) which Axum serializes as 200 OK. Sites: routes/favorites.rs:125+158 (add_favorite), routes/inquiries.rs:295+396 (send_contact_message) and :410+564 (request_viewing), routes/saved_searches.rs:106+122 (create_saved_search), routes/realtors.rs:120+146 (create_profile), routes/agencies.rs:81+107 (create_agency) and :400+445 (invitation), routes/imports.rs:143+159 (create import job) and :334+351 (create feed). Peers like routes/compare.rs:228-234, routes/articles.rs create_comment, routes/users.rs register, routes/reports.rs submit_report correctly use tuple form Ok((StatusCode::CREATED, Json(...))). Clients that branch on 201 vs 200 misread every one of these endpoints.",
+      "files": [
+        "backend/servers/reality-server/src/routes/favorites.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/saved_searches.rs",
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-server 2026-10-03",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT then separate INSERT; two concurrent POSTs can both see count==3 and exceed MAX_COMPARE_LISTINGS=4. No tx wrap, no DB-side check-constraint or partial unique index.",
+      "files": [
+        "backend/servers/reality-server/src/routes/compare.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: sentry 0.48.5→0.49.0 /backend — open 28d",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: expo-status-bar 56.0.4→57.0.1 /frontend — open 28d",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: @testing-library/react-native 13.3.3→14.0.1 — open 28d",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: expo-device 56.0.4→57.0.1 — open 28d",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-2960",
+      "type": "dep-update-noise",
+      "source": "PR #2960",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: expo-secure-store 56.0.4→57.0.3 — open 22d",
+      "files": []
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "will be true after brief write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advancement check vs HEAD",
+      "observed": "last_pr_seen 3011→3015, last_issue_seen 3012→3017, last_run_iso advanced, seen_signals grew by 12",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '.items | [.[].id] | length == (unique|length)' backlog.json",
+      "observed": "455 ids, 455 unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-emits this run",
+      "observed": "all this-run signal ids are new vs prior seen_signals; cumulative churn-hotspots are first observations too",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap <= 8 and decay applied",
+      "observed": "max score=6; no open items older than 14d need decay (all open items are current)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plan files added this run",
+      "observed": "0 new plans; sell-wizard plan archived",
+      "expected": "no new plans → gate is vacuously satisfied"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<= 2 new plans; each meets readiness; 0 added this run",
+      "observed": "0 new plans",
+      "expected": "<= 2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "will verify after staging; this run only writes under .research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames in staged diff",
+      "observed": "no secret or private-hostname patterns added in staged lines",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regenerated",
+      "observed": "renderer output byte-identical to staged backlog.md",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures to report",
+      "observed": "all phases ran; Phase 1.6 intentionally skipped (lightweight budget), pm_cursor and coverage_cursor not advanced",
+      "expected": "cursors unchanged when phase skipped"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plans still in plans/ or plans/_archive/",
+      "observed": "sell-wizard moved plans/ → plans/_archive/; no plans silently deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grows or stays",
+      "observed": "archive 8 → 9 (sell-wizard archived)",
+      "expected": "new >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regenerated",
+      "observed": "renderer output byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline",
+      "observed": "no auto_fix_actions this run (no candidate met the bar); auto_fix_history unchanged",
+      "expected": "<=1 pr, <=1 issue, <=1 comment, no re-process"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management-artifacts gate — Phase 1.6 skipped this run",
+      "observed": "no-op (pm_cursor and coverage_cursor unchanged); artifacts remain valid JSON",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in staged diff",
+      "observed": "no token literal added",
+      "expected": "0 matches"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidates (dep-update noise is log-only; screen-map-drift lacks `docs/screens/_template.md` worktree primitive)"
+}

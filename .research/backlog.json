@@ -3757,7 +3757,7 @@
       ],
       "created_at": "2026-06-14",
       "updated_at": "2026-06-15",
-      "plan": "plans/code-review-reality-web-realtor-mgmt-untranslated.md",
+      "plan": "plans/_archive/code-review-reality-web-realtor-mgmt-untranslated.md",
       "reconciled": {
         "at": "2026-07-07T14:08:09Z",
         "assignment_status": "done",
@@ -4297,7 +4297,7 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
-      "plan": "plans/bug-revoke-all-sessions-cookie-blindness.md",
+      "plan": "plans/_archive/bug-revoke-all-sessions-cookie-blindness.md",
       "reconciled": {
         "at": "2026-07-11T18:05:18Z",
         "assignment_status": "merged",
@@ -4322,7 +4322,7 @@
       ],
       "created_at": "2026-07-09",
       "updated_at": "2026-07-09",
-      "plan": "plans/security-forgot-password-no-rate-limit.md",
+      "plan": "plans/_archive/security-forgot-password-no-rate-limit.md",
       "reconciled": {
         "at": "2026-07-12T00:07:12Z",
         "assignment_status": "merged",
@@ -4925,7 +4925,7 @@
       ],
       "created_at": "2026-07-23",
       "updated_at": "2026-07-23",
-      "plan": "plans/code-review-api-handlers-community-cross-tenant-idor.md",
+      "plan": "plans/_archive/code-review-api-handlers-community-cross-tenant-idor.md",
       "reconciled": {
         "at": "2026-07-24T00:06:07Z",
         "assignment_status": "merged",
@@ -5131,7 +5131,7 @@
       ],
       "created_at": "2026-07-27",
       "updated_at": "2026-07-27",
-      "plan": "plans/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md",
+      "plan": "plans/_archive/code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state.md",
       "reconciled": {
         "at": "2026-07-29T21:27:28Z",
         "assignment_status": "merged",
@@ -6927,7 +6927,7 @@
       ],
       "created_at": "2026-08-06",
       "updated_at": "2026-08-06",
-      "plan": "plans/code-review-ppt-web-core-ws-pong-timeout-drop.md",
+      "plan": "plans/_archive/code-review-ppt-web-core-ws-pong-timeout-drop.md",
       "reconciled": {
         "at": "2026-08-07T00:11:53Z",
         "assignment_status": "merged",
@@ -8062,7 +8062,7 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": "plans/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md",
+      "plan": "plans/_archive/code-review-api-handlers-voice-oauth-refresh-unauthenticated.md",
       "reconciled": {
         "at": "2026-08-15T10:24:40Z",
         "assignment_status": "merged",
@@ -8091,7 +8091,7 @@
       ],
       "created_at": "2026-08-15",
       "updated_at": "2026-08-15",
-      "plan": "plans/code-review-api-handlers-voice-google-verify-fail-open.md",
+      "plan": "plans/_archive/code-review-api-handlers-voice-google-verify-fail-open.md",
       "reconciled": {
         "at": "2026-08-15T08:24:53Z",
         "assignment_status": "merged",
@@ -8689,7 +8689,7 @@
       ],
       "created_at": "2026-08-19",
       "updated_at": "2026-08-19",
-      "plan": "plans/code-review-reality-server-submit-report-no-rate-limit.md",
+      "plan": "plans/_archive/code-review-reality-server-submit-report-no-rate-limit.md",
       "reconciled": {
         "at": "2026-08-20T10:27:25Z",
         "assignment_status": "merged",
@@ -9194,7 +9194,7 @@
       ],
       "created_at": "2026-08-25",
       "updated_at": "2026-08-25",
-      "plan": "plans/code-review-ppt-web-ui-content-mod-unsafe-cast.md",
+      "plan": "plans/_archive/code-review-ppt-web-ui-content-mod-unsafe-cast.md",
       "reconciled": {
         "at": "2026-08-25T08:23:14Z",
         "assignment_status": "merged",
@@ -9428,7 +9428,7 @@
       ],
       "created_at": "2026-08-29",
       "updated_at": "2026-08-29",
-      "plan": "plans/code-review-api-core-client-ip-cf-spoof.md",
+      "plan": "plans/_archive/code-review-api-core-client-ip-cf-spoof.md",
       "reconciled": {
         "at": "2026-08-30T06:23:27Z",
         "assignment_status": "merged",
@@ -10673,7 +10673,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
@@ -10688,7 +10688,12 @@
       ],
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T22:29:55Z",
+        "assignment_status": "merged",
+        "pr_number": 2969
+      }
     },
     {
       "id": "code-review-reality-web-feedcard-mutation-silent-fail",
@@ -10696,7 +10701,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
@@ -10710,7 +10715,12 @@
       ],
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2968
+      }
     },
     {
       "id": "code-review-reality-web-syncschedule-save-silent-fail",
@@ -10718,7 +10728,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-web 2026-09-21"
       ],
@@ -10731,7 +10741,12 @@
       ],
       "created_at": "2026-09-21",
       "updated_at": "2026-09-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T22:29:55Z",
+        "assignment_status": "merged",
+        "pr_number": 2967
+      }
     },
     {
       "id": "code-review-ppt-web-core-authed-roots-session-leak",
@@ -10763,7 +10778,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
       ],
@@ -10778,7 +10793,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2985
+      }
     },
     {
       "id": "code-review-ppt-web-core-api-default-export-orphan",
@@ -10786,7 +10806,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache)"
       ],
@@ -10799,7 +10819,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2990
+      }
     },
     {
       "id": "code-review-ppt-web-ui-automation-rules-mutations-swallow-errors",
@@ -10807,7 +10832,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
@@ -10819,7 +10844,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2986
+      }
     },
     {
       "id": "code-review-ppt-web-ui-automation-feature-no-i18n",
@@ -10827,7 +10857,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
@@ -10839,7 +10869,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2991
+      }
     },
     {
       "id": "code-review-ppt-web-ui-createrule-partial-cast-boundary",
@@ -10847,7 +10882,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-ui automation-feature)"
       ],
@@ -10859,7 +10894,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2996
+      }
     },
     {
       "id": "code-review-mobile-rn-fault-photos-silently-dropped",
@@ -10867,7 +10907,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)"
       ],
@@ -10879,7 +10919,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2989
+      }
     },
     {
       "id": "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
@@ -10887,7 +10932,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 mobile-rn)"
       ],
@@ -10899,7 +10944,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2988
+      }
     },
     {
       "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
@@ -10927,7 +10977,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
       ],
@@ -10939,7 +10989,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-27T06:27:02Z",
+        "assignment_status": "merged",
+        "pr_number": 2984
+      }
     },
     {
       "id": "code-review-reality-web-callback-hardcoded-login-string",
@@ -10947,7 +11002,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-26 reality-web)"
       ],
@@ -10959,7 +11014,12 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2993
+      }
     },
     {
       "id": "code-review-reality-server-dup-url-validator",
@@ -10987,7 +11047,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
@@ -11004,7 +11064,12 @@
       ],
       "created_at": "2026-09-27",
       "updated_at": "2026-09-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2994
+      }
     },
     {
       "id": "code-review-ppt-web-core-home-cta-role-drift",
@@ -11012,7 +11077,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router)"
       ],
@@ -11029,7 +11094,850 @@
       ],
       "created_at": "2026-09-27",
       "updated_at": "2026-09-27",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-09-30T08:25:16Z",
+        "assignment_status": "merged",
+        "pr_number": 2995
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
+      "title": "RegistryRulesPage save silently swallows errors and gives no success feedback",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx:48-51 — handleSubmit catch only calls console.error; no toast, no error state surfaced; failed updateRulesMutation.mutateAsync looks identical to success.",
+        "RegistryRulesPage.tsx:46-47 — success path also silent (code comment acknowledges 'could show a toast notification here'); user has no confirmation either way, inviting duplicate submits and lost edits."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": "plans/_archive/code-review-ppt-web-ui-registry-rules-save-silent-fail.md",
+      "reconciled": {
+        "at": "2026-10-02T00:26:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3009
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
+      "title": "workflow-automation pages emit English-literal toast titles while rest of file uses i18n",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx:29-33,47-50,53-57 — toast title/message literals ('Create failed', 'Rule created', …) while rest of page uses t('automation.createPage.*').",
+        "EditRulePage.tsx:30-34,37-41; AutomationRulesPage.tsx:66-114 (six toast groups incl. rule.name interpolations); ExecutionMonitoringPage.tsx:81-92; TemplateLibraryPage.tsx:70-76 — same anti-pattern repeats across all five automation pages."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/EditRulePage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/AutomationRulesPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/ExecutionMonitoringPage.tsx",
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-07T14:28:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3020
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
+      "title": "FacilitiesPage swallows listFacilities error — empty indistinguishable from fetch failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-10-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx:68-72 — listFacilities() rejection caught, logged to console.error, swallowed; no error state, isLoading flips false, user sees 'empty' list indistinguishable from an actually empty building.",
+        "FacilitiesPage.tsx:48-51,110-124 — component carries no error useState and FacilityList receives no error prop; there is no code path capable of rendering an error state. Prior PendingBookings fix (PendingBookingsPage.test.tsx:6 header) called out the same anti-pattern."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-02T00:26:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3011
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "title": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #2994"
+      ],
+      "evidence": [
+        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
       "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-2995-ppt",
+      "title": "ppt-web Home CTA refactor (PR #2995) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #2995"
+      ],
+      "evidence": [
+        "PR #2995 route-level Home CTA role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T20:25:10Z",
+        "assignment_status": "merged",
+        "pr_number": 3023
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3002-ppt",
+      "title": "ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3002"
+      ],
+      "evidence": [
+        "PR #3002 added core.dashboard-role-gate route + role gate on frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch — mechanical drift signal, review-candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-07T12:26:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3027
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
+      "title": "ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "4 commits in 14d touched core.tsx — three were route-auth refactors (PR #2994 ProtectedRoute wrap, PR #2995 Home CTA role gate, PR #3002 dashboard role gate). Signals route-table instability or an incomplete pattern migration."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
+      "title": "ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "4 commits in 14d culminating in PR #2996 (boundary-cast fix); workflow-automation feature pages churn together — see sibling churn-hotspot items."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
+      "title": "ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 14d"
+      ],
+      "evidence": [
+        "3 commits in 14d (tied with EditRulePage, ExecutionMonitoringPage, AutomationRulesPage) — the workflow-automation feature is churning as a unit; see hardcoded-toasts code-review finding for a concrete follow-up."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
+      "title": "Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "Issue #3006 (post-merge review of PR #3004)",
+        "PR #3010"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/lib/fetch.ts contains two near-identical retry-aware auth implementations after PR #3004 — fetchJsonInner and authenticatedFetchInner — both re-implementing header injection and 401→MFA→retry-once. A third copy of header-injection lives in the generated clients auth/interceptors.ts.",
+        "The three copies already drift: getAuthHeaders() (JSON path) sets only Authorization; authenticatedFetchInner (raw path) sets Authorization and X-Tenant-ID. Any future change (rename X-Tenant-ID, add a required header, change MFA marker key, bound the retry) must be made in three places that already disagree.",
+        "Proposed in #3006: factor applyAuthHeaders + shouldRetryOnMfa401 into shared helpers; add a test asserting authenticatedFetchJson and authenticatedFetch emit the same auth/tenant headers.",
+        "resolved: PR #3010 merged 2026-10-01 (refactor(api-client): unify triplicated auth-header + MFA-retry logic) — closes #3006 (sole source). Added `frontend/packages/api-client/src/auth/apply-headers.ts` as the shared helper; interceptors.ts and raw `authenticatedFetch` now both route through it. JSON-path divergence (`authenticatedFetchJson` deliberately omits `X-Tenant-ID`) is now pinned by a test — intentional, documented."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/lib/fetch.ts",
+        "frontend/packages/api-client/src/auth/interceptors.ts"
+      ],
+      "created_at": "2026-10-01",
+      "updated_at": "2026-10-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-sell-wizard-no-persist",
+      "title": "reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+        "PR #3013 merged 2026-10-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx:723-746 — Publish onClick validates with validateStep, sets errors, then only setSubmitted(true) when errors are empty. No fetch / mutation / @ppt/reality-api-client hook anywhere in the 848-line file (`grep -c 'fetch|mutate|axios|useQuery|RealtorApi|await ' sell/page.tsx` returns 0).",
+        "Form data (`INITIAL_FORM_DATA`, `SELL_STEPS`) imported from `./_mock`. After Publish, the component early-returns the success screen (`if (submitted)` at :151) rendering `t('submittedTitle')`/`t('submittedBody')`.",
+        "Impact: data loss on a public, conversion-critical flow. The seller completes the entire multi-step wizard (address/price/area/rooms/description/contact/terms), clicks Publish, sees a success confirmation, but nothing is persisted or transmitted. Zero listings created, zero leads captured.",
+        "Fix (cloud-landable, frontend-only): wire Publish to the generated create-listing mutation from `@ppt/reality-api-client` — await it, set `submitted` only on success, render a submit-error branch on failure — mirroring `account/listings/[id]/edit/page.tsx:195-217`.",
+        "resolved: PR #3013 merged 2026-10-02 — code-review-reality-web-sell-wizard-no-persist: wire /sell wizard Publish to createListing"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-03",
+      "plan": "plans/_archive/code-review-reality-web-sell-wizard-no-persist.md"
+    },
+    {
+      "id": "code-review-reality-web-report-page-no-submit",
+      "title": "reality-web /report page submits locally only — abuse reports never POSTed; server already exposes the endpoint",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)",
+        "PR #3014 merged 2026-10-02"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:37-41 — handleSubmit `(e) => { e.preventDefault(); if (!problem || !description.trim() || !gdprAccepted) return; setSubmitted(true); }` validates the form + GDPR checkbox then flips local `submitted` without POSTing. Success screen rendered at :43. Problem options sourced from `./_mock`.",
+        "Server side already exists (see done rows `code-review-reality-server-submit-report-no-rate-limit`, `code-review-reality-server-report-contact-unvalidated`). This is a frontend integration gap, not a missing backend.",
+        "Impact: trust/safety — users reporting fraud/scam/wrong-data see confirmation but the report never reaches moderators. Abuse-report funnel is non-functional.",
+        "Fix (cloud-landable, frontend-only): make `handleSubmit` async and call the generated report-submission hook from `@ppt/reality-api-client`; show submit-error on failure.",
+        "resolved: PR #3014 merged 2026-10-02 — code-review-reality-web-report-page-no-submit: wire /report submit to reality-server abuse-report endpoint"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-profile-mock-data",
+      "title": "reality-web /profile route renders MOCK_* fixtures — every signed-in user sees the same fabricated identity, listings, activity, reviews",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:17,65,268,346,384 — `profile = MOCK_PROFILE`, `MOCK_LISTINGS.map(...)`, `MOCK_ACTIVITY.map(...)`, `MOCK_REVIEWS.map(...)`. No `useQuery` / SDK call and no auth-context read; the shipped route is a static mock.",
+        "File header comment (:8-11) acknowledges this is a placeholder pending SDK wiring.",
+        "Impact: completeness/correctness. On a public portal, displaying fictitious listings and reviews as if they were the current user's is misleading and risks user confusion over whose data they're seeing.",
+        "Fix: swap MOCK_* for the generated current-user / my-listings / my-reviews hooks from `@ppt/reality-api-client`, with loading + empty states. If some endpoints aren't live yet, split the covered subset into its own smaller finding."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3033
+      }
+    },
+    {
+      "id": "code-review-reality-web-featured-fav-silent-fail",
+      "title": "reality-web FeaturedListings favorite-toggle swallows mutation errors — heart UI diverges from server state silently",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx:20-22 — `handleToggleFavorite` calls `toggleFavorite.mutate({ listingId, isFavorite })` fire-and-forget with no onError; the component never reads `toggleFavorite.isError`/`.error`.",
+        "frontend/packages/reality-api-client/src/listings/hooks.ts:146-169 — `useToggleFavorite` throws on `!response.ok` with only an onSuccess invalidate; React Query captures the throw into `mutation.isError` state, so without a call-site handler the failure is fully silent (no toast, no rollback).",
+        "Impact: UX/correctness gap on a conversion-critical public homepage. A failed toggle (e.g. 401 unauthenticated, 5xx) leaves the heart desynced from server state until the next refetch.",
+        "Fix: wire an `onError` on the mutate call (or read `toggleFavorite.isError`) and surface a toast + optimistic-update rollback."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-02T20:28:19Z",
+        "assignment_status": "merged",
+        "pr_number": 3015
+      }
+    },
+    {
+      "id": "code-review-reality-web-price-alert-markread-silent-fail",
+      "title": "reality-web PriceAlerts mark-read mutations swallow errors — row stays unread with no user feedback on failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:170,190 — `markAllRead.mutate()` and `markRead.mutate(alert.id)` fired fire-and-forget with no onError; the component never reads `markRead.isError`/`.error`.",
+        "Same pattern as the FeaturedListings heart (above): the generated hooks throw on `!response.ok` but call-sites don't propagate.",
+        "Impact: users clicking 'Mark all read' or a single-row mark-read on a failure path see no feedback; the badge count stays stale until next refetch, giving the impression of a frozen UI.",
+        "Fix: attach onError to both mutate calls and surface a toast; consider sharing a toast-on-error wrapper with the FeaturedListings fix."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ],
+      "created_at": "2026-10-02",
+      "updated_at": "2026-10-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-05T10:32:41Z",
+        "assignment_status": "merged",
+        "pr_number": 3021
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3013-reality",
+      "title": "PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3013"
+      ],
+      "evidence": [
+        "PR #3013 modified frontend/apps/reality-web/src/app/[locale]/sell/page.tsx (handlePublish wiring, saving/submitError state) but did not touch docs/screens/reality/sell.md.",
+        "Screen doc describes the sell wizard flow; needs an Agent Log line for the publish-wiring change and a note that submit is now wired to POST /api/v1/listings.",
+        "Heuristic signal — not a code bug. Treat as reminder to update screen-map, not a promotable plan."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "docs/screens/reality/sell.md"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3031
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3014-reality",
+      "title": "PR #3014 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3014"
+      ],
+      "evidence": [
+        "PR #3014 modified frontend/apps/reality-web/src/app/[locale]/report/page.tsx (handleSubmit wiring, new useSubmitReport hook) but did not touch docs/screens/reality/report-listing.md.",
+        "Screen doc should capture the new POST /api/v1/reports wiring, listing_id resolution rule (?listing= or UUID in reference), and attachments-not-transmitted follow-up (#3017).",
+        "Heuristic signal."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/report-listing.md"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3032
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "title": "reality-web /sell page recent churn — PR #3013 publish-wiring change",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-03",
+        "PR #3013"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR this run). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "title": "reality-web /report page recent churn — PR #3014 submit-wiring change",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-03",
+        "PR #3014"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR this run). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+      "title": "reality-web FeaturedListings recent churn — PR #3015 error-surface fix",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-03",
+        "PR #3015"
+      ],
+      "evidence": [
+        "Top-3 churn this run (1 PR this run). First observation."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-create-handlers-return-200-not-201",
+      "title": "reality-server create handlers return 200 OK but utoipa spec claims 201 Created — OpenAPI contract vs runtime divergence across 9 endpoints",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-10-03"
+      ],
+      "evidence": [
+        "Nine creation handlers advertise 201 Created in #[utoipa::path] spec but return Ok(Json(...)); Axum serializes bare Json<T> as 200 OK. Sites: routes/favorites.rs:125+158 add_favorite, routes/inquiries.rs:295+396 send_contact_message and :410+564 request_viewing, routes/saved_searches.rs:106+122 create_saved_search, routes/realtors.rs:120+146 create_profile, routes/agencies.rs:81+107 create_agency and :400+445 invitation, routes/imports.rs:143+159 create import job and :334+351 create feed.",
+        "Peer handlers correctly use tuple form Ok((StatusCode::CREATED, Json(...))): routes/compare.rs:228-234, routes/articles.rs create_comment, routes/users.rs register, routes/reports.rs submit_report.",
+        "Impact: generated clients (@ppt/reality-api-client TS, Rust client, mobile-native Kotlin) that branch on 201 vs 200 for post-create disposition misread all nine endpoints. Fix: swap bare Json(..) for the tuple form; one line per handler."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/favorites.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/src/routes/saved_searches.rs",
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/routes/imports.rs"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
+      "title": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-10-03"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT(*) (line 166) → MAX_COMPARE_LISTINGS=4 guard → separate INSERT (line 221) with no row-level lock and no DB-side constraint. Two concurrent POSTs from the same user can both see count==3 and both insert, exceeding the documented cap.",
+        "Existing exists-check at line 205 only catches exact duplicates, not count violations.",
+        "Fix: wrap count+insert in a serializable transaction, or add a DB-side partial unique index / check constraint."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/compare.rs"
+      ],
+      "created_at": "2026-10-03",
+      "updated_at": "2026-10-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-community-group-detail-mock-data",
+      "title": "ppt-web /community/groups/:groupId renders hardcoded mock group — every group shows fake \"Sample Group\" with no-op actions",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-04"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:74-114 GroupDetailPageRoute reads the groupId route param (L75) then discards it: it builds a hardcoded `mockGroup` (L84-97, name 'Sample Group', buildingId 'bld-1', memberCount 10, createdBy 'user-1') and passes it to <GroupDetailPage group={mockGroup}>. No useQuery/API fetch exists, so every community group detail page renders identical fabricated data regardless of which group the user opened — a shipped, user-facing route presenting fake data as real.",
+        "All mutating handlers are empty no-ops: onJoin={() => {}}, onLeave={() => {}}, onEdit={() => {}}, onPromoteMember={() => {}}, onRemoveMember={() => {}}, onBanMember={() => {}} (L105-111). Join/Leave/moderation controls render but do nothing when clicked.",
+        "Reachable in production: the route wrapper is mapped under the community group-detail path and the guard at L79 only handles a missing param. Fix: resolve the real group via the api-client (e.g. a useCommunityGroup(groupId) query with loading/error/empty states) and wire the handlers to the corresponding mutations."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-04",
+      "updated_at": "2026-10-04",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3034
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-route-group-toast-i18n",
+      "title": "ppt-web route-group action toasts use hardcoded English — bypass react-i18next, render English on sk/cs/de locales",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review ppt-web-core 2026-10-04"
+      ],
+      "evidence": [
+        "Route-group wrappers call showToast() with literal English title/message instead of t(...), so success/error feedback always renders in English regardless of the user's selected language: community.tsx:66 title:'Created' message:'Group created'; faults.tsx:368 title:'Created' message:'Fault reported'; meters.tsx:243 'Submitted'/'Reading submitted', :296-297 'Updated'/'Reading correction submitted', :337 'Done'/'Reading validated'; iot.tsx:194 'Sensor deleted', :198 'Failed to delete sensor', :255 'Sensor registered', :260 'Failed to register sensor', :333 'Sensor updated', :338 'Failed to update sensor'.",
+        "ppt-web is a localized app (react-i18next 16); user-facing toast copy must resolve through t('...') keys. These literals were introduced at the router layer and are not wrapped, so all four non-English locales (sk/cs/de) see English confirmations.",
+        "Fix: move the strings into i18n resource bundles and resolve via useTranslation()/t() in each route-group wrapper, matching the errors.catalogue.* pattern already used by lib/errorHandler.ts."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-10-04",
+      "updated_at": "2026-10-04",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T02:39:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3036
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "title": "ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-14d"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "title": "reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-14d"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts — 2 commits in last 14d (new hotspot)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+      "title": "reality-web components/import/SyncSchedule.tsx recent churn — 2 commits in 14d (new hotspot)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git-log-14d"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx — 2 commits in last 14d (new hotspot)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3036-ppt",
+      "title": "ppt-web route-group i18n PR #3036 touched 6 routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3036"
+      ],
+      "evidence": [
+        "PR #3036 (code-review-ppt-web-core-route-group-toast-i18n) touched 6 ppt-web route files without updating docs/screens/ppt/"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3034-ppt",
+      "title": "ppt-web community-group-detail PR #3034 touched 2 routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3034"
+      ],
+      "evidence": [
+        "PR #3034 (community-group-detail mock→API) touched 2 ppt-web route files without updating docs/screens/ppt/"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3033-reality",
+      "title": "reality-web /profile PR #3033 touched 3 routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3033"
+      ],
+      "evidence": [
+        "PR #3033 (reality /profile mock→real-data) touched 3 reality-web route files without updating docs/screens/reality/"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "title": "reality-web /report PR #3019 touched 2 routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3019"
+      ],
+      "evidence": [
+        "PR #3019 (disable /report attachment control) touched 2 reality-web route files without updating docs/screens/reality/report-listing.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "title": "reality-web /sell PR #3022 touched 3 routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3022"
+      ],
+      "evidence": [
+        "PR #3022 (drop dead seller contact fields in /sell wizard) touched 3 reality-web route files without updating docs/screens/reality/sell.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-group-join-leave-silent",
+      "title": "ppt-web community groups: join/leave mutations have no error handling — 403/409/5xx silent",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:143 — onJoin fires joinGroup.mutate with no onError, no visible error UI",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:144 — onLeave fires leaveGroup.mutate with same silent-failure pattern",
+        "frontend/packages/api-client/src/community/hooks.ts:110 — useJoinGroup/useLeaveGroup wire only onSuccess (invalidation); 403 (private)/409 (already-member)/5xx never surface"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/packages/api-client/src/community/hooks.ts"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-09T00:27:16Z",
+        "assignment_status": "merged",
+        "pr_number": 3048
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-group-delete-stub",
+      "title": "ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "dropped",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:146 — onDelete={() => navigate(\"/community/groups\")} navigates away without any delete API call",
+        "No useDeleteGroup hook exists in frontend/packages/api-client — the record remains on the server while the UI acts as if deleted"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-08T20:33:17Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-silent",
+      "title": "ppt-web rentals: 4 mutations swallow non-auth errors (connection create, platform sync, guest check-in/out)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311 — createConnection.onError discards handleRentalsAuthError return; non-auth 400/409/5xx produce no toast",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:323 — syncPlatforms.onError same unhandled-non-auth-error pattern",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:417 — checkIn.onError silently drops non-auth failures (guest check-in flow)",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:427 — checkOut.onError silently drops non-auth failures (guest check-out flow)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-10-08",
+      "updated_at": "2026-10-08",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-09T12:45:54Z",
+        "assignment_status": "merged",
+        "pr_number": 3050
+      }
     }
   ]
 }
