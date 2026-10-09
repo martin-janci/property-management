@@ -481,7 +481,39 @@
         "reviews": "Bewertungen",
         "settings": "Einstellungen"
       },
-      "title": "Mein Profil"
+      "title": "Mein Profil",
+      "stats": {
+        "activeListings": "Aktive Inserate",
+        "totalListings": "Alle Inserate",
+        "reviews": "Bewertungen",
+        "avgRating": "Ø Bewertung"
+      },
+      "status": {
+        "active": "Aktiv",
+        "sold": "Verkauft",
+        "rented": "Vermietet",
+        "draft": "Entwurf",
+        "paused": "Pausiert",
+        "archived": "Archiviert"
+      },
+      "listings": {
+        "loading": "Inserate werden geladen…",
+        "error": "Inserate konnten nicht geladen werden.",
+        "emptyTitle": "Sie haben noch keine Inserate",
+        "emptyBody": "Sobald Sie ein Inserat hinzufügen, erscheint es hier.",
+        "rooms": "{count} Zimmer"
+      },
+      "activity": {
+        "emptyTitle": "Aktivität ist noch nicht verfügbar",
+        "emptyBody": "Eine Übersicht Ihrer Aktivität ist verfügbar, sobald wir die entsprechende Übersicht vorbereitet haben."
+      },
+      "reviews": {
+        "emptyTitle": "Noch keine Bewertungen",
+        "emptyBody": "Bewertungen von Kunden erscheinen hier, sobald Sie welche erhalten."
+      },
+      "settings": {
+        "description": "Profileinstellungen finden Sie im Bereich <account>Mein Konto</account>."
+      }
     },
     "report": {
       "submit": "Meldung absenden",
@@ -540,6 +572,8 @@
         "addressPlaceholder": "Street and number",
         "city": "City / Town",
         "cityPlaceholder": "e.g. Bratislava",
+        "postalCode": "Postal code",
+        "postalCodePlaceholder": "e.g. 811 01",
         "area": "Area (m²)",
         "areaPlaceholder": "e.g. 65",
         "rooms": "Number of rooms",
@@ -598,6 +632,7 @@
         "required": "Required",
         "addressRequired": "Address is required",
         "cityRequired": "City is required",
+        "postalCodeRequired": "Postal code is required",
         "areaRequired": "Area is required",
         "areaPositive": "Area must be greater than 0",
         "roomsRequired": "Number of rooms is required",
@@ -995,6 +1030,7 @@
       "mappingHint": "Ordnen Sie Ihre CRM-Felder den Inserateigenschaften zu",
       "creating": "Erstelle...",
       "createConnection": "Verbindung erstellen",
+      "createError": "Verbindung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
       "connectionFailed": "Verbindung fehlgeschlagen",
       "connectionSuffix": "Verbindung",
       "status": {
@@ -1046,6 +1082,7 @@
       "mappingHint": "Ordnen Sie Feed-Felder den Inserateigenschaften zu",
       "creating": "Erstelle...",
       "createFeed": "Feed erstellen",
+      "createError": "Feed konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
       "defaultName": "Immobilien-Feed",
       "status": {
         "active": "Aktiv",
@@ -1070,6 +1107,7 @@
       "cancel": "Abbrechen",
       "saving": "Speichern...",
       "saveChanges": "Änderungen speichern",
+      "saveError": "Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
       "status": "Status",
       "enabled": "Aktiviert",
       "disabled": "Deaktiviert",

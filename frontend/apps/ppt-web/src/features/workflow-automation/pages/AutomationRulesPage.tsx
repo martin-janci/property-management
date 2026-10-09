@@ -64,15 +64,15 @@ export function AutomationRulesPage() {
       await deleteRule.mutateAsync(rule.id);
       showToast({
         type: 'success',
-        title: 'Rule deleted',
-        message: `"${rule.name}" was deleted.`,
+        title: t('automation.rules.deleteSuccessTitle'),
+        message: t('automation.rules.deleteSuccessMessage', { name: rule.name }),
       });
       setDeleteConfirm(null);
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Delete failed',
-        message: err instanceof Error ? err.message : 'The automation rule could not be deleted.',
+        title: t('automation.rules.deleteErrorTitle'),
+        message: err instanceof Error ? err.message : t('automation.rules.deleteErrorMessage'),
       });
     }
   };
@@ -85,14 +85,16 @@ export function AutomationRulesPage() {
       });
       showToast({
         type: 'success',
-        title: enabled ? 'Rule activated' : 'Rule paused',
-        message: `"${rule.name}" was ${enabled ? 'activated' : 'paused'}.`,
+        title: enabled ? t('automation.rules.activatedTitle') : t('automation.rules.pausedTitle'),
+        message: enabled
+          ? t('automation.rules.activatedMessage', { name: rule.name })
+          : t('automation.rules.pausedMessage', { name: rule.name }),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update failed',
-        message: err instanceof Error ? err.message : 'The automation rule could not be updated.',
+        title: t('automation.rules.updateErrorTitle'),
+        message: err instanceof Error ? err.message : t('automation.rules.updateErrorMessage'),
       });
     }
   };
@@ -102,14 +104,14 @@ export function AutomationRulesPage() {
       await runRule.mutateAsync(rule.id);
       showToast({
         type: 'success',
-        title: 'Rule triggered',
-        message: `"${rule.name}" is now running.`,
+        title: t('automation.rules.runSuccessTitle'),
+        message: t('automation.rules.runSuccessMessage', { name: rule.name }),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Run failed',
-        message: err instanceof Error ? err.message : 'The automation rule could not be run.',
+        title: t('automation.rules.runErrorTitle'),
+        message: err instanceof Error ? err.message : t('automation.rules.runErrorMessage'),
       });
     }
   };

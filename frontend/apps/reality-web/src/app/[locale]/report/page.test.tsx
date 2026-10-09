@@ -10,10 +10,14 @@
  *      (`listing_id` / `problem_type` / `description`) the server expects,
  *      and only then shows the success screen;
  *   2. a rate-limit (429) surfaces an error alert instead of a fake success;
- *   3. a missing listing reference blocks the POST and surfaces an error.
+ *   3. a missing listing reference blocks the POST and surfaces an error;
+ *   4. the attachment control collects nothing and the submit body is
+ *      attachment-free (#3017) — the page must not imply evidence is sent.
  *
  * On `dev` test (1) fails at the `expect(post).toBeDefined()` assertion
- * because no fetch ever happens — this is the IG3 regression guard.
+ * because no fetch ever happens — this is the IG3 regression guard. Test (4)
+ * is the #3017 regression guard: on `dev` the file input still exists so the
+ * `toBeNull()` assertion fails.
  *
  * Only the Header/Footer chrome and next/navigation are mocked; the submit
  * path and `useSubmitReport` are the real thing.
@@ -108,6 +112,33 @@ describe('ReportPage — abuse-report submit wiring', () => {
     expect(await screen.findByText('Nahlásenie bolo odoslané')).toBeInTheDocument();
   });
 
+  // #3042: the server returns `201 { report: { id } }` but the success card
+  // used to ignore it, so the "ID R-…" acknowledgement was aspirational and
+  // the reporter had no reference to quote in a follow-up. The success card
+  // must now read `report.id` back and render it. On `dev` (before the fix)
+  // the id is never surfaced, so the `findByTestId` below times out — this is
+  // the IG3 regression guard.
+  it('surfaces the created report id on the success card', async () => {
+    const REPORT_ID = 'c0ffee00-dead-beef-cafe-0123456789ab';
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          report: { id: REPORT_ID, listing_id: LISTING_ID, status: 'received' },
+        }),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderPage();
+    fillForm(container);
+    fireEvent.click(screen.getByRole('button'));
+
+    const ref = await screen.findByTestId('report-reference-id');
+    expect(ref).toHaveTextContent(REPORT_ID);
+  });
+
   it('surfaces an error alert on a 429 rate-limit instead of a fake success', async () => {
     const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
       Promise.resolve({ ok: false, status: 429, json: async () => ({}) })
@@ -121,6 +152,45 @@ describe('ReportPage — abuse-report submit wiring', () => {
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(/Priveľa nahlásení/);
     expect(screen.queryByText('Nahlásenie bolo odoslané')).not.toBeInTheDocument();
+  });
+
+  // #3017: the attachment control used to collect File objects that
+  // handleSubmit never transmitted, so a reporter saw a success screen while
+  // the evidence was silently dropped. Until an upload endpoint exists the
+  // control is disabled with a "coming soon" hint and carries no file input,
+  // so the page must not imply evidence can be attached and sent.
+  it('does not collect attachments (control disabled, no file input, coming-soon hint)', () => {
+    const { container } = renderPage();
+    // No file input: nothing to collect, nothing to silently drop.
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+    // A disabled "coming soon" placeholder stands in for the old control.
+    const placeholder = screen.getByText('Pridávanie príloh bude čoskoro dostupné');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('keeps the submit body attachment-free even after the form is filled', async () => {
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        json: async () => ({ report: { id: 'r-2', listing_id: LISTING_ID, status: 'received' } }),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderPage();
+    fillForm(container);
+    fireEvent.click(screen.getByRole('button'));
+
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
+      expect(post).toBeDefined();
+      const body = JSON.parse(String(post?.[1]?.body));
+      // The POST body carries no `attachments` key — the page does not pretend
+      // to submit evidence it cannot upload yet.
+      expect(body).not.toHaveProperty('attachments');
+    });
   });
 
   it('blocks the POST and shows an error when no listing reference is present', async () => {

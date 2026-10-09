@@ -8,6 +8,13 @@
  * `createListing`, only shows the success screen on a resolved 2xx, surfaces a
  * form-level error banner on failure (keeping the wizard open), and disables
  * the button while the request is in flight.
+ *
+ * Follow-up (#3016): step 5 used to collect contactName/contactPhone/
+ * contactEmail that `handlePublish` then dropped (they were never in the
+ * `ListingDraft` POST body). Those inputs were removed — contact comes from
+ * the authenticated realtor profile. The `does not render seller contact
+ * inputs` test below pins that removal (it fails on `main`, where the inputs
+ * exist).
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -48,6 +55,9 @@ function fillWizardToPublish() {
   // Step 1 — type + location (defaults: sale / apartment)
   fireEvent.change(screen.getByLabelText('fields.address'), { target: { value: 'Hlavna 1' } });
   fireEvent.change(screen.getByLabelText('fields.city'), { target: { value: 'Bratislava' } });
+  // postalCode is a required server field (#3052): the wizard must collect it
+  // and send it, otherwise the Publish POST 422s on the missing field.
+  fireEvent.change(screen.getByLabelText('fields.postalCode'), { target: { value: '81101' } });
   fireEvent.click(screen.getByRole('button', { name: 'next' }));
 
   // Step 2 — details
@@ -62,14 +72,9 @@ function fillWizardToPublish() {
   fireEvent.change(screen.getByLabelText('fields.price'), { target: { value: '120000' } });
   fireEvent.click(screen.getByRole('button', { name: 'next' }));
 
-  // Step 5 — contact + terms
-  fireEvent.change(screen.getByLabelText('fields.contactName'), { target: { value: 'Jane Doe' } });
-  fireEvent.change(screen.getByLabelText('fields.contactPhone'), {
-    target: { value: '+421 900 000 000' },
-  });
-  fireEvent.change(screen.getByLabelText('fields.contactEmail'), {
-    target: { value: 'jane@example.com' },
-  });
+  // Step 5 — summary + terms. Seller contact (name/phone/email) is no longer
+  // collected here: the listing is associated with the authenticated realtor
+  // server-side, so those inputs were removed (#3016). Just accept the terms.
   fireEvent.click(screen.getByRole('checkbox'));
 }
 
@@ -92,13 +97,41 @@ describe('SellPage — Publish persists the listing', () => {
         propertyType: 'apartment',
         street: 'Hlavna 1',
         city: 'Bratislava',
-        area: 65,
+        // #3052: the wizard's `area` input must map to the server's `sizeSqm`
+        // field, and `postalCode` (a required server field) must be collected
+        // and sent — otherwise the Publish POST 422s.
+        sizeSqm: 65,
+        postalCode: '81101',
         rooms: 3,
         price: 120000,
         currency: 'EUR',
         isNegotiable: false,
       })
     );
+    const payload = mockCreateListing.mock.calls[0][0];
+    // #3052: the payload must NOT carry the client-only `area` key the server
+    // doesn't understand — it is mapped to `sizeSqm`.
+    expect(payload).not.toHaveProperty('area');
+    expect(payload).toHaveProperty('sizeSqm', 65);
+    expect(payload).toHaveProperty('postalCode', '81101');
+    // Regression (#3016): the dropped contact fields must not silently
+    // reappear in the POST body — the payload carries no contact keys.
+    expect(payload).not.toHaveProperty('contactName');
+    expect(payload).not.toHaveProperty('contactPhone');
+    expect(payload).not.toHaveProperty('contactEmail');
+  });
+
+  it('does not render seller contact inputs on step 5 (#3016)', () => {
+    mockCreateListing.mockResolvedValue({ id: 'lst_1' } as never);
+    render(<SellPage />);
+    fillWizardToPublish();
+
+    // We are on step 5 (the terms checkbox and Publish button are present)…
+    expect(screen.getByRole('button', { name: 'publish' })).toBeInTheDocument();
+    // …but the contact inputs the wizard used to ask for (and drop) are gone.
+    expect(screen.queryByLabelText('fields.contactName')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('fields.contactPhone')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('fields.contactEmail')).not.toBeInTheDocument();
   });
 
   it('shows the success screen only after a resolved 2xx', async () => {

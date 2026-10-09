@@ -14,6 +14,7 @@ import { ListingCard } from '../listings/ListingCard';
 
 export function FeaturedListings() {
   const t = useTranslations('home');
+  const tError = useTranslations('error');
   const { data, isLoading, error } = useFeaturedListings();
   const toggleFavorite = useToggleFavorite();
 
@@ -182,6 +183,22 @@ export function FeaturedListings() {
 
   return (
     <>
+      {toggleFavorite.isError && (
+        <div className="action-error" role="alert" aria-live="assertive">
+          {tError('description')}
+          <style jsx>{`
+            .action-error {
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: 12px 16px;
+              border-radius: 8px;
+              background: var(--ppt-color-danger-light);
+              color: var(--ppt-color-danger-hover);
+              font-size: 14px;
+            }
+          `}</style>
+        </div>
+      )}
       {sections.map(
         (section) =>
           section.listings.length > 0 && (

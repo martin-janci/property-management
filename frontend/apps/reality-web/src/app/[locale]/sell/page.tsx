@@ -4,7 +4,12 @@
  * Sell / publish listing wizard — Reality Portal.
  * Screen-map: docs/screens/reality/sell.md
  *
- * 5-step wizard: Type+location → Details → Photos → Price → Contact+summary
+ * 5-step wizard: Type+location → Details → Photos → Price → Summary+publish
+ *
+ * Step 5 shows a read-only summary and the terms checkbox only. Seller
+ * contact (name/phone/email) is NOT collected here: the listing is associated
+ * with the authenticated realtor (`principal.user_id`) server-side on POST
+ * /api/v1/listings, so contact comes from the realtor profile (#3016).
  *
  * All user-facing strings come from `pages.sell.*` in `messages/<locale>.json`.
  */
@@ -100,9 +105,6 @@ const errorStyle: React.CSSProperties = {
   display: 'block',
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^[+0-9 ()-]{6,}$/;
-
 type StepErrors = Partial<Record<keyof SellFormData, string>>;
 
 /**
@@ -117,6 +119,9 @@ function validateStep(step: number, form: SellFormData, tKey: (k: string) => str
   if (step === 1) {
     if (!form.address.trim()) errors.address = tKey('addressRequired');
     if (!form.city.trim()) errors.city = tKey('cityRequired');
+    // postalCode is a required server field (CreatePortalListingRequest):
+    // omitting it 422s the Publish POST (#3052), so enforce it here.
+    if (!form.postalCode.trim()) errors.postalCode = tKey('postalCodeRequired');
   } else if (step === 2) {
     if (form.area === '' || form.area === null || Number.isNaN(form.area))
       errors.area = tKey('areaRequired');
@@ -127,13 +132,12 @@ function validateStep(step: number, form: SellFormData, tKey: (k: string) => str
   } else if (step === 4) {
     if (form.price === '' || form.price === null) errors.price = tKey('priceRequired');
     else if (Number(form.price) <= 0) errors.price = tKey('pricePositive');
-  } else if (step === 5) {
-    if (!form.contactName.trim()) errors.contactName = tKey('nameRequired');
-    if (!form.contactPhone.trim()) errors.contactPhone = tKey('phoneRequired');
-    else if (!PHONE_RE.test(form.contactPhone.trim())) errors.contactPhone = tKey('phoneFormat');
-    if (!form.contactEmail.trim()) errors.contactEmail = tKey('emailRequired');
-    else if (!EMAIL_RE.test(form.contactEmail.trim())) errors.contactEmail = tKey('emailFormat');
   }
+  // Step 5 (summary + terms) has no field-level validation — the seller's
+  // contact details come from the authenticated realtor profile (the listing
+  // is associated with `principal.user_id` server-side on POST
+  // /api/v1/listings), so the wizard no longer collects them. The terms
+  // checkbox is enforced via the disabled Publish button.
   return errors;
 }
 
@@ -173,7 +177,11 @@ export default function SellPage() {
         currency: form.currency,
         street: form.address || undefined,
         city: form.city,
-        area: form.area === '' ? undefined : Number(form.area),
+        postalCode: form.postalCode.trim(),
+        // The UI collects "area"; the server contract names it `sizeSqm`
+        // (POST /api/v1/my/listings). Map it here so the measure is not
+        // silently dropped (#3052).
+        sizeSqm: form.area === '' ? undefined : Number(form.area),
         rooms: form.rooms === '' ? undefined : Number(form.rooms),
         floor: form.floor === '' ? undefined : Number(form.floor),
         isNegotiable: form.priceNegotiable,
@@ -412,6 +420,32 @@ export default function SellPage() {
                     </span>
                   )}
                 </div>
+
+                <div>
+                  <label htmlFor="sell-postalCode" style={labelStyle}>
+                    {t('fields.postalCode')}
+                  </label>
+                  <input
+                    id="sell-postalCode"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder={t('fields.postalCodePlaceholder')}
+                    value={form.postalCode}
+                    onChange={(e) => update({ postalCode: e.target.value })}
+                    aria-invalid={errors.postalCode ? true : undefined}
+                    aria-describedby={errors.postalCode ? 'sell-postalCode-error' : undefined}
+                    style={
+                      errors.postalCode
+                        ? { ...inputStyle, borderColor: 'var(--ppt-color-danger-hover, #dc2626)' }
+                        : inputStyle
+                    }
+                  />
+                  {errors.postalCode && (
+                    <span id="sell-postalCode-error" style={errorStyle}>
+                      {errors.postalCode}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
@@ -580,7 +614,7 @@ export default function SellPage() {
               </div>
             )}
 
-            {/* Step 5: Contact + summary */}
+            {/* Step 5: Summary + terms (contact comes from the realtor profile) */}
             {step === 5 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* Summary */}
@@ -603,6 +637,7 @@ export default function SellPage() {
                   </div>
                   <div>
                     <strong>{t('summary.location')}:</strong> {form.address || '–'},{' '}
+                    {form.postalCode ? `${form.postalCode} ` : ''}
                     {form.city || '–'}
                   </div>
                   <div>
@@ -618,62 +653,6 @@ export default function SellPage() {
                     <strong>{t('summary.photos')}:</strong> {form.photos.length}
                   </div>
                 </div>
-
-                {(
-                  [
-                    {
-                      key: 'contactName',
-                      labelKey: 'contactName',
-                      placeholderKey: 'contactNamePlaceholder',
-                      inputType: 'text',
-                    },
-                    {
-                      key: 'contactPhone',
-                      labelKey: 'contactPhone',
-                      placeholderKey: 'contactPhonePlaceholder',
-                      inputType: 'tel',
-                    },
-                    {
-                      key: 'contactEmail',
-                      labelKey: 'contactEmail',
-                      placeholderKey: 'contactEmailPlaceholder',
-                      inputType: 'email',
-                    },
-                  ] as const
-                ).map((field) => {
-                  const fieldError = errors[field.key as keyof SellFormData];
-                  const inputId = `sell-${field.key}`;
-                  const errorId = `${inputId}-error`;
-                  return (
-                    <div key={field.key}>
-                      <label htmlFor={inputId} style={labelStyle}>
-                        {t(`fields.${field.labelKey}`)}
-                      </label>
-                      <input
-                        id={inputId}
-                        type={field.inputType}
-                        autoComplete={
-                          field.key === 'contactEmail'
-                            ? 'email'
-                            : field.key === 'contactPhone'
-                              ? 'tel'
-                              : 'name'
-                        }
-                        placeholder={t(`fields.${field.placeholderKey}`)}
-                        value={form[field.key as keyof SellFormData] as string}
-                        onChange={(e) => update({ [field.key]: e.target.value })}
-                        aria-invalid={fieldError ? true : undefined}
-                        aria-describedby={fieldError ? errorId : undefined}
-                        style={inputStyle}
-                      />
-                      {fieldError && (
-                        <span id={errorId} style={errorStyle}>
-                          {fieldError}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
 
                 <label
                   style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}

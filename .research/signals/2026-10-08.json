@@ -1,0 +1,303 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-08",
+      "type": "lag_warning",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "process",
+      "evidence": [
+        "routine last_run_iso=2026-10-03T03:12:00Z — 5d (123h) lag"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-10-08",
+      "type": "stale_routine_alert",
+      "source": "routine-self-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "process",
+      "evidence": [
+        "state.json last_run_iso=2026-10-03T03:12:00Z is 5d old — cloud routine may be paused; dispatcher commits continue on dev so dispatcher loop is healthy"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3030",
+      "type": "dep-update-noise",
+      "source": "PR #3030",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #3030 — chore(deps): bump the npm-minor-patch group across 1 directory with 28 updates (dependabot[bot], open)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2981",
+      "type": "dep-update-noise",
+      "source": "PR #2981",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #2981 — chore(deps): bump the cargo-minor-patch group (dependabot[bot], open, updated this window)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx — 3 commits in last 14d (new hotspot)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts — 2 commits in last 14d (new hotspot)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx — 2 commits in last 14d (new hotspot)"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3036-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3036",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3036 (code-review-ppt-web-core-route-group-toast-i18n) touched 6 ppt-web route files without updating docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3034-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3034",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3034 (community-group-detail mock→API) touched 2 ppt-web route files without updating docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3033-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3033",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3033 (reality /profile mock→real-data) touched 3 reality-web route files without updating docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3019-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3019",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3019 (disable /report attachment control) touched 2 reality-web route files without updating docs/screens/reality/report-listing.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3022",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3022 (drop dead seller contact fields in /sell wizard) touched 3 reality-web route files without updating docs/screens/reality/sell.md"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-group-join-leave-silent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:143 — onJoin fires joinGroup.mutate with no onError, no visible error UI",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:144 — onLeave fires leaveGroup.mutate with same silent-failure pattern",
+        "frontend/packages/api-client/src/community/hooks.ts:110 — useJoinGroup/useLeaveGroup wire only onSuccess (invalidation); 403/409/5xx never surface"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-group-delete-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx:146 — onDelete={() => navigate(\"/community/groups\")} navigates away without calling any delete API",
+        "No useDeleteGroup hook exists in frontend/packages/api-client — record remains on server while UI acts as if deleted (data-coherence lie to the user)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutation-silent",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:311 — createConnection.onError discards non-auth errors",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:323 — syncPlatforms.onError same pattern",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:417 — checkIn.onError silent on non-auth failures",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:427 — checkOut.onError silent on non-auth failures"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-08.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signals double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; no open item >14d old without decay",
+      "observed": "true; 0 decay candidates",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "0 new plans this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; each meets gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only under .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "diff -q = 0",
+      "expected": "0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed properly logged",
+      "observed": "none",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs still present (plans/ or _archive/)",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "28 >= 16",
+      "expected": "ge prior"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "diff -q = 0",
+      "expected": "0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions, kill switch not set",
+      "expected": "ok"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 ran)",
+      "observed": "Phase 1.6 skipped this run; gate is a no-op",
+      "expected": "noop"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
