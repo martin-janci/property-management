@@ -2516,7 +2516,9 @@
       "created": "Booking created",
       "updated": "Last updated",
       "pendingRegistrations": "{{count}} guest(s) pending registration",
-      "pendingRegistrationsDesc": "These guests need to be registered with authorities before check-in."
+      "pendingRegistrationsDesc": "These guests need to be registered with authorities before check-in.",
+      "checkInFailed": "Failed to check in",
+      "checkOutFailed": "Failed to check out"
     },
     "status": {
       "pending": "Pending",
@@ -2615,7 +2617,9 @@
       "addConnectionDesc": "Select a rental unit and platform to create a new connection.",
       "selectUnit": "Select Rental Unit",
       "selectPlatform": "Select Platform",
-      "create": "Create Connection"
+      "create": "Create Connection",
+      "createFailed": "Failed to create connection",
+      "syncFailed": "Failed to sync platform"
     },
     "guest": {
       "personalInfo": "Personal Information",
