@@ -119,6 +119,9 @@ function validateStep(step: number, form: SellFormData, tKey: (k: string) => str
   if (step === 1) {
     if (!form.address.trim()) errors.address = tKey('addressRequired');
     if (!form.city.trim()) errors.city = tKey('cityRequired');
+    // postalCode is a required server field (CreatePortalListingRequest):
+    // omitting it 422s the Publish POST (#3052), so enforce it here.
+    if (!form.postalCode.trim()) errors.postalCode = tKey('postalCodeRequired');
   } else if (step === 2) {
     if (form.area === '' || form.area === null || Number.isNaN(form.area))
       errors.area = tKey('areaRequired');
@@ -174,7 +177,11 @@ export default function SellPage() {
         currency: form.currency,
         street: form.address || undefined,
         city: form.city,
-        area: form.area === '' ? undefined : Number(form.area),
+        postalCode: form.postalCode.trim(),
+        // The UI collects "area"; the server contract names it `sizeSqm`
+        // (POST /api/v1/my/listings). Map it here so the measure is not
+        // silently dropped (#3052).
+        sizeSqm: form.area === '' ? undefined : Number(form.area),
         rooms: form.rooms === '' ? undefined : Number(form.rooms),
         floor: form.floor === '' ? undefined : Number(form.floor),
         isNegotiable: form.priceNegotiable,
@@ -413,6 +420,32 @@ export default function SellPage() {
                     </span>
                   )}
                 </div>
+
+                <div>
+                  <label htmlFor="sell-postalCode" style={labelStyle}>
+                    {t('fields.postalCode')}
+                  </label>
+                  <input
+                    id="sell-postalCode"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder={t('fields.postalCodePlaceholder')}
+                    value={form.postalCode}
+                    onChange={(e) => update({ postalCode: e.target.value })}
+                    aria-invalid={errors.postalCode ? true : undefined}
+                    aria-describedby={errors.postalCode ? 'sell-postalCode-error' : undefined}
+                    style={
+                      errors.postalCode
+                        ? { ...inputStyle, borderColor: 'var(--ppt-color-danger-hover, #dc2626)' }
+                        : inputStyle
+                    }
+                  />
+                  {errors.postalCode && (
+                    <span id="sell-postalCode-error" style={errorStyle}>
+                      {errors.postalCode}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
@@ -604,6 +637,7 @@ export default function SellPage() {
                   </div>
                   <div>
                     <strong>{t('summary.location')}:</strong> {form.address || '–'},{' '}
+                    {form.postalCode ? `${form.postalCode} ` : ''}
                     {form.city || '–'}
                   </div>
                   <div>
