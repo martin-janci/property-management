@@ -1,0 +1,53 @@
+{
+  "generated": "2026-10-08T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=19 < floor=36). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the reality-web segment. Findings verified net-new against backlog.json (0 open code-review-finding items) and prior reality-web signal files.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "churn-aligned (Phase 1 churn hotspots frontend/apps/reality-web/src/lib/realtor-api.ts [modified today], components/import/{FeedImport,CrmConnection,SyncSchedule}.tsx all start with the reality-web segment root frontend/apps/reality-web/src/; no saturation — 0 open code-review-finding items in backlog.json for this segment)",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "notes": "Churn hotspots themselves (realtor-api.ts, import/* components, listings/[slug]/page.tsx SSR path) were reviewed and found mature: proper try/catch, inline i18n error states (t('createError')), null/malformed-body handling with hard 404 vs soft-404, tenant-keyed ISR cache tags, and existing regression tests (SyncSchedule). No new correctness/security findings there. All 'as unknown as' casts are confined to test files; no production 'as any'. The findings below are a genuine whole-section i18n gap in the authenticated area of a 6-locale (sk/cs/de/en/pl/hu) public portal, surfaced while tracing realtor-api.ts consumers.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "evidence": [
+        "The entire authenticated realtor section renders in hardcoded English with ZERO i18n in a portal that is explicitly multi-language (sk/cs/de/en/pl/hu). These pages live under the /[locale]/ route segment (so locale IS selectable) yet contain no useTranslations/getTranslations/next-intl import at all — grep -c returns 0 for all five. Concretely in realtor/analytics/page.tsx: the heading <h1 className=\"title\">Analytics</h1> (line ~67), subtitle <p className=\"subtitle\">Performance of your listings over time.</p>, and the error fallback setError(err instanceof RealtorApiError ? err.message : 'Could not load analytics.') at line 54 are all hardcoded English rendered to the user. A Slovak/Czech/German/Polish/Hungarian realtor on /sk/realtor/analytics gets an English-only page. Contrast with sibling pages that are correctly translated (e.g. app/[locale]/favorites/page.tsx uses useTranslations) and with components/realtor/ListingForm.tsx which wraps every label in t('labelTitle') etc. — so the i18n plumbing exists and is used elsewhere; these pages simply never adopted it. Fix (cloud-landable, frontend-only): add useTranslations('realtor') blocks, replace the literal strings with t(...) keys, and add the keys to messages/{en,sk,cs,de,pl,hu}.json. No backend/DB work. Verified net-new: 0 open code-review-finding rows in backlog.json for this segment."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-account-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "evidence": [
+        "Same whole-section i18n gap as the realtor pages, in the separate account/profile route group — split into its own finding because it is a distinct, independently PR-able unit. All five page.tsx files render user-facing text (<h1>/<p>/<button> headings, button labels, error strings) under the /[locale]/ segment but import no useTranslations/getTranslations/next-intl (grep -c = 0 for each). Concrete examples: account/password/page.tsx line 55 setErrors({ currentPassword: 'Current password is incorrect.' }), line 126 {isSubmitting ? 'Updating…' : 'Update password'}; realtor/profile shares the pattern with 'Could not load profile.' (line 48), 'Name is required' (line 63), 'Could not save profile.' (line 82), 'Saving…'/'Save changes' (line 183). These are the authenticated account screens of a 6-locale public portal served English-only to every non-English locale. Error-handling itself is correct (AuthApiError 401 distinguished, RealtorApiError branches) — the gap is purely untranslated literals. Fix (cloud-landable, frontend-only): introduce useTranslations('account'/'profile') blocks, move literals to t(...) keys, extend messages/{en,sk,cs,de,pl,hu}.json. No backend/DB work."
+      ]
+    }
+  ]
+}

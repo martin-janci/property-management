@@ -55,6 +55,9 @@ function fillWizardToPublish() {
   // Step 1 — type + location (defaults: sale / apartment)
   fireEvent.change(screen.getByLabelText('fields.address'), { target: { value: 'Hlavna 1' } });
   fireEvent.change(screen.getByLabelText('fields.city'), { target: { value: 'Bratislava' } });
+  // postalCode is a required server field (#3052): the wizard must collect it
+  // and send it, otherwise the Publish POST 422s on the missing field.
+  fireEvent.change(screen.getByLabelText('fields.postalCode'), { target: { value: '81101' } });
   fireEvent.click(screen.getByRole('button', { name: 'next' }));
 
   // Step 2 — details
@@ -94,16 +97,25 @@ describe('SellPage — Publish persists the listing', () => {
         propertyType: 'apartment',
         street: 'Hlavna 1',
         city: 'Bratislava',
-        area: 65,
+        // #3052: the wizard's `area` input must map to the server's `sizeSqm`
+        // field, and `postalCode` (a required server field) must be collected
+        // and sent — otherwise the Publish POST 422s.
+        sizeSqm: 65,
+        postalCode: '81101',
         rooms: 3,
         price: 120000,
         currency: 'EUR',
         isNegotiable: false,
       })
     );
+    const payload = mockCreateListing.mock.calls[0][0];
+    // #3052: the payload must NOT carry the client-only `area` key the server
+    // doesn't understand — it is mapped to `sizeSqm`.
+    expect(payload).not.toHaveProperty('area');
+    expect(payload).toHaveProperty('sizeSqm', 65);
+    expect(payload).toHaveProperty('postalCode', '81101');
     // Regression (#3016): the dropped contact fields must not silently
     // reappear in the POST body — the payload carries no contact keys.
-    const payload = mockCreateListing.mock.calls[0][0];
     expect(payload).not.toHaveProperty('contactName');
     expect(payload).not.toHaveProperty('contactPhone');
     expect(payload).not.toHaveProperty('contactEmail');

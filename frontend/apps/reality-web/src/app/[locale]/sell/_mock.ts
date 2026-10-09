@@ -29,6 +29,7 @@ export interface SellFormData {
   propertyType: PropertyType;
   address: string;
   city: string;
+  postalCode: string;
   area: number | '';
   rooms: number | '';
   floor: number | '';
@@ -47,6 +48,7 @@ export const INITIAL_FORM_DATA: SellFormData = {
   propertyType: 'apartment',
   address: '',
   city: '',
+  postalCode: '',
   area: '',
   rooms: '',
   floor: '',

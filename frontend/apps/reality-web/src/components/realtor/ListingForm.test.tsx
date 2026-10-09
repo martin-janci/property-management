@@ -67,7 +67,7 @@ describe('ListingForm — numeric field validation', () => {
     // sanitized to empty — in both cases NaN must never reach onSubmit.
     if (onSubmit.mock.calls.length > 0) {
       const draft = onSubmit.mock.calls[0][0];
-      expect(draft.area === undefined || Number.isFinite(draft.area)).toBe(true);
+      expect(draft.sizeSqm === undefined || Number.isFinite(draft.sizeSqm)).toBe(true);
     } else {
       expect(onSubmit).not.toHaveBeenCalled();
     }
@@ -84,9 +84,9 @@ describe('ListingForm — numeric field validation', () => {
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const draft = onSubmit.mock.calls[0][0];
-    expect(draft.area).toBe(85);
+    expect(draft.sizeSqm).toBe(85);
     expect(draft.rooms).toBe(3);
-    expect(Number.isNaN(draft.area)).toBe(false);
+    expect(Number.isNaN(draft.sizeSqm)).toBe(false);
     expect(Number.isNaN(draft.rooms)).toBe(false);
   });
 
@@ -112,7 +112,7 @@ describe('ListingForm — numeric field validation', () => {
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const draft = onSubmit.mock.calls[0][0];
-    expect(draft.area).toBeUndefined();
+    expect(draft.sizeSqm).toBeUndefined();
     expect(draft.rooms).toBeUndefined();
   });
 });

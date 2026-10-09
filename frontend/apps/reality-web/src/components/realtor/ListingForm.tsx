@@ -84,7 +84,7 @@ export function ListingForm({
   const [city, setCity] = useState(initialValue?.city ?? '');
   const [street, setStreet] = useState(initialValue?.street ?? '');
   const [postalCode, setPostalCode] = useState(initialValue?.postalCode ?? '');
-  const [area, setArea] = useState(initialValue?.area?.toString() ?? '');
+  const [area, setArea] = useState(initialValue?.sizeSqm?.toString() ?? '');
   const [rooms, setRooms] = useState(initialValue?.rooms?.toString() ?? '');
   const [errors, setErrors] = useState<FieldErrors>({});
 
@@ -115,7 +115,8 @@ export function ListingForm({
       city: city.trim(),
       street: street.trim() || undefined,
       postalCode: postalCode.trim() || undefined,
-      area: areaResult.value,
+      // UI field "area" maps to the server's `sizeSqm` contract field (#3052).
+      sizeSqm: areaResult.value,
       rooms: roomsResult.value,
     });
   };

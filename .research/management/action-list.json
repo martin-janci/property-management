@@ -2,26 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "pm-devops-unblock-api-server-utoipa-swagger-egress",
-      "action": "Unblock utoipa-swagger-ui crates.io / egress for api-server in cloud runner (issue #2966) \u2014 every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED; this is the single largest buffer-starvation lever and gates all 3 IDOR retries (#2944/#2945/#2946)",
-      "owner_role": "pm-devops",
-      "priority": "high",
-      "status": "open",
-      "source": "pm-scrum-master 2026-10-01 (buffer-low signal: claimable=9/72)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T04:30:00Z",
-      "issue_ref": {
-        "number": 2966,
-        "url": "https://github.com/martin-janci/property-management/issues/2966",
-        "labels": [
-          "infra",
-          "ci"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2946-retry2",
       "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_analytics property metrics computed org_id then discarded (Closes #2946) [retry 2/2 of failed gh-issue-2946]",
       "owner_role": "pm-security",
@@ -95,7 +75,7 @@
     },
     {
       "id": "pm-scrum-master-stalled-accounting-pay-by-square-2559",
-      "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot \u2014 one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months",
+      "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot — one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -107,7 +87,7 @@
     },
     {
       "id": "pm-scrum-master-stalled-invoice-lifecycle-2555",
-      "action": "Stalled 64d: PR #2555 (invoice lifecycle accounting slice) needs reviewer slot \u2014 companion to #2559; both are the aging accounting MVP trio tracked since 2026-07-30",
+      "action": "Stalled 64d: PR #2555 (invoice lifecycle accounting slice) needs reviewer slot — companion to #2559; both are the aging accounting MVP trio tracked since 2026-07-30",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -119,7 +99,7 @@
     },
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -134,26 +114,6 @@
         "labels": [
           "infra",
           "mobile-native"
-        ]
-      }
-    },
-    {
-      "id": "pm-devops-unblock-mobile-rn-jest-expo-version-rot",
-      "action": "Resolve mobile/React Native jest-expo version rot (#2951) \u2014 RN mobile unit tests failing on cloud runner; blocks mobile RN code-review items from landing",
-      "owner_role": "pm-devops",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-scrum-master 2026-10-01 (standing blocker)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T04:30:00Z",
-      "issue_ref": {
-        "number": 2951,
-        "url": "https://github.com/martin-janci/property-management/issues/2951",
-        "labels": [
-          "infra",
-          "mobile"
         ]
       }
     },
@@ -176,7 +136,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -195,7 +155,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout \u2014 every suspend API call can hang indefinitely on Android + iOS",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -233,7 +193,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings \u2014 dashboard under-reports on large portfolios",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -252,7 +212,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit \u2014 up to 100 parallel GETs from a mobile device [retry 1/2]",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -287,7 +247,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -306,7 +266,7 @@
     },
     {
       "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
-      "action": "Mobile RN meter-reading input accepts non-numeric \u2014 silent write of garbage values",
+      "action": "Mobile RN meter-reading input accepts non-numeric — silent write of garbage values",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -325,7 +285,7 @@
     },
     {
       "id": "code-review-reality-server-dup-url-validator",
-      "action": "reality-server carries a duplicated URL-validation helper \u2014 merge into shared crate",
+      "action": "reality-server carries a duplicated URL-validation helper — merge into shared crate",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -337,23 +297,6 @@
       "backlog_ref": {
         "plan": null,
         "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english",
-      "action": "workflow-automation pages emit English-literal toast titles while rest of file uses i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=2 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T06:28:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
         "vector": "refactor"
       }
     },
@@ -375,42 +318,8 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-2995-ppt",
-      "action": "ppt-web Home CTA refactor (PR #2995) landed without touching docs/screens/ppt",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T06:28:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "screen-map-drift-pr-3002-ppt",
-      "action": "ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-01T06:28:31Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T06:28:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
-      "action": "ppt-web workflow-automation CreateRulePage.tsx \u2014 4 commits in 14d (new hotspot)",
+      "action": "ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -427,7 +336,7 @@
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
-      "action": "ppt-web workflow-automation TemplateLibraryPage.tsx \u2014 3 commits in 14d (new hotspot)",
+      "action": "ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -444,7 +353,7 @@
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
-      "action": "ppt-web src/routes/groups/core.tsx \u2014 4 commits in last 14d (new hotspot)",
+      "action": "ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -460,25 +369,8 @@
       }
     },
     {
-      "id": "code-review-reality-web-profile-mock-data",
-      "action": "reality-web /profile route renders MOCK_* fixtures \u2014 every signed-in user sees the same fabricated identity, listings, activity, reviews",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-02T06:31:33Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-02T06:31:33Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-server-create-handlers-return-200-not-201",
-      "action": "reality-server create handlers return 200 OK but utoipa spec claims 201 Created \u2014 OpenAPI contract vs runtime divergence across 9 endpoints",
+      "action": "reality-server create handlers return 200 OK but utoipa spec claims 201 Created — OpenAPI contract vs runtime divergence across 9 endpoints",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -494,42 +386,8 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-3013-reality",
-      "action": "PR #3013 touched reality-web /sell route without updating docs/screens/reality/sell.md",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-03T04:25:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "screen-map-drift-pr-3014-reality",
-      "action": "PR #3014 touched reality-web /report route without updating docs/screens/reality/report-listing.md",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-03T04:25:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
-      "action": "reality-web /report page recent churn \u2014 PR #3014 submit-wiring change",
+      "action": "reality-web /report page recent churn — PR #3014 submit-wiring change",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -546,7 +404,7 @@
     },
     {
       "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
-      "action": "reality-web /sell page recent churn \u2014 PR #3013 publish-wiring change",
+      "action": "reality-web /sell page recent churn — PR #3013 publish-wiring change",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -563,7 +421,7 @@
     },
     {
       "id": "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
-      "action": "reality-web FeaturedListings recent churn \u2014 PR #3015 error-surface fix",
+      "action": "reality-web FeaturedListings recent churn — PR #3015 error-surface fix",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -580,7 +438,7 @@
     },
     {
       "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
-      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS \u2014 two concurrent POSTs can exceed the 4-item cap",
+      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -596,16 +454,16 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-community-group-detail-mock-data",
-      "action": "ppt-web /community/groups/:groupId renders hardcoded mock group \u2014 every group shows fake \"Sample Group\" with no-op actions",
+      "id": "code-review-ppt-web-core-documents-default-org-sentinel",
+      "action": "ppt-web documents routes fabricate a 'default-org' sentinel instead of gating when the user has no organizationId",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-04T14:31:10Z (score=2 conf=high vector=bug)",
+      "source": "dispatcher-backlog-refill 2026-10-07T16:42:28Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-04T14:31:10Z",
+      "first_open_at": "2026-10-07T16:42:28Z",
       "backlog_ref": {
         "plan": null,
         "score": 2,
@@ -613,20 +471,160 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-route-group-toast-i18n",
-      "action": "ppt-web route-group action toasts use hardcoded English \u2014 bypass react-i18next, render English on sk/cs/de locales",
-      "owner_role": "pm-backend",
+      "id": "screen-map-drift-pr-3019-reality",
+      "action": "reality-web /report PR #3019 touched 2 routes with no docs/screens/reality update",
+      "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-04T14:31:10Z (score=1 conf=high vector=bug)",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-04T14:31:10Z",
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3022-reality",
+      "action": "reality-web /sell PR #3022 touched 3 routes with no docs/screens/reality update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3033-reality",
+      "action": "reality-web /profile PR #3033 touched 3 routes with no docs/screens/reality update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3034-ppt",
+      "action": "ppt-web community-group-detail PR #3034 touched 2 routes with no docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3036-ppt",
+      "action": "ppt-web route-group i18n PR #3036 touched 6 routes with no docs/screens/ppt update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "action": "ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
       "backlog_ref": {
         "plan": null,
         "score": 1,
-        "vector": "bug"
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+      "action": "reality-web components/import/SyncSchedule.tsx recent churn — 2 commits in 14d (new hotspot)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "action": "reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "gh-issue-3052",
+      "action": "Follow-up: /sell wizard Publish payload mismatches server (area vs sizeSqm; postalCode not collected) → 422 (Closes #3052)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-09T04:30:01Z (#3052)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-09T04:30:01Z",
+      "issue_ref": {
+        "number": 3052,
+        "url": "https://github.com/martin-janci/property-management/issues/3052",
+        "labels": [
+          "frontend",
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],
