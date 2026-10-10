@@ -1,0 +1,71 @@
+{
+  "generated": "2026-10-10T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=12 < floor=36, run parity EVEN at stats.runs=88). Static single-segment rotating code review via the ppt-dev-review skill — no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-ui segment. Per the skill's >40-file narrowing rule the slice targeted the recently-churned feature cluster (hotspot_history flags the disputes feature: MediationWorkspacePage/MediationResolutionForm/MediationChatThread) plus the broad i18n-gap sweep of pages/ + components/ + features/*/{pages,components}. Each finding verified net-new against ALL prior ppt-web-ui signal files (2026-10-09 + three 2026-10-10 runs a/b/c): those covered voting (BallotQuestion/QuorumTile/QuestionResults), privacy, oauth-grants, sentiment, registry, marketplace ORPHANED ROUTES, Toast copy-timer, LanguageSwitcher — NONE touched disputes, community, or the marketplace RfqForm. DROPPED as not-a-finding: MediationWorkspacePage.tsx (clean — loading + error-with-retry + empty states + full i18n), MediationResolutionForm.tsx (clean — fully i18n'd), console.error hits in catch blocks (legitimate error logging, nits). Verified NOT a bug: EvidenceUploader object-URL lifecycle (revokes on unmount via ref) is correct.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-ui = 2026-10-01, tied-oldest of 8 segments with mobile-rn; ppt-web-ui preferred over mobile-rn per the Tier-1d cloud-landable-frontend steer and segment-map table order, consistent with the other 2026-10-10 Tier-1d runs). No churn files supplied to this generator; disputes targeted from hotspot_history. No saturation — 0 open code-review-finding items in backlog.json for this segment (all 19 historical are status=done).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-filedisputedialog-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/FileDisputeDialog.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/FileDisputeDialog.tsx — internally inconsistent i18n in the churn-hot disputes feature (hotspot_history flags MediationWorkspacePage/MediationResolutionForm/MediationChatThread). The file DOES import useTranslation but uses t() exactly once, for an aria label (L88 aria.closeDialog); the entire visible dispute-filing form is hardcoded English: L95 heading 'File a Dispute', L109 label 'Category *', L126 label 'Title *', L131 placeholder 'Brief summary of the dispute', L152 '<option>Select building...</option>', L170 '<option>Select unit...</option>', L188 placeholder 'Describe the issue in detail. Include dates, times, and specific incidents.', L203 placeholder 'What outcome would you like to see?'.",
+        "Reachable in production: this is the primary modal for filing a dispute (Epic 80) — a legally-meaningful flow — so every sk/cs/de resident sees an English-only form while the surrounding disputes UI (MediationWorkspacePage, MediationResolutionForm) is fully localized. Net-new: 0 prior signal/backlog mentions of FileDisputeDialog.tsx; prior disputes work in the backlog was backend IDOR tests, not this component.",
+        "Fix (frontend-only, cloud-landable, no backend/DB): the t() plumbing is already present — move the heading, the two field labels, the two select placeholders, and the three input placeholders into the disputes i18n namespace for en/sk/cs/de. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-forms-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/components/EventForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/GroupForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/CreatePostForm.tsx"
+      ],
+      "evidence": [
+        "The community feature's user-facing creation forms are ENTIRELY un-internationalized — EventForm.tsx, GroupForm.tsx, ItemForm.tsx and CreatePostForm.tsx each import NO useTranslation and make 0 t() calls (verified by grep), yet render English-only labels and placeholders on a multi-locale app (ppt-web ships react-i18next via src/i18n + LanguageSwitcher).",
+        "Concrete strings: EventForm.tsx L137 placeholder 'Enter event title', L154 'What's this event about?', L199 '<span>Date & Time</span>', L207 'All day event', L274 'Leave empty for unlimited'; GroupForm.tsx L125 'Enter group name', L142 'Describe what your group is about...'; ItemForm.tsx L204 'What are you selling?', L221 'Describe your item in detail...'; CreatePostForm.tsx L160 'What's on your mind?', L178 'Enter image URL'. These are the primary create-flows for the Community/Neighbors feature, so every sk/cs/de resident sees English forms.",
+        "Net-new: 0 prior signal/backlog mentions of any community/components form. Fix (frontend-only, cloud-landable, no backend/DB): add useTranslation to each form and move the labels/placeholders into a community i18n namespace for en/sk/cs/de. Can be done as one PR across the four forms. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-rfqform-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/RfqForm.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/RfqForm.tsx — the Request-for-Quote form (Epic 68 Service Provider Marketplace) imports NO useTranslation and makes 0 t() calls, rendering an English-only form on a multi-locale app. Hardcoded visible strings: L130 heading 'Create Request for Quote', L216 section 'Timeline', L282 'Mark as Urgent', L290 section 'Budget (Optional)', L352 section 'Preferences', L372-374 select options 'Any'/'Email Only'/'Phone Only', plus placeholders L151 'e.g., Annual HVAC Maintenance', L189 'Describe what you need in detail...', L208 'Detailed scope, specifications, requirements...'.",
+        "Distinct from the existing marketplace finding (code-review-ppt-web-ui-marketplace-epic68-orphaned-routes, filed 2026-10-10 tier1d-c) which is about unwired ROUTES, not this component's i18n. Net-new: 0 prior signal mentions of RfqForm.tsx. Reachable: RFQ submission is a core marketplace resident action.",
+        "Fix (frontend-only, cloud-landable, no backend/DB): add useTranslation and move the heading, three section titles, the urgent/budget labels, the three select option labels, and the placeholders into a marketplace i18n namespace for en/sk/cs/de. Severity low (i18n gap, +1)."
+      ]
+    }
+  ]
+}
