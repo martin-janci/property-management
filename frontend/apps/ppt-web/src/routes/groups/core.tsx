@@ -62,6 +62,21 @@ const PortalWebhooksPage = lazy(() =>
   import('../../features/settings').then((m) => ({ default: m.PortalWebhooksPage }))
 );
 
+/**
+ * Resolve the role-appropriate dashboard landing path.
+ *
+ * Managers (per {@link isManagerRole} / `MANAGER_ROLES`) land on the manager
+ * shell; every other role lands on the resident dashboard. Centralising the
+ * path choice keeps the Home "Open dashboard" CTA and the bare-`/dashboard`
+ * redirect ({@link DashboardIndexRedirect}) in lockstep so their targets
+ * cannot drift apart.
+ */
+function dashboardPathForRole(
+  role: string | undefined
+): '/dashboard/manager' | '/dashboard/resident' {
+  return isManagerRole(role) ? '/dashboard/manager' : '/dashboard/resident';
+}
+
 export function Home() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
@@ -96,9 +111,7 @@ export function Home() {
           <div className="mt-6">
             <button
               type="button"
-              onClick={() =>
-                navigate(isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident')
-              }
+              onClick={() => navigate(dashboardPathForRole(user?.role))}
               className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
             >
               {t('nav.dashboard', { defaultValue: 'Open dashboard' })}
@@ -166,12 +179,7 @@ export function authRoutes() {
  */
 export function DashboardIndexRedirect() {
   const { user } = useAuth();
-  return (
-    <Navigate
-      to={isManagerRole(user?.role) ? '/dashboard/manager' : '/dashboard/resident'}
-      replace
-    />
-  );
+  return <Navigate to={dashboardPathForRole(user?.role)} replace />;
 }
 
 /** Dashboard routes (Epic 124). */
