@@ -112,14 +112,14 @@ pub async fn create_saved_search(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Json(data): Json<CreatePortalSavedSearch>,
-) -> Result<Json<PortalSavedSearch>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<PortalSavedSearch>), (axum::http::StatusCode, String)> {
     let search = state
         .reality_portal_repo
         .create_saved_search(principal.user_id, data)
         .await
         .map_err(|e| saved_search_error_response("create saved search", e))?;
 
-    Ok(Json(search))
+    Ok((axum::http::StatusCode::CREATED, Json(search)))
 }
 
 /// Get a saved search by ID.
