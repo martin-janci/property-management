@@ -393,6 +393,7 @@
     "enterReading": "Stand eingeben",
     "readingPlaceholder": "0,00",
     "readingRequired": "Bitte geben Sie einen Stand ein",
+    "readingInvalid": "Bitte geben Sie eine gueltige Zahl ein",
     "photo": "Foto (optional)",
     "submit": "Stand absenden",
     "submitSuccess": "Zahlerstand erfolgreich gesendet",

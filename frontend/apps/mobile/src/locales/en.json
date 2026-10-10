@@ -433,6 +433,7 @@
     "enterReading": "Enter Reading",
     "readingPlaceholder": "0.00",
     "readingRequired": "Please enter a reading",
+    "readingInvalid": "Please enter a valid number",
     "photo": "Photo (optional)",
     "submit": "Submit Reading",
     "submitSuccess": "Meter reading submitted successfully",

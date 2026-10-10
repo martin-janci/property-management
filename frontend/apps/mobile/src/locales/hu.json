@@ -393,6 +393,7 @@
     "enterReading": "Adja meg az allast",
     "readingPlaceholder": "0,00",
     "readingRequired": "Kerem adja meg az allast",
+    "readingInvalid": "Adjon meg egy ervenyes szamot",
     "photo": "Foto (opcionalis)",
     "submit": "Allas elkuldese",
     "submitSuccess": "Meroora allas sikeresen elkuldve",
