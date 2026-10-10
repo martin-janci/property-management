@@ -128,4 +128,29 @@ describe('CreateRulePage create-payload boundary', () => {
     });
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/automations/rules'));
   });
+
+  it('surfaces the thrown Error message and does not navigate when the mutation rejects', async () => {
+    createMutate.mockRejectedValueOnce(new Error('boom'));
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'submit-complete' }));
+
+    await waitFor(() => expect(createMutate).toHaveBeenCalledTimes(1));
+    // The Error instance's own message is shown verbatim in the failure Toast.
+    await waitFor(() => expect(hasToast(/boom/i)).toBe(true));
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the generic error message when a non-Error is thrown', async () => {
+    createMutate.mockRejectedValueOnce('plain string failure');
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'submit-complete' }));
+
+    await waitFor(() => expect(createMutate).toHaveBeenCalledTimes(1));
+    // Non-Error rejections use the translated fallback message, not the raw value.
+    await waitFor(() => expect(hasToast(/could not be created/i)).toBe(true));
+    expect(hasToast(/plain string failure/)).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });
