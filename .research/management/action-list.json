@@ -454,23 +454,6 @@
       }
     },
     {
-      "id": "screen-map-drift-pr-3019-reality",
-      "action": "reality-web /report PR #3019 touched 2 routes with no docs/screens/reality update",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-08T10:28:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "screen-map-drift-pr-3036-ppt",
       "action": "ppt-web route-group i18n PR #3036 touched 6 routes with no docs/screens/ppt update",
       "owner_role": "pm-qa",
