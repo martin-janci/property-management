@@ -321,12 +321,16 @@ async fn add_evidence(
 
 async fn list_evidence(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(violation_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationEvidence>>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .list_evidence(violation_id)
+        .list_evidence(violation_id, org_id)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to list evidence: {}", e)))
@@ -474,12 +478,16 @@ async fn record_payment(
 
 async fn list_payments(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<Vec<db::models::violations::FinePayment>>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .list_payments(action_id)
+        .list_payments(action_id, org_id)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to list payments: {}", e)))
@@ -624,13 +632,25 @@ struct ListCommentsQuery {
 
 async fn list_comments(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(violation_id): Path<Uuid>,
     Query(query): Query<ListCommentsQuery>,
 ) -> ApiResult<Json<Vec<db::models::violations::ViolationComment>>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
+    // Internal notes are staff-only. Even if the caller passes
+    // `?include_internal=true`, only manager-level roles (and platform admins)
+    // may actually see `is_internal` comments — a non-privileged role's request
+    // is silently downgraded to public-only (privilege-leak fix, issue #2944).
+    let may_see_internal =
+        user.is_platform_admin() || user.role.map(|r| r.is_manager()).unwrap_or(false);
+    let include_internal = query.include_internal.unwrap_or(false) && may_see_internal;
+
     state
         .violation_repo
-        .list_comments(violation_id, query.include_internal.unwrap_or(false))
+        .list_comments(violation_id, org_id, include_internal)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to list comments: {}", e)))
