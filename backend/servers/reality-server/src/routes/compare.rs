@@ -157,15 +157,49 @@ pub async fn add_to_compare(
     principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<(axum::http::StatusCode, Json<AddCompareResponse>), (axum::http::StatusCode, String)> {
+    use sqlx::Acquire;
+
     let mut conn = state
         .acquire_public_conn()
         .await
         .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
-    // Check current count
+    // TOCTOU fix: the count check and the INSERT must be atomic for a given
+    // user, otherwise two concurrent POSTs can both observe `count < cap` and
+    // both insert, pushing the list past MAX_COMPARE_LISTINGS. Run the whole
+    // check-then-insert inside a transaction that first takes a per-user
+    // transaction-scoped advisory lock (same pattern as
+    // `VoiceAssistantDeviceRepo::upsert_active_voice_device` and the
+    // idempotency middleware): concurrent adds for the same user serialize,
+    // so the second waits for the first to commit and then re-reads an
+    // accurate count. Different users never contend. The lock releases
+    // automatically on commit/rollback (cancellation-safe: a dropped future
+    // rolls the transaction back, freeing the lock).
+    let mut tx = conn
+        .begin()
+        .await
+        .map_err(|e| crate::util::errors::db_error("begin compare transaction", e))?;
+
+    // Bound any lock wait so a pathological block fails fast instead of
+    // hanging the request/handler.
+    sqlx::query("SET LOCAL lock_timeout = '15s'")
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| crate::util::errors::db_error("set lock timeout", e))?;
+
+    // Serialize concurrent adds for this exact user. `hashtextextended(text,
+    // bigint) -> bigint` yields the 64-bit advisory lock key.
+    let lock_key = format!("compare_add:{}", principal.user_id);
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+        .bind(&lock_key)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| crate::util::errors::db_error("acquire compare lock", e))?;
+
+    // Check current count (now protected by the advisory lock).
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM compare_lists WHERE user_id = $1")
         .bind(principal.user_id)
-        .fetch_one(&mut *conn)
+        .fetch_one(&mut *tx)
         .await
         .map_err(|e| crate::util::errors::db_error("count compare entries", e))?;
 
@@ -190,7 +224,7 @@ pub async fn add_to_compare(
         "SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND status = 'active')",
     )
     .bind(listing_id)
-    .fetch_one(&mut *conn)
+    .fetch_one(&mut *tx)
     .await
     .map_err(|e| crate::util::errors::db_error("check listing", e))?;
 
@@ -207,7 +241,7 @@ pub async fn add_to_compare(
     )
     .bind(principal.user_id)
     .bind(listing_id)
-    .fetch_one(&mut *conn)
+    .fetch_one(&mut *tx)
     .await
     .map_err(|e| crate::util::errors::db_error("check compare list", e))?;
 
@@ -221,9 +255,13 @@ pub async fn add_to_compare(
     sqlx::query("INSERT INTO compare_lists (user_id, listing_id) VALUES ($1, $2)")
         .bind(principal.user_id)
         .bind(listing_id)
-        .execute(&mut *conn)
+        .execute(&mut *tx)
         .await
         .map_err(|e| crate::util::errors::db_error("add to compare list", e))?;
+
+    tx.commit()
+        .await
+        .map_err(|e| crate::util::errors::db_error("commit compare transaction", e))?;
 
     Ok((
         axum::http::StatusCode::CREATED,
