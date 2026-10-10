@@ -279,7 +279,7 @@ async fn upsert_property_metrics(
     user: AuthUser,
     Json(req): Json<CreatePropertyMetrics>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let _org_id = user.tenant_id.ok_or_else(|| {
+    let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request("Tenant context required")),
@@ -288,7 +288,7 @@ async fn upsert_property_metrics(
 
     match s
         .portfolio_analytics_repo
-        .upsert_property_metrics(req)
+        .upsert_property_metrics(org_id, req)
         .await
     {
         Ok(metrics) => Ok(Json(to_json_value(metrics)?)),
@@ -311,7 +311,7 @@ async fn get_property_metrics(
     Path(building_id): Path<Uuid>,
     Query(query): Query<GetPropertyMetricsQuery>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let _org_id = user.tenant_id.ok_or_else(|| {
+    let org_id = user.tenant_id.ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request("Tenant context required")),
@@ -320,7 +320,7 @@ async fn get_property_metrics(
 
     match s
         .portfolio_analytics_repo
-        .get_property_metrics(building_id, query.period_start, query.period_end)
+        .get_property_metrics(org_id, building_id, query.period_start, query.period_end)
         .await
     {
         Ok(Some(metrics)) => Ok(Json(to_json_value(metrics)?)),
