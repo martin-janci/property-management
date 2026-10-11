@@ -137,3 +137,70 @@ describe('SyncSchedule — save error handling', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
+
+describe('SyncSchedule — edit form seeding', () => {
+  const mutateAsync = vi.fn().mockResolvedValue({});
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseUpdateSyncSchedule.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof useUpdateSyncSchedule>);
+  });
+
+  it('seeds the form from schedule data that arrived after mount', () => {
+    mockUseSyncSchedule.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as unknown as ReturnType<typeof useSyncSchedule>);
+    const { rerender } = render(<SyncSchedule {...baseProps} />);
+
+    mockUseSyncSchedule.mockReturnValue({
+      data: { frequency: 'weekly', preferredTime: '14:00', preferredDay: 3, enabled: false },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useSyncSchedule>);
+    rerender(<SyncSchedule {...baseProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /editSchedule/i }));
+    expect(screen.getByRole('checkbox')).not.toBeChecked();
+  });
+
+  it('preserves Sunday (preferredDay 0) when saving a weekly schedule', async () => {
+    mockUseSyncSchedule.mockReturnValue({
+      data: { frequency: 'weekly', preferredTime: '08:00', preferredDay: 0, enabled: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useSyncSchedule>);
+    render(<SyncSchedule {...baseProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /editSchedule/i }));
+    fireEvent.click(screen.getByRole('button', { name: /saveChanges/i }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledOnce());
+    expect(mutateAsync).toHaveBeenCalledWith({
+      frequency: 'weekly',
+      preferredTime: '08:00',
+      preferredDay: 0,
+      enabled: true,
+    });
+  });
+
+  it('omits time and day for hourly schedules', async () => {
+    mockUseSyncSchedule.mockReturnValue({
+      data: { frequency: 'hourly', enabled: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useSyncSchedule>);
+    render(<SyncSchedule {...baseProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /editSchedule/i }));
+    fireEvent.click(screen.getByRole('button', { name: /saveChanges/i }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledOnce());
+    expect(mutateAsync).toHaveBeenCalledWith({
+      frequency: 'hourly',
+      preferredTime: undefined,
+      preferredDay: undefined,
+      enabled: true,
+    });
+  });
+});
