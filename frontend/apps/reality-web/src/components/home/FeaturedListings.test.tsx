@@ -180,7 +180,10 @@ describe('FeaturedListings — query states', () => {
   });
 
   it('shows skeleton cards while loading', () => {
-    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {}))
+    );
 
     const { container } = renderFeatured();
 
