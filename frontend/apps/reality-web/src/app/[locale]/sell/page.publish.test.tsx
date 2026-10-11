@@ -179,4 +179,63 @@ describe('SellPage — Publish persists the listing', () => {
 
     resolve({ id: 'lst_1' }); // let the pending request settle for cleanup
   });
+  it('sends trimmed street/city when the user typed surrounding spaces', async () => {
+    mockCreateListing.mockResolvedValue({ id: 'lst_1' } as never);
+    render(<SellPage />);
+    fireEvent.change(screen.getByLabelText('fields.address'), { target: { value: '  Hlavna 1  ' } });
+    fireEvent.change(screen.getByLabelText('fields.city'), { target: { value: ' Bratislava ' } });
+    fireEvent.change(screen.getByLabelText('fields.postalCode'), { target: { value: '81101' } });
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.change(screen.getByLabelText('fields.area'), { target: { value: '65' } });
+    fireEvent.change(screen.getByLabelText('fields.rooms'), { target: { value: '3' } });
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.change(screen.getByLabelText('fields.price'), { target: { value: '120000' } });
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: 'publish' }));
+
+    await waitFor(() => expect(mockCreateListing).toHaveBeenCalledTimes(1));
+    const payload = mockCreateListing.mock.calls[0][0];
+    expect(payload.street).toBe('Hlavna 1');
+    expect(payload.city).toBe('Bratislava');
+    expect(payload.title).toBe('apartment Bratislava');
+  });
+
+  it('shows the generic submitFailed message for a non-RealtorApiError', async () => {
+    mockCreateListing.mockRejectedValue(new TypeError('network down'));
+    render(<SellPage />);
+    fillWizardToPublish();
+    fireEvent.click(screen.getByRole('button', { name: 'publish' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('submitFailed');
+    expect(alert).not.toHaveTextContent('network down');
+  });
+
+  it('keeps Publish disabled until the terms are accepted and never POSTs', () => {
+    render(<SellPage />);
+    fillWizardToPublish();
+    const publish = screen.getByRole('button', { name: 'publish' });
+    expect(publish).toBeEnabled();
+    fireEvent.click(screen.getByRole('checkbox')); // untick
+    expect(publish).toBeDisabled();
+    fireEvent.click(publish);
+    expect(mockCreateListing).not.toHaveBeenCalled();
+  });
+
+  it('allows retry after a failed POST and clears the error on success', async () => {
+    mockCreateListing
+      .mockRejectedValueOnce(new RealtorApiError('boom', 500))
+      .mockResolvedValueOnce({ id: 'lst_1' } as never);
+    render(<SellPage />);
+    fillWizardToPublish();
+
+    fireEvent.click(screen.getByRole('button', { name: 'publish' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('boom');
+
+    fireEvent.click(screen.getByRole('button', { name: 'publish' }));
+    expect(await screen.findByText('submittedTitle')).toBeInTheDocument();
+    expect(mockCreateListing).toHaveBeenCalledTimes(2);
+  });
 });
