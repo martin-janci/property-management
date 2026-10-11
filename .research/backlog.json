@@ -11259,7 +11259,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn 14d"
       ],
@@ -11271,7 +11271,12 @@
       ],
       "created_at": "2026-10-01",
       "updated_at": "2026-10-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-11T00:25:43Z",
+        "assignment_status": "merged",
+        "pr_number": 3061
+      }
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx",
@@ -11279,7 +11284,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn 14d"
       ],
@@ -11291,7 +11296,12 @@
       ],
       "created_at": "2026-10-01",
       "updated_at": "2026-10-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-11T00:25:43Z",
+        "assignment_status": "merged",
+        "pr_number": 3060
+      }
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx",
@@ -11299,7 +11309,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn 14d"
       ],
@@ -11311,7 +11321,12 @@
       ],
       "created_at": "2026-10-01",
       "updated_at": "2026-10-01",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-11T00:25:43Z",
+        "assignment_status": "merged",
+        "pr_number": 3062
+      }
     },
     {
       "id": "code-review-ppt-web-api-client-auth-fetch-triplication",
