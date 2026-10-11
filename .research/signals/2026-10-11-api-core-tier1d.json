@@ -1,0 +1,47 @@
+[
+  {
+    "id": "code-review-api-core-rls-context-pool-leak",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review",
+    "segment": "api-core",
+    "score_delta": 3,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/crates/api-core/src/middleware/rls_context.rs:3 — module self-documents as DEPRECATED and 'fundamentally flawed': it calls set_request_context on the shared pool, not a dedicated connection, so RLS session settings leak across pooled connections (cross-tenant data exposure)",
+      "backend/crates/api-core/src/middleware/mod.rs:16 — `pub use rls_context::*;` re-exports rls_context_middleware and require_rls_context on api-core's public API; any server/handler can import and re-adopt the flawed pool-scoped RLS path",
+      "backend/crates/api-core/src/middleware/rls_context.rs:110 — set_request_context(pool.as_ref(), ...) sets tenant context on the pool, while the correct RlsConnection extractor pins it to one acquired connection; grep shows the middleware is wired into no router (dead but publicly exported foot-gun)"
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-authz-fail-open-guest",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/crates/api-core/src/middleware/authorization.rs:176 — require_permission reads the role with `.unwrap_or(TenantRole::Guest)`: a request with no TenantRole extension (e.g. auth extractor skipped/failed) is silently downgraded to Guest instead of rejected — fail-open default on an authorization gate",
+      "backend/crates/api-core/src/middleware/authorization.rs:139 — permissions::AUTHENTICATED = min_level(1), and Guest.level()==10 (common/src/tenant.rs:125), so is_satisfied_by(Guest) is true; require_authenticated therefore grants access to a request that carries no authenticated role at all",
+      "backend/crates/api-core/src/middleware/mod.rs:11 — authorization module is `pub use`-exported but wired into no router (grep: require_permission/require_authenticated referenced only inside authorization.rs); latent auth-bypass if these gates are ever adopted as the sole check"
+    ],
+    "expert": "rust"
+  },
+  {
+    "id": "code-review-api-core-tenant-filter-header-trust",
+    "type": "code-review-finding",
+    "source": "rotating-expert-review",
+    "segment": "api-core",
+    "score_delta": 2,
+    "confidence": "medium",
+    "candidate_vector": "bug",
+    "evidence": [
+      "backend/crates/api-core/src/middleware/tenant_filter.rs:29 — tenant_filter accepts any well-formed X-Tenant-ID UUID and passes the request through; the three real checks (tenant exists/active, user has access to tenant, rate limit) are only a `// In production, validate:` TODO comment (lines 31-34), so the middleware provides no actual tenant isolation",
+      "backend/crates/api-core/src/middleware/mod.rs:18 — tenant_filter and tenant_logging are `pub use`-exported but wired into no router (grep: referenced only inside tenant_filter.rs); a dead stub named 'tenant isolation middleware' invites being layered in under the false belief it enforces access",
+      "backend/crates/api-core/src/middleware/tenant_filter.rs:61 — tenant_logging logs the full request URI at info level; query-string credentials/tokens would be captured in logs"
+    ],
+    "expert": "rust"
+  }
+]
