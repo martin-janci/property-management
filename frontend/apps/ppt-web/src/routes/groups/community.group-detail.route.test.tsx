@@ -273,4 +273,35 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
 
     expect(showToastMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
+  it('surfaces a success toast when leaving the group succeeds', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [makeMember()] };
+    leaveMutate.mockImplementation((_id: string, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.()
+    );
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'leave' }));
+
+    expect(showToastMock).toHaveBeenCalledTimes(1);
+    expect(showToastMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
+
+  it('does not treat a pending or banned membership row as an active member', () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    for (const status of ['pending', 'banned'] as const) {
+      membersResult = { data: [makeMember({ status })] };
+      const { unmount } = render(<GroupDetailPageInner groupId="grp-1" />);
+      expect(screen.getByTestId('is-member')).toHaveTextContent('false');
+      unmount();
+    }
+  });
+
+  it('navigates back to the groups list from the not-found state', async () => {
+    groupResult = { data: undefined, isLoading: false, error: null };
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'common.back' }));
+    expect(navigateMock).toHaveBeenCalledWith('/community/groups');
+  });
 });
