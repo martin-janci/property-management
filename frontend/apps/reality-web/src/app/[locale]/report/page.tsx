@@ -74,6 +74,9 @@ export default function ReportPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Re-entrancy guard: a second submit event (Enter key / fast double click)
+    // while the POST is in flight would file a duplicate abuse report.
+    if (submitReport.isPending) return;
     setFormError(null);
     if (!problem || !description.trim() || !gdprAccepted) return;
 

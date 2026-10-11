@@ -208,4 +208,118 @@ describe('ReportPage — abuse-report submit wiring', () => {
     expect(alert).toHaveTextContent(/Nevedeli sme určiť/);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('maps 404 to the not-found message and other failures to the generic one', async () => {
+    for (const [status, re] of [
+      [404, /Inzerát sa nenašiel/],
+      [500, /Nahlásenie sa nepodarilo odoslať/],
+    ] as const) {
+      const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+        Promise.resolve({ ok: false, status, json: async () => ({}) })
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      const { container, unmount } = renderPage();
+      fillForm(container);
+      fireEvent.click(screen.getByRole('button'));
+      expect(await screen.findByRole('alert')).toHaveTextContent(re);
+      expect(screen.queryByText('Nahlásenie bolo odoslané')).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('resolves the listing id from a pasted URL and preserves it as [ref: …]', async () => {
+    setSearchParams(new URLSearchParams());
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({ ok: true, status: 201, json: async () => ({ report: { id: 'r-3' } }) })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderPage();
+    const url = `https://rlt.sk/listings/${LISTING_ID}`;
+    fireEvent.change(container.querySelector('input[type="text"]') as HTMLInputElement, {
+      target: { value: url },
+    });
+    fillForm(container);
+    fireEvent.click(screen.getByRole('button'));
+
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
+      expect(post).toBeDefined();
+      const body = JSON.parse(String(post?.[1]?.body));
+      expect(body.listing_id).toBe(LISTING_ID);
+      expect(body.description).toBe(`This looks like a scam\n\n[ref: ${url}]`);
+    });
+  });
+
+  it('does not append [ref: …] when the reference is the bare UUID', async () => {
+    const OTHER = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({ ok: true, status: 201, json: async () => ({ report: { id: 'r-4' } }) })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderPage();
+    fireEvent.change(container.querySelector('input[type="text"]') as HTMLInputElement, {
+      target: { value: LISTING_ID },
+    });
+    fillForm(container);
+    fireEvent.click(screen.getByRole('button'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.description).toBe('This looks like a scam');
+  });
+
+  it('prefers ?listing over a different UUID in the free-text reference', async () => {
+    const OTHER = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+    setSearchParams(new URLSearchParams({ listing: OTHER }));
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({ ok: true, status: 201, json: async () => ({ report: { id: 'r-6' } }) })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { container } = renderPage();
+    fireEvent.change(container.querySelector('input[type="text"]') as HTMLInputElement, {
+      target: { value: LISTING_ID },
+    });
+    fillForm(container);
+    fireEvent.click(screen.getByRole('button'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.listing_id).toBe(OTHER);
+  });
+
+  it('does not POST while the form is incomplete', () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { container } = renderPage();
+    // Radio + description but GDPR not accepted.
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.change(container.querySelector('textarea') as HTMLTextAreaElement, {
+      target: { value: 'x' },
+    });
+    const form = container.querySelector('form') as HTMLFormElement;
+    fireEvent.submit(form);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('ignores a second submit event while the first POST is in flight', async () => {
+    let resolve: (v: unknown) => void = () => {};
+    const fetchMock = vi.fn(
+      (_url: string, _init?: RequestInit) =>
+        new Promise((r) => {
+          resolve = r;
+        })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderPage();
+    fillForm(container);
+    const form = container.querySelector('form') as HTMLFormElement;
+    fireEvent.submit(form);
+    await waitFor(() => expect(screen.getByRole('button')).toHaveTextContent('Odosiela sa…'));
+    fireEvent.submit(form);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolve({ ok: true, status: 201, json: async () => ({ report: { id: 'r-5' } }) });
+    expect(await screen.findByText('Nahlásenie bolo odoslané')).toBeInTheDocument();
+  });
 });
