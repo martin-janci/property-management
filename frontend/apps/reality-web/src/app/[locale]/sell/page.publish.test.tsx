@@ -182,7 +182,9 @@ describe('SellPage — Publish persists the listing', () => {
   it('sends trimmed street/city when the user typed surrounding spaces', async () => {
     mockCreateListing.mockResolvedValue({ id: 'lst_1' } as never);
     render(<SellPage />);
-    fireEvent.change(screen.getByLabelText('fields.address'), { target: { value: '  Hlavna 1  ' } });
+    fireEvent.change(screen.getByLabelText('fields.address'), {
+      target: { value: '  Hlavna 1  ' },
+    });
     fireEvent.change(screen.getByLabelText('fields.city'), { target: { value: ' Bratislava ' } });
     fireEvent.change(screen.getByLabelText('fields.postalCode'), { target: { value: '81101' } });
     fireEvent.click(screen.getByRole('button', { name: 'next' }));

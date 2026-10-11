@@ -9,7 +9,7 @@
  * Step 5 shows a read-only summary and the terms checkbox only. Seller
  * contact (name/phone/email) is NOT collected here: the listing is associated
  * with the authenticated realtor (`principal.user_id`) server-side on POST
- * /api/v1/listings, so contact comes from the realtor profile (#3016).
+ * /api/v1/my/listings, so contact comes from the realtor profile (#3016).
  *
  * All user-facing strings come from `pages.sell.*` in `messages/<locale>.json`.
  */
@@ -136,7 +136,7 @@ function validateStep(step: number, form: SellFormData, tKey: (k: string) => str
   // Step 5 (summary + terms) has no field-level validation — the seller's
   // contact details come from the authenticated realtor profile (the listing
   // is associated with `principal.user_id` server-side on POST
-  // /api/v1/listings), so the wizard no longer collects them. The terms
+  // /api/v1/my/listings), so the wizard no longer collects them. The terms
   // checkbox is enforced via the disabled Publish button.
   return errors;
 }
@@ -154,7 +154,7 @@ export default function SellPage() {
 
   /**
    * Persist the collected wizard data via the reality-server
-   * `POST /api/v1/listings` endpoint, then flip to the success screen only on
+   * `POST /api/v1/my/listings` endpoint, then flip to the success screen only on
    * a resolved 2xx. Mirrors the await+try/catch+finally pattern used by the
    * sibling account/listings/[id]/edit page. Previously the Publish button
    * flipped `submitted` without any network call, silently discarding every
@@ -164,19 +164,23 @@ export default function SellPage() {
     const stepErrors = validateStep(step, form, (k) => t(`validation.${k}`));
     setErrors(stepErrors);
     if (Object.keys(stepErrors).length > 0) return;
+    // Defensive re-entry/terms guard: the button is disabled in these states,
+    // but a double-fire must never POST twice or publish without consent.
+    if (saving || !form.termsAccepted) return;
 
     setSaving(true);
     setSubmitError(null);
     try {
       const payload: ListingDraft = {
-        title: form.description.trim().slice(0, 80) || `${form.propertyType} ${form.city}`.trim(),
+        title:
+          form.description.trim().slice(0, 80) || `${form.propertyType} ${form.city.trim()}`.trim(),
         description: form.description,
         propertyType: form.propertyType,
         transactionType: form.transactionType,
         price: Number(form.price),
         currency: form.currency,
-        street: form.address || undefined,
-        city: form.city,
+        street: form.address.trim() || undefined,
+        city: form.city.trim(),
         postalCode: form.postalCode.trim(),
         // The UI collects "area"; the server contract names it `sizeSqm`
         // (POST /api/v1/my/listings). Map it here so the measure is not
