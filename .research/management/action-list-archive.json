@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-10T22:42:51Z",
+  "archived_at": "2026-10-11T08:42:12Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2094,6 +2094,30 @@
       }
     },
     {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
+      "action": "ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-11T08:41:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3068,
+        "merged_at": "2026-10-11T08:27:47Z",
+        "at": "2026-10-11T08:41:50Z"
+      }
+    },
+    {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
       "action": "ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot)",
       "owner_role": "pm-tech-lead",
@@ -2115,6 +2139,125 @@
         "merged_pr": 3061,
         "merged_at": "2026-10-10T22:27:53Z",
         "at": "2026-10-10T22:42:51Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "action": "reality-web /report page recent churn — PR #3014 submit-wiring change",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-11T08:41:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-03T04:25:31Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3067,
+        "merged_at": "2026-10-11T08:27:44Z",
+        "at": "2026-10-11T08:41:50Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+      "action": "reality-web /sell page recent churn — PR #3013 publish-wiring change",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-11T08:41:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-03T04:25:31Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3066,
+        "merged_at": "2026-10-11T08:27:42Z",
+        "at": "2026-10-11T08:41:50Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
+      "action": "reality-web FeaturedListings recent churn — PR #3015 error-surface fix",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-11T08:41:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-03T04:25:31Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3063,
+        "merged_at": "2026-10-11T08:27:09Z",
+        "at": "2026-10-11T08:41:50Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+      "action": "reality-web components/import/SyncSchedule.tsx recent churn — 2 commits in 14d (new hotspot)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-11T08:41:50Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3064,
+        "merged_at": "2026-10-11T08:27:37Z",
+        "at": "2026-10-11T08:41:50Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "action": "reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor) | dev-reconcile 2026-10-11T08:32:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-08T10:28:13Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "3abe0455b9bce0c3d98da128ec21c63dccb34023",
+        "subject": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts: encode ids + test coverage (#3065)",
+        "at": "2026-10-11T08:32:13Z"
       }
     },
     {
@@ -17099,15 +17242,17 @@
     },
     {
       "id": "gh-issue-2944-retry1",
-      "action": "[CLAIM-SKIP: source issue closed-completed on GitHub with no linked PR; ghost retry] [CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403); tracked by open GitHub issue] Cross-tenant IDOR: violation comments/evidence/payments read without org scoping (+ internal-notes privilege leak) (Closes #2944) [retry 1/2 of failed gh-issue-2944]",
+      "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR: violation comments/evidence/payments read without org scoping (+ internal-notes privilege leak) (Closes #2944) [retry 1/2 of failed gh-issue-2944]",
       "owner_role": "pm-security",
       "priority": "high",
-      "status": "dropped",
-      "source": "dispatcher-retry-remint 2026-09-16T14:26:47Z (retry_of=gh-issue-2944 reason=failed-no-pr cooldown_ok newest_failure=2026-09-06T12:49:38Z)",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-09-24T22:24:48Z (retry_of=gh-issue-2944 reason=failed-no-pr cooldown_ok newest_failure=2026-09-06T12:49:38Z) | gc1-reconcile 2026-10-11T08:31:27Z",
       "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-16T14:26:47Z",
+      "dependency": "#2966",
+      "depends_on": [
+        "pm-devops-unblock-api-server-utoipa-swagger-egress"
+      ],
+      "first_open_at": "2026-09-24T22:24:48Z",
       "retry_of": "gh-issue-2944",
       "retry_round": 1,
       "issue_ref": {
@@ -17117,6 +17262,13 @@
           "bug",
           "security"
         ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2977,
+        "merged_at": "2026-10-11T06:26:50Z",
+        "at": "2026-10-11T08:31:27Z"
       }
     },
     {

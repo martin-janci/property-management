@@ -26,30 +26,6 @@
       }
     },
     {
-      "id": "gh-issue-2944-retry1",
-      "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR: violation comments/evidence/payments read without org scoping (+ internal-notes privilege leak) (Closes #2944) [retry 1/2 of failed gh-issue-2944]",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-09-24T22:24:48Z (retry_of=gh-issue-2944 reason=failed-no-pr cooldown_ok newest_failure=2026-09-06T12:49:38Z)",
-      "deadline": null,
-      "dependency": "#2966",
-      "depends_on": [
-        "pm-devops-unblock-api-server-utoipa-swagger-egress"
-      ],
-      "first_open_at": "2026-09-24T22:24:48Z",
-      "retry_of": "gh-issue-2944",
-      "retry_round": 1,
-      "issue_ref": {
-        "number": 2944,
-        "url": "https://github.com/martin-janci/property-management/issues/2944",
-        "labels": [
-          "bug",
-          "security"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2945-retry1",
       "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_properties handlers missing org verification (Closes #2945) [retry 1/2 of failed gh-issue-2945]",
       "owner_role": "pm-security",
@@ -335,57 +311,6 @@
       }
     },
     {
-      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
-      "action": "reality-web /report page recent churn — PR #3014 submit-wiring change",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-03T04:25:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
-      "action": "reality-web /sell page recent churn — PR #3013 publish-wiring change",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-03T04:25:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
-      "action": "reality-web FeaturedListings recent churn — PR #3015 error-surface fix",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-03T04:25:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
       "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
       "owner_role": "pm-backend",
@@ -400,57 +325,6 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
-      "action": "ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-08T10:28:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
-      "action": "reality-web components/import/SyncSchedule.tsx recent churn — 2 commits in 14d (new hotspot)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-08T10:28:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
-      "action": "reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-08T10:28:13Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-08T10:28:13Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
       }
     }
   ],
