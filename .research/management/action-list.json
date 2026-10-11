@@ -377,6 +377,26 @@
         "score": 2,
         "vector": "bug"
       }
+    },
+    {
+      "id": "gh-issue-3069",
+      "action": "Follow-up: scope ViolationRepository::list_notifications by org (same IDOR class as #2944) (PR #2977) (Closes #3069)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-11T16:25:57Z (#3069)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-11T16:25:57Z",
+      "issue_ref": {
+        "number": 3069,
+        "url": "https://github.com/martin-janci/property-management/issues/3069",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-01T04:30:00Z"
