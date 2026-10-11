@@ -15640,6 +15640,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-2944-retry1",
+      "branch": "auto-impl/gh-issue-2944-retry1-6891adec",
+      "status": "merged",
+      "claimed_at": "2026-09-25T02:29:26Z",
+      "last_updated": "2026-10-11T06:29:41Z",
+      "status_changed_at": "2026-10-11T06:26:50Z",
+      "pr_number": 2977,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/2977",
+      "merged_at": "2026-10-11T06:26:50Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=2977 status=blocked-in-cloud specialist=rust-backend scope_drift=true: fix pushed (d7fd076) org-scoped list_evidence/list_comments/list_payments in ViolationRepository + handlers extract org_id from AuthUser + internal-notes role-gate (is_manager/is_platform_admin) + violations_test.rs sqlx regressions; offline PASS (cargo check/clippy/fmt -p db); full verify gate UNRUNNABLE in cloud (api-server egress #2966, ppt-bridge 403, no local DB); dispatcher opened draft PR flagged needs-human-review for human verify+merge",
+      "reviewer_summary": "verdict=approve note=IDOR-fix-correct-schema-verified-CI-green [base-sync 2026-10-09T16:28 operator dev-merge; prior approve carried forward]",
+      "last_reviewed_oid": "947061b93728b7ad5194ab776db0b42a74700fff",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-09T16:33:50Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-2945",
       "branch": "auto-impl/gh-issue-2945-c06172e2",
       "status": "failed",
@@ -19127,5 +19151,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-10T22:42:25Z"
+  "archived_at": "2026-10-11T06:33:14Z"
 }
