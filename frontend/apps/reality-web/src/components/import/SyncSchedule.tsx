@@ -50,13 +50,20 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
   const [isEditing, setIsEditing] = useState(false);
   const [frequency, setFrequency] = useState<SyncFrequency>(schedule?.frequency || 'daily');
   const [preferredTime, setPreferredTime] = useState(schedule?.preferredTime || '09:00');
-  const [preferredDay, setPreferredDay] = useState(schedule?.preferredDay || 1);
+  const [preferredDay, setPreferredDay] = useState(schedule?.preferredDay ?? 1);
   const [enabled, setEnabled] = useState(schedule?.enabled ?? true);
   // Local error state (not the persistent mutation flag) so a prior failure
   // never bleeds into a fresh edit session — matches CrmConnection/FeedImport.
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const startEditing = () => {
+    // Re-seed the form from the latest server data: useState initialisers only
+    // run on mount (while the query is still loading), and `||` would turn
+    // Sunday (preferredDay 0) into Monday.
+    setFrequency(schedule?.frequency ?? 'daily');
+    setPreferredTime(schedule?.preferredTime ?? '09:00');
+    setPreferredDay(schedule?.preferredDay ?? 1);
+    setEnabled(schedule?.enabled ?? true);
     setSaveError(null);
     setIsEditing(true);
   };
