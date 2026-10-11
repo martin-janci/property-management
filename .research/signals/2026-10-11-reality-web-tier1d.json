@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-11",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved: open_claimable=3 < floor=36; coverage/backlog/retry exhausted). reality-web is both churn-aligned (239 file-touches in last 14d, 2nd-hottest segment) AND the oldest-unreviewed cursor (review_cursor 2026-10-02); the two hottest churn segments (ppt-web-ui, mobile-rn) were both already reviewed today (2026-10-11), so reality-web maximizes fresh coverage. Not backlog-saturated (0 open code-review-finding items for any segment).",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-account-edit-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — the entire 5-step listing-edit wizard (~930 lines) hardcodes Slovak user-facing strings with zero next-intl usage (no useTranslations/getTranslations/t()); e.g. labels 'Typ transakcie' (L358), 'Typ nehnutelnosti' (L399), 'Adresa'/'Mesto / Obec' (L429-434), 'Cena (EUR)' (L623), step hints 'Krok {step} z ...' (L340); buttons 'Dalej' (L794), 'Ulozit zmeny' (L827), 'Spat' (L775); loading state 'Nacitavam inzerat' (L223); error states 'Nacitanie inzeratu zlyhalo.' (L166) and 'Ulozenie zlyhalo, skuste znova.' (L213); status labels 'Aktivny/Neaktivny/Koncept' (L665-667). On this multilingual portal (messages/ ships sk, cs, de, en, pl, hu) every non-Slovak visitor sees the whole edit flow in Slovak. The sibling route realtor/listings/[id]/edit/page.tsx hardcodes the same strings in English instead — neither is localized."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-api-lib-english-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts:48 ('Network error. Please check your connection.') and frontend/apps/reality-web/src/lib/realtor-api.ts:35 ('Network error. Please try again.') throw hardcoded English messages as the thrown error's .message. These are surfaced verbatim to users in every locale via setGeneralError(error.message) — e.g. app/[locale]/auth/forgot-password/page.tsx:38, auth/login/page.tsx:77, auth/register/page.tsx:65, auth/reset-password/page.tsx:76 — so a non-English user on a dropped connection gets English error text on the login/registration path. The thrown string should be a locale-agnostic code the page maps through t(), not a baked-in English sentence."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-dup-edit-route",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Two parallel listing-edit implementations exist for the same UC-51.5 function: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (33KB inline 5-step wizard, Slovak strings, uses ./_mock EDIT_STEPS) and frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx (4KB, English strings, delegates to the shared components/realtor/ListingForm). Both call getMyListing/updateListing from lib/realtor-api. They diverge in language, UI structure and validation; one is almost certainly dead/legacy. Divergent duplicate routes for the same action are a maintenance hazard (bug fixes applied to one, not the other) and an inconsistent-UX source — consolidate onto a single localized ListingForm-based route."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
