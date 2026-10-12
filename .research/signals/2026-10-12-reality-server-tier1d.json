@@ -1,0 +1,36 @@
+{
+  "generated": "2026-10-12T00:00:00Z",
+  "source_run": "dispatcher Tier-1d buffer-starvation demand-driven vector generator (claimable=7 < floor=36). Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no Rust toolchain: api-server/reality-server build blocked by utoipa-swagger-ui egress #2966). File reading + grep only. CHURN_FILES empty this run (no Phase 1 churn list; hotspot_history entries in state.json are stale May/Sep dates, not treated as churn).",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed. After api-core was reviewed earlier today (cursor advanced 2026-10-03 -> 2026-10-12), reality-server and mobile-native-kmp remain tied at review_cursor 2026-10-03 (the oldest). Neither is saturated (0 open code-review-findings each; only api-handlers is saturated at 3 open). Tie broken by segment-map order -> reality-server (backend/servers/reality-server/src/), which precedes mobile-native-kmp in the skill's segment table.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": false,
+  "cloud_landable_note": "reality-server fix requires cargo compile/test which the cloud runner cannot do (utoipa-swagger-ui egress block #2966). Static review itself needs no toolchain; landing a fix does.",
+  "signals": [
+    {
+      "id": "code-review-reality-server-sso-raw-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/util/errors.rs"
+      ],
+      "evidence": [
+        "SECURITY CONTRACT reality-server already codifies: backend/servers/reality-server/src/util/errors.rs:1-32 documents that reality-server is internet-facing and raw sqlx::Error / anyhow::Error strings 'can leak column names, constraint names, sometimes pool / TLS state -- none of which a portal client should ever see.' The db_error(ctx, e) helper logs the full error server-side and returns a FIXED generic (500, \"Internal server error\") to the caller; this is enforced by tests at util/errors.rs:42-91 (db_error_body_leaks_no_source_detail asserts constraint/column/host=/dbname=/sslmode tokens never reach the client body). Other route files honor the contract: favorites.rs:154 & :200 and inquiries.rs:173 funnel DB errors through db_error(); users.rs password-reset (users.rs:503-529 request, :577-583 confirm) deliberately returns generic, enumeration-safe messages and logs only email_log_hash.",
+        "VIOLATION: backend/servers/reality-server/src/routes/sso.rs bypasses that contract at ~16 client-facing sites by serializing the raw error into the JSON body via SsoError::new(code, &e.to_string()): lines 303, 313, 325, 337 (SSO OAuth callback/exchange), 460, 477, 489 (POST /api/v1/sso/mobile/token -> create_mobile_sso_token), 541, 553, 565 (POST /api/v1/sso/mobile/validate -> validate_mobile_sso_token), and 976, 994, 1029, 1042, 1150, 1185, 1202, 1213, 1229, 1240 (token exchange & session-sync). These are all public/unauthenticated POST handlers, so the leak is reachable by any caller.",
+        "The 'user_create_failed' arms (sso.rs:325, 553, 1029, 1202, 1229) wrap state.user_service.upsert_sso_user(&user_info) and the 'session_create_failed' arms (sso.rs:337, 565, 1042, 1213, 1240) wrap the DB-backed session_service.create_session(...). Both are the exact DB-backed calls whose sqlx errors (unique-constraint names like realtor/user keys, column names, and on a connection failure host=/dbname=/sslmode) util/errors.rs exists to scrub -- here they are returned verbatim to an unauthenticated SSO client instead of through db_error().",
+        "The 'invalid_token' / 'token_exchange_failed' arms (sso.rs:303, 460, 976, 1150) embed the upstream PM OAuth introspection failure string, which introspect_pm_token_inner builds at sso.rs:835-837 as format!(\"Token introspection failed ({status}): {error_text}\") where error_text = response.text() of the PM introspection endpoint (sso.rs:829). This discloses the internal PM introspection endpoint's HTTP status and raw response body to the external portal/mobile client.",
+        "FIX: route every SSO error branch through crate::util::errors (log full detail server-side, return a fixed generic client message), or give SsoError the same log-full / return-generic discipline, keeping only explicitly-authored safe strings (e.g. 'invalid or expired token') in the client body. Backend fix is not cloud-landable until the reality-server build block (#2966) is lifted."
+      ]
+    }
+  ]
+}
