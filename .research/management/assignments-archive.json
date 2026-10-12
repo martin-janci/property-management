@@ -5222,6 +5222,30 @@
       "archived_at": "2026-10-05T02:59:26Z"
     },
     {
+      "task_id": "code-review-ppt-web-api-client-auth-fetch-triplication-retry1",
+      "branch": "auto-impl/code-review-ppt-web-api-client-auth-fetc-bcd3675e",
+      "status": "merged",
+      "claimed_at": "2026-10-12T18:38:31Z",
+      "last_updated": "2026-10-12T22:36:15Z",
+      "status_changed_at": "2026-10-12T22:36:15Z",
+      "pr_number": 3071,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3071",
+      "merged_at": "2026-10-12T22:32:46Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=clean-byte-identical-dedup-of-bearer-ctor-into-shared-bearerAuthorization-tests-added-CI-green (review posted as COMMENT; GitHub blocks self-approval on own PR)",
+      "last_reviewed_oid": "c30f9b00e9882cd5976475f167ed17534aeb7502",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-12T22:36:15Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-api-401-no-request-replay",
       "branch": "auto-impl/code-review-ppt-web-core-api-401-no-requ-10ba81d2",
       "status": "merged",
@@ -19283,5 +19307,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-11T08:39:19Z"
+  "archived_at": "2026-10-12T22:36:58Z"
 }
