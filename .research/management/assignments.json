@@ -205,7 +205,7 @@
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3035 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=10 reality-server create POSTs now 201 per utoipa spec; IG3 split; fmt+clippy green offline; cargo test blocked no-Postgres -> needs-human-review",
-      "reviewer_summary": "verdict=approve note=clean-201-convergence-already-201-no-200-asserts-regressed-posted-as-comment-self-approval-blocked",
+      "reviewer_summary": "verdict=approve note=clean-201-convergence-already-201-no-200-asserts-regressed-posted-as-comment-self-approval-blocked [base-sync 2026-10-09T16:28 operator dev-merge; prior approve carried forward]",
       "last_reviewed_oid": "793d7164257e9aa777014d01bc86fd1bc624796d",
       "scope_drift": false,
       "code_reuse_warn": null,
@@ -213,7 +213,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null,
+      "merge_attempted_at": "2026-10-09T16:33:50Z",
       "quarantined_at": null,
       "quarantine_reason": null
     }
