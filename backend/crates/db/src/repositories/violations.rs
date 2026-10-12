@@ -1062,15 +1062,29 @@ impl ViolationRepository {
         .await
     }
 
-    /// List notifications for a violation.
+    /// List notifications for a violation (tenant-scoped via parent violation).
+    ///
+    /// `violation_notifications` carries no `organization_id` of its own, so the
+    /// read is gated on the parent `violations` row matching `org_id`. An Org B
+    /// caller passing an Org A `violation_id` gets an empty list, not the
+    /// notification rows (which hold recipient PII) — same cross-tenant IDOR
+    /// class as `list_evidence` / `list_comments` / `list_payments` (issue
+    /// #2944, follow-up #3069).
     pub async fn list_notifications(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Vec<ViolationNotification>, sqlx::Error> {
         sqlx::query_as::<_, ViolationNotification>(
-            "SELECT * FROM violation_notifications WHERE violation_id = $1 ORDER BY sent_at DESC",
+            r#"
+            SELECT n.* FROM violation_notifications n
+            JOIN violations v ON v.id = n.violation_id
+            WHERE n.violation_id = $1 AND v.organization_id = $2
+            ORDER BY n.sent_at DESC
+            "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }
