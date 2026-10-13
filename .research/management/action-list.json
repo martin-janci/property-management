@@ -2,30 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "gh-issue-2946-retry2",
-      "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_analytics property metrics computed org_id then discarded (Closes #2946) [retry 2/2 of failed gh-issue-2946]",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-09-30T08:26:22Z (retry_of=gh-issue-2946 reason=failed-no-pr cooldown_ok newest_failure=2026-09-21T22:38:30Z)",
-      "deadline": null,
-      "dependency": "#2966",
-      "depends_on": [
-        "pm-devops-unblock-api-server-utoipa-swagger-egress"
-      ],
-      "first_open_at": "2026-09-30T08:26:22Z",
-      "retry_of": "gh-issue-2946",
-      "retry_round": 2,
-      "issue_ref": {
-        "number": 2946,
-        "url": "https://github.com/martin-janci/property-management/issues/2946",
-        "labels": [
-          "bug",
-          "security"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2945-retry1",
       "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_properties handlers missing org verification (Closes #2945) [retry 1/2 of failed gh-issue-2945]",
       "owner_role": "pm-security",
@@ -91,23 +67,6 @@
           "infra",
           "mobile-native"
         ]
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-authed-roots-session-leak",
-      "action": "logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-ppt-web-core-authed-roots-session-leak.md",
-        "score": 3,
-        "vector": "bug"
       }
     },
     {
@@ -260,23 +219,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-dup-url-validator",
-      "action": "reality-server carries a duplicated URL-validation helper — merge into shared crate",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "screen-map-drift-pr-2994-ppt",
       "action": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
       "owner_role": "pm-qa",
@@ -291,23 +233,6 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
-    },
-    {
-      "id": "code-review-reality-server-create-handlers-return-200-not-201",
-      "action": "reality-server create handlers return 200 OK but utoipa spec claims 201 Created — OpenAPI contract vs runtime divergence across 9 endpoints",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-03T04:25:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
       }
     },
     {
@@ -413,6 +338,28 @@
         "number": 3073,
         "url": "https://github.com/martin-janci/property-management/issues/3073",
         "labels": [
+          "follow-up"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3076",
+      "action": "cargo-deny: bump `ammonia` to clear RUSTSEC-2021-0157 (blocks all backend PRs) (Closes #3076)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-13T16:45:10Z (#3076)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-13T16:45:10Z",
+      "issue_ref": {
+        "number": 3076,
+        "url": "https://github.com/martin-janci/property-management/issues/3076",
+        "labels": [
+          "security",
+          "backend",
+          "dependencies",
           "follow-up"
         ]
       }

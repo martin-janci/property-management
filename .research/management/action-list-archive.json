@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-13T00:36:26Z",
+  "archived_at": "2026-10-13T16:47:37Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5401,6 +5401,29 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-authed-roots-session-leak",
+      "action": "logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=3 conf=high vector=bug) | dev-reconcile 2026-10-13T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-26T18:28:20Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-ppt-web-core-authed-roots-session-leak.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "0debcbb7533f2b504a6121096a8f17919678b3e5",
+        "subject": "code-review-ppt-web-core-authed-roots-session-leak: purge all authed query roots on logout (#2987)",
+        "at": "2026-10-13T16:44:42Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-community-group-detail-mock-data",
       "action": "ppt-web /community/groups/:groupId renders hardcoded mock group — every group shows fake \"Sample Group\" with no-op actions",
       "owner_role": "pm-backend",
@@ -6934,6 +6957,29 @@
       }
     },
     {
+      "id": "code-review-reality-server-create-handlers-return-200-not-201",
+      "action": "reality-server create handlers return 200 OK but utoipa spec claims 201 Created — OpenAPI contract vs runtime divergence across 9 endpoints",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=2 conf=high vector=bug) | dev-reconcile 2026-10-13T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-03T04:25:31Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "cc6e815c80a3bd5681bbef4bf427375f39245aa3",
+        "subject": "code-review-reality-server-create-handlers-return-200-not-201: return 201 Created from reality-server create POSTs (#3035)",
+        "at": "2026-10-13T16:44:42Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-create-review-body-length-uncapped",
       "action": "reality-server create_review accepts unbounded `body` text — only rating validated (~4 MiB blobs possible)",
       "owner_role": "pm-security",
@@ -6998,6 +7044,29 @@
       "stale_reconciled": {
         "at": "2026-08-09T14:11:09Z",
         "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-server-dup-url-validator",
+      "action": "reality-server carries a duplicated URL-validation helper — merge into shared crate",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=medium vector=refactor) | dev-reconcile 2026-10-13T16:44:42Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-09-26T18:28:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4b23b5890bd885d8261bb05cf4e426b6eaf97568",
+        "subject": "code-review-reality-server-dup-url-validator: dedup SSRF URL validator into common crate (#2992)",
+        "at": "2026-10-13T16:44:42Z"
       }
     },
     {
@@ -17374,6 +17443,36 @@
           "bug",
           "security"
         ]
+      }
+    },
+    {
+      "id": "gh-issue-2946-retry2",
+      "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_analytics property metrics computed org_id then discarded (Closes #2946) [retry 2/2 of failed gh-issue-2946]",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-09-30T08:26:22Z (retry_of=gh-issue-2946 reason=failed-no-pr cooldown_ok newest_failure=2026-09-21T22:38:30Z) | dev-reconcile 2026-10-13T16:44:42Z",
+      "deadline": null,
+      "dependency": "#2966",
+      "depends_on": [
+        "pm-devops-unblock-api-server-utoipa-swagger-egress"
+      ],
+      "first_open_at": "2026-09-30T08:26:22Z",
+      "retry_of": "gh-issue-2946",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 2946,
+        "url": "https://github.com/martin-janci/property-management/issues/2946",
+        "labels": [
+          "bug",
+          "security"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "1ff7db43b66f5ddcc028865ccfabb1f91b4be5b0",
+        "subject": "gh-issue-2946-retry2: scope portfolio_analytics property-metrics read+write by org (Closes #2946) (#3003)",
+        "at": "2026-10-13T16:44:42Z"
       }
     },
     {
