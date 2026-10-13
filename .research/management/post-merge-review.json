@@ -1,9 +1,89 @@
 {
-  "generated": "2026-10-12T18:28:40Z",
+  "generated": "2026-10-13T20:35:19Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-13T20:35:19Z",
+      "prs_scanned": 7,
+      "clean": [
+        3035,
+        2997,
+        2987,
+        2976,
+        3071
+      ],
+      "with_issues": [
+        {
+          "pr": 3003,
+          "issue": 3078,
+          "findings": 2,
+          "specialist": "rust",
+          "note": "gh-issue-2946-retry2 (cross-tenant IDOR on portfolio_analytics property-metrics, Closes #2946) merged 10-13. The IDOR fix is CORRECT and the shape is right: upsert_property_metrics persists organization_id + guards the target building with WHERE EXISTS(buildings WHERE id=$building AND organization_id=$org) so a cross-tenant upsert writes nothing; get_property_metrics adds AND organization_id=$org (foreign building -> 404); route layer extracts org_id from user.tenant_id and no longer discards it (mirrors #2976/#2977). 2 findings -> issue #3078. MEDIUM (correctness): the PR's own test header documents a pre-existing schema drift it calls 'BIT-567' where the repo projects columns absent from property_performance_metrics (gross_rental_income, average_lease_term_months, total_revenue, estimated_value) so BOTH endpoints return 500 at runtime regardless of the fix — endpoints effectively non-functional in prod. Verified via search_issues: NO such tracker as 'BIT-567' exists (only #2946, closed); repo uses numeric gh issues, so this known-broken behavior is UNTRACKED. LOW (tests): because endpoints 500, the new portfolio_analytics_cross_org_idor_tests.rs asserts only assert_ne!(status, OK) — which passes for a correct 404 but ALSO for the 500 and even if org scoping were reverted to 500/403-for-everyone; no same-org 200 control. Proposal: reconcile projections with migration 00091 schema (add columns or trim SELECT/struct), replace dangling BIT-567 ref with the real issue number, then tighten to assert_eq!(NOT_FOUND)+same-org 200 control."
+        },
+        {
+          "pr": 2992,
+          "issue": 3079,
+          "findings": 1,
+          "specialist": "rust",
+          "note": "code-review-reality-server-dup-url-validator merged 10-13: dedups SSRF validator by deleting reality-server util/url_validator.rs (validate_fetch_url) + its 350 lines of tests and switching agency_imports.rs to common::url_validation::validate_external_url. Consolidation is the right move — the shared validator is STRICTLY more comprehensive (CGNAT 100.64/10, documentation ranges, blocked cloud-metadata hostnames metadata.google.internal/169.254.169.254, .local/.internal TLDs, plus the validate_resolved_host/validate_resolved_addrs DNS-re-resolution layer the local one never had). 1 LOW security finding -> issue #3079: the IPv6 arm of is_forbidden_ip (common/src/url_validation.rs) uses to_ipv4_mapped() which only unmaps the ::ffff: form, whereas the DELETED validator used to_ipv4() which also unmaps the deprecated IPv4-COMPATIBLE form (::a.b.c.d). So a literal ::127.0.0.1 / ::169.254.169.254 (compatible form) now returns Ok from the static check where reality-server previously rejected it — a narrow (deprecated-address-class, literal-IP-only) SSRF-filter regression introduced by the dedup. Proposal: in the V6 arm fall back to v6.to_ipv4() when to_ipv4_mapped() is None (guarding ::/::1) and run check_ipv4; add regression cases for ::127.0.0.1 and ::169.254.169.254. The reports.rs/users.rs XSS image/link validators were intentionally left inlined (distinct concern) — correct scoping, not a finding."
+        }
+      ],
+      "skipped_already_reviewed": [
+        3062,
+        3060,
+        3061,
+        3063,
+        3064,
+        3065,
+        3066,
+        3067,
+        3068,
+        2977,
+        3056,
+        3055,
+        3049,
+        3053,
+        3054,
+        3058,
+        3059,
+        3043,
+        3046,
+        3045,
+        3047,
+        3048,
+        3050,
+        3051,
+        3044,
+        3032,
+        3034,
+        3031,
+        3033,
+        3026,
+        3025,
+        3020,
+        3036,
+        2967,
+        2969,
+        3023,
+        3027,
+        3018,
+        3019,
+        3021,
+        3022
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review. repo=martin-janci/property-management, window=14d (merged>=2026-09-29), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL proxy-blocked, gh api write paths 403'd). DISPATCHER_OWNED_COMMIT semantics per dispatcher instruction: wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did NOT touch assignments.json/action-list.json/archives; review-only, plus issue creation via MCP). Reviewed diffs inline (no Task fan-out tool available to this subagent; <=5 concurrency honoured conceptually). Enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc, perPage=50); merged detected by non-null merged_at. 7 net-new unreviewed merges since the 10-12 18:28Z run (all merged 10-12 22:32Z onwards, none carrying post-merge-reviewed): #3035,#3003,#2997,#2992,#2987,#2976 @10-13 16:30-16:31Z and #3071 @10-12 22:32Z. 5 CLEAN: #3035 (reality-server create handlers now return 201 Created matching the utoipa contract — create_agency/create_invitation/add_favorite/create_import_job/create_feed/send_contact_message/request_viewing/create_profile/respond_to_inquiry/create_saved_search; per-endpoint 201 regression tests incl. new realtors_happy_path_tests.rs), #2997 (mobile-RN MeterReadingScreen numeric validation: normalizeReadingInput strips non-numeric on each keystroke + comma->dot + first-separator-only, isValidReading strict regex submit guard; readingInvalid i18n across all 6 locales; pure-fn tests + render test), #2987 (ppt-web logout session-leak: adds 18 missing route-group/feature cache roots — community/disputes/iot/outages/leases/violations/voting/registries/compliance/esignature/my-units/portfolio-performance/templates/integrations/syndication/oauth-grants/mfa/layout — to AUTHED_QUERY_KEY_ROOTS; note voting is live root vs legacy votes; allow-list-membership + live-purge tests with representative key shapes; bounded-purge design deliberate/documented so clean), #2976 (portfolio-property update/remove IDOR #2945: repo writes now scoped to portfolio_id AND id so attacker's own portfolio + victim property -> 404; 4 cross-tenant + own-org-success #[sqlx::test] controls that assert victim row untouched), #3071 (ppt-web api-client: folds last Bearer <token> copy into shared bearerAuthorization, behavior-preserving, tested for drift). 2 WITH ISSUES: #3003 -> #3078 (rust: untracked schema-drift 500 'BIT-567' nonexistent + weak assert_ne!(200) IDOR tests), #2992 -> #3079 (rust: SSRF dedup dropped IPv4-compatible IPv6 unmapping). All 7 PRs labeled post-merge-reviewed via issue_write update (existing labels preserved: needs-human-review on #3035/#2997/#2987/#2976, bug+security+needs-human-review on #3003; #3071 had none). Breadcrumb comments on #3003 -> #3078 and #2992 -> #3079. Top-of-list dependabot PRs (#3030,#3008) are closed-unmerged (no merged_at). 09-28-and-earlier in-window merges already carry post-merge-reviewed from prior runs. Single-writer: wrote JSON + marker, deferred commit/push to orchestrator Phase 6.",
+      "focus_prs": [
+        3003,
+        2992,
+        3035,
+        2997,
+        2987,
+        2976,
+        3071
+      ]
+    },
     {
       "run_at": "2026-10-12T18:28:40Z",
       "prs_scanned": 0,
@@ -459,15 +539,6 @@
         2938
       ],
       "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-05), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable proxy-403; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration via list_pull_requests (state=closed, base=dev, sort=updated desc, perPage=50). All 9 in-window merges (merged_at>=2026-09-05: 2955,2956,2950,2952,2941,2942,2943,2940,2938) already carry post-merge-reviewed from prior runs; earliest in-window merge #2938 @2026-09-05T16:23:55Z, everything below out of window. Top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2934,2867,2865,2749) were closed unmerged (no merged_at). Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened. No-op pass.",
-      "focus_prs": []
-    },
-    {
-      "run_at": "2026-09-17T16:27:41Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-03), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; git push proxy-blocked); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to orchestrator Phase 6. Enumeration via search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-03 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new PRs. Cross-checked list_pull_requests (closed, base=dev, sorted updated desc, perPage=40): all 17 in-window merges (2955,2956,2950,2952,2941,2942,2943,2938,2940,2583,2585,2586,2673,2935,2558,2932,2931) already carry post-merge-reviewed from prior runs; top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2936,2934,2867,2865,2749) were closed unmerged (no merged_at). Nothing to review; no reviewer subagents spawned; no follow-up issues opened. No-op pass.",
       "focus_prs": []
     }
   ]
