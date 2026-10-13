@@ -393,6 +393,7 @@
     "enterReading": "Wprowadz odczyt",
     "readingPlaceholder": "0,00",
     "readingRequired": "Prosze wprowadzic odczyt",
+    "readingInvalid": "Wprowadz prawidlowa liczbe",
     "photo": "Zdjecie (opcjonalnie)",
     "submit": "Wyslij odczyt",
     "submitSuccess": "Odczyt licznika wyslany pomyslnie",
