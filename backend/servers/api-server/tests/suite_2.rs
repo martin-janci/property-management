@@ -59,3 +59,5 @@ mod booking_cross_user_idor_tests;
 mod booking_handler_routes_tests;
 #[path = "suites/booking_oauth_csrf_tests.rs"]
 mod booking_oauth_csrf_tests;
+#[path = "suites/portfolio_analytics_cross_org_idor_tests.rs"]
+mod portfolio_analytics_cross_org_idor_tests;

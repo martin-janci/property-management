@@ -157,19 +157,28 @@ impl PortfolioAnalyticsRepository {
 
     pub async fn upsert_property_metrics(
         &self,
+        org_id: Uuid,
         req: CreatePropertyMetrics,
     ) -> Result<PropertyPerformanceMetrics, AppError> {
+        // Org-scoped write (issue #2946): persist `organization_id` and guard the
+        // target building against the caller's org via `WHERE EXISTS`. A building
+        // owned by another org matches no row, so the INSERT..SELECT writes nothing
+        // and `fetch_one` returns RowNotFound — a cross-tenant upsert can neither
+        // create nor overwrite a foreign org's metrics.
         let metrics = sqlx::query_as::<_, PropertyPerformanceMetrics>(
             r#"
             INSERT INTO property_performance_metrics (
-                building_id, period_start, period_end, period_type,
+                organization_id, building_id, period_start, period_end, period_type,
                 total_units, occupied_units, average_lease_term_months, tenant_turnover_rate,
                 gross_rental_income, other_income, operating_expenses, currency,
                 revenue_per_unit, expense_per_unit, expense_ratio, collection_rate,
                 maintenance_requests, avg_resolution_time_hours, maintenance_cost,
                 tenant_satisfaction_score, complaints_count, estimated_value, cap_rate
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+            SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+            WHERE EXISTS (
+                SELECT 1 FROM buildings b WHERE b.id = $2 AND b.organization_id = $1
+            )
             ON CONFLICT (building_id, period_start, period_end, period_type)
             DO UPDATE SET
                 total_units = EXCLUDED.total_units,
@@ -199,6 +208,7 @@ impl PortfolioAnalyticsRepository {
                       complaints_count, estimated_value, cap_rate, created_at
             "#,
         )
+        .bind(org_id)
         .bind(req.building_id)
         .bind(req.period_start)
         .bind(req.period_end)
@@ -231,10 +241,13 @@ impl PortfolioAnalyticsRepository {
 
     pub async fn get_property_metrics(
         &self,
+        org_id: Uuid,
         building_id: Uuid,
         period_start: NaiveDate,
         period_end: NaiveDate,
     ) -> Result<Option<PropertyPerformanceMetrics>, AppError> {
+        // Org-scoped by `organization_id` so a foreign org's building_id resolves
+        // to no row (surfaced as 404), never the cross-tenant metrics (issue #2946).
         let metrics = sqlx::query_as::<_, PropertyPerformanceMetrics>(
             r#"
             SELECT id, building_id, period_start, period_end, period_type,
@@ -246,11 +259,13 @@ impl PortfolioAnalyticsRepository {
                    complaints_count, estimated_value, cap_rate, created_at
             FROM property_performance_metrics
             WHERE building_id = $1 AND period_start = $2 AND period_end = $3
+              AND organization_id = $4
             "#,
         )
         .bind(building_id)
         .bind(period_start)
         .bind(period_end)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
