@@ -21,8 +21,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 // H7 — `profile_image_url` ends up in `<img src=>` on the frontend. Reject
-// `javascript:`, `data:`, `file:` URLs. Inlined locally (see H7 brief);
-// swap for a shared `url_validator` module once it lands on main.
+// `javascript:`, `data:`, `file:` URLs. Inlined locally (see H7 brief).
+// NOTE: this is an XSS-focused scheme check for URLs rendered in the
+// frontend, distinct from the SSRF fetch validator now shared in
+// `common::url_validation`; a future consolidation could move this
+// image/link validator into that shared crate too.
 const MAX_PROFILE_URL_LEN: usize = 2048;
 
 fn validate_image_or_link_url(s: &str) -> Result<(), String> {

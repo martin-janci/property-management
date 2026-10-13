@@ -33,8 +33,10 @@ const MAX_URL_LEN: usize = 2048;
 
 /// Reject `javascript:`, `data:`, `file:`, etc. URLs that would later be
 /// rendered in `<img src=>` / `<a href=>` on the frontend (stored XSS).
-/// Inlined locally per H7 brief — once the auth-hardening branch lands a
-/// shared `url_validator` module this should be swapped for the import.
+/// Inlined locally per H7 brief. NOTE: this is an XSS-focused scheme check
+/// for URLs rendered in the frontend, distinct from the SSRF fetch validator
+/// now shared in `common::url_validation`; a future consolidation could move
+/// this image/link validator into that shared crate too.
 fn validate_image_or_link_url(s: &str) -> Result<(), String> {
     if s.chars().count() > MAX_URL_LEN {
         return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
