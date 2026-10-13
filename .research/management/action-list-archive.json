@@ -17382,28 +17382,6 @@
       }
     },
     {
-      "id": "gh-issue-2945-retry1",
-      "action": "[CLAIM-SKIP: source issue closed-completed on GitHub with no linked PR; ghost retry] [CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_properties handlers missing org verification (Closes #2945) [retry 1/2 of failed gh-issue-2945]",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "dropped",
-      "source": "dispatcher-retry-remint 2026-09-16T14:26:47Z (retry_of=gh-issue-2945 reason=failed-no-pr cooldown_ok newest_failure=2026-09-06T12:49:38Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-09-16T14:26:47Z",
-      "retry_of": "gh-issue-2945",
-      "retry_round": 1,
-      "issue_ref": {
-        "number": 2945,
-        "url": "https://github.com/martin-janci/property-management/issues/2945",
-        "labels": [
-          "bug",
-          "security"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-2946",
       "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_analytics property metrics computed org_id then discarded (Closes #2946)",
       "owner_role": "pm-security",
@@ -21516,6 +21494,63 @@
         "at": "2026-06-18T00:28:55Z",
         "by": "dispatcher-verify-noop",
         "evidence": "reclaim respawn confirmed already shipped on dev; pr=none status=done"
+      }
+    },
+    {
+      "id": "gh-issue-2945-retry1",
+      "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_properties handlers missing org verification (Closes #2945) [retry 1/2 of failed gh-issue-2945]",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-09-24T22:24:48Z (retry_of=gh-issue-2945 reason=failed-no-pr cooldown_ok newest_failure=2026-09-06T12:49:38Z) | gc1-reconcile 2026-10-13T18:27:21Z",
+      "deadline": null,
+      "dependency": "#2966",
+      "depends_on": [
+        "pm-devops-unblock-api-server-utoipa-swagger-egress"
+      ],
+      "first_open_at": "2026-09-24T22:24:48Z",
+      "retry_of": "gh-issue-2945",
+      "retry_round": 1,
+      "issue_ref": {
+        "number": 2945,
+        "url": "https://github.com/martin-janci/property-management/issues/2945",
+        "labels": [
+          "bug",
+          "security"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2976,
+        "merged_at": "2026-10-13T16:30:28Z",
+        "at": "2026-10-13T18:27:21Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
+      "action": "Mobile RN meter-reading input accepts non-numeric — silent write of garbage values",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-10-13T18:27:21Z",
+      "deadline": null,
+      "dependency": "#2951",
+      "depends_on": [
+        "pm-devops-unblock-mobile-rn-jest-expo-version-rot"
+      ],
+      "first_open_at": "2026-09-26T18:28:20Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 2997,
+        "merged_at": "2026-10-13T16:31:30Z",
+        "at": "2026-10-13T18:27:21Z"
       }
     }
   ]

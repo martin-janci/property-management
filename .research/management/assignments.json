@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-13T16:44:23Z",
+  "generated": "2026-10-13T18:37:14Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -157,6 +157,28 @@
       "implementer_summary": null,
       "reviewer_summary": "verdict=approve note=atomic-tx+FOR-UPDATE-correct; posted as COMMENT (self-approval blocked); cargo-deny red pre-existing; DB tests deferred to human/CI (#2966)",
       "last_reviewed_oid": "f4040256d670b0b951043d05e48de7f2d6da2677",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-3076",
+      "branch": "auto-impl/gh-issue-3076-26cdb820",
+      "status": "in-progress",
+      "claimed_at": "2026-10-13T18:32:08Z",
+      "last_updated": "2026-10-13T18:32:08Z",
+      "status_changed_at": "2026-10-13T18:32:08Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,

@@ -2,30 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "gh-issue-2945-retry1",
-      "action": "[CLOUD-BUILD-BLOCKED: backend api-server unbuildable in cloud runner (swagger-ui egress 403, #2966); tracked by open GitHub issue] Cross-tenant IDOR (read+write): portfolio_properties handlers missing org verification (Closes #2945) [retry 1/2 of failed gh-issue-2945]",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-09-24T22:24:48Z (retry_of=gh-issue-2945 reason=failed-no-pr cooldown_ok newest_failure=2026-09-06T12:49:38Z)",
-      "deadline": null,
-      "dependency": "#2966",
-      "depends_on": [
-        "pm-devops-unblock-api-server-utoipa-swagger-egress"
-      ],
-      "first_open_at": "2026-09-24T22:24:48Z",
-      "retry_of": "gh-issue-2945",
-      "retry_round": 1,
-      "issue_ref": {
-        "number": 2945,
-        "url": "https://github.com/martin-janci/property-management/issues/2945",
-        "labels": [
-          "bug",
-          "security"
-        ]
-      }
-    },
-    {
       "id": "pm-scrum-master-stalled-accounting-pay-by-square-2559",
       "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot — one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months",
       "owner_role": "pm-tech-lead",
@@ -196,25 +172,6 @@
       "backlog_ref": {
         "plan": null,
         "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-meter-reading-no-numeric-validation",
-      "action": "Mobile RN meter-reading input accepts non-numeric — silent write of garbage values",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-09-26T18:28:20Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": "#2951",
-      "depends_on": [
-        "pm-devops-unblock-mobile-rn-jest-expo-version-rot"
-      ],
-      "first_open_at": "2026-09-26T18:28:20Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
         "vector": "bug"
       }
     },
