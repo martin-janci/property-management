@@ -397,20 +397,6 @@
           "from-merged-review"
         ]
       }
-    },
-    {
-      "id": "code-review-ppt-web-api-client-auth-fetch-triplication-retry1",
-      "action": "Triplicated (and already divergent) auth-header + MFA-retry logic in @ppt/api-client fetch primitives [retry 1/2 of failed code-review-ppt-web-api-client-auth-fetch-triplication]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-10-12T04:26:32Z (retry_of=code-review-ppt-web-api-client-auth-fetch-triplication reason=failed-no-pr cooldown_ok newest_failure=2026-10-05T02:59:26Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-12T04:26:32Z",
-      "retry_of": "code-review-ppt-web-api-client-auth-fetch-triplication",
-      "retry_round": 1
     }
   ],
   "generated": "2026-10-01T04:30:00Z"
