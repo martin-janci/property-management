@@ -133,7 +133,7 @@ pub async fn add_favorite(
     principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
     Json(data): Json<AddFavorite>,
-) -> Result<Json<PortalFavorite>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<PortalFavorite>), (axum::http::StatusCode, String)> {
     let favorite = state
         .reality_portal_repo
         .add_favorite(principal.user_id, listing_id, data.notes)
@@ -155,7 +155,7 @@ pub async fn add_favorite(
             }
         })?;
 
-    Ok(Json(favorite))
+    Ok((axum::http::StatusCode::CREATED, Json(favorite)))
 }
 
 /// Update a favorite's settings (notes / price-alert opt-in).
