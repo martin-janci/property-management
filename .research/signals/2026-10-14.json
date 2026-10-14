@@ -1,0 +1,1021 @@
+{
+  "date": "2026-10-14",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-14",
+      "type": "lag_warning",
+      "source": "routine-timing-check",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "last_run_iso=2026-10-08T04:30:00Z; now=2026-10-14T18:45:00Z; lag=6d 14h — routine missed 2026-10-09..2026-10-13"
+      ],
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "2 commits in 14d touching this file (14-day window since 2026-09-30; new hotspot)"
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/auth/index.ts",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "2 commits in 14d touching this file (14-day window since 2026-09-30; new hotspot)"
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
+      "type": "churn-hotspot",
+      "source": "git-log-14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "2 commits in 14d touching this file (14-day window since 2026-09-30; new hotspot)"
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-ui-docsearchresult-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearchResult.tsx (Story 39.1, rendered by DocumentSearch on the WIRED DocumentsPage — routes/groups/documents.tsx:26/68, routes/lazyRoutes.tsx:12) has NO useTranslation at all (`grep -c useTranslation` = 0) and hardcodes every visible English string: the RLS audience labels SCOPE_LABEL = {organization:'All members', building:'Building', unit:'Unit', user:'Private', public:'Public'} (:14-20) shown in the AudienceBadge and its `Visible to: ${SCOPE_LABEL[scope]}` tooltip (:25,:39); the highlight field labels getFieldLabel 'Title'/'Description'/'Document Content (OCR)'/'AI Summary' (:94-101); the 'Has Summary' badge (:138); `${Math.round(score*100)}% match` (:114) and the `Relevance score: ${score.toFixed(2)}` tooltip (:113).",
+        "ppt-web ships sk/cs/de/en, so Slovak/Czech/German users see English-only labels on the document-search results surface. This is NET-NEW: the only prior documents-feature i18n finding (code-review-ppt-web-ui-documents-i18n-hardcoded, 2026-09-16) targeted hardcoded SLOVAK error/empty/loading literals in 7 DIFFERENT files (MoveFolderDialog/DocumentsBrowse/FolderTree/DocumentDetail/FolderTreePage/DocumentPreviewModal/PdfPreview) — it does not name DocumentSearchResult.tsx and concerns a different (sk, not en) string set.",
+        "Secondary: the same component also hardcodes `toLocaleDateString('en-US', ...)` for the result date (:64-71), so dates render with US ordering regardless of active locale (the broad hardcoded-en-US-locale finding of 2026-09-20 listed KPICard/RecentPaymentsList/PolicyCard, not this file).",
+        "Fix (frontend-only, cloud-landable): add useTranslation and route all labels through t('documents.search.*') / t('documents.audience.*') keys across the en/sk/cs/de bundles, and derive the date locale from i18n.language (reuse the shared formatDate util introduced by PR #2917). Low severity, i18n gap on a wired customer-facing surface."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-2fa-qr-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/auth/pages/TwoFactorAuthPage.tsx (Epic 9 Stories 9.1/9.2, TOTP 2FA enrollment — a security-critical wired flow using @ppt/api-client useMfa* hooks) renders the setup QR via QrCodeCanvas, whose effect calls `QRCode.toCanvas(canvasRef.current, uri, { width: 200, margin: 2 }).catch(() => {})` (:44-48). The empty catch SILENTLY swallows any QR-generation failure: the <canvas> is left blank with no error text, no aria-live announcement and no guidance. Most users scan the QR, so a silent render failure strands them on the enable step.",
+        "There IS a graceful fallback — the TOTP secret is always shown as copyable text below the QR (manualEntrySecret, :332-344) — so this is a degraded-UX / missing-feedback gap rather than a hard dead-end, which is why this is scored Low rather than Medium.",
+        "Related same-file weakness: the error paths surface RAW error text to the user via `message: String(err)` on setup (:139-140) and `setFormError(String(err) ...)` on verify/disable/regen (:158,:183,:209), echoing backend/exception strings untranslated on a security page. (The raw-error-to-user pattern is already filed for other surfaces — errorboundary-raw-message-prod, emergency-dir-raw-err-message, loginpage-raw-error-message — but is net-new for the 2FA page; no prior ppt-web-ui signal or backlog row touches features/auth 2FA.)",
+        "Fix (frontend-only, cloud-landable): on QR failure set an error state that renders a translated 'QR unavailable — use the manual key below' notice (and log via the app error channel) instead of an empty catch; map known MFA error statuses to translated t('auth.twoFactor.*') copy instead of String(err). Add a Vitest case asserting the fallback notice renders when QRCode.toCanvas rejects. Low severity, silent-failure + i18n on a security surface."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-articledetail-i18n-gaps",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/news/pages/ArticleDetailPage.tsx imports useTranslation (:8) and uses t() for most copy, yet hardcodes several VISIBLE English strings that bypass i18n: `return <div className=\"article-error\">Please select an organization</div>` (:245), `return <div className=\"article-not-found\">Article not found</div>` (:264), the pinned badge `<span className=\"pinned-badge\">Pinned</span>` (:274), and the view counter `<span className=\"views\">{article.viewCount} views</span>` (:294, both the ' views' label and the lack of locale number formatting).",
+        "ppt-web ships sk/cs/de/en locales, so Slovak/Czech/German users see English-only text for the no-org guard, the not-found state, the Pinned badge, and the view count on this wired customer-facing route. This is a cloud-landable frontend-only i18n gap.",
+        "NET-NEW: all prior signal mentions of ArticleDetailPage concern ONLY its dangerouslySetInnerHTML sink (2026-09-11 'ArticleDetailPage.tsx:331 ... is SAFE', 2026-09-23 same) or its endpoint auth (2026-08-29); none filed these rendered i18n gaps. No backlog.json row exists for news/article i18n.",
+        "Secondary (same file): the thrown load error `new Error(status === 404 ? 'Article not found' : 'Failed to load article')` (:57) is also an untranslated literal; if surfaced to the user it should map to a t('news.article.*') key.",
+        "Fix (frontend-only): route the four rendered strings through t('news.article.*') keys across en/sk/cs/de bundles and format viewCount with the active locale (reuse the shared number/formatDate util). Low severity, i18n gap on a wired surface."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-pinned-badge-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/announcements/components/PinnedAnnouncementsBand.tsx:36 renders a hardcoded visible badge `<span>Pinned</span>` with no t() wrapping, in a component that otherwise imports useTranslation. The Pinned label is shown on every pinned-announcement chip and stays English for sk/cs/de users.",
+        "frontend/apps/ppt-web/src/features/news/components/NewsArticleCard.tsx:53 hardcodes the SVG accessibility label `<title>Pinned</title>`. This is screen-reader-facing text (announced by assistive tech) and must also be localized; it is an a11y + i18n gap on the news list card.",
+        "Same class as the ArticleDetailPage pinned badge above but in two distinct, independently-wired components (announcements band + news card), so filed separately for independent remediation. NET-NEW: no backlog.json row or prior signal names PinnedAnnouncementsBand or NewsArticleCard i18n.",
+        "Fix (frontend-only, cloud-landable): replace both literals with t('announcements.pinned') / t('news.pinnedLabel') (SVG <title> included) across en/sk/cs/de bundles. Low severity i18n/a11y gap."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-privacy-settings-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx (Epic 63, GDPR Screening & Consent Management) is a WIRED, production, customer-facing page (privacy is NOT in UNWIRED_FEATURES) yet ships ZERO i18n: `grep -rln useTranslation features/privacy/` returns nothing and every user-facing string is hardcoded English — including legally-sensitive GDPR copy: 'Privacy & Data Settings', 'Manage your privacy preferences and data in accordance with GDPR.' (:161), 'Delete Account' (:276), the deletion warning 'This action cannot be undone after the grace period.' (:283), profile-visibility option labels (:205-207), and the account-deletion prompt body (:120-123). ppt-web ships sk/cs/de/en, so Slovak/Czech/German users see English-only GDPR legal text. Separately, raw backend bodies are surfaced directly as the user-facing error: `err.message` from thrown `new Error(response.text())` (loadSettings :52, save :88, export :112, deletion :143-149) can leak server internals/stack text to end users. Fix (frontend-only, cloud-landable): route all strings through react-i18next t('privacy.*') keys across en/sk/cs/de bundles, and map known error statuses to translated catalogue copy instead of echoing the raw HTTP body. Net-new: no `privacy` id in prior ppt-web-ui signals or backlog."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-sentiment-dash-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/sentiment/pages/SentimentDashboardPage.tsx (Epic 13 Story 13.2, WIRED at routes/lazyRoutes.tsx:317) is a presentational dashboard whose props interface (SentimentDashboardPageProps, :12-21) exposes ONLY loading flags (dashboardLoading/trendsLoading/alertsLoading) and NO error prop/branch. The route wrapper in routes/groups/core.tsx wires the TanStack Query hooks but has no error channel to pass through, and the component renders no isError/ErrorBoundary fallback. On any query failure the KPI tiles render MISLEADING values indistinguishable from real data: avgScore -> 'N/A' (:64), 'Data points' -> 0 (:70), and critically 'Open alerts' -> 0 with tone 'default' (:72-73) — i.e. a failed fetch silently reports 'zero open sentiment alerts' on an alerts-monitoring surface, masking real open alerts from managers with no error indication and no retry. Fix (frontend-only, cloud-landable): add dashboardError/trendsError/alertsError props, surface an error state + retry when any query fails, and render '—'/'N/A' distinctly from a loaded zero. Net-new: prior sentiment signals target features/sentiment/hooks/useSentiment.ts (auth-token wiring in ppt-web-core), not this page's missing error UI."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-oauth-grants-hardcoded-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/oauth-grants/pages/OAuthGrantsPage.tsx (Authorized Applications — the page where a user revokes third-party OAuth app access to their account, a security-sensitive wired surface) imports useTranslation and `const { t } = useTranslation()` (:15,:24) but uses t() ONLY for a single aria-label `t('aria.authorizedApplications')` (:101). All visible text and toast copy are hardcoded English: heading 'Authorized Applications' (:62/:87/…), loading 'Loading authorized applications…' (:63), the isError body + 'Retry' button (:74-82), revoke success toast 'Access revoked' / '{clientName} can no longer access your account.' (:41-43), and revoke failure toast 'Failed to revoke access' + raw `err.message` fallback (:45-49). Non-English (sk/cs/de) users see English on a security/account-management page. Fix (frontend-only, cloud-landable): move all literals to t('oauthGrants.*') keys across the four locale bundles and translate the revoke toasts. Net-new: no oauth-grants id in prior ppt-web-ui signals or backlog."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-profile-local-only-save",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "ProfileScreen.handleSave() (:44-71) persists an edited first/last name ONLY to local device storage: `await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updated))` (:61), then sets `savedAt = Date.now()` (:62) which drives a user-visible 'saved' confirmation (:124). The screen has ZERO API wiring — grep for useApi/apiRequest/useMutation in the file returns 0 matches; no addToQueue either.",
+        "There is NO backend profile-update call anywhere in the mobile app (repo-wide grep for users/me PATCH / updateProfile / updateUser outside push-token handlers finds nothing). The screen's own header docstring (:6) confirms this is a known stub: 'keys until the backend `PATCH /me` endpoint is wired in.'",
+        "Consequence: the name change never reaches the server and never syncs to web / other devices; it silently reverts the moment the cached User is overwritten by a login or a session-restore refetch (AuthContext writes USER_KEY on login), and is wiped by resetLocalData()/logout. Yet the user is shown a success state — a false-persistence data-integrity bug.",
+        "Cloud-landable (frontend-only) portion: either (a) route the edit through useOfflineSupport.addToQueue({endpoint:'/api/v1/users/me', method:'PATCH', body:{first_name,last_name}}) mirroring the ReportFault online/offline pattern so it actually syncs, or (b) at minimum stop presenting a device-only write as a persisted 'saved' profile update. Full server wiring additionally depends on the PATCH /me endpoint existing in api-server (verify before claiming the happy path)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-still-mock",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "INCOMPLETE REMEDIATION of the blanket finding code-review-mobile-rn-screens-mock-data (status: done), whose title explicitly lists 'Notifications' among the mock-data screens. Sibling screens were migrated to the real API (BuildingsScreen.test.ts:23 notes MOCK_BUILDINGS was removed; NewsScreen.tsx:64 and OutagesScreen.tsx:123 now use useApiQuery with full loading/error/empty states) — but NotificationsScreen was left behind, so marking the parent finding 'done' was premature for this screen.",
+        "NotificationsScreen.tsx still imports no API hook (no useApi/useApiQuery/apiRequest), seeds state from a hardcoded array `useState<AppNotification[]>(MOCK_NOTIFICATIONS)` (:116, array defined :37), and its pull-to-refresh is a fake `await new Promise((r) => setTimeout(r, 600))` (:120) that fetches nothing. markAllRead() (:132) only mutates local state and never POSTs a read-receipt.",
+        "Also ships hardcoded English in the header: 'Notifications' (:138) and `{unread} unread` (:139) are not wrapped in t(), unlike the rest of the migrated screens.",
+        "Per the screen's own docstring (:8-10) the REST list needs backend `GET /api/v1/users/me/notifications` first, so the data-source fix is backend-gated (not fully cloud-landable); the i18n header fix and removing the fake setTimeout 'refresh' are frontend-only / cloud-landable."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/components/BallotQuestion.tsx:62-64,80 — the YesNo ballot sub-component hardcodes the answer button labels `{ label: 'Yes', val: true }` / `{ label: 'No', val: false }` and renders `{opt.label}` directly. These are the actual vote-answer buttons a resident clicks on the vote-detail screen (Epic 5), so they render in English for every sk/cs/de locale on a multi-locale app (ppt-web ships i18n via src/i18n + LanguageSwitcher).",
+        "Net-new and internally inconsistent: the SAME file already imports and uses useTranslation — the Ranked sub-component (L152, L179, L188) wraps its reorder aria-labels in t('aria.moveUp')/t('aria.moveDown'). i18n is wired into the file; the YesNo labels were simply missed. No prior signal references BallotQuestion.tsx (0 hits across all ppt-web-ui signals).",
+        "Fix (frontend-only, cloud-landable, no backend/DB): add `const { t } = useTranslation()` to the YesNo sub-component and replace the two literals with t('voting.ballot.yes') / t('voting.ballot.no'); add the keys to the ppt-web i18n namespace for en/sk/cs/de. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-quorumtile-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/components/QuorumTile.tsx — component imports NO useTranslation (only participationPercent) yet renders user-facing English: L22 `{quorumMet ? 'Quorum met' : `${pct}%`}` and L29 `{participation} of {eligible} eligible voted`. QuorumTile is shared by both the vote list and vote detail views (per its own docstring), so this English text surfaces on two wired Epic-5 screens for all sk/cs/de visitors.",
+        "Net-new: 0 prior signal/backlog mentions of QuorumTile.tsx. The `participationPercent(participation, eligible)` helper it calls (types.ts:42-45) is correctly guarded against eligible<=0 (returns 0), so there is no NaN/division-by-zero bug — the only defect here is the missing i18n.",
+        "Fix (frontend-only, cloud-landable): add useTranslation; move 'Quorum met' and the 'N of M eligible voted' line into the voting i18n namespace (the count sentence needs interpolation + plural handling for Slavic locales). Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-questionresults-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/components/QuestionResults.tsx:8-9 — the per-question results bar hardcodes `{result.total_responses} response{result.total_responses === 1 ? '' : 's'}`. The component imports NO useTranslation; the 'response/responses' label and its English-only singular/plural rule (append 's') render on the wired vote-results view for all locales. English pluralization is incorrect for sk/cs (which have 1 / 2-4 / 5+ plural forms), so even a naive translation of the two literals would be wrong without ICU plural rules.",
+        "Net-new: 0 prior signal/backlog mentions of QuestionResults.tsx.",
+        "Fix (frontend-only, cloud-landable): add useTranslation and use an i18next plural key, e.g. t('voting.results.responses', { count: result.total_responses }), with the _one/_few/_many forms defined per locale in the ppt-web i18n namespace. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/ — the entire Epic 68 Service Provider Marketplace UI (6 pages: MarketplacePage, CreateRfqPage, ProviderDetailPage, ProviderProfilePage, QuoteComparisonPage, RfqListPage — see pages/index.ts barrel — plus ~14 components) is never mounted into the router. `grep -rn \"features/marketplace\" src --include=*.tsx --include=*.ts` returns ZERO references outside the feature directory, and none of the 6 page components are referenced in src/routes/** (CreateRfqPage/QuoteComparisonPage/RfqListPage/ProviderDetailPage/ProviderProfilePage → 0 route refs). src/routes/AppRoutes.tsx:38-68 composes 23 feature route-group fragments and NONE import features/marketplace; lazyRoutes.tsx has no marketplace entry. NOTE the trap: the only wired `MarketplacePage` is a DIFFERENT component, features/community/pages/MarketplacePage.tsx (community classifieds), exported at features/community/index.ts:32 and routed at routes/groups/community.tsx:254 as /community/marketplace — it is NOT the Epic 68 service-provider marketplace. Consequence: a fully-built, polished epic's UI is dead code — unreachable by users, invisible to route/screen-map coverage, and excluded from bundle route-splitting. Fix (frontend-only, cloud-landable): add a marketplaceRoutes() group under routes/groups/, wire the 6 pages to container route-wrappers (data hooks + API↔UI mappers) and register it in AppRoutes.tsx, or explicitly delete/park the feature if descoped. Medium: shipped feature functionally unreachable, no crash."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/ — the pet/vehicle Registry feature (RegistryPage, RegistryRulesPage + forms/lists/modal components) is imported nowhere outside its own directory: `grep -rn \"features/registry\" src` returns zero external refs, no registryRoutes() group exists, and src/routes/AppRoutes.tsx:38-68 registers no registry group. Yet RegistryPage's own handlers navigate via hard `window.location.href = '/registry/pets/new'` / '/registry/vehicles/{id}/edit' (RegistryPage.tsx:91,95,129,148,152,186) — routes that are never registered, so every such navigation lands on the NotFound/error route. The feature is therefore both unreachable (no entry route) and internally broken (its nav targets 404). Fix (frontend-only, cloud-landable): add a registryRoutes() group wiring RegistryPage + RegistryRulesPage (and the pet/vehicle detail/edit/new sub-routes the handlers already point at) and register it in AppRoutes.tsx; prefer react-router useNavigate over window.location.href so the SPA doesn't full-reload. Medium: shipped feature unreachable + dead internal links, no crash."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-mutations-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx — all four destructive/approval mutations swallow failures with only console.error and give the user NO feedback: handlePetDelete (98-109), handlePetReview (111-126), handleVehicleDelete (155-166), handleVehicleReview (168-183) each do `try { await mutation.mutateAsync(...) } catch (error) { console.error(...) }`. On a failed delete or approval (403/409/network) the user sees the row unchanged and no error toast/banner, so they assume success (or retry blindly) — a classic silent-failure UX trap on a manager-facing moderation surface. Distinct from the existing code-review-ppt-web-ui-registry-rules-save-silent-fail finding, which is RegistryRulesPage (rules save), not these RegistryPage registration handlers. Fix (frontend-only, cloud-landable): surface mutation errors via the app toast/error system (and ideally use the mutation's onError + isError state), and add a Vitest case asserting a visible error is rendered when mutateAsync rejects. Medium: unhandled error on a user-facing action path, no crash."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-filedisputedialog-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/FileDisputeDialog.tsx — internally inconsistent i18n in the churn-hot disputes feature (hotspot_history flags MediationWorkspacePage/MediationResolutionForm/MediationChatThread). The file DOES import useTranslation but uses t() exactly once, for an aria label (L88 aria.closeDialog); the entire visible dispute-filing form is hardcoded English: L95 heading 'File a Dispute', L109 label 'Category *', L126 label 'Title *', L131 placeholder 'Brief summary of the dispute', L152 '<option>Select building...</option>', L170 '<option>Select unit...</option>', L188 placeholder 'Describe the issue in detail. Include dates, times, and specific incidents.', L203 placeholder 'What outcome would you like to see?'.",
+        "Reachable in production: this is the primary modal for filing a dispute (Epic 80) — a legally-meaningful flow — so every sk/cs/de resident sees an English-only form while the surrounding disputes UI (MediationWorkspacePage, MediationResolutionForm) is fully localized. Net-new: 0 prior signal/backlog mentions of FileDisputeDialog.tsx; prior disputes work in the backlog was backend IDOR tests, not this component.",
+        "Fix (frontend-only, cloud-landable, no backend/DB): the t() plumbing is already present — move the heading, the two field labels, the two select placeholders, and the three input placeholders into the disputes i18n namespace for en/sk/cs/de. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-forms-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "The community feature's user-facing creation forms are ENTIRELY un-internationalized — EventForm.tsx, GroupForm.tsx, ItemForm.tsx and CreatePostForm.tsx each import NO useTranslation and make 0 t() calls (verified by grep), yet render English-only labels and placeholders on a multi-locale app (ppt-web ships react-i18next via src/i18n + LanguageSwitcher).",
+        "Concrete strings: EventForm.tsx L137 placeholder 'Enter event title', L154 'What's this event about?', L199 '<span>Date & Time</span>', L207 'All day event', L274 'Leave empty for unlimited'; GroupForm.tsx L125 'Enter group name', L142 'Describe what your group is about...'; ItemForm.tsx L204 'What are you selling?', L221 'Describe your item in detail...'; CreatePostForm.tsx L160 'What's on your mind?', L178 'Enter image URL'. These are the primary create-flows for the Community/Neighbors feature, so every sk/cs/de resident sees English forms.",
+        "Net-new: 0 prior signal/backlog mentions of any community/components form. Fix (frontend-only, cloud-landable, no backend/DB): add useTranslation to each form and move the labels/placeholders into a community i18n namespace for en/sk/cs/de. Can be done as one PR across the four forms. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-rfqform-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/marketplace/components/RfqForm.tsx — the Request-for-Quote form (Epic 68 Service Provider Marketplace) imports NO useTranslation and makes 0 t() calls, rendering an English-only form on a multi-locale app. Hardcoded visible strings: L130 heading 'Create Request for Quote', L216 section 'Timeline', L282 'Mark as Urgent', L290 section 'Budget (Optional)', L352 section 'Preferences', L372-374 select options 'Any'/'Email Only'/'Phone Only', plus placeholders L151 'e.g., Annual HVAC Maintenance', L189 'Describe what you need in detail...', L208 'Detailed scope, specifications, requirements...'.",
+        "Distinct from the existing marketplace finding (code-review-ppt-web-ui-marketplace-epic68-orphaned-routes, filed 2026-10-10 tier1d-c) which is about unwired ROUTES, not this component's i18n. Net-new: 0 prior signal mentions of RfqForm.tsx. Reachable: RFQ submission is a core marketplace resident action.",
+        "Fix (frontend-only, cloud-landable, no backend/DB): add useTranslation and move the heading, three section titles, the urgent/budget labels, the three select option labels, and the placeholders into a marketplace i18n namespace for en/sk/cs/de. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-iot-dashboard-swallows-query-errors",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:78-80 — the IoT dashboard wrapper destructures only `{ data, isLoading }` from useIotDashboard(), useSensors() and useSensorReadings(); the queries' isError/error are dropped and never threaded into IotDashboardPage (its props expose dashboardLoading/sensorsLoading/readingsLoading but NO error flags).",
+        "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx:76-96 — on a failed dashboard fetch, `dashboard` is undefined and the KPI cards render `dashboard?.total_sensors ?? 0`, `active_sensors ?? 0`, `offline_sensors ?? 0`, `unresolved_alerts ?? 0`, so a manager sees an all-zero 'healthy empty building' view that is indistinguishable from a backend/network failure — misleading state on a monitoring surface (Epic 14 FR75). Fix: destructure isError from the read queries, pass an error flag down, and render an explicit error panel instead of zeroed KPIs."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-outages-page-swallows-query-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/outages.tsx:42 — `const { data, isLoading } = useOutages(queryParams);` drops isError/error; OutagesPage (UC-12 Utility Outages) receives `outages`/`total`/`isLoading` props but no error prop (OutagesPage.tsx has 0 error references).",
+        "frontend/apps/ppt-web/src/features/outages/pages/OutagesPage.tsx:72-85 — on a failed list fetch, `outages` is an empty array, so OutageList renders a normal empty state; a failed load is indistinguishable from 'no active outages' — exactly the wrong signal for a utility-outage list where empty vs. failed is safety-relevant. Fix: thread isError into the wrapper and surface a retryable error state distinct from the empty state."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-leases-list-swallows-query-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx:587 — `const { data, isLoading } = useLeases({ organization_id: organizationId });` drops isError; `leases = (data?.items ?? [])` and `total={data?.total ?? 0}` are passed to LeasesListPage with no error prop.",
+        "frontend/apps/ppt-web/src/features/leases/pages/LeasesListPage.tsx:229 — the page renders its empty state (`!isLoading && leases.length === 0`) whenever the query fails, since a failed fetch yields `leases=[]`; the user sees 'no leases' instead of a load-failure message. Same swallowed-read-error anti-pattern as the iot and outages route-group wrappers — a shared fix (destructure isError + render a distinct error state) applies across these route groups. Fix: surface isError and render an error state separate from the empty state."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-copy-timer-no-cleanup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:172-189 — ToastItem.handleCopy() schedules `setTimeout(() => setCopied(false), 2000)` on BOTH the success path (:177) and the execCommand fallback path (:187) to reset the 'Copied' button label, but the timer id is neither stored in a ref nor cleared on unmount. ToastItem unmounts whenever its toast auto-dismisses (ToastProvider auto-dismiss via getDefaultDuration — error toasts, which are the ones that render this copy button, default to a finite duration) or is manually dismissed. If the user clicks copy and the toast then unmounts within the 2s window, the pending timer fires setCopied(false) on an unmounted component — a setState-after-unmount leak.",
+        "This is an internal-consistency defect: every OTHER timer in the same file and its sibling are tracked and cleaned up — ToastProvider tracks auto-dismiss timers in `timeoutRefs` (Map) and clears them all in a useEffect cleanup (Toast.tsx:97-107, and per-toast in removeToast :109-117), and components/Announcer.tsx:85-93 clears all four of its setTimeout refs on unmount. ToastItem's copy-feedback timer is the lone unmanaged timer.",
+        "Severity low: React 18 silently no-ops a setState on an unmounted component (no console warning, no crash, no user-visible breakage), so this is a latent smell rather than an active bug — but it violates the team's own established cleanup pattern and would resurface as a real warning under React 19 strict/concurrent flows or in test teardown. Fix (frontend-only, cloud-landable, no backend/DB): store the timer id in a useRef inside ToastItem and clearTimeout it in a useEffect(() => () => clearTimeout(ref.current), []) cleanup, mirroring ToastProvider/Announcer; or gate the setCopied(false) behind a mounted ref. Add a Vitest case that unmounts ToastItem immediately after a copy click and asserts no act() warning / no state update."
+      ]
+    },
+    {
+      "id": "code-review-api-core-jwt-no-aud-iss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/jwt.rs:198-212 (validate_access_token) and :216-230 (validate_refresh_token) build `Validation::default()` and set only `validation.validate_exp = true`. Neither validator binds `aud` (audience) or `iss` (issuer): there is no `validation.set_audience(...)` / `validation.set_issuer(...)` call, and the issued Claims struct (:30-57) carries no aud/iss fields at all. Token scoping rests solely on the shared HS256 secret plus the string `token_type` gate (:208 `!= \"access\"`, :226 `!= \"refresh\"`).",
+        "Consequence: any component that shares JWT_SECRET (api-server is also the OAuth provider per CLAUDE.md, and reality-server is an SSO consumer against the same shared DB/auth surface) will accept a token minted for a different audience/context. There is no cryptographic binding preventing an access token issued for one principal-kind/service context from being replayed against another that trusts the same secret. The nbf (not-before) claim is likewise unvalidated.",
+        "The service's own doc comment at :191-197 explicitly flags this as a KNOWN future-hardening gap ('any future hardening ... e.g. adding aud/iss validation ... MUST be applied here as well as in verify_access_token') and names a sibling verifier api_core::extractors::auth::verify_access_token that ~40 route call-sites depend on - so the hardening must land in BOTH copies or they silently diverge (the exact failure mode GH #1675/#1782 set out to prevent).",
+        "Fix (backend-only): add an `aud` claim at issuance (generate_access_token*/ refresh), call validation.set_audience(&[expected_aud]) and set_issuer(&[expected_iss]) in both validate_* fns AND in the shared verify_access_token, and enable validate_nbf. Gate behind config so existing tokens drain over the 15-min access TTL. Medium severity: auth-hardening on the most-used token path, not an active bypass (single-secret monolith today), confidence medium (static trace only, no runtime PoC)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-retention-days-no-floor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/main.rs:670-681 parses three retention windows from env as raw i64 with `std::env::var(...).ok().and_then(|v| v.parse().ok()).unwrap_or(<default>)`: SUPPORT_TOOLING_RETENTION_DAYS (default 730), LAYOUT_CHANGE_EVENTS_RETENTION_DAYS (730), OAUTH_TOKEN_EVENTS_RETENTION_DAYS (90). There is NO lower-bound / positivity validation on any of them; the field types (scheduler/mod.rs:64,68,75) are plain `i64`.",
+        "backend/servers/api-server/src/services/scheduler/retention.rs:209 computes `let cutoff = now - chrono::Duration::days(self.config.oauth_token_events_retention_days);` and then `oauth_token_event_repo.cleanup_before(cutoff)` DELETEs every row older than cutoff. The support-tooling and layout-change prunes (:72-74, :137-141) pass the day count straight into cleanup_old_* repo deletes the same way.",
+        "Misconfiguration-to-data-loss: setting any of these env vars to `0` makes cutoff == now, pruning ALL existing rows on the next scheduler tick; a NEGATIVE value makes cutoff a FUTURE timestamp, deleting the entire table including rows just written. The 24h min-interval guards (SUPPORT_TOOLING_PRUNE_MIN_INTERVAL_HOURS etc.) only rate-limit how often the destructive prune runs, not its blast radius. Operator typo (e.g. `RETENTION_DAYS=0` meaning 'disabled') silently wipes audit/event history instead.",
+        "Fix (backend-only): validate each parsed value is >= 1 at startup (clamp with .max(1) or fail-fast with a clear error like the JWT_SECRET checks at main.rs:539-578), or treat <=0 as 'retention disabled -> skip prune' explicitly in retention.rs before building the cutoff. Add a unit test asserting a 0/negative config does not delete recent rows. Medium severity: requires operator misconfiguration but the outcome is irreversible data loss on audit/event tables; confidence medium (static only)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:3 — module self-documents as DEPRECATED and 'fundamentally flawed': it calls set_request_context on the shared pool, not a dedicated connection, so RLS session settings leak across pooled connections (cross-tenant data exposure)",
+        "backend/crates/api-core/src/middleware/mod.rs:16 — `pub use rls_context::*;` re-exports rls_context_middleware and require_rls_context on api-core's public API; any server/handler can import and re-adopt the flawed pool-scoped RLS path",
+        "backend/crates/api-core/src/middleware/rls_context.rs:110 — set_request_context(pool.as_ref(), ...) sets tenant context on the pool, while the correct RlsConnection extractor pins it to one acquired connection; grep shows the middleware is wired into no router (dead but publicly exported foot-gun)"
+      ]
+    },
+    {
+      "id": "code-review-api-core-authz-fail-open-guest",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/authorization.rs:176 — require_permission reads the role with `.unwrap_or(TenantRole::Guest)`: a request with no TenantRole extension (e.g. auth extractor skipped/failed) is silently downgraded to Guest instead of rejected — fail-open default on an authorization gate",
+        "backend/crates/api-core/src/middleware/authorization.rs:139 — permissions::AUTHENTICATED = min_level(1), and Guest.level()==10 (common/src/tenant.rs:125), so is_satisfied_by(Guest) is true; require_authenticated therefore grants access to a request that carries no authenticated role at all",
+        "backend/crates/api-core/src/middleware/mod.rs:11 — authorization module is `pub use`-exported but wired into no router (grep: require_permission/require_authenticated referenced only inside authorization.rs); latent auth-bypass if these gates are ever adopted as the sole check"
+      ]
+    },
+    {
+      "id": "code-review-api-core-tenant-filter-header-trust",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:29 — tenant_filter accepts any well-formed X-Tenant-ID UUID and passes the request through; the three real checks (tenant exists/active, user has access to tenant, rate limit) are only a `// In production, validate:` TODO comment (lines 31-34), so the middleware provides no actual tenant isolation",
+        "backend/crates/api-core/src/middleware/mod.rs:18 — tenant_filter and tenant_logging are `pub use`-exported but wired into no router (grep: referenced only inside tenant_filter.rs); a dead stub named 'tenant isolation middleware' invites being layered in under the false belief it enforces access",
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:61 — tenant_logging logs the full request URI at info level; query-string credentials/tokens would be captured in logs"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-states-untested-hardcoded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "components/states/{ErrorState,EmptyState,LoadingSkeleton}.tsx are the shared loading/error/empty primitives used across screens, yet no test file anywhere in src references them (grep for ErrorState/EmptyState in *test* returns 0).",
+        "ErrorState.tsx:20,23 default props are hardcoded English ('Something went wrong', 'Try again') not routed through t(), and LoadingSkeleton.tsx:67,78,88 sets accessibilityLabel=\"Loading\" in English, so screen readers announce English in sk/cs/de locales.",
+        "Frontend-only, cloud-landable: add a small render test (retry press fires onRetry, progressbar role present) and switch defaults to useTranslation keys in locales."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-device-info-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "FeedbackScreen.tsx:~206-211 renders literal English 'Platform: ...' and 'App: v... (Build ...)' inside an otherwise t()-translated device-info preview, and :216 Alert.alert('Diagnostic Report', ...) title is hardcoded.",
+        "Frontend-only i18n gap; add feedback.platform/feedback.appVersion/feedback.diagnosticReport keys in all mobile locales."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-sync-notifications-dead-hook",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "useSyncNotifications is exported from hooks/index.ts:19-20 but has zero consumers outside hooks/ (repo-wide grep) and no test file; Epic 123.2 sync-progress toast is never wired to useOfflineSupport queue processing.",
+        "showSyncSuccess/showSyncFailure accept itemName but ignore it (_itemName), and updateProgress can set current>total without clamping. Either wire into the offline sync flow with a test or remove the dead hook."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-rentals-load-error-unhandled",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The wired rentals feature has NO error-state path for failed data loads. frontend/apps/ppt-web/src/routes/groups/rentals.tsx contains 6 read useQuery() calls (lines 266, 274, 328, 401, 449, 546) and 0 references to isError (`grep -c isError` on the file returns 0). Every read query destructures only `{ data, isLoading }`.",
+        "On query failure (network drop / 4xx / 5xx) each route falls the data back to an empty collection: rentals.tsx:283-284 `const bookings = (data?.data?.data ?? []).map(...)` / `const connections = (connData?.data ?? []).map(...)`; also :375, :418, :558. So a failed load renders as legitimately-empty data, not an error.",
+        "RentalsDashboardPageRoute (rentals.tsx:262-320) is the worst case: on a failed reservations query it computes statistics from `bookings = []` and shows totalBookings 0, totalRevenue €0, 0 active/upcoming (rentals.tsx:290-299) with isLoading already false and no error banner — a misleading zeroed revenue dashboard that looks like real empty state to a property manager.",
+        "The presentational pages cannot surface the error even if the container knew about it: frontend/apps/ppt-web/src/features/rentals/pages/RentalsDashboardPage.tsx props (lines 10-27) expose `isLoading?: boolean` and `isTaxSummaryLoading?` but NO error/isError prop; same for BookingsPage/CalendarPage/PlatformConnectionsPage/GuestRegistrationPage/BookingDetailPage (none reference isError/.error/catch). The UI layer offers no error affordance at all.",
+        "This is a DISTINCT issue from the prior rentals findings, which were all about MUTATIONS and are already done: code-review-ppt-web-core-rentals-mutation-silent, code-review-ppt-web-core-rentals-auth-nonnull-mutation, code-review-ppt-web-core-mutation-no-onerror. Those drove the elaborate mutation onError handling now in the file (handleRentalsMutationError at rentals.tsx:244-260, SESSION_LOST_CODES, AuthError routing) — which makes the untouched READ queries the glaring remaining gap. No prior *ppt-web-ui*.json or backlog row covers the read-query/no-error-prop path (verified against 172 prior ppt-web-ui signals + backlog).",
+        "Landable remedy (frontend-only, no backend/KMP): destructure `isError`/`error` from the 6 read useQuery calls, add an `isError?: boolean` (or `loadError`) prop to the rentals presentational pages, and render an error state (retry affordance) instead of defaulting to `?? []`. Matches how the rest of ppt-web surfaces query failures (e.g. PortfolioDashboardPage.tsx:258 `cardsQuery.isError ? <error> : ...`). Severity medium: silent empty/zeroed revenue dashboard on a live, router-mounted feature. Confidence medium: statically code-verified (isError literally never referenced in the container; pages have no error prop), not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-critical-notif-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "The critical-notifications feature renders user-facing emergency copy as hardcoded English with no useTranslation / i18n keys. frontend/apps/ppt-web/src/features/critical-notifications/components/CriticalNotificationModal.tsx: 'Critical Notification' (:74), 'Posted on {date}' (:88), '{n} of {n}' (:78), 'Acknowledging...' (:127), 'I Acknowledge - Next' (:130), 'I Acknowledge' (:132). CriticalNotificationBanner.tsx: 'View Now' (:54) and the full banner sentence (:42-45).",
+        "Worse than a plain i18n gap: CriticalNotificationBanner.tsx:38-45 does manual English-only pluralization — `{count === 1 ? 'notification' : 'notifications'}` and `{count === 1 ? 'requires' : 'require'}`. This cannot be localized by swapping strings; Slovak/Czech have 3+ plural forms and German differs, so the hardcoded binary English branch is structurally wrong for sk/cs/de (the repo's supported locales).",
+        "This is critical/emergency content behind an acknowledgement action — a non-English resident literally cannot read what they are acknowledging (the Modal's acknowledge button and the persistent banner CTA are both unlocalized). i18n gaps in error/acknowledgement copy are the highest-impact ones.",
+        "critical-notifications is in UNWIRED_FEATURES (frontend/apps/ppt-web/src/features/unwired-features.ts:44) — built-but-not-yet-routed, code intentionally retained to wire later. The gap is latent today but will ship the moment the feature is wired; prior runs emit findings for unwired features too (e.g. code-review-ppt-web-ui-portfolio-perf-no-i18n for portfolio-performance, also unwired). Non-duplicate: no prior *ppt-web-ui*.json or backlog row references critical-notifications i18n (the only prior hit, dx-stale-todo-security-comments-faults-critical-notifications, is about stale TODO security comments, unrelated).",
+        "Reproduce: `grep -rL useTranslation frontend/apps/ppt-web/src/features/critical-notifications --include='*.tsx' | grep -v .test.` lists NotificationStatsCard.tsx, CriticalNotificationBanner.tsx and CriticalNotificationModal.tsx as having no i18n wiring.",
+        "Landable remedy (frontend-only): introduce `t('criticalNotifications.*')` keys for the literals, use interpolation/ICU plurals (e.g. react-i18next `t('...', { count })`) for the banner count sentence instead of manual English branching, and register keys in the sk/cs/de/en bundles. Low severity (unwired today, mechanical fix), confidence medium (static: literals + missing useTranslation code-verified, not runtime-confirmed)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-feedimport-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:48 — `const { data: feeds, isLoading } = useFeedSources(agency?.id || '')` destructures the query result without an `isError`/`error` branch. The render at L74-84 only handles `isLoading` (skeleton) and `feeds?.length === 0` (EmptyState); on a transport/server error `feeds` is `undefined`, so `feeds?.length === 0` is `false` and control falls to the else branch where `feeds?.map(...)` yields nothing — the user sees a silent blank `.feeds-list` with no error message and no retry affordance. This is the exact anti-pattern RealtorManagement.tsx was fixed for (Issue #2343, sibling of #2277: 'transport/server error no longer renders the misleading empty state'), and PriceAlerts.tsx:133 handles correctly via an `if (error)` role=\"alert\" block. FeedImport never adopted the fix."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-crmconn-no-error-state",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:50 — `const { data: connections, isLoading } = useCrmConnections(agency?.id || '')` has the same missing-error-branch bug as FeedImport. Render at L76-84 handles only `isLoading` and `connections?.length === 0`; on query failure `connections` is `undefined`, `connections?.length === 0` is `false`, and the else branch's `connections?.map(...)` renders an empty list — a silent failure on the agency CRM-connection management screen with no error UI or retry. Should follow the established reality-web pattern (PriceAlerts.tsx:133 / RealtorManagement.tsx Issue #2343): destructure `isError`/`error` and render a role=\"alert\" error state."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-anchor-nav-drops-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Several internal navigations use a raw HTML `<a href=\"/...\">` anchor with an unprefixed absolute path instead of the app's locale-aware `Link` from `@/i18n/routing`. The i18n router is configured `localePrefix: 'as-needed'` (src/i18n/routing.ts:8), so non-default locales carry a prefix (/de/listings, /cs/listings) while sk (default) does not. A bare `<a href=\"/listings\">` therefore always resolves to the NO-PREFIX = default-locale (sk) route, so a de/cs/en visitor who clicks it is dropped out of their language mid-session (and gets a full document reload, losing client state).",
+        "ListingDetailContent.tsx:145 `<a href=\"/\">` and :147 `<a href=\"/listings\">` are the breadcrumb on the PUBLIC, SEO-indexed listing detail page (the highest-traffic entry point); ListingDetailContent.tsx:38 `<a href=\"/listings\">` is the not-found back-link. auth-button.tsx:158 `<a href=\"/favorites\">` and :162 `<a href=\"/profile\">` are in the global header account menu shown on every page. CsvImport.tsx:996 `<a href=\"/agency/listings\">` is the post-import 'view listings' action.",
+        "This is DISTINCT from the already-logged `code-review-reality-web-auth-nav-drops-locale` (2026-09-05), which covers programmatic `router.push`/`router.replace` imported from `next/navigation` in the three auth PAGES (register/reset-password/login) — a different mechanism in different files. The anchor case here was not previously flagged. Confidence medium: the locale-drop is inferred from the documented `as-needed` config + the app's own convention (sell/page.tsx and the rest of the app use `Link` from `@/i18n/routing`, which sell/page.tsx:17-22 explicitly documents as required to keep a SK user on /sk/terms), not runtime-confirmed. Fix (cloud-landable, frontend-only): replace each plain `<a href>` internal link with `import { Link } from '@/i18n/routing'`; no backend/DB work."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-date-tolocale-no-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "A cluster of date renders call `new Date(...).toLocaleString()` / `.toLocaleDateString()` with NO locale argument and no timeZone. In a Next.js SSR app this formats on the Node server with the server's default locale/timezone during SSR, then re-formats in the browser with the visitor's locale/timezone on hydration — a classic React hydration-mismatch source — and either way ignores the active next-intl locale, so a cs/de/en visitor sees dates in the server/browser default format rather than their chosen app language.",
+        "SyncSchedule.tsx:232 `new Date(schedule.nextRunAt).toLocaleString()` and :526 `new Date(item.startedAt).toLocaleString()`; FeedImport.tsx:207 `new Date(feed.lastFetchAt).toLocaleDateString()` and :263 `new Date(item.startedAt).toLocaleString()`; CrmConnection.tsx:196 `new Date(connection.lastSyncAt).toLocaleString()` and :202 `new Date(connection.nextSyncAt).toLocaleString()`; AgencyListings.tsx:406 `new Date(listing.updatedAt).toLocaleDateString()`; AdditionalInfo.tsx:42 `new Date(listing.availableFrom).toLocaleDateString()` and :48 `new Date(listing.createdAt).toLocaleDateString()`.",
+        "Net-new: the prior `code-review-reality-web-categorycards-tolocalestring-no-locale` (2026-09-07) is a NUMBER count on CategoryCards, and the en-US price findings (listingheader/agencylistings/additionalinfo -en-us-price) are explicit-`'en-US'` price formats — both different from these no-arg DATE calls (AdditionalInfo's date lines are separate from its already-flagged price line). Severity low (i18n/UX + potential hydration warning; no data/auth impact). Confidence medium (static read; default-locale landing + hydration behaviour inferred from Next.js/Intl semantics). Fix (cloud-landable, frontend-only): pass the active next-intl locale (via `useLocale()` / `useFormatter()`) or a shared date formatter with an explicit timeZone; no backend/DB work."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-authbutton-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "auth-button.tsx — the global header auth control (sign-in button + logged-in account dropdown, rendered on every page via the shared Header) — has ZERO next-intl usage (no `useTranslations` import, no `t(` call in the file) and ships its user-facing strings hardcoded in English: 'Sign In' (:127), 'My Favorites' (:159), 'Profile' (:162), 'Sign Out' (:165). A sk/cs/de visitor sees an English account menu on every page, which contradicts the app's i18n convention (all user-facing copy comes from `messages/<locale>.json`).",
+        "Net-new: auth-button.tsx is not referenced in any prior reality-web signal; the earlier i18n-gap findings target realtor/account/import/comparison/listing-grid surfaces, not this shared header component. Severity low (i18n gap, no data/auth impact; high visibility because it is global). Confidence medium (static read confirms the literals and the absence of any translation call). Fix (cloud-landable, frontend-only): add `useTranslations` and move the four strings into `messages/<locale>.json`; no backend/DB work."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — the authenticated listing-edit page renders almost entirely hardcoded Slovak strings in a 4-locale portal (en/sk/cs/de, routed under [locale]). The file only resolves i18n 5 times yet the whole form is Slovak-literal: L166 load-error fallback 'Načítanie inzerátu zlyhalo.', L213 save-error fallback 'Uloženie zlyhalo, skúste znova.', L429 label 'Adresa' / placeholder 'Ulica a číslo', L432 'Mesto / Obec', L465 'Plocha (m²)', L466 'Počet izieb', L469 'Rok výstavby', L827 button 'Ukladám…' / 'Uložiť zmeny'.",
+        "Reachable in production: this is the owner's primary listing-edit screen (UC-51). An en/cs/de user who opens /en/account/listings/<id>/edit sees Slovak-only labels, placeholders and error copy — a real i18n regression against the portal's multi-language requirement. Net-new: 0 prior reality-web signal/backlog mentions of this file; it is not in any earlier Tier-1d signal set.",
+        "Fix (frontend-only, cloud-landable, no backend/DB): move the heading, field labels/placeholders, the two error fallbacks and the save-button copy into the reality-web messages namespace for en/sk/cs/de and resolve via next-intl useTranslations (already used elsewhere in this app). Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-csvimport-fileselect-noval",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx:58-64 — handleFileSelect (the <input type=file> onChange path) accepts ANY selected file and advances straight to the mapping step with no type check: `const selectedFile = e.target.files?.[0]; if (selectedFile) { setFile(selectedFile); setStep('mapping'); }`. The sibling drag-drop handler handleDrop (L47-56) DOES guard with `droppedFile?.type === 'text/csv' || droppedFile?.name.endsWith('.csv')`, so the two entry points are inconsistent.",
+        "The file input carries accept='.csv,text/csv' (L338) but `accept` is only a picker hint — a user can switch the dialog to All Files and pick a .xlsx/.png, which then flows into useCsvPreview/useCsvImport with an empty-id guard `agency?.id || ''`. Not a crash (server + preview surface a parse error downstream), but a validation gap and a drop-vs-select behavioral inconsistency.",
+        "Fix (frontend-only, cloud-landable): apply the same type/extension guard used in handleDrop inside handleFileSelect, and surface a non-CSV rejection message instead of silently advancing. Severity low (+1)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-syndication-jobs-never-drained",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "completeness",
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289-406 (SyndicationService::process_syndication_job) is the ONLY code that actually acts on a queued syndication job (updates syndication status, would call the portal). A repo-wide grep for callers of `process_syndication_job` returns ZERO hits outside its own definition (`grep -rn process_syndication_job backend --include=*.rs`). Meanwhile SyndicationService::create_publish_jobs IS wired into production: routes/listings.rs:655-661 constructs a SyndicationService and calls create_publish_jobs(&listing, &data.portals, Some(tenant.user_id)) when a manager publishes a listing to portals. Net effect: publishing a listing enqueues background jobs on SYNDICATION_QUEUE that NOTHING ever drains -- there is no registered worker consuming that queue. Listings are never actually propagated to Sreality/Bezrealitky/Nehnutelnosti/etc., and the per-portal syndication status stays pending forever, with no error surfaced to the manager who requested syndication.",
+        "Even if a worker were wired up, process_syndication_job is a documented mock (syndication.rs:286-288 comment: 'This is a placeholder for the actual portal API integration. In production, this would call the respective portal APIs.'). For the PUBLISH operation it fabricates a fake external id -- `let external_id = format!(\"{}_{}\", payload.portal, uuid::Uuid::new_v4());` (syndication.rs:318) -- and then calls listing_repo.update_syndication_status(..., syndication_status::SYNCED, Some(&external_id), None) at L321-330, i.e. it records the listing as SYNCED to the portal with a made-up external reference without any outbound portal API call. The STATUS_CHANGE / UPDATE / REMOVE arms likewise stamp SYNCED/REMOVED without contacting any portal. This is a false-success stub on a user-facing feature path (manager-initiated listing syndication, UC-31/UC-32).",
+        "Consequence: the 'publish listing to external portals' feature is silently non-functional in two compounding ways -- (1) enqueued jobs are never consumed (no drainer registered for SYNDICATION_QUEUE, unlike the push-fanout / quiet-hours-drain workers which are explicitly spawned), and (2) the processor, if ever invoked, reports success with a synthetic external id instead of integrating. Managers believe their listings reached the portals when nothing was sent. Fix: register a background worker that drains SYNDICATION_QUEUE and calls process_syndication_job, and replace the mock PUBLISH/UPDATE/REMOVE arms with real portal API calls (or gate the feature off / mark jobs failed with an explicit 'portal integration not configured' status so the UI stops claiming success). Backend fix is not cloud-landable until the api-server build block (#2966) is lifted."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-record-view-no-rate-limit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs:861-872 — `record_view` is an anonymous (no-auth), mutating POST endpoint (`/api/v1/listings/{id}/view`) that calls `state.reality_portal_repo.track_view(id, \"website\")` on every request with NO per-IP throttle and no dedup. Every other anonymous mutating endpoint in this crate enforces the shared per-IP rate limiter first: inquiries (routes/inquiries.rs `enforce_inquiry_rate_limit`, e.g. request_viewing:422 and the contact path) and reports (routes/reports.rs:191 `enforce_public_report_rate_limit`). This one does not, so an unauthenticated client can inflate a listing's view_count arbitrarily and drive unbounded DB write amplification by hammering the endpoint.",
+        "Secondary defect in the same handler: the OpenAPI doc annotates `(status = 404, description = \"Listing not found\")` (listings.rs:858) but the handler NEVER returns 404 — track_view errors are swallowed as a non-fatal warn (:868-870) and it unconditionally returns 204 NO_CONTENT, so a view against a non-existent/inactive listing silently succeeds. Spec/impl mismatch.",
+        "Suggested fix (cloud-landable, backend-only): route `record_view` through the existing `state.inquiry_rate_limiters.check(key)` / `InquiriesHandler::rate_limit_result` path keyed on client IP + listing_id (mirror enforce_public_report_rate_limit in reports.rs), and either verify listing existence to honor the documented 404 or drop the 404 from the utoipa annotation. Add a regression test asserting a 429 after the per-IP budget is exhausted."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-branding-color-no-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_branding.rs:252-254 + :322-325 — update_branding carefully validates the three URL fields (check_optional_url_field for logo_url/banner_url/watermark_url, H7 stored-XSS guard) but binds `primary_color` and `secondary_color` straight into the INSERT (:325 `.bind(&data.primary_color).bind(&data.secondary_color)`) with NO format or length validation. These values are served back via GET branding and consumed by reality-web, which applies them as CSS on `<html>` (app/[locale]/layout.tsx:168,187 brandingToStyleObject; also brandingToStyleString). The ONLY thing preventing CSS/attribute injection today is reality-web's client-side `sanitizeCssValue()` (frontend/apps/reality-web/src/lib/tenant-config.ts) — a single front-end guard. This is a defense-in-depth asymmetry: an agency member can persist arbitrary strings in these columns, and any OTHER consumer of agency_branding that does not replicate sanitizeCssValue (mobile-native Reality app, server-rendered PDF/email branding, a future export) would render attacker-controlled CSS. Fix (backend-only, cloud-landable): validate primary_color/secondary_color against a strict pattern (e.g. `#` + 3/6/8 hex, or a small named-color/`rgb()/hsl()` allowlist) with a max length, rejecting on mismatch with 400, mirroring the URL-field hardening already in the same handler. Low severity, defense-in-depth + consistency."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-alert-workers-fire-forget",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/main.rs:442-461 — all three background notification workers (SavedSearchAlertWorker, SearchAlertDrainerWorker, FavoriteAlertWorker) are spawned fire-and-forget: their JoinHandles are dropped into `_`-prefixed bindings (`let _alert_worker_handle = ...start();` :446, `let _drainer_worker_handle = ...` :457, `let _favorite_alert_worker_handle = ...` :461). Nothing awaits, supervises, or restarts them.",
+        "backend/servers/reality-server/src/services/search_alert_drainer.rs:330-354 — each worker's `start()` runs an infinite `loop { ticker.tick().await; self.run_once().await; }` inside a single `tokio::spawn`. `run_once` catches its own DB/transport errors (:365-369), so steady-state is fine — but a panic anywhere inside the tick loop (e.g. a panic in a transport adapter or in AlertNotification::localized, or a future `.unwrap()`) terminates that one task permanently and silently. The process keeps serving HTTP with its notification pipeline dead and NO liveness signal; users simply stop receiving saved-search / favorite alerts until an operator notices and restarts the process.",
+        "Suggested fix (cloud-landable, backend-only): wrap each worker tick in a supervised restart (observe the JoinHandle, or an inner watchdog that re-spawns on unexpected exit), or at minimum surface a last-tick heartbeat into the readiness probe (routes/health.rs) so a dead worker fails readiness instead of silently dropping notifications. Add a test that a panicking run_once does not permanently halt the drain loop."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-imports-limit-unclamped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:125 — `list_import_jobs` (GET /api/v1/imports/jobs, authenticated PortalPrincipal) passes `query.limit.unwrap_or(20)` straight to the repo, which binds it to `LIMIT $3` in backend/crates/db/src/repositories/reality_portal/imports.rs:36-70 with NO clamp. The sibling `offset` IS clamped (`crate::util::clamp_offset_i32(query.offset)`), so the omission is an oversight, not a policy.",
+        "This violates the clamp-then-wire contract used by EVERY other list endpoint in the same crate: listings.rs:28-33 `clamp_pagination` -> `.clamp(1, MAX_LISTINGS_LIMIT=100)` (with a docstring: 'a negative `limit` would otherwise surface a raw DB error (\"LIMIT must not be negative\") as a 500, and an unbounded `limit`/`page` is a latent resource-exhaustion vector'); portal_listings.rs:437 `.clamp(1, 100)`; saved_searches.rs:324 `.clamp(1, ALERTS_MAX_LIMIT)`; favorites.rs:276 `.clamp(1, ALERTS_MAX_LIMIT)`; agencies.rs:125 `.clamp(1, 200)`; realtors.rs:214 / inquiries.rs:589,650 `.clamp(1, 100)`.",
+        "Impact: `?limit=-1` reaches Postgres as `LIMIT -1` -> raw DB error surfaced as HTTP 500 (the exact failure listings.rs documents guarding against); `?limit=2000000000` is an unbounded row-fetch / resource-exhaustion vector. FIX: mirror the siblings — `query.limit.unwrap_or(20).clamp(1, 100)`."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-total-pagelen",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:131-135 — `list_import_jobs` is paginated (limit/offset) but sets `let total = jobs.len() as i64;` and returns it as `ImportJobsResponse.total`. Because `jobs.len() <= limit`, `total` can never exceed the current page size, so a client computing `total / limit` can never page past page 1 — the full filtered count is lost.",
+        "This is the exact 'page-length-as-total' regression already identified and fixed elsewhere in the SAME crate, where the fix was a parallel COUNT query: realtors.rs:207-209 comments '(the previous behaviour, #774 item 3) silently lied on every non-final page: it reported the page size, not the real total'; inquiries.rs:600-603 / 646-648 '(the page-length-as-total bug fixed for the realtor axis in PR #919)'. Those handlers use `tokio::try_join!(get_*, count_*)`; `list_import_jobs` has no matching `count_import_jobs` call.",
+        "FIX: add a `count_import_jobs(user_id, status)` repo method and populate `total` from it (parallel `tokio::try_join!`), matching realtors.rs / inquiries.rs / saved_searches.rs."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-import-history-trunc",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:153-185 — `list_import_history` (GET /api/v1/agencies/{id}/imports) hardcodes `ORDER BY created_at DESC LIMIT 100` with NO limit/offset query params, so an agency with more than 100 import jobs silently loses all history older than the newest 100 with no way to page to it.",
+        "Compounding the truncation, `let total = rows.len() as i64;` (agency_imports.rs:183) caps the reported `total` at 100 as well (same page-length-as-total class as the imports.rs:131 finding), so clients cannot even detect that older history exists.",
+        "FIX: accept `limit` (clamped, e.g. `.clamp(1, 100)`) + `offset` (via `crate::util::clamp_offset`) query params and return `total` from a separate COUNT over `portal_import_jobs WHERE agency_id = $1`, consistent with the crate's other paginated list endpoints."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-branding-coalesce-no-clear",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_branding.rs:300-325 — update_branding (PUT /api/v1/agencies/{id}/branding) upserts every field with `COALESCE(EXCLUDED.<col>, agency_branding.<col>)` (logo_url, banner_url, primary_color, secondary_color, watermark_style, watermark_opacity, watermark_position, watermark_url). All request fields are `Option<_>` (UpdateBrandingRequest, :126-137), so a JSON `null` for a field binds SQL NULL and COALESCE keeps the PREVIOUS value — meaning there is NO way to CLEAR a previously-set branding element (e.g. remove an agency logo) through this endpoint by sending null. The only value that clears is an empty string `\"\"`, which binds a non-NULL '' that COALESCE writes verbatim — but empty strings are silently skipped by check_optional_url_field (:46 `if !s.is_empty() && ...`), so '' is never rejected yet also never documented as the clear sentinel. Net: clear semantics are inconsistent (null = no-op, '' = clear-to-empty-string) and a UI that sends null to remove a logo finds the old logo sticks. Fix (backend-only, cloud-landable): either (a) treat an explicitly-present null as a clear by binding the column unconditionally with a tri-state wrapper, or (b) document '' as the clear sentinel and normalize null->'' for clearable fields. Add a unit/integration test that sets then clears logo_url and asserts the row goes NULL/empty."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-url-validator-triplicated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Three near-identical private copies of `fn validate_image_or_link_url` exist — agency_branding.rs:28, reports.rs:38, users.rs:28 — each with its own duplicated MAX_URL_LEN/MAX_PROFILE_URL_LEN = 2048 const and each carrying the SAME stale comment 'Inlined locally ... swap for a shared url_validator module once it lands on main.' That shared module HAS already landed: backend/servers/reality-server/src/util/url_validator.rs (exports validate_fetch_url + full SSRF/scheme policy) and is actively used by routes/agency_imports.rs:7,238,290. The three inline copies also DIVERGE from the shared validator: they accept `http://` in production (the shared url_validator rejects plain http outside RUST_ENV=development, PlainHttpNotAllowed) and perform no private/reserved-IP check. Because these three validators gate strings that are rendered in `<img src=>` / `<a href=>` on the frontend (stored-XSS guard), any future hardening of the scheme/length policy must be remembered in three places. Fix (backend-only, cloud-landable): extract one shared `validate_display_url` helper (scheme allowlist + max-len, no SSRF/IP policy needed for render-only URLs) into util/url_validator.rs, replace the three inline copies and the duplicated consts, and delete the now-stale TODO comments. No behavior change for callers beyond optionally aligning the prod-http policy."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-parse-throw",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 (DecimalAsLongSerializer.deserialize) does `raw.substringBefore('.').toLong()` and :62 (DecimalAsDoubleSerializer.deserialize) does `raw.toDouble()` on the raw JSON primitive content with NO guard. `toLong()`/`toDouble()` throw NumberFormatException on any non-numeric / empty / unexpectedly-formatted content (e.g. an empty string -> substringBefore('.') = \"\" -> \"\".toLong() throws; a null-rendered, grouped, or scientific value throws).",
+        "This re-introduces the exact failure mode these serializers were written to eliminate: the file header (lines 20-25) documents issue #2331, where a single fractional monetary field 'silently killed the whole price-tracking payload decode'. An uncaught exception thrown inside kotlinx.serialization deserialize() aborts the entire `response.body()` decode for the favorites/alerts payload (GET /api/v1/favorites, GET /api/v1/favorites/alerts), so one malformed monetary field still sinks every row in the payload — not just that field. Caught at the repo try/catch boundary (becomes Result.failure), so no crash, but the whole screen's data is lost rather than the one bad field degrading gracefully.",
+        "Reachability is bounded by the backend (rust_decimal serde-str emits well-formed decimal strings), hence confidence medium / severity low (+1). Fix (KMP-shared, cloud-landable, no backend): wrap the parse (`raw.substringBefore('.').toLongOrNull() ?: 0L` and `raw.toDoubleOrNull() ?: 0.0`, or a try/catch returning a sentinel) so a single malformed monetary value degrades to a default instead of aborting the payload decode, and add a commonTest case feeding a non-numeric string to each serializer."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-repo-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt — the core listing repository (6 public suspend endpoints: searchListings, getListingDetail, getFeaturedListings, getRecentListings, getSearchSuggestions, getListingsNearby) has NO corresponding test file anywhere under mobile-native/shared/src/commonTest. Verified: `find commonTest -name 'ListingRepository*Test.kt'` returns nothing.",
+        "Every sibling repository in the same shared module ships at least a path-encoding test: InquiryRepositoryPathEncodingTest, AgencyRepositoryPathEncodingTest, FavoritesRepositoryTest + FavoritesRepositoryPathEncodingTest, NotificationRepositoryTest, PortalListingsRepositoryTest, RealtorRepositoryPathEncodingTest, LayoutRepositoryTest. ListingRepository is the only untested one — and it is the primary search/detail surface (Epic 48 Story 48.1). getListingDetail relies on `listingId.asPathSegment()` for path encoding with no regression test guarding it (the exact thing every sibling's PathEncodingTest exists to pin).",
+        "Severity low (+1), test-gap. Fix (KMP-shared commonTest, cloud-landable, no backend): add a ListingRepository test with a Ktor MockEngine covering (a) asPathSegment encoding of listingId in getListingDetail, (b) the success/NotFound/other-status branch mapping, and (c) that a thrown client exception becomes Result.failure — mirroring the existing PathEncodingTest pattern used by the sibling repos."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-naive-en-pluralization",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/forms/FormsScreen.tsx:121 — `{forms.length} form{forms.length === 1 ? '' : 's'} available` hardcodes English binary (1 vs many) pluralization via string concatenation. This is a CORRECTNESS bug distinct from the already-tracked translation-gap findings (code-review-mobile-rn-screen-header-titles-i18n flags this subtitle as a missing-t() literal, but a naive `t('forms.countAvailable', { count })` fix that still interpolates `count + ' form' + (n===1?'':'s')` would remain wrong). The app ships 6 locales (frontend/apps/mobile/src/locales/: sk, cs, pl, de, hu, en). Slavic locales sk/cs/pl have 3-4 CLDR plural categories (one/few/many/other), and the binary `=== 1 ? '' : 's'` renders grammatically wrong counts in 5 of the 6 shipped languages (e.g. sk needs distinct forms for 1 / 2-4 / 5+). Correct fix: i18next ICU/count plural keys (`t('forms.available', { count })` with one/few/many/other sub-keys in each locale json), never a JS ternary appending 's'.",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx:151 — same antipattern: `{entry.declaredPersons} person{entry.declaredPersons === 1 ? '' : 's'}`. (person-months has prior translation-gap findings but none addresses the plural-form correctness.)",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:117 — same antipattern: `{unreadTotal} unread message{unreadTotal === 1 ? '' : 's'}`.",
+        "Net-new verification: searched all prior mobile-rn signal files — the only 'plural'-mentioning prior signals are in ppt-web-ui / reality-web / reality-server segments, none in mobile-rn. backlog.json has 0 open mobile-rn code-review-finding rows. The three mobile i18n/header findings already on record are translation-gap (missing t()) in nature and do not call out the binary-pluralization correctness defect for non-English plural rules.",
+        "Scope note for implementer: fix all three sites in one PR and grep `? '' : 's'` across frontend/apps/mobile/src to catch any further instances; add the plural sub-keys to each of the 6 locale json files (one/few/many/other where the locale requires them)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-meters-allmeters-false-empty",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/meters.tsx:163-174 — useAllMeters() derives the building fan-out from useBuildings(): `const buildingIds = (buildingsData?.items ?? []).map(b => b.id)`, runs one useQueries entry per building, and returns `isLoading = buildingIds.length > 0 && results.some(r => r.isLoading)`. The `buildingIds.length > 0` guard is the defect. (1) LOADING FLASH: while the parent useBuildings() query is still in flight, buildingsData is undefined, buildingIds is [], useQueries([]) yields [], so isLoading evaluates to `false && ... = false` and meters is []. MetersPageRoute (:177-190) therefore passes meters=[] isLoading=false to <MetersPage>, which renders its 'no meters' empty state for the whole initial-buildings-load window, then flips to a spinner once buildings resolve and the per-building queries start — a reversed/false empty-state flash on every cold load of /meters. (2) MORE SERIOUS — ERROR SWALLOWED AS ZERO: useBuildings() exposes no isError/error here, and on a buildings-fetch failure buildingsData stays undefined forever, so buildingIds stays [], isLoading stays false, meters stays [] permanently. A failed buildings request is thus indistinguishable from a tenant who legitimately has zero meters: the user is shown a settled 'No meters' screen with no loading and no error affordance. Same misleading-empty class as the already-tracked financial-dash-false-zeros finding, but in a distinct file/hook (meters.tsx useAllMeters fan-out) not covered by any existing code-review-ppt-web-core-* id. Fix (frontend-only, cloud-landable): treat the parent-buildings phase as loading/error explicitly — e.g. `const { data: buildingsData, isLoading: isLoadingBuildings, isError: isBuildingsError } = useBuildings();` then `const isLoading = isLoadingBuildings || results.some(r => r.isLoading);` and surface isBuildingsError (plus results.some(r => r.isError)) so the page can show an error state instead of a false empty one; the `buildingIds.length > 0` short-circuit should be dropped. Add a hook test asserting isLoading===true while useBuildings is pending and that a buildings error does not resolve to an empty, done-loading meters list."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-disableall-dialog-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/components/DisableAllWarningDialog.tsx (131 lines, Epic 8A Story 8A.1) — the ENTIRE user-facing confirmation dialog is hardcoded English with NO useTranslation import (grep -c 'useTranslation|react-i18next' = 0). Untranslated visible copy: title `<h3>Disable All Notifications?</h3>` (:89-91); body `<p>You are about to disable all notification channels. This means you will not receive any notifications about:</p>` (:93-96); four bulleted items `<li>Important announcements from your property manager</li>`, `<li>Updates on reported faults and maintenance</li>`, `<li>Voting deadlines and results</li>`, `<li>Direct messages from neighbors</li>` (:98-101); amber warning `<p>You may miss critical information about your property.</p>` (:103-105); and BOTH action buttons `Disable All Notifications` (:117) and `Keep Notifications` (:124). This is a modal shown when a tenant tries to disable all notification channels, on a documented sk/cs/de/en multi-locale product (CLAUDE.md i18n: sk, cs, de, en) — a non-English user is shown an entirely English warning before a consequential opt-out. Distinct from the already-tracked generic aria-label-i18n finding (that covered aria-label *attributes*; this is visible body/button copy) and net-new vs all prior signals + backlog (grep for 'DisableAllWarningDialog' across .research/signals + backlog.json = 0 hits). Severity low per the i18n-gap taxonomy (no crash) but high confidence (literals are plainly visible, no dynamic path). Fix (frontend-only, cloud-landable): add useTranslation, replace each literal with a t('settings.notifications.disableAll.*') key, and add the keys to frontend/apps/ppt-web/src/i18n (+ sk/cs/de bundles). Low i18n-test risk; DisableAllWarningDialog.test.tsx (if present) asserting on the English strings would need updating to key lookups."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-categorypref-hardcoded-labels",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/settings/notifications/advanced/components/CategoryPreferenceCard.tsx — no useTranslation import; renders hardcoded English for notification-channel labels. A module-level `const CHANNEL_LABELS: Record<NotificationChannel, string> = { push: 'Push', email: 'Email', ... }` (:67-69+) supplies VISIBLE button text rendered at :130 `{CHANNEL_LABELS[channel]}`, not merely accessibility metadata. Also hardcoded: the per-channel tooltip `title={`${enabled ? 'Disable' : 'Enable'} ${CHANNEL_LABELS[channel]} for ${CATEGORY_LABELS[preference.category]}`}` (:125) — the 'Disable'/'Enable' verbs and sentence structure are English literals that will not localize, and the aria-label at :112 has the same 'notifications for' English glue. On the sk/cs/de/en product the per-category notification matrix shows English channel names and English tooltips to all locales. Net-new: grep for 'CategoryPreferenceCard' across .research/signals + backlog.json = 0 hits. PARTIAL overlap to flag for the triager: (a) the aria-label at :112 is the same class as the tracked aria-label-i18n finding; (b) CATEGORY_LABELS/CATEGORY_DESCRIPTIONS are imported from '@ppt/api-client' (:8), the same user-facing-labels-in-the-generated-client anti-pattern as the tracked contact-labels-in-api-client finding — so if that one is being fixed generically, the CATEGORY_LABELS half may be absorbed there. The genuinely NET-NEW, non-overlapping part is the locally-defined CHANNEL_LABELS map (visible button text at :130) and the 'Disable'/'Enable' tooltip verbs (:125), neither covered by any existing id. Severity low (i18n gap, no crash); confidence medium (visible literals confirmed, but fix scope entangled with the two related tracked findings above). Fix (frontend-only, cloud-landable): move CHANNEL_LABELS to t('settings.notifications.channels.*'), build the title/aria strings via t(... , { channel, category }) with interpolation, and add keys to the i18n bundles."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-realtor-respond-no-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/realtors.rs:274-293 — respond_to_inquiry (POST /api/v1/realtors/inquiries/{id}/respond) passes the client-supplied `data.message` (db::models::SendInquiryMessage) STRAIGHT to reality_portal_repo.respond_to_inquiry(id, principal.user_id, &data.message) with NO validation whatsoever: no empty/whitespace rejection and no length cap.",
+        "backend/servers/reality-server/src/routes/inquiries.rs:772-811 — the sibling respond_to_inquiry (POST /api/v1/inquiries/{id}/respond) takes the SAME SendInquiryMessage body and calls the SAME repo method, but first rejects an empty/trimmed message with 400 (:779-785) and caps it at 5000 chars with 400 (:786-791 `if req.message.chars().count() > 5000`). The realtors.rs route is the divergent copy — an authenticated realtor can POST an empty message (persisting a blank inquiry_messages row the UI renders as an empty bubble) or a multi-MiB message that bloats the inquiry_messages table, the realtor/consumer response payloads, and tracing logs. This is the one uncapped free-text write path in the segment; every other one (inquiries.rs:54/446/786 MAX_INQUIRY_MESSAGE_LEN=5000, agent_reviews.rs:27/233 MAX_REVIEW_BODY_LEN, articles.rs:24/456 MAX_COMMENT_BODY_LEN, reports.rs:30/199 MAX_REPORT_DESCRIPTION_LEN) enforces the server-wide 5000-char hygiene cap (H6). Fix (backend-only, cloud-landable): mirror the inquiries.rs guard in realtors.rs::respond_to_inquiry — reject empty-after-trim (400) and reject chars().count() > 5000 (400) before the repo call; ideally extract a shared validate_inquiry_message helper so the two respond paths cannot drift again. Add a unit test asserting a 5001-char and an empty body are both rejected with 400 on the realtors route."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-favorites-limit-toctou",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/favorites/mod.rs:48-66 — add_favorite enforces MAX_FAVORITES_PER_USER (=100, :10) purely in application code via a check-then-act sequence: it fetches the full favorites list (:49-53), returns LimitReached when `favorites.len() >= 100` (:55-57), checks the in-memory list for an existing entry (:60-62), then INSERTs (:65-66). There is no DB-side enforcement (no partial-unique/row-count constraint) of the per-user cap, so the limit check is a TOCTOU race: two concurrent POSTs from the same user at count==99, each with a distinct listing_id, both read 99, both pass the `>= 100` guard, and both insert — leaving the user above the advertised 100-favorite ceiling. Same class as the already-tracked compare TOCTOU (code-review-reality-server-add-to-compare-toctou-max-cap) but in a different handler/table (portal_favorites) and not covered by the favorites-read-amplification / favorites-add-error-mapping-500 findings, which are about read cost and unique-violation status mapping respectively. Low severity (a user can only slightly overfill their OWN favorites list, no cross-tenant impact) but it makes the documented cap non-authoritative. Fix (backend-only, cloud-landable): enforce the cap atomically — e.g. an INSERT ... WHERE (SELECT COUNT(*) FROM portal_favorites WHERE user_id = $1) < 100 guard (or a counter row / trigger) in repo.add_favorite, and map a zero-rows result to LimitReached. Add a test that fires two near-simultaneous adds at the boundary and asserts the final count never exceeds 100."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-sso-probe-caches-transient-blip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:78-106 — probeSsoSession() caches EVERY probe outcome for PROBE_CACHE_MS=2000ms, including the transient network-blip failure, directly contradicting that failure's own inline comment. The catch at :94-98 returns `{ ok: false }` and documents: 'Network blip — treat as transient, NOT as \"logged out\". Don\\'t cache so the next mount can retry'. But the surrounding code ignores that intent: the IIFE's `.finally()` (:100-103) unconditionally sets `_cachedProbeAt = Date.now()`, and the outer body (:105) unconditionally runs `_cachedProbeResult = result;` for ALL results — the catch's transient `{ ok: false }` is cached identically to a legitimate unauthenticated `{ ok: false }` (the response-not-ok return at :92). The two failure modes are indistinguishable at the cache layer because they share the same `{ ok: false }` shape.",
+        "Consequence: for up to 2s after a single transient /api/v1/sso/session blip, every probeSsoSession() caller is served the stale cached failure from :80-82 (`if (_cachedProbeResult && now - _cachedProbeAt < PROBE_CACHE_MS) return _cachedProbeResult;`) and the documented 'next mount can retry' recovery never fires within that window, even if the network recovered immediately. For a cookie/SSO-only visitor (no stored bearer token) this is user-visible: checkSession() (:132-167) hits the bearer early-return only when getSession() is truthy, so a cookie user falls straight to `probeSsoSession()` at :155 and the else-branch at :163-164 calls `setUser(null)` on the cached `{ ok: false }` — the header renders the 'Sign in' control and will not self-correct until the 2s cache lapses AND something re-triggers a probe (remount / refreshSession), rather than on the very next check as the comment promises.",
+        "Note: the 2026-09-05 reality-web review explicitly cleared this helper ('probeSsoSession dedups + never clobbers state on a network blip') — that assessment covered the in-flight dedup and the return value but overlooked the result-cache write, so this caching defect is genuinely net-new (no probe-cache / PROBE_CACHE finding id exists in any prior signal file or in backlog.json). Fix (frontend-only, cloud-landable): only populate `_cachedProbeResult`/`_cachedProbeAt` for a definitive outcome — i.e. cache on `{ ok: true }` and on the response-not-ok `{ ok: false }` (unauthenticated) path, but skip the cache write for the catch (transient) path, e.g. by threading a `cacheable` flag out of the IIFE (true for both return statements, false in the catch) and guarding the `.finally` timestamp + the `_cachedProbeResult` assignment on it. Add a unit test: a first probe that rejects (fetch throws) must NOT be served from cache to a second probe fired <2s later — the second call must re-issue the fetch."
+      ]
+    },
+    {
+      "id": "code-review-api-core-pushfanout-queue-drops-transient",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:1650 `async fn deliver_job(&self, payload: &str)` — the Redis push_fanout_queue worker. A job is popped off the list via BLPOP (process_pending_jobs :1601, queue_pop_blocking on PUSH_FANOUT_QUEUE_KEY :1486, up to MAX_JOBS_PER_TICK=256 :1498 per tick). On a GENUINE transient failure the job is logged and DROPPED with no re-queue, no backoff, and no dead-letter: the `Err(e) =>` arm at the end of deliver_job (~:1683-1697) carries the inline comment \"Genuine failure (DB error or all provider sends failed). ... we log and move on rather than re-queue (avoids hot-looping on a permanently failing job)\" and only emits `tracing::warn!(... \"push delivery failed for queued job\")`. Because the payload was already BLPOP-popped off the list before delivery is attempted, a TRANSIENT fault — an FCM/APNs 5xx or rate-limit, a momentary Postgres pool exhaustion while resolving device tokens, or a Redis/network blip mid-send — permanently loses that user's push notification for the remaining process lifetime. The queue's at-least-once intent (BLPOP drain of a durable Redis list) is silently downgraded to at-most-once for every transient blip. The code conflates PERMANENT failures (which correctly should not re-queue, to avoid the poison-message hot-loop the comment guards against) with TRANSIENT ones (which SHOULD get bounded retry/backoff or a dead-letter list). Mitigation that exists: the in-app channel remains the mandatory record, so this is a push-delivery DEGRADATION, not data loss — hence severity medium, not high. NET-NEW vs backlog: distinct FILE+MECHANISM from code-review-api-core-quiet-drain-drops-failed-delivery (that is quiet_hours_drain.rs's DB-held deliver_held drain, not the Redis BLPOP queue worker) and distinct from all prior push_fanout token/endpoint findings. Suggested landable (backend-only) fix: classify the NotificationError in deliver_job's Err arm into transient vs permanent (reuse the provider error taxonomy already present in the FCM/APNs adapters), and for transient failures either LPUSH the payload back with a bounded attempt counter + exponential backoff or move it to a `push_fanout_dlq` list for a later redrive, leaving only permanent failures to drop as today. Reachability traced statically (process_pending_jobs -> deliver_job -> adapter.send); runtime frequency of transient-vs-permanent not confirmed, hence confidence medium."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-meter-submit-wrong-endpoint",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:128-138 — handleSubmit enqueues `addToQueue({ type: 'CREATE', endpoint: '/api/v1/meter-readings', method: 'POST', body: { meterType, reading, unit, photoUri } })`. The endpoint path `/api/v1/meter-readings` DOES NOT EXIST on the api-server. The backend mounts the meters router under `/api/v1/meters` and nests readings at `/readings` (backend/servers/api-server/src/routes/meters.rs:44 `.route(\"/readings\", post(submit_reading))`, documented utoipa path :571 `/api/v1/meters/readings`). A grep of backend/servers/api-server/src for `meter-readings` finds only an S3 key prefix in routes/ai/ocr.rs, never a route. So every POST from this screen hits a non-existent path and returns 404.",
+        "Payload shape is also incompatible with the real endpoint. Backend handler submit_reading (meters.rs:579-595) deserializes `Json<SubmitReading>`; SubmitReading (backend/crates/db/src/models/meter.rs:193-204) REQUIRES `meter_id: Uuid` and `reading: Decimal`, with optional `reading_date`, `reading_time`, `source`, `photo_url`. The mobile body sends none of these — it sends a `meterType` string enum (water/electricity/gas/...), `reading` as a raw user string, a `unit` string, and `photoUri`. There is no meter_id anywhere in the mobile flow (the screen selects a hardcoded METER_TYPES enum, not a server meter UUID), so even if the path were corrected the request would 422 on the missing required `meter_id`.",
+        "Failure is silent + data-losing. The offline queue classifies the 404 as a TERMINAL 4xx and DROPS the action permanently (frontend/apps/mobile/src/hooks/useOfflineSupport.ts:437-465, `isPermanent` branch -> droppedPermanent + console.error, action discarded). Meanwhile handleSubmit shows the success/offline Alert OPTIMISTICALLY at enqueue time, before any server round-trip (MeterReadingScreen.tsx:144-152 — t('meters.submitSuccess') / t('meters.savedOffline')). Net effect: NO meter reading submitted from the mobile app can ever persist; the resident is told their reading was saved while it is 404-dropped. This is a complete-feature-breakage + silent-data-loss bug on a core UC (meter self-readings).",
+        "Fix (landable in the cloud runner, TS + jest-expo only): point the submit at the real contract — resolve the user's meter UUID for the selected meterType (needs a meter-list/lookup; the screen currently has none) and POST `/api/v1/meters/readings` with `{ meter_id, reading: <numeric>, reading_date?, photo_url? }` per SubmitReading. Add a jest-expo test asserting the queued action's endpoint + body match the OpenAPI/SubmitReading shape (would fail on main today). If the server meter_id is genuinely unavailable on mobile, this is a missing-capability that must be surfaced to the user instead of a fake success."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-meter-photo-not-uploaded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:84-97 captures a photo via ImagePicker and stores the LOCAL device URI in `photoUri` (a `file:///.../ImagePicker/xyz.jpg` path). handleSubmit then puts that raw local URI straight into the JSON submit body: :122 `photoUri: photoUri || undefined` -> :136 `photoUri: readingData.photoUri`. The body is sent as JSON, never multipart: executeQueuedAction serialises it with `JSON.stringify(action.body)` and sends it as a JSON POST (frontend/apps/mobile/src/hooks/useOfflineSupport.ts:299). No FormData, no presigned-URL upload, no file bytes ever leave the device — only the device-local path string.",
+        "The backend field is `photo_url: Option<String>` (backend/crates/db/src/models/meter.rs:203) — a URL to an ALREADY-UPLOADED image, not a client file:// path; note also the name mismatch (`photoUri` vs `photo_url`), so serde would ignore the mobile field even on the correct endpoint. There is no meter-photo upload pipeline on mobile (contrast the sibling fault-photo gap tracked in 2026-09-26, which is a different file/mechanism — faults omit photos entirely; here the photo is 'sent' as an unusable local path). The resident photographs their meter as proof-of-reading, sees success, and the image is silently discarded.",
+        "This is a distinct fix from the endpoint bug above: even after the submit is re-pointed to POST /api/v1/meters/readings with a valid meter_id, the photo still needs a real upload (capture -> upload image to storage / presigned URL -> pass the resulting `photo_url` string in SubmitReading), OR the photo picker should be hidden / the user warned that photos are not yet uploaded so no one believes evidence was filed when it was not. Fix is TS-only and cloud-landable; add a jest-expo test asserting a captured photo results in an uploaded URL (not a file:// path) in the submit body."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-paymentmatch-silent-err",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui -b accounting)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61-73 — confirmMutation (confirmMatch) and rejectMutation (rejectMatch) are declared with only an onSuccess (invalidateQueries); neither has an onError callback and neither mutation's isError/error is ever rendered anywhere in the file. Only uploadMutation surfaces failure (uploadMutation.isError -> 'Upload failed' at L112-114).",
+        "The confirm/reject buttons (L327-341) wire disabled={confirming}/{rejecting} pending state + 'Processing...'/'Rejecting...' labels, but on a failed confirmMatch/rejectMatch (network error, 409 already-matched, 422 validation, auth expiry) the button simply re-enables with NO toast/alert/inline error — the operator gets zero feedback that confirming or rejecting a bank-statement payment match failed, and may assume it succeeded. Contrast ContentModerationPage.tsx:139-146 in the same app which correctly does assignCase.mutate(id, { onError: show localized alert/toast }).",
+        "Impact: MEDIUM. Silent failure on a financial reconciliation action (payment match confirm/reject) — user-facing, misleading, and on money-handling data. Fix (cloud-landable, ppt-web frontend): add onError to both mutations surfacing a localized error toast/inline message, mirroring uploadMutation.isError and the ContentModerationPage pattern. Confidence MEDIUM (static; failure path not runtime-reproduced)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-hardcoded-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui -b documents)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "The documents preview surface renders user-facing strings as HARDCODED SLOVAK literals (not routed through react-i18next t()), so cs/de/en locale users see untranslated Slovak: DocumentPreviewModal.tsx:56 'Načítavanie náhľadu…', :64 'Náhľad nie je dostupný.'; PdfPreview.tsx:130 'Nahled dokumentu nie je dostupny.', :150 'Nahled nie je dostupny pre tento typ suboru.', :269 'Chyba pri nacitani PDF: {docError}'; DocumentDetail.tsx:132 'Tento dokument nie je prístupný pre váš účet.' (permission-message).",
+        "This is a mixed-language i18n leak, not accepted English-default copy: the app ships sk/cs/de/en bundles and uses t() elsewhere, so a German or English manager opening a document gets Slovak error/loading/permission text. Some PdfPreview strings are even de-diacriticized Slovak ('Nahled','nacitani'), suggesting ad-hoc placeholder copy that never went through i18n.",
+        "Impact: LOW (i18n gap on user-facing document preview/permission states). Net-new: no prior i18n finding covers these files (the only backlog row touching DocumentDetail.tsx is a done test-gap sweep, different vector). Fix (cloud-landable): wrap all six strings in t('documents.preview.*' / 'documents.detail.*') keys and add to the sk/cs/de/en bundles."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-paymentmatch-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui -b accounting)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx imports NO useTranslation / react-i18next and contains ZERO t() calls (grep confirmed) — the entire Payment Matching screen is hardcoded English regardless of the active sk/cs/de locale.",
+        "Hardcoded literals include: L79 <h1>Payment Matching</h1>; L80 'Review and confirm matches from bank statements'; L87 'Bank Statements'; L90 'Upload CSV'; L104 'Choose File'; L109 'Processing upload...'; L113 'Upload failed'; L126 'No statements uploaded yet'; L321 'Variable symbol and amount matches the open balance.'; L333 'Confirm Payment Match'; L341 'Not a match'.",
+        "Impact: LOW (full-screen i18n gap on a manager-facing accounting/reconciliation page). Distinct from the silent-error finding on the same file (different vector: localization vs error-handling). Net-new vs backlog (existing payment-match rows are api-core backend matcher logic, not this UI). Fix (cloud-landable): add useTranslation and route all literals through t('accounting.paymentMatching.*') keys + sk/cs/de/en bundles."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-faultlist-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui faults)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultList.tsx — the primary /faults manager listing screen is almost entirely hardcoded English; useTranslation/t() is imported but used ONLY in the error + retry branch (L166 'faults.failedToLoad', L174 'common.retry'). Everything else renders raw English literals regardless of the active sk/cs/de locale.",
+        "Hardcoded strings include: L100 <h1>Faults</h1>; L106 'Report Fault' button; L115 placeholder=\"Search faults...\"; the three filter <select> label maps statusOptions (L34-44: 'All Statuses','New','Triaged','In Progress','Waiting for Parts','Scheduled','Resolved','Closed','Reopened'), priorityOptions (L46-52: 'All Priorities','Urgent','High','Medium','Low'), categoryOptions (L54-66: 'All Categories','Plumbing','Electrical','Heating','Structural','Exterior','Elevator','Common Area','Security','Cleaning','Other'); L189 'No faults found.' empty state; L210-212 'Showing X to Y of Z faults' pagination; L221 'Previous' / L229 'Next'.",
+        "Impact: MEDIUM. The filter option labels are functional controls (status/priority/category) -- non-English managers cannot read the fault filters or primary actions on the main faults list, not just decorative copy. Net-new vs backlog: no prior faults-list finding exists (createfault-mock-ai and editfaultpage-no-i18n cover different files; aria-label-i18n is the aria surface only). Fix (cloud-landable, ppt-web frontend): route all literals through t('faults.*') and move the option maps to locale-keyed label lookups, mirroring the already-localized error branch."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-faulttimeline-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui faults)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx contains ZERO useTranslation()/t() calls (grep count 0) yet renders the fault audit-history timeline (UC-03.5/UC-03.7) with hardcoded English throughout: the actionLabels map L40-54 (13 entries: 'Reported fault','Triaged fault','Assigned fault','Changed status','Changed priority','Added work note','Added comment','Added attachment','Scheduled work','Resolved fault','Confirmed resolution','Reopened fault','Rated resolution'); L82 'No timeline entries.' empty state; L87 <h3>Timeline</h3>; L111 'Internal' visibility badge.",
+        "This is a MISSED file, not an accepted pattern: it is a distinct unlocalized sibling the earlier editfaultpage-no-i18n finding (2026-09-11) did NOT enumerate (that finding listed CreateFaultPage/FaultDetailPage/FaultReportsPage/FaultsPage/FaultForm as localized but never checked FaultTimeline). Non-English managers see the entire fault history action log in English.",
+        "Impact: LOW (i18n gap on a user-facing manager component). Fix: wrap the labels/heading/badge/empty-state in t('faults.timeline.*') keys and add to the sk/cs/de/en bundles."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-faulttimeline-rating-repeat-crash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui faults)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx:142 renders a star rating via `'⭐'.repeat(Number.parseInt(entry.newValue, 10))` with no bounds check on entry.newValue (a server-supplied string on the 'rated' timeline entry). String.prototype.repeat throws RangeError for any negative count, so a malformed/out-of-range rating value (e.g. '-1') crashes the render of the whole FaultTimeline (and the enclosing FaultDetailPage) with an uncaught RangeError rather than degrading gracefully.",
+        "Non-integer or NaN inputs are harmless (repeat floors / treats NaN as 0), so the crash is specifically the negative-count path; a value above ~2^28 would instead throw on string length. Reachability requires the backend (or a tampered response) to emit a rated entry with an out-of-range newValue, hence confidence MEDIUM / severity MEDIUM (not runtime-reproduced).",
+        "Fix: clamp before repeat, e.g. `'⭐'.repeat(Math.max(0, Math.min(5, Number.parseInt(entry.newValue, 10) || 0)))`, or render N discrete star nodes from a clamped count."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-compare-url-unvalidated-body",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 — `return response.json() as Promise<ListingSummary>;` casts the raw fetch body of GET /api/v1/listings/{id} straight to ListingSummary with no runtime shape validation, then feeds it into addToComparison() (comparison-context.tsx:71) and the comparison UI.",
+        "Inconsistent with the SSR detail page for the SAME endpoint: frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:79-89 only does `if (!response.ok) return null` then routes the body through `parseListingDetail(body)` precisely because (per its own inline comment, lines 80-87) a 200 response can carry a malformed/partial body (missing nested fields, wrong-typed `features`/`photos`) that crashes render. ComparisonUrlHandler guards response.ok (line 44) but performs no equivalent body normalization/validation.",
+        "Impact: a malformed/partial 200 body for a shared-comparison id (?ids=... deep link on the public /compare page) flows unvalidated into the comparison view and can crash client rendering. No parseListingSummary normalizer exists in src/lib — the parse pattern is applied to detail bodies but not summary bodies. Fix: add/apply a parseListingSummary normalizer (mirroring parseListingDetail) and drop the raw `as Promise<ListingSummary>` cast, dropping ids whose body fails validation (the loop already degrades gracefully via Promise.allSettled)."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-14.md && head -1 matches",
+      "observed": "# 2026-10-14",
+      "expected": "# 2026-10-14"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advances",
+      "observed": "last_pr_seen 3036→3080, seen_signals +70",
+      "expected": "any cursor change"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no dup signal with nonzero score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap+decay",
+      "observed": "all scores ≤8; no open items older than 14d",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotations",
+      "observed": "both new plans annotated",
+      "expected": "both annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 plans, 11 headings, 4 metadata, files exist",
+      "observed": "2 plans, 11/11 headings each, 4/4 metadata, all files resolve",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only in .research/",
+      "observed": "0 non-.research/ paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures surfaced",
+      "observed": "Phase 1.5+1.6 skipped and both noted",
+      "expected": "both noted"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "all tracked",
+      "expected": "all tracked"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "22≥22",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions this run",
+      "expected": "≤1 pr, ≤1 issue, ≤1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "PM artifacts (no-op this run — Phase 1.6 skipped)",
+      "observed": "pm_cursor.next_index=6 valid",
+      "expected": "0..7"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram secret",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
