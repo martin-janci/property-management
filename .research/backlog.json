@@ -12114,6 +12114,54 @@
       "score_delta": 2,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "gh-issue-3083-portfolio-aggregated-metrics-drift",
+      "title": "portfolio_aggregated_metrics schema drift — portfolio-summary/metrics endpoints 500 at runtime after PR #3081",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #3083",
+        "PR #3081"
+      ],
+      "evidence": [
+        "Issue #3083 (owner-filed follow-up to PR #3081 merged 2026-10-14): PortfolioAnalyticsRepository::calculate_portfolio_metrics / get_portfolio_metrics / get_portfolio_summary project columns absent from current portfolio_aggregated_metrics DDL; migration 00236 fixed only the sibling property_performance_metrics table.",
+        "backend/crates/db/src/repositories/portfolio_analytics.rs — repository projects columns no migration created",
+        "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs — portfolio-summary / benchmark success cases were deleted under BIT-567 and must be restored once the DDL is reconciled."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/portfolio_analytics.rs",
+        "backend/crates/db/migrations/00236_reconcile_property_performance_metrics.sql",
+        "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": "plans/gh-issue-3083-portfolio-aggregated-metrics-drift.md"
+    },
+    {
+      "id": "gh-issue-3084-ssrf-nat64-siit-bypass",
+      "title": "SSRF validator still bypassable via NAT64 (64:ff9b::/96) and SIIT IPv4-translated IPv6 forms after PR #3082",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #3084",
+        "PR #3082"
+      ],
+      "evidence": [
+        "Issue #3084 (owner-filed follow-up to PR #3082 merged 2026-10-14): is_forbidden_ip in backend/crates/common/src/url_validation.rs:299 unmaps only ::ffff:…/::/96 — NAT64 64:ff9b::169.254.169.254 and SIIT ::ffff:0:127.0.0.1 both fall through to Ok(()).",
+        "to_ipv4_mapped() / to_ipv4() both return None for 64:ff9b::/96 and ::ffff:0:0/96 — the embedded IPv4 is never surfaced to check_ipv4.",
+        "Regression tests needed: rejects_nat64_metadata and rejects_siit_translated_loopback, next to the existing rejects_ipv4_compatible_ipv6_metadata at url_validation.rs:525."
+      ],
+      "files": [
+        "backend/crates/common/src/url_validation.rs"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": "plans/gh-issue-3084-ssrf-nat64-siit-bypass.md"
     }
   ]
 }

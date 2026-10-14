@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-08T04:30:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3036,
-  "last_issue_seen": 3029,
-  "last_commit_sha": "5ea25b4677b1a383be7d24f188db1c5a90b9632c",
+  "last_run_iso": "2026-10-14T22:40:00Z",
+  "last_run_ms": 90000,
+  "last_pr_seen": 3082,
+  "last_issue_seen": 3084,
+  "last_commit_sha": "38cbadc6",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1146,7 +1146,11 @@
     "screen-map-drift-pr-3022-reality",
     "code-review-ppt-web-core-group-join-leave-silent",
     "code-review-ppt-web-core-group-delete-stub",
-    "code-review-ppt-web-core-rentals-mutation-silent"
+    "code-review-ppt-web-core-rentals-mutation-silent",
+    "lag-warning-2026-10-14",
+    "stale-routine-2026-10-14",
+    "code-review-gh-issue-3083-portfolio-aggregated-metrics-drift",
+    "code-review-gh-issue-3084-ssrf-nat64-siit-bypass"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1160,9 +1164,9 @@
     "mobile-native-kmp": "2026-10-13"
   },
   "stats": {
-    "runs": 88,
-    "vectors_created": 420,
-    "plans_created": 33,
+    "runs": 89,
+    "vectors_created": 422,
+    "plans_created": 35,
     "quiet_days": 5,
     "auto_fix_count": 0
   },

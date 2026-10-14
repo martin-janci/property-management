@@ -1,0 +1,64 @@
+{
+  "run_iso": "2026-10-14T22:40:00Z",
+  "trigger": "buffer-low: claimable=1/72 — refill planner",
+  "mode": "incremental (focused — Phase 1.5 and Phase 1.6 skipped under buffer-low scope)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-14",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-08T04:30:00Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 6d 18h — stale cloud cron; dispatcher kept firing on planning branch and drained the claimable buffer",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-2026-10-14",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-10-08T04:30:00Z is 6 days old; cloud routine may be paused. Dispatcher state (planning branch assignments.json) was not read this run.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-gh-issue-3083-portfolio-aggregated-metrics-drift",
+      "type": "code-review-finding",
+      "source": "Issue #3083 (owner-filed follow-up to PR #3081)",
+      "score_delta": 3,
+      "evidence": "PortfolioAnalyticsRepository::calculate_portfolio_metrics / get_portfolio_metrics / get_portfolio_summary project columns absent from current portfolio_aggregated_metrics DDL — portfolio-summary/metrics endpoints 500/400 at runtime; migration 00236 fixed only the sibling property_performance_metrics table. Deleted BIT-567 success tests need restoration after the new migration lands.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-gh-issue-3084-ssrf-nat64-siit-bypass",
+      "type": "code-review-finding",
+      "source": "Issue #3084 (owner-filed follow-up to PR #3082)",
+      "score_delta": 3,
+      "evidence": "is_forbidden_ip at backend/crates/common/src/url_validation.rs:299 unmaps only ::ffff:…/::/96 IPv6 forms — NAT64 64:ff9b::169.254.169.254 and SIIT ::ffff:0:127.0.0.1 both fall through to Ok(()). Need rejects_nat64_metadata + rejects_siit_translated_loopback regression tests at line 525.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal matched the Phase 5 allowlist shape this run (both high-score signals need migration authoring / security logic changes outside doc-stub, orphan-remove, lockfile-bump, fixme-in-merged-code, stalled-review)",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/2026-10-14.md && head -1", "observed": "exists; H1='# 2026-10-14'", "expected": "exit 0 + H1 matches today" },
+    { "goal": "G2",  "passed": true,  "command": "jq slurpfile prev vs staged state.json",   "observed": "last_pr_seen 3036→3082; last_issue_seen 3029→3084; last_commit_sha advanced; seen_signals.length grew by 4", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true (473 unique of 473)", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "jq signals vs prior seen_signals",         "observed": "all 4 new signal ids absent from prior seen_signals", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "jq backlog score cap + 14d decay",         "observed": "max score 6; 0 open rows with updated_at <= 2026-09-30 → vacuous decay pass", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "grep adversarial-pass in brief for new plans", "observed": "brief notes `adversarial pass: passed` for both new plans", "expected": "all new plans annotated" },
+    { "goal": "G7",  "passed": true,  "command": "count + 15 required sections per new plan", "observed": "2 new plans; both have 4 metadata + 11 ## headings + ticked capability + Mode: cloud-ok + Files resolve on disk", "expected": "≤2 new; all gates satisfied" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 non-.research/ paths staged", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "git diff --cached grep secret patterns (ex baseline docs)", "observed": "0 matches in staged diff of .research/ excluding the four baseline doc files", "expected": "0 matches" },
+    { "goal": "G10", "passed": true,  "command": "diff -q backlog.md regen(backlog.json)",   "observed": "backlog.md is the fresh regen output of this run", "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "brief phases-failed vs cursor advance",    "observed": "no failed phases; all cursors advanced", "expected": "match" },
+    { "goal": "G12", "passed": true,  "command": "prior plans still present in plans/ or _archive/", "observed": "all prior plan slugs intact; 2 new added", "expected": "no silent deletions" },
+    { "goal": "G13", "passed": true,  "command": "archive count this run >= HEAD",           "observed": "archive untouched this run", "expected": "exit 0" },
+    { "goal": "G14", "passed": true,  "command": "diff -q IDEAS_TRIAGE.md regen(triage)",    "observed": "IDEAS_TRIAGE.md is the fresh regen output (triage rows unchanged — only timestamp refreshed)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions cap + idempotency",       "observed": "auto_fix_actions=[]; kill switch not set; nothing matched allowlist", "expected": "true" },
+    { "goal": "G16", "passed": true,  "command": "Phase 1.6 management artifacts valid",    "observed": "no-op — Phase 1.6 skipped this run; coverage_cursor and pm_cursor unchanged, both in-range", "expected": "no-op pass" },
+    { "goal": "G17", "passed": true,  "command": "grep telegram token value in staged diff", "observed": "no literal token values in staged diff", "expected": "0" }
+  ]
+}
