@@ -103,6 +103,12 @@ output in the PR body.
   `.claude/skills/_verify-rules.md`.
 - **Check:** quote the `VERIFY-PLAN base=<sha> files=<n>` block and the
   `VERIFY OK <hash>` line verbatim in the PR body.
+- **Disk (issue #3073):** when spawned by the dispatcher you run with
+  `CARGO_TARGET_DIR=/tmp/ppt-cargo-target` exported by the worktree preamble,
+  so parallel Rust builds share one target dir instead of each filling a ~24 GB
+  `target/` and hitting ENOSPC mid-verify. Don't unset it. All cargo already
+  serializes host-wide on `flock /tmp/ppt-cargo.lock`, so the shared target is
+  never written concurrently.
 
 ### IG8 — Hand-off back to the routine
 
