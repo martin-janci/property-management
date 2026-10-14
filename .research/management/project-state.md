@@ -1,98 +1,79 @@
 # PPT Project State
 
-_Generated: 2026-10-01 — routine Phase 1.6 upkeep (pm-security rotation slot; pm-cursor idx 5 → 6) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 7 → 8 (epic-82 re-checked, no material change; advances to epic-83). 4-day lag since last routine run (2026-09-27)._
+_Generated: 2026-10-14 — routine Phase 1.6 upkeep (pm-data rotation slot; pm-cursor idx 6 → 7) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 8 → 9 (epic-83 re-checked, no material change). 6-day lag since last routine run (2026-10-08)._
 
 ## Executive summary
 
-- **Delivery: 49/49 stories done across 13 epics in coverage.** Sprint-status.yaml still shows some epics as in-progress/partial (6, 7A, 10B, 80) — that's sprint-level drift against the deeper coverage.json truth and does not reflect new regressions; a deep scan would reconcile it.
-- **7 PRs merged** in the observation window since #2991: a defense-in-depth RBAC pass (role gates, protected routes), one SSO i18n fix, one bug boundary cast, one mobile feature wiring, one cross-cutting auth-client refactor. Zero coverage status flips (all touched surfaces already shipped).
-- **Buffer-low alarm (new): `claimable=9/72`** (floor 36). Root cause is **#2966 utoipa-swagger-ui egress 403** blocking every backend PR — including all three open cross-tenant IDOR retries. Compounded by #2652 (KMP cloud builds blocked) and 11 stalled open PRs (bulk dependabot plus the 64d accounting trio).
-- **No new blockers.** Standing infra blockers (#2966, #2951, #2946, #2652) carry forward.
-- **One new noteworthy issue: #3006** — post-merge review of PR #3004 surfaced triplicated auth-header + MFA-retry logic across @ppt/api-client fetch primitives. Medium-priority refactor with security overtones.
+- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this window; the window shipped quality + bugfix work on top of an already-done feature set.
+- **26 PRs merged** since the 2026-10-08 cursor (PR#3043..#3080) — the broadest window in weeks. Themes: (a) reality-web /sell + /report funnel hardening (#3044 /#3046 /#3056 /#3058 /#3064 /#3066 /#3067); (b) ppt-web community/groups/documents/rentals mutation-error surfacing (#3045 /#3048 /#3049 /#3050); (c) screen-map drift reconciliations (#3053 /#3054 /#3055 /#3058 /#3059); (d) churn-hotspot test coverage + small refactors (#3060..#3063 /#3065 /#3068); (e) auth-fetch triplication finally folded into `bearerAuthorization` (#3071 — closes the #3006 risk); (f) infra ENOSPC fix for the dispatcher (#3080 — closes #3073).
+- **No coverage status flips.** All 49 stories still `done`; `last_checked` stamped on all three epic-83 stories (cursor upkeep slot).
+- **New open issues to watch**: #3076 (ammonia / RUSTSEC-2021-0157 — blocks all backend PRs — open PR #3077 still draft `needs-human-review`), #3078 (portfolio-analytics property-metrics 500 schema drift — open PR #3081 draft), #3079 (SSRF IPv4-compatible IPv6 bypass — open PR #3082 draft), #3069 (ViolationRepository::list_notifications cross-tenant IDOR — open PR #3070 draft).
+- **Role focus today: pm-data** — flagged a live data-health incident on portfolio-analytics (#3078) and a complete absence of event tracking on the reality-web /sell + /report funnels PR#3044..#3067 just hardened.
 
 ## Sprint progress
 
-Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** at sprint level (sprint-status.yaml); coverage-level all extended epics are complete.
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** at sprint level (sprint-status.yaml); coverage-level all 13 epics are complete.
 
 | Epic | Sprint status | Coverage status | Shipped PRs this window |
 |---|---|---|---|
 | 6 — Announcements & Communication | in-progress (3/6)† | 6/6 done | — |
-| 7A — Basic Document Management | in-progress (2/5)† | 5/5 done | #3001 (pattern reuse: presigned S3 for fault photos — adjacent vertical) |
+| 7A — Basic Document Management | in-progress (2/5)† | 5/5 done | #3049 (gate documents routes on organizationId) |
 | 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
-| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | #2993 (reality-web SSO locale) |
-| 10B — Platform Administration | in-progress (7/7)† | 7/7 done | #2994 (ppt-web dashboard ProtectedRoute), #3002 (manager-dashboard role gate), #2995 (Home CTA role gate) |
+| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | — |
+| 10B — Platform Administration | in-progress (7/7)† | 7/7 done | — |
 | 80 — Dispute Resolution | partial (1/3)† | 3/3 done | — |
-| 79 — API client integration | (extended) | 4/4 done | #3004 (gdprClient + paymentMatching → shared auth) |
-| 82 — iOS Reality Portal (SwiftUI) | (extended) | 5/5 done · **last_checked 2026-10-01 (cursor re-check)** | — |
-| Cross-cutting | — | — | #2996 (automation-rule boundary cast) |
+| 79 — API client integration | (extended) | 4/4 done | #3071 (auth-fetch folded into shared bearerAuthorization — closes #3006) |
+| 83 — Portal Integrations | (extended) | 3/3 done · **last_checked 2026-10-14 (cursor re-check)** | — |
+| Cross-cutting | — | — | #3080 (dispatcher ENOSPC: share one Cargo target across worktrees) |
 
 † sprint-status.yaml drift against coverage.json — no action required this run; deep scan will reconcile.
 
-## Shipped since last run (7 PRs merged since #2991)
+## Shipped since last run (26 PRs merged since cursor)
 
-- **#2993** — reality-web SSO locale: fix locale propagation through SSO consumer path (6 locales)
-- **#2994** — ppt-web dashboard ProtectedRoute: tighten route-level RBAC on admin/manager dashboard
-- **#2995** — Home CTA role gate: role-based visibility on Home dashboard CTAs
-- **#2996** — automation-rule boundary cast: fix integer-boundary cast in automation rule evaluator
-- **#3001** — mobile fault photos presigned: wire RN mobile fault reporting to presigned S3 upload (parity with 7a-1 upload pattern on a new vertical)
-- **#3002** — manager dashboard role gate: role gate on manager dashboard entry
-- **#3004** — gdprClient + paymentMatching via shared auth: migrate two @ppt/api-client fetch primitives onto shared authenticatedFetchJson (post-merge review surfaced #3006)
+**Reality-web /sell + /report + /profile funnel (8)**: #3044 Publish 405 fix · #3046 reports_submit sitemap + id surfacing · #3047 /profile i18n via next-intl · #3056 /sell area→sizeSqm + postalCode (closes #3052) · #3058 /report screen-map reconcile · #3064 SyncSchedule edit-form seed · #3066 /sell publish wiring harden · #3067 /report submit wiring + tests.
 
-## Buffer-low alarm
+**ppt-web community + documents + rentals + leases + groups (6)**: #3045 group-not-found reuses errors.groupNotFound/common.back · #3048 community group join/leave mutation-errors surfaced · #3049 documents routes gated on organizationId · #3050 rentals mutations surface non-auth errors · #3051 lease currency from config (not hardcoded EUR) · #3068 community group-detail route-coverage.
 
-- Dispatcher reports **claimable = 9 / 72 open** (floor 36). Buffer below half.
-- Root cause 1 — **#2966 utoipa-swagger-ui egress 403** in the cloud runner. Every backend-touching dispatcher task is `CLOUD-BUILD-BLOCKED`. The 3 IDOR retries (#2944/#2945/#2946), the integrations-webhook refactor, and the AUTHED_QUERY_KEY_ROOTS session-leak item are all parked here.
-- Root cause 2 — **#2652 mobile-native/KMP cloud build gate** still open; 6 KMP items are blocked downstream.
-- Root cause 3 — reviewer starvation on the accounting trio **#2559** (PAY by Square, 64d) + **#2555** (invoice lifecycle, 64d). Not infra, but holds reviewer slots.
+**Screen-map drift reconciliations (5)**: #3053 /sell · #3054 community-group-detail · #3055 /profile · #3058 /report · #3059 toast route-group i18n.
 
-## Blockers (carried, none new)
+**Churn-hotspot test + refactor (5)**: #3060 CreateRulePage mutation-fail test · #3061 dashboardPathForRole helper extract · #3062 CategoryFilter type alias · #3063 FeaturedListings error-surface tests · #3065 realtor-api id encoding + test coverage.
 
-- **#2966** — api-server utoipa-swagger-ui egress 403 (NEW top blocker — surfaced as highest-leverage infra fix). Owner: pm-devops.
-- **#2951** — mobile RN jest-expo version rot. Blocks mobile-rn code-review items from landing. Owner: pm-devops.
-- **#2946** — portfolio_analytics cross-tenant IDOR (retry 2/2 draft open as `gh-issue-2946-retry2`; blocked by #2966). Owner: pm-security.
+**Cross-cutting (3)**: #3043 SyncSchedule save-error banner reset · #3071 last auth-header fold into shared bearerAuthorization (closes #3006) · #3080 dispatcher ENOSPC: one shared Cargo target across worktrees (closes #3073).
+
+## What's next (top 5 from the ranked plan)
+
+1. **[high] Unblock backend CI by landing #3077** (`ammonia` → 4.1.7 clearing RUSTSEC-2021-0157) — gates every backend-touching PR including all open security retries. Owner: pm-security / pm-devops.
+2. **[high] Land #3081 (portfolio-analytics property-metrics 500 — schema drift + IDOR regression tests)** — live data-health incident on realtor dashboards. Owner: pm-tech-lead.
+3. **[high] Land #3082 (SSRF IPv4-compatible IPv6 bypass)** — security retry open as `gh-issue-3079`. Owner: pm-security.
+4. **[high] Instrument reality-web /sell + /report funnels** — PRs #3044..#3067 hardened them but zero `trackEvent` calls were added; the trackEvent bus already exists. Owner: pm-data (spec) + pm-frontend (wire).
+5. **[high] Land #3070 (ViolationRepository::list_notifications org scoping)** — same IDOR class as #2944 — open as `gh-issue-3069`. Owner: pm-tech-lead.
+
+## Open PR landscape (17 open)
+
+- **Security retries open (6 drafts, all `needs-human-review`)**: #3077 ammonia bump · #3070 ViolationRepository scope · #3072 violations role authz · #3074 record_payment atomic · #3075 violation numbering race · #3081 portfolio-analytics + IDOR · #3082 SSRF IPv6. Reviewer bandwidth is the gating factor.
+- **Dependabot bulk (8)**: #2957 tower-http · #2961 kotlin group · #2962 compose-bom · #2972 ktor group · #2981 cargo-minor-patch bulk · #3007 gradle-minor-patch · #3037 tokio patch · #3038 npm-minor-patch bulk.
+- **Older stalled (3)**: #3024 ppt-web dashboard screen-map reconcile · #3028 add_to_compare TOCTOU.
+
+## Blockers (carried; one new)
+
+- **#3076 — ammonia / RUSTSEC-2021-0157** (NEW): blocks every backend PR until #3077 merges. Owner: pm-security + pm-devops.
+- **#2966** — api-server utoipa-swagger-ui egress 403: still open. Owner: pm-devops.
+- **#2951** — mobile RN jest-expo version rot. Owner: pm-devops.
 - **#2652** — mobile-native/KMP builds unlandable in cloud runner. Owner: pm-devops.
 
-## Infra follow-ups needed per #2966
+## Noteworthy resolved this window
 
-1. **Decide vendoring vs egress-allowlist vs base-image-cache** for `utoipa-swagger-ui` crates.io assets. Any of the three unblocks all backend security PRs. (pm-devops)
-2. **Pin + test** the chosen path in the cloud runner's base image. (pm-devops)
-3. **Backfill a dispatcher trigger** that re-mints `gh-issue-294[456]-retryN` the moment the egress fix lands, so the IDOR fixes get first slot on the newly-unblocked runner. (pm-scrum-master + pm-devops)
-4. **Add CI alert** on egress 403 from crates.io so the next instance of this class surfaces in minutes, not days. (pm-devops)
+- **#3006** (triplicated auth-header + MFA-retry drift) — resolved by PR #3071 folding the last call site into shared `bearerAuthorization`. One carried-risk retires.
+- **#3073** (dispatcher ENOSPC on verify) — resolved by PR #3080 sharing one Cargo target across worktrees.
+- **#3052** (/sell wizard payload mismatch) — resolved by PR #3056.
+- **#3042** (reports sitemap registration + id surface) — resolved by PR #3046.
 
-## Noteworthy new issue
+## Role analysis — pm-data (2026-10-14)
 
-- **#3006** — unify triplicated auth-header + MFA-retry in @ppt/api-client fetch primitives. Surfaced by post-merge review of PR #3004. Three copies of the same auth logic will drift (one will forget MFA-retry on a 403; one will send a stale token; one will log the token). Classic refactor-with-security-overtones target. Medium priority, owner pm-tech-lead.
+**Top 3 findings**
 
-## Role analysis — pm-security (2026-10-01)
+1. **Live data-health incident, under-prioritised**: portfolio-analytics `property-metrics` endpoint is returning 500s in production (#3078 / open PR #3081, schema drift). Realtor dashboards are currently rendering partial/erroring data — this is a data-health incident, not just a code bug. Treat it as a backfill + alert exercise once the fix lands.
+2. **Zero funnel instrumentation on the two flows we just hardened**: PRs #3044 /#3046 /#3056 /#3064 /#3066 /#3067 fixed the reality-web /sell + /report happy-path. Grepping `trackEvent` in `apps/reality-web/src/app/[locale]/sell/page.tsx` + `.../report/page.tsx` finds **zero** calls. The `lib/analytics.ts` bus exists and is used elsewhere; wiring these funnels costs ≤ a day. Without it, we cannot measure whether the fixes actually improved conversion.
+3. **Metric-definition drift reinforced**: PR #3051 fixed one hardcoded EUR currency on leases but at least two sibling call sites still compute revenue without an explicit currency key. FaultStatusCount drift (carried risk from 2026-05-28) remains open. "Revenue" and "fault" numbers across admin + portfolio dashboards still don't reconcile.
 
-**Open security-tagged items in backlog + issues (snapshot)**
-
-- **Tier-1 blocker: #2946 portfolio_analytics cross-tenant IDOR** — still open. Retry 2/2 draft branch `gh-issue-2946-retry2` is pushed but has no landed PR; last `failed-no-pr` cycle 2026-09-21. The underlying issue is that the handler computes `org_id` then discards it before the SQL query — a one-line fix in principle, but the implementer branch keeps failing to produce a PR because the cloud runner can't compile api-server (#2966). The security tier does not change until the fix lands.
-- **Tier-1 companions: #2944 + #2945** — same shape (cross-tenant IDOR), same parking lot behind #2966. Both at retry 1/2.
-- **Standing security risks** (carried, no change): #2485 layout webhook replay, #2486 mobile layout-cache cross-tenant, #2483 add_evidence dispute sub-resource IDOR (awaiting #2490), #2574 SSO CSRF state fix non-functional (owner pm-mobile).
-
-**Security-adjacent signals from the 7 merged PRs (all positive this window)**
-
-- **PR #2994** — ppt-web dashboard ProtectedRoute hardened: route-level RBAC gate added on the manager/admin dashboard entry. Reduces the surface where a client-side session with a stale role could reach an admin dashboard.
-- **PR #3002** — manager-dashboard role gate: companion to #2994 on the server-fetched side of the manager dashboard. Defense in depth.
-- **PR #2995** — Home CTA role gate: Home dashboard CTAs now hidden for roles that cannot act on them. Low security value but removes a social-engineering vector.
-- **PR #2993** — reality-web SSO locale: a correctness fix on the SSO consumer path. Not a security change per se, but touches the SSO exchange — no regression spotted; evidence appended on 10a-1 (OAuth authorization server) story.
-
-**Medium-priority refactor-with-security-overtones**
-
-- **#3006** — triplicated auth-header + MFA-retry. The security angle is that drift between the three copies is almost certain over time. One copy will omit MFA-retry on a 403 (user locked out). One will log the token on a transient error. One will send a stale token after refresh. Consolidate into a single `authenticatedFetchJson` primitive and add a biome rule forbidding new fetch primitives that do not import from the shared module.
-
-**Suggested next security actions (3)**
-
-1. **Unblock #2966 as a security dependency** — this is the single highest-leverage security move this cycle because it is the sole thing standing between the 3 open IDOR retries and a merged PR. Treat it as a security-tier work item routed to pm-devops with explicit security owner-sign-off.
-2. **Hand-land #2946 locally** if #2966 slips another week — fix is one-line (restore the org_id filter in the portfolio_analytics query); add a cross-tenant repro test that fails on main as the IG3 anchor; push a reviewed PR manually to break the retry loop. Document the manual-land path for IDOR tier-1 bugs that get stuck behind cloud-build gates.
-3. **Open #3006 as a tracked refactor** — fold the unify-auth-header work into the next frontend sprint; add the biome rule as part of the fix PR; audit the remaining @ppt/api-client fetch primitives for the same pattern (prediction: 1-2 more latent sites).
-
-## Coverage (upkeep this run — 2026-10-01)
-
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-01T04:30:00Z`, no re-scan.
-- **Epic re-check: epic-82 (cursor idx 7)** — all 5 stories (82-1..82-5) still `done`; no PR in the 2026-09-28..10-01 window touched iOS SwiftUI RealityPortalApp surfaces. `last_checked = 2026-10-01` stamped on all 5. Evidence line appended on 82-5-inquiries-account noting the negative check.
-- **Merged-PR evidence appended** on 10b-1-organization-management-dashboard (PR #2994 + #3002), 10a-1-oauth-authorization-server (PR #2993), 79-1-api-client-integration (PR #3004), 7a-1-document-upload-metadata (PR #3001, pattern reuse). No status flips.
-- **`coverage_cursor` advances 7 → 8** (epic-82 → epic-83 next run).
-- **`pm_cursor` advances 5 → 6** (pm-security → next role in rotation). role_last_run["pm-security"] = 2026-10-01.
-- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, already queued).
+See `roles/pm-data.md` for the full return + 6 next_actions.

@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "generated": "2026-10-01T04:30:00Z",
+  "generated": "2026-10-14T04:30:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
-      "risk": "utoipa-swagger-ui egress 403 (#2966) renders api-server structurally unbuildable in the cloud runner — every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED, including all 3 open cross-tenant IDOR retries (#2944/#2945/#2946). Security fixes are not landing because the toolchain can't compile, not because the fix is hard",
+      "risk": "utoipa-swagger-ui egress 403 (#2966) renders api-server structurally unbuildable in the cloud runner \u2014 every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED, including all 3 open cross-tenant IDOR retries (#2944/#2945/#2946). Security fixes are not landing because the toolchain can't compile, not because the fix is hard",
       "probability": "high",
       "impact": "high",
-      "mitigation": "Vendor swagger-ui assets locally OR allowlist the egress target OR cache the dist in the sandbox base image — any of three. Blocks: all backend security PRs plus #2559 / #2555 accounting trio",
+      "mitigation": "Vendor swagger-ui assets locally OR allowlist the egress target OR cache the dist in the sandbox base image \u2014 any of three. Blocks: all backend security PRs plus #2559 / #2555 accounting trio",
       "owner_role": "pm-devops",
       "trigger": "Any dispatcher run with claimable<=10 AND >=2 open blocked-on-#2966 items",
       "status": "open",
@@ -15,7 +15,7 @@
     },
     {
       "id": "pm-security-portfolio-analytics-idor-persistent-2026-10-01",
-      "risk": "Cross-tenant IDOR #2946 (portfolio_analytics property metrics computed org_id then discarded) is on retry 2/2 and still open — a tier-1 security defect that has survived two implementer attempts; a successful exploit returns per-property metrics across org boundaries",
+      "risk": "Cross-tenant IDOR #2946 (portfolio_analytics property metrics computed org_id then discarded) is on retry 2/2 and still open \u2014 a tier-1 security defect that has survived two implementer attempts; a successful exploit returns per-property metrics across org boundaries",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Prioritize #2966 unblock; if infra slips, land #2946 fix locally and push a reviewed PR by hand; add a hand-written cross-tenant repro test as part of the fix PR so regression surfaces",
@@ -26,18 +26,20 @@
     },
     {
       "id": "pm-tech-lead-auth-header-triplicate-drift-2026-10-01",
-      "risk": "@ppt/api-client has triplicated auth-header + MFA-retry logic across fetch primitives (gdprClient, paymentMatching, remaining consumers) — surfaced by post-merge review of PR #3004 and tracked as #3006. Three copies will drift (one will forget to attach MFA-retry on a 403; one will send a stale token; one will log the token). Classic security-overtones refactor target",
+      "risk": "@ppt/api-client has triplicated auth-header + MFA-retry logic across fetch primitives (gdprClient, paymentMatching, remaining consumers) \u2014 surfaced by post-merge review of PR #3004 and tracked as #3006. Three copies will drift (one will forget to attach MFA-retry on a 403; one will send a stale token; one will log the token). Classic security-overtones refactor target",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Collapse into a single shared `authenticatedFetchJson` primitive; add a biome rule to forbid new fetch primitives that do not import from the shared module",
       "owner_role": "pm-tech-lead",
       "trigger": "Any new PR introducing a 4th auth-header path, OR an MFA regression caught post-merge",
-      "status": "open",
-      "source": "pm-security 2026-10-01 (post-merge review of PR #3004)"
+      "status": "resolved",
+      "source": "pm-security 2026-10-01 (post-merge review of PR #3004)",
+      "resolved_at": "2026-10-14",
+      "resolved_by": "PR #3071 \u2014 last auth-header copy folded into shared bearerAuthorization (closes #3006)"
     },
     {
       "id": "pm-scrum-master-accounting-mvp-trio-reviewer-starvation-2026-07-30",
-      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting at 64d with no reviewer engagement — dispatcher stack is still starving on reviewer capacity, not implementer capacity. Risk is now aging past the 'review by October' commitment captured in the sprint retro",
+      "risk": "Accounting MVP-loop trio (#2555 / #2558 / #2559) has been sitting at 64d with no reviewer engagement \u2014 dispatcher stack is still starving on reviewer capacity, not implementer capacity. Risk is now aging past the 'review by October' commitment captured in the sprint retro",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Explicit reviewer slot for the trio next 24h; document reviewer-slot rotation policy for large-scope feature PRs",
@@ -48,7 +50,7 @@
     },
     {
       "id": "risk-layout-webhook-replay-2026-07-23",
-      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) — a captured legitimate publish can be replayed to overwrite a newer layout",
+      "risk": "Layout publish webhook lacks timestamp/replay protection (#2485) \u2014 a captured legitimate publish can be replayed to overwrite a newer layout",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Fix #2485 (add nonce+timestamp+HMAC parity with esignature webhook); track integration test in action-list",
@@ -59,7 +61,7 @@
     },
     {
       "id": "risk-mobile-layout-cache-cross-tenant-2026-07-23",
-      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) — user A's layout can leak to user B on shared device or org-switch",
+      "risk": "Mobile LAYOUT_CACHE_KEY is not tenant-scoped and survives logout (#2486) \u2014 user A's layout can leak to user B on shared device or org-switch",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Fix #2486 (namespace cache key by tenant_id + purge on logout); add regression test in QA action-list",
@@ -70,7 +72,7 @@
     },
     {
       "id": "risk-dispute-add-evidence-idor-lingers-2026-07-23",
-      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) — PR #2450 fixed 5 handlers but missed the sub-route",
+      "risk": "add_evidence dispute sub-resource remains cross-tenant-writable until PR #2490 lands (#2483) \u2014 PR #2450 fixed 5 handlers but missed the sub-route",
       "probability": "low",
       "impact": "high",
       "mitigation": "Land PR #2490 promptly; add subroute-authz regression as part of ongoing IDOR sweep pattern",
@@ -81,7 +83,7 @@
     },
     {
       "id": "risk-announcement-fanout-test-fidelity-2026-07-23",
-      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) — the SQL predicate could regress without the test catching it",
+      "risk": "Announcement cross-tenant fan-out guard is tested only via a pure-Rust re-model, not the real SQL (#2484) \u2014 the SQL predicate could regress without the test catching it",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Replace pure-Rust model test with sqlx integration test that exercises the actual RLS policy",
@@ -92,7 +94,7 @@
     },
     {
       "id": "risk-analytics-blindspots-shipped-mvp-2026-07-23",
-      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation — product/business decisions run blind",
+      "risk": "Multiple shipped MVP features (Epic 6, 10A, 10B, 80, 84) lack KPI instrumentation \u2014 product/business decisions run blind",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Sequence pm-data KPI-definition tasks; establish minimum-analytics DoD for future stories",
@@ -103,7 +105,7 @@
     },
     {
       "id": "risk-data-retention-policy-missing-2026-07-23",
-      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL — long-term storage/GDPR compliance risk",
+      "risk": "Append-only support_tooling_events + support-data audit trail have ON DELETE RESTRICT but no TTL \u2014 long-term storage/GDPR compliance risk",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Publish retention policy; if GDPR-in-scope, add lifecycle policy for personal-data-containing events",
@@ -114,7 +116,7 @@
     },
     {
       "id": "risk-metric-definition-drift-2026-07-23",
-      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs — dashboards will disagree with each other",
+      "risk": "FaultStatusCount metric (support-data) diverges from owner/portfolio fault KPIs \u2014 dashboards will disagree with each other",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Land single-source-of-truth metric definitions in shared module; deprecate duplicates",
@@ -125,7 +127,7 @@
     },
     {
       "id": "risk-webhook-cross-integration-drift-2026-07-23",
-      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening — #2485 shows layout has no replay guard; unknown parity elsewhere",
+      "risk": "Webhook handlers across integrations (booking, airbnb, esignature, layout) lack consistent hardening \u2014 #2485 shows layout has no replay guard; unknown parity elsewhere",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Cross-cutting audit action-list item integrations-webhook-hardening-audit-2026-07-23",
@@ -136,7 +138,7 @@
     },
     {
       "id": "pm-scrum-master-delete-by-file-key-samesorg-ref-gap-2026-07-30",
-      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) — an active same-org file key can be deleted out from under a live document row",
+      "risk": "PR #2571 (DELETE-by-file-key) landed with a same-org reference-check gap (#2573) \u2014 an active same-org file key can be deleted out from under a live document row",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Land a reference-count guard + integration test before any client wires the endpoint",
@@ -147,7 +149,7 @@
     },
     {
       "id": "pm-scrum-master-android-sso-csrf-half-wired-2026-07-30",
-      "risk": "PR #2568 CSRF state fix is non-functional (#2574) — SsoStateStore.mint() has no call site so every reality://sso callback is rejected",
+      "risk": "PR #2568 CSRF state fix is non-functional (#2574) \u2014 SsoStateStore.mint() has no call site so every reality://sso callback is rejected",
       "probability": "high",
       "impact": "high",
       "mitigation": "Wire mint() at the SSO deep-link entry point; add integration test for the happy-path SSO callback",
@@ -158,7 +160,7 @@
     },
     {
       "id": "pm-backend-disputes-kpis-window-validation-gap-2026-07-30",
-      "risk": "Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
+      "risk": "Dispute KPI endpoint (#2572 \u2192 #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Un-quarantine the KPIs test; add window_start <= window_end validation; add a second test asserting the reporting-consumer contract",
@@ -169,7 +171,7 @@
     },
     {
       "id": "pm-scrum-master-voice-webhooks-churn-persists-2026-08-25",
-      "risk": "backend/servers/api-server/src/routes/voice_webhooks.rs is on its 3rd hotspot window running; PR #2838 centralized token encryption but scheduler/OAuth-refresh/token-vend paths still cluster — repeated micro-fixes without a structural split are a leading indicator of a latent design defect",
+      "risk": "backend/servers/api-server/src/routes/voice_webhooks.rs is on its 3rd hotspot window running; PR #2838 centralized token encryption but scheduler/OAuth-refresh/token-vend paths still cluster \u2014 repeated micro-fixes without a structural split are a leading indicator of a latent design defect",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Draft a refactor plan (extract token-mgmt / webhook-handlers / scheduler-jobs into 3 modules) before the next voice-related feature request",
@@ -180,7 +182,7 @@
     },
     {
       "id": "pm-qa-mobile-rn-lint-gap-hooks-i18n-2026-08-25",
-      "risk": "3 mobile-rn PRs fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them",
+      "risk": "3 mobile-rn PRs fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically \u2014 every future mobile-rn PR risks reintroducing them",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it",
@@ -191,7 +193,7 @@
     },
     {
       "id": "pm-devops-mobile-native-cloud-starvation",
-      "risk": "Buffer starvation becomes chronic — every new mobile-native/KMP finding adds an unclaimable item to the cloud dispatcher's pool, now compounded by #2966 forcing claimable=9/72",
+      "risk": "Buffer starvation becomes chronic \u2014 every new mobile-native/KMP finding adds an unclaimable item to the cloud dispatcher's pool, now compounded by #2966 forcing claimable=9/72",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Fix issue #2652 (AGP/Gradle egress in cloud sandbox) + issue #2966 (swagger-ui egress) or split action-list into cloud + local buckets",
@@ -208,6 +210,39 @@
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
       "status": "open"
+    },
+    {
+      "id": "pm-data-portfolio-analytics-schema-drift-2026-10-14",
+      "risk": "Live data-health incident: portfolio-analytics property-metrics endpoint returns 500 in production (#3078 / open PR #3081) due to schema drift. Realtor dashboards are currently rendering partial or erroring data \u2014 product decisions are being made on broken numbers until #3081 lands.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Expedite #3081 review + land. Add schema-drift CI gate comparing sqlx prepared queries against live schema. Backfill-time note to realtors. Add alert on realtor.portfolio_metrics.5xx_rate > 1%.",
+      "owner_role": "pm-data",
+      "trigger": "any routine run showing #3081 still open AND #3078 still open",
+      "status": "open",
+      "source": "pm-data 2026-10-14 (rotating role deep-dive)"
+    },
+    {
+      "id": "pm-data-reality-funnel-blindspot-2026-10-14",
+      "risk": "Reality-web /sell and /report funnels were hardened by PRs #3044 #3046 #3056 #3064 #3066 #3067 but zero trackEvent calls were added \u2014 we cannot measure whether the fixes improved conversion, drop-off step, or error-class distribution. The trackEvent bus already exists in lib/analytics.ts.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Instrument both funnels (actions pm-data-instrument-reality-{sell,report}-funnel) before the next change to either flow.",
+      "owner_role": "pm-data",
+      "trigger": "Next PR that modifies apps/reality-web/src/app/[locale]/sell/* or .../report/* without a corresponding trackEvent diff.",
+      "status": "open",
+      "source": "pm-data 2026-10-14"
+    },
+    {
+      "id": "pm-data-trackevent-pii-schema-gap-2026-10-14",
+      "risk": "trackEvent accepts arbitrary Record<string, unknown> \u2014 no schema, no PII scrubber. Wiring the /sell wizard (postalCode, address fragments, email contacts) risks leaking PII into dataLayer / downstream analytics transport.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Minimum-analytics DoD (action pm-data-minimum-analytics-dod) must require a reviewed property-list. Add Biome / codemod rule forbidding spread of request bodies into trackEvent properties.",
+      "owner_role": "pm-data",
+      "trigger": "First trackEvent call site that passes >= 5 properties AND includes a user-supplied string.",
+      "status": "open",
+      "source": "pm-data 2026-10-14"
     }
   ]
 }

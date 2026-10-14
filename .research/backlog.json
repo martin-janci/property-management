@@ -12114,6 +12114,585 @@
       "score_delta": 2,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx — 1 PRs this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn window 2026-10-08..2026-10-14"
+      ],
+      "evidence": [
+        "3 PRs this run touched community.group-detail.route.test.tsx (#3045 i18n, #3054 drift-reconcile, #3068 test-extend) — test file churn tracks mutation errors + i18n keys landed in parallel"
+      ],
+      "files": [],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.test.ts",
+      "title": "Churn hotspot: frontend/apps/reality-web/src/lib/realtor-api.test.ts — 1 PRs this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn window 2026-10-08..2026-10-14"
+      ],
+      "evidence": [
+        "2 PRs this run touched realtor-api.test.ts (#3063 FeaturedListings coverage, #3065 encode-ids coverage)"
+      ],
+      "files": [],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3045-ppt",
+      "title": "ppt-web PR #3045 touched routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3045"
+      ],
+      "evidence": [
+        "PR #3045 (reused errors.groupNotFound/common.back in group-detail not-found) touched ppt-web route files without updating docs/screens/ppt/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx + .mappers.test.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3047-reality",
+      "title": "reality-web PR #3047 touched routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3047"
+      ],
+      "evidence": [
+        "PR #3047 (/profile copy routed through next-intl) touched reality-web route files without updating docs/screens/reality/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3048-ppt",
+      "title": "ppt-web PR #3048 touched routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3048"
+      ],
+      "evidence": [
+        "PR #3048 (surface community group join/leave mutation errors) touched ppt-web route files without updating docs/screens/ppt/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3049-ppt",
+      "title": "ppt-web PR #3049 touched routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3049"
+      ],
+      "evidence": [
+        "PR #3049 (gate documents routes on organizationId) touched ppt-web route files without updating docs/screens/ppt/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/documents.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3050-ppt",
+      "title": "ppt-web PR #3050 touched routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3050"
+      ],
+      "evidence": [
+        "PR #3050 (ppt-web rentals mutations surface non-auth errors) touched ppt-web route files without updating docs/screens/ppt/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx + rentals.mappers.test.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3051-ppt",
+      "title": "ppt-web PR #3051 touched routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3051"
+      ],
+      "evidence": [
+        "PR #3051 (source lease currency from config) touched ppt-web route files without updating docs/screens/ppt/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/ (lease mappers)"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3056-reality",
+      "title": "reality-web PR #3056 touched routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3056"
+      ],
+      "evidence": [
+        "PR #3056 (/sell wizard Publish — area→sizeSqm + postalCode) touched reality-web route files without updating docs/screens/reality/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx + wizard"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3061-ppt",
+      "title": "ppt-web PR #3061 touched routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3061"
+      ],
+      "evidence": [
+        "PR #3061 (extract dashboardPathForRole helper (groups/core.tsx)) touched ppt-web route files without updating docs/screens/ppt/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3066-reality",
+      "title": "reality-web PR #3066 touched routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3066"
+      ],
+      "evidence": [
+        "PR #3066 (harden /sell publish wiring (churn-hotspot)) touched reality-web route files without updating docs/screens/reality/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3067-reality",
+      "title": "reality-web PR #3067 touched routes with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3067"
+      ],
+      "evidence": [
+        "PR #3067 (harden /report submit wiring + tests (churn-hotspot)) touched reality-web route files without updating docs/screens/reality/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3068-ppt",
+      "title": "ppt-web PR #3068 touched routes with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3068"
+      ],
+      "evidence": [
+        "PR #3068 (extend community group-detail route coverage (test-only)) touched ppt-web route files without updating docs/screens/ppt/*.md (best-effort heuristic — review candidate)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/community.group-detail.route.test.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3024",
+      "title": "Stalled review: PR #3024 open 9d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3024"
+      ],
+      "evidence": [
+        "PR #3024 open 9d (needs-human-review label, martin-janci) with no reviewDecision"
+      ],
+      "files": [],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3028",
+      "title": "Stalled review: PR #3028 open 9d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3028"
+      ],
+      "evidence": [
+        "PR #3028 open 9d (needs-human-review label, martin-janci) with no reviewDecision"
+      ],
+      "files": [],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-faultlist-no-i18n",
+      "title": "frontend/apps/ppt-web/src/features/faults/components/FaultList.tsx — /faults manager listing is almost entirely hardcode",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14 (dispatcher tier1d ppt-web-ui slice a)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultList.tsx — /faults manager listing is almost entirely hardcoded English; useTranslation/t() used ONLY in error+retry branch (L166 'faults.failedToLoad', L174 'common.retry'). Everything else renders raw English regardless of sk/cs/de locale."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultList.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-faulttimeline-no-i18n",
+      "title": "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx — ZERO useTranslation/t() calls; renders fault au",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14 (dispatcher tier1d ppt-web-ui slice a)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx — ZERO useTranslation/t() calls; renders fault audit timeline with hardcoded English throughout: actionLabels map L40-54 (13 entries), L82 'No timeline entries.', L87 <h3>Timeline</h3>, L111 'Internal' visibility badge."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-faulttimeline-rating-repeat-crash",
+      "title": "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx:142 renders a star rating via `'⭐'.repeat(Number.",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14 (dispatcher tier1d ppt-web-ui slice a)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx:142 renders a star rating via `'⭐'.repeat(Number.parseInt(entry.newValue, 10))` with no bounds check on entry.newValue (server-supplied string). String.prototype.repeat throws RangeError for negative count — a malformed rating value (e.g. '-1') crashes the render of the whole FaultTimeline and enclosing FaultDetailPage with uncaught RangeError."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-compare-url-unvalidated-body",
+      "title": "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 — `return response.json() as Promise<Lis",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14 (dispatcher tier1d reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 — `return response.json() as Promise<ListingSummary>;` casts raw fetch body of GET /api/v1/listings/{id} to ListingSummary with NO runtime shape validation, then feeds it into addToComparison() (comparison-context.tsx:71) and the comparison UI. Malformed or partial API responses crash downstream."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-paymentmatch-silent-err",
+      "title": "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61-73 — confirmMutation (confirmMatch) and r",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14 (dispatcher tier1d ppt-web-ui slice b)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61-73 — confirmMutation (confirmMatch) and rejectMutation (rejectMatch) declared with only onSuccess (invalidateQueries); neither has onError callback and neither mutation's isError/error is ever rendered. Only uploadMutation surfaces failure (L112-114). Failed matches silently swallow server errors."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-hardcoded-sk",
+      "title": "The documents preview surface renders user-facing strings as hardcoded Slovak literals (not routed through react-i18next",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14 (dispatcher tier1d ppt-web-ui slice b)"
+      ],
+      "evidence": [
+        "The documents preview surface renders user-facing strings as hardcoded Slovak literals (not routed through react-i18next t()), so cs/de/en locale users see untranslated Slovak: DocumentPreviewModal.tsx:56 'Načítavanie náhľadu…', :64 'Náhľad nie je dostupný.'; PdfPreview.tsx:130/150/269; DocumentDetail.tsx:132 'Tento dokument nie je prístupný pre váš účet.'."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentPreviewModal.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/PdfPreview.tsx",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentDetail.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-paymentmatch-no-i18n",
+      "title": "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx — imports NO useTranslation/react-i18next, Z",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14 (dispatcher tier1d ppt-web-ui slice b)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx — imports NO useTranslation/react-i18next, ZERO t() calls — Payment Matching screen hardcoded English regardless of sk/cs/de locale."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-disputes-idor",
+      "title": "SECURITY (IDOR): disputes list_disputes + get_statistics trust client-supplied organization_id — any auth user reads any tenant's disputes",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review 2026-10-14"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/disputes.rs:367-384 (list_disputes) takes `_user: AuthUser` (discarded) and `Query(query): Query<ListDisputesQuery>`, then calls `state.dispute_repo.list(query.organization_id, (&query).into())` — i.e. the org id is read directly from the client query string and NEVER checked against the caller's tenant. The same pattern repeats at :387-404 (get_statistics) which calls `.get_statistics(query.organization_id)`. The in-file comment at :415 even says 'The organization is derived from the caller's JWT tenant (never a query- or body-supplied org)' — true for get_kpis via require_org(&user) at :420, but violated by list_disputes and get_statistics. The repo backing it (backend/crates/db/src/repositories/dispute.rs:120-168 `pub async fn list`) runs `.fetch_all(&self.pool)` on the raw pool — not an RlsConnection — so there is NO row-level security to catch the missing handler check (confirmed by the comment at dispute.rs:171-177 that reads 'the management API pool does not enforce RLS'). Reachable: lib.rs:333 mounts the router at `/api/v1/disputes`, and the routes are registered at disputes.rs:37 (GET /) and :38 (GET /statistics). Attack: an authenticated principal in org A issues `GET /api/v1/disputes/?organization_id=<org_B_uuid>` and receives org B's full dispute list including titles, descriptions (via ILIKE search column exposure) and party counts; same for `/statistics`. Fix shape: replace the `_user` placeholder with `user: AuthUser`, drop `organization_id` from ListDisputesQuery/OrgQuery, and derive `let org_id = require_org(&user)?;` as get_kpis already does."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/disputes.rs",
+        "backend/crates/db/src/repositories/dispute.rs"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": "plans/code-review-api-handlers-disputes-idor.md"
+    },
+    {
+      "id": "code-review-api-handlers-pvaluation-adj-idor",
+      "title": "SECURITY (IDOR): property-valuation adjustment handlers (list/create/delete) discard AuthUser — any user DELETEs/INJECTs on any tenant's valuation",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review 2026-10-14"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/property_valuation.rs:498-545 — the three adjustment handlers (`list_adjustments`, `create_adjustment`, `delete_adjustment`) each take `_auth: AuthUser` (discarded) and act on a client-supplied `Path(comparable_id)` or `Path(adjustment_id)` with NO organization check. The backing repo calls at backend/crates/db/src/repositories/property_valuation.rs:582-628 (`create_adjustment`, `list_adjustments`) and :631-638 (`delete_adjustment`) all run `.fetch_all/.execute(&self.pool)` on the raw pool — no RLS, no org filter in the SQL (`DELETE FROM comparable_adjustments WHERE id = $1` at :632 is a bare primary-key delete). Reachable via `lib.rs:391 .nest(\"/api/v1/property-valuations\", routes::property_valuation::router())` with the aliased mount at :395; router routes at property_valuation.rs:129-133 register GET/POST `/comparables/{comparable_id}/adjustments` and DELETE `/adjustments/{adjustment_id}`. Attack: any authenticated user can `DELETE /api/v1/property-valuations/adjustments/{any_uuid}` to permanently delete adjustments belonging to any other tenant's valuation (adjustments influence the valuation amount — this is both a cross-tenant data destruction AND a valuation-tampering vector), and `POST /api/v1/property-valuations/comparables/{other_org_comparable_uuid}/adjustments` to inject fraudulent adjustments into another org's valuation workflow. Fix shape: load the comparable through an org-scoped repo call (join to valuation → organization_id) and reject when it mismatches `user.tenant_id`, mirroring the pattern used in reserve_funds/vendors (`let org_id = rls.tenant_id(); repo.op(&mut **rls.conn(), org_id, …)`)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/property_valuation.rs",
+        "backend/crates/db/src/repositories/property_valuation.rs"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": "plans/code-review-api-handlers-pvaluation-adj-idor.md"
+    },
+    {
+      "id": "code-review-api-handlers-reports-dl-404-reemit",
+      "title": "reports: /api/v1/reports/files/{key} download URL returned to clients but route is not registered — 100% 404 on every completed-report download",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review 2026-10-14"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reports/mod.rs:1540 — `let url = format!(\"/api/v1/reports/files/{}\", file_key);` is returned by `get_execution_download_url` as the only client-facing download link, with `expires_at: now + 1h` implying a presigned URL. But grepping `/api/v1/reports/files` across api-server/src/** finds NO `.route(\"/files/{...}\")` registration anywhere (only `/executions/{id}/download` and `/export/{job_id}/status` exist in the reports router at :238; the file-serving route is not nested elsewhere). The dormancy is acknowledged in a sibling test at tests/suites/report_execution_download_retry_e2e_tests.rs:293-294 ('the actual S3 presigning happens one hop downstream (at the /reports/files/...)') but that downstream hop is not implemented. Reachable from production: `/api/v1/reports/executions/{id}/download` → the response is a dead link that will 404 on every click once the client follows it. Status: this is a re-emit of `code-review-api-handlers-report-dl-deadlink` from signals/2026-07-08-api-handlers.json; verified today (2026-10-14) still present at the same line in the current branch. Fix shape: either (a) register `GET /files/{file_key}` on the reports router that re-authenticates, re-authorizes the caller's org against the file_key's leading org_id, and either streams from S3 (via state.storage_service) or returns a true S3 presigned URL (304); or (b) change get_execution_download_url to return the presigned S3 URL directly from `storage_service.presign_get(&file_key, Duration::hours(1))` and drop the dead intermediate endpoint."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports/mod.rs"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "pm-data-portfolio-analytics-schema-drift-audit",
+      "title": "Audit all sqlx prepared queries feeding analytics dashboards for schema drift (same class as #3078 portfolio-analytics 500)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "pm-data role 2026-10-14"
+      ],
+      "evidence": [
+        "pm-data flagged class risk: portfolio-analytics `property-metrics` returns 500s in prod from schema drift (#3078, open draft PR #3081) — same pattern likely in every sqlx prepared query that materialises into a realtor dashboard. Audit candidate: grep sqlx::query_as!/query!/query_file! sites feeding analytics endpoints vs current migrations."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/portfolio_analytics.rs",
+        "backend/crates/db/src/repositories/portfolio_analytics.rs"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "pm-data-trackevent-pii-schema-gap",
+      "title": "trackEvent() accepts Record<string, unknown> with no PII schema/scrubber — latent risk once /sell + /report funnels instrument",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "pm-data role 2026-10-14"
+      ],
+      "evidence": [
+        "pm-data: `lib/analytics.ts` `trackEvent(name, Record<string, unknown>)` accepts arbitrary metadata — no PII schema / scrubber. Once /sell + /report funnels get instrumented they will begin emitting postalCode, address, email + payload fields with no governance. Risk is latent today (0 trackEvent calls on the funnels) but promoting from latent to active the moment someone wires analytics."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/analytics.ts"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "pm-data-funnel-no-tracking-tests",
+      "title": "Reality /sell + /report funnels have ZERO trackEvent calls despite 7 recent funnel-touching PRs — conversion is unmeasurable",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "pm-data role 2026-10-14"
+      ],
+      "evidence": [
+        "pm-data: zero trackEvent calls in reality-web /sell page.tsx + /report page.tsx — 7 funnel-touching PRs landed (#3044 #3046 #3056 #3064 #3066 #3067 + report) with no funnel/instrumentation unit tests to verify conversion/drop-off/error-class distribution would ever be measurable."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
+    },
+    {
+      "id": "pm-data-sqlx-schema-drift-ci-gate",
+      "title": "Backend CI has no sqlx prepared-query drift gate — stale `.sqlx/` lets schema-mismatch 500s land on main",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "pm-data role 2026-10-14"
+      ],
+      "evidence": [
+        "pm-data: no CI gate comparing sqlx prepared queries against the live schema — the portfolio-analytics 500 (#3078) landed on main because `.sqlx/` was stale against the current migrations. Need `sqlx prepare --check` or equivalent as a required check on backend PRs."
+      ],
+      "files": [
+        ".github/workflows/backend.yml",
+        "backend/Cargo.toml"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
     }
   ]
 }

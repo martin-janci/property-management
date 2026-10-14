@@ -1,47 +1,40 @@
-# Role: pm-data — 2026-07-23
+# pm-data — 2026-10-14 rotation slot
 
-> Data/analytics lens. Rotating role this run (pm_cursor rotation[6]). Static read-only. Previous run: 2026-05-28 (56 days ago).
+> Role: Data / analytics engineer lens. Static read only.
+> Pm-cursor rotation idx 6 → 7. Previous run: 2026-07-23 (82-day gap).
 
-**Summary:** Delivery has largely converged on MVP (47/49 stories done) yet almost none of the recently shipped features are instrumented for KPI/analytics. Epic 6 announcements, Epic 10A OAuth, Epic 10B platform admin, Epic 80 disputes, Epic 84 e-signature all lack basic event tracking. The recent test-backfill wave (BIT-268/BIT-557/BIT-559 in PRs #2447/#2453/#2465) raised code coverage but did NOT add analytics events; the pipeline for platform-admin audit_read is well-defined (SupportDataPage) but has not been generalized to feature-level KPIs. Two carried-over 2026-05-28 decisions (support-staff audit event schema + FaultStatusCount unification) are still open.
+## Summary
 
-## Cross-reference to shipped test-backfill wave
-
-- **Is data flowing to analytics correctly?** No — the test wave verifies code paths execute, but there is no analytics-event emission assertion helper anywhere in the workspace. Silent metric drift is possible.
-- **Missing metrics for disputes epic:** Epic 80 (all 3 stories done) has zero KPI — no filed/mediation/resolved funnel, no TTR percentiles, no evidence-per-dispute counter. PR #2450 hardened access but did not add an audit event for who accessed / added evidence to which dispute; #2483 follow-up (add_evidence IDOR) also needs an audit_write event when the fix lands.
-- **Missing metrics for layout epic:** Layout & Content Manager (PRs #2424–#2432, #2443, #2464, #2478) shipped end-to-end with zero KPI hooks — no `published_by`, `layout_version`, or `target_tenant_count` events on the publish path.
+The 26-PR observation window hardened the public portal /sell + /report + /profile funnels and the ppt-web community/documents/rentals mutation paths — but **not one of those PRs added a single `trackEvent` call**, even though `reality-web/src/lib/analytics.ts` and `ppt-web/src/lib/analytics.ts` already provide a transport-agnostic event bus. Analytics blindspots on shipped MVP features (risk `risk-analytics-blindspots-shipped-mvp-2026-07-23`) are now compounded by a data-health incident on the portfolio-analytics endpoint (#3078 / open PR #3081: schema drift causing live 500s on `property-metrics`), meaning realtor dashboards are currently returning partial/erroring data in production until #3081 lands.
 
 ## Next actions
 
-| Action | Priority | Dependency | Definition of done |
-|---|---|---|---|
-| Backfill dispute add_evidence access-audit event to support-data event stream once #2483/PR #2490 lands (parity with support-data audit_read pattern) | medium | pm-security (gh-issue-2483) | audit_write event emitted on evidence upload; visible in SupportDataPage |
-| Define layout publish/webhook analytics events (published_by, layout_version, target_tenant_count) — Layout & Content Manager shipped end-to-end with zero KPI hooks | medium | none | event schema + emission wired in publish_layout handler; documented in support-data catalogue |
-| Define dispute-lifecycle KPI set (filed->mediation->resolved funnel, TTR percentiles, evidence-per-dispute) — Epic 80 all-done, no dashboard exists | medium | pm-scrum-master (dashboard scope) | metric definitions + filed/resolved counters + p50/p95 TTR emitted; shared taxonomy with owner/portfolio KPIs |
-| Instrument announcement fan-out with delivered/read/ack per targeting scope; also feed #2484 real-SQL integration data-quality check | medium | pm-qa (gh-issue-2484 test rework) | metrics visible per scope (all/building/units/roles); #2484 test exercises real SQL and asserts count matches emitted metric |
-| Publish data-retention policy for support-data / analytics events / audit trail (append-only support_tooling_events has no TTL) | medium | pm-security (GDPR classification) | policy doc merged; PII-carrying tables get lifecycle SQL jobs |
-| Formalize support-staff read audit event schema (who viewed which tenant's diagnostics / revoked sessions) — carried-over decision from 2026-05-28 | medium | pm-security | event schema + emit at all support-data read/revoke sites |
+| # | Action | Priority | Dependency | Definition of done |
+|---|---|---|---|---|
+| 1 | Instrument the reality-web **/sell wizard funnel** — emit `listing.sell_wizard.step_shown`, `listing.sell_wizard.step_completed`, `listing.sell_wizard.publish_submitted`, `listing.sell_wizard.publish_succeeded`, `listing.sell_wizard.publish_failed` with the server-side error class (405/422/5xx) from PRs #3044 / #3056 / #3066. Owner: pm-data (spec) + pm-frontend (wire). | high | none | 5 events emitted, dataLayer contract documented in `docs/analytics/reality-sell-funnel.md`, unit test asserts no PII in properties |
+| 2 | Instrument the reality-web **/report submission flow** — emit `report.form_shown`, `report.submitted`, `report.submit_succeeded` (with returned report id from PR #3046), `report.submit_failed` (with error class from PR #3067). | high | none | 4 events emitted, dataLayer contract documented, screen-map `reality/report` agent-log entry linking to the spec |
+| 3 | Treat **portfolio-analytics property-metrics 500 (#3078 / PR #3081)** as a data-health incident, not just a code bug — add a dashboard alert on `realtor.portfolio_metrics.5xx_rate > 1%` and a backfill plan for any dashboards that silently rendered zeros during the drift window. | high | pm-tech-lead (PR #3081 land) | Alert configured; retro note in `decisions.md`; `data_health_check` row in action-list for monthly schema-drift audit |
+| 4 | Define single-source-of-truth **currency metric** after PR #3051 fixed hardcoded EUR on leases — publish `lease.currency` + `payment.currency` dimensions in the shared metric catalog and deprecate any dashboard that computed revenue without a currency key. | medium | pm-frontend | `docs/analytics/metrics.md` lists the canonical currency keys; 1 duplicate currency series removed from a reporting dashboard |
+| 5 | Add a **mutation-error funnel** cross-cutting event (`client.mutation.error_surfaced`) on the ppt-web mutations that PRs #3048 / #3049 / #3050 now surface. Without it, we see error toasts fire but have no funnel for "mutation attempted → mutation surfaced error → user retried / abandoned". | medium | pm-frontend | 1 shared helper + 3 call sites (community group join/leave, documents, rentals); downstream dashboard tile wired in realtor-analytics |
+| 6 | Author **minimum-analytics DoD** for all new stories (even internal admin screens) — one page: event name convention, required properties, PII rules, screen-map agent-log stamp. Stop shipping MVP surfaces without instrumentation. | medium | pm-tech-lead | `docs/analytics/story-dod.md` merged; added as checklist item to `.github/pull_request_template.md` |
 
 ## Risks
 
-| Risk | Probability | Impact | Mitigation |
-|---|---|---|---|
-| Shipped MVP features (Epic 6/10A/10B/80/84) lack KPI instrumentation — product decisions run blind on exactly the features that just went live | high | medium | Sequence the 7 pm-data KPI tasks now on the action-list; establish minimum-analytics DoD for future stories |
-| FaultStatusCount vs owner/portfolio fault KPIs diverge (2026-05-28 open decision) — dashboards will disagree | high | medium | Land single-source-of-truth definitions in shared module; deprecate duplicates |
-| Append-only support_tooling_events + audit trail have no TTL / retention policy — long-term storage + GDPR risk | medium | medium | Publish retention policy; add lifecycle jobs if PII-carrying |
-| Test-backfill wave proves code paths execute but does NOT verify analytics events fire — silent metric drift possible | medium | low | Add analytics-event assertion helper; require metric-touching tests to use it |
-| Mobile (RN + KMP) event tracking parity with web unknown — funnels may be blind on ~50% of traffic | medium | medium | Audit + backfill (action data-mobile-native-analytics-parity-2026-07-23) |
+| # | Risk | Prob | Impact | Mitigation |
+|---|---|---|---|---|
+| 1 | **Live data-health incident**: portfolio-analytics property-metrics 500 (schema drift, open PR #3081) silently returns errors to realtor dashboards — realtors making portfolio decisions from an empty / partial view. | high | high | Expedite #3081 review; backfill-time communication to realtors; add schema-drift CI gate (compare `sqlx` prepared queries against live schema). |
+| 2 | **Reality-portal funnel blindspot**: PRs #3044 / #3056 / #3064 / #3066 / #3067 hardened the /sell + /report happy-path but we still cannot measure success rate, drop-off step, or error-class distribution on either funnel — the whole point of the fixes (did we actually improve conversion?) is unmeasurable. | high | medium | Ship actions #1 and #2 in the same sprint as the next /sell or /report change. |
+| 3 | **Metric-definition drift (carried, now reinforced)**: PR #3051 fixed one hardcoded EUR currency in leases. Grepping shows at least two other call sites still compute revenue with implicit currency. FaultStatusCount metric already drifts between support-data and portfolio dashboards. Any shared "revenue" or "fault" number across the admin surface is suspect. | high | medium | Action #4 catalog + delete-after-migrate on the duplicates. |
+| 4 | **PII leakage via unreviewed trackEvent properties**: the current analytics bus accepts an arbitrary `Record<string, unknown>` — no schema, no PII scrubber. Once we start wiring events from the /sell wizard (which carries postalCode, address fragments), easy to leak PII into the dataLayer. | medium | high | Action #6 DoD must require a reviewed property-list; add a Biome rule / codemod that forbids spreading request bodies into trackEvent properties. |
+| 5 | **Data-retention policy still unpublished (carried)**: `support_tooling_events` + support-data audit trail are append-only with no TTL; GDPR surface area grows every week. | medium | medium | Publish retention policy; action in last pm-data run still open — needs promotion to committed. |
 
 ## Open questions
 
-- What KPI dashboard tool does PPT use for internal metrics — Grafana over Postgres, a third-party (Amplitude/PostHog/Segment), or bespoke platform-admin pages?
-- Are dispute lifecycle KPIs required by any customer contract / regulatory obligation, or purely product-internal?
-- Is there a Data Protection Impact Assessment on `support_tooling_events` (support staff reading tenant data)?
-- For webhook events (booking / airbnb / esignature / layout), do we emit analytics on delivery + retry + failure, or only log?
-- Are the seed-data recipes stable enough to reason about analytics test fidelity (pm-data DoD depends on repeatable seeds)?
+- Which deploy-time analytics tag manager (PostHog / Segment / GTM / nothing) is actually injected into reality-web in staging + prod? The code says "injected at deploy time, if at all" — we need to know "at all" before writing event specs.
+- Is there a shared metric-catalog repo / page outside this codebase? If not, action #4 and #6 both create it in `docs/analytics/`.
+- Is portfolio-analytics property-metrics the only endpoint on the dashboard with live schema drift, or should #3081 trigger a sweep of every `sqlx` prepared query that materialises into a realtor dashboard?
 
 ## Decisions needed
 
-- Analytics platform choice (bespoke vs Amplitude/PostHog/Segment) — owner: pm-tech-lead + pm-data
-- GDPR / retention policy for `support_tooling_events` (TTL vs indefinite) — owner: pm-security + pm-data
-- Minimum-analytics DoD for new stories (blocking gate or advisory?) — owner: pm-scrum-master + pm-data
-- FaultStatusCount canonical definition (support-data vs owner/portfolio KPI) — owner: pm-data (carried over from 2026-05-28)
+- **Pick a canonical analytics transport** (PostHog self-hosted vs Segment vs GTM-only) — owner: pm-tech-lead + pm-devops. Without this, the trackEvent calls land but no one knows where the events go.
+- **Classify portfolio-analytics #3081 as a data-health incident vs a code bug** — owner: pm-tech-lead. Determines whether we backfill dashboards or just land the PR.

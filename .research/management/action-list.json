@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -42,7 +42,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout \u2014 every suspend API call can hang indefinitely on Android + iOS",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -80,7 +80,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings \u2014 dashboard under-reports on large portfolios",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -99,7 +99,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2]",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit \u2014 up to 100 parallel GETs from a mobile device [retry 1/2]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -134,7 +134,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -170,7 +170,7 @@
     },
     {
       "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
-      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
+      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS \u2014 two concurrent POSTs can exceed the 4-item cap",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -187,7 +187,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-missing-role-authz",
-      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal",
+      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) \u2014 any org member can issue fines and approve their own appeal",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -204,7 +204,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-number-count-race",
-      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
+      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency \u2192 opaque 500 on create",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -221,7 +221,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-record-payment-non-atomic",
-      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine",
+      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction \u2192 partial failure records money without decrementing the fine",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -300,7 +300,7 @@
     },
     {
       "id": "gh-issue-3079",
-      "action": "Follow-up: SSRF validator dedup dropped IPv4-compatible IPv6 unmapping — literal ::127.0.0.1 / ::169.254.169.254 now pass the static check (PR #2992) (Closes #3079)",
+      "action": "Follow-up: SSRF validator dedup dropped IPv4-compatible IPv6 unmapping \u2014 literal ::127.0.0.1 / ::169.254.169.254 now pass the static check (PR #2992) (Closes #3079)",
       "owner_role": "pm-security",
       "priority": "high",
       "status": "open",
@@ -318,7 +318,81 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "pm-data-instrument-reality-sell-funnel",
+      "action": "Instrument reality-web /sell wizard funnel \u2014 emit listing.sell_wizard.{step_shown,step_completed,publish_submitted,publish_succeeded,publish_failed} via existing trackEvent bus; dataLayer contract in docs/analytics/reality-sell-funnel.md; no-PII unit test (follow-up on #3044/#3056/#3066)",
+      "owner_role": "pm-data",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-14",
+      "first_open_at": "2026-10-14T04:30:00Z"
+    },
+    {
+      "id": "pm-data-instrument-reality-report-funnel",
+      "action": "Instrument reality-web /report submission flow \u2014 emit report.{form_shown,submitted,submit_succeeded,submit_failed} with returned id from #3046 and error class from #3067; agent-log entry on reality/report screen-map",
+      "owner_role": "pm-data",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-14",
+      "first_open_at": "2026-10-14T04:30:00Z"
+    },
+    {
+      "id": "pm-data-portfolio-analytics-health-incident",
+      "action": "Treat portfolio-analytics property-metrics 500 (#3078 / open PR #3081) as a data-health incident: add alert on realtor.portfolio_metrics.5xx_rate > 1%; backfill plan for dashboards that silently rendered zeros during the drift window; monthly schema-drift audit",
+      "owner_role": "pm-data",
+      "priority": "high",
+      "dependency": "pm-tech-lead (PR #3081 land)",
+      "depends_on": [
+        "UNRESOLVED:PR #3081 land \u2014 portfolio-analytics 500"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-14",
+      "first_open_at": "2026-10-14T04:30:00Z"
+    },
+    {
+      "id": "pm-data-currency-metric-source-of-truth",
+      "action": "Define canonical lease.currency / payment.currency metric dimensions in docs/analytics/metrics.md (follow-up on PR #3051 EUR hardcoding fix); deprecate any dashboard that computed revenue without a currency key",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-14",
+      "first_open_at": "2026-10-14T04:30:00Z"
+    },
+    {
+      "id": "pm-data-mutation-error-funnel-event",
+      "action": "Add shared client.mutation.error_surfaced event helper + wire at 3 ppt-web sites (community group join/leave #3048, documents #3049, rentals #3050); downstream dashboard tile in realtor-analytics",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-14",
+      "first_open_at": "2026-10-14T04:30:00Z"
+    },
+    {
+      "id": "pm-data-minimum-analytics-dod",
+      "action": "Author minimum-analytics DoD (event name convention, required properties, PII rules, screen-map agent-log stamp); add checklist item to .github/pull_request_template.md so new stories cannot ship without instrumentation",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "pm-tech-lead",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-14",
+      "first_open_at": "2026-10-14T04:30:00Z"
     }
   ],
-  "generated": "2026-10-01T04:30:00Z"
+  "generated": "2026-10-14T04:30:00Z"
 }
