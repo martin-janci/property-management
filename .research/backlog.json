@@ -11783,13 +11783,14 @@
         "git-log-14d"
       ],
       "evidence": [
-        "frontend/apps/reality-web/src/lib/realtor-api.ts — 2 commits in last 14d (new hotspot)"
+        "frontend/apps/reality-web/src/lib/realtor-api.ts — 2 commits in last 14d (new hotspot)",
+        "re-emit 2026-10-14 (cumulative): 3 PRs touched in-window — #3063 test coverage harden, #3065 id encoding, #3066 sell publish wiring; hotspot_history runs_seen 1→2"
       ],
       "files": [
         "frontend/apps/reality-web/src/lib/realtor-api.ts"
       ],
       "created_at": "2026-10-08",
-      "updated_at": "2026-10-08",
+      "updated_at": "2026-10-14",
       "plan": null,
       "reconciled": {
         "at": "2026-10-11T10:25:34Z",
@@ -12114,6 +12115,31 @@
       "score_delta": 2,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "title": "repeated churn: reality-web realtor-api.ts (runs_seen=2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3063",
+        "PR #3065",
+        "PR #3066",
+        "state.hotspot_history runs_seen=2"
+      ],
+      "evidence": [
+        "runs_seen=2 after 2026-10-14 run (first seen 2026-10-08 recent_churn=2, re-seen 2026-10-14 recent_churn=3). Instability proxy — two consecutive routine windows touched this file.",
+        "In-window PRs: #3063 (harden error-surface test coverage), #3065 (id encoding + tests), #3066 (sell publish wiring). Shared concern: multiple callers reaching into shared realtor-api.ts for different needs — consider splitting by concern or hardening its contract."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts",
+        "frontend/apps/reality-web/src/lib/realtor-api.test.ts"
+      ],
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "plan": null
     }
   ]
 }

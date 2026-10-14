@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-10-14T20:36:29Z",
+  "window_start": "2026-10-08T04:30:00Z",
+  "window_end": "2026-10-14T20:36:29Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-14",
+      "type": "lag_warning",
+      "source": "routine lag check",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-10-08T04:30:00Z; now=2026-10-14T20:36:29Z; lag=~160h (6d 16h) — exceeds 36h threshold.",
+        "stale_routine_alert: cloud routine has not advanced state.json in 3+ days; dispatcher kept ticking on its own loop (10 active assignments all in review)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "type": "churn-hotspot",
+      "source": "merged PRs #3063, #3065, #3066 (window 2026-10-08..2026-10-14)",
+      "score_delta": 0,
+      "cumulative_reemit": true,
+      "evidence": [
+        "re-emit 2026-10-14: 3 PRs touched this file in-window — #3063 (test coverage harden), #3065 (encode ids + tests), #3066 (sell publish wiring). hotspot_history runs_seen 1→2."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/lib/realtor-api.ts",
+      "type": "repeated-churn",
+      "source": "state.hotspot_history runs_seen=2 after this run",
+      "score_delta": 1,
+      "evidence": [
+        "runs_seen=2 (first seen 2026-10-08 with recent_churn=2, re-seen 2026-10-14 with recent_churn=3). Instability proxy — same file touched across two consecutive routine windows."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "buffer-low-planner-starvation-2026-10-14",
+      "type": "process-signal",
+      "source": "dispatcher routine-fire payload",
+      "score_delta": 0,
+      "evidence": [
+        "Payload: 'buffer-low: claimable=1/72 — structural starvation, only mobile-native-gated backlog remains; refill planner'.",
+        "Current backlog non-terminal: 7 items (2 ready mobile-native-kmp gated, 5 open with scores 1-3). All 5 open items already have in-flight PRs (#3024, #3028, #3072, #3074, #3075) opened by the dispatcher outside the plan-promotion path — plan files were never written, so `plan: none` in backlog.json.",
+        "Non-mobile-native work IS in flight (10 assignments, all `review` status, 9 verdict=approve awaiting human). Starvation is on the plan file side, not the delivery side."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-10-14.md && head -1 ... grep '# 2026-10-14'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq '... cursor advance' .research/state.json", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq cumulative-allowlist check", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap + decay", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run → trivially passes", "observed": "0 new plans", "expected": "ok" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans; no new plans this run", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets grep", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md regen byte-identity", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no failed phases this run", "observed": "no failures", "expected": "ok" },
+    { "goal": "G12", "passed": true, "command": "no plans dropped silently", "observed": "ok", "expected": "ok" },
+    { "goal": "G13", "passed": true, "command": "_archive count ≥ HEAD", "observed": "same count", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regen byte-identity", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "no auto-fix actions this run", "observed": "0", "expected": "≤1 of each" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run → no-op", "observed": "skipped", "expected": "no-op or valid" },
+    { "goal": "G17", "passed": true, "command": "no telegram token leaks", "observed": "0", "expected": "0" }
+  ]
+}
