@@ -16495,6 +16495,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-3073",
+      "branch": "auto-impl/gh-issue-3073-4a4ecfe2",
+      "status": "merged",
+      "claimed_at": "2026-10-14T06:37:17Z",
+      "last_updated": "2026-10-14T12:32:56Z",
+      "status_changed_at": "2026-10-14T12:32:56Z",
+      "pr_number": 3080,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3080",
+      "merged_at": "2026-10-14T12:32:56Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=72193d1ae99c7f3e39e121f3afcc6cb0d6b23a12 note=shared-cargo-target-safe-flock-serializes-all-cargo-ci-green-posted-as-comment-self-approve-blocked",
+      "last_reviewed_oid": "72193d1ae99c7f3e39e121f3afcc6cb0d6b23a12",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-14T12:32:56Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -19495,5 +19517,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-14T06:43:20Z"
+  "archived_at": "2026-10-14T12:33:11Z"
 }
