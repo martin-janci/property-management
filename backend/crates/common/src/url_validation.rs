@@ -303,6 +303,17 @@ fn is_forbidden_ip(ip: IpAddr) -> Result<(), String> {
             if let Some(v4) = v6.to_ipv4_mapped() {
                 return check_ipv4(v4);
             }
+            // IPv4-compatible IPv6 (the deprecated `::a.b.c.d` ::/96 embedding,
+            // e.g. `::127.0.0.1` or `::169.254.169.254`). `to_ipv4()` covers both
+            // the mapped and compatible ranges; the mapped case already returned
+            // above, so a `Some` here is a compatible-range address. Skip `::`
+            // and `::1`, which keep their dedicated unspecified/loopback checks
+            // below so their rejection reasons stay accurate.
+            if let Some(v4) = v6.to_ipv4() {
+                if !v6.is_unspecified() && !v6.is_loopback() {
+                    return check_ipv4(v4);
+                }
+            }
             let segs = v6.segments();
             if (segs[0] & 0xfe00) == 0xfc00 {
                 return Err("fc00::/7 (IPv6 unique-local)".into());
