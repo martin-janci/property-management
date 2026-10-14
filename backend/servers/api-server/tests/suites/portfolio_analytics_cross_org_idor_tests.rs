@@ -21,20 +21,24 @@
 //!     `WHERE EXISTS (SELECT 1 FROM buildings WHERE id = $building AND
 //!     organization_id = $org)`, so a cross-tenant upsert writes no row.
 //!
-//! KNOWN LIMITATION (pre-existing, tracked as BIT-567): the property-metrics
-//! repo queries also project columns that are absent from the
-//! `property_performance_metrics` table in migration 00091 (e.g.
+//! SCHEMA DRIFT (reconciled by issue #3078): the property-metrics repo queries
+//! and the `PropertyPerformanceMetrics` model used to project columns absent
+//! from the `property_performance_metrics` table in migration 00091 (e.g.
 //! `gross_rental_income`, `average_lease_term_months`, `total_revenue`,
-//! `estimated_value`). Because of that pre-existing schema drift these endpoints
-//! currently return 500 at runtime regardless of the IDOR fix, so a same-org
-//! `200 OK` control and a strict `404`-on-foreign assertion cannot be exercised
-//! here (the sibling `analytics_portfolio_success_tests.rs` deletes those cases
-//! for the same reason). These tests therefore assert the tenant-boundary
-//! invariant that holds independently of the projection bug — a foreign caller
-//! must NOT get a `2xx`, and must NOT be able to persist a row against another
-//! org's building — plus the standard unauthenticated-rejection case. Once
-//! BIT-567 reconciles the schema, the `assert_ne!` reads should be tightened to
-//! `assert_eq!(NOT_FOUND)` and a same-org success control added.
+//! `estimated_value`), and the upsert's `ON CONFLICT` keyed on a column set
+//! (`building_id, period_start, period_end, period_type`) that no unique
+//! constraint covered. Those endpoints therefore 500'd/400'd at runtime
+//! regardless of the IDOR fix. Earlier this was labelled "BIT-567", which is
+//! not a real issue in this repo; the tracked bug is #3078 and migration
+//! 00236 adds the missing columns and aligns the unique constraint.
+//!
+//! With the drift reconciled, these tests now assert the tenant boundary
+//! end-to-end: a foreign caller must get a strict `404` on read and must not be
+//! able to persist a row against another org's building, while the owning org
+//! must get a `200 OK` with a correct payload (read) and a persisted row
+//! (write). The `200 OK` same-org controls prove the scoping is a boundary, not
+//! a "deny everyone" false positive. The unauthenticated-rejection case is
+//! retained.
 
 #![allow(dead_code)]
 
@@ -113,9 +117,11 @@ async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
     .expect("seed building")
 }
 
-/// Insert a `property_performance_metrics` row for `building_id`/`org_id` using
-/// only columns that exist in migration 00091, so the foreign row physically
-/// exists as an IDOR target (independent of the BIT-567 projection drift).
+/// Insert a `property_performance_metrics` row for `building_id`/`org_id`. Only
+/// the always-present / defaulted columns are set explicitly; the columns added
+/// by migration 00236 (#3078) fall back to their defaults (`gross_rental_income`
+/// -> 0, `currency` -> 'EUR') or NULL, which is enough for the row to decode
+/// into `PropertyPerformanceMetrics` on read.
 async fn seed_metrics_row(pool: &PgPool, org_id: Uuid, building_id: Uuid) {
     sqlx::query(
         r#"INSERT INTO property_performance_metrics
@@ -163,11 +169,59 @@ async fn property_metrics_from_other_org_read_is_rejected(pool: PgPool) {
     );
     let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
 
-    assert_ne!(
+    // A foreign building_id resolves to no org-scoped row -> the handler maps
+    // `Ok(None)` to 404. Asserting the specific 404 (not merely `!= 200`) means
+    // a regression that made the endpoint 500 for everyone, or returned "404 for
+    // the owner too", would be caught here rather than passing vacuously.
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "Org A property metrics must be 404 (not found) for Org B, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// T1b — same-org property-metrics READ succeeds (200 control)
+//
+// Proves the org scoping added by #2946 is a tenant *boundary*, not a blanket
+// "deny everyone" — the owning org still reads its own row with a 200 and the
+// correct payload. This control is only exercisable now that #3078 reconciled
+// the `property_performance_metrics` schema drift (migration 00236).
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn property_metrics_same_org_read_succeeds(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_b = seed_org(&pool, "pa-idor-read-ok-b").await;
+    let user_b = seed_user(&pool, &format!("read-ok-b-{}@pa-idor.test", Uuid::new_v4())).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
+
+    // Building and metrics both belong to org B — the caller's own org.
+    let building_b = seed_building(&pool, org_b).await;
+    seed_metrics_row(&pool, org_b, building_b).await;
+
+    let token_b = mint_token(user_b, "read-ok-b@pa-idor.test", org_b);
+    let uri = format!(
+        "/api/v1/portfolio-analytics/properties/{building_b}/metrics\
+         ?period_start=2024-01-01&period_end=2024-01-31"
+    );
+    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+
+    assert_eq!(
         resp.status,
         StatusCode::OK,
-        "Org A property metrics must NOT be readable by Org B (got 200): {}",
+        "Org B must read its own property metrics (got {}): {}",
+        resp.status,
         resp.text()
+    );
+
+    let body: serde_json::Value = resp.json();
+    assert_eq!(
+        body.get("building_id").and_then(|v| v.as_str()),
+        Some(building_b.to_string().as_str()),
+        "same-org read must return the requested building's metrics: {body}"
     );
 }
 
@@ -206,10 +260,14 @@ async fn property_metrics_upsert_against_other_org_building_writes_nothing(pool:
         .await;
 
     // The write must not succeed against a building the caller does not own.
-    assert_ne!(
+    // The `WHERE EXISTS (… org)` guard writes no row, so `fetch_one` surfaces
+    // RowNotFound, which the handler maps to 400. Asserting the specific status
+    // (not merely `!= 200`) catches a regression to a silent 2xx.
+    assert_eq!(
         resp.status,
-        StatusCode::OK,
-        "Org B must NOT upsert metrics against Org A's building (got 200): {}",
+        StatusCode::BAD_REQUEST,
+        "Org B must NOT upsert metrics against Org A's building (got {}): {}",
+        resp.status,
         resp.text()
     );
 
@@ -219,6 +277,62 @@ async fn property_metrics_upsert_against_other_org_building_writes_nothing(pool:
     assert_eq!(
         count, 0,
         "cross-tenant upsert must not persist a metrics row for Org A's building; found {count}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// T2b — same-org property-metrics WRITE succeeds and persists (200 control)
+//
+// Proves the `WHERE EXISTS (… org)` guard admits the owning org: a caller
+// upserting metrics for its *own* building gets a 200 and a persisted row.
+// Only exercisable now that #3078 reconciled the schema drift (migration
+// 00236) — the upsert's `ON CONFLICT` target now matches a real constraint.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn property_metrics_same_org_upsert_persists(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_b = seed_org(&pool, "pa-idor-write-ok-b").await;
+    let user_b = seed_user(
+        &pool,
+        &format!("write-ok-b-{}@pa-idor.test", Uuid::new_v4()),
+    )
+    .await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
+
+    // Building belongs to org B — the caller's own org.
+    let building_b = seed_building(&pool, org_b).await;
+
+    let token_b = mint_token(user_b, "write-ok-b@pa-idor.test", org_b);
+    let resp = app
+        .execute(
+            app.post("/api/v1/portfolio-analytics/properties/metrics")
+                .bearer(&token_b)
+                .json(serde_json::json!({
+                    "building_id": building_b,
+                    "period_start": "2024-03-01",
+                    "period_end": "2024-03-31",
+                    "period_type": "monthly",
+                    "total_units": 10,
+                    "occupied_units": 8,
+                    "gross_rental_income": "12000.00"
+                }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "Org B must upsert metrics against its own building (got {}): {}",
+        resp.status,
+        resp.text()
+    );
+
+    let count = count_metrics_for_building(&pool, building_b).await;
+    assert_eq!(
+        count, 1,
+        "same-org upsert must persist exactly one metrics row for Org B's building; found {count}"
     );
 }
 
