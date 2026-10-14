@@ -492,6 +492,32 @@ mod tests {
         ));
     }
 
+    /// Regression (#3079): IPv4-*compatible* IPv6 (the deprecated `::a.b.c.d`
+    /// `::/96` embedding, distinct from the `::ffff:a.b.c.d` *mapped* form) must
+    /// also be unmapped and range-checked. `::127.0.0.1` is the IPv6 literal
+    /// `::7f00:1` — `to_ipv4_mapped()` returns `None`, `segs[0]` is 0 so the
+    /// fc00/fe80/ff00 masks miss, and `is_loopback()`/`is_unspecified()` only
+    /// match `::1`/`::`, so before the fix it fell through to `Ok` and this
+    /// loopback address passed the static SSRF check.
+    #[test]
+    fn rejects_ipv4_compatible_ipv6_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[::127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3079): the cloud-metadata IP embedded as an IPv4-compatible
+    /// IPv6 address (`::169.254.169.254`) must be rejected for the same reason
+    /// as the loopback case above — it is the highest-value SSRF target.
+    #[test]
+    fn rejects_ipv4_compatible_ipv6_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[::169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
     #[test]
     fn rejects_dot_local_tld() {
         assert!(matches!(
