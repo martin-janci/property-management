@@ -1,0 +1,30 @@
+{
+  "generated": "2026-10-14",
+  "source_run": "dispatcher Tier-1d demand-driven (claimable starved < floor 36)",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven, claimable starved < floor 36). REVIEW_CURSOR 4-way tie at 2026-10-11 (api-handlers, ppt-web-ui, reality-web, mobile-rn); CHURN_FILES empty. Deterministic tiebreak = segment-map order. api-handlers SKIPPED (saturation: 3 open code-review-finding rows in backlog.json >= floor 3). ppt-web-ui SKIPPED (already has a fresh 2026-10-14 tier1d signals file from an earlier sub-run today — faults-slice pass). Next buildable segment in map order = reality-web (0 open code-review-finding rows -> not saturated; frontend TS -> cloud-landable). mobile-rn deferred (later in map order). Experts: frontend (primary). Static-only: file reads + grep, no compile/test. Scope = frontend/apps/reality-web/src/ (app/ RSC + components/ + lib/).",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-compare-url-unvalidated-body",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:47 — `return response.json() as Promise<ListingSummary>;` casts the raw fetch body of GET /api/v1/listings/{id} straight to ListingSummary with no runtime shape validation, then feeds it into addToComparison() (comparison-context.tsx:71) and the comparison UI.",
+        "Inconsistent with the SSR detail page for the SAME endpoint: frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:79-89 only does `if (!response.ok) return null` then routes the body through `parseListingDetail(body)` precisely because (per its own inline comment, lines 80-87) a 200 response can carry a malformed/partial body (missing nested fields, wrong-typed `features`/`photos`) that crashes render. ComparisonUrlHandler guards response.ok (line 44) but performs no equivalent body normalization/validation.",
+        "Impact: a malformed/partial 200 body for a shared-comparison id (?ids=... deep link on the public /compare page) flows unvalidated into the comparison view and can crash client rendering. No parseListingSummary normalizer exists in src/lib — the parse pattern is applied to detail bodies but not summary bodies. Fix: add/apply a parseListingSummary normalizer (mirroring parseListingDetail) and drop the raw `as Promise<ListingSummary>` cast, dropping ids whose body fails validation (the loop already degrades gracefully via Promise.allSettled)."
+      ]
+    }
+  ]
+}

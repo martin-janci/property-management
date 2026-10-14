@@ -2,30 +2,6 @@
   "version": 1,
   "items": [
     {
-      "id": "pm-scrum-master-stalled-accounting-pay-by-square-2559",
-      "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot — one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-scrum-master 2026-10-01 (stalled-PR scan)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T04:30:00Z"
-    },
-    {
-      "id": "pm-scrum-master-stalled-invoice-lifecycle-2555",
-      "action": "Stalled 64d: PR #2555 (invoice lifecycle accounting slice) needs reviewer slot — companion to #2559; both are the aging accounting MVP trio tracked since 2026-07-30",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "pm-scrum-master 2026-10-01 (stalled-PR scan)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-01T04:30:00Z"
-    },
-    {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
       "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
