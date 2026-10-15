@@ -164,6 +164,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-price-map-cache-unbounded",
+      "branch": "auto-impl/code-review-reality-server-price-map-cac-0faac5bd",
+      "status": "in-progress",
+      "claimed_at": "2026-10-15T18:31:14Z",
+      "last_updated": "2026-10-15T18:31:14Z",
+      "status_changed_at": "2026-10-15T18:31:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
