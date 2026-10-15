@@ -12310,6 +12310,46 @@
       "created_at": "2026-10-15",
       "updated_at": "2026-10-15",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirmdialog-loading-focustrap",
+      "title": "ppt-web ConfirmationDialog focus-trap breaks while isLoading — both action buttons disabled, selector matches zero elements, Tab escapes modal (WCAG 2.1.2/2.4.3)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-15 ppt-web-ui confirmdialog-loading-focustrap)"
+      ],
+      "evidence": [
+        "ConfirmationDialog.tsx:76-90 — Tab focus-trap selector querySelectorAll('button:not([disabled]), [tabindex]:not([tabindex=\"-1\"])') matches ZERO elements while isLoading because both cancel (:136) and confirm (:144) render disabled={isLoading} and the dialog carries no tabindex. firstElement/lastElement are undefined (:80-81), the shift/!shift guards (:83-88) can never fire, trap silently no-ops, native Tab moves focus OUT of the open aria-modal=\"true\" alertdialog to the background page. Compounding it, the initial-focus effect keyed on [isOpen] (:57-66) does not re-run when isLoading flips, so the cancel button it focused (:61) becomes disabled and focus falls to <body> for the whole latency window. WCAG 2.1.2/2.4.3 keyboard-trap/focus-order defect on every confirmation with a non-instant onConfirm (delete / danger API calls are the latency case). Fix: keep at least one focusable control reachable while loading (don't disable cancel, or make the dialog container tabindex=0 and focus it), or guard the trap so an empty focusable set re-focuses the dialog instead of releasing Tab."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-10-15",
+      "updated_at": "2026-10-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-raw-err-message",
+      "title": "ppt-web AuthCallbackPage SSO code-exchange catch renders raw err.message — untranslated English leaks on sk/cs/de + minor internal-detail disclosure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-15 ppt-web-ui authcallback-raw-err-message)"
+      ],
+      "evidence": [
+        "AuthCallbackPage.tsx:138-146 — the SSO code-exchange catch block does `err instanceof Error ? err.message : t('auth.ssoCallbackFailed')`, so whenever loginWithSsoCode() rejects with a plain Error the RAW err.message is stored in errorMessage and rendered verbatim in the error banner (:191-196, `<span>{errorMessage}</span>`). On the sk/cs/de locales this surfaces untranslated English/developer text on the primary SSO auth surface, and leaks whatever internal/network detail the thrown Error carries (e.g. a fetch/axios message or backend error string) to the end user. Same raw-backend-message anti-pattern already filed for LoginPage.tsx:80-86 (login-raw-message) and errorboundary-raw-message-prod / emergency-dir-raw-err / signature-modal-raw-err, but is NET-NEW for AuthCallbackPage — the only prior finding on this file is the unguarded decodeURIComponent at :93. Fix: render a translated generic fallback (t('auth.ssoCallbackFailed') / t('auth.unexpectedError')) for unmapped errors and map known AuthError codes, instead of echoing err.message — mirroring the fix proposed for the LoginPage sibling finding."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx"
+      ],
+      "created_at": "2026-10-15",
+      "updated_at": "2026-10-15",
+      "plan": null
     }
   ]
 }

@@ -391,6 +391,40 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-raw-err-message",
+      "action": "ppt-web AuthCallbackPage SSO code-exchange catch renders raw err.message — untranslated English leaks on sk/cs/de + minor internal-detail disclosure",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-15T20:39:46Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T20:39:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirmdialog-loading-focustrap",
+      "action": "ppt-web ConfirmationDialog focus-trap breaks while isLoading — both action buttons disabled, selector matches zero elements, Tab escapes modal (WCAG 2.1.2/2.4.3)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-15T20:39:46Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T20:39:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-01T04:30:00Z"

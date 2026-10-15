@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-15 16:53 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-15 20:38 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -215,12 +215,14 @@
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
 | 1 | refactor | Churn hotspot: frontend/packages/api-client/src/lib/fetch.ts (api-client shared fetch — refactor consolidation window 2026-10-08..2026-10-15) | `frontend/packages/api-client/src/lib/fetch.ts` | PR #3071 (+1) | 2026-10-15 | open | — |
-| 1 | refactor | Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor) | `frontend/packages/api-client/src/auth/apply-headers.ts` | PR #3071 (+1) | 2026-10-15 | open | — |
+| 1 | refactor | Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor) | `frontend/packages/api-client/src/auth/apply-headers.ts` | PR #3071 (+1) | 2026-10-15 | dropped | — |
 | 1 | refactor | Churn hotspot: frontend/packages/api-client/src/auth/index.ts (shared auth-header entry point) | `frontend/packages/api-client/src/auth/index.ts` | PR #3071 (+1) | 2026-10-15 | open | — |
 | 1 | bug | reality-server price_map/listings use sqlx::AssertSqlSafe + format!() for query text — safe today but opt-out of the SQL-injection guard; add SAFETY comments or move to QueryBuilder | `backend/servers/reality-server/src/routes/price_map.rs (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server assertsqlsafe) | 2026-10-15 | open | — |
 | 1 | refactor | mobile-rn Outages/News/PersonMonths screens render hardcoded English headers, filter chips, and a validation Alert in an app shipping 6 locales | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 mobile-rn header-chip-i18n) | 2026-10-15 | open | — |
 | 1 | test-gap | mobile-rn: OutagesScreen pure transforms (narrow<T>, toUiOutage, formatRange) ship with zero tests — regressions silently mis-render or crash on unexpected server enums | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 mobile-rn outages-transforms-untested) | 2026-10-15 | open | — |
 | 1 | refactor | ppt-web errorHandler prefers raw data.message / Error.message over the i18n catalogue — server English leaks through to users on sk/cs/de locales (incomplete fix after 2026-08-17 i18n-gap) | `frontend/apps/ppt-web/src/lib/errorHandler.ts` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 ppt-web-core errorHandler) | 2026-10-15 | open | — |
+| 1 | bug | ppt-web ConfirmationDialog focus-trap breaks while isLoading — both action buttons disabled, selector matches zero elements, Tab escapes modal (WCAG 2.1.2/2.4.3) | `frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 ppt-web-ui confirmdialog-loading-focustrap) | 2026-10-15 | open | — |
+| 1 | bug | ppt-web AuthCallbackPage SSO code-exchange catch renders raw err.message — untranslated English leaks on sk/cs/de + minor internal-detail disclosure | `frontend/apps/ppt-web/src/pages/AuthCallbackPage.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 ppt-web-ui authcallback-raw-err-message) | 2026-10-15 | open | — |
 | 1 | refactor | ppt-web routes/groups/community.tsx recent churn — 3 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | git-log-14d | 2026-10-08 | done | — |
 | 1 | refactor | reality-web lib/realtor-api.ts recent churn — 2 commits in 14d (new hotspot) | `frontend/apps/reality-web/src/lib/realtor-api.ts` | git-log-14d | 2026-10-08 | done | — |
 | 1 | refactor | reality-web components/import/SyncSchedule.tsx recent churn — 2 commits in 14d (new hotspot) | `frontend/apps/reality-web/src/components/import/SyncSchedule.tsx` | git-log-14d | 2026-10-08 | done | — |

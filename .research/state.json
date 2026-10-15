@@ -5,7 +5,7 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-15T16:53:11Z",
+  "last_run_iso": "2026-10-15T20:38:57Z",
   "last_run_ms": 5200,
   "last_pr_seen": 3088,
   "last_issue_seen": 3085,
@@ -1172,7 +1172,9 @@
     "code-review-mobile-rn-outage-news-detail-dead-nav",
     "code-review-mobile-rn-outages-news-header-chip-i18n",
     "code-review-mobile-rn-outages-transforms-untested",
-    "code-review-ppt-web-core-errorhandler-raw-message-i18n-bypass"
+    "code-review-ppt-web-core-errorhandler-raw-message-i18n-bypass",
+    "code-review-ppt-web-ui-confirmdialog-loading-focustrap",
+    "code-review-ppt-web-ui-authcallback-raw-err-message"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1186,8 +1188,8 @@
     "mobile-native-kmp": "2026-10-13"
   },
   "stats": {
-    "runs": 92,
-    "vectors_created": 429,
+    "runs": 93,
+    "vectors_created": 431,
     "plans_created": 34,
     "quiet_days": 6,
     "auto_fix_count": 0
