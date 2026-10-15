@@ -5,7 +5,7 @@
       "type": "lag_warning",
       "source": "state.last_run_iso=2026-10-08T04:30:00Z",
       "score_delta": 0,
-      "evidence": "7d 0h since last routine run — cron fired for the first time since 2026-10-08; dispatcher kept advancing autonomously on this branch (29 PRs merged in gap window, 51 commits on dev).",
+      "evidence": "7d 0h since last routine run \u2014 cron fired for the first time since 2026-10-08; dispatcher kept advancing autonomously on this branch (29 PRs merged in gap window, 51 commits on dev).",
       "confidence": "high",
       "candidate_vector": "dx"
     },
@@ -44,127 +44,276 @@
       "evidence": "2 commits touched this file in the 7-day window; shared auth-header entry point for api-client (PR #3071). runs_seen 0->1.",
       "confidence": "high",
       "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-price-map-cache-unbounded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map)",
+      "segment": "reality-server",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:32-38 \u2014 PRICE_MAP_CACHE is a process-global HashMap<String, CacheEntry> (OnceLock<Arc<RwLock<..>>>) with NO size cap and NO eviction policy other than TTL expiry. The map key embeds raw, attacker-controlled request parameters: cache_key = format!(\"{}:{}:{}:{}\", mode, time_window_str, query.property_type.unwrap_or(\"\"), query.city.unwrap_or(\"\")) at :125-131, where query.city and query.property_type are free-form strings taken straight off the public, UNAUTHENTICATED GET /api/v1/price-map handler (get_price_map(State, Query<PriceMapQuery>) at :97-100 \u2014 no RequestPrincipal / no auth extractor).",
+        "Memory-exhaustion DoS: the only reclamation is cache.retain(|_, v| Instant::now() < v.expires_at) at :229 run on the write path, and CACHE_TTL = Duration::from_secs(3600) (:41). Entries live a full hour before they become eligible for retain to drop them; an attacker issuing GET /api/v1/price-map?city=<unique-random-string> on a loop inserts a brand-new, never-expiring-within-the-window entry on every distinct city value (:227-234 unconditionally cache.insert(cache_key, ...)). Each city only has to differ by one byte; it does not need to match any real listing (the query runs city ILIKE $3 and caches even an empty district vector). Millions of distinct keys accumulate within the 1h TTL \u2192 unbounded heap growth \u2192 OOM on a public endpoint.",
+        "Self-inconsistency: state.rs:910-915 (INQUIRY_RATE_LIMIT_MAX_IPS = 100_000, built with with_default_bounded) explicitly bounds memory against an attacker rotating source IPs; the price_map cache, keyed on an equally attacker-influenced string space, has no equivalent bound. Fix (backend-only, cloud-landable): cap the map (bounded LRU / size-limited insert that evicts oldest once a MAX_ENTRIES ceiling is hit, mirroring the inquiry limiter), and/or normalise+reject out-of-allowlist city/property_type before they reach the key, and/or key the cache on a hash of validated inputs only."
+      ]
+    },
+    {
+      "id": "code-review-reality-server-assertsqlsafe-format-sql",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server assertsqlsafe)",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs",
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "evidence": [
+        "price_map.rs:158-206 and listings.rs:700-706 both build query text with format!(...) and execute via sqlx::query(sqlx::AssertSqlSafe(sql)) / sqlx::query_as::<_, _>(sqlx::AssertSqlSafe(sql)). AssertSqlSafe is a deliberate opt-out of sqlx's compile-time/runtime SQL-safety checking \u2014 it tells sqlx 'trust me, this string is safe', disabling the one framework guard against interpolated-value injection.",
+        "Both sites are SAFE AS WRITTEN TODAY: listings.rs interpolates only the RICH_LISTING_SELECT const (:703) and binds all user values; price_map.rs interpolates only interval, which at :109-123 is the result of a closed match time_window_str.as_str() returning fixed literals ('1 month'/'3 months'/'12 months'/'5 years') and 400-ing on anything else. This is a latent-footgun / refactor-smell finding, not a live injection.",
+        "Risk: safety now rests on reviewer vigilance that every current and future format! argument stays a constant or an allowlisted literal. A later edit interpolating a less-controlled value (sort column, city, dynamic WHERE fragment) would silently introduce SQL injection with no macro error. Fix: add an explicit // SAFETY: ... comment at each AssertSqlSafe call, or migrate dynamic portions to sqlx::QueryBuilder."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-outage-news-detail-dead-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-15 mobile-rn outage-news-nav)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx",
+        "frontend/apps/mobile/src/App.tsx"
+      ],
+      "evidence": [
+        "Dead card navigation silently bounces users to the Dashboard. OutagesScreen.tsx:196 \u2014 each outage card's onPress calls onNavigate?.('OutageDetail', { outageId: outage.id }); NewsScreen.tsx:137 \u2014 each article card calls onNavigate?.('ArticleDetail', { articleId: article.id }). But App.tsx renderScreen() is a string switch whose cases run Dashboard/Faults/.../Outages/News/Forms/Buildings/Leases/LeaseDetail/LeaseSignature/More and then default: return <DashboardScreen onNavigate={handleNavigate} /> (:264-265). There is NO case 'OutageDetail' and NO case 'ArticleDetail' anywhere. Full traced path: tap card -> handleNavigate(target, params) sets currentScreen -> switch falls to default -> renders DashboardScreen. The outageId/articleId is discarded. Reachable in production (both screens are live-registered; OutagesScreen is wired to GET /api/v1/outages). Fix (cloud-landable, frontend-only): add OutageDetailScreen / ArticleDetailScreen components + switch cases, or remove the dead onPress + card Pressable. Add an App.tsx navigation test asserting every onNavigate target resolves to a non-default case."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-outages-news-header-chip-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-15 mobile-rn header-chip-i18n)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "evidence": [
+        "Net-new i18n gaps distinct from the already-logged empty/error/loading string item (code-review-mobile-rn-hardcoded-empty-error-i18n, done). Hardcoded header titles, filter-chip labels, and a validation Alert in an app that ships sk/cs/de/en/hu/pl locales: OutagesScreen.tsx:150-151 header 'Outages' / 'Planned and active utility interruptions.' and :141-144 filter chip labels 'All' | 'Scheduled' | 'Active' | 'Resolved'; NewsScreen.tsx:91-92 header + :82-85 filter labels; PersonMonthsScreen.tsx:78 Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.') and :93-96 header + inline Save/Cancel/Edit/Bulk entry labels. Also OutagesScreen.tsx:209 renders raw enum outage.status.replace('_', ' '). Fix: wrap in t() and add keys to 6 locale files."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-outages-transforms-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-15 mobile-rn outages-transforms-untested)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "tester",
+      "files": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx"
+      ],
+      "evidence": [
+        "OutagesScreen is a real API-backed screen (useApiQuery '/api/v1/outages', :123) with non-trivial pure logic and ZERO test files (compare meters/ and messages/ which each ship 4-5 test files). Untested pure functions: narrow<T>() (:58-62, allow-list guard documented as a footgun), toUiOutage() (:64-75, snake\u2192camel + narrow fallbacks), formatRange() (:100-113, same-day vs multi-day). Trivially unit-testable with no RN render \u2014 cloud-landable under jest-expo without a device. Add tests covering each commodity/status/severity passthrough + fallback, same-day vs cross-day range formatting, and null/empty description -> ''. Net-new: no existing outages test-gap item in backlog.json."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-message-i18n-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-15 ppt-web-core errorHandler)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:221 \u2014 parseErrorResponse returns message: data.message || errorInfo.message, PREFERRING the raw server-supplied data.message string over the localized errorInfo.message (which errorCopy() resolves via i18n.t(`errors.catalogue.${code}.message`)). For any structured backend error carrying a message field, the client-side i18n catalogue is bypassed and the server's untranslated English is rendered regardless of active sk/cs/de locale. Same pattern at :190-196 (instanceof Error branch returns error.message || copy.message).",
+        "Incomplete-fix residue of code-review-ppt-web-core-errorhandler-i18n-gap (filed 2026-08-17, merged): that fix i18n'd the catalogue itself but never touched these two || fallback sites. Nuance for the fix: data.message sometimes carries dynamic specificity the catalogue copy lacks \u2014 prefer catalogue copy when data.error resolves to a KNOWN code, falling back to data.message only for unknown codes. Cloud-landable (frontend TS only). IG3: errorHandler test asserting parseApiError on a structured error with a known code + a server message returns the i18n catalogue message, not the raw server string \u2014 fails today."
+      ]
     }
   ],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-10-15.md && head -1 == \"# 2026-10-15\"",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "test -f briefs/<today>.md && head -1 matches '# YYYY-MM-DD'",
+      "observed": "ok",
+      "expected": "ok"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state.json staged advanced vs HEAD",
+      "command": "jq --slurpfile prev \u2026 state.json",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "detail": "last_pr_seen 3086\u21923088, last_commit_sha advanced, last_issue_seen 3085, seen_signals 568\u2192574, stats.runs 91\u219292"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "backlog ids unique",
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no re-score of already-seen non-cumulative signals",
+      "command": "non-cumulative re-emits with score_delta!=0 count",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
       "observed": "true",
       "expected": "true"
     },
     {
-      "goal": "G5",
+      "goal": "G5-decay",
       "passed": true,
-      "command": "no score > 8; no stale-open to decay this run",
-      "observed": "true",
-      "expected": "true"
+      "command": "no open row has updated_at strictly before 2026-10-01",
+      "observed": "n/a \u2014 no decay triggers",
+      "expected": "pass"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run → gate n/a",
-      "observed": "no new plans",
-      "expected": "n/a"
+      "command": "every new plan has 'adversarial pass:' line in brief",
+      "observed": "price-map-cache-unbounded: passed",
+      "expected": "pass"
     },
     {
-      "goal": "G7",
+      "goal": "G7-count",
       "passed": true,
-      "command": "0 new plans ≤ 2; no plan readiness check applicable",
-      "observed": "0",
-      "expected": "<= 2"
+      "command": "<=2 new plan files",
+      "observed": "1",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "4 metadata fields present",
+      "observed": "all 4",
+      "expected": "all 4"
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "11 required headings present",
+      "observed": "all 11",
+      "expected": "all 11"
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "at least one [x] in Required capabilities",
+      "observed": "C1,C2,C3,C6 ticked",
+      "expected": "yes"
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "Mode: cloud-ok|local-only declared",
+      "observed": "cloud-ok",
+      "expected": "declared"
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "every bullet under ## Files resolves",
+      "observed": "price_map.rs + state.rs:910 both exist",
+      "expected": "all exist"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^\\.research/",
-      "observed": "0",
+      "command": "git diff --cached outside .research/",
+      "observed": "0 paths",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secret/private-hostname scan of staged diff",
+      "command": "no secrets/private hostnames in staged diff",
       "observed": "0 matches",
-      "expected": "0 matches"
+      "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "regenerated backlog.md == staged backlog.md",
-      "observed": "match",
-      "expected": "match"
+      "command": "regen backlog.md matches staged",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "cursors advanced for successful phases only",
-      "observed": "all advanced; none failed",
-      "expected": "consistent"
+      "command": "no decayed phase/cursor failure in brief",
+      "observed": "no phase failed, no cursor regressed",
+      "expected": "n/a"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
-      "observed": "all accounted",
-      "expected": "all accounted"
+      "command": "prior plan slugs preserved (active or archived)",
+      "observed": "all accounted for",
+      "expected": "all"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "plans/_archive/ count ≥ HEAD count",
-      "observed": "22 >= 22",
-      "expected": ">= HEAD"
+      "command": "archive count >= HEAD count",
+      "observed": "no change this run",
+      "expected": "ge"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "regenerated IDEAS_TRIAGE.md == staged IDEAS_TRIAGE.md",
-      "observed": "match",
-      "expected": "match"
+      "command": "regen IDEAS_TRIAGE.md matches staged",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix caps (<=3 total, <=1 each type)",
-      "observed": "0/0/0",
-      "expected": "within caps"
+      "command": "auto_fix_actions discipline",
+      "observed": "empty (no auto-fix candidate)",
+      "expected": "pass"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped → gate is a no-op",
-      "observed": "skipped",
-      "expected": "n/a"
+      "command": "mgmt artifacts parse + pm_cursor + GC7",
+      "observed": "action-list/risks parse; project-state non-empty; pm_cursor.next_index=6 \u2208 [0,7]; coverage_cursor.next_index=8 \u2208 [0,13); Phase 1.6 skipped this run so GC7 advance clause is a no-op",
+      "expected": "pass"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "Telegram-token pattern not present in added lines",
+      "command": "no Telegram token in staged diff",
       "observed": "0 matches",
-      "expected": "0 matches"
+      "expected": "0"
     }
   ],
   "auto_fix_actions": [],

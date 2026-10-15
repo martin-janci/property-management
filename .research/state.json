@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-15T10:34:46Z",
-  "last_run_ms": 5000,
-  "last_pr_seen": 3086,
+  "last_run_iso": "2026-10-15T16:53:11Z",
+  "last_run_ms": 5200,
+  "last_pr_seen": 3088,
   "last_issue_seen": 3085,
-  "last_commit_sha": "c13b3451eb694379510d76075c540a80abb6efc8",
+  "last_commit_sha": "48ca0c72928e4d9ea199995266d065a550bc98aa",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1166,7 +1166,13 @@
     "stale-routine-alert-2026-10-15",
     "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
     "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
-    "churn-hotspot-frontend/packages/api-client/src/auth/index.ts"
+    "churn-hotspot-frontend/packages/api-client/src/auth/index.ts",
+    "code-review-reality-server-price-map-cache-unbounded",
+    "code-review-reality-server-assertsqlsafe-format-sql",
+    "code-review-mobile-rn-outage-news-detail-dead-nav",
+    "code-review-mobile-rn-outages-news-header-chip-i18n",
+    "code-review-mobile-rn-outages-transforms-untested",
+    "code-review-ppt-web-core-errorhandler-raw-message-i18n-bypass"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1180,9 +1186,9 @@
     "mobile-native-kmp": "2026-10-13"
   },
   "stats": {
-    "runs": 91,
-    "vectors_created": 423,
-    "plans_created": 33,
+    "runs": 92,
+    "vectors_created": 429,
+    "plans_created": 34,
     "quiet_days": 6,
     "auto_fix_count": 0
   },
