@@ -73,8 +73,9 @@ describe('parseApiError — axios errors with structured body', () => {
 
     expect(result.code).toBe('SESSION_EXPIRED');
     expect(result.title).toBe('Session Expired');
-    // Backend message takes precedence over the canned message.
-    expect(result.message).toBe('Session gone');
+    // The localized catalogue copy wins for a known code — the raw backend
+    // `message` ("Session gone") must not leak through to the user.
+    expect(result.message).toBe('Your session has expired. Please log in again.');
     expect(result.requestId).toBe('req-123');
     expect(result.statusCode).toBe(401);
     expect(result.isNetworkError).toBe(false);
@@ -239,7 +240,8 @@ describe('parseApiError — plain objects, Error, and fallback', () => {
 
     expect(result.code).toBe('DUPLICATE_ENTRY');
     expect(result.title).toBe('Duplicate Entry');
-    expect(result.message).toBe('Already exists');
+    // Known code -> localized catalogue message, not the raw backend text.
+    expect(result.message).toBe('An item with the same value already exists.');
     expect(result.requestId).toBe('req-9');
   });
 
