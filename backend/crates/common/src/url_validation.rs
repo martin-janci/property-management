@@ -529,6 +529,34 @@ mod tests {
         ));
     }
 
+    /// Regression (#3084): NAT64 well-known prefix `64:ff9b::/96` (RFC 6052).
+    /// `64:ff9b::169.254.169.254` (`64:ff9b::a9fe:a9fe`) embeds the cloud-metadata
+    /// IP in its low 32 bits. `to_ipv4_mapped()` / `to_ipv4()` both return `None`
+    /// (it is not in `::/96`), and `segs[0]` is `0x0064` so the fc00/fe80/ff00
+    /// masks miss — before the fix this highest-value SSRF target reached `Ok`
+    /// and translated to `169.254.169.254` on an IPv6-only / NAT64 host.
+    #[test]
+    fn rejects_nat64_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b::169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3084): SIIT / IPv4-translated `::ffff:0:a.b.c.d`
+    /// (`::ffff:0:0/96`, RFC 6052 §2.2). `::ffff:0:127.0.0.1` (`::ffff:0:7f00:1`)
+    /// places `0xffff` in `segs[4]` (not `segs[5]`), so it is neither IPv4-mapped
+    /// nor IPv4-compatible — `to_ipv4_mapped()` and `to_ipv4()` both return `None`
+    /// — and `segs[0]` is 0 so the masks miss. Before the fix this loopback form
+    /// fell through to `Ok`.
+    #[test]
+    fn rejects_siit_translated_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[::ffff:0:127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
     #[test]
     fn rejects_dot_local_tld() {
         assert!(matches!(
