@@ -169,7 +169,14 @@
     "noNews": "Žádné zprávy",
     "loadError": "Nepodařilo se načíst novinky",
     "emptyTitle": "Nic nového",
-    "emptyText": "Novinky najdete později."
+    "emptyText": "Novinky najdete později.",
+    "subtitle": "Novinky z vaší budovy a okolí.",
+    "filters": {
+      "all": "Všechny",
+      "building": "Budova",
+      "district": "Čtvrť",
+      "partner": "Partneři"
+    }
   },
   "voting": {
     "title": "Hlasovani",
@@ -565,10 +572,29 @@
     "noPayments": "Nejsou naplánovány žádné nadcházející platby.",
     "notFound": "Nájemní smlouva nebyla nalezena."
   },
+  "personMonths": {
+    "title": "Osoboměsíce",
+    "subtitle": "Nahlaste, kolik osob bydlelo ve vaší jednotce každý měsíc pro účely rozúčtování nákladů.",
+    "invalidTitle": "Neplatná hodnota",
+    "invalidMessage": "Zadejte celé číslo od 0 do 20.",
+    "bulkEntry": "Hromadné zadání…",
+    "personCount_one": "{{count}} osoba",
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osoby",
+    "personCount_other": "{{count}} osob"
+  },
   "outages": {
     "loadError": "Nepodařilo se načíst výpadky",
     "emptyTitle": "Žádné výpadky",
-    "emptyText": "Momentálně není nic naplánováno ani aktivní."
+    "emptyText": "Momentálně není nic naplánováno ani aktivní.",
+    "title": "Výpadky",
+    "subtitle": "Plánovaná a aktivní přerušení dodávek.",
+    "filters": {
+      "all": "Všechny",
+      "scheduled": "Naplánované",
+      "active": "Aktivní",
+      "resolved": "Vyřešené"
+    }
   },
   "forms": {
     "loadError": "Nepodařilo se načíst formuláře",

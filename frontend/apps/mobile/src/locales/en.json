@@ -169,7 +169,14 @@
     "noNews": "No news available",
     "loadError": "Couldn't load news",
     "emptyTitle": "Nothing new",
-    "emptyText": "Check back later for fresh updates."
+    "emptyText": "Check back later for fresh updates.",
+    "subtitle": "Updates from your building and neighbourhood.",
+    "filters": {
+      "all": "All",
+      "building": "Building",
+      "district": "District",
+      "partner": "Partners"
+    }
   },
   "voting": {
     "title": "Voting",
@@ -565,10 +572,27 @@
     "noPayments": "No upcoming payments scheduled.",
     "notFound": "Lease not found."
   },
+  "personMonths": {
+    "title": "Person-months",
+    "subtitle": "Declare how many people lived in your unit each month for cost allocation.",
+    "invalidTitle": "Invalid value",
+    "invalidMessage": "Enter a whole number between 0 and 20.",
+    "bulkEntry": "Bulk entry…",
+    "personCount_one": "{{count}} person",
+    "personCount_other": "{{count}} persons"
+  },
   "outages": {
     "loadError": "Couldn't load outages",
     "emptyTitle": "No outages",
-    "emptyText": "Nothing scheduled or active right now."
+    "emptyText": "Nothing scheduled or active right now.",
+    "title": "Outages",
+    "subtitle": "Planned and active utility interruptions.",
+    "filters": {
+      "all": "All",
+      "scheduled": "Scheduled",
+      "active": "Active",
+      "resolved": "Resolved"
+    }
   },
   "forms": {
     "loadError": "Couldn't load forms",

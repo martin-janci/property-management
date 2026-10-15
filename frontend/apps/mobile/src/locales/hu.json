@@ -169,7 +169,14 @@
     "noNews": "Nincsenek elérhető hírek",
     "loadError": "A hírek nem tölthetők be",
     "emptyTitle": "Semmi új",
-    "emptyText": "Nézzen vissza később a friss hírekért."
+    "emptyText": "Nézzen vissza később a friss hírekért.",
+    "subtitle": "Hírek az épületből és a környékről.",
+    "filters": {
+      "all": "Összes",
+      "building": "Épület",
+      "district": "Kerület",
+      "partner": "Partnerek"
+    }
   },
   "voting": {
     "title": "Szavazas",
@@ -525,10 +532,27 @@
     "noPayments": "Nincsenek ütemezett közelgő fizetések.",
     "notFound": "A bérleti szerződés nem található."
   },
+  "personMonths": {
+    "title": "Személyhónapok",
+    "subtitle": "Adja meg, hány személy lakott az egységében havonta a költségfelosztáshoz.",
+    "invalidTitle": "Érvénytelen érték",
+    "invalidMessage": "Adjon meg egy egész számot 0 és 20 között.",
+    "bulkEntry": "Tömeges bevitel…",
+    "personCount_one": "{{count}} személy",
+    "personCount_other": "{{count}} személy"
+  },
   "outages": {
     "loadError": "A kimaradások nem tölthetők be",
     "emptyTitle": "Nincsenek kimaradások",
-    "emptyText": "Jelenleg semmi sincs ütemezve vagy aktív."
+    "emptyText": "Jelenleg semmi sincs ütemezve vagy aktív.",
+    "title": "Kimaradások",
+    "subtitle": "Tervezett és aktív közműkimaradások.",
+    "filters": {
+      "all": "Összes",
+      "scheduled": "Ütemezett",
+      "active": "Aktív",
+      "resolved": "Megoldott"
+    }
   },
   "forms": {
     "loadError": "Az űrlapok nem tölthetők be",

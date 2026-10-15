@@ -169,7 +169,14 @@
     "noNews": "Brak dostępnych wiadomości",
     "loadError": "Nie można załadować aktualności",
     "emptyTitle": "Nic nowego",
-    "emptyText": "Sprawdź później, aby zobaczyć nowości."
+    "emptyText": "Sprawdź później, aby zobaczyć nowości.",
+    "subtitle": "Aktualności z Twojego budynku i okolicy.",
+    "filters": {
+      "all": "Wszystkie",
+      "building": "Budynek",
+      "district": "Dzielnica",
+      "partner": "Partnerzy"
+    }
   },
   "voting": {
     "title": "Glosowanie",
@@ -525,10 +532,29 @@
     "noPayments": "Brak zaplanowanych nadchodzących płatności.",
     "notFound": "Nie znaleziono umowy najmu."
   },
+  "personMonths": {
+    "title": "Osobomiesiące",
+    "subtitle": "Zadeklaruj, ile osób mieszkało w Twoim lokalu każdego miesiąca na potrzeby rozliczenia kosztów.",
+    "invalidTitle": "Nieprawidłowa wartość",
+    "invalidMessage": "Wprowadź liczbę całkowitą od 0 do 20.",
+    "bulkEntry": "Wprowadzanie zbiorcze…",
+    "personCount_one": "{{count}} osoba",
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osób",
+    "personCount_other": "{{count}} osób"
+  },
   "outages": {
     "loadError": "Nie można załadować awarii",
     "emptyTitle": "Brak awarii",
-    "emptyText": "Obecnie nic nie jest zaplanowane ani aktywne."
+    "emptyText": "Obecnie nic nie jest zaplanowane ani aktywne.",
+    "title": "Awarie",
+    "subtitle": "Planowane i aktywne przerwy w dostawach.",
+    "filters": {
+      "all": "Wszystkie",
+      "scheduled": "Zaplanowane",
+      "active": "Aktywne",
+      "resolved": "Rozwiązane"
+    }
   },
   "forms": {
     "loadError": "Nie można załadować formularzy",

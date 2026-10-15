@@ -169,7 +169,14 @@
     "noNews": "Keine Nachrichten verfügbar",
     "loadError": "Neuigkeiten konnten nicht geladen werden",
     "emptyTitle": "Nichts Neues",
-    "emptyText": "Schauen Sie später für neue Updates vorbei."
+    "emptyText": "Schauen Sie später für neue Updates vorbei.",
+    "subtitle": "Neuigkeiten aus Ihrem Gebäude und Ihrer Nachbarschaft.",
+    "filters": {
+      "all": "Alle",
+      "building": "Gebäude",
+      "district": "Viertel",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Abstimmung",
@@ -525,10 +532,27 @@
     "noPayments": "Keine anstehenden Zahlungen geplant.",
     "notFound": "Mietvertrag nicht gefunden."
   },
+  "personMonths": {
+    "title": "Personenmonate",
+    "subtitle": "Geben Sie an, wie viele Personen jeden Monat in Ihrer Wohneinheit gelebt haben, zur Kostenverteilung.",
+    "invalidTitle": "Ungültiger Wert",
+    "invalidMessage": "Geben Sie eine ganze Zahl zwischen 0 und 20 ein.",
+    "bulkEntry": "Sammeleingabe…",
+    "personCount_one": "{{count}} Person",
+    "personCount_other": "{{count}} Personen"
+  },
   "outages": {
     "loadError": "Störungen konnten nicht geladen werden",
     "emptyTitle": "Keine Störungen",
-    "emptyText": "Derzeit ist nichts geplant oder aktiv."
+    "emptyText": "Derzeit ist nichts geplant oder aktiv.",
+    "title": "Störungen",
+    "subtitle": "Geplante und aktive Versorgungsunterbrechungen.",
+    "filters": {
+      "all": "Alle",
+      "scheduled": "Geplant",
+      "active": "Aktiv",
+      "resolved": "Behoben"
+    }
   },
   "forms": {
     "loadError": "Formulare konnten nicht geladen werden",
