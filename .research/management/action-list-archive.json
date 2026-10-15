@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-15T10:32:26Z",
+  "archived_at": "2026-10-15T12:36:58Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -18180,6 +18180,59 @@
         "commit": "2caea154dcf8fa26383f5fceb258fda29c489523",
         "subject": "gh-issue-3079: fix IPv4-compatible IPv6 SSRF bypass in URL validator (#3082)",
         "at": "2026-10-15T00:35:15Z"
+      }
+    },
+    {
+      "id": "gh-issue-3083",
+      "action": "Follow-up: reconcile portfolio_aggregated_metrics schema drift + restore deleted success tests (PR #3081) (Closes #3083)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-15T00:36:00Z (#3083) | dev-reconcile 2026-10-15T12:32:21Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T00:36:00Z",
+      "issue_ref": {
+        "number": 3083,
+        "url": "https://github.com/martin-janci/property-management/issues/3083",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "10fa2087a91c09fb53bd6444c89064521053c6cf",
+        "subject": "gh-issue-3083: reconcile portfolio_aggregated_metrics schema drift + restore deleted success tests (#3087)",
+        "at": "2026-10-15T12:32:21Z"
+      }
+    },
+    {
+      "id": "gh-issue-3084",
+      "action": "Follow-up: SSRF validator still bypassable via NAT64 (64:ff9b::/96) and SIIT IPv4-embedding IPv6 forms (PR #3082) (Closes #3084)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-15T00:36:00Z (#3084)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T00:36:00Z",
+      "issue_ref": {
+        "number": 3084,
+        "url": "https://github.com/martin-janci/property-management/issues/3084",
+        "labels": [
+          "security",
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "last_updated": "2026-10-15T00:38:55Z",
+      "dev_reconciled": {
+        "landed": "49e893171cb817880a250e017c03503456c333ea",
+        "subject": "gh-issue-3084: reject NAT64 + SIIT IPv4-in-IPv6 SSRF embeddings (#3088)",
+        "at": "2026-10-15T12:33:19Z"
       }
     },
     {

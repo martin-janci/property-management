@@ -257,48 +257,6 @@
       }
     },
     {
-      "id": "gh-issue-3083",
-      "action": "Follow-up: reconcile portfolio_aggregated_metrics schema drift + restore deleted success tests (PR #3081) (Closes #3083)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-15T00:36:00Z (#3083)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-15T00:36:00Z",
-      "issue_ref": {
-        "number": 3083,
-        "url": "https://github.com/martin-janci/property-management/issues/3083",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-3084",
-      "action": "Follow-up: SSRF validator still bypassable via NAT64 (64:ff9b::/96) and SIIT IPv4-embedding IPv6 forms (PR #3082) (Closes #3084)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "in-progress",
-      "source": "dispatcher-issue-ingest 2026-10-15T00:36:00Z (#3084)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-15T00:36:00Z",
-      "issue_ref": {
-        "number": 3084,
-        "url": "https://github.com/martin-janci/property-management/issues/3084",
-        "labels": [
-          "security",
-          "follow-up",
-          "from-merged-review"
-        ]
-      },
-      "last_updated": "2026-10-15T00:38:55Z"
-    },
-    {
       "id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
       "action": "Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor)",
       "owner_role": "pm-tech-lead",

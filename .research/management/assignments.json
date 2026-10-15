@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-15T10:37:27Z",
+  "generated": "2026-10-15T12:37:46Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -164,52 +164,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-3084",
-      "branch": "auto-impl/gh-issue-3084-52b25a70",
-      "status": "review",
-      "claimed_at": "2026-10-15T00:38:55Z",
-      "last_updated": "2026-10-15T10:37:27Z",
-      "status_changed_at": "2026-10-15T06:36:08Z",
-      "pr_number": 3088,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3088",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": " [reclaim#1: sandbox-timeout, branch missing; re-spawning implementer]",
-      "reviewer_summary": "verdict=approve head_oid=b7d09675c1c668c792e33b0a2aa26aef18b16fc3 note=re-review-after-base-sync-drift;feature-diff-unchanged;ci-34-green-incl-cargo-deny;MERGE-BLOCKED auto-mode self-approval guard (self-authored PR) — needs human merge/authorization",
-      "last_reviewed_oid": "b7d09675c1c668c792e33b0a2aa26aef18b16fc3",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-10-15T10:37:27Z",
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "gh-issue-3083",
-      "branch": "auto-impl/gh-issue-3083-0dcbf2b5",
-      "status": "review",
-      "claimed_at": "2026-10-15T02:29:42Z",
-      "last_updated": "2026-10-15T10:37:27Z",
-      "status_changed_at": "2026-10-15T06:36:08Z",
-      "pr_number": 3087,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3087",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=3087 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=migration 00237 reconciles portfolio_aggregated_metrics (add missing cols + realign unique_org_period to include period_end); restored 3 pa_* success tests; fmt+clippy green (full workspace), DB tests deferred to CI (no Postgres), mirrors PR #3081",
-      "reviewer_summary": "verdict=approve head_oid=bfcd7a422c3b0a47a003c214aaaf4834edf12d26 note=re-review-after-base-sync;bigint-cast-intact;migration-00237-safe;ci-34-green;MERGE-BLOCKED auto-mode self-approval guard (self-authored PR) — needs human merge/authorization",
-      "last_reviewed_oid": "bfcd7a422c3b0a47a003c214aaaf4834edf12d26",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": "2026-10-15T10:37:27Z"
     }
   ]
 }
