@@ -16583,6 +16583,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-3085",
+      "branch": "auto-impl/gh-issue-3085-54c6ec9c",
+      "status": "merged",
+      "claimed_at": "2026-10-15T02:29:42Z",
+      "last_updated": "2026-10-15T08:28:49Z",
+      "status_changed_at": "2026-10-15T08:28:49Z",
+      "pr_number": 3086,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3086",
+      "merged_at": "2026-10-15T08:28:49Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3086 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=set RUSTUP_TOOLCHAIN=stable on cargo-deny step in .github/workflows/backend.yml so rustup ignores in-tree rust-toolchain.toml 1.97.1-musl pin (GH #3085); drift is the CI yaml itself (outside pm-backend backend/** map) — justified, issue scopes fix to this file; VERIFY OK 199e0966; IG3 skipped (pure CI config, self-verifying via PR red->green cargo-deny run); draft PR vs dev opened",
+      "reviewer_summary": "verdict=approve head_oid=89301b45edd3f436f624d437989eb0ab4d2fba35 note=cargo-deny-green; rustls 0.23.46 bump + minimal 0346/0349 ignore + bans floor-guard all justified; CI all-green (merge blocked: self-approval + review-required gate; needs human merge)",
+      "last_reviewed_oid": "89301b45edd3f436f624d437989eb0ab4d2fba35",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-10-15T06:36:08Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -19583,5 +19605,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-15T00:39:03Z"
+  "archived_at": "2026-10-15T08:35:20Z"
 }
