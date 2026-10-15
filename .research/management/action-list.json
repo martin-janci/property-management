@@ -299,26 +299,6 @@
       "last_updated": "2026-10-15T00:38:55Z"
     },
     {
-      "id": "gh-issue-3085",
-      "action": "infra: cargo-deny CI job fails on every backend PR — rust-toolchain.toml 1.97.1-musl not installable in cargo-deny-action container (Closes #3085)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-15T00:36:00Z (#3085)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-15T00:36:00Z",
-      "issue_ref": {
-        "number": 3085,
-        "url": "https://github.com/martin-janci/property-management/issues/3085",
-        "labels": [
-          "bug",
-          "backend"
-        ]
-      }
-    },
-    {
       "id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
       "action": "Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor)",
       "owner_role": "pm-tech-lead",
