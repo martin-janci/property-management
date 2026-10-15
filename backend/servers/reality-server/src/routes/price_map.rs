@@ -68,6 +68,21 @@ fn insert_bounded(cache: &mut HashMap<String, CacheEntry>, key: String, entry: C
     let now = Instant::now();
     // (1) Correctness: drop TTL-expired entries.
     cache.retain(|_, v| now < v.expires_at);
+    // (2) Memory bound: inserting a genuinely new key while the map is already
+    // at the cap would push it over, so first evict the oldest-inserted live
+    // entries (smallest `expires_at`) to make room for exactly one more.
+    // Replacing an existing key does not grow the map, so it skips eviction.
+    if !cache.contains_key(&key) && cache.len() >= MAX_PRICE_MAP_CACHE_ENTRIES {
+        let overflow = cache.len() + 1 - MAX_PRICE_MAP_CACHE_ENTRIES;
+        let mut by_age: Vec<(String, Instant)> = cache
+            .iter()
+            .map(|(k, v)| (k.clone(), v.expires_at))
+            .collect();
+        by_age.sort_by_key(|(_, expires_at)| *expires_at);
+        for (k, _) in by_age.into_iter().take(overflow) {
+            cache.remove(&k);
+        }
+    }
     cache.insert(key, entry);
 }
 
@@ -349,7 +364,10 @@ mod tests {
             },
         );
 
-        assert!(!cache.contains_key("stale"), "expired entry must be reclaimed");
+        assert!(
+            !cache.contains_key("stale"),
+            "expired entry must be reclaimed"
+        );
         assert!(cache.contains_key("fresh"));
         assert_eq!(cache.len(), 1);
     }
@@ -358,8 +376,7 @@ mod tests {
     /// the shared write lock; the final size must still respect the cap.
     #[tokio::test]
     async fn price_map_cache_bounded_under_concurrent_distinct_key_flood() {
-        let cache: Arc<RwLock<HashMap<String, CacheEntry>>> =
-            Arc::new(RwLock::new(HashMap::new()));
+        let cache: Arc<RwLock<HashMap<String, CacheEntry>>> = Arc::new(RwLock::new(HashMap::new()));
         let per_task = MAX_PRICE_MAP_CACHE_ENTRIES / 2 + 1;
 
         let mut handles = Vec::new();
