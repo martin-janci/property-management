@@ -99,6 +99,50 @@ ignore = [
     # would in any case carry a different RUSTSEC id and is NOT covered by this
     # ignore.
     "RUSTSEC-2026-0258",
+
+    # RUSTSEC-2026-0346 / -0347 / -0348 / -0349 — four rustls advisories, all
+    # with a patched floor of `>= 0.23.46`. The resolved graph carries TWO
+    # rustls lines; they are handled differently:
+    #
+    #   * rustls 0.23.x (the workspace's own TLS stack, via `reqwest`, `quinn`,
+    #     and the 0.23 side of `aws-smithy-http-client`) is the REACHABLE line.
+    #     It is PATCHED, not suppressed: `cargo update -p rustls --precise
+    #     0.23.46` bumped it to 0.23.46 in Cargo.lock (the primary fix for
+    #     GH #3085), which clears all four advisories there — including
+    #     RUSTSEC-2026-0347 (pre-auth brotli cert-decompression 1 GiB DoS) and
+    #     RUSTSEC-2026-0348 (application data buffered to the outer server after
+    #     ECH rejection), both of which are 0.23.x-only (ECH / brotli-cert
+    #     features that never existed on the 0.21.x line). Those two are
+    #     deliberately NOT on this ignore list, so they stay enforced: a future
+    #     in-range downgrade of the 0.23.x line below the 0.23.46 floor trips
+    #     the `[bans]` guard on rustls below (same mechanism as the h2 0.4.16
+    #     and quick-xml pins).
+    #
+    #   * rustls 0.21.12 is transitively pinned by the AWS SDK family
+    #     (`aws-smithy-http-client 1.1.13` -> `aws-smithy-runtime` ->
+    #     `aws-config` / `aws-sdk-{s3,sso,ssooidc,sts}`, and `hyper-rustls
+    #     0.24.2` -> `tokio-rustls 0.24.1`). It cannot reach the >= 0.23.46 fix
+    #     without a major AWS SDK migration onto rustls 0.23+, exactly like the
+    #     rustls-webpki advisories -0098/-0099/-0104 ignored above
+    #     (GH #2445/#2141/#2009). Only -0346 and -0349 match this line (its
+    #     VersionReq floor sweeps up all pre-0.23.46 releases); -0347/-0348 do
+    #     not fire on it. These two ignores exist SOLELY to cover that
+    #     un-upgradable 0.21.12 line. Reachability on 0.21.12:
+    #       - RUSTSEC-2026-0349 (ServerHello PQ-downgrade): needs the client to
+    #         offer the X25519MLKEM768 hybrid group, which did not exist until
+    #         rustls 0.23.x. 0.21.12 never offers it, so there is no PQ key
+    #         exchange to downgrade — the behaviour is absent on this line.
+    #       - RUSTSEC-2026-0346 (derived `Debug` leaks the TLS 1.2 master secret
+    #         / 1.3 resumption PSK): only affects a CUSTOM `ClientSessionStore`
+    #         that Debug-formats session values; built-in session-cache Debug is
+    #         redacted. The AWS SDK client uses the built-in cache and we add no
+    #         custom session store on the AWS outbound path (S3/STS/SSO), so the
+    #         leaking path is not exercised.
+    # Follow-up (GH #3085): remove both once the AWS SDK drops its rustls 0.21 /
+    # hyper 0.14 dependency (smithy on hyper 1.x + rustls 0.23+), which also
+    # clears the rustls-webpki and h2 0.3 ignores above.
+    "RUSTSEC-2026-0346",
+    "RUSTSEC-2026-0349",
 ]
 
 [bans]
@@ -118,6 +162,21 @@ deny = [
     # h2 >= 0.4.16 (outside the range, allowed). Lift once the AWS SDK drops its
     # hyper 0.14 / h2 0.3 dependency and the ignore above can be removed.
     { name = "h2", version = ">=0.4.0, <0.4.16", reason = "RUSTSEC-2026-0258 patched-floor guard — h2 on the 0.4.x line must be >= 0.4.16; the advisory ignore is scoped to the un-upgradable 0.3.x line, so an unpatched 0.4.0–0.4.15 must trip cargo-deny rather than be swept up by it (GH #2804/#2798)" },
+
+    # rustls 0.23.x PATCHED-FLOOR GUARD for RUSTSEC-2026-0346/-0347/-0348/-0349
+    # (GH #3085). The workspace's reachable rustls line is bumped to 0.23.46 in
+    # Cargo.lock, which patches all four advisories there. -0346/-0349 stay on
+    # the `[advisories] ignore` list ONLY to cover the AWS-SDK-pinned rustls
+    # 0.21.12 (un-upgradable); -0347/-0348 are 0.23.x-only and are NOT ignored.
+    # Because an ID ignore is global, a future in-range downgrade of the 0.23.x
+    # line (0.23.0–0.23.45, e.g. a bad `cargo update` / Dependabot lockfile
+    # move) would otherwise be silently swept up by the -0346/-0349 ignore. This
+    # ban denies exactly that window, so such a regression trips
+    # `cargo deny check bans` instead. It intentionally does NOT touch
+    # rustls 0.21.x (< 0.23.0, allowed — that is the AWS-pinned line the ignore
+    # covers) or the patched rustls >= 0.23.46 (outside the range, allowed).
+    # Lift once the AWS SDK drops rustls 0.21 and the ignore above is removed.
+    { name = "rustls", version = ">=0.23.0, <0.23.46", reason = "RUSTSEC-2026-0346/-0347/-0348/-0349 patched-floor guard — the reachable rustls 0.23.x line must be >= 0.23.46; the -0346/-0349 advisory ignore is scoped to the un-upgradable AWS-pinned 0.21.x line, so an unpatched 0.23.0–0.23.45 must trip cargo-deny rather than be swept up by it (GH #3085)" },
 
     # quick-xml XXE / billion-laughs SECURITY PIN (GH #2084, supersedes the
     # advisory pinned-dependency-guard.yml workflow). The inbound OTA parsers
