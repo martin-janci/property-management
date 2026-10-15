@@ -391,6 +391,20 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-group-delete-stub-retry1",
+      "action": "ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) [retry 1/2 of failed code-review-ppt-web-core-group-delete-stub]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-10-15T20:31:55Z (retry_of=code-review-ppt-web-core-group-delete-stub reason=failed-no-pr cooldown_ok newest_failure=2026-10-08T18:46:45Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T20:31:55Z",
+      "retry_of": "code-review-ppt-web-core-group-delete-stub",
+      "retry_round": 1
     }
   ],
   "generated": "2026-10-01T04:30:00Z"
