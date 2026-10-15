@@ -412,8 +412,8 @@ impl PortfolioAnalyticsRepository {
             r#"
             SELECT
                 COUNT(DISTINCT b.id) as total_buildings,
-                COALESCE(SUM(u.unit_count), 0) as total_units,
-                COALESCE(SUM(u.occupied_count), 0) as occupied_units,
+                COALESCE(SUM(u.unit_count), 0)::bigint as total_units,
+                COALESCE(SUM(u.occupied_count), 0)::bigint as occupied_units,
                 COALESCE(pam.total_revenue, 0) as total_revenue,
                 COALESCE(pam.total_noi, 0) as total_noi,
                 COALESCE(pam.estimated_portfolio_value, 0) as estimated_value
