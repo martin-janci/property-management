@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-15T12:36:58Z",
+  "archived_at": "2026-10-15T18:31:43Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2258,6 +2258,30 @@
         "commit": "3abe0455b9bce0c3d98da128ec21c63dccb34023",
         "subject": "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts: encode ids + test coverage (#3065)",
         "at": "2026-10-11T08:32:13Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
+      "action": "Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-10-15T04:26:46Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-15T18:25:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T04:26:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-10-15T18:25:40Z"
       }
     },
     {
