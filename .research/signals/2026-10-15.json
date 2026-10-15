@@ -1,0 +1,172 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-15",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-08T04:30:00Z",
+      "score_delta": 0,
+      "evidence": "7d 0h since last routine run — cron fired for the first time since 2026-10-08; dispatcher kept advancing autonomously on this branch (29 PRs merged in gap window, 51 commits on dev).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-10-15",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-08T04:30:00Z (>=3d)",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 7d old; cloud routine likely paused between 2026-10-08 and 2026-10-15. Dispatcher state on this planning branch still ticking (b611a55 at 02:32 UTC today).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
+      "type": "churn-hotspot",
+      "source": "git log --name-only --since=2026-10-08 origin/dev",
+      "score_delta": 1,
+      "evidence": "2 commits touched this file in the 7-day window; both tied to PR #3071 auth-fetch triplication cleanup (shared bearerAuthorization fold-in). Intentional consolidation, not instability. runs_seen 0->1.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
+      "type": "churn-hotspot",
+      "source": "git log --name-only --since=2026-10-08 origin/dev",
+      "score_delta": 1,
+      "evidence": "2 commits touched this file in the 7-day window; from the shared bearerAuthorization refactor (PR #3071). runs_seen 0->1.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/auth/index.ts",
+      "type": "churn-hotspot",
+      "source": "git log --name-only --since=2026-10-08 origin/dev",
+      "score_delta": 1,
+      "evidence": "2 commits touched this file in the 7-day window; shared auth-header entry point for api-client (PR #3071). runs_seen 0->1.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-15.md && head -1 == \"# 2026-10-15\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json staged advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-score of already-seen non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; no stale-open to decay this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → gate n/a",
+      "observed": "no new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans ≤ 2; no plan readiness check applicable",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^\\.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan of staged diff",
+      "observed": "0 matches",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md == staged backlog.md",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "cursors advanced for successful phases only",
+      "observed": "all advanced; none failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
+      "observed": "all accounted",
+      "expected": "all accounted"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive/ count ≥ HEAD count",
+      "observed": "22 >= 22",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md == staged IDEAS_TRIAGE.md",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps (<=3 total, <=1 each type)",
+      "observed": "0/0/0",
+      "expected": "within caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → gate is a no-op",
+      "observed": "skipped",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram-token pattern not present in added lines",
+      "observed": "0 matches",
+      "expected": "0 matches"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the certainty bar this run (no screen-map-drift / screen-map-orphan / fixme-in-merged-code / dep-update-noise-lockfile-drift / stalled-review signal above confidence=high + score>=3 + allowlist)"
+}

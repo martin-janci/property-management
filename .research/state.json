@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-08T04:30:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3036,
-  "last_issue_seen": 3029,
-  "last_commit_sha": "5ea25b4677b1a383be7d24f188db1c5a90b9632c",
+  "last_run_iso": "2026-10-15T02:40:36Z",
+  "last_run_ms": 180000,
+  "last_pr_seen": 3082,
+  "last_issue_seen": 3085,
+  "last_commit_sha": "b611a55f8b7ff49434711df47bbb689dda77d593",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -581,6 +581,21 @@
       "runs_seen": 1,
       "last_seen": "2026-10-08",
       "recent_churn": 2
+    },
+    "frontend/packages/api-client/src/lib/fetch.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-15",
+      "recent_churn": 2
+    },
+    "frontend/packages/api-client/src/auth/apply-headers.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-15",
+      "recent_churn": 2
+    },
+    "frontend/packages/api-client/src/auth/index.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-15",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -1146,7 +1161,12 @@
     "screen-map-drift-pr-3022-reality",
     "code-review-ppt-web-core-group-join-leave-silent",
     "code-review-ppt-web-core-group-delete-stub",
-    "code-review-ppt-web-core-rentals-mutation-silent"
+    "code-review-ppt-web-core-rentals-mutation-silent",
+    "lag-warning-2026-10-15",
+    "stale-routine-alert-2026-10-15",
+    "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
+    "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
+    "churn-hotspot-frontend/packages/api-client/src/auth/index.ts"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1160,8 +1180,8 @@
     "mobile-native-kmp": "2026-10-13"
   },
   "stats": {
-    "runs": 88,
-    "vectors_created": 420,
+    "runs": 89,
+    "vectors_created": 423,
     "plans_created": 33,
     "quiet_days": 5,
     "auto_fix_count": 0
