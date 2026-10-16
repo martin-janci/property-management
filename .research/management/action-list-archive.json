@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-16T02:41:37Z",
+  "archived_at": "2026-10-16T06:37:55Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5705,6 +5705,26 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-10-08T20:33:17Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-group-delete-stub-retry1",
+      "action": "ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) [retry 1/2 of failed code-review-ppt-web-core-group-delete-stub]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-10-15T20:31:55Z (retry_of=code-review-ppt-web-core-group-delete-stub reason=failed-no-pr cooldown_ok newest_failure=2026-10-08T18:46:45Z) | dev-reconcile 2026-10-16T06:28:54Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T20:31:55Z",
+      "retry_of": "code-review-ppt-web-core-group-delete-stub",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "a2dab95d83b82b9a3d107bf0376b3cfe0a392c1a",
+        "subject": "code-review-ppt-web-core-group-delete-stub-retry1: wire community group Delete to the real delete API (#3101)",
+        "at": "2026-10-16T06:28:54Z"
       }
     },
     {

@@ -308,20 +308,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-group-delete-stub-retry1",
-      "action": "ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) [retry 1/2 of failed code-review-ppt-web-core-group-delete-stub]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-10-15T20:31:55Z (retry_of=code-review-ppt-web-core-group-delete-stub reason=failed-no-pr cooldown_ok newest_failure=2026-10-08T18:46:45Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-15T20:31:55Z",
-      "retry_of": "code-review-ppt-web-core-group-delete-stub",
-      "retry_round": 1
-    },
-    {
       "id": "gh-issue-3098",
       "action": "Follow-up: reconcile portfolio_benchmarks schema drift + replace dangling BIT-622 test refs (PR #3087) (Closes #3098)",
       "owner_role": "pm-tech-lead",
@@ -359,6 +345,125 @@
           "follow-up",
           "from-merged-review"
         ]
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
+      "action": "mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…')",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-outage-status-untranslated",
+      "action": "mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*')",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
+      "action": "Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
+      "action": "Churn hotspot: frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx — new in PR #3094 (minimal RN article-detail view)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
+      "action": "Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
+      "action": "mobile-rn: NewsScreen/ArticleDetailScreen category and PersonMonthsScreen status badges render raw English enum values on i18n screens",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "stalled-review-pr-3024",
+      "action": "Stalled review: PR #3024 docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, no reviewDecision",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
       }
     }
   ],

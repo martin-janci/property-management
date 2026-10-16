@@ -12122,7 +12122,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3071",
         "git log --since=2026-10-08"
@@ -12135,7 +12135,12 @@
       ],
       "created_at": "2026-10-15",
       "updated_at": "2026-10-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-16T06:28:54Z",
+        "assignment_status": "merged",
+        "pr_number": 3100
+      }
     },
     {
       "id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
@@ -12217,7 +12222,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server assertsqlsafe)"
       ],
@@ -12231,7 +12236,12 @@
       ],
       "created_at": "2026-10-15",
       "updated_at": "2026-10-15",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-16T06:28:54Z",
+        "assignment_status": "merged",
+        "pr_number": 3102
+      }
     },
     {
       "id": "code-review-mobile-rn-outage-news-detail-dead-nav",
