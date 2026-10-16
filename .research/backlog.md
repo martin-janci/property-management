@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-15 16:53 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-16 00:50 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -66,7 +66,6 @@
 | 2 | bug | reality-web PriceAlerts mark-read mutations swallow errors — row stays unread with no user feedback on failure | `frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) | 2026-10-02 | done | — |
 | 2 | refactor | workflow-automation pages emit English-literal toast titles while rest of file uses i18n | `frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx (+4)` | rotating-expert-review ppt-web-ui 2026-10-01 | 2026-10-01 | done | — |
 | 2 | bug | FacilitiesPage swallows listFacilities error — empty indistinguishable from fetch failure | `frontend/apps/ppt-web/src/features/facilities/pages/FacilitiesPage.tsx` | rotating-expert-review ppt-web-ui 2026-10-01 | 2026-10-01 | done | — |
-| 2 | test-gap | ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #2994 | 2026-10-01 | open | — |
 | 2 | test-gap | ppt-web Home CTA refactor (PR #2995) landed without touching docs/screens/ppt | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #2995 | 2026-10-01 | done | — |
 | 2 | test-gap | ppt-web manager-dashboard role-gate (PR #3002) landed without touching docs/screens/ppt | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #3002 | 2026-10-01 | done | — |
 | 2 | bug | ppt-web dashboard routes lack ProtectedRoute wrapper — no auth on /dashboard/* | `frontend/apps/ppt-web/src/routes/groups/core.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-09-27 ppt-web-core router) | 2026-09-27 | done | — |
@@ -215,7 +214,7 @@
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
 | 1 | refactor | Churn hotspot: frontend/packages/api-client/src/lib/fetch.ts (api-client shared fetch — refactor consolidation window 2026-10-08..2026-10-15) | `frontend/packages/api-client/src/lib/fetch.ts` | PR #3071 (+1) | 2026-10-15 | open | — |
-| 1 | refactor | Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor) | `frontend/packages/api-client/src/auth/apply-headers.ts` | PR #3071 (+1) | 2026-10-15 | open | — |
+| 1 | refactor | Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor) | `frontend/packages/api-client/src/auth/apply-headers.ts` | PR #3071 (+1) | 2026-10-15 | dropped | — |
 | 1 | refactor | Churn hotspot: frontend/packages/api-client/src/auth/index.ts (shared auth-header entry point) | `frontend/packages/api-client/src/auth/index.ts` | PR #3071 (+1) | 2026-10-15 | open | — |
 | 1 | bug | reality-server price_map/listings use sqlx::AssertSqlSafe + format!() for query text — safe today but opt-out of the SQL-injection guard; add SAFETY comments or move to QueryBuilder | `backend/servers/reality-server/src/routes/price_map.rs (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server assertsqlsafe) | 2026-10-15 | open | — |
 | 1 | refactor | mobile-rn Outages/News/PersonMonths screens render hardcoded English headers, filter chips, and a validation Alert in an app shipping 6 locales | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 mobile-rn header-chip-i18n) | 2026-10-15 | open | — |
@@ -229,6 +228,7 @@
 | 1 | refactor | reality-web /report page recent churn — PR #3014 submit-wiring change | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | done | — |
 | 1 | refactor | reality-web FeaturedListings recent churn — PR #3015 error-surface fix | `frontend/apps/reality-web/src/components/home/FeaturedListings.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | done | — |
 | 1 | bug | reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap | `backend/servers/reality-server/src/routes/compare.rs` | rotating-expert-review reality-server 2026-10-03 | 2026-10-03 | open | — |
+| 1 | test-gap | ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #2994 | 2026-10-01 | open | — |
 | 1 | refactor | ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot) | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | churn 14d | 2026-10-01 | done | — |
 | 1 | refactor | ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx` | churn 14d | 2026-10-01 | done | — |
 | 1 | refactor | ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx` | churn 14d | 2026-10-01 | done | — |

@@ -11203,13 +11203,14 @@
       "title": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #2994"
       ],
       "evidence": [
-        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat."
+        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat.",
+        "decayed 2026-10-16: no new signals in 14 days (score 2 -> 1)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"

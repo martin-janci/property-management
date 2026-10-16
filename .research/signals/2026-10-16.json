@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-10-16T00:48:56Z",
+  "trigger_payload": "buffer-low: claimable=3/72 (coverage.json missing; 7 dep-blocked on absent pm-devops-unblock-mobile-native-cloud-builds) — refill planner",
+  "phase_1_summary": {
+    "merged_prs_since_cursor": 0,
+    "open_prs_touched": 9,
+    "new_issues": 2,
+    "commits_on_dev": 9,
+    "lag_hours": 7
+  },
+  "phases_skipped": {
+    "phase_1_5_code_review": "dispatcher Tier-1d dev-review ran same-segment coverage within last 30h; 0 new app-code PRs merged since last routine run; deferring to next calendar day keeps 8-segment rotation on cadence",
+    "phase_1_6_project_management": "same-day shape — pm-full / per-role analysis not useful without new PR surface; next role pm-data remains at pm_cursor.next_index=6"
+  },
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal — 0 new signals this run (confidence=high + score>=3 requires a fresh observation)",
+  "backlog_mutations": [
+    {
+      "id": "screen-map-drift-pr-2994-ppt",
+      "op": "decay",
+      "score_before": 2,
+      "score_after": 1,
+      "rationale": "updated_at=2026-10-01 is 15d old, no new signal in 14d — G5 decay rule applied; evidence line appended"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-10-16.md && head -1 matches '# 2026-10-16'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "cursor diff vs HEAD state.json", "observed": "last_run_iso + last_issue_seen (3085→3099) + last_commit_sha changed", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | length == (unique | length)'", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "signals[] vs prev seen_signals, excluding cumulative types", "observed": "signals=[] (no re-emits)", "expected": "true" },
+    { "goal": "G5-cap", "passed": true, "command": "jq '[.items[]|select(.score>8)]|length == 0'", "observed": "true", "expected": "true" },
+    { "goal": "G5-decay", "passed": true, "command": "every open item updated_at<=today-14 lost 1 or moved to dropped", "observed": "1 candidate (screen-map-drift-pr-2994-ppt) decayed 2→1", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "every new plan file has adversarial pass annotation in brief", "observed": "no new plans this run", "expected": "true (vacuously)" },
+    { "goal": "G7", "passed": true,  "command": "new plan count ≤2 + metadata/headings/mode/files-exist checks", "observed": "no new plans this run", "expected": "true (vacuously)" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/'", "observed": "0 non-.research/ paths", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "secret / private-hostname regex over staged diff (see routine-prompt G9 for exact pattern)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regenerated", "observed": "byte-identical except regen-time timestamp (which is the regen itself)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief lists failed phases; cursors advanced only on success", "observed": "no phase failures (Phase 1.5/1.6 skips are policy decisions, not failures; brief surfaces them in Code review slice + Open questions)", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug present in plans/ or plans/_archive/", "observed": "all prior slugs retained", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "plans/_archive count this run ≥ HEAD count", "observed": "21 == 21 (no archive change)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regenerated", "observed": "byte-identical except regen-time timestamp", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions discipline + idempotency + kill switch", "observed": "auto_fix_actions=[]; no new auto_fix_history entries; ROUTINE_AUTOFIX_DISABLED unset but no eligible signal", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + pm_cursor valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this run (no-op gate); pm_cursor.next_index=6 valid; coverage_cursor.next_index=8 valid", "expected": "true (no-op)" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}
