@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-16T10:37:18Z",
+  "archived_at": "2026-10-16T12:40:24Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4791,6 +4791,30 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
+      "action": "mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…')",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-10-16T12:29:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3105,
+        "merged_at": "2026-10-16T10:27:07Z",
+        "at": "2026-10-16T12:29:37Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-fault-photos-silently-dropped",
       "action": "Mobile RN fault-report photos silently dropped when upload fails — no user-visible error",
       "owner_role": "pm-backend",
@@ -5063,6 +5087,30 @@
         "merged_pr": 3094,
         "merged_at": "2026-10-16T02:30:46Z",
         "at": "2026-10-16T02:41:31Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-outage-status-untranslated",
+      "action": "mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*')",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-10-16T12:29:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3106,
+        "merged_at": "2026-10-16T10:27:36Z",
+        "at": "2026-10-16T12:29:37Z"
       }
     },
     {

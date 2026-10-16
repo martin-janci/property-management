@@ -12434,7 +12434,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en)",
         "PR #3094"
@@ -12449,7 +12449,12 @@
       ],
       "created_at": "2026-10-16",
       "updated_at": "2026-10-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-16T12:29:50Z",
+        "assignment_status": "merged",
+        "pr_number": 3105
+      }
     },
     {
       "id": "code-review-mobile-rn-outage-status-untranslated",
@@ -12457,7 +12462,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated)",
         "PR #3096"
@@ -12472,7 +12477,12 @@
       ],
       "created_at": "2026-10-16",
       "updated_at": "2026-10-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-16T12:29:50Z",
+        "assignment_status": "merged",
+        "pr_number": 3106
+      }
     },
     {
       "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
