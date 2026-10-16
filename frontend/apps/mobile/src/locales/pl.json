@@ -163,6 +163,7 @@
     "emptyText": "Wszystkie problemy zostały rozwiązane"
   },
   "news": {
+    "backToList": "‹ Aktualnosci",
     "title": "Aktualnosci",
     "latest": "Najnowsze wiadomosci",
     "readMore": "Czytaj wiecej",
@@ -544,6 +545,7 @@
     "personCount_other": "{{count}} osób"
   },
   "outages": {
+    "backToList": "‹ Awarie",
     "loadError": "Nie można załadować awarii",
     "emptyTitle": "Brak awarii",
     "emptyText": "Obecnie nic nie jest zaplanowane ani aktywne.",

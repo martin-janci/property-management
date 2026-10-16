@@ -163,6 +163,7 @@
     "emptyText": "All issues have been addressed"
   },
   "news": {
+    "backToList": "‹ News",
     "title": "News",
     "latest": "Latest News",
     "readMore": "Read More",
@@ -582,6 +583,7 @@
     "personCount_other": "{{count}} persons"
   },
   "outages": {
+    "backToList": "‹ Outages",
     "loadError": "Couldn't load outages",
     "emptyTitle": "No outages",
     "emptyText": "Nothing scheduled or active right now.",

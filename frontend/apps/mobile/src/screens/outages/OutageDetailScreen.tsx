@@ -62,7 +62,7 @@ export function OutageDetailScreen({ outageId, onBack }: OutageDetailScreenProps
 
   const back = (
     <Pressable style={styles.backButton} onPress={onBack} disabled={!onBack}>
-      <Text style={styles.backButtonText}>‹ Outages</Text>
+      <Text style={styles.backButtonText}>{t('outages.backToList')}</Text>
     </Pressable>
   );
 
