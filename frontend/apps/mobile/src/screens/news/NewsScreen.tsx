@@ -79,17 +79,17 @@ export function NewsScreen({ onNavigate }: NewsScreenProps) {
   );
 
   const filters: ReadonlyArray<{ value: 'all' | NewsArticle['category']; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'building', label: 'Building' },
-    { value: 'district', label: 'District' },
-    { value: 'partner', label: 'Partners' },
+    { value: 'all', label: t('news.filters.all') },
+    { value: 'building', label: t('news.filters.building') },
+    { value: 'district', label: t('news.filters.district') },
+    { value: 'partner', label: t('news.filters.partner') },
   ];
 
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>News</Text>
-        <Text style={s.headerSubtitle}>Updates from your building and neighbourhood.</Text>
+        <Text style={s.headerTitle}>{t('news.title')}</Text>
+        <Text style={s.headerSubtitle}>{t('news.subtitle')}</Text>
       </View>
 
       <View style={s.filtersWrapper}>

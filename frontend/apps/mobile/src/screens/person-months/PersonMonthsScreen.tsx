@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Pressable,
@@ -55,6 +56,7 @@ interface PersonMonthsScreenProps {
 }
 
 export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
+  const { t } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
   const [entries, setEntries] = useState<PersonMonthEntry[]>(MOCK_ENTRIES);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
   const saveEdit = (entry: PersonMonthEntry) => {
     const next = Number(draftValue);
     if (!Number.isInteger(next) || next < 0 || next > 20) {
-      Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.');
+      Alert.alert(t('personMonths.invalidTitle'), t('personMonths.invalidMessage'));
       return;
     }
     setEntries((prev) =>
@@ -90,10 +92,8 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Person-months</Text>
-        <Text style={s.headerSubtitle}>
-          Declare how many people lived in your unit each month for cost allocation.
-        </Text>
+        <Text style={s.headerTitle}>{t('personMonths.title')}</Text>
+        <Text style={s.headerSubtitle}>{t('personMonths.subtitle')}</Text>
       </View>
 
       <ScrollView
@@ -139,20 +139,20 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
                     style={[s.primaryButton, styles.saveButton]}
                     onPress={() => saveEdit(entry)}
                   >
-                    <Text style={s.primaryButtonText}>Save</Text>
+                    <Text style={s.primaryButtonText}>{t('common.save')}</Text>
                   </Pressable>
                   <Pressable style={styles.cancelButton} onPress={() => setEditingId(null)}>
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                   </Pressable>
                 </View>
               ) : (
                 <View style={styles.viewRow}>
                   <Text style={styles.value}>
-                    {entry.declaredPersons} person{entry.declaredPersons === 1 ? '' : 's'}
+                    {t('personMonths.personCount', { count: entry.declaredPersons })}
                   </Text>
                   {entry.status !== 'confirmed' && (
                     <Pressable onPress={() => startEdit(entry)} style={styles.editLink}>
-                      <Text style={styles.editLinkText}>Edit</Text>
+                      <Text style={styles.editLinkText}>{t('common.edit')}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -162,7 +162,7 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
         })}
 
         <Pressable style={s.primaryButton} onPress={() => onNavigate?.('PersonMonthsBulk')}>
-          <Text style={s.primaryButtonText}>Bulk entry…</Text>
+          <Text style={s.primaryButtonText}>{t('personMonths.bulkEntry')}</Text>
         </Pressable>
 
         <View style={s.bottomSpacer} />

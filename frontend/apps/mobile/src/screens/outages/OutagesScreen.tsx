@@ -138,17 +138,17 @@ export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
   );
 
   const filters: ReadonlyArray<{ value: 'all' | OutageStatus; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'in_progress', label: 'Active' },
-    { value: 'resolved', label: 'Resolved' },
+    { value: 'all', label: t('outages.filters.all') },
+    { value: 'scheduled', label: t('outages.filters.scheduled') },
+    { value: 'in_progress', label: t('outages.filters.active') },
+    { value: 'resolved', label: t('outages.filters.resolved') },
   ];
 
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Outages</Text>
-        <Text style={s.headerSubtitle}>Planned and active utility interruptions.</Text>
+        <Text style={s.headerTitle}>{t('outages.title')}</Text>
+        <Text style={s.headerSubtitle}>{t('outages.subtitle')}</Text>
       </View>
 
       <View style={s.filtersWrapper}>
