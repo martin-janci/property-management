@@ -12046,14 +12046,15 @@
       "evidence": [
         "backend/servers/api-server/src/routes/violations.rs — EVERY handler authorizes solely on `user.tenant_id` presence (`.ok_or_else(|| forbidden_error(\"No organization context\"))`) and never consults `user.role`. The ONLY role check in the whole router is list_comments L648 (`user.is_platform_admin() || user.role.map(|r| r.is_manager())`) deciding whether internal comments are visible — proving the role model is available but was not applied to the write/decision paths.",
         "Privileged endpoints with NO role gate: create_rule/update_rule/delete_rule (community rules), create_violation, update_violation, assign_violation, create_action/update_action/mark_action_sent (issue enforcement actions + fines), record_payment, create_appeal and decide_appeal. Most severe: POST /api/v1/violations/appeals/{appeal_id}/decide → decide_appeal (repo L799) lets any authenticated org member approve an appeal, which sets the violation to 'dismissed' and reduces the fine via GREATEST(0, fine_amount - adjustment). A Resident/Tenant can file an appeal on their own violation and then approve it, zeroing their own fine.",
-        "AuthUser exposes `role: Option<TenantRole>` with a hierarchy (`is_manager()`, `level()`, `is_platform_admin()` — api-core/src/extractors/auth.rs:247, rls_connection.rs:121). The router is mounted as a plain `.nest(\"/api/v1/violations\", routes::violations::router())` (lib.rs:408) with no role-enforcing Tower layer, so there is no outer authorization layer compensating. Fix: require manager/org-admin (or a committee role) on all create/update/delete/assign/action/payment/appeal-decision handlers."
+        "AuthUser exposes `role: Option<TenantRole>` with a hierarchy (`is_manager()`, `level()`, `is_platform_admin()` — api-core/src/extractors/auth.rs:247, rls_connection.rs:121). The router is mounted as a plain `.nest(\"/api/v1/violations\", routes::violations::router())` (lib.rs:408) with no role-enforcing Tower layer, so there is no outer authorization layer compensating. Fix: require manager/org-admin (or a committee role) on all create/update/delete/assign/action/payment/appeal-decision handlers.",
+        "[rolled-back promotion 2026-10-16]: stem collision with active assignment PR #3072 (status=review) — plan file deleted; the implementer is already shipping this fix. Backlog row stays open until PR #3072 merges, then it will resolve via Phase 2 PR-body/evidence-gone check."
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs",
         "backend/crates/db/src/repositories/violations.rs"
       ],
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-10-16",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -12434,14 +12435,16 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en)",
-        "PR #3094"
+        "PR #3094",
+        "PR #3105"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx:59 and frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx:65 — the only chrome element on these two newly-merged detail screens hardcodes the English back-button label ('‹ News' / '‹ Outages') while every other visible string already resolves through t('…'). sk/cs/de users see English on the back control.",
-        "Fix shape: add news.backTo / outages.backTo keys to the six locale JSONs and swap the two literal strings."
+        "Fix shape: add news.backTo / outages.backTo keys to the six locale JSONs and swap the two literal strings.",
+        "resolved: PR #3105 merged 2026-10-16 — fix(mobile): externalize detail-screen back-button labels to i18n; grep for literals \"‹ News\" / \"‹ Outages\" returns 0 hits."
       ],
       "files": [
         "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
@@ -12457,14 +12460,16 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated)",
-        "PR #3096"
+        "PR #3096",
+        "PR #3106"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:209 and frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx:115 — status badge renders outage.status.replace('_', ' ') directly ('scheduled' | 'in progress' | 'resolved'). Slovak-locale user sees English on the primary triage element.",
-        "Allow-list already narrowed via narrow(o.status, OUTAGE_STATUSES, 'scheduled'); t('outages.status.' + outage.status) lookup is safe. 3 locale keys per locale."
+        "Allow-list already narrowed via narrow(o.status, OUTAGE_STATUSES, 'scheduled'); t('outages.status.' + outage.status) lookup is safe. 3 locale keys per locale.",
+        "resolved: PR #3106 merged 2026-10-16 — fix(mobile): translate OutagesScreen status badge via i18n; grep for `outage.status.replace` returns 0 hits."
       ],
       "files": [
         "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
@@ -12493,6 +12498,50 @@
         "frontend/apps/mobile/src/screens/news/NewsScreen.tsx",
         "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
         "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-mock-data",
+      "title": "reality-web: /realtor/[id]/page.tsx serves MOCK_AGENT for every id — public realtor profiles are hardcoded demo data",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-10-16 reality-web realtor-mock-data)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11 — imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS from `./_mock`.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:20 — `const agent = MOCK_AGENT;` ignores the [id] route param entirely, so every public URL /realtor/<anything> renders the same demo profile and uses MOCK_AGENT_LISTINGS/MOCK_AGENT_REVIEWS; no fetch hook is called.",
+        "Fix shape: wire TanStack Query against the realtor-profile endpoint on reality-server and gate the mock to dev/preview only (or delete `_mock` once the real hook ships)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-slovak-strings",
+      "title": "reality-web: /agency/[slug]/page.tsx hardcodes Slovak copy under /[locale]/ route — cs/de/en visitors see Slovak",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-10-16 reality-web agency-slovak-strings)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:8 — top-of-file comment admits `hardcoded Slovak copy (the sibling profile does not use next-intl)` on a route served under /[locale]/ for sk/cs/de/en.",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,46,125,157,220,223 — literals `Načítavam…`, `Kancelária sa nenašla.`, `✓ Overená`, `O kancelárii`, `Aktívne ponuky`, `Žiadne aktívne ponuky.` bypass next-intl.",
+        "Fix shape: pull strings into `messages/<locale>.json` under `agency.*` and swap for `useTranslations(\"agency\")`."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
       ],
       "created_at": "2026-10-16",
       "updated_at": "2026-10-16",

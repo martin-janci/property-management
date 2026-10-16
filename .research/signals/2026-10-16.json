@@ -1,225 +1,228 @@
 {
-  "date": "2026-10-16",
-  "run_iso": "2026-10-16T06:42:25Z",
-  "trigger": "buffer-low-refire-incremental",
+  "run_iso": "2026-10-16T11:00:23Z",
+  "since_iso": "2026-10-16T06:51:02Z",
+  "lag_hours": 3,
   "signals": [
     {
-      "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
-      "type": "churn-hotspot",
-      "source": "commit 7c4b1db / PR #3094",
-      "score_delta": 1,
-      "evidence": "162 lines added (fresh test file) in commit 7c4b1db. #1 raw churn this run.",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
-      "type": "churn-hotspot",
-      "source": "commit 710fe8a / PR #3093",
-      "score_delta": 1,
-      "evidence": "152 lines added (fresh test file) in commit 710fe8a. #2 raw churn this run.",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
-      "type": "churn-hotspot",
-      "source": "commit 7c4b1db / PR #3094",
-      "score_delta": 1,
-      "evidence": "144 lines added (fresh screen file) in commit 7c4b1db. #3 raw churn this run.",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "stalled-review-pr-3024",
-      "type": "stalled-review",
-      "source": "PR #3024",
-      "score_delta": 0,
-      "evidence": "docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, reviewDecision=null, draft=false. Non-dependabot.",
-      "confidence": "high",
-      "candidate_vector": "dx",
-      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
-    },
-    {
-      "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
+      "id": "code-review-reality-web-realtor-mock-data",
       "type": "code-review-finding",
-      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en)",
-      "score_delta": 0,
-      "evidence": "ArticleDetailScreen.tsx:59 and OutageDetailScreen.tsx:65 — only chrome element on these two newly-merged detail screens hardcodes English back-button label ('‹ News' / '‹ Outages') while all other strings resolve t('…').",
-      "confidence": "high",
+      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 reality-web realtor-mock-data)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
       "candidate_vector": "bug",
-      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11 — imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS from `./_mock`.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:20 — `const agent = MOCK_AGENT;` ignores the [id] route param; every public /realtor/<anything> URL renders the same demo profile."
+      ],
+      "expert": "frontend"
     },
     {
-      "id": "code-review-mobile-rn-outage-status-untranslated",
+      "id": "code-review-reality-web-agency-slovak-strings",
       "type": "code-review-finding",
-      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated)",
-      "score_delta": 0,
-      "evidence": "OutagesScreen.tsx:209 and OutageDetailScreen.tsx:115 — status badge renders outage.status.replace('_', ' ') directly on a screen whose filters are already t('outages.filters.*'). Allow-list already narrowed; safe to t('outages.status.' + outage.status).",
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
-    },
-    {
-      "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn news-personmonths-badge-untranslated)",
-      "score_delta": 0,
-      "evidence": "NewsScreen.tsx:147, ArticleDetailScreen.tsx:114 render raw {category} and PersonMonthsScreen.tsx:125 renders raw {entry.status}. Same screens otherwise use t('news.filters.*') / t('personMonths.*').",
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
+      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 reality-web agency-slovak-strings)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:8 — top-of-file comment admits `hardcoded Slovak copy (the sibling profile does not use next-intl)` on a route served under /[locale]/ for sk/cs/de/en.",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,46,125,157,220,223 — literals `Načítavam…`, `Kancelária sa nenašla.`, `✓ Overená`, `O kancelárii`, `Aktívne ponuky`, `Žiadne aktívne ponuky.` bypass next-intl."
+      ],
+      "expert": "frontend"
     }
   ],
-  "code_review_slice": {
-    "segment_reviewed": "mobile-rn",
-    "reason": "churn-aligned (3 of top-3 raw-churn files under frontend/apps/mobile/src/) and oldest-unreviewed tied at 2026-10-11",
-    "experts": [
+  "merged_prs_since_cursor": [
+    {
+      "number": 3103,
+      "title": "gh-issue-3099: block NAT64 RFC 8215 local-use prefix in SSRF filter",
+      "merged_at": "2026-10-16T10:27:39Z"
+    },
+    {
+      "number": 3105,
+      "title": "fix(mobile): externalize detail-screen back-button labels to i18n",
+      "merged_at": "2026-10-16T10:27:07Z"
+    },
+    {
+      "number": 3106,
+      "title": "fix(mobile): translate OutagesScreen status badge via i18n",
+      "merged_at": "2026-10-16T10:27:36Z"
+    }
+  ],
+  "resolution_actions": [
+    {
+      "backlog_id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
+      "to_status": "done",
+      "pr": 3105,
+      "reason": "pr-body + evidence-gone (grep for '‹ News'/'‹ Outages' literals returns 0 hits)"
+    },
+    {
+      "backlog_id": "code-review-mobile-rn-outage-status-untranslated",
+      "to_status": "done",
+      "pr": 3106,
+      "reason": "pr-body + evidence-gone (grep for outage.status.replace returns 0 hits)"
+    }
+  ],
+  "promotions": [
+    {
+      "backlog_id": "code-review-api-handlers-violations-missing-role-authz",
+      "action": "rolled-back",
+      "reason": "stem collision with active assignment PR #3072 (status=review) — the implementer is already shipping this fix; promoting again would duplicate work."
+    }
+  ],
+  "phase15": {
+    "segment_reviewed": "reality-web",
+    "selection_reason": "oldest-unreviewed (tied 2026-10-11 with api-handlers; api-handlers saturation-skipped — 3 open code-review-api-handlers-violations-* items)",
+    "experts_used": [
       "frontend"
     ],
-    "findings_count": 3,
-    "next_segment_hint": "api-handlers or reality-web (both oldest at 2026-10-11; api-handlers has 3 open findings = saturated → reality-web)"
+    "findings_count": 2
   },
-  "auto_fix_actions": [],
+  "phase16": {
+    "roles_run": [
+      "pm-scrum-master",
+      "pm-integration"
+    ],
+    "trigger_text": "",
+    "action_list_delta": {
+      "added": 8,
+      "marked_done": 2,
+      "open_count_after": 30,
+      "target": 36
+    },
+    "risks_added": 6,
+    "decisions_added": 7,
+    "coverage_cursor_advanced": {
+      "from": 9,
+      "to": 10,
+      "epic_rechecked": "epic-84"
+    },
+    "pm_cursor_advanced": {
+      "from": 7,
+      "to": 0,
+      "role_run": "pm-integration"
+    }
+  },
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && head -1 == # YYYY-MM-DD",
+      "command": "test -f briefs/<today>.md && head -1 matches ^# <today>$",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state advanced vs HEAD",
-      "observed": "last_pr_seen 3097→3102, last_commit_sha advanced, stats.runs 93→94",
+      "command": "jq slurpfile prev state advanced",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "backlog ids unique",
+      "command": "backlog.items ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no non-cumulative signal id re-emits with score_delta != 0",
-      "observed": "4 re-emits zeroed (stalled-review-pr-3024 + 3 code-review-findings)",
-      "expected": "true"
-    },
-    {
-      "goal": "G5 (cap)",
-      "passed": true,
-      "command": "no score > 8",
+      "command": "non-cumulative signal re-emit check",
       "observed": "true",
       "expected": "true"
     },
     {
-      "goal": "G5 (decay)",
+      "goal": "G5",
       "passed": true,
-      "command": "aged items decayed or dropped",
-      "observed": "screen-map-drift-pr-2994-ppt 1→0→dropped (second decay same day on re-fire)",
+      "command": "score cap <= 8 + decay rule",
+      "observed": "true + no items eligible for decay",
       "expected": "true"
     },
     {
-      "goal": "G7 (plan count)",
+      "goal": "G6",
       "passed": true,
-      "command": "at most 2 new plans",
-      "observed": "0 new plans",
-      "expected": "true"
+      "command": "every new plans/*.md has adversarial-pass annotation in brief",
+      "observed": "no new plans (promoted + rolled back; delete not add) — vacuously true",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans + metadata + headings + capability + mode + files-exist",
+      "observed": "0 new plans — vacuously true",
+      "expected": "<=2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "no non-.research/ files staged",
-      "observed": "0",
+      "command": "staged files all under .research/",
+      "observed": "0 non-.research files",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets in staged diff",
+      "command": "staged diff has no secrets / private hostnames (excluding 4 baseline docs)",
       "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md matches regen",
-      "observed": "byte-identical",
-      "expected": "byte-identical"
+      "command": "backlog.md regen byte-identical to staged",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases that failed match cursors not advanced",
-      "observed": "no phase failures reported; all cursors consistent",
-      "expected": "match"
+      "command": "no failed phases vs state cursors",
+      "observed": "no phases failed",
+      "expected": "exit 0"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plans still present",
-      "observed": "all prior plans accounted for",
-      "expected": "true"
+      "command": "every HEAD plan slug present in working tree (active or archive)",
+      "observed": "all 16 active HEAD plans still in working tree",
+      "expected": "exit 0"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive only grows",
-      "observed": "22 >= 22",
-      "expected": ">="
+      "command": "archive count now >= HEAD count",
+      "observed": "now=22 head=22",
+      "expected": "now >= head"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md matches regen",
-      "observed": "byte-identical",
-      "expected": "byte-identical"
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix caps + idempotency",
-      "observed": "auto_fix_actions=[] (no eligible candidate)",
-      "expected": "<=3 total, <=1 each type"
+      "command": "auto-fix caps + idempotency + kill switch",
+      "observed": "auto_fix_actions=[] — no candidate",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid",
-      "observed": "action-list.json, risks.json, project-state.md valid; pm_cursor in 0..7; coverage_cursor in [0, #epics)",
-      "expected": "all valid"
+      "command": "management artifacts valid; pm_cursor in [0,7]; coverage_cursor in [0, #epics); advanced vs HEAD",
+      "observed": "action-list/risks parse; project-state non-empty; pm=0 (was 7); coverage=10 (was 9); epics=13",
+      "expected": "exit 0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token in diff",
+      "command": "staged diff has no literal Telegram bot-token value",
       "observed": "0 matches",
       "expected": "0"
     }
   ],
-  "rerun_at": "2026-10-16T06:47:16Z",
-  "rerun_note": "buffer-low payload (claimable=11/72) — re-fired after 04:00 scheduled run; captured 3 implementer PRs merged at 04:38Z (#3100 fetch.ts passthrough test, #3101 group-delete-stub-retry1, #3102 assertsqlsafe-format-sql). No new signals emitted (resolution-only); 3 backlog items flipped to done; cursors advanced to PR #3102.",
-  "resolutions_this_rerun": [
-    {
-      "item_id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
-      "pr": 3100,
-      "transition": "open→done"
-    },
-    {
-      "item_id": "code-review-reality-server-assertsqlsafe-format-sql",
-      "pr": 3102,
-      "transition": "open→done"
-    },
-    {
-      "item_id": "code-review-ppt-web-core-group-delete-stub",
-      "pr": 3101,
-      "transition": "dropped→done (retry1 landed)"
-    }
-  ],
-  "rerun_goal_checks_at": "2026-10-16T06:47:16Z"
+  "auto_fix_actions": []
 }

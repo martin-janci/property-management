@@ -298,7 +298,7 @@
       "action": "mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…')",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=2 conf=high vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -308,14 +308,15 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "notes": " | resolved by PR #3105 merged 2026-10-16"
     },
     {
       "id": "code-review-mobile-rn-outage-status-untranslated",
       "action": "mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*')",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=2 conf=high vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -325,7 +326,8 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "notes": " | resolved by PR #3106 merged 2026-10-16"
     },
     {
       "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
@@ -430,7 +432,99 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "pm-devops-unblock-utoipa-swagger-ui-egress",
+      "action": "Unblock utoipa-swagger-ui crates.io egress for api-server in the cloud runner (#2966) so IDOR retries (#2946 #2944 #2945) can build",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "pm-devops",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-scrum-master)"
+    },
+    {
+      "id": "pm-devops-retry-idor-fixes-2944-2945-2946",
+      "action": "Retry cross-tenant IDOR fixes #2946 (portfolio_analytics), #2944 (dispute comments/evidence/payments/internal-notes leak) and #2945 (portfolio_properties) once #2966 is cleared",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "pm-devops-unblock-utoipa-swagger-ui-egress",
+      "depends_on": [
+        "pm-devops-unblock-utoipa-swagger-ui-egress"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-scrum-master)"
+    },
+    {
+      "id": "pm-tech-lead-reviewer-slots-2559-2555",
+      "action": "Assign reviewer slots to stalled PRs #2559 (PAY by Square QR) and #2555 (invoice lifecycle), or close them",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-scrum-master)"
+    },
+    {
+      "id": "pm-frontend-review-pr-2902-and-3006",
+      "action": "Review draft PR #2902 (saved-searches screen-map drift vs PR #2894) with /screens validate; triage #3006 (api-client auth-header + MFA-retry unification)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-scrum-master)"
+    },
+    {
+      "id": "pm-backend-land-pr-3107-analytics-drift",
+      "action": "Land draft PR #3107 (portfolio_benchmarks reconcile) and the other #3104 items: remove name column from property_comparisons SELECT, fix portfolio lookup, fix get_dashboard_summary via add-column migrations (00236/00237/00238); un-ignore pa_list_comparisons_succeeds, pp_list_comparisons_succeeds, analytics_owner_success_tests",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "gh-issue-3098",
+      "depends_on": [
+        "gh-issue-3098"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-integration)"
+    },
+    {
+      "id": "pm-backend-openapi-source-of-truth-inquiries",
+      "action": "Make OpenAPI the source of truth for reality-server inquiries responses; align TypeSpec, utoipa, @ppt/reality-api-client and KMP openapi-generator on limit vs page_size and realtors response shape; add a CI contract check in api-validation.yml",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-integration)"
+    },
+    {
+      "id": "pm-qa-schema-drift-guard-repos",
+      "action": "Add a schema-drift guard for repositories: CI test that executes each repo list/summary query against the migrated schema (smoke test per repo), so a SELECT on a missing column fails in CI not at runtime 500",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-integration)"
+    },
+    {
+      "id": "pm-security-audit-outbound-http-after-nat64-ssrf",
+      "action": "Audit outbound HTTP callers after #3103 NAT64 SSRF fix: confirm e-signature, webhook, S3 and embedding integrations route through the filtered client, and that timeouts/retries/error mapping behave consistently when a destination is blocked",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-16 (pm-integration)"
     }
   ],
-  "generated": "2026-10-16T04:00:00Z"
+  "generated": "2026-10-16T10:53:48Z"
 }

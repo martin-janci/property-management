@@ -1,6 +1,6 @@
-# PPT Roadmap — upkeep 2026-10-01
+# PPT Roadmap — upkeep 2026-10-16
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 4-day lag since 2026-09-27 run._
+_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` (30 open items after this run) + sprint-status.yaml. ~3-hour lag since the 2026-10-16 06:51 run. Phase 1.6 added +8 action-list rows this run (pm-scrum-master + pm-integration rotation)._
 
 ## State of the project
 
@@ -67,4 +67,4 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 - api-server routes/integrations/webhook.rs repeated-churn (3 hotspot windows)
 - logout() AUTHED_QUERY_KEY_ROOTS allow-list gap (session leak)
 
-Buffer: **9 claimable / 72 open** (floor 36) — buffer-low. Top lever is **#2966 unblock**; everything downstream of backend builds is parked behind it.
+Buffer: **7 claimable / 30 open** (floor 36) — buffer-low (dispatcher 10:37 UTC). Top lever is **#2966 unblock** (utoipa-swagger-ui egress); every backend security retry (#2944 / #2945 / #2946) is parked behind it. +8 new rows added this run from pm-scrum-master + pm-integration; the thin-buffer root cause is structural (mobile-native-gated + swagger-egress-gated), not row-count.

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-16T04:00:00Z",
+  "generated": "2026-10-16T10:54:36Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -207,6 +207,66 @@
       "mitigation": "Add alert if `dev` HEAD has no research commit for >36h (mirrors routine's Phase 1 stale-routine check)",
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-buffer-dominated-by-mobile-native-gated-2026-10-16",
+      "risk": "The actionable buffer is only 7 of 72 and dominated by mobile-native-gated items, so dispatcher runs idle or churn on score=1 noise.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Prioritise #2966 and #2652 infra unblocks. Prune or score-gate the noise items.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-swagger-egress-blocks-idor-fixes-2026-10-16",
+      "risk": "Three cross-tenant IDOR issues (#2944, #2945, #2946) remain unfixed because of the swagger-ui egress block.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Escalate #2966. Consider vendoring the crate or feature-gating swagger-ui in cloud builds.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-analytics-drift-500s-and-merge-conflict-2026-10-16",
+      "risk": "Analytics drift 500s (#3104) in owner-analytics and portfolio endpoints, with a potential merge conflict between the #3107 schema fix and the #2946 IDOR fix in the same repository code.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Sequence the IDOR fix and the schema reconcile; split #3104 into separate issues.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-repo-sql-vs-migration-drift-2026-10-16",
+      "risk": "Repository SQL has drifted from migrations (missing columns like property_comparisons.name, portfolio_benchmarks), so analytics endpoints return 500 in production while success tests are ignored. OpenAPI promises endpoints that fail at runtime.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Merge #3107 and the rest of #3104 with un-ignored tests; add the repo smoke-test guard.",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-kmp-inquiries-missing-field-exception-2026-10-16",
+      "risk": "KMP inquiries client throws MissingFieldException on every real reality-server response — inquiries listing broken in the mobile reality app and the realtor flow. Story 82-5 marked done without a contract test, hiding the failure.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Fix the InquiriesResponse model; add contract tests with reality-server fixture payloads; reopen or annotate 82-5.",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-paging-envelope-no-owner-2026-10-16",
+      "risk": "No single owner for paging conventions across servers: reality-server uses limit, KMP sends page_size, realtors omits both. Hand-written Kotlin models bypass the generated SDK and drift silently.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Standardise the paging envelope in TypeSpec and generate KMP models from it; ban hand-written DTOs for contract types.",
+      "owner_role": "pm-integration",
+      "trigger": null,
       "status": "open"
     }
   ]

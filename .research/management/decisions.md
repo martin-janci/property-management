@@ -112,3 +112,15 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-08-25, pm-qa):** Dispatcher-spawned fix PRs should require a failing-on-main regression test file in the same PR before entering the merge queue (enforced via CI diff-guard). The auto-review loop closed 7/7 in-window this run, but 5 of the 7 shipped without a regression test — the loop's compensating-transaction property masks a growing test-shadow debt. Owner: pm-tech-lead + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Adopt eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — 3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects a static lint would catch. Blocking-on-first-adoption vs warn-only-for-one-sprint is the open question. Owner: pm-frontend + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Shared proptest fuzz-corpus discipline for sanitizers (CSV, XSS, HTML, JSON) — PR #2827 closed one CSV bypass but the sanitizer test suite is per-input, not corpus-driven; a shared corpus crate under `backend/crates/` would prevent the next class-of-bug from being fixed one-input-at-a-time. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-10-16 (Phase 1.6 — pm-scrum-master + pm-integration)
+
+- **NEW (2026-10-16, pm-scrum-master):** Invest in the #2966 egress fix vs vendoring/feature-gating `utoipa-swagger-ui` for cloud builds — the egress block is the single largest buffer-starvation lever this quarter. Owner: pm-devops.
+- **NEW (2026-10-16, pm-scrum-master):** Define the next sprint and goal. The current sprint ("Epic 6, 7A, 8A & 10A", dated 2025-12-21) is stale against coverage.json (all extended epics done). Owner: pm-scrum-master with the human product owner.
+- **NEW (2026-10-16, pm-scrum-master):** Decide whether the #3104 analytics drift bugs outrank new feature work, given the production 500s. Owner: pm-tech-lead.
+- **NEW (2026-10-16, pm-scrum-master):** Close or reassign stalled PRs #2559 (PAY by Square) and #2555 (invoice lifecycle) — open ~75 d with no reviewDecision. Owner: pm-tech-lead.
+- **NEW (2026-10-16, pm-integration):** Pick a canonical paging envelope (`limit`/`page`/`total` vs `page_size`) across api-server and reality-server, plus the realtors response shape. Generate KMP models from TypeSpec. Owner: pm-architect.
+- **NEW (2026-10-16, pm-integration):** For the KMP inquiries contract break: fix the client to match the server (recommended) vs change the server to match the client. The backend contract is already consumed by web. Owner: pm-mobile.
+- **NEW (2026-10-16, pm-integration):** Reopen or annotate story 82-5 (inquiries done but unverified) given the KMP MissingFieldException on every real response. Owner: pm-scrum-master.
