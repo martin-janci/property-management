@@ -70,6 +70,8 @@ const REQUIRED_TOAST_KEYS: string[] = [
   'community.joinFailed',
   'community.groupLeft',
   'community.leaveFailed',
+  'community.groupDeleted',
+  'community.deleteFailed',
   // faults.tsx
   'faults.reported',
   'faults.reportFailed',

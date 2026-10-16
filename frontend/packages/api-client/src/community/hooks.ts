@@ -107,6 +107,19 @@ export function useUpdateGroup() {
   });
 }
 
+export function useDeleteGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (groupId: string) => api.deleteGroup(groupId),
+    onSuccess: (_, groupId) => {
+      // Drop the now-deleted group's detail cache and refresh any group list.
+      queryClient.removeQueries({ queryKey: communityKeys.groupDetail(groupId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.groups() });
+    },
+  });
+}
+
 export function useJoinGroup() {
   const queryClient = useQueryClient();
 
