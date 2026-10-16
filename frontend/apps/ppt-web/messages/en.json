@@ -4903,6 +4903,9 @@
     "groupJoined": "You joined the group.",
     "joinFailed": "Could not join the group",
     "groupLeft": "You left the group.",
-    "leaveFailed": "Could not leave the group"
+    "leaveFailed": "Could not leave the group",
+    "groupDeleted": "Group deleted.",
+    "deleteFailed": "Could not delete the group",
+    "deleteGroupConfirm": "Delete this group? This action cannot be undone."
   }
 }

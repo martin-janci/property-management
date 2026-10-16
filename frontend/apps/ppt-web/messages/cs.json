@@ -2702,7 +2702,10 @@
     "groupJoined": "Připojili jste se do skupiny.",
     "joinFailed": "Nepodařilo se připojit do skupiny",
     "groupLeft": "Opustili jste skupinu.",
-    "leaveFailed": "Nepodařilo se opustit skupinu"
+    "leaveFailed": "Nepodařilo se opustit skupinu",
+    "groupDeleted": "Skupina odstraněna.",
+    "deleteFailed": "Nepodařilo se odstranit skupinu",
+    "deleteGroupConfirm": "Odstranit tuto skupinu? Tuto akci nelze vrátit zpět."
   },
   "meters": {
     "readingSubmitted": "Odečet odeslán",
