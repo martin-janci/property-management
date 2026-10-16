@@ -592,6 +592,11 @@
       "scheduled": "Scheduled",
       "active": "Active",
       "resolved": "Resolved"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
+      "resolved": "Resolved"
     }
   },
   "forms": {

@@ -552,6 +552,11 @@
       "scheduled": "Geplant",
       "active": "Aktiv",
       "resolved": "Behoben"
+    },
+    "status": {
+      "scheduled": "Geplant",
+      "in_progress": "In Bearbeitung",
+      "resolved": "Behoben"
     }
   },
   "forms": {

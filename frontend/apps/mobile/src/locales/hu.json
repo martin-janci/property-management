@@ -552,6 +552,11 @@
       "scheduled": "Ütemezett",
       "active": "Aktív",
       "resolved": "Megoldott"
+    },
+    "status": {
+      "scheduled": "Ütemezett",
+      "in_progress": "Folyamatban",
+      "resolved": "Megoldott"
     }
   },
   "forms": {
