@@ -17,7 +17,7 @@
  * Hooks should import { authenticatedFetchJson } from '../lib/fetch'.
  */
 
-import { applyAuthHeaders, bearerAuthorization } from '../auth';
+import { applyAuthHeaders, bearerAuthHeader } from '../auth';
 import { client } from '../generated/client.gen';
 import { requestMfaChallenge } from './mfa-handler';
 
@@ -56,13 +56,13 @@ export class ApiError extends Error {
  * not silently as part of this de-duplication. Pinned by a test in `fetch.test.ts`.
  *
  * The `Bearer <token>` credential itself is derived by the shared
- * `bearerAuthorization` (`auth/apply-headers.ts`) — the same helper that backs
- * `applyAuthHeaders` — so this path no longer re-implements the construction and
+ * `bearerAuthHeader` (`auth/apply-headers.ts`) — the object-form sibling of
+ * `bearerAuthorization` that backs `applyAuthHeaders` — so this path no longer
+ * re-implements either the credential construction or its object wrap and
  * cannot drift from the other two primitives.
  */
 function getAuthHeaders(): HeadersInit {
-  const authorization = bearerAuthorization();
-  return authorization ? { Authorization: authorization } : {};
+  return bearerAuthHeader();
 }
 
 /**
