@@ -26,7 +26,7 @@ export interface Outage {
   endsAt: string;
 }
 
-interface ApiOutage {
+export interface ApiOutage {
   id: string;
   commodity: string;
   title: string;
@@ -55,13 +55,13 @@ const OUTAGE_SEVERITIES: readonly OutageSeverity[] = ['low', 'medium', 'high'];
 // `as Foo ?? default` doesn't actually guard at runtime — an unknown value
 // flows through and then blows up `commodityIcon` / `severityColor` /
 // `statusBadgeColor`. Narrow against the allow-list instead.
-const narrow = <T extends string>(
+export const narrow = <T extends string>(
   value: string | null | undefined,
   allowed: readonly T[],
   fallback: T
 ): T => (value && (allowed as readonly string[]).includes(value) ? (value as T) : fallback);
 
-function toUiOutage(o: ApiOutage): Outage {
+export function toUiOutage(o: ApiOutage): Outage {
   return {
     id: o.id,
     commodity: narrow(o.commodity, OUTAGE_COMMODITIES, 'water'),
@@ -97,7 +97,7 @@ function severityColor(severity: OutageSeverity): string {
       : colors.success;
 }
 
-function formatRange(startsAt: string, endsAt: string): string {
+export function formatRange(startsAt: string, endsAt: string): string {
   const start = new Date(startsAt);
   const end = new Date(endsAt);
   const sameDay = start.toDateString() === end.toDateString();
