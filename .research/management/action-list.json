@@ -257,23 +257,6 @@
       }
     },
     {
-      "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
-      "action": "Churn hotspot: frontend/packages/api-client/src/lib/fetch.ts (api-client shared fetch — refactor consolidation window 2026-10-08..2026-10-15)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-15T04:26:46Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-15T04:26:46Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-reality-server-price-map-cache-unbounded",
       "action": "SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map — attacker-controlled city rotates distinct keys past the 1h TTL → OOM DoS",
       "owner_role": "pm-backend",
@@ -287,23 +270,6 @@
       "backlog_ref": {
         "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md",
         "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-assertsqlsafe-format-sql",
-      "action": "reality-server price_map/listings use sqlx::AssertSqlSafe + format!() for query text — safe today but opt-out of the SQL-injection guard; add SAFETY comments or move to QueryBuilder",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-15T18:27:05Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-15T18:27:05Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
         "vector": "bug"
       }
     },
@@ -464,6 +430,25 @@
         "plan": null,
         "score": 1,
         "vector": "dx"
+      }
+    },
+    {
+      "id": "gh-issue-3104",
+      "action": "Portfolio/owner analytics: comparisons + dashboard summary + owner portfolio runtime drift (500s) (Closes #3104)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-16T08:28:25Z (#3104)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T08:28:25Z",
+      "issue_ref": {
+        "number": 3104,
+        "url": "https://github.com/martin-janci/property-management/issues/3104",
+        "labels": [
+          "follow-up"
+        ]
       }
     }
   ],

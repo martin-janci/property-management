@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-16T06:37:55Z",
+  "archived_at": "2026-10-16T08:36:33Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2306,6 +2306,30 @@
         "merged_pr": 3097,
         "merged_at": "2026-10-16T02:30:46Z",
         "at": "2026-10-16T02:41:31Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
+      "action": "Churn hotspot: frontend/packages/api-client/src/lib/fetch.ts (api-client shared fetch — refactor consolidation window 2026-10-08..2026-10-15)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-15T04:26:46Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-16T08:27:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T04:26:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3100,
+        "merged_at": "2026-10-16T04:38:45Z",
+        "at": "2026-10-16T08:27:12Z"
       }
     },
     {
@@ -7120,6 +7144,30 @@
         "merged_pr": 2896,
         "merged_at": "2026-08-30T18:32:11Z",
         "at": "2026-08-30T18:54:59Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-assertsqlsafe-format-sql",
+      "action": "reality-server price_map/listings use sqlx::AssertSqlSafe + format!() for query text — safe today but opt-out of the SQL-injection guard; add SAFETY comments or move to QueryBuilder",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-15T18:27:05Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-10-16T08:27:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T18:27:05Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3102,
+        "merged_at": "2026-10-16T04:38:42Z",
+        "at": "2026-10-16T08:27:12Z"
       }
     },
     {
