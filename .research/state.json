@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-15T16:53:11Z",
-  "last_run_ms": 5200,
-  "last_pr_seen": 3088,
-  "last_issue_seen": 3085,
-  "last_commit_sha": "48ca0c72928e4d9ea199995266d065a550bc98aa",
+  "last_run_iso": "2026-10-16T02:58:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3097,
+  "last_issue_seen": 3099,
+  "last_commit_sha": "5b9d138bb20d51b677c5970c01d04c1e93687709",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -596,6 +596,11 @@
       "runs_seen": 1,
       "last_seen": "2026-10-15",
       "recent_churn": 2
+    },
+    "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-16",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -1172,7 +1177,13 @@
     "code-review-mobile-rn-outage-news-detail-dead-nav",
     "code-review-mobile-rn-outages-news-header-chip-i18n",
     "code-review-mobile-rn-outages-transforms-untested",
-    "code-review-ppt-web-core-errorhandler-raw-message-i18n-bypass"
+    "code-review-ppt-web-core-errorhandler-raw-message-i18n-bypass",
+    "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+    "code-review-reality-web-comparison-ctx-unvalidated-parse",
+    "code-review-reality-web-authapi-unwrapped-json-parse",
+    "dep-update-noise-pr-3089",
+    "dep-update-noise-pr-3090",
+    "dep-update-noise-pr-3091"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1181,13 +1192,13 @@
     "reality-server": "2026-10-13",
     "ppt-web-ui": "2026-10-15",
     "ppt-web-core": "2026-10-13",
-    "reality-web": "2026-10-11",
+    "reality-web": "2026-10-16",
     "mobile-rn": "2026-10-11",
     "mobile-native-kmp": "2026-10-13"
   },
   "stats": {
-    "runs": 92,
-    "vectors_created": 429,
+    "runs": 93,
+    "vectors_created": 432,
     "plans_created": 34,
     "quiet_days": 6,
     "auto_fix_count": 0
@@ -1203,7 +1214,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 6,
+    "next_index": 7,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
@@ -1211,11 +1222,11 @@
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
-      "pm-data": "2026-07-23",
+      "pm-data": "2026-10-16",
       "pm-integration": "2026-07-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 8
+    "next_index": 9
   }
 }

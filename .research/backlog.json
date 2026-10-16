@@ -11203,19 +11203,20 @@
       "title": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #2994"
       ],
       "evidence": [
-        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat."
+        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat.",
+        "decay: no new signals in 14 days (2026-10-01 → 2026-10-16); score 2 → 1"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-16",
       "plan": null
     },
     {
@@ -12335,6 +12336,68 @@
         "assignment_status": "merged",
         "pr_number": 3095
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+      "title": "Churn hotspot: mobile-rn OutagesScreen.tsx — 2 commits in this window (nav wiring + i18n headers/chips), top-1 non-generated churn this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3094",
+        "PR #3096",
+        "git log --since=2026-10-15"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx — 2 non-generated commits in this 10h window (PR #3094 wired OutageDetail route, PR #3096 i18n headers/chips/Alert). Tracker-only: both intentional, scope-complete; no instability signal."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
+      "title": "reality-web ComparisonProvider does JSON.parse(localStorage) with no shape validation — a non-array / wrong-shape stored value crashes every consumer with TypeError on first render",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-16 reality-web comparison-ctx-unvalidated-parse)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40 — mount effect reads localStorage then setListings(JSON.parse(stored)) with no Array.isArray / minimal-shape check; corrupted or extension-written storage parses as valid JSON of the wrong shape, so .length/.map throws TypeError and crashes the ComparisonProvider subtree on next navigation. Suggested fix: Array.isArray + minimal ListingSummary shape probe; on mismatch, removeItem + fallback to []. Static reachability traced; real-world corruption frequency not observable statically (hence medium)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-authapi-unwrapped-json-parse",
+      "title": "reality-web requestJson wraps error paths in try/catch but final 2xx response.json() throws unwrapped SyntaxError on empty/malformed 2xx bodies — bypasses the AuthApiError surface",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-16 reality-web authapi-unwrapped-json-parse)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts:67 — the success-path return (await response.json()) as T; is outside any try/catch. 2xx non-204 responses with empty/non-JSON bodies (upstream proxy empty 200, misrouted health page, 200-for-204 misuse) throw raw SyntaxError that bypasses the AuthApiError-based uniform error surface. Suggested fix: wrap final response.json() and rethrow as AuthApiError with status/code MALFORMED_RESPONSE, or read text first and treat empty as 204."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
     }
   ]
 }

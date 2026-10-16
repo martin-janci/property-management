@@ -1,0 +1,98 @@
+{
+  "generated": "2026-10-16T02:58:00Z",
+  "run": "routine 2026-10-16 02:58 UTC (payload: buffer-low claimable=2/72 dep-blocked=7 — refill planner)",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-10-15T16:53:11Z (PR #3094 + PR #3096)",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx — 2 non-generated commits in this 10h window (PR #3094 wired OutageDetail route, PR #3096 i18n headers/chips/Alert). Top-1 non-generated churn after excluding lockfiles/dist/generated and i18n catalog .jsons (which tied at 1 each). Tracker-only: both commits intentional and scope-complete; no instability signal.",
+        "hotspot_history: new entry (runs_seen=1)"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d — .research/signals/2026-10-16-reality-web-tier1d.json (ingested by routine)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40 — JSON.parse of localStorage persisted into setListings without Array.isArray or minimal ListingSummary shape probe; a valid-JSON wrong-shape value corrupts React state and crashes .length/.map on next render.",
+        "ingested from dispatcher Tier-1d 2026-10-16-reality-web-tier1d.json (fp-tier1d-signals-accumulate-no-promotion-to-backlog workaround — root fix still owed)"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-authapi-unwrapped-json-parse",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d — .research/signals/2026-10-16-reality-web-tier1d.json (ingested by routine)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "confidence": "medium",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts:67 — final response.json() on 2xx success path is outside the AuthApiError try/catch; empty / malformed 2xx bodies throw raw SyntaxError and bypass the uniform typed-error surface, causing untyped crashes in login/profile/update callers.",
+        "ingested from dispatcher Tier-1d 2026-10-16-reality-web-tier1d.json"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3089",
+      "type": "dep-update-noise",
+      "source": "PR #3089 (dependabot tokio group)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": ["dependabot — tokio group across 1 directory with 2 updates; logged only, no backlog item"]
+    },
+    {
+      "id": "dep-update-noise-pr-3090",
+      "type": "dep-update-noise",
+      "source": "PR #3090 (dependabot serde_json)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": ["dependabot — serde_json 1.0.151 -> 1.0.154; logged only"]
+    },
+    {
+      "id": "dep-update-noise-pr-3091",
+      "type": "dep-update-noise",
+      "source": "PR #3091 (dependabot npm-minor-patch group — 31 updates)",
+      "score_delta": 0,
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "evidence": ["dependabot — npm-minor-patch group across 1 directory with 31 updates; logged only"]
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f .research/briefs/2026-10-16.md && head -1 ... = '# 2026-10-16'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "staged state.json vs HEAD — cursors + seen_signals + hotspot_history advanced", "observed": "true", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))'", "observed": "true", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "no non-cumulative signal re-emitted with score_delta != 0", "observed": "true", "expected": "true" },
+    { "goal": "G5-cap", "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0'", "observed": "true", "expected": "true" },
+    { "goal": "G5-decay", "passed": true, "command": "every open item older than 14d lost >=1 point this run or moved to dropped", "observed": "screen-map-drift-pr-2994-ppt: 2 -> 1 (open, updated=2026-10-16)", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "every new plan has an adversarial-pass annotation", "observed": "no new plans this run", "expected": "true (vacuously)" },
+    { "goal": "G7-count",   "passed": true, "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '\\.md$' <= 2", "observed": "0", "expected": "<=2" },
+    { "goal": "G7-metadata","passed": true, "command": "metadata/headings vacuous — no new plans", "observed": "n/a", "expected": "true (vacuously)" },
+    { "goal": "G7-headings","passed": true, "command": "vacuous", "observed": "n/a", "expected": "true (vacuously)" },
+    { "goal": "G7-capability", "passed": true, "command": "vacuous", "observed": "n/a", "expected": "true (vacuously)" },
+    { "goal": "G7-mode", "passed": true, "command": "vacuous", "observed": "n/a", "expected": "true (vacuously)" },
+    { "goal": "G7-files-exist", "passed": true, "command": "vacuous", "observed": "n/a", "expected": "true (vacuously)" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l == 0", "observed": "0", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "git diff --cached secrets grep", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "diff -q .research/backlog.md /tmp/backlog.regen.md", "observed": "match", "expected": "match" },
+    { "goal": "G11", "passed": true,  "command": "no phase failed; cursors advanced consistently", "observed": "no phase failures", "expected": "true (vacuously)" },
+    { "goal": "G12", "passed": true,  "command": "every prior-run plan slug still in plans/ or plans/_archive/", "observed": "no deletions this run", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "git ls-files .research/plans/_archive/ count >= HEAD count", "observed": "equal (21)", "expected": ">= 21" },
+    { "goal": "G14", "passed": true,  "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "match", "expected": "match" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions length == 0", "observed": "0", "expected": "<=3 (and <=1 of each type)" },
+    { "goal": "G16", "passed": true,  "command": "management-artifact + pm_cursor + coverage_cursor + GC7", "observed": "pm_cursor 6->7, coverage_cursor 8->9, action-list.json + risks.json valid, project-state.md non-empty", "expected": "exit 0" },
+    { "goal": "G17", "passed": true,  "command": "git diff --cached literal Telegram token value grep", "observed": "0", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no high-confidence signal matched the Phase 5 allowlist (screen-map-drift / screen-map-orphan / fixme-in-merged-code / lockfile-drift / stalled-review). All 6 signals this run are either dep-update-noise (score 0, outside allowlist), churn-hotspot (analytical, not actionable), or code-review-finding (not in allowlist)."
+}
