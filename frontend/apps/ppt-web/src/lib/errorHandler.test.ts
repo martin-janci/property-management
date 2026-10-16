@@ -73,8 +73,9 @@ describe('parseApiError — axios errors with structured body', () => {
 
     expect(result.code).toBe('SESSION_EXPIRED');
     expect(result.title).toBe('Session Expired');
-    // Backend message takes precedence over the canned message.
-    expect(result.message).toBe('Session gone');
+    // The localized catalogue copy wins for a known code — the raw backend
+    // `message` ("Session gone") must not leak through to the user.
+    expect(result.message).toBe('Your session has expired. Please log in again.');
     expect(result.requestId).toBe('req-123');
     expect(result.statusCode).toBe(401);
     expect(result.isNetworkError).toBe(false);
@@ -239,7 +240,8 @@ describe('parseApiError — plain objects, Error, and fallback', () => {
 
     expect(result.code).toBe('DUPLICATE_ENTRY');
     expect(result.title).toBe('Duplicate Entry');
-    expect(result.message).toBe('Already exists');
+    // Known code -> localized catalogue message, not the raw backend text.
+    expect(result.message).toBe('An item with the same value already exists.');
     expect(result.requestId).toBe('req-9');
   });
 
@@ -369,5 +371,40 @@ describe('parseApiError — i18n localisation', () => {
     const result = parseApiError({ requestId: 'r', error: 'SESSION_EXPIRED', message: '' });
 
     expect(result.title).toBe('Session Expired');
+  });
+
+  it('prefers the localized catalogue message over raw server English for a known code', () => {
+    // Regression for the raw-message i18n bypass: the backend ships English
+    // `message` text even when the user runs a non-English locale. For a code
+    // that HAS a catalogue entry, the localized catalogue copy must win so the
+    // server English never leaks through to sk/cs/de users.
+    i18n.changeLanguage('sk');
+
+    const result = parseApiError({
+      requestId: 'req-sk-raw',
+      error: 'SESSION_EXPIRED',
+      message: 'Session gone', // raw backend English — must NOT reach the user
+    });
+
+    expect(result.code).toBe('SESSION_EXPIRED');
+    expect(result.message).toBe('Vaša relácia vypršala. Prihláste sa prosím znova.');
+    expect(result.message).not.toBe('Session gone');
+  });
+
+  it('keeps using the localized catalogue message for a known code even on English', () => {
+    // Even on English, a known code must resolve through the catalogue rather
+    // than echoing the raw backend `message`, so copy stays consistent and
+    // reviewable in one place.
+    i18n.changeLanguage('en');
+
+    const result = parseApiError({
+      requestId: 'req-en-raw',
+      error: 'DUPLICATE_ENTRY',
+      message: 'row 42 violates unique constraint foo_key', // raw DB/server text
+    });
+
+    expect(result.code).toBe('DUPLICATE_ENTRY');
+    expect(result.message).toBe('An item with the same value already exists.');
+    expect(result.message).not.toContain('constraint');
   });
 });
