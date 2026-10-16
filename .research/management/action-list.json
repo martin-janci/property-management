@@ -294,26 +294,6 @@
       }
     },
     {
-      "id": "gh-issue-3099",
-      "action": "Follow-up: NAT64 SSRF filter misses RFC 8215 local-use prefix 64:ff9b:1::/48 (PR #3088) (Closes #3099)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-16T02:33:29Z (#3099)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-16T02:33:29Z",
-      "issue_ref": {
-        "number": 3099,
-        "url": "https://github.com/martin-janci/property-management/issues/3099",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
       "action": "mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…')",
       "owner_role": "pm-backend",

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-16T08:36:33Z",
+  "archived_at": "2026-10-16T10:37:18Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -18472,6 +18472,32 @@
         "merged_pr": 3086,
         "merged_at": "2026-10-15T08:28:49Z",
         "at": "2026-10-15T10:25:29Z"
+      }
+    },
+    {
+      "id": "gh-issue-3099",
+      "action": "Follow-up: NAT64 SSRF filter misses RFC 8215 local-use prefix 64:ff9b:1::/48 (PR #3088) (Closes #3099)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-16T02:33:29Z (#3099) | dev-reconcile 2026-10-16T10:31:52Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T02:33:29Z",
+      "issue_ref": {
+        "number": 3099,
+        "url": "https://github.com/martin-janci/property-management/issues/3099",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "d391270c178a1a52c09844428875d39708c4b2bd",
+        "subject": "gh-issue-3099: block NAT64 RFC 8215 local-use prefix in SSRF filter (#3103)",
+        "at": "2026-10-16T10:31:52Z"
       }
     },
     {
