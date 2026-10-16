@@ -6016,14 +6016,16 @@
       "status": "done",
       "sources": [
         "PR #2627",
-        "rotating-expert-review api-core 2026-08-02"
+        "rotating-expert-review api-core 2026-08-02",
+        "PR #3103"
       ],
       "evidence": [
         "backend/servers/api-server/src/services/actions/api_call.rs:150-209 defines a private validate_external_url that shadows the canonical common::url_validation::validate_external_url used by routes/signatures.rs, routes/integrations/webhook.rs, integrations/workflow_executor.rs",
         "The private impl uses starts_with(\"http://\") at line 243 but never enforces the canonical rule that plain http:// is rejected outside RUST_ENV=development (common/url_validation.rs:94-101); ApiCall workflow actions can exfiltrate over unencrypted HTTP in prod, bypassing hardened SSRF defence",
         "Case-sensitivity drift: blocked_hosts uses eq_ignore_ascii_case at line 169 but the .local/.internal TLD check at line 204 is case-sensitive; canonical lowercases first at url_validation.rs:116-118 — future tightening of the canonical validator will silently miss this path",
         "Fix: delete ApiCallExecutor::validate_external_url and is_blocked_v4; call common::url_validation::validate_external_url(&url) at line 251, mapping UrlValidationError to ActionError::ConfigurationError",
-        "resolved: PR #2627 merged 2026-08-02 — delegated to common::url_validation::validate_external_url (private duplicate + is_blocked_v4 removed); regression test execute_rejects_multicast_via_shared_validator added"
+        "resolved: PR #2627 merged 2026-08-02 — delegated to common::url_validation::validate_external_url (private duplicate + is_blocked_v4 removed); regression test execute_rejects_multicast_via_shared_validator added",
+        "follow-up: PR #3103 merged 2026-10-16 (gh-issue-3099) — SSRF filter extended to RFC 8215 NAT64 local-use prefix 64:ff9b:1::/48; regression tests added. Confirms the common::url_validation path stays in use."
       ],
       "files": [
         "backend/servers/api-server/src/services/actions/api_call.rs"
@@ -12437,11 +12439,13 @@
       "status": "done",
       "sources": [
         "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en)",
-        "PR #3094"
+        "PR #3094",
+        "PR #3105"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx:59 and frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx:65 — the only chrome element on these two newly-merged detail screens hardcodes the English back-button label ('‹ News' / '‹ Outages') while every other visible string already resolves through t('…'). sk/cs/de users see English on the back control.",
-        "Fix shape: add news.backTo / outages.backTo keys to the six locale JSONs and swap the two literal strings."
+        "Fix shape: add news.backTo / outages.backTo keys to the six locale JSONs and swap the two literal strings.",
+        "resolved: PR #3105 merged 2026-10-16 — mobile detail-back-button labels now resolve via t(news.backTo)/t(outages.backTo); 6-locale JSON + i18n regression test added"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
@@ -12465,11 +12469,13 @@
       "status": "done",
       "sources": [
         "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated)",
-        "PR #3096"
+        "PR #3096",
+        "PR #3106"
       ],
       "evidence": [
         "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:209 and frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx:115 — status badge renders outage.status.replace('_', ' ') directly ('scheduled' | 'in progress' | 'resolved'). Slovak-locale user sees English on the primary triage element.",
-        "Allow-list already narrowed via narrow(o.status, OUTAGE_STATUSES, 'scheduled'); t('outages.status.' + outage.status) lookup is safe. 3 locale keys per locale."
+        "Allow-list already narrowed via narrow(o.status, OUTAGE_STATUSES, 'scheduled'); t('outages.status.' + outage.status) lookup is safe. 3 locale keys per locale.",
+        "resolved: PR #3106 merged 2026-10-16 — OutagesScreen status badge resolves via t(outages.status.*) + locale keys + regression test"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
