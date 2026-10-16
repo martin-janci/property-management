@@ -203,6 +203,13 @@ pub async fn get_price_map(
 
     let city_pattern = query.city.as_ref().map(|c| format!("%{}%", c));
 
+    // SAFETY (sqlx::AssertSqlSafe): the only value interpolated into `sql` via
+    // `format!` is `interval`, a `&'static str` chosen from the closed match on
+    // `time_window_str` above (any other value already returned 400). It is
+    // never derived from request input. All request-controlled values — mode,
+    // property_type and the city pattern — are passed as bound parameters
+    // ($1/$2/$3), so no untrusted data reaches the query text. Opting out of the
+    // SQL-injection guard here is sound.
     let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&mode)
         .bind(&query.property_type)
