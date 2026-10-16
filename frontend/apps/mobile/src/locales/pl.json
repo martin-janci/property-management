@@ -556,6 +556,11 @@
       "scheduled": "Zaplanowane",
       "active": "Aktywne",
       "resolved": "Rozwiązane"
+    },
+    "status": {
+      "scheduled": "Zaplanowane",
+      "in_progress": "W toku",
+      "resolved": "Rozwiązane"
     }
   },
   "forms": {

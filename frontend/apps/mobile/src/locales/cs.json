@@ -596,6 +596,11 @@
       "scheduled": "Naplánované",
       "active": "Aktivní",
       "resolved": "Vyřešené"
+    },
+    "status": {
+      "scheduled": "Naplánované",
+      "in_progress": "Probíhá",
+      "resolved": "Vyřešené"
     }
   },
   "forms": {
