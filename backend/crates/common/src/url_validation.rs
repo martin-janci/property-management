@@ -350,6 +350,10 @@ fn is_forbidden_ip(ip: IpAddr) -> Result<(), String> {
 ///
 /// * **NAT64 well-known prefix `64:ff9b::/96`** (RFC 6052) — on an IPv6-only /
 ///   NAT64 host `64:ff9b::169.254.169.254` translates to the cloud-metadata IP.
+/// * **NAT64 RFC 8215 local-use prefix `64:ff9b:1::/48`** — the `/96`-on-local-use
+///   form (`64:ff9b:1:0:0:0:a.b.c.d`) embeds the IPv4 in the low 32 bits exactly
+///   like the well-known prefix, so `64:ff9b:1::169.254.169.254` is the same
+///   cloud-metadata SSRF target on a host configured with the local-use prefix (#3099).
 /// * **SIIT / IPv4-translated `::ffff:0:0/96`** (RFC 6052 §2.2) — e.g.
 ///   `::ffff:0:127.0.0.1` reaches loopback.
 ///
@@ -365,13 +369,22 @@ fn embedded_ipv4(v6: &std::net::Ipv6Addr) -> Option<std::net::Ipv4Addr> {
         && segs[3] == 0
         && segs[4] == 0
         && segs[5] == 0;
+    // RFC 8215 local-use NAT64 prefix `64:ff9b:1::/48`, `/96`-on-local-use form
+    // (`64:ff9b:1:0:0:0:a.b.c.d`): same low-32-bit embedding as the well-known
+    // prefix above, differing only in `segs[2] == 0x0001` (#3099).
+    let is_nat64_local_use = segs[0] == 0x0064
+        && segs[1] == 0xff9b
+        && segs[2] == 0x0001
+        && segs[3] == 0
+        && segs[4] == 0
+        && segs[5] == 0;
     let is_siit_translated = segs[0] == 0
         && segs[1] == 0
         && segs[2] == 0
         && segs[3] == 0
         && segs[4] == 0xffff
         && segs[5] == 0;
-    if is_nat64_well_known || is_siit_translated {
+    if is_nat64_well_known || is_nat64_local_use || is_siit_translated {
         Some(std::net::Ipv4Addr::new(
             (segs[6] >> 8) as u8,
             segs[6] as u8,
