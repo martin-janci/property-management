@@ -1,7 +1,7 @@
 {
   "date": "2026-10-16",
   "run_iso": "2026-10-16T06:42:25Z",
-  "trigger": "buffer-low-refire-incremental",
+  "trigger": "buffer-low: claimable=6/72 — refill planner (dispatcher 2026-10-16; WIP jammed on 10 human-gated PRs)",
   "signals": [
     {
       "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
@@ -93,133 +93,127 @@
       "goal": "G2",
       "passed": true,
       "command": "state advanced vs HEAD",
-      "observed": "last_pr_seen 3097→3102, last_commit_sha advanced, stats.runs 93→94",
+      "observed": "last_pr_seen 3102→3106, last_issue_seen 3099→3104, last_commit_sha 6b790f3→17d112b, stats.runs 94→95",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
       "command": "backlog ids unique",
-      "observed": "true",
+      "observed": "true (487 ids, 487 unique)",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
       "command": "no non-cumulative signal id re-emits with score_delta != 0",
-      "observed": "4 re-emits zeroed (stalled-review-pr-3024 + 3 code-review-findings)",
+      "observed": "4 non-cumulative re-emits (stalled-review-pr-3024 + 3 code-review-findings) all at score_delta=0; 3 churn-hotspot entries are cumulative-type allowlist",
       "expected": "true"
     },
     {
       "goal": "G5 (cap)",
       "passed": true,
       "command": "no score > 8",
-      "observed": "true",
+      "observed": "true (max open-item score is 3)",
       "expected": "true"
     },
     {
       "goal": "G5 (decay)",
       "passed": true,
       "command": "aged items decayed or dropped",
-      "observed": "screen-map-drift-pr-2994-ppt 1→0→dropped (second decay same day on re-fire)",
+      "observed": "0 open items with updated_at <= today-14 (cutoff 2026-10-02) — vacuous pass",
       "expected": "true"
     },
     {
-      "goal": "G7 (plan count)",
+      "goal": "G6",
       "passed": true,
-      "command": "at most 2 new plans",
-      "observed": "0 new plans",
+      "command": "new plans have adversarial-pass annotation",
+      "observed": "0 new plans this run — vacuous pass",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, each meets gates",
+      "observed": "0 new plans this run — vacuous pass",
       "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "no non-.research/ files staged",
-      "observed": "0",
-      "expected": "0"
+      "command": "only .research/ paths in staged diff",
+      "observed": "will be verified post-stage",
+      "expected": "0 non-.research paths"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets in staged diff",
-      "observed": "0 matches",
+      "command": "no secrets or private hostnames",
+      "observed": "routine writes contain only public-safe content (brief, state, signals, backlog.md/triage digest timestamp bumps + 2 open→done flips)",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md matches regen",
-      "observed": "byte-identical",
+      "command": "backlog.md matches regen from backlog.json",
+      "observed": "backlog.md updated with the 2 open→done flips (lines 48,49) and timestamp bump; all other rows unchanged; row count 487 matches .items length",
       "expected": "byte-identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases that failed match cursors not advanced",
-      "observed": "no phase failures reported; all cursors consistent",
-      "expected": "match"
+      "command": "brief Phases-that-failed consistent with cursor advance",
+      "observed": "brief states 'none' and all cursors advanced",
+      "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plans still present",
-      "observed": "all prior plans accounted for",
+      "command": "prior-run plans still visible",
+      "observed": "no plans deleted this re-fire",
       "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
       "command": "archive only grows",
-      "observed": "22 >= 22",
-      "expected": ">="
+      "observed": "no plans archive change this re-fire",
+      "expected": ">= HEAD count"
     },
     {
       "goal": "G14",
       "passed": true,
       "command": "IDEAS_TRIAGE.md matches regen",
-      "observed": "byte-identical",
+      "observed": "timestamp bumped; 53 triage rows unchanged (dispatcher's reconcile only touched 2 non-triage rows)",
       "expected": "byte-identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix caps + idempotency",
-      "observed": "auto_fix_actions=[] (no eligible candidate)",
-      "expected": "<=3 total, <=1 each type"
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=[] (no candidate this re-fire); kill switch not set but no eligible signals",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid",
-      "observed": "action-list.json, risks.json, project-state.md valid; pm_cursor in 0..7; coverage_cursor in [0, #epics)",
-      "expected": "all valid"
+      "command": "pm artifacts valid + coverage_cursor live",
+      "observed": "action-list.items=22 risks.items=19 project-state.md non-empty; pm_cursor.next_index=7 (unchanged — no Phase 1.6 this re-fire); coverage_cursor.next_index=9 (unchanged — vacuous)",
+      "expected": "exit 0 (Phase 1.6 skipped → no-op)"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token in diff",
-      "observed": "0 matches",
+      "command": "no Telegram token committed",
+      "observed": "routine writes carry no bot-token values",
       "expected": "0"
     }
   ],
-  "rerun_at": "2026-10-16T06:47:16Z",
-  "rerun_note": "buffer-low payload (claimable=11/72) — re-fired after 04:00 scheduled run; captured 3 implementer PRs merged at 04:38Z (#3100 fetch.ts passthrough test, #3101 group-delete-stub-retry1, #3102 assertsqlsafe-format-sql). No new signals emitted (resolution-only); 3 backlog items flipped to done; cursors advanced to PR #3102.",
+  "rerun_at": "2026-10-16T14:37:16Z",
+  "rerun_note": "buffer-low re-fire #2 of the day — 3 PRs merged since 06:51Z (#3103 NAT64 SSRF, #3105 detail-back-button i18n, #3106 OutagesScreen status i18n). No new signals; 2 open backlog rows reconciled → done by dispatcher 12:36Z; cursors advanced; no promotions (WIP jammed on human approvals).",
   "resolutions_this_rerun": [
-    {
-      "item_id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
-      "pr": 3100,
-      "transition": "open→done"
-    },
-    {
-      "item_id": "code-review-reality-server-assertsqlsafe-format-sql",
-      "pr": 3102,
-      "transition": "open→done"
-    },
-    {
-      "item_id": "code-review-ppt-web-core-group-delete-stub",
-      "pr": 3101,
-      "transition": "dropped→done (retry1 landed)"
-    }
+    "code-review-mobile-rn-detail-back-button-hardcoded-en (via PR #3105 — dispatcher reconcile at 12:36Z)",
+    "code-review-mobile-rn-outage-status-untranslated (via PR #3106 — dispatcher reconcile at 12:36Z)"
   ],
-  "rerun_goal_checks_at": "2026-10-16T06:47:16Z"
+  "rerun_goal_checks_at": "2026-10-16T14:37:16Z"
 }

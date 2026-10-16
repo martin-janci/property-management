@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-16 06:50 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-16 14:37 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -45,8 +45,8 @@
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
 | 2 | bug | ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review (+1) | 2026-10-16 | done | — |
-| 2 | bug | mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…') | `frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en) (+1) | 2026-10-16 | open | — |
-| 2 | bug | mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*') | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated) (+1) | 2026-10-16 | open | — |
+| 2 | bug | mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…') | `frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en) (+1) | 2026-10-16 | done | — |
+| 2 | bug | mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*') | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated) (+1) | 2026-10-16 | done | — |
 | 2 | bug | mobile-rn: Outage/News card onPress navigates to OutageDetail/ArticleDetail which have no App.tsx case — taps silently bounce the user back to Dashboard, params discarded | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 mobile-rn outage-news-nav) | 2026-10-15 | done | — |
 | 2 | bug | violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create | `backend/crates/db/src/repositories/violations.rs (+1)` | rotating-expert-review [api-handlers] | 2026-10-11 | open | — |
 | 2 | bug | record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine | `backend/crates/db/src/repositories/violations.rs` | rotating-expert-review [api-handlers] | 2026-10-11 | open | — |
