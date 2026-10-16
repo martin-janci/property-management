@@ -591,6 +591,33 @@ mod tests {
         ));
     }
 
+    /// Regression (#3099): NAT64 RFC 8215 local-use prefix `64:ff9b:1::/48`.
+    /// The `/96`-on-local-use form `64:ff9b:1:0:0:0:169.254.169.254`
+    /// (`64:ff9b:1::a9fe:a9fe`) embeds the cloud-metadata IP in its low 32 bits.
+    /// Like the well-known prefix it is neither IPv4-mapped nor IPv4-compatible
+    /// (`to_ipv4_mapped()` / `to_ipv4()` both return `None`) and `segs[0]` is
+    /// `0x0064` so the fc00/fe80/ff00 masks miss — before the fix this reached
+    /// `Ok` and translated to `169.254.169.254` on a host configured with the
+    /// RFC 8215 local-use NAT64 prefix.
+    #[test]
+    fn rejects_nat64_local_use_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b:1:0:0:0:169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3099): loopback via the same RFC 8215 local-use prefix —
+    /// `64:ff9b:1:0:0:0:127.0.0.1` (`64:ff9b:1::7f00:1`) must be rejected for
+    /// the same reason as the metadata case above.
+    #[test]
+    fn rejects_nat64_local_use_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b:1:0:0:0:127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
     /// Regression (#3084): SIIT / IPv4-translated `::ffff:0:a.b.c.d`
     /// (`::ffff:0:0/96`, RFC 6052 §2.2). `::ffff:0:127.0.0.1` (`::ffff:0:7f00:1`)
     /// places `0xffff` in `segs[4]` (not `segs[5]`), so it is neither IPv4-mapped
