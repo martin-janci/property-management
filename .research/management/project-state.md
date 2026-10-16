@@ -1,6 +1,15 @@
 # PPT Project State
 
-_Generated: 2026-10-01 — routine Phase 1.6 upkeep (pm-security rotation slot; pm-cursor idx 5 → 6) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 7 → 8 (epic-82 re-checked, no material change; advances to epic-83). 4-day lag since last routine run (2026-09-27)._
+_Generated: 2026-10-16 — routine Phase 1.6 upkeep (pm-data rotation slot; pm-cursor idx 6 → 7) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 8 → 9 (epic-83 Airbnb/Booking/portal integrations re-checked, all 3 stories still done, no material change). 10h lag — on schedule._
+
+## Delta since last routine run (2026-10-15)
+
+- **5 PRs merged** (#3093, #3094, #3095, #3096, #3097) — all dispatcher-authored code-review follow-ups on dispatcher Tier-1d signals: 3× mobile-rn (OutageDetail/ArticleDetail route wiring + Outages transforms test + i18n for Outages/News/PersonMonths headers/chips), 1× ppt-web (errorHandler i18n catalogue precedence), 1× api-client (bearer-auth-header consolidation under auth/apply-headers). Zero coverage status flips — all touches are refactor/test-gap/i18n on already-shipped surfaces.
+- **No new blockers.** #2966 (swagger-ui egress) + #2652 (KMP cloud builds) + #2946 (cross-tenant IDOR retry) still carry forward as the recurring buffer-low drivers.
+- **Phase 1.5 (mobile-rn) surfaced 3 i18n regressions** on the just-merged PRs: back-button labels and status/category badges still render raw English in detail screens that otherwise resolve `t('…')`. Logged as `code-review-mobile-rn-detail-back-button-hardcoded-en` (+2), `code-review-mobile-rn-outage-status-untranslated` (+2), `code-review-mobile-rn-news-personmonths-badge-untranslated` (+1).
+- **PM-data rotation note:** pm-data was last run 2026-07-23 — nearly 3 months stale. The rotation gap is a known cadence drift (quiet role; no obvious tier-1 data-pipeline work in recent diffs). Flagging for next deep run.
+
+<sub>Prior upkeep note (archived): 2026-10-01 — pm-security rotation; coverage_cursor 7 → 8 (epic-82 re-checked).</sub>
 
 ## Executive summary
 

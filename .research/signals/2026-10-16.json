@@ -1,0 +1,201 @@
+{
+  "date": "2026-10-16",
+  "run_iso": "2026-10-16T04:00:00Z",
+  "trigger": "scheduled-incremental",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
+      "type": "churn-hotspot",
+      "source": "commit 7c4b1db / PR #3094",
+      "score_delta": 1,
+      "evidence": "162 lines added (fresh test file) in commit 7c4b1db. #1 raw churn this run.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
+      "type": "churn-hotspot",
+      "source": "commit 710fe8a / PR #3093",
+      "score_delta": 1,
+      "evidence": "152 lines added (fresh test file) in commit 710fe8a. #2 raw churn this run.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "commit 7c4b1db / PR #3094",
+      "score_delta": 1,
+      "evidence": "144 lines added (fresh screen file) in commit 7c4b1db. #3 raw churn this run.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-3024",
+      "type": "stalled-review",
+      "source": "PR #3024",
+      "score_delta": 1,
+      "evidence": "docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, reviewDecision=null, draft=false. Non-dependabot.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en)",
+      "score_delta": 2,
+      "evidence": "ArticleDetailScreen.tsx:59 and OutageDetailScreen.tsx:65 — only chrome element on these two newly-merged detail screens hardcodes English back-button label ('‹ News' / '‹ Outages') while all other strings resolve t('…').",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-outage-status-untranslated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated)",
+      "score_delta": 2,
+      "evidence": "OutagesScreen.tsx:209 and OutageDetailScreen.tsx:115 — status badge renders outage.status.replace('_', ' ') directly on a screen whose filters are already t('outages.filters.*'). Allow-list already narrowed; safe to t('outages.status.' + outage.status).",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn news-personmonths-badge-untranslated)",
+      "score_delta": 1,
+      "evidence": "NewsScreen.tsx:147, ArticleDetailScreen.tsx:114 render raw {category} and PersonMonthsScreen.tsx:125 renders raw {entry.status}. Same screens otherwise use t('news.filters.*') / t('personMonths.*').",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "code_review_slice": {
+    "segment_reviewed": "mobile-rn",
+    "reason": "churn-aligned (3 of top-3 raw-churn files under frontend/apps/mobile/src/) and oldest-unreviewed tied at 2026-10-11",
+    "experts": [
+      "frontend"
+    ],
+    "findings_count": 3,
+    "next_segment_hint": "api-handlers or reality-web (both oldest at 2026-10-11; api-handlers has 3 open findings = saturated → reality-web)"
+  },
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && first-line match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative double-score",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass line",
+      "observed": "no new plans this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no files outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "Phases that failed: none",
+      "expected": "none-or-listed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans survived",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "cur=22 head=22",
+      "expected": "cur>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen(triage rows)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions, kill switch unset, no history re-use",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + cursors live",
+      "observed": "EPICS=13 CC_NOW=9 CC_HEAD=8 PM_NOW=7 PM_HEAD=6",
+      "expected": "coverage advanced when pm advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

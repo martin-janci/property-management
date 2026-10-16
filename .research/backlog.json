@@ -11203,13 +11203,14 @@
       "title": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #2994"
       ],
       "evidence": [
-        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat."
+        "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat.",
+        "decayed 2026-10-16: no new signals in 14d — score 2→1"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
@@ -12335,6 +12336,154 @@
         "assignment_status": "merged",
         "pr_number": 3095
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
+      "title": "Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3094"
+      ],
+      "evidence": [
+        "Raw churn 162 lines this run (fresh file created in commit 7c4b1db by PR #3094; one-shot test for the missing OutageDetail/ArticleDetail routes). No prior history — hotspot_history runs_seen will stabilize at 1 and decay off the backlog unless the file re-churns."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/App.outageNewsDetail.test.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3093"
+      ],
+      "evidence": [
+        "Raw churn 152 lines this run (fresh file in commit 710fe8a; 21 pure-transform unit tests for OutagesScreen). No prior history."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx — new in PR #3094 (minimal RN article-detail view)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3094"
+      ],
+      "evidence": [
+        "Raw churn 144 lines this run (fresh file in commit 7c4b1db; new ArticleDetail detail screen landing route). No prior history."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3024",
+      "title": "Stalled review: PR #3024 docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3024"
+      ],
+      "evidence": [
+        "PR #3024 opened 2026-10-05; still open 2026-10-16 (10 days) with reviewDecision=null and not a draft. Non-dependabot — process signal, not a code vector."
+      ],
+      "files": [],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
+      "title": "mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…')",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en)",
+        "PR #3094"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx:59 and frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx:65 — the only chrome element on these two newly-merged detail screens hardcodes the English back-button label ('‹ News' / '‹ Outages') while every other visible string already resolves through t('…'). sk/cs/de users see English on the back control.",
+        "Fix shape: add news.backTo / outages.backTo keys to the six locale JSONs and swap the two literal strings."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-outage-status-untranslated",
+      "title": "mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*')",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated)",
+        "PR #3096"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx:209 and frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx:115 — status badge renders outage.status.replace('_', ' ') directly ('scheduled' | 'in progress' | 'resolved'). Slovak-locale user sees English on the primary triage element.",
+        "Allow-list already narrowed via narrow(o.status, OUTAGE_STATUSES, 'scheduled'); t('outages.status.' + outage.status) lookup is safe. 3 locale keys per locale."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/outages/OutageDetailScreen.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
+      "title": "mobile-rn: NewsScreen/ArticleDetailScreen category and PersonMonthsScreen status badges render raw English enum values on i18n screens",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn news-personmonths-badge-untranslated)",
+        "PR #3096"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx:147 and ArticleDetailScreen.tsx:114 render {article.category} directly ('building' | 'district' | 'partner'); PersonMonthsScreen.tsx:125 renders {entry.status} ('draft' | 'submitted' | 'confirmed'). Same screens otherwise resolve t('news.filters.*') / t('personMonths.*').",
+        "Low: cosmetic badges, secondary to status. One-liner t('news.category.' + category) each — three sites."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/news/NewsScreen.tsx",
+        "frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "created_at": "2026-10-16",
+      "updated_at": "2026-10-16",
+      "plan": null
     }
   ]
 }
