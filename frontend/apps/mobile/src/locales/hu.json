@@ -163,6 +163,7 @@
     "emptyText": "Minden probléma megoldva"
   },
   "news": {
+    "backToList": "‹ Hirek",
     "title": "Hirek",
     "latest": "Legfrissebb hirek",
     "readMore": "Bovebben",
@@ -542,6 +543,7 @@
     "personCount_other": "{{count}} személy"
   },
   "outages": {
+    "backToList": "‹ Kimaradások",
     "loadError": "A kimaradások nem tölthetők be",
     "emptyTitle": "Nincsenek kimaradások",
     "emptyText": "Jelenleg semmi sincs ütemezve vagy aktív.",

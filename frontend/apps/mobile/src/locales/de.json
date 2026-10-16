@@ -163,6 +163,7 @@
     "emptyText": "Alle Probleme wurden behoben"
   },
   "news": {
+    "backToList": "‹ Nachrichten",
     "title": "Nachrichten",
     "latest": "Neueste Nachrichten",
     "readMore": "Mehr lesen",
@@ -542,6 +543,7 @@
     "personCount_other": "{{count}} Personen"
   },
   "outages": {
+    "backToList": "‹ Störungen",
     "loadError": "Störungen konnten nicht geladen werden",
     "emptyTitle": "Keine Störungen",
     "emptyText": "Derzeit ist nichts geplant oder aktiv.",

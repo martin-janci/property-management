@@ -163,6 +163,7 @@
     "emptyText": "Všetky problémy boli vyriešené"
   },
   "news": {
+    "backToList": "‹ Spravy",
     "title": "Spravy",
     "latest": "Najnovsie spravy",
     "readMore": "Citat viac",
@@ -584,6 +585,7 @@
     "personCount_other": "{{count}} osôb"
   },
   "outages": {
+    "backToList": "‹ Výpadky",
     "loadError": "Nepodarilo sa načítať výpadky",
     "emptyTitle": "Žiadne výpadky",
     "emptyText": "Momentálne nie je nič naplánované ani aktívne.",
