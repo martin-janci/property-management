@@ -11203,20 +11203,21 @@
       "title": "ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #2994"
       ],
       "evidence": [
         "PR #2994 wrapped /dashboard/{manager,resident} in ProtectedRoute via frontend/apps/ppt-web/src/routes/groups/core.tsx with no docs/screens/ppt/*.md touch. PR body claims 'no route paths added or removed' so screen-map frontmatter unaffected — review-candidate per spec caveat.",
-        "decayed 2026-10-16: no new signals in 14d — score 2→1"
+        "decayed 2026-10-16: no new signals in 14d — score 2→1",
+        "decayed 2026-10-16 (buffer-low re-fire, second decay same day on this routine run): no new signals in 14d — score 1→0 → dropped. Prior decay 2→1 at 04:00Z this calendar day."
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/core.tsx"
       ],
       "created_at": "2026-10-01",
-      "updated_at": "2026-10-01",
+      "updated_at": "2026-10-16",
       "plan": null
     },
     {
@@ -11982,19 +11983,21 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "dropped",
+      "status": "done",
       "sources": [
-        "rotating-expert-review"
+        "rotating-expert-review",
+        "PR #3101"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/routes/groups/community.tsx:146 — onDelete={() => navigate(\"/community/groups\")} navigates away without any delete API call",
-        "No useDeleteGroup hook exists in frontend/packages/api-client — the record remains on the server while the UI acts as if deleted"
+        "No useDeleteGroup hook exists in frontend/packages/api-client — the record remains on the server while the UI acts as if deleted",
+        "resurrected 2026-10-16: PR #3101 (retry1 code-review-ppt-web-core-group-delete-stub-retry1) landed the fix — added @ppt/api-client deleteGroup + useDeleteGroup, wired onDelete to confirm→mutate→toast→navigate-on-success in frontend/apps/ppt-web/src/routes/groups/community.tsx with 4 new delete-wiring route tests + i18n across sk/cs/de/en/pl/hu + screen-map update. Backend DELETE /community/groups/{id} is a known follow-up (not blocking frontend-coherence). Dispatcher backlog-reconcile exact-id match missed this because the retry has a different task-id."
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/groups/community.tsx"
       ],
       "created_at": "2026-10-08",
-      "updated_at": "2026-10-08",
+      "updated_at": "2026-10-16",
       "plan": null,
       "reconciled": {
         "at": "2026-10-08T20:33:17Z",

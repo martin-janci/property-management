@@ -1,7 +1,7 @@
 {
   "date": "2026-10-16",
-  "run_iso": "2026-10-16T04:00:00Z",
-  "trigger": "scheduled-incremental",
+  "run_iso": "2026-10-16T06:42:25Z",
+  "trigger": "buffer-low-refire-incremental",
   "signals": [
     {
       "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
@@ -34,37 +34,41 @@
       "id": "stalled-review-pr-3024",
       "type": "stalled-review",
       "source": "PR #3024",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, reviewDecision=null, draft=false. Non-dependabot.",
       "confidence": "high",
-      "candidate_vector": "dx"
+      "candidate_vector": "dx",
+      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
     },
     {
       "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
       "type": "code-review-finding",
       "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "ArticleDetailScreen.tsx:59 and OutageDetailScreen.tsx:65 — only chrome element on these two newly-merged detail screens hardcodes English back-button label ('‹ News' / '‹ Outages') while all other strings resolve t('…').",
       "confidence": "high",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
     },
     {
       "id": "code-review-mobile-rn-outage-status-untranslated",
       "type": "code-review-finding",
       "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated)",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": "OutagesScreen.tsx:209 and OutageDetailScreen.tsx:115 — status badge renders outage.status.replace('_', ' ') directly on a screen whose filters are already t('outages.filters.*'). Allow-list already narrowed; safe to t('outages.status.' + outage.status).",
       "confidence": "high",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
     },
     {
       "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
       "type": "code-review-finding",
       "source": "rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn news-personmonths-badge-untranslated)",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": "NewsScreen.tsx:147, ArticleDetailScreen.tsx:114 render raw {category} and PersonMonthsScreen.tsx:125 renders raw {entry.status}. Same screens otherwise use t('news.filters.*') / t('personMonths.*').",
       "confidence": "high",
-      "candidate_vector": "bug"
+      "candidate_vector": "bug",
+      "rerun_note": "already applied at 04:00Z; score_delta zeroed on re-fire per G4"
     }
   ],
   "code_review_slice": {
@@ -81,7 +85,7 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && first-line match",
+      "command": "test -f briefs/<today>.md && head -1 == # YYYY-MM-DD",
       "observed": "exit 0",
       "expected": "exit 0"
     },
@@ -89,113 +93,133 @@
       "goal": "G2",
       "passed": true,
       "command": "state advanced vs HEAD",
-      "observed": "true",
+      "observed": "last_pr_seen 3097→3102, last_commit_sha advanced, stats.runs 93→94",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "unique backlog ids",
+      "command": "backlog ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no non-cumulative double-score",
+      "command": "no non-cumulative signal id re-emits with score_delta != 0",
+      "observed": "4 re-emits zeroed (stalled-review-pr-3024 + 3 code-review-findings)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5 (cap)",
+      "passed": true,
+      "command": "no score > 8",
       "observed": "true",
       "expected": "true"
     },
     {
-      "goal": "G5",
+      "goal": "G5 (decay)",
       "passed": true,
-      "command": "cap + decay",
-      "observed": "true",
+      "command": "aged items decayed or dropped",
+      "observed": "screen-map-drift-pr-2994-ppt 1→0→dropped (second decay same day on re-fire)",
       "expected": "true"
     },
     {
-      "goal": "G6",
+      "goal": "G7 (plan count)",
       "passed": true,
-      "command": "new plans have adversarial pass line",
-      "observed": "no new plans this run",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "≤2 new plans + readiness gates",
+      "command": "at most 2 new plans",
       "observed": "0 new plans",
-      "expected": "≤2"
+      "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "no files outside .research/",
+      "command": "no non-.research/ files staged",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets/hostnames",
-      "observed": "0",
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md == regen(backlog.json)",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "backlog.md matches regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phase-failure honesty",
-      "observed": "Phases that failed: none",
-      "expected": "none-or-listed"
+      "command": "phases that failed match cursors not advanced",
+      "observed": "no phase failures reported; all cursors consistent",
+      "expected": "match"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plans survived",
-      "observed": "0 missing",
-      "expected": "0"
+      "command": "prior-run plans still present",
+      "observed": "all prior plans accounted for",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
       "command": "archive only grows",
-      "observed": "cur=22 head=22",
-      "expected": "cur>=head"
+      "observed": "22 >= 22",
+      "expected": ">="
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md == regen(triage rows)",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix discipline",
-      "observed": "0 actions, kill switch unset, no history re-use",
-      "expected": "true"
+      "command": "auto_fix caps + idempotency",
+      "observed": "auto_fix_actions=[] (no eligible candidate)",
+      "expected": "<=3 total, <=1 each type"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "mgmt artifacts valid + cursors live",
-      "observed": "EPICS=13 CC_NOW=9 CC_HEAD=8 PM_NOW=7 PM_HEAD=6",
-      "expected": "coverage advanced when pm advanced"
+      "command": "management artifacts valid",
+      "observed": "action-list.json, risks.json, project-state.md valid; pm_cursor in 0..7; coverage_cursor in [0, #epics)",
+      "expected": "all valid"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token",
-      "observed": "0",
+      "command": "no Telegram token in diff",
+      "observed": "0 matches",
       "expected": "0"
     }
-  ]
+  ],
+  "rerun_at": "2026-10-16T06:47:16Z",
+  "rerun_note": "buffer-low payload (claimable=11/72) — re-fired after 04:00 scheduled run; captured 3 implementer PRs merged at 04:38Z (#3100 fetch.ts passthrough test, #3101 group-delete-stub-retry1, #3102 assertsqlsafe-format-sql). No new signals emitted (resolution-only); 3 backlog items flipped to done; cursors advanced to PR #3102.",
+  "resolutions_this_rerun": [
+    {
+      "item_id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
+      "pr": 3100,
+      "transition": "open→done"
+    },
+    {
+      "item_id": "code-review-reality-server-assertsqlsafe-format-sql",
+      "pr": 3102,
+      "transition": "open→done"
+    },
+    {
+      "item_id": "code-review-ppt-web-core-group-delete-stub",
+      "pr": 3101,
+      "transition": "dropped→done (retry1 landed)"
+    }
+  ],
+  "rerun_goal_checks_at": "2026-10-16T06:47:16Z"
 }
