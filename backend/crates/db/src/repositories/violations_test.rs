@@ -234,4 +234,43 @@ mod tests {
             cross.len()
         );
     }
+
+    /// Notifications are only visible to the owning org. An Org B caller passing
+    /// an Org A `violation_id` must get an empty list, never the notification
+    /// rows (which hold recipient PII) — follow-up #3069, same IDOR class as the
+    /// siblings above.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn list_notifications_is_org_scoped(pool: sqlx::PgPool) {
+        let repo = ViolationRepository::new(pool.clone());
+        let org_a = make_org(&pool, "ntf-org-a").await;
+        let org_b = make_org(&pool, "ntf-org-b").await;
+        let reporter = make_user(&pool, "ntf-reporter@example.com").await;
+
+        let violation = repo
+            .create_violation(org_a, sample_violation(), reporter)
+            .await
+            .unwrap();
+        repo.record_notification(
+            violation.id,
+            "fine_issued",
+            None,
+            Some("resident@example.com"),
+            Some("Notice of violation"),
+            Some("You have incurred a fine."),
+        )
+        .await
+        .unwrap();
+
+        // Owning org sees the notification.
+        let own = repo.list_notifications(violation.id, org_a).await.unwrap();
+        assert_eq!(own.len(), 1, "owning org must see its own notifications");
+
+        // Foreign org sees nothing — the IDOR is closed.
+        let cross = repo.list_notifications(violation.id, org_b).await.unwrap();
+        assert!(
+            cross.is_empty(),
+            "cross-tenant read must return no notification rows, got {}",
+            cross.len()
+        );
+    }
 }
