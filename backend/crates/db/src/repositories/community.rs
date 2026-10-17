@@ -211,6 +211,60 @@ impl CommunityRepository {
         Ok(())
     }
 
+    /// `true` when `user_id` owns `group_id` — either they created it
+    /// (`community_groups.created_by`) or they hold an `owner`-role membership
+    /// row. This answers "is this user an owner of the group?" only; tenant
+    /// scoping is the caller's responsibility (via `group_exists_for_org`), and
+    /// org-manager override is decided in the handler. Deletion is destructive
+    /// and cascading, so the owner check is enforced server-side rather than
+    /// trusting a client-supplied `isOwner` flag.
+    pub async fn user_owns_group(&self, group_id: Uuid, user_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM community_groups
+                 WHERE id = $1 AND created_by = $2
+                UNION ALL
+                SELECT 1 FROM community_group_members
+                 WHERE group_id = $1 AND user_id = $2 AND role = 'owner'
+            )
+            "#,
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Delete a community group scoped to `org_id` (resolved via
+    /// `buildings.organization_id`), returning the number of rows removed — `0`
+    /// when the group is absent or belongs to another tenant, so a cross-tenant
+    /// delete cannot silently succeed even if the handler's access check were
+    /// bypassed (defense in depth). Members, posts, post reactions, comments and
+    /// event RSVPs cascade via the `ON DELETE CASCADE` foreign keys declared in
+    /// migration 00064; community events reference the group with
+    /// `ON DELETE SET NULL` and are intentionally preserved.
+    pub async fn delete_group_for_org(
+        &self,
+        group_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<u64, SqlxError> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM community_groups g
+             USING buildings b
+             WHERE g.id = $1
+               AND g.building_id = b.id
+               AND b.organization_id = $2
+            "#,
+        )
+        .bind(group_id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected())
+    }
+
     // ========================================================================
     // Community Posts (Story 37.2)
     // ========================================================================
