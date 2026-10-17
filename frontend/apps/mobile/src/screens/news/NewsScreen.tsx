@@ -144,7 +144,7 @@ export function NewsScreen({ onNavigate }: NewsScreenProps) {
                   {article.title}
                 </Text>
                 <View style={s.badge}>
-                  <Text style={s.badgeText}>{article.category}</Text>
+                  <Text style={s.badgeText}>{t(`news.categories.${article.category}`)}</Text>
                 </View>
               </View>
               <Text style={s.cardBody} numberOfLines={3}>

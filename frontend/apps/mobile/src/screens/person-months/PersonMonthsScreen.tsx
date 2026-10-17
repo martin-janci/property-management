@@ -122,7 +122,7 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
                       entry.status === 'draft' && styles.badgeDraftText,
                     ]}
                   >
-                    {entry.status}
+                    {t(`personMonths.status.${entry.status}`)}
                   </Text>
                 </View>
               </View>

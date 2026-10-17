@@ -177,6 +177,11 @@
       "building": "Budynek",
       "district": "Dzielnica",
       "partner": "Partnerzy"
+    },
+    "categories": {
+      "building": "Budynek",
+      "district": "Dzielnica",
+      "partner": "Partner"
     }
   },
   "voting": {
@@ -542,7 +547,12 @@
     "personCount_one": "{{count}} osoba",
     "personCount_few": "{{count}} osoby",
     "personCount_many": "{{count}} osób",
-    "personCount_other": "{{count}} osób"
+    "personCount_other": "{{count}} osób",
+    "status": {
+      "draft": "Szkic",
+      "submitted": "Wysłane",
+      "confirmed": "Potwierdzone"
+    }
   },
   "outages": {
     "backToList": "‹ Awarie",

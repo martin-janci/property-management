@@ -111,7 +111,9 @@ export function ArticleDetailScreen({ articleId, onBack }: ArticleDetailScreenPr
             </Text>
             {data.category ? (
               <View style={s.badge}>
-                <Text style={s.badgeText}>{data.category}</Text>
+                <Text style={s.badgeText}>
+                  {t(`news.categories.${data.category}`, { defaultValue: data.category })}
+                </Text>
               </View>
             ) : null}
           </View>
