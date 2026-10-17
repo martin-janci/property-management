@@ -36,6 +36,30 @@ fn forbidden_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     (StatusCode::FORBIDDEN, Json(ErrorResponse::forbidden(msg)))
 }
 
+/// Manager-level authorization gate for privileged violation mutations.
+///
+/// Issuing a violation, issuing a fine / enforcement action, recording a fine
+/// payment, managing community rules, assigning a violation, and deciding an
+/// appeal are all staff operations. Before this gate every such mutation was
+/// reachable by *any* authenticated tenant member — tenant membership
+/// (a non-null `tenant_id`) was the only check — so an ordinary Resident /
+/// Tenant could fine other residents, or approve the appeal of their own fine.
+///
+/// [`TenantRole::is_manager`] covers SuperAdmin / PlatformAdmin / OrgAdmin /
+/// Manager / TechnicalManager; every role below (Owner, Tenant, Resident,
+/// Guest, …) is rejected with 403. Self-service actions a resident legitimately
+/// performs — filing an appeal (`create_appeal`) and commenting (`add_comment`)
+/// — are intentionally NOT gated here.
+fn require_manager(user: &AuthUser) -> ApiResult<()> {
+    if user.role.map(|r| r.is_manager()).unwrap_or(false) {
+        Ok(())
+    } else {
+        Err(forbidden_error(
+            "Manager role required to perform this operation",
+        ))
+    }
+}
+
 /// Create the violations router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -100,6 +124,8 @@ async fn create_rule(
     user: AuthUser,
     Json(req): Json<CreateCommunityRule>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -163,6 +189,8 @@ async fn update_rule(
     Path(rule_id): Path<Uuid>,
     Json(req): Json<UpdateCommunityRule>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -180,6 +208,8 @@ async fn delete_rule(
     user: AuthUser,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -206,6 +236,8 @@ async fn create_violation(
     user: AuthUser,
     Json(req): Json<CreateViolation>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -259,6 +291,8 @@ async fn update_violation(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<UpdateViolation>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -282,6 +316,8 @@ async fn assign_violation(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<AssignRequest>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -341,6 +377,8 @@ async fn delete_evidence(
     user: AuthUser,
     Path((_violation_id, evidence_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -368,6 +406,8 @@ async fn create_action(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateEnforcementAction>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -423,6 +463,8 @@ async fn update_action(
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateEnforcementAction>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -446,6 +488,8 @@ async fn mark_action_sent(
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<SendNoticeRequest>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -464,6 +508,8 @@ async fn record_payment(
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<RecordFinePayment>,
 ) -> ApiResult<Json<db::models::violations::FinePayment>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -556,6 +602,8 @@ async fn update_appeal(
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<UpdateViolationAppeal>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
@@ -581,6 +629,8 @@ async fn decide_appeal(
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
