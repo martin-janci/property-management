@@ -12660,6 +12660,66 @@
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
       "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-dead-buttons",
+      "title": "ppt-web-ui: PortfolioDashboardPage Export Report & Calculate Metrics buttons have no onClick — silent no-op on primary CTAs",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1d dev-review 2026-10-17 (ppt-web-ui, completeness expert)"
+      ],
+      "evidence": [
+        "PortfolioDashboardPage.tsx:190-201 — two primary buttons rendered type=\"button\" with no onClick, no disabled, no handler prop threaded (component only takes portfolioId). Clicking Export Report / Calculate Metrics is silent no-op with zero feedback on a shipped Epic-144 analytics dashboard."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "created_at": "2026-10-17",
+      "updated_at": "2026-10-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-alert-mutations-silent-fail",
+      "title": "ppt-web-ui: PortfolioDashboardPage alert mark-read/resolve mutations have no onError — rejections swallowed, stale UI",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Tier-1d dev-review 2026-10-17 (ppt-web-ui, frontend expert)"
+      ],
+      "evidence": [
+        "PortfolioDashboardPage.tsx:226-227 — markRead.mutate / resolve.mutate called with no onError callback and markRead.isError/resolve.isError never surfaced. On a reject (5xx/perm), the alert stays in its old state silently; same defect CLASS as accounting-invoice-silent-fail and registry-rules-save-silent-fail but on portfolio-performance feature."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "created_at": "2026-10-17",
+      "updated_at": "2026-10-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-no-i18n",
+      "title": "ppt-web-ui: PortfolioDashboardPage hardcodes English — zero useTranslation/t() usage on multilingual portal",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Tier-1d dev-review 2026-10-17 (ppt-web-ui, frontend expert)"
+      ],
+      "evidence": [
+        "PortfolioDashboardPage.tsx — no react-i18next import; literal English strings: Portfolio Dashboard (:184), Export Report/Calculate Metrics (:194/:200), Alerts (:211), loading/error copy (:148,:156,:237,:241), Retry (:167), SummaryCards titles Portfolio Value/Total Equity/YTD NOI/YTD Cash Flow/LTV Ratio (:96-124). Sibling features route all copy through t(). Epic-144 surface untranslated end-to-end."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "created_at": "2026-10-17",
+      "updated_at": "2026-10-17",
+      "plan": null
     }
   ]
 }

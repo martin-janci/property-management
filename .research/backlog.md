@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-17 14:47 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-17 20:37 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -47,6 +47,8 @@
 | 2 | bug | ppt-web-core: useAmlDashboard assessment transform calls a.risk_factors.map with no ?? [] guard — crashes dashboard on null | `frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web) | 2026-10-17 | open | — |
 | 2 | bug | reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle) | `backend/servers/reality-server/src/routes/users.rs` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-server) | 2026-10-17 | open | — |
 | 2 | bug | reality-web: auth-context checkSession treats ANY /users/me non-ok as auth failure → transient 5xx wipes session | `frontend/apps/reality-web/src/lib/auth-context.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web) | 2026-10-17 | open | — |
+| 2 | bug | ppt-web-ui: PortfolioDashboardPage Export Report & Calculate Metrics buttons have no onClick — silent no-op on primary CTAs | `frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx` | Tier-1d dev-review 2026-10-17 (ppt-web-ui, completeness expert) | 2026-10-17 | open | — |
+| 2 | bug | ppt-web-ui: PortfolioDashboardPage alert mark-read/resolve mutations have no onError — rejections swallowed, stale UI | `frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx` | Tier-1d dev-review 2026-10-17 (ppt-web-ui, frontend expert) | 2026-10-17 | open | — |
 | 2 | bug | ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review (+1) | 2026-10-16 | done | — |
 | 2 | bug | mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…') | `frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en) (+2) | 2026-10-16 | done | — |
 | 2 | bug | mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*') | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated) (+2) | 2026-10-16 | done | — |
@@ -226,6 +228,7 @@
 | 1 | bug | api-core: TotpService::encrypt_secret() panics on CSPRNG failure via .expect() instead of threading TotpError | `backend/servers/api-server/src/services/totp.rs (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core) | 2026-10-17 | open | — |
 | 1 | bug | ppt-web-core: useAmlDashboard hardcodes id_verified/sof_documented/pep/sanctions_check to false and recommendations=[] regardless of backend state | `frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web) | 2026-10-17 | open | — |
 | 1 | bug | reality-web: ListingHeader & AgencyListings hardcode locale=en-US in formatPrice on a 4-language portal | `frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web) | 2026-10-17 | open | — |
+| 1 | bug | ppt-web-ui: PortfolioDashboardPage hardcodes English — zero useTranslation/t() usage on multilingual portal | `frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx` | Tier-1d dev-review 2026-10-17 (ppt-web-ui, frontend expert) | 2026-10-17 | open | — |
 | 1 | dx | Stalled review: PR #3024 docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, no reviewDecision | — | PR #3024 | 2026-10-16 | dropped | — |
 | 1 | refactor | Churn hotspot: frontend/packages/api-client/src/lib/fetch.ts (api-client shared fetch — refactor consolidation window 2026-10-08..2026-10-15) | `frontend/packages/api-client/src/lib/fetch.ts` | PR #3071 (+1) | 2026-10-15 | done | — |
 | 1 | refactor | Churn hotspot: frontend/packages/api-client/src/auth/apply-headers.ts (shared bearerAuthorization refactor) | `frontend/packages/api-client/src/auth/apply-headers.ts` | PR #3071 (+1) | 2026-10-15 | dropped | — |

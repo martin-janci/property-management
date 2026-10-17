@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-17T14:43:45Z",
+  "last_run_iso": "2026-10-17T20:37:02Z",
   "last_run_ms": 0,
   "last_pr_seen": 3114,
   "last_issue_seen": 3116,
-  "last_commit_sha": "81eb1378",
+  "last_commit_sha": "b61a54c2",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -898,6 +898,9 @@
     "code-review-ppt-web-ui-moderation-fabricated-context",
     "code-review-ppt-web-ui-moderation-no-i18n",
     "code-review-ppt-web-ui-notif-settings-hardcoded-errors",
+    "code-review-ppt-web-ui-portfolio-alert-mutations-silent-fail",
+    "code-review-ppt-web-ui-portfolio-dashboard-dead-buttons",
+    "code-review-ppt-web-ui-portfolio-dashboard-no-i18n",
     "code-review-ppt-web-ui-propinput-json-coerce",
     "code-review-ppt-web-ui-registry-rules-save-silent-fail",
     "code-review-ppt-web-ui-role-gate-fail-open",
@@ -1213,8 +1216,8 @@
     "mobile-native-kmp": "2026-10-13"
   },
   "stats": {
-    "runs": 96,
-    "vectors_created": 442,
+    "runs": 97,
+    "vectors_created": 445,
     "plans_created": 34,
     "quiet_days": 6,
     "auto_fix_count": 0
