@@ -396,6 +396,26 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "gh-issue-3109",
+      "action": "Follow-up: implement api-server `DELETE /community/groups/{id}` so wired frontend delete works end-to-end (PR #3101) (Closes #3109)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-17T04:25:46Z (#3109)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T04:25:46Z",
+      "issue_ref": {
+        "number": 3109,
+        "url": "https://github.com/martin-janci/property-management/issues/3109",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-16T04:00:00Z"
