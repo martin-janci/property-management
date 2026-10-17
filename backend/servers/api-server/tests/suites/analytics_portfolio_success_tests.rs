@@ -250,14 +250,126 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
 // a regression to "500 for everyone" (or a 42P10 on calculate) rather than passing
 // vacuously the way a deny-only suite would.
 //
-// Still deleted (separate, unreconciled drift — NOT this issue):
-//   pa_{list,create,get,update,delete}_benchmarks — portfolio_benchmarks (migration
-//     00091) is missing min_acceptable/max_acceptable/scope/property_type/region/
-//     is_industry_standard/source_name that the repo queries reference. Restoring
-//     these needs its own portfolio_benchmarks reconciliation migration.
+// Restored (issue #3098): the benchmark CRUD lifecycle below, now that migration
+// 00238 reconciles portfolio_benchmarks (min/max_acceptable, scope, property_type,
+// region, is_industry_standard, source_name, source_year).
+//
+// Still deleted:
 //   pa_{list,upsert,get}_property_metrics_succeeds — the property_performance_metrics
 //     path (reconciled by 00236) is already exercised as a boundary by the IDOR
 //     suite's T1b/T2b 200-controls (PR #3081); dedicated success cases can follow.
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn pa_benchmark_crud_lifecycle_succeeds(pool: PgPool) {
+    let f = setup(pool, "pa-bench-crud").await;
+    let tenant = f.org_id.to_string();
+
+    // create
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .post("/api/v1/portfolio-analytics/benchmarks")
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &tenant)
+                .json(serde_json::json!({
+                    "name": "Occupancy target",
+                    "category": "occupancy",
+                    "target_value": "95.0",
+                    "min_acceptable": "85.0",
+                    "max_acceptable": "100.0",
+                    "region": "Bratislava",
+                    "source_name": "internal",
+                    "source_year": 2024
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa create benchmark: {}",
+        resp.text()
+    );
+    let id = resp.json_value()["id"]
+        .as_str()
+        .expect("benchmark id")
+        .to_string();
+
+    // list
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .get("/api/v1/portfolio-analytics/benchmarks")
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &tenant)
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa list benchmarks: {}",
+        resp.text()
+    );
+
+    // get
+    let url = format!("/api/v1/portfolio-analytics/benchmarks/{id}");
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .get(&url)
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &tenant)
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa get benchmark: {}",
+        resp.text()
+    );
+
+    // update
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .put(&url)
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &tenant)
+                .json(serde_json::json!({ "name": "Occupancy target v2" }))
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa update benchmark: {}",
+        resp.text()
+    );
+
+    // delete
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .delete(&url)
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &tenant)
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::NO_CONTENT,
+        "pa delete benchmark: {}",
+        resp.text()
+    );
+}
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pa_get_portfolio_summary_succeeds(pool: PgPool) {
@@ -354,7 +466,7 @@ async fn pa_get_portfolio_metrics_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-622: list_comparisons repo SELECTs a `name` column that does not exist in \
+#[ignore = "#3104: list_comparisons repo SELECTs a `name` column that does not exist in \
             the property_comparisons schema (migration 00091) -> 500 Database error. \
             Needs a repositories/portfolio_analytics.rs query/model fix (source bug, \
             not test drift)."]
@@ -864,7 +976,7 @@ async fn pp_get_latest_metrics_succeeds(pool: PgPool) {
     );
 }
 
-#[ignore = "BIT-622: 500 Portfolio not found despite seeded portfolio; server-side route lookup bug requires investigation"]
+#[ignore = "#3104: 500 Portfolio not found despite seeded portfolio; server-side route lookup bug requires investigation"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn pp_get_metrics_summary_succeeds(pool: PgPool) {
     let f = setup(pool.clone(), "pp-metrics-summary").await;
@@ -1100,7 +1212,7 @@ async fn pp_get_comparison_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-622: PortfolioPerformanceRepository::get_dashboard_summary calls \
+#[ignore = "#3104: PortfolioPerformanceRepository::get_dashboard_summary calls \
             get_portfolio(portfolio_id, Uuid::nil()) (repositories/portfolio_performance.rs:1337) \
             so the org-scoped WHERE never matches -> 500 'Portfolio not found'. \
             Needs a source fix to thread org_id through get_dashboard_summary."]
