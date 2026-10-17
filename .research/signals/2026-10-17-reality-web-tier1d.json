@@ -1,0 +1,62 @@
+{
+  "generated": "2026-10-17T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=6 < floor=36; deterministic refills backlog-refill + retry-remint found nothing). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner, file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push performed, and .research/management/assignments.json was not touched — the orchestrator folds .research deltas into its own Phase 6 commit. Segment selection: no Phase-1 churn list was handed to this demand-driven invocation and git-log over recent commits showed no frontend/backend/mobile churn, so priority-1 churn-alignment was empty. Fell to priority-2 oldest-unreviewed. review_cursor oldest date is 2026-10-11, a tie between api-handlers and reality-web. api-handlers skipped for saturation (3 open code-review-finding rows with status==open in backlog.json). reality-web selected: equally oldest AND a cloud-CI-verifiable frontend web stack (dispatcher directive prefers ppt-web/reality-web/admin-web because backend/mobile-native/mobile-rn findings are currently cloud-CI-blocked and cannot be merged).",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (cloud-landable, non-saturated). 2026-10-11 cursor tie resolved away from api-handlers (saturated: 3 open findings) toward reality-web, which is also the dispatcher-preferred cloud-CI-verifiable frontend web stack. No Phase-1 churn list supplied to this demand-driven run, so priority-1 churn-alignment did not apply.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-realtor-id-shared-mock",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts",
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11-20 — the public agent-profile page for the dynamic route /[locale]/realtor/[id] imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS from ./_mock (:11) and binds `const agent = MOCK_AGENT` (:20). The component signature is `export default function AgentProfilePage()` with NO props and it never reads the `[id]` route param (no `params`, no `useParams`): confirmed by grep — the only `params` occurrence in the file is the `/[locale]/realtor/[id]` route string in the header comment. Consequently EVERY agent URL (`/sk/realtor/anything`, `/sk/realtor/<real-uuid>`, etc.) renders the exact same hard-coded fake agent, fake listing grid (:227 `MOCK_AGENT_LISTINGS.length`, :237 `.map`), and fake reviews (:330 `MOCK_AGENT_REVIEWS.length`, :333 `.map`) on a public, SEO-indexed portal route. This is the SAME defect class the sibling page frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:12-15 documents it already fixed — its header comment says it 'previously rendered a shared MOCK_PROFILE (\"Tomas Novotny\") to every visitor, which was both a UX bug and a privacy footgun' — so the repo already treats shared-mock-to-every-visitor as a real bug, and realtor/[id] is the un-migrated twin. The backing APIs partly exist in frontend/apps/reality-web/src/lib/realtor-api.ts: reviews are available via getRealtorReviews(realtorId) (:233 → GET /api/v1/realtors/{id}/reviews) and the authenticated profile via getMyRealtorProfile (:67); the fix needs those plus a public realtor-by-id profile GET (realtor-api.ts currently only exposes the `/me` profile, so a public `GET /api/v1/realtors/{id}` may need adding/confirming server-side). NET-NEW vs backlog: the only existing reality-web/realtor row is bug-reality-web-realtor-invite-silent-error (RealtorManagement.tsx invite flow — a different file and feature); nothing covers the realtor/[id] public profile stub. Severity MEDIUM (+2): user-facing wrong data on every public agent page, not a crash/auth bypass. Confidence HIGH: statically certain — the page imports only mocks and never touches the route param or any fetch. Cloud-landable (reality-web Next.js, CI + vitest verifiable)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-dead-contact-form",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:22-27 — the 'Contact agent' form submit handler `handleSendMessage` is purely local: `if (message.trim()) { setMessageSent(true); setContactOpen(false); }`. It performs NO network call — no fetch, no realtor-api helper, no mutation (confirmed: the file's only imports are `useState` from react and the MOCK_* consts; there is no inquiry/contact API call anywhere in the file). The form at :591 (`onSubmit={handleSendMessage}`) therefore shows the user a success state (`messageSent`) while silently dropping the message: the agent never receives any inquiry. This is a silent-data-loss UX bug on a public lead-capture surface — a prospective buyer believes they contacted the agent but nothing was sent. Distinct work item from the shared-mock finding (that one wires GET profile/reviews data; this one needs an inquiry/contact POST endpoint wired to submit). NET-NEW vs backlog: no existing row covers the realtor/[id] contact form. Severity MEDIUM (+2): user-facing action silently no-ops (lost leads). Confidence HIGH: statically certain the handler never leaves local component state. Cloud-landable (reality-web, vitest-verifiable with a mocked submit)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx — the page sits under the locale segment /[locale]/ (portal supports sk/cs/de/en) yet has ZERO i18n: grep for next-intl/useTranslations/getTranslations returns 0 hits in the file. User-facing chrome is hard-coded Slovak, e.g. the contact textarea placeholder 'Dobry den, mam zaujem o Vase sluzby...' (:597), the 'Zrusit' (Cancel) button (:625), the 'Odoslat' (Send) button (:639), plus section headings 'Aktivne ponuky' (:227) and 'Hodnotenia' (:330). German/Czech/English visitors get Slovak UI on this route, unlike the rest of the app which routes strings through next-intl (cf. compare/page.tsx:8,25 using getTranslations, and the pageMetadata() helper used by neighbouring routes). This is a localization defect on a multi-language public portal, not merely a lint nit. NET-NEW vs backlog: the existing reality-web i18n-flavoured rows target comparison-view / agency error-state, not realtor/[id]. Severity LOW (+1): i18n gap. Confidence HIGH: grep-confirmed absence of any i18n binding + concrete hard-coded strings. Cloud-landable (reality-web, verifiable by adding message keys + biome/CI). Note: this gap becomes moot if the page is rewritten for the shared-mock finding — fold accordingly during implementation."
+      ]
+    }
+  ]
+}
