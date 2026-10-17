@@ -12418,7 +12418,7 @@
       "vector": "dx",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "PR #3024"
       ],
@@ -12428,7 +12428,12 @@
       "files": [],
       "created_at": "2026-10-16",
       "updated_at": "2026-10-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-17T12:27:59Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
