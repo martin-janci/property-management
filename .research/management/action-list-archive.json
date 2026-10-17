@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-17T12:33:06Z",
+  "archived_at": "2026-10-17T16:29:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1949,6 +1949,78 @@
         "pr": 2735,
         "merged_at": "2026-08-11T14:09:24Z",
         "landed_on": "dev"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
+      "action": "Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-17T16:29:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3113,
+        "merged_at": "2026-10-17T14:26:08Z",
+        "at": "2026-10-17T16:29:19Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
+      "action": "Churn hotspot: frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx — new in PR #3094 (minimal RN article-detail view)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-17T16:29:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3114,
+        "merged_at": "2026-10-17T14:26:10Z",
+        "at": "2026-10-17T16:29:19Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
+      "action": "Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-10-17T16:29:19Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3112,
+        "merged_at": "2026-10-17T14:26:04Z",
+        "at": "2026-10-17T16:29:19Z"
       }
     },
     {
@@ -4909,6 +4981,30 @@
         "merged_pr": 2739,
         "merged_at": "2026-08-12T12:19:26Z",
         "at": "2026-08-12T16:05:30Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
+      "action": "mobile-rn: NewsScreen/ArticleDetailScreen category and PersonMonthsScreen status badges render raw English enum values on i18n screens",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=bug) | gc1-reconcile 2026-10-17T16:25:01Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T06:30:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3110,
+        "merged_at": "2026-10-17T12:36:05Z",
+        "at": "2026-10-17T16:25:01Z"
       }
     },
     {

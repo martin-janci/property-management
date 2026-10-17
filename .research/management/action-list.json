@@ -294,74 +294,6 @@
       }
     },
     {
-      "id": "churn-hotspot-frontend/apps/mobile/src/App.outageNewsDetail.test.tsx",
-      "action": "Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-16T06:30:26Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx",
-      "action": "Churn hotspot: frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx — new in PR #3094 (minimal RN article-detail view)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-16T06:30:26Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts",
-      "action": "Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-16T06:30:26Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-news-personmonths-badge-untranslated",
-      "action": "mobile-rn: NewsScreen/ArticleDetailScreen category and PersonMonthsScreen status badges render raw English enum values on i18n screens",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-16T06:30:26Z (score=1 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-16T06:30:26Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "gh-issue-3104",
       "action": "Portfolio/owner analytics: comparisons + dashboard summary + owner portfolio runtime drift (500s) (Closes #3104)",
       "owner_role": "pm-tech-lead",
@@ -394,6 +326,170 @@
       "issue_ref": {
         "number": 3109,
         "url": "https://github.com/martin-janci/property-management/issues/3109",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3115",
+      "action": "Follow-up: ArticleDetailScreen test asserts raw category 'building' but badge renders an i18n key after #3110 (PR #3114) (Closes #3115)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-17T16:25:39Z (#3115)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:25:39Z",
+      "issue_ref": {
+        "number": 3115,
+        "url": "https://github.com/martin-janci/property-management/issues/3115",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3116",
+      "action": "Follow-up: NewsScreen category badge lacks the i18n defaultValue fallback that ArticleDetailScreen uses (PR #3110) (Closes #3116)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-17T16:25:39Z (#3116)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:25:39Z",
+      "issue_ref": {
+        "number": 3116,
+        "url": "https://github.com/martin-janci/property-management/issues/3116",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
+      "action": "ppt-web-core: useAmlDashboard assessment transform calls a.risk_factors.map with no ?? [] guard — crashes dashboard on null",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-server-register-account-enumeration",
+      "action": "reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-auth-ctx-transient-logout",
+      "action": "reality-web: auth-context checkSession treats ANY /users/me non-ok as auth failure → transient 5xx wipes session",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-totp-rng-expect-panic",
+      "action": "api-core: TotpService::encrypt_secret() panics on CSPRNG failure via .expect() instead of threading TotpError",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
+      "action": "ppt-web-core: useAmlDashboard hardcodes id_verified/sof_documented/pep/sanctions_check to false and recommendations=[] regardless of backend state",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-formatprice-hardcoded-locale",
+      "action": "reality-web: ListingHeader & AgencyListings hardcode locale=en-US in formatPrice on a 4-language portal",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "gh-issue-3006-retry2",
+      "action": "Follow-up: unify triplicated auth-header + MFA-retry logic in @ppt/api-client fetch primitives (PR #3004) (Closes #3006) [retry 2/2 of failed gh-issue-3006]",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-10-17T16:26:28Z (retry_of=gh-issue-3006 reason=failed-no-pr cooldown_ok newest_failure=2026-10-10T06:43:37Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "retry_of": "gh-issue-3006",
+      "retry_round": 2,
+      "issue_ref": {
+        "number": 3006,
+        "url": "https://github.com/martin-janci/property-management/issues/3006",
         "labels": [
           "follow-up",
           "from-merged-review"
