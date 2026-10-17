@@ -12044,19 +12044,21 @@
       "score": 3,
       "status": "open",
       "sources": [
-        "rotating-expert-review [api-handlers]"
+        "rotating-expert-review [api-handlers]",
+        "PR #3072"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/violations.rs — EVERY handler authorizes solely on `user.tenant_id` presence (`.ok_or_else(|| forbidden_error(\"No organization context\"))`) and never consults `user.role`. The ONLY role check in the whole router is list_comments L648 (`user.is_platform_admin() || user.role.map(|r| r.is_manager())`) deciding whether internal comments are visible — proving the role model is available but was not applied to the write/decision paths.",
         "Privileged endpoints with NO role gate: create_rule/update_rule/delete_rule (community rules), create_violation, update_violation, assign_violation, create_action/update_action/mark_action_sent (issue enforcement actions + fines), record_payment, create_appeal and decide_appeal. Most severe: POST /api/v1/violations/appeals/{appeal_id}/decide → decide_appeal (repo L799) lets any authenticated org member approve an appeal, which sets the violation to 'dismissed' and reduces the fine via GREATEST(0, fine_amount - adjustment). A Resident/Tenant can file an appeal on their own violation and then approve it, zeroing their own fine.",
-        "AuthUser exposes `role: Option<TenantRole>` with a hierarchy (`is_manager()`, `level()`, `is_platform_admin()` — api-core/src/extractors/auth.rs:247, rls_connection.rs:121). The router is mounted as a plain `.nest(\"/api/v1/violations\", routes::violations::router())` (lib.rs:408) with no role-enforcing Tower layer, so there is no outer authorization layer compensating. Fix: require manager/org-admin (or a committee role) on all create/update/delete/assign/action/payment/appeal-decision handlers."
+        "AuthUser exposes `role: Option<TenantRole>` with a hierarchy (`is_manager()`, `level()`, `is_platform_admin()` — api-core/src/extractors/auth.rs:247, rls_connection.rs:121). The router is mounted as a plain `.nest(\"/api/v1/violations\", routes::violations::router())` (lib.rs:408) with no role-enforcing Tower layer, so there is no outer authorization layer compensating. Fix: require manager/org-admin (or a committee role) on all create/update/delete/assign/action/payment/appeal-decision handlers.",
+        "In-flight: PR #3072 opened by dispatcher auto-impl flow — dispatcher-reviewer verdict=approve (role-gate-correct, 13 mutations gated, tests sound). Blocked on human merge: PR is still draft on GitHub and reviewer could only COMMENT (bots cannot self-approve). Stem-colliding with planner readiness gate; buffer-low 2026-10-17 22:30 counted this as claimable but it is already in flight."
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs",
         "backend/crates/db/src/repositories/violations.rs"
       ],
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-10-17",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
