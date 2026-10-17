@@ -28,6 +28,12 @@ const capture = (onNavigate?: (screen: string, params?: Record<string, unknown>)
   capturedNavigate = onNavigate;
 };
 
+// `onBack` captured from each detail screen. App wires these to
+// `handleNavigate('Outages')` / `handleNavigate('News')`, so invoking them
+// drives the real state machine back to the matching list route.
+let capturedOutageBack: (() => void) | undefined;
+let capturedArticleBack: (() => void) | undefined;
+
 // ── Auth context — always authenticated so the protected switch renders ──────
 jest.mock('./contexts', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -73,9 +79,10 @@ jest.mock('./screens', () => {
     },
     AnnouncementsScreen: () => null,
     AnnouncementDetailScreen: () => null,
-    ArticleDetailScreen: ({ articleId }: { articleId?: string }) => (
-      <RNText>{`article-detail:${articleId}`}</RNText>
-    ),
+    ArticleDetailScreen: ({ articleId, onBack }: { articleId?: string; onBack?: () => void }) => {
+      capturedArticleBack = onBack;
+      return <RNText>{`article-detail:${articleId}`}</RNText>;
+    },
     BuildingsScreen: () => null,
     DocumentDetailScreen: () => null,
     DocumentPermissionsScreen: () => null,
@@ -92,12 +99,14 @@ jest.mock('./screens', () => {
     MeterReadingScreen: () => null,
     MetersScreen: () => null,
     NeighborsScreen: () => null,
-    NewsScreen: () => null,
+    // List screens render identifiable text so back-navigation lands are observable.
+    NewsScreen: () => <RNText>{'news-list'}</RNText>,
     NotificationsScreen: () => null,
-    OutageDetailScreen: ({ outageId }: { outageId?: string }) => (
-      <RNText>{`outage-detail:${outageId}`}</RNText>
-    ),
-    OutagesScreen: () => null,
+    OutageDetailScreen: ({ outageId, onBack }: { outageId?: string; onBack?: () => void }) => {
+      capturedOutageBack = onBack;
+      return <RNText>{`outage-detail:${outageId}`}</RNText>;
+    },
+    OutagesScreen: () => <RNText>{'outages-list'}</RNText>,
     PersonMonthsScreen: () => null,
     ProfileScreen: () => null,
     ReportFaultScreen: () => null,
@@ -132,9 +141,20 @@ function navigate(screen: string, params?: Record<string, unknown>) {
   });
 }
 
+function invokeBack(back: (() => void) | undefined, label: string) {
+  if (!back) {
+    throw new Error(`${label} onBack was never captured — detail screen did not render`);
+  }
+  act(() => {
+    back();
+  });
+}
+
 describe('MainApp Outage/News detail navigation wiring', () => {
   beforeEach(() => {
     capturedNavigate = undefined;
+    capturedOutageBack = undefined;
+    capturedArticleBack = undefined;
     jest.clearAllMocks();
   });
 
@@ -158,5 +178,64 @@ describe('MainApp Outage/News detail navigation wiring', () => {
 
     expect(getByText('article-detail:a-1')).toBeTruthy();
     expect(queryByText('dashboard')).toBeNull();
+  });
+
+  // Unlike AnnouncementDetail/VoteDetail, the Outage/Article cases have no
+  // required-param redirect: a param-less tap must still reach the detail
+  // screen, not silently bounce to the list or the Dashboard fallback. Pins
+  // the current contract so a future "defensive" param guard can't be added
+  // without a conscious test update.
+  it('resolves OutageDetail with no params to the detail screen (no param guard), not the Dashboard', () => {
+    const { getByText, queryByText } = render(<App />);
+    navigate('OutageDetail');
+
+    expect(getByText('outage-detail:undefined')).toBeTruthy();
+    expect(queryByText('dashboard')).toBeNull();
+  });
+
+  it('resolves ArticleDetail with no params to the detail screen (no param guard), not the Dashboard', () => {
+    const { getByText, queryByText } = render(<App />);
+    navigate('ArticleDetail');
+
+    expect(getByText('article-detail:undefined')).toBeTruthy();
+    expect(queryByText('dashboard')).toBeNull();
+  });
+
+  // Back-navigation wiring lives in the same switch cases (onBack ->
+  // handleNavigate('Outages') / ('News')). A regression that mis-wires onBack
+  // would strand the user on the detail screen.
+  it('wires OutageDetail back to the Outages list', () => {
+    const { getByText, queryByText } = render(<App />);
+    navigate('OutageDetail', { outageId: 'o-1' });
+    expect(getByText('outage-detail:o-1')).toBeTruthy();
+
+    invokeBack(capturedOutageBack, 'OutageDetail');
+
+    expect(getByText('outages-list')).toBeTruthy();
+    expect(queryByText('outage-detail:o-1')).toBeNull();
+  });
+
+  it('wires ArticleDetail back to the News list', () => {
+    const { getByText, queryByText } = render(<App />);
+    navigate('ArticleDetail', { articleId: 'a-1' });
+    expect(getByText('article-detail:a-1')).toBeTruthy();
+
+    invokeBack(capturedArticleBack, 'ArticleDetail');
+
+    expect(getByText('news-list')).toBeTruthy();
+    expect(queryByText('article-detail:a-1')).toBeNull();
+  });
+
+  // Documents WHY the two cases are load-bearing: an unmapped screen name
+  // falls through to the Dashboard default branch — exactly the silent
+  // fallthrough that swallowed OutageDetail/ArticleDetail before #3094.
+  it('falls through to the Dashboard for an unmapped screen name (the default branch)', () => {
+    const { getByText } = render(<App />);
+    navigate('OutageDetail', { outageId: 'o-1' });
+    expect(getByText('outage-detail:o-1')).toBeTruthy();
+
+    navigate('ThisScreenDoesNotExist');
+
+    expect(getByText('dashboard')).toBeTruthy();
   });
 });
