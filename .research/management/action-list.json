@@ -396,7 +396,58 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "pm-integration-community-group-delete-endpoint",
+      "action": "Implement DELETE /api/v1/community/groups/{id} on api-server (route in community.rs next to get_group, utoipa path, auth + owner/manager + tenant/RLS scoping, 204/403/404 shape, idempotent) — unblocks ppt-web community group delete already wired in PR #3101 (issue #3109).",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-17",
+      "first_open_at": "2026-10-17T03:23:02Z",
+      "issue_ref": {
+        "number": 3109,
+        "url": "https://github.com/martin-janci/property-management/issues/3109",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "pm-integration-realtor-id-wire-page-to-api",
+      "action": "Wire reality-web /[locale]/realtor/[id] page to existing public GET /api/v1/realtors/{user_id}/profile via @ppt/reality-api-client — replace MOCK_AGENT (3 code-review-findings: shared-mock score 2, dead contact-form score 2, no-i18n score 1). Add 404 state, confirm [id] == user_id semantics, thread next-intl.",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-17",
+      "first_open_at": "2026-10-17T03:23:02Z",
+      "backlog_ref": {
+        "items": [
+          "code-review-reality-web-realtor-id-shared-mock",
+          "code-review-reality-web-realtor-id-dead-contact-form",
+          "code-review-reality-web-realtor-id-no-i18n"
+        ]
+      }
+    },
+    {
+      "id": "pm-integration-cross-service-contract-drift-audit",
+      "action": "Cross-service contract-drift audit: diff every frontend-called path (ppt-web + reality-web hooks + mobile) against axum routes and OpenAPI spec; flag DELETE/PUT/PATCH first. Add the check to api-validation CI so a future wired-but-missing endpoint (like #3101→#3109) fails on PR.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-17",
+      "first_open_at": "2026-10-17T03:23:02Z"
     }
   ],
-  "generated": "2026-10-16T04:00:00Z"
+  "generated": "2026-10-17T03:23:02Z"
 }

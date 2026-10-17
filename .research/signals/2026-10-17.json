@@ -1,0 +1,200 @@
+{
+  "signals": [
+    {
+      "id": "code-review-api-core-totp-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core)",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/totp.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/totp.rs:153 TotpService::encrypt_secret fills AES-GCM nonce via rand::rngs::SysRng.try_fill_bytes(...).expect(\"OS rng failed\") — panics on CSPRNG error instead of returning TotpError like every other fallible step in the same body (totp.rs:149, :162).",
+        "Both call sites (routes/mfa.rs:228 and routes/admin/mfa/enroll.rs:130-131) consume encrypt_secret's Result with map_err→logged-500; the panic bypasses that path on the MFA-enrollment endpoint.",
+        "Remedy: replace .expect(\"OS rng failed\") with .map_err(|e| TotpError::EncryptionError(format!(\"OS rng failed: {e}\")))?. Verifiable via cargo check -p api-server + a unit test with an injected failing RNG. candidate_vector=bug (latent panic on MFA path contradicting surrounding error-handling contract)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-shared-mock",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/_mock.ts",
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:11-20 imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS and binds `const agent = MOCK_AGENT`; signature takes no params/useParams so EVERY /[locale]/realtor/<id> URL renders the same hard-coded fake agent on a public, SEO-indexed route. Sibling /profile page.tsx:12-15 header documents this exact defect class as a 'UX bug and privacy footgun' that was already fixed there.",
+        "realtor-api.ts has getRealtorReviews(id) and getMyRealtorProfile but no public GET /api/v1/realtors/{id} — the fix needs that (confirming/adding server-side) plus wiring the page to fetch by `[id]` route param. Confidence HIGH: statically certain (no params read, no fetch calls)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-dead-contact-form",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:22-27 — handleSendMessage is purely local: `if (message.trim()) { setMessageSent(true); setContactOpen(false); }`. No fetch, no realtor-api helper, no mutation. User's 'Správa odoslaná' (message sent) toast is a lie — a public-facing inquiry contact form that silently drops user input.",
+        "Classic fake-submit anti-pattern already treated as a real bug in sibling screens (e.g. prior report-fault-fake-submit plan). Confidence HIGH: statically confirmed. Fix: wire to a realtor-contact API or disable the form until the backend endpoint exists."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx is under /[locale]/ (sk/cs/de/en) yet uses zero next-intl / useTranslations / getTranslations — grep returns 0 hits in the file. User-facing chrome is hard-coded Slovak (e.g. 'Správa odoslaná', 'Kontaktovať makléra'), so cs/de/en visitors see Slovak on this public SEO-indexed page.",
+        "Confidence HIGH: statically confirmed via grep. Fix is routine: thread useTranslations and move strings to locale JSONs — depends on the shared-mock fix for scope coherence."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-17.md && head -1 | grep -q '^# 2026-10-17$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog.json ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal re-emit cumulative-type carve-out",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score>8 count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq open items older than 14d lost >=1 pt or dropped",
+      "observed": "true",
+      "expected": "true (toctou 1 → 0 → dropped)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → vacuously pass",
+      "observed": "0 new plans",
+      "expected": "adversarial pass or 0 new"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "grep -c '\\.md$' diff --cached --diff-filter=A .research/plans/",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private-hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed: none' and no failed phase in state",
+      "observed": "line present",
+      "expected": "present"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan slug still in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count staged (22) >= HEAD (22)",
+      "observed": "22 >= 22",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions cap + idempotency",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "PM artifact validity + cursor liveness",
+      "observed": "CC 9→10, PM 7→0 (wrap), epics=13",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram-token-value in staged + diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

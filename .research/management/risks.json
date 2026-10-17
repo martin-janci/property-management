@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-16T04:00:00Z",
+  "generated": "2026-10-17T03:23:24Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -208,6 +208,39 @@
       "owner_role": "pm-devops",
       "trigger": "gap of 36h+ between routine commits on `dev`",
       "status": "open"
+    },
+    {
+      "id": "pm-integration-frontend-wires-missing-backend-2026-10-17",
+      "risk": "Repeating anti-pattern: frontend PRs wire DELETE/UPDATE calls to endpoints that do not exist (PR #3101 → issue #3109). Shipped UI produces runtime 404/405 against the real API, discovered only post-merge.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Make backend route + OpenAPI entry a merge prerequisite for the frontend wiring PR, or require a feature flag. Add a CI route-drift check in api-validation.yml.",
+      "owner_role": "pm-integration",
+      "trigger": "Any merged frontend PR calling an HTTP method not present on the matching axum route.",
+      "status": "open",
+      "source": "pm-integration 2026-10-17"
+    },
+    {
+      "id": "pm-integration-public-profile-pii-exposure-2026-10-17",
+      "risk": "reality-server GET /api/v1/realtors/{user_id}/profile is unauthenticated; wiring reality-web /[locale]/realtor/[id] to it may expose private fields on ProfileResponse (contact email/phone) if not field-reviewed first.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Field-level PII review of ProfileResponse before the realtor-id page lands; publish only non-PII fields on the unauth route; move private fields behind /me or an auth-only variant.",
+      "owner_role": "pm-security",
+      "trigger": "Any PR under pm-integration-realtor-id-wire-page-to-api that does not include a documented PII review.",
+      "status": "open",
+      "source": "pm-integration 2026-10-17"
+    },
+    {
+      "id": "pm-scrum-master-pr-3072-review-bottleneck-2026-10-17",
+      "risk": "PR #3072 (code-review-api-handlers-violations-missing-role-authz) sits awaiting human reviewer; it is the sole open score-3 item unblocking a stem-collision guard. No application-code movement in ~10h.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Escalate to a named reviewer with a review SLA; split the PR if too large; the research routine cannot resolve this.",
+      "owner_role": "pm-scrum-master",
+      "trigger": "PR #3072 open > 7d without reviewDecision.",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-17"
     }
   ]
 }

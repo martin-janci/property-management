@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-16 16:38 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-17 03:20 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -44,6 +44,8 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | reality-web /[locale]/realtor/[id] renders a shared MOCK_AGENT to every visitor (ignores route param) | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx (+2)` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web) | 2026-10-17 | open | — |
+| 2 | bug | reality-web realtor contact form posts nothing — handleSendMessage drops user input | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web) | 2026-10-17 | open | — |
 | 2 | bug | ppt-web community groups: Delete button navigates away without calling delete API (data-coherence lie) | `frontend/apps/ppt-web/src/routes/groups/community.tsx` | rotating-expert-review (+1) | 2026-10-16 | done | — |
 | 2 | bug | mobile-rn: NEW OutageDetail/ArticleDetail back-button labels render raw '‹ News' / '‹ Outages' English in files whose other strings resolve through t('…') | `frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn detail-back-button-hardcoded-en) (+2) | 2026-10-16 | done | — |
 | 2 | bug | mobile-rn: OutagesScreen status badge renders raw outage.status.replace('_',' ') in English on a screen whose filters are already t('outages.filters.*') | `frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx (+1)` | rotating-expert-review (routine Phase 1.5 2026-10-16 mobile-rn outage-status-untranslated) (+2) | 2026-10-16 | done | — |
@@ -215,6 +217,8 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | bug | api-server totp.rs encrypt_secret() panics on OS CSPRNG error instead of returning TotpError | `backend/servers/api-server/src/services/totp.rs` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core) | 2026-10-17 | open | — |
+| 1 | bug | reality-web /[locale]/realtor/[id] hard-codes Slovak chrome — zero next-intl on a public SEO-indexed locale route | `frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web) | 2026-10-17 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test) | `frontend/apps/mobile/src/App.outageNewsDetail.test.tsx` | PR #3094 | 2026-10-16 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests) | `frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts` | PR #3093 | 2026-10-16 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx — new in PR #3094 (minimal RN article-detail view) | `frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx` | PR #3094 | 2026-10-16 | open | — |
@@ -234,7 +238,6 @@
 | 1 | refactor | reality-web /sell page recent churn — PR #3013 publish-wiring change | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | done | — |
 | 1 | refactor | reality-web /report page recent churn — PR #3014 submit-wiring change | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | done | — |
 | 1 | refactor | reality-web FeaturedListings recent churn — PR #3015 error-surface fix | `frontend/apps/reality-web/src/components/home/FeaturedListings.tsx` | churn-scan-2026-10-03 (+1) | 2026-10-03 | done | — |
-| 1 | bug | reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap | `backend/servers/reality-server/src/routes/compare.rs` | rotating-expert-review reality-server 2026-10-03 | 2026-10-03 | open | — |
 | 1 | refactor | ppt-web src/routes/groups/core.tsx — 4 commits in last 14d (new hotspot) | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | churn 14d | 2026-10-01 | done | — |
 | 1 | refactor | ppt-web workflow-automation CreateRulePage.tsx — 4 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/features/workflow-automation/pages/CreateRulePage.tsx` | churn 14d | 2026-10-01 | done | — |
 | 1 | refactor | ppt-web workflow-automation TemplateLibraryPage.tsx — 3 commits in 14d (new hotspot) | `frontend/apps/ppt-web/src/features/workflow-automation/pages/TemplateLibraryPage.tsx` | churn 14d | 2026-10-01 | done | — |
@@ -446,6 +449,7 @@
 | 1 | triage | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | — | #836 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | — | #845 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | — | #849 (+1) | 2026-05-31 | done | — |
+| 0 | bug | reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap | `backend/servers/reality-server/src/routes/compare.rs` | rotating-expert-review reality-server 2026-10-03 | 2026-10-17 | dropped | — |
 | 0 | test-gap | ppt-web route refactor (PR #2994) landed without touching docs/screens/ppt | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #2994 | 2026-10-16 | dropped | — |
 | 0 | bug | mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt` | Tier1d review 2026-08-04 (mobile-native-kmp) | 2026-09-20 | dropped | — |
 | 0 | bug | mobile-native-kmp: shared repositories swallow CancellationException in catch(e: Exception), breaking coroutine cancellation and showing spurious errors | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt (+8)` | Tier1d review 2026-08-11 (mobile-native-kmp) | 2026-09-20 | dropped | — |
