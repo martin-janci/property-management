@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-16T04:00:00Z",
+  "generated": "2026-10-17T04:39:09Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -1228,7 +1228,7 @@
         "ppt-web upload flow still server-proxied — wire direct-to-S3 upload via POST /documents/upload-url (api-client binding + UploadDocument integration; endpoint landed in #2309)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-08-25",
+      "last_checked": "2026-10-17",
       "screen_refs": [
         {
           "screen_id": "ppt/upload-document",
@@ -1259,7 +1259,7 @@
         "build the signer-facing document-sign page in ppt-web (screen-map ppt/document-sign buildStatus planned→shipped; verify signature-request email delivery end-to-end; NOTE: prior task gap-84-2-no-frontend-ui-component-consuming-the failed with no PR — fresh attempt, scope to the shipped API)"
       ],
       "epic": "epic-84",
-      "last_checked": "2026-08-25",
+      "last_checked": "2026-10-17",
       "screen_refs": [
         {
           "screen_id": "ppt/document-sign",
@@ -1288,7 +1288,7 @@
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-17",
       "screen_refs": [
         {
           "screen_id": "reality/favorites",
@@ -1316,7 +1316,7 @@
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-17",
       "screen_refs": [
         {
           "screen_id": "ppt/notification-triggers",
@@ -1343,7 +1343,7 @@
       ],
       "gaps": [],
       "epic": "epic-84",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-17",
       "screen_refs": []
     }
   ]
