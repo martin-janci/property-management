@@ -55,6 +55,16 @@ describe('PersonMonthsScreen header + control i18n', () => {
     }
   });
 
+  it('renders status badges via i18n keys, not the raw enum values', () => {
+    render(<PersonMonthsScreen />);
+    // Mock data carries one draft and three confirmed entries on first render.
+    expect(screen.getAllByText('personMonths.status.draft').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('personMonths.status.confirmed').length).toBeGreaterThan(0);
+    // Raw enum values must not leak through as badge labels.
+    expect(screen.queryByText('draft')).toBeNull();
+    expect(screen.queryByText('confirmed')).toBeNull();
+  });
+
   it('raises the invalid-value Alert via i18n keys, not hardcoded literals', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     render(<PersonMonthsScreen />);
@@ -85,13 +95,29 @@ describe('personMonths keys resolve to real, locale-distinct translations', () =
   it('every locale defines the keys and translates the title/subtitle away from English', () => {
     for (const locale of [sk, cs, de, pl, hu]) {
       for (const key of ['title', 'subtitle', 'invalidTitle', 'invalidMessage', 'bulkEntry']) {
-        const value = (locale.personMonths as Record<string, string>)[key];
+        const value = (locale.personMonths as unknown as Record<string, string>)[key];
         expect(typeof value).toBe('string');
         expect(value.length).toBeGreaterThan(0);
       }
       expect(locale.personMonths.subtitle).not.toBe(en.personMonths.subtitle);
       expect(locale.personMonths.personCount_one).toContain('{{count}}');
       expect(locale.personMonths.personCount_other).toContain('{{count}}');
+    }
+  });
+
+  it('en carries the status badge labels', () => {
+    expect(en.personMonths.status.draft).toBe('Draft');
+    expect(en.personMonths.status.submitted).toBe('Submitted');
+    expect(en.personMonths.status.confirmed).toBe('Confirmed');
+  });
+
+  it('every locale defines the status badge labels', () => {
+    for (const locale of [sk, cs, de, pl, hu]) {
+      for (const key of ['draft', 'submitted', 'confirmed'] as const) {
+        const value = (locale.personMonths.status as Record<string, string>)[key];
+        expect(typeof value).toBe('string');
+        expect(value.length).toBeGreaterThan(0);
+      }
     }
   });
 });
