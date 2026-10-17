@@ -12513,6 +12513,32 @@
       "created_at": "2026-10-16",
       "updated_at": "2026-10-16",
       "plan": null
+    },
+    {
+      "id": "gh-issue-3109-community-group-delete-backend-missing",
+      "title": "Issue #3109 follow-up: implement api-server `DELETE /api/v1/community/groups/{id}` — ppt-web Delete action wired by PR #3101 but backend route 404s",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Issue #3109",
+        "PR #3101 (shipped frontend-only)"
+      ],
+      "evidence": [
+        "Issue #3109 (from-merged-review): PR #3101 wired ppt-web `useDeleteGroup()` mutation to `DELETE /api/v1/community/groups/{id}` with confirm/toast/invalidate, but `backend/servers/api-server/src/routes/community.rs` registers only `.route(\"/groups/{id}\", get(get_group))` + join/leave POSTs — no `delete(delete_group)` handler, so every Delete click 404s and the group survives.",
+        "Proposed slice (per issue body): add `delete_group` handler + utoipa path, mirror the owner/manager role check used by join/leave, add `delete_group(group_id, org_id)` repository fn (RLS-scoped, cascade group_members + posts), add cross-tenant IDOR regression + happy-path owner + non-owner 403 tests, and update TypeSpec so `@ppt/sitemap` picks up the endpoint.",
+        "Platform: cloud-verifiable — pure backend (api-server routes + db crate + TypeSpec + Rust tests)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/community.rs",
+        "backend/crates/db/src/repositories/community.rs",
+        "docs/api/typespec/community.tsp",
+        "backend/servers/api-server/tests/community_cross_tenant_idor_tests.rs"
+      ],
+      "created_at": "2026-10-17",
+      "updated_at": "2026-10-17",
+      "plan": null
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-16 16:38 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-17 06:38 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -215,6 +215,7 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | bug | Issue #3109 follow-up: implement api-server `DELETE /api/v1/community/groups/{id}` — ppt-web Delete action wired by PR #3101 but backend route 404s | `backend/servers/api-server/src/routes/community.rs (+3)` | Issue #3109 (+1) | 2026-10-17 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test) | `frontend/apps/mobile/src/App.outageNewsDetail.test.tsx` | PR #3094 | 2026-10-16 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests) | `frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts` | PR #3093 | 2026-10-16 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx — new in PR #3094 (minimal RN article-detail view) | `frontend/apps/mobile/src/screens/news/ArticleDetailScreen.tsx` | PR #3094 | 2026-10-16 | open | — |

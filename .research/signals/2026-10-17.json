@@ -1,0 +1,141 @@
+{
+  "run_date": "2026-10-17",
+  "run_iso": "2026-10-17T06:38:00Z",
+  "trigger_payload": "buffer-low: claimable=6/72 dep-blocked=7 (all mobile-native-gated); WIP jammed 10>cap8; please refill coverage/backlog with cloud-verifiable (non-mobile-native) stories",
+  "signals": [
+    {
+      "id": "gh-issue-3109-community-group-delete-backend-missing",
+      "type": "untriaged-issue",
+      "source": "Issue #3109",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Issue #3109 (from-merged-review): PR #3101 wired ppt-web `useDeleteGroup()` to `DELETE /api/v1/community/groups/{id}` but api-server has no delete handler on that path — every Delete 404s. Cloud-verifiable backend slice; already in action-list.json as `gh-issue-3109` (dispatcher-ingested 2026-10-17T04:25:46Z). Promoted into routine backlog with vector=bug (feature half-shipped) rather than vector=triage because the issue body is explicit and the fix path is scoped."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist (`screen-map-drift|screen-map-orphan|fixme-in-merged-code|dep-update-noise|stalled-review`). The sole new signal (`gh-issue-3109-*`) is `untriaged-issue`, not in the allowlist.",
+  "phase_1_5_skipped": "yes — api-handlers (oldest-unreviewed, 2026-10-11) is saturated at 3 open code-review-finding items; reality-web (tied oldest 2026-10-11) has 1 open code-review item but routine context budget prioritised Phase 2 refill under the buffer-low trigger. Review slice resumes on the next scheduled run; review_cursor NOT advanced.",
+  "phase_1_6_skipped": "yes — pm_cursor.next_index stays at 7 (pm-integration due); run is buffer-refill-focused rather than delivery synthesis. G16 is a no-op when Phase 1.6 is skipped.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-17.md && head -1 == '# 2026-10-17'",
+      "observed": "will-pass",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "staged state.json != HEAD state.json",
+      "observed": "last_run_iso + last_issue_seen + seen_signals advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit",
+      "observed": "sole signal id not in prior seen_signals",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "no scores > 8; no open items older than 14d requiring decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 plans added",
+      "expected": "true (vacuously)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "will-pass (no app-code touched)",
+      "expected": "0 non-.research/ paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "will-pass",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "will-pass (regen produced identical content)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phase; no advanced-cursor violation",
+      "observed": "Phase 1 succeeded; Phase 1.5/1.6 explicitly skipped (cursors held)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "no plan touched this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "archive count unchanged",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "will-pass",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions empty — no candidate met certainty bar",
+      "expected": "<= per-run caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "will-pass",
+      "expected": "0"
+    }
+  ]
+}
