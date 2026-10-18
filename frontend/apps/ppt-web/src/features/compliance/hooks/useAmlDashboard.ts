@@ -100,7 +100,7 @@ export function useAmlDashboard(): UseAmlDashboardResult {
     risk_score: a.risk_score,
     risk_level: a.risk_level,
     status: a.status,
-    risk_factors: a.risk_factors.map((f) => ({
+    risk_factors: (a.risk_factors ?? []).map((f) => ({
       factor_type: f.factor_type,
       description: f.description,
       weight: f.weight,
