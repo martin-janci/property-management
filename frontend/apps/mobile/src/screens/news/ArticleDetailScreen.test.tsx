@@ -100,7 +100,10 @@ describe('ArticleDetailScreen', () => {
       });
       render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(screen.getByText('Lift maintenance scheduled')).toBeTruthy();
-      expect(screen.getByText('building')).toBeTruthy();
+      // The global `t:(key)=>key` stub (src/test/setup.ts) ignores the badge's
+      // `defaultValue`, so the rendered label is the i18n KEY — assert on that,
+      // consistent with this file's key-based approach (see header comment).
+      expect(screen.getByText('news.categories.building')).toBeTruthy();
       expect(screen.getByText('The lift will be out of service on Tuesday.')).toBeTruthy();
     });
 
