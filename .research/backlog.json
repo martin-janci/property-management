@@ -9888,7 +9888,8 @@
       "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-native-kmp re-detection)"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9896,7 +9897,8 @@
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
         "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
         "decayed 2026-09-20: no new signals in 14d (routine-lag: 19d) (score 4 → 3)",
-        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207"
+        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207",
+        "Tier-1d re-detection 2026-10-18 (dispatcher mobile-native-kmp slice): Navigation.kt:493 still wires CreateListing onSubmit to `{ _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`; PortalListingsRepository exposes listMyListings/getListingAnalytics/getPortfolioAnalytics but no createListing — plan at plans/code-review-mobile-native-kmp-create-listing-not-wired.md still correct and in-flight on dispatcher assignments."
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9905,7 +9907,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-10-18",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -12666,6 +12668,72 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-silent-drop",
+      "title": "mobile-native-kmp: PortalListingsRepository.getPortfolioAnalytics silently drops per-listing failures via .getOrNull()|filterNotNull — portfolio totals/trends computed from partial subset with no partial-failure indicator",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 — getPortfolioAnalytics() fans one getListingAnalytics(listing.id) per listing inside `coroutineScope { listings.map { async { getListingAnalytics(it.id).getOrNull() } }.awaitAll().filterNotNull() }`. Each per-listing failure (network/5xx/429 under the N-call fan-out) is collapsed to null by `.getOrNull()` and dropped by `.filterNotNull()`, yet the function still returns Result.success(...). Totals (totalViews/totalInquiries/totalFavorites at :132-134) and viewsTrend/inquiriesTrend arrays (:150-151) are therefore computed from a partial subset of listings with no partial-failure flag on PortfolioAnalytics and no minimum-success threshold.",
+        "The Realtor ListingAnalytics screen (androidApp Navigation.kt:497-, comment at :498-500 cites this method) renders these portfolio metrics as authoritative, so a transient failure on even one listing silently understates portfolio-wide views/inquiries/favorites with zero indication to the realtor. Severity LOW (+1): silent data-understatement on a user-facing analytics surface, no crash/auth impact. Confidence MEDIUM: statically certain failures are dropped; exact user impact depends on how often the fan-out partially fails at runtime. Fix: surface partial-failure indicator (count of listings whose analytics could not be loaded) or fail the aggregate when a threshold of per-listing calls error. NET-NEW vs backlog: distinct from the dropped `-unbounded-fanout` row (which flagged the fan-out concurrency itself, not the error-handling semantics)."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "title": "mobile-rn: usePushNotifications sets isRegistered=true BEFORE sendTokenToBackend await — backend-rejection path leaves isRegistered true forever, silent zero-push failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:223 vs :227 (registerForPushNotifications) — the hook calls `setIsRegistered(true)` at line 223 BEFORE it awaits `sendTokenToBackend(nativeToken.data)` at line 227. sendTokenToBackend posts the device's FCM/APNs token to the api-server (`sendPushTokenToBackend` -> `apiRequest`), which can reject on any backend 4xx/5xx or network error. When it throws, the surrounding catch (line ~230) only does `setError(message); return null;` — it never rolls `isRegistered` back to false.",
+        "Consequence: on a backend-registration failure the hook reports `isRegistered === true` (exposed in the returned API at line 315) while the api-server never stored this device's push token. The device therefore silently receives NO pushes, there is NO retry, and any UI gated on `isRegistered` shows a successful/complete registration — a silent, permanent (for the session) delivery failure that masks itself. This defeats the entire purpose of the hook (direct FCM/APNs fan-out).",
+        "Reachability: register is the app's push-enrolment entry point; a transient backend outage, an expired/absent access token at enrolment time, or a 4xx from the push-tokens endpoint all trip it under normal operating conditions. Verified net-new against prior mobile-rn signal files and backlog ids.",
+        "Suggested fix (implementer): move `setIsRegistered(true)` to AFTER `await sendTokenToBackend(...)` succeeds, so the flag reflects backend acceptance rather than local token acquisition; in the catch, ensure `setIsRegistered(false)` (and optionally surface a retriable error state). Add a jest-expo unit test asserting that when `sendPushTokenToBackend` rejects, the hook ends with `isRegistered === false` and a non-null `error` (satisfies IG3 — fails on current main)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-18",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-perm-only",
+      "title": "mobile-rn: usePushNotifications checkRegistrationStatus sets isRegistered from OS permission alone — stale/rotated device token or never-persisted token still reports registered",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:154-156 (checkRegistrationStatus) — sets `setIsRegistered(status === 'granted')` purely from `Notifications.getPermissionsAsync()`, i.e. from OS notification-permission state alone, with no knowledge of whether the api-server currently holds this device's push token.",
+        "This conflates two distinct facts under one boolean: (a) the user has granted OS notification permission, and (b) the backend can actually deliver pushes to this device (has a current, non-rotated token). On app launch with a previously-granted permission, `isRegistered` becomes true without the current session ever (re)sending the token, so a stale or rotated device token — or a device whose token was never successfully persisted (see sibling finding code-review-mobile-rn-push-isregistered-premature) — is reported as fully registered. Any UI/telemetry that treats `isRegistered` as 'backend will deliver pushes' is misled.",
+        "Severity low: this is a semantic-conflation / observability smell rather than a crash; it compounds the premature-flag bug above and makes silent delivery failures harder to detect. Suggested fix: split the concept into `permissionGranted` (OS state) and `backendRegistered` (token successfully persisted this session / confirmed by backend), or re-send the token on launch when permission is granted and only set `backendRegistered` on backend ack."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-18",
       "plan": null
     }
   ]
