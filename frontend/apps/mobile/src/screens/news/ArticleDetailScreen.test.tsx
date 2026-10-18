@@ -100,7 +100,12 @@ describe('ArticleDetailScreen', () => {
       });
       render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(screen.getByText('Lift maintenance scheduled')).toBeTruthy();
+      // The badge renders `t('news.categories.building', { defaultValue: 'building' })`
+      // (PR #3110). The raw i18n key must NOT leak as the label: with a `t()` that
+      // honours `defaultValue`, the badge resolves to the category value. Mirrors
+      // NewsScreen.i18n.test.tsx, which asserts the key-only (no-defaultValue) path.
       expect(screen.getByText('building')).toBeTruthy();
+      expect(screen.queryByText('news.categories.building')).toBeNull();
       expect(screen.getByText('The lift will be out of service on Tuesday.')).toBeTruthy();
     });
 
