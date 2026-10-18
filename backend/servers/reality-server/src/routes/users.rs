@@ -19,6 +19,7 @@ use db::models::user::Locale;
 use db::models::PortalUser;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 // H7 — `profile_image_url` ends up in `<img src=>` on the frontend. Reject
 // `javascript:`, `data:`, `file:` URLs. Inlined locally (see H7 brief).
@@ -142,9 +143,12 @@ pub struct UpdateProfileRequest {
     tag = "Users",
     request_body = RegisterRequest,
     responses(
-        (status = 201, description = "Registration successful", body = RegisterResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 409, description = "Email already exists")
+        // The response is intentionally identical whether or not the email is
+        // already registered (same status, body shape, and timing) to avoid
+        // account-existence enumeration — mirroring the password-reset flow.
+        (status = 201, description = "Registration accepted (or email already in use)",
+                       body = RegisterResponse),
+        (status = 400, description = "Invalid input")
     )
 )]
 pub async fn register(
@@ -157,8 +161,8 @@ pub async fn register(
 }
 
 /// Generic message returned on a successful-looking registration. Shared by
-/// the real-success and (soon) already-exists paths so the bodies stay
-/// identical.
+/// the real-success and already-exists paths so the two bodies are identical
+/// (account-enumeration defense).
 const REGISTER_UNIFORM_MESSAGE: &str =
     "Registration successful. Please check your email to verify your account.";
 
@@ -178,10 +182,26 @@ fn register_response(
                 }),
             ))
         }
-        RegistrationResult::EmailExists => Err((
-            axum::http::StatusCode::CONFLICT,
-            "An account with this email already exists".to_string(),
-        )),
+        RegistrationResult::EmailExists => {
+            // Account-enumeration defense: respond exactly as if a new account
+            // had been created. We do NOT reveal the existing account's id — a
+            // fresh random uuid keeps the body shape identical to a real
+            // success while carrying no existence signal. Timing is equalized
+            // in `UserHandler::register` (dummy Argon2 hash on this path), so
+            // neither status, body, nor latency distinguishes the two cases.
+            // Genuine validation errors (400) below are intentionally left
+            // distinct: they describe the input, not whether an account exists.
+            tracing::info!(
+                "Registration attempted for an existing email; returning uniform response"
+            );
+            Ok((
+                axum::http::StatusCode::CREATED,
+                Json(RegisterResponse {
+                    message: REGISTER_UNIFORM_MESSAGE.to_string(),
+                    user_id: Uuid::new_v4().to_string(),
+                }),
+            ))
+        }
         RegistrationResult::InvalidEmail => Err((
             axum::http::StatusCode::BAD_REQUEST,
             "Invalid email format".to_string(),
