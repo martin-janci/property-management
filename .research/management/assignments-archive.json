@@ -5540,6 +5540,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
+      "branch": "auto-impl/code-review-ppt-web-core-aml-checks-hard-8b6c6683",
+      "status": "merged",
+      "claimed_at": "2026-10-18T18:31:13Z",
+      "last_updated": "2026-10-18T22:32:32Z",
+      "status_changed_at": "2026-10-18T22:32:32Z",
+      "pr_number": 3122,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3122",
+      "merged_at": "2026-10-18T22:32:32Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3122 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wired useAmlDashboard id_verified/sof/pep/sanctions from backend row via @ppt/api-client type; recommendations left [] + documented gap (no new endpoint); verify OK ppt-web 5141 tests, IG3 two-commit split; drift pm-backend hint vs frontend-only diff",
+      "reviewer_summary": "verdict=approve head_oid=a7188a0c1d36dd389b500fd7ef28403e2c4d283a note=flags-match-backend-snake_case-serde; recommendations-gap-honest(no endpoint); scope-drift-false-positive; CI-green",
+      "last_reviewed_oid": "a7188a0c1d36dd389b500fd7ef28403e2c4d283a",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-18T22:32:32Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
       "branch": "auto-impl/code-review-ppt-web-core-aml-risk-factor-3a194876",
       "status": "merged",
@@ -8054,6 +8076,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-03T10:13:52Z"
+    },
+    {
+      "task_id": "code-review-reality-web-auth-ctx-transient-logout",
+      "branch": "auto-impl/code-review-reality-web-auth-ctx-transie-aeef8a77",
+      "status": "merged",
+      "claimed_at": "2026-10-18T18:31:13Z",
+      "last_updated": "2026-10-18T22:32:32Z",
+      "status_changed_at": "2026-10-18T22:32:32Z",
+      "pr_number": 3121,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3121",
+      "merged_at": "2026-10-18T22:32:32Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3121 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=checkSession clears session only on 401/403; transient 5xx/network keep optimistic user (mirrors refreshSession); RTL regression test (2-commit TDD); verify green 325/325 reality-web tests; scope_drift owner-hint pm-backend vs frontend",
+      "reviewer_summary": "verdict=approve head_oid=32c2dc25571fe5f446d879ee95d9b205519d2f22 note=fix-correct-tested-ci-green-scopedrift-benign(frontend-only); 1 non-blocking nit (test-file header comment order)",
+      "last_reviewed_oid": "32c2dc25571fe5f446d879ee95d9b205519d2f22",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-18T22:32:32Z"
     },
     {
       "task_id": "code-review-reality-web-callback-hardcoded-login-string",
@@ -20103,5 +20147,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-18T04:45:57Z"
+  "archived_at": "2026-10-18T22:39:46Z"
 }

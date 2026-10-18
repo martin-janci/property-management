@@ -370,42 +370,8 @@
       }
     },
     {
-      "id": "code-review-reality-web-auth-ctx-transient-logout",
-      "action": "reality-web: auth-context checkSession treats ANY /users/me non-ok as auth failure → transient 5xx wipes session",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-17T16:26:28Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-core-totp-rng-expect-panic",
       "action": "api-core: TotpService::encrypt_secret() panics on CSPRNG failure via .expect() instead of threading TotpError",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-17T16:26:28Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
-      "action": "ppt-web-core: useAmlDashboard hardcodes id_verified/sof_documented/pep/sanctions_check to false and recommendations=[] regardless of backend state",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -435,6 +401,27 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
+      }
+    },
+    {
+      "id": "gh-issue-3124",
+      "action": "cargo-deny advisories FAILED on dev: RUSTSEC-2026-0368/0369 (zip 8.6.0 via rust_xlsxwriter) blocks every backend PR merge (Closes #3124)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-18T22:36:09Z (#3124)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-18T22:36:09Z",
+      "issue_ref": {
+        "number": 3124,
+        "url": "https://github.com/martin-janci/property-management/issues/3124",
+        "labels": [
+          "bug",
+          "security",
+          "backend"
+        ]
       }
     }
   ],

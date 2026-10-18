@@ -12586,7 +12586,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web)"
       ],
@@ -12598,7 +12598,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-18T22:35:25Z",
+        "assignment_status": "merged",
+        "pr_number": 3122
+      }
     },
     {
       "id": "code-review-reality-server-register-account-enumeration",
@@ -12629,7 +12634,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)"
       ],
@@ -12643,7 +12648,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-18T22:35:25Z",
+        "assignment_status": "merged",
+        "pr_number": 3121
+      }
     },
     {
       "id": "code-review-reality-web-formatprice-hardcoded-locale",
