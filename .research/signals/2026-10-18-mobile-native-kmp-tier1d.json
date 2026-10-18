@@ -2,11 +2,12 @@
   "generator": "dev-review",
   "generated_at": "2026-10-18",
   "segment_reviewed": "mobile-native-kmp",
-  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, 5 < floor 36; coverage.json exhausted 49/49). No churn input, so oldest-unreviewed by review_cursor: api-handlers (2026-10-11) is oldest but backlog-saturated (3 open code-review-finding items) -> saturation-skip; next oldest = mobile-native-kmp (2026-10-13), not saturated (0 open items).",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved, 5 < floor 36). No CHURN_FILES input, so oldest-unreviewed by review_cursor: api-handlers (2026-10-11) is oldest but backlog-saturated (3 open code-review-finding items) -> saturation-skip; next oldest = mobile-native-kmp (2026-10-13), not saturated (0 open items). This slot already carried finding #1 (create-listing-stub) from a sibling Tier-1d pass; this run preserves it verbatim and adds a net-new finding #2 (portfolio-analytics-silent-drop) from an independent static pass, so the file grows the backlog rather than duplicating. Static analysis only, no compilation/test execution, DISPATCHER_OWNED_COMMIT=1 (no git add/commit/push).",
   "experts_used": [
     "kotlin"
   ],
-  "findings_count": 1,
+  "findings_count": 2,
+  "static_only": true,
   "signals": [
     {
       "id": "code-review-mobile-native-kmp-create-listing-stub",
@@ -21,6 +22,23 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt — exposes only listMyListings (:40), getListingAnalytics (:74) and getPortfolioAnalytics (:111); there is no createListing method anywhere, confirming the create path was never backed by an API call rather than being a temporary local stub."
       ],
       "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-portfolio-analytics-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 — getPortfolioAnalytics() fans out one getListingAnalytics(listing.id) call per listing inside `coroutineScope { listings.map { async { getListingAnalytics(it.id).getOrNull() } }.awaitAll().filterNotNull() }`. Each per-listing failure (network/5xx/429 under the N-call fan-out) is collapsed to null by `.getOrNull()` and then dropped by `.filterNotNull()`, yet the function still returns Result.success(...). Totals (totalViews/totalInquiries/totalFavorites at :132-134) and the viewsTrend/inquiriesTrend arrays (:150-151) are therefore computed from a partial subset of listings with no partial-failure flag on PortfolioAnalytics and no minimum-success threshold.",
+        "The Realtor ListingAnalytics screen (androidApp Navigation.kt:497-, comment at :498-500 cites this method) renders these portfolio metrics as authoritative, so a transient failure on even one listing silently understates portfolio-wide views/inquiries/favorites with zero indication to the realtor that the figures are incomplete. Severity LOW (+1): silent data-understatement on a user-facing analytics surface, no crash/auth impact. Confidence MEDIUM: statically certain failures are dropped; exact user impact depends on how often the fan-out partially fails at runtime. Fix: surface a partial-failure indicator (e.g. count of listings whose analytics could not be loaded) or fail the aggregate when a threshold of per-listing calls error. NET-NEW vs backlog: distinct from finding #1 (create path) and from any existing open row; getPortfolioAnalytics error-handling was not previously reviewed."
+      ]
     }
   ]
 }
