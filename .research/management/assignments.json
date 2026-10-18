@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-17T20:30:31Z",
+  "generated": "2026-10-18T00:30:38Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -237,7 +237,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "gh-issue-3109",
@@ -259,7 +261,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     }
   ]
 }
