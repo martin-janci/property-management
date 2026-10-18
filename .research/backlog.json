@@ -12560,7 +12560,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web)"
       ],
@@ -12573,7 +12573,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-18T06:26:09Z",
+        "assignment_status": "merged",
+        "pr_number": 3117
+      }
     },
     {
       "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
