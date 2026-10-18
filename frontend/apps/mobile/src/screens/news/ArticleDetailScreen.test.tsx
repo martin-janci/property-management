@@ -9,8 +9,10 @@
  * `enabled: !!articleId`).
  *
  * `useApiQuery` is mocked so the branches can be driven directly, and
- * react-i18next is mocked in `src/test/setup.ts` (`t(key) => key`), so the
- * assertions check for the i18n keys rather than translated copy.
+ * react-i18next is mocked in `src/test/setup.ts`
+ * (`t(key, opts) => opts?.defaultValue ?? key`), so the assertions check for
+ * the i18n keys, except where the screen passes a `defaultValue` (the category
+ * badge), which resolves to that fallback rather than translated copy.
  */
 
 import { render, screen } from '@testing-library/react-native';
