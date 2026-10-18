@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-10-18T02:45:00Z",
+  "trigger_payload": "buffer-low: claimable=10/72 — refill planner (treated as empty string per routine-prompt line 2)",
+  "run_summary": {
+    "merged_prs_since_last_run": 0,
+    "open_prs_touched": 1,
+    "new_issues": 0,
+    "new_app_commits": 0,
+    "dispatcher_chore_commits": 3,
+    "new_signals": 0,
+    "plans_promoted": 0,
+    "auto_fix_actions": 0,
+    "phase_1_5_skipped": true,
+    "phase_1_6_skipped": true,
+    "quiet_day": true
+  },
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — 0 new signals this run; no eligible allowlist match",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-10-18.md && head -1 ... | grep '^# 2026-10-18$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq advance-check vs HEAD state.json", "observed": "true (last_commit_sha 830f193d → 75e32d7f, last_pr_seen 3114 → 3117, stats.quiet_days 6 → 7, stats.runs 97 → 98)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no re-emitted non-cumulative signal with non-zero score_delta", "observed": "true (0 signals this run — vacuous pass)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap + decay check", "observed": "no item >8 (max is 6); no open item older than 14d (oldest open 2026-10-11, 7d old)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "every new plan has adversarial-pass annotation", "observed": "0 new plans this run — vacuous pass", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans each with 15 required sections + file-resolve check", "observed": "0 new plans this run — vacuous pass", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets/private-hostname scan on staged diff (excl. 4 baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "exit 0 (data unchanged this run; only timestamp bumped)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no failed phases → no cursor-advance claim to audit", "observed": "0 failed phases", "expected": "0 failed phases" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug still in plans/ or plans/_archive/", "observed": "all slugs resolved", "expected": "all resolved" },
+    { "goal": "G13", "passed": true, "command": "archive count this run ≥ archive count at HEAD", "observed": "unchanged (0 archive ops this run)", "expected": "≥ HEAD" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "exit 0 (data unchanged; only timestamp bumped)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency + kill-switch", "observed": "auto_fix_actions=[] (0 PRs, 0 issues, 0 comments)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management-artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped — gate is no-op", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token value in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}
