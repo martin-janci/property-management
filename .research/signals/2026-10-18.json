@@ -1,16 +1,17 @@
 {
   "date": "2026-10-18",
-  "run_iso": "2026-10-18T03:09:36Z",
-  "trigger": "scheduled-daily",
-  "window_since": "2026-10-17T22:41:17Z",
+  "run_iso": "2026-10-18T08:34:31Z",
+  "window_since": "2026-10-18T03:09:36Z",
+  "trigger": "scheduled-fire-buffer-low (payload: claimable=5/72 — refill planner)",
   "summary": {
-    "merged_prs": 0,
-    "open_prs_touched": 4,
+    "merged_prs": 2,
+    "open_prs_touched": 5,
     "closed_not_merged": 0,
     "new_or_updated_issues": 0,
-    "commits_on_dev": 3,
+    "commits_on_dev": 5,
     "new_signals": 0,
-    "quiet_day": true
+    "quiet_day": false,
+    "trigger_payload_action": "no-op from research routine: buffer-low alert is dispatcher-targeted; the 1 open backlog item with score>=3 (code-review-api-handlers-violations-missing-role-authz) is stem-colliding with in-flight PR #3072 (dispatcher auto-impl) and so is NOT promotable from here. Real unblock remains human-merge of the 10+1 draft+approved PRs."
   },
   "signals": [],
   "auto_fix_actions": [],
