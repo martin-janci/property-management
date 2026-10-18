@@ -152,16 +152,28 @@ pub async fn register(
     Json(req): Json<RegisterRequest>,
 ) -> Result<(axum::http::StatusCode, Json<RegisterResponse>), (axum::http::StatusCode, String)> {
     let handler = UserHandler::new(state.portal_repo.clone());
+    let result = handler.register(&req.email, &req.password, &req.name).await;
+    register_response(result)
+}
 
-    match handler.register(&req.email, &req.password, &req.name).await {
+/// Generic message returned on a successful-looking registration. Shared by
+/// the real-success and (soon) already-exists paths so the bodies stay
+/// identical.
+const REGISTER_UNIFORM_MESSAGE: &str =
+    "Registration successful. Please check your email to verify your account.";
+
+/// Map a [`RegistrationResult`] onto the HTTP response. Extracted from the
+/// handler so the response contract is unit-testable without a live database.
+fn register_response(
+    result: RegistrationResult,
+) -> Result<(axum::http::StatusCode, Json<RegisterResponse>), (axum::http::StatusCode, String)> {
+    match result {
         RegistrationResult::Success(user) => {
             tracing::info!(user_id = %user.id, "User registered");
             Ok((
                 axum::http::StatusCode::CREATED,
                 Json(RegisterResponse {
-                    message:
-                        "Registration successful. Please check your email to verify your account."
-                            .to_string(),
+                    message: REGISTER_UNIFORM_MESSAGE.to_string(),
                     user_id: user.id.to_string(),
                 }),
             ))
@@ -584,5 +596,51 @@ pub async fn confirm_password_reset(
                 "Failed to reset password".to_string(),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod register_enumeration_tests {
+    use super::*;
+    use axum::http::StatusCode;
+
+    /// Account-enumeration regression (code-review finding
+    /// `reality-server-register-account-enumeration`): attempting to register
+    /// an email that already exists MUST be indistinguishable from a brand-new
+    /// registration. The leak was a `409 CONFLICT` + "An account with this
+    /// email already exists" body — a textbook enumeration oracle the frontend
+    /// surfaced directly as "email taken".
+    #[test]
+    fn email_exists_is_indistinguishable_from_success() {
+        let (status, body) = register_response(RegistrationResult::EmailExists)
+            .expect("EmailExists must map to a 2xx uniform response, not an error");
+        assert_eq!(
+            status,
+            StatusCode::CREATED,
+            "existing-email must mirror the created status, not leak 409"
+        );
+        assert_eq!(
+            body.0.message, REGISTER_UNIFORM_MESSAGE,
+            "existing-email must return the generic success message"
+        );
+        // A well-formed random uuid keeps the body shape identical to a real
+        // success without leaking the existing account's id.
+        assert!(
+            uuid::Uuid::parse_str(&body.0.user_id).is_ok(),
+            "user_id must be a well-formed uuid"
+        );
+    }
+
+    /// Validation errors describe the *input*, not whether an account exists,
+    /// so they are deliberately NOT collapsed into the uniform response.
+    #[test]
+    fn validation_errors_are_preserved() {
+        let (status, _) = register_response(RegistrationResult::InvalidEmail).unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+
+        let (status, _) =
+            register_response(RegistrationResult::WeakPassword(vec!["too short".into()]))
+                .unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
     }
 }
