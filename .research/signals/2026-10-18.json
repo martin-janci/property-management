@@ -4,12 +4,12 @@
   "trigger": "scheduled-daily",
   "window_since": "2026-10-17T22:41:17Z",
   "summary": {
-    "merged_prs": 0,
-    "open_prs_touched": 4,
+    "merged_prs": 2,
+    "open_prs_touched": 2,
     "closed_not_merged": 0,
     "new_or_updated_issues": 0,
-    "commits_on_dev": 3,
-    "new_signals": 2,
+    "commits_on_dev": 11,
+    "new_signals": 0,
     "quiet_day": false
   },
   "signals": [
@@ -177,5 +177,9 @@
       "observed": "0 matches",
       "expected": "0"
     }
-  ]
+  ],
+  "refire": true,
+  "refire_trigger": "buffer-low: claimable=2/72 — refill planner",
+  "refire_iso": "2026-10-18T18:41:09Z",
+  "refire_summary": "dispatcher buffer-low escalation; 2 PRs (#3117 UC-90 null guard, #3118 ArticleDetail i18n) merged since last run — both close out already-done backlog items; 2 new drafts (#3119 NewsScreen i18n, #3120 register account-enumeration) added by dispatcher; merge bottleneck (10 approved drafts) persists unchanged"
 }
