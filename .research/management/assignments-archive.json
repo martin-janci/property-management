@@ -5540,6 +5540,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
+      "branch": "auto-impl/code-review-ppt-web-core-aml-risk-factor-3a194876",
+      "status": "merged",
+      "claimed_at": "2026-10-18T02:36:26Z",
+      "last_updated": "2026-10-18T04:45:50Z",
+      "status_changed_at": "2026-10-18T04:45:50Z",
+      "pr_number": 3117,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3117",
+      "merged_at": "2026-10-18T04:39:59Z",
+      "specialist": "frontend",
+      "implementer_summary": " [pr=3117 review->merged this run]",
+      "reviewer_summary": "verdict=approve head_oid=f22c44259a98003d435a875b7242023193d0b6d7 note=null-guard correct + IG3 test + CI green",
+      "last_reviewed_oid": "f22c44259a98003d435a875b7242023193d0b6d7",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-18T04:45:50Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-api-401-no-request-replay",
       "branch": "auto-impl/code-review-ppt-web-core-api-401-no-requ-10ba81d2",
       "status": "merged",
@@ -17037,6 +17059,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-3115",
+      "branch": "auto-impl/gh-issue-3115-3095879f",
+      "status": "merged",
+      "claimed_at": "2026-10-18T02:36:26Z",
+      "last_updated": "2026-10-18T04:45:50Z",
+      "status_changed_at": "2026-10-18T04:45:50Z",
+      "pr_number": 3118,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3118",
+      "merged_at": "2026-10-18T04:40:17Z",
+      "specialist": "frontend",
+      "implementer_summary": " [pr=3118 review->merged this run; issue #3115 closed]",
+      "reviewer_summary": "verdict=approve head_oid=8a4e9e0438975bb9103f27d0dd22857afa765ff5 note=i18n mock fix clean + CI green (closes #3115)",
+      "last_reviewed_oid": "8a4e9e0438975bb9103f27d0dd22857afa765ff5",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-18T04:45:50Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -20059,5 +20103,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-18T02:44:04Z"
+  "archived_at": "2026-10-18T04:45:57Z"
 }
