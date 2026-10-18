@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-18T00:30:38Z",
+  "generated": "2026-10-18T02:44:30Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2894-reality",
@@ -290,28 +290,6 @@
     {
       "task_id": "gh-issue-3116",
       "branch": "auto-impl/gh-issue-3116-0f0aabda",
-      "status": "in-progress",
-      "claimed_at": "2026-10-18T02:36:26Z",
-      "last_updated": "2026-10-18T02:36:26Z",
-      "status_changed_at": "2026-10-18T02:36:26Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "gh-issue-3006-retry2",
-      "branch": "auto-impl/gh-issue-3006-retry2-1fbf193e",
       "status": "in-progress",
       "claimed_at": "2026-10-18T02:36:26Z",
       "last_updated": "2026-10-18T02:36:26Z",
