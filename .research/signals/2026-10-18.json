@@ -9,10 +9,53 @@
     "closed_not_merged": 0,
     "new_or_updated_issues": 0,
     "commits_on_dev": 3,
-    "new_signals": 0,
-    "quiet_day": true
+    "new_signals": 2,
+    "quiet_day": false
   },
-  "signals": [],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-createlisting-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "generator": "dev-review-tier1d",
+      "segment": "mobile-native-kmp",
+      "title": "Realtor Create Listing: full form is built but Navigation hardwires onSubmit to NotImplementedError, so every submit fails",
+      "candidate_vector": "bug",
+      "score_delta": 2,
+      "confidence": "high",
+      "expert": "kotlin",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — composable(Screen.CreateListing.route) passes onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }; submission can never succeed",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt:39-55 — complete form (title/description/city/price/currency/transactionType) with per-field validation + isSubmitting state, all wired only to the stub onSubmit",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:480-487 — MyListingsScreen onCreateClick navigates to Screen.CreateListing, so the dead-end is reachable in production (full path traced)",
+        "RealtorRepository exists (mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt) but no create-listing call is wired into the submit path"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ssoservice-no-test",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "generator": "dev-review-tier1d",
+      "segment": "mobile-native-kmp",
+      "title": "SsoService (auth-critical: login/register/password-reset/SSO-token-validate/session) has no dedicated test",
+      "candidate_vector": "test-gap",
+      "score_delta": 1,
+      "confidence": "medium",
+      "expert": "tester",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt — 12 public methods (createMobileToken, validateAndLogin, loginWithPassword, register, requestPasswordReset, confirmPasswordReset, getSession, refreshSession, updateProfile, restoreSession, logout, isAuthenticated) carry the mobile auth-state machine",
+        "grep for 'SsoService' under mobile-native/shared/src/commonTest returns 0 files — only SsoInitiationTest (nonce) and SsoStateStoreTest (CSRF store) exist; neither exercises SsoService",
+        "untested auth-critical behaviour includes the 401->logout() branch in getSession()/refreshSession() and the authState transitions in validateAndLogin()/loginWithPassword()/restoreSession() — a regression here silently breaks re-auth with no test to catch it"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ]
+    }
+  ],
   "auto_fix_actions": [],
   "goal_checks": [
     {
