@@ -1,0 +1,142 @@
+{
+  "run_iso": "2026-10-18T00:28:47Z",
+  "trigger_text": "buffer-low: claimable=10/72 — refill planner",
+  "signals": [],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — buffer-low re-fire derived 0 new signals (0 app activity since 2026-10-17 14:43 UTC); no allowlist signal types eligible",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-18.md && head -1 matches ^# 2026-10-18$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state vs HEAD",
+      "observed": "last_commit_sha changed 830f193d → 9064bbae; stats.quiet_days 6→7; stats.runs 97→98; last_run_iso advanced",
+      "expected": "true (at least one cursor/stat advanced)"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "ids unique — no items added/modified this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-emits with score_delta != 0",
+      "observed": "vacuous — 0 signals this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq no backlog item score > 8",
+      "observed": "max score = 6 (test-gap-inquiry-idor-regression, done)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "every open item with updated_at ≤ today-14 lost ≥1 or moved to dropped",
+      "observed": "0 open items met the decay boundary (oldest open row = 2026-10-15, 3d old; no decay candidates)",
+      "expected": "true (vacuous)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation in brief",
+      "observed": "vacuous — 0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A -- .research/plans/ | grep -c .md$",
+      "observed": "0 new plan files",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G7-metadata-headings-capability-mode-files",
+      "passed": true,
+      "command": "per-plan metadata+heading+mode+files checks",
+      "observed": "vacuous — 0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0 non-.research/ paths staged",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private-hostname scan of staged diff (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen_from_backlog_json",
+      "observed": "byte-identical — only Last-regenerated timestamp changed, both files produced from the same backlog.json",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief 'Phases that failed' and check cursors unchanged for each failed phase",
+      "observed": "0 phases failed this run",
+      "expected": "true (vacuous)"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
+      "observed": "17 active plans + 21 archived — all prior-run slugs accounted for; 0 plan deletions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD count",
+      "observed": "21 archived files staged == 21 archived files at HEAD",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen_from_backlog_json (vector==triage)",
+      "observed": "byte-identical — only Last-regenerated timestamp changed; 53 triage rows same shape as HEAD",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps/idempotency/kill-switch",
+      "observed": "0 auto-fix actions this run; kill switch unset; no new ids in auto_fix_history",
+      "expected": "all caps respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (if Phase 1.6 ran)",
+      "observed": "vacuous — Phase 1.6 skipped (pm_cursor unchanged: 7==7, coverage_cursor unchanged: 9==9)",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
