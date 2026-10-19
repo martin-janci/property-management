@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-18T18:41:09Z",
-  "last_run_ms": 5000,
-  "last_pr_seen": 3118,
-  "last_issue_seen": 3116,
-  "last_commit_sha": "c08b188",
+  "last_run_iso": "2026-10-19T00:47:58Z",
+  "last_run_ms": 900000,
+  "last_pr_seen": 3123,
+  "last_issue_seen": 3124,
+  "last_commit_sha": "62aaaa5",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1202,11 +1202,14 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-api-handlers-migration-upload-drops-file",
+    "code-review-api-handlers-migration-export-fake-url-stub",
+    "code-review-api-handlers-impersonation-active-raw-xff-audit"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-10-11",
+    "api-handlers": "2026-10-19",
     "api-core": "2026-10-17",
     "reality-server": "2026-10-17",
     "ppt-web-ui": "2026-10-17",
@@ -1216,9 +1219,9 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 99,
-    "vectors_created": 442,
-    "plans_created": 34,
+    "runs": 100,
+    "vectors_created": 445,
+    "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
   },
@@ -1233,7 +1236,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 7,
+    "next_index": 0,
     "role_last_run": {
       "pm-tech-lead": "2026-07-27",
       "pm-backend": "2026-07-30",
@@ -1242,10 +1245,10 @@
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
-      "pm-integration": "2026-07-24"
+      "pm-integration": "2026-10-19"
     }
   },
   "coverage_cursor": {
-    "next_index": 9
+    "next_index": 10
   }
 }

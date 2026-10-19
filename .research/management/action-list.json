@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -42,7 +42,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-httpclient-no-timeout",
-      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout — every suspend API call can hang indefinitely on Android + iOS",
+      "action": "mobile-native-kmp shared Ktor HttpClient installs no HttpTimeout \u2014 every suspend API call can hang indefinitely on Android + iOS",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -80,7 +80,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings — dashboard under-reports on large portfolios",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() truncates realtor portfolio at 100 listings \u2014 dashboard under-reports on large portfolios",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -99,7 +99,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-portfolio-analytics-unbounded-fanout-retry1",
-      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit — up to 100 parallel GETs from a mobile device [retry 1/2]",
+      "action": "mobile-native-kmp: getPortfolioAnalytics() fans out one analytics HTTP request per listing with no concurrency limit \u2014 up to 100 parallel GETs from a mobile device [retry 1/2]",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -134,7 +134,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -170,7 +170,7 @@
     },
     {
       "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
-      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
+      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS \u2014 two concurrent POSTs can exceed the 4-item cap",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -187,7 +187,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-missing-role-authz",
-      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal",
+      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) \u2014 any org member can issue fines and approve their own appeal",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -204,7 +204,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-number-count-race",
-      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
+      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency \u2192 opaque 500 on create",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -221,7 +221,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-record-payment-non-atomic",
-      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine",
+      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction \u2192 partial failure records money without decrementing the fine",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -258,7 +258,7 @@
     },
     {
       "id": "code-review-reality-server-price-map-cache-unbounded",
-      "action": "SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map — attacker-controlled city rotates distinct keys past the 1h TTL → OOM DoS",
+      "action": "SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map \u2014 attacker-controlled city rotates distinct keys past the 1h TTL \u2192 OOM DoS",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -423,7 +423,45 @@
           "backend"
         ]
       }
+    },
+    {
+      "id": "pm-integration-audit-integration-prs-openapi-drift",
+      "action": "Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift (draft #3123 is api-core TOTP RNG \u2014 no contract impact; recent merged #3121/#3122 are client-side only)",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-19",
+      "first_open_at": "2026-10-19T04:00:00Z"
+    },
+    {
+      "id": "pm-integration-rustsec-exception-policy-ci-surface",
+      "action": "Surface the RUSTSEC-exception policy in the cargo-deny CI gate description so #3124-class blockers are triaged faster next time (bounded deadline, approver captured in the exception row)",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "#3124",
+      "depends_on": [
+        "gh-issue-3124"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-19",
+      "first_open_at": "2026-10-19T04:00:00Z"
+    },
+    {
+      "id": "pm-integration-document-sso-transient-401-contract",
+      "action": "Document the reality-server SSO consumer transient-401 contract vs reality-web auth-context cushion (PR #3121) in docs/api/README.md \u2014 ensure client/server treat transient vs permanent 401 symmetrically",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-19",
+      "first_open_at": "2026-10-19T04:00:00Z"
     }
   ],
-  "generated": "2026-10-16T04:00:00Z"
+  "generated": "2026-10-19T04:00:00Z"
 }
