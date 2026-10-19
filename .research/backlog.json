@@ -12738,6 +12738,119 @@
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
       "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "title": "mobile-rn usePushNotifications: setIsRegistered(true) fires BEFORE sendTokenToBackend await — isRegistered reports true while backend never stored the token (silent push-delivery failure)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:223 vs :227 (registerForPushNotifications) — the hook calls `setIsRegistered(true)` at line 223 BEFORE it awaits `sendTokenToBackend(nativeToken.data)` at line 227. sendTokenToBackend posts the device's FCM/APNs token to the api-server (`sendPushTokenToBackend` -> `apiRequest`), which can reject on any backend 4xx/5xx or network error. When it throws, the surrounding catch (line ~230) only does `setError(message); return null;` — it never rolls `isRegistered` back to false.",
+        "Consequence: on a backend-registration failure the hook reports `isRegistered === true` (exposed in the returned API at line 315) while the api-server never stored this device's push token. The device therefore silently receives NO pushes, there is NO retry, and any UI gated on `isRegistered` shows a successful/complete registration — a silent, permanent (for the session) delivery failure that masks itself. This defeats the entire purpose of the hook (direct FCM/APNs fan-out).",
+        "Reachability: register is the app's push-enrolment entry point; a transient backend outage, an expired/absent access token at enrolment time, or a 4xx from the push-tokens endpoint all trip it under normal operating conditions. Verified net-new against prior mobile-rn signal files and backlog ids.",
+        "Suggested fix (implementer): move `setIsRegistered(true)` to AFTER `await sendTokenToBackend(...)` succeeds, so the flag reflects backend acceptance rather than local token acquisition; in the catch, ensure `setIsRegistered(false)` (and optionally surface a retriable error state). Add a jest-expo unit test asserting that when `sendPushTokenToBackend` rejects, the hook ends with `isRegistered === false` and a non-null `error` (satisfies IG3 — fails on current main)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-perm-only",
+      "title": "mobile-rn usePushNotifications: checkRegistrationStatus derives isRegistered from OS permission alone — stale/rotated backend token still reports as registered",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:154-156 (checkRegistrationStatus) — sets `setIsRegistered(status === 'granted')` purely from `Notifications.getPermissionsAsync()`, i.e. from OS notification-permission state alone, with no knowledge of whether the api-server currently holds this device's push token.",
+        "This conflates two distinct facts under one boolean: (a) the user has granted OS notification permission, and (b) the backend can actually deliver pushes to this device (has a current, non-rotated token). On app launch with a previously-granted permission, `isRegistered` becomes true without the current session ever (re)sending the token, so a stale or rotated device token — or a device whose token was never successfully persisted (see sibling finding code-review-mobile-rn-push-isregistered-premature) — is reported as fully registered. Any UI/telemetry that treats `isRegistered` as 'backend will deliver pushes' is misled.",
+        "Severity low: this is a semantic-conflation / observability smell rather than a crash; it compounds the premature-flag bug above and makes silent delivery failures harder to detect. Suggested fix: split the concept into `permissionGranted` (OS state) and `backendRegistered` (token successfully persisted this session / confirmed by backend), or re-send the token on launch when permission is granted and only set `backendRegistered` on backend ack."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voting-timeremaining-nan",
+      "title": "mobile-rn VotingScreen: getTimeRemaining renders literal 'NaN minutes left' for any active vote whose end_at is a present-but-unparseable string (isApiVoteSummary only checks typeof string, not date validity)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:179-194 — getTimeRemaining(endsAt) renders 'NaN minutes left' for any active vote whose end_at is a present-but-unparseable date string. Full traced path: parseVoteSummaries() -> isApiVoteSummary() (:56-65) validates end_at with ONLY `typeof v.end_at === 'string'` (:63); it does NOT check that the string parses to a real date. So end_at values like '', 'TBD', '0000-00-00', or any non-ISO string survive the guard, flow through toUiVote() (endsAt = s.end_at, :128) into getTimeRemaining(vote.endsAt), which is called in the active-card render at :277 (`{vote.status === 'active' && <Text>{getTimeRemaining(vote.endsAt)}</Text>}`).",
+        "Inside getTimeRemaining: `const diff = new Date(endsAt).getTime() - now.getTime()` (:180-182) is NaN for a bad string. The intended early-return `if (diff <= 0) return t('voting.ended')` (:184) is SKIPPED because `NaN <= 0` is false (every relational comparison with NaN is false). Execution falls through: `Math.floor(NaN / …)` is NaN, so `days > 0` (:189) and `hours > 0` (:190) are both false, and the function returns `t('voting.timeLeftMinutes', { minutes: NaN })` (:192-193) — i.e. the card shows a literal 'NaN' where the remaining time should be, on the primary voting list a resident sees.",
+        "Asymmetry confirms this is an omission, not intent: the same file is otherwise aggressively defensive about the list shape — parseVoteSummaries drops malformed ROWS so one bad entry can't crash .map() (:67-81, with an explanatory comment at :48-54 about a past blind-cast crash) — but the per-field DATE validity was overlooked. Net-new: grep across all .research/signals/*mobile-rn*.json and backlog.json for getTimeRemaining / timeRemaining / NaN returns nothing for VotingScreen; the three prior voting findings (vote-list-cast, vote-xform-untested, votedetail-conditional-hooks) are all unrelated. Confidence medium: the NaN-fallthrough is proven by static read of JS NaN semantics and the traced render path; whether the backend actually emits a non-ISO end_at on the summary endpoint is data-dependent, so the trigger is latent rather than runtime-confirmed. Fix (cloud-landable, frontend-only, single file): guard the parse once and treat a non-finite timestamp as ended/unknown, e.g. `const end = new Date(endsAt).getTime(); if (!Number.isFinite(end)) return t('voting.ended'); const diff = end - Date.now(); if (diff <= 0) return t('voting.ended');` — and/or tighten isApiVoteSummary to reject an end_at whose Date is invalid. getTimeRemaining is a non-exported closure today, so also consider extracting it (like toUiVote/parseVoteSummaries already are) to cover it in VotingScreen.test.ts."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voting-quorum-divzero",
+      "title": "mobile-rn VotingScreen: quorum progress bar divides by eligible_count (can be 0/null) → width='NaN%' AND `n >= 0` always-true falsely renders 'quorum met' on votes with unknown eligibility",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:302 + :304 — the quorum progress bar divides by a value that can legitimately be 0, producing both a broken style and a FALSE 'quorum met' indication. requiredQuorum is derived as `s.eligible_count ?? 0` in toUiVote (:130), and eligible_count is typed `number | null` and OPTIONAL on ApiVoteSummary (:44) and is NOT validated by isApiVoteSummary (:56-65). So whenever the summary endpoint omits eligible_count or returns 0/null, requiredQuorum = 0.",
+        "Consequence 1 (width): :302 computes `width: `${Math.min((vote.currentQuorum / vote.requiredQuorum) * 100, 100)}%``. With requiredQuorum === 0: if currentQuorum > 0 -> `n/0` = Infinity -> Math.min(Infinity,100)=100 (bar renders FULL); if currentQuorum === 0 -> `0/0` = NaN -> Math.min(NaN,100)=NaN -> `width: 'NaN%'`, an invalid React Native length that silently drops the style. Consequence 2 (false 'met'): :304 applies the styles.quorumMet highlight via `vote.currentQuorum >= vote.requiredQuorum`, and `n >= 0` is ALWAYS true — so a vote whose eligible population is unknown/zero is rendered to the resident as QUORUM MET. The label at :290-295 simultaneously shows `required: 0`, i.e. 'X / 0 votes'.",
+        "This is a governance-correctness bug: the quorum bar is a trust-bearing element of the voting list, and it can assert a quorum has been reached purely because the eligible count was absent/zero in the payload. Reachable: filteredVotes.map(...) renders this block for every vote card (:262-308), active or closed. Net-new: no existing mobile-rn signal or backlog row references quorum / eligible_count / the quorum bar (prior voting findings are unrelated). Confidence medium: the divide-by-zero and the always-true `>= 0` are proven statically; reachability depends on the backend returning eligible_count = 0/null on a summary, which is plausible for a just-opened vote or a quorum_type that doesn't track eligibility. Fix (cloud-landable, frontend-only, single file): guard the ratio (`const pct = vote.requiredQuorum > 0 ? Math.min((vote.currentQuorum / vote.requiredQuorum) * 100, 100) : 0;`) and gate the quorumMet style on `vote.requiredQuorum > 0 && vote.currentQuorum >= vote.requiredQuorum`; optionally render an 'eligibility unknown' state when requiredQuorum is 0."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-storage-unguarded-parse",
+      "title": "mobile-rn FeedbackManager: getDrafts/getPendingFeedback do unguarded JSON.parse on AsyncStorage blobs — a corrupted key breaks the feedback-draft load AND the offline-retry/enqueue path",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-19 mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:138-140 — `getDrafts()` does `const stored = await AsyncStorage.getItem(FEEDBACK_DRAFTS_KEY); return stored ? JSON.parse(stored) : [];` with NO try/catch. A corrupted / partially-written FEEDBACK_DRAFTS_KEY blob (interrupted write, schema drift across an app update, manual storage tampering) makes JSON.parse throw, and the throw propagates to the caller (the feedback draft-loading flow in screens/help/FeedbackScreen.tsx) rather than degrading to an empty list.",
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:229-231 — `getPendingFeedback()` has the identical unguarded pattern on PENDING_FEEDBACK_KEY: `return stored ? JSON.parse(stored) : [];`. This is called by `retryPendingFeedback()` (line 161) and `storePendingFeedback()` (line 233); a corrupted blob throws and silently aborts the offline-feedback retry/enqueue path, so queued feedback can be neither retried nor added until storage is cleared.",
+        "Divergence from the codebase's own established defensive convention IN THE SAME DIRECTORY: onboarding/TourManager.ts:277-294 and onboarding/HelpCenter.ts:191-199 both wrap their AsyncStorage JSON.parse in try/catch and reset-to-default with a `console.warn('... corrupted ... resetting to default')`; nfc/NFCCredentialManager.ts:224/353/363 does the same ('Stored ... corrupted; discarding'). FeedbackManager is the outlier that never adopted the pattern.",
+        "Net-new verification: grep of backlog.json + all prior mobile-rn signal files for FeedbackManager/getDrafts/getPendingFeedback/FEEDBACK_DRAFTS/PENDING_FEEDBACK parse shows the only FeedbackManager finding on record is code-review-mobile-rn-feedback-device-info-i18n (an i18n gap, different concern). No prior finding covers the unguarded-parse resilience gap in this file.",
+        "Severity LOW (+1): no happy-path crash and no data loss on normal operation; impact is confined to the corrupted-storage edge, and feedback is a non-critical surface. Confidence medium (static-only: the throw-on-corruption is certain by inspection, but triggering it requires a corrupted blob that cannot be produced in the cloud runner). Cloud-landable frontend-only fix: wrap both reads in try/catch returning `[]` on parse failure (and optionally `console.warn` + delete the corrupted key), mirroring TourManager/HelpCenter. Fix both sites in one PR."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts"
+      ],
+      "created_at": "2026-10-19",
+      "updated_at": "2026-10-19",
+      "plan": null
     }
   ]
 }

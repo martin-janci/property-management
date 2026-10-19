@@ -50,6 +50,91 @@
         "backend/servers/api-server/src/routes/admin/mod.rs"
       ],
       "evidence": "backend/servers/api-server/src/routes/admin/impersonation.rs:114 `list_active` reads the raw X-Forwarded-For header verbatim for audit logging: `let ip = headers.get(\"x-forwarded-for\").and_then(|h| h.to_str().ok());`, then passes the full comma-separated chain to `audit.record(..., ip, ua)` at line 126. This bypasses the shared helper `audit_ip_from_headers` defined at routes/admin/mod.rs:60-75, which the sibling `start` handler in the SAME file uses correctly at line 195 (`let ip = super::audit_ip_from_headers(&headers);`). The helper's doc comment (admin/mod.rs:41-55) states it exists specifically to prevent silent audit-row drops: `audit_logs.ip_address` is VARCHAR(45) (admin/mod.rs:44 `AUDIT_IP_MAX_LEN: usize = 45`), and a typical multi-hop X-Forwarded-For chain (e.g. `203.0.113.7, 198.51.100.1, 10.0.0.1` = 36 chars; three IPv6 hops easily exceed 45) overflows the column. Impact: when the audit INSERT fails on an overlong IP string, the handler's error branch at line 130-132 only emits `tracing::warn!(error = %e, \"audit write for impersonation/active failed\")` and returns 200 OK with the full cross-tenant impersonation list — so the compliance-mandated audit trail of 'who viewed the active-impersonation dashboard' silently has gaps for any viewer behind >1 proxy. Divergence is clear within the file itself: `start` (line 195), `stop` (not applicable — no audit call), and every audit site in sibling admin/* files use `audit_ip_from_headers`. Reachability: `GET /api/v1/admin/impersonation/active` is wired via lib.rs:145 (`admin::router()`) → admin/mod.rs:94 (`impersonation::router()`) → impersonation.rs:28 (`.route(\"/active\", get(list_active)...)`). This is DISTINCT from the prior finding `code-review-api-handlers-share-log-proxy-ip` which is about `documents/shares.rs` share access logs, not admin impersonation. Confidence HIGH: the raw-XFF read, the helper's existence, and the sibling `start` call-site all read directly from the file. Severity MEDIUM (+2): compliance/audit-trail integrity on a platform-admin impersonation surface — an attacker-controlled or merely multi-proxy X-Forwarded-For value silently drops the 'who viewed active impersonations' audit row. No crash, no data loss, no auth bypass. Fix: replace line 114 with `let ip = super::audit_ip_from_headers(&headers);` to mirror the `start` handler's call site."
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "evidence": "usePushNotifications.ts:223 vs :227 — setIsRegistered(true) fires before awaiting sendTokenToBackend, so a backend 4xx/5xx on token-upload leaves isRegistered=true while the api-server never persisted the device token (silent push-delivery failure).",
+      "folded_from": ".research/signals/2026-10-18-mobile-rn-tier1d.json",
+      "folded_at": "2026-10-19T04:38:00Z",
+      "fold_reason": "buffer-low re-fire: Tier-1d signal left unfolded by dispatcher — folding into backlog so backlog-refill.sh can promote to action-list"
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-perm-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "evidence": "usePushNotifications.ts:154-156 — checkRegistrationStatus sets isRegistered from Notifications.getPermissionsAsync() alone, so a stale/rotated backend token still reports as registered on relaunch.",
+      "folded_from": ".research/signals/2026-10-18-mobile-rn-tier1d.json",
+      "folded_at": "2026-10-19T04:38:00Z",
+      "fold_reason": "buffer-low re-fire: Tier-1d signal left unfolded by dispatcher — folding into backlog so backlog-refill.sh can promote to action-list"
+    },
+    {
+      "id": "code-review-mobile-rn-voting-timeremaining-nan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "evidence": "VotingScreen.tsx:179-194 — getTimeRemaining renders 'NaN minutes left' when end_at is a present-but-unparseable string; isApiVoteSummary only checks typeof string, so '', 'TBD' survive and fall through NaN<=0 guard.",
+      "folded_from": ".research/signals/2026-10-18-mobile-rn-tier1d-2.json",
+      "folded_at": "2026-10-19T04:38:00Z",
+      "fold_reason": "buffer-low re-fire: Tier-1d signal left unfolded by dispatcher — folding into backlog so backlog-refill.sh can promote to action-list"
+    },
+    {
+      "id": "code-review-mobile-rn-voting-quorum-divzero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "evidence": "VotingScreen.tsx:302+304 — quorum bar divides by eligible_count (?? 0); n/0=NaN|Infinity broken style AND n>=0 always-true falsely renders 'quorum met' on votes with unknown/zero eligibility.",
+      "folded_from": ".research/signals/2026-10-18-mobile-rn-tier1d-2.json",
+      "folded_at": "2026-10-19T04:38:00Z",
+      "fold_reason": "buffer-low re-fire: Tier-1d signal left unfolded by dispatcher — folding into backlog so backlog-refill.sh can promote to action-list"
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-storage-unguarded-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-19 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts"
+      ],
+      "evidence": "FeedbackManager.ts:138-140 getDrafts and :229-231 getPendingFeedback do unguarded JSON.parse on AsyncStorage blobs; corrupted key throws instead of defaulting to []; sibling TourManager/HelpCenter/NFCCredentialManager wrap identical reads in try/catch.",
+      "folded_from": ".research/signals/2026-10-19-mobile-rn-tier1d.json",
+      "folded_at": "2026-10-19T04:38:00Z",
+      "fold_reason": "buffer-low re-fire: Tier-1d signal left unfolded by dispatcher — folding into backlog so backlog-refill.sh can promote to action-list"
     }
   ],
   "auto_fix_actions": [],
@@ -173,5 +258,10 @@
       "observed": "0 matches",
       "expected": "0"
     }
-  ]
+  ],
+  "refire": {
+    "at": "2026-10-19T04:38:00Z",
+    "trigger": "buffer-low: claimable=7/72 — refill planner",
+    "folded_tier1d_count": 5
+  }
 }

@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-19 00:46 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-19 04:38 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -47,6 +47,9 @@
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
 | 2 | bug | api-server /migration/export: auto-ready with fake example.com URL + fabricated record counts (silent broken feature) | `backend/servers/api-server/src/routes/migration.rs` | rotating-expert-review 2026-10-19 api-handlers | 2026-10-19 | open | — |
 | 2 | bug | admin /impersonation/active audit skips `audit_ip_from_headers` → raw XFF overflows VARCHAR(45), audit INSERT fails silently | `backend/servers/api-server/src/routes/admin/impersonation.rs (+1)` | rotating-expert-review 2026-10-19 api-handlers | 2026-10-19 | open | — |
+| 2 | bug | mobile-rn usePushNotifications: setIsRegistered(true) fires BEFORE sendTokenToBackend await — isRegistered reports true while backend never stored the token (silent push-delivery failure) | `frontend/apps/mobile/src/hooks/usePushNotifications.ts` | rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn) | 2026-10-19 | open | — |
+| 2 | bug | mobile-rn VotingScreen: getTimeRemaining renders literal 'NaN minutes left' for any active vote whose end_at is a present-but-unparseable string (isApiVoteSummary only checks typeof string, not date validity) | `frontend/apps/mobile/src/screens/voting/VotingScreen.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn) | 2026-10-19 | open | — |
+| 2 | bug | mobile-rn VotingScreen: quorum progress bar divides by eligible_count (can be 0/null) → width='NaN%' AND `n >= 0` always-true falsely renders 'quorum met' on votes with unknown eligibility | `frontend/apps/mobile/src/screens/voting/VotingScreen.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn) | 2026-10-19 | open | — |
 | 2 | bug | ppt-web-core: useAmlDashboard assessment transform calls a.risk_factors.map with no ?? [] guard — crashes dashboard on null | `frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web) | 2026-10-17 | done | — |
 | 2 | bug | reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle) | `backend/servers/reality-server/src/routes/users.rs` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-server) | 2026-10-17 | open | — |
 | 2 | bug | reality-web: auth-context checkSession treats ANY /users/me non-ok as auth failure → transient 5xx wipes session | `frontend/apps/reality-web/src/lib/auth-context.tsx` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web) | 2026-10-17 | done | — |
@@ -221,6 +224,8 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | bug | mobile-rn usePushNotifications: checkRegistrationStatus derives isRegistered from OS permission alone — stale/rotated backend token still reports as registered | `frontend/apps/mobile/src/hooks/usePushNotifications.ts` | rotating-expert-review (dispatcher Tier-1d 2026-10-18 mobile-rn) | 2026-10-19 | open | — |
+| 1 | bug | mobile-rn FeedbackManager: getDrafts/getPendingFeedback do unguarded JSON.parse on AsyncStorage blobs — a corrupted key breaks the feedback-draft load AND the offline-retry/enqueue path | `frontend/apps/mobile/src/onboarding/FeedbackManager.ts` | rotating-expert-review (dispatcher Tier-1d 2026-10-19 mobile-rn) | 2026-10-19 | open | — |
 | 1 | bug | reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap | `backend/servers/reality-server/src/routes/compare.rs` | rotating-expert-review reality-server 2026-10-03 | 2026-10-17 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test) | `frontend/apps/mobile/src/App.outageNewsDetail.test.tsx` | PR #3094 (+1) | 2026-10-17 | done | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests) | `frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts` | PR #3093 (+1) | 2026-10-17 | done | — |
