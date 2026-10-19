@@ -257,23 +257,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-price-map-cache-unbounded",
-      "action": "SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map — attacker-controlled city rotates distinct keys past the 1h TTL → OOM DoS",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-15T18:27:05Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-15T18:27:05Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md",
-        "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "gh-issue-3098",
       "action": "Follow-up: reconcile portfolio_benchmarks schema drift + replace dangling BIT-622 test refs (PR #3087) (Closes #3098)",
       "owner_role": "pm-tech-lead",

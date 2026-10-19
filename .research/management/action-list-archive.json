@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-18T22:39:48Z",
+  "archived_at": "2026-10-19T14:33:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7798,6 +7798,30 @@
       "stale_reconciled": {
         "at": "2026-08-09T14:11:09Z",
         "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-server-price-map-cache-unbounded",
+      "action": "SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map — attacker-controlled city rotates distinct keys past the 1h TTL → OOM DoS",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-15T18:27:05Z (score=3 conf=high vector=bug) | gc1-reconcile 2026-10-19T14:27:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-15T18:27:05Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md",
+        "score": 3,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3092,
+        "merged_at": "2026-10-19T10:28:52Z",
+        "at": "2026-10-19T14:27:07Z"
       }
     },
     {
