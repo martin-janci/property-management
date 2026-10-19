@@ -690,7 +690,7 @@ async fn upload_import_file(
     let mut template_id: Option<Uuid> = None;
     let mut filename: Option<String> = None;
     let mut file_size: i64 = 0;
-    let mut _file_data: Vec<u8> = Vec::new();
+    let mut file_data: Vec<u8> = Vec::new();
 
     while let Some(field) = multipart
         .next_field()
@@ -717,7 +717,7 @@ async fn upload_import_file(
                     .await
                     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
                 file_size = data.len() as i64;
-                _file_data = data.to_vec();
+                file_data = data.to_vec();
             }
             _ => {}
         }
@@ -754,7 +754,37 @@ async fn upload_import_file(
         return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
     }
 
-    let file_path = format!("imports/{}/{}", org_id, Uuid::new_v4());
+    // Persist the uploaded bytes to object storage BEFORE creating the
+    // import_job row. A prior stub read the multipart body into a discarded
+    // buffer and fabricated a `file_path` that pointed at nothing, so every
+    // upload silently lost its data and the downstream validate/approve flow
+    // operated on a key that never existed. Fail closed: if storage is not
+    // configured, do not create a job row that would dangle (503).
+    let storage = state.storage_service.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Storage service is not configured; import upload is unavailable".to_string(),
+    ))?;
+
+    let storage_key = format!("imports/{}/{}", org_id, Uuid::new_v4());
+    let content_type = integrations::get_content_type(&filename);
+    let file_path = storage
+        .upload(&storage_key, file_data, content_type)
+        .await
+        .map_err(|e| {
+            let msg = e.to_string();
+            // An unsupported MIME type is a client error; anything else is a
+            // transient storage failure.
+            if msg.to_lowercase().contains("content type") {
+                (StatusCode::BAD_REQUEST, msg)
+            } else {
+                tracing::error!(error = %e, "Failed to upload import file to storage");
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Failed to store uploaded file. Please try again later.".to_string(),
+                )
+            }
+        })?;
+
     let default_options = serde_json::json!({
         "skip_errors": false,
         "update_existing": true,
