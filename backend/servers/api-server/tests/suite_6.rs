@@ -17,6 +17,8 @@ mod mfa_recovery_cross_user_idor_tests;
 mod mfa_regenerate_backup_codes_rls_scope_tests;
 #[path = "suites/migration_db_tests.rs"]
 mod migration_db_tests;
+#[path = "suites/migration_import_upload_persists_file.rs"]
+mod migration_import_upload_persists_file;
 #[path = "suites/migration_pagination_tests.rs"]
 mod migration_pagination_tests;
 #[path = "suites/multi_currency_cross_org_idor_tests.rs"]
