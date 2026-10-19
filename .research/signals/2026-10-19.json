@@ -1,176 +1,131 @@
 {
   "date": "2026-10-19",
-  "generated_at": "2026-10-19T00:51:03Z",
-  "phase": "post-stage",
-  "segment_reviewed": "api-handlers",
-  "experts_consulted": [
-    "rust-backend"
-  ],
-  "next_segment": "mobile-rn (2026-10-16, oldest after this run)",
-  "signals": [
-    {
-      "id": "code-review-api-handlers-migration-upload-drops-file",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review 2026-10-19 api-handlers",
-      "segment": "api-handlers",
-      "score_delta": 3,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "expert": "rust",
-      "files": [
-        "backend/servers/api-server/src/routes/migration.rs"
-      ],
-      "evidence": "backend/servers/api-server/src/routes/migration.rs:678-798 upload_import_file (POST /api/v1/migration/import/upload, wired at routes/migration.rs:59 and lib.rs:320) is a silent stub that drops the uploaded file bytes. At line 693 it declares `let mut _file_data: Vec<u8> = Vec::new();` (the leading underscore is the Rust 'intentionally unused' marker that suppresses the dead-store warning). At line 715-720 it reads the full multipart body into memory with `field.bytes().await` and assigns it to `_file_data = data.to_vec();`. That buffer is never used again anywhere in the file (grep for `_file_data` returns only these two lines). At line 757 it fabricates a storage path `let file_path = format!(\"imports/{}/{}\", org_id, Uuid::new_v4());` with NO call to any S3/MinIO/filesystem writer, then at line 764-779 passes that non-existent path to `migration_repo.create_import_job(...)` and returns 200 with job_id + 'File uploaded successfully. Validation will begin shortly.' (line 796). Impact: (a) data loss — platform admins who upload a bulk-import file (buildings/units/residents/financial records, up to 100 MB per MAX_IMPORT_SIZE at line 734) receive a success response and a job_id but no file was ever persisted; (b) silent broken feature — downstream processing (`get_import_job_status`, `validate_import`, `approve_import`) references a `file_path` that resolves to nothing; (c) memory bloat — the handler still allocates up to 100 MB into a Vec<u8> per concurrent request before dropping it. Reachability: router nested at lib.rs:320 under `/api/v1/migration`, mod declared at routes/mod.rs:101 `pub mod migration;`. Confidence HIGH: the `_file_data` dead-store and the lack of any writer call are directly observable; the fabricated file_path pattern and the `Pending` status at line 770 confirm the stub intent. Severity HIGH (+3): data-loss class on a platform-admin migration endpoint whose entire purpose is to persist tenant data, not a mere I/O bug. Fix: route the uploaded bytes through `state.storage_service` (same pattern as other upload sites, e.g. documents) BEFORE creating the import job, use the actual storage key as `file_path`, and reject the request if `storage_service` is not configured (fail-closed) instead of returning success."
-    },
-    {
-      "id": "code-review-api-handlers-migration-export-fake-url-stub",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review 2026-10-19 api-handlers",
-      "segment": "api-handlers",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "expert": "rust",
-      "files": [
-        "backend/servers/api-server/src/routes/migration.rs"
-      ],
-      "evidence": "backend/servers/api-server/src/routes/migration.rs:1241-1398 — the migration export flow (POST /api/v1/migration/export → GET /api/v1/migration/export/{id} → GET /api/v1/migration/export/{id}/download) is a stub that fabricates its outputs. In `get_export_status` the explicit comment at line 1268 says `// Auto-transition to Ready in mock setup`, and lines 1269-1291 unconditionally flip the record from Pending to Ready, writing a hardcoded placeholder file_path `let path = format!(\"https://storage.example.com/exports/{}.zip\", export_id);` (line 1270), a hardcoded fake file_size_bytes `Some(15_234_567)` (line 1278), and a fabricated completed_at `Some(chrono::Utc::now())` (line 1283). No real export job has run — `request_migration_export` (lines 1183-1239) only inserts a DB row, there is no backing worker or writer that materialises the archive. Then at lines 1312-1316 the response hands the admin a hardcoded fake record_counts payload `{ \"buildings\": 45, \"units\": 320, \"residents\": 580 }` regardless of the org's actual data. Finally `download_export` (line 1393-1395) returns `download_url: updated.file_path.unwrap_or_else(|| format!(\"https://storage.example.com/exports/{}.zip\", export_id))` — the admin UI gets a `storage.example.com` URL (an IANA reserved illustration domain, RFC 2606, that will never resolve to real content). Reachability: router nested at lib.rs:320, `pub mod migration;` at routes/mod.rs:101, routes wired at routes/migration.rs:66-69. Impact: silent broken feature — platform admins requesting a migration export see 'Ready' with a plausible file size and record counts, but every download URL is a dead `storage.example.com` link and no archive exists. This is distinct from the already-flagged `code-review-api-handlers-data-export-report-stub` / `code-review-api-handlers-report-dl-deadlink` findings (different modules: reports/mod.rs vs. migration.rs) and from `multi-currency-refresh-stub-success` (different domain). Confidence HIGH: the hardcoded example.com URL, the fabricated record counts, and the 'mock setup' author comment at line 1268 are direct quotes from the source. Severity MEDIUM (+2): platform-admin-only, no data loss, but a silently broken customer-visible feature on a flagship Epic 66.3 migration-export surface, with user-trust and compliance impact (admin thinks data was exported). Fix: either (a) hide the endpoints behind a feature flag until a real exporter lands, or (b) implement the backing export job and persist a real presigned URL from the storage service in the file_path column, and drop the hardcoded `storage.example.com` fallback at line 1395."
-    },
-    {
-      "id": "code-review-api-handlers-impersonation-active-raw-xff-audit",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review 2026-10-19 api-handlers",
-      "segment": "api-handlers",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "expert": "rust",
-      "files": [
-        "backend/servers/api-server/src/routes/admin/impersonation.rs",
-        "backend/servers/api-server/src/routes/admin/mod.rs"
-      ],
-      "evidence": "backend/servers/api-server/src/routes/admin/impersonation.rs:114 `list_active` reads the raw X-Forwarded-For header verbatim for audit logging: `let ip = headers.get(\"x-forwarded-for\").and_then(|h| h.to_str().ok());`, then passes the full comma-separated chain to `audit.record(..., ip, ua)` at line 126. This bypasses the shared helper `audit_ip_from_headers` defined at routes/admin/mod.rs:60-75, which the sibling `start` handler in the SAME file uses correctly at line 195 (`let ip = super::audit_ip_from_headers(&headers);`). The helper's doc comment (admin/mod.rs:41-55) states it exists specifically to prevent silent audit-row drops: `audit_logs.ip_address` is VARCHAR(45) (admin/mod.rs:44 `AUDIT_IP_MAX_LEN: usize = 45`), and a typical multi-hop X-Forwarded-For chain (e.g. `203.0.113.7, 198.51.100.1, 10.0.0.1` = 36 chars; three IPv6 hops easily exceed 45) overflows the column. Impact: when the audit INSERT fails on an overlong IP string, the handler's error branch at line 130-132 only emits `tracing::warn!(error = %e, \"audit write for impersonation/active failed\")` and returns 200 OK with the full cross-tenant impersonation list — so the compliance-mandated audit trail of 'who viewed the active-impersonation dashboard' silently has gaps for any viewer behind >1 proxy. Divergence is clear within the file itself: `start` (line 195), `stop` (not applicable — no audit call), and every audit site in sibling admin/* files use `audit_ip_from_headers`. Reachability: `GET /api/v1/admin/impersonation/active` is wired via lib.rs:145 (`admin::router()`) → admin/mod.rs:94 (`impersonation::router()`) → impersonation.rs:28 (`.route(\"/active\", get(list_active)...)`). This is DISTINCT from the prior finding `code-review-api-handlers-share-log-proxy-ip` which is about `documents/shares.rs` share access logs, not admin impersonation. Confidence HIGH: the raw-XFF read, the helper's existence, and the sibling `start` call-site all read directly from the file. Severity MEDIUM (+2): compliance/audit-trail integrity on a platform-admin impersonation surface — an attacker-controlled or merely multi-proxy X-Forwarded-For value silently drops the 'who viewed active impersonations' audit row. No crash, no data loss, no auth bypass. Fix: replace line 114 with `let ip = super::audit_ip_from_headers(&headers);` to mirror the `start` handler's call site."
-    }
-  ],
+  "generated_at": "2026-10-19T03:12:09Z",
+  "phase": "re-fire — scheduled routine, 2h22m after 00:47:58Z",
+  "segment_reviewed": null,
+  "experts_consulted": [],
+  "next_segment": "mobile-rn",
+  "signals": [],
   "auto_fix_actions": [],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/2026-10-19.md && head -1 … | grep '^# 2026-10-19$'",
+      "command": "test -f .research/briefs/2026-10-19.md && head -1 .research/briefs/2026-10-19.md | grep -q \"^# 2026-10-19$\"",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq compare staged state.json vs HEAD on cursors/seen/hotspot/quiet_days",
-      "observed": "last_pr_seen 3118→3123, last_issue_seen 3116→3124, last_commit_sha c08b188→62aaaa5, seen_signals 589→592, stats.runs 99→100",
-      "expected": "true"
+      "command": "jq cursor-advance vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "note": "last_issue_seen 3124->3126; last_run_iso 2026-10-19T00:47:58Z->2026-10-19T03:12:09Z; stats.quiet_days 8->9"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique|length))' .research/backlog.json",
-      "observed": "496 ids, 496 unique",
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq -s --slurpfile prev … non-cumulative seen-and-rescored == 0",
-      "observed": "3 signals (all code-review-finding, non-cumulative), none in prior seen_signals, score_delta applied once",
+      "command": "empty-signals carve-out — signals[] has length 0, no overlap possible",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "cap+decay vs backlog.json",
-      "observed": "no score>8; 0 open items with updated_at<=2026-10-05 → decay not triggered",
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json; decay check — no open item with updated_at <= 2026-10-05",
+      "observed": "true (max score=4 on security-rls-migration-residual, well under cap; oldest open updated_at=2026-10-11 — not yet decay-eligible)",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "brief annotation for each new plan",
-      "observed": "plans/code-review-api-handlers-migration-upload-drops-file.md · adversarial pass: passed (in brief)",
-      "expected": "true"
+      "command": "no new plans this run — no adversarial-pass annotation required",
+      "observed": "0 new plans",
+      "expected": "<=2 new plans with adversarial pass each"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "git diff --cached --diff-filter=A -- .research/plans/ | grep -c .md$; headings+metadata+mode+files-exist",
-      "observed": "1 new plan; 4 metadata + 11 headings all present; Mode: cloud-ok; all 3 Files paths exist on disk",
-      "expected": "≤2"
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '.md$' | <= 2",
+      "observed": "0 new plans",
+      "expected": "<= 2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secret-scan on staged diff (ex-baseline)",
-      "observed": "0 matches (auth-header placeholder in plan repro rewritten to $AUTHZ env-var form)",
+      "command": "git diff --cached (excluding baseline doc files) | grep secrets patterns",
+      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "python3 regen_views.py backlog.json … | diff backlog.md",
-      "observed": "byte-identical",
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0 (backlog.json unchanged; backlog.md unchanged — byte-identical to regen with preserved timestamp)",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "parse brief 'Phases that failed' + verify cursors",
-      "observed": "'Phases that failed: none' — all cursors advanced only where phase succeeded",
-      "expected": "true"
+      "command": "parse brief 'Phases that failed' line + cursor-pin check",
+      "observed": "no failed phases; cursors advanced for Phase 1 observations only (last_issue_seen -> 3126); Phase 1.5/1.6 explicitly skipped (not failed)",
+      "expected": "no failed phases ∨ corresponding cursor pinned"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior-run plan slug still in plans/ or _archive/",
-      "observed": "16 prior plan slugs all present (no silent deletions)",
-      "expected": "true"
+      "command": "every prior-run plan slug appears in plans/ OR plans/_archive/",
+      "observed": "no plan deletions this run; morning run's new plan still in plans/",
+      "expected": "no silent deletions"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "[ staged archive >= HEAD archive ]",
-      "observed": "22 == 22 (archive untouched)",
+      "command": "[ \"$(git ls-files -- .research/plans/_archive/ | wc -l)\" -ge \"$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)\" ]",
+      "observed": "equal (archive unchanged this run)",
       "expected": "exit 0"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "python3 regen_views.py backlog.json … | diff IDEAS_TRIAGE.md",
-      "observed": "byte-identical",
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0 (backlog.json unchanged; IDEAS_TRIAGE.md unchanged — byte-identical to regen with preserved timestamp)",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions discipline",
-      "observed": "auto_fix_actions=[]; no eligible signal this run (all 3 are code-review-finding — not on Phase 5 allowlist); kill switch not set",
+      "command": "jq '.auto_fix_actions | length <= 3 and ...caps...' + idempotency vs auto_fix_history",
+      "observed": "auto_fix_actions=[] (0 ≤ caps); nothing to idempotency-check; kill switch not set — no violation",
       "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "jq -e .items action-list/risks; project-state non-empty; pm_cursor 0..7; GC7 coverage_cursor liveness",
-      "observed": "action-list.items + risks.items parse; project-state.md non-empty; pm_cursor.next_index=0; coverage_cursor.next_index=10 within [0,13); pm_cursor advanced vs HEAD and coverage_cursor advanced vs HEAD (9→10)",
-      "expected": "exit 0"
+      "command": "Phase 1.6 skipped this run (pm_cursor and coverage_cursor unchanged) — gate is a no-op",
+      "observed": "pm_cursor.next_index=0 unchanged; coverage_cursor.next_index=10 unchanged; management artifacts untouched",
+      "expected": "no-op when Phase 1.6 skipped"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "grep Telegram-token patterns in staged diff (ex-baseline)",
-      "observed": "0 matches",
+      "command": "git diff --cached (excluding baseline doc files) | grep -E 'api.telegram.org/bot[0-9]{6,}:[A-Za-z0-9_-]{20,}|[0-9]{8,10}:[A-Za-z0-9_-]{35}' | wc -l",
+      "observed": "0",
       "expected": "0"
     }
   ]
