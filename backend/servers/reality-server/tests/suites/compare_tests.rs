@@ -119,15 +119,20 @@ async fn add_to_compare_concurrent_never_exceeds_max(pool: PgPool) {
     const CONCURRENCY: usize = 8;
     let mut listing_ids = Vec::with_capacity(CONCURRENCY);
     for i in 0..CONCURRENCY {
+        // `created_by` is `NOT NULL REFERENCES users(id)`, so it must be a real
+        // user id — not `org_id`. Binding `org_id` there (the old `$1, $1`)
+        // violated `listings_created_by_fkey` and panicked at
+        // `.expect("seed listing")` before the concurrency assertions ever ran.
         let listing_id: Uuid = sqlx::query_scalar(
             "INSERT INTO listings \
              (organization_id, created_by, status, transaction_type, title, \
               property_type, price, currency, street, city, postal_code, country) \
-             VALUES ($1, $1, 'active', 'sale', $2, 'apartment', 100000.00, 'EUR', \
+             VALUES ($1, $3, 'active', 'sale', $2, 'apartment', 100000.00, 'EUR', \
                      'St 1', 'Bratislava', '81101', 'SK') RETURNING id",
         )
         .bind(org_id)
         .bind(format!("Cmp Listing {i}"))
+        .bind(user_id)
         .fetch_one(&pool)
         .await
         .expect("seed listing");
