@@ -1,9 +1,27 @@
 {
-  "generated": "2026-10-18T04:34:32Z",
+  "generated": "2026-10-19T06:35:55Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-19T06:35:55Z",
+      "prs_scanned": 4,
+      "clean": [
+        3117,
+        3118,
+        3121
+      ],
+      "with_issues": [
+        {
+          "pr": 3122,
+          "issue": 3128,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "AML list endpoint untyped serde_json::Value -> hand-maintained TS types + recommendations always []"
+        }
+      ]
+    },
     {
       "run_at": "2026-10-18T04:34:32Z",
       "prs_scanned": 0,
@@ -587,15 +605,6 @@
       "with_issues": [],
       "skipped_already_reviewed": [],
       "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-10), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives; no MCP issues opened). Enumeration: search_pull_requests 'is:merged base:dev merged:>=2026-09-10' => total_count=0 (search index unsynced in runner). Cross-checked list_pull_requests (state=closed, base=dev): sort=updated desc page1 newest merge is #2956@2026-09-08T20:33Z; sort=created desc perPage=40 confirms newest merged_at is #2956@09-08 (#2955@09-08, #2952/#2950@09-07 next) \u2014 all already carry post-merge-reviewed from prior runs and all predate the 09-10 window start. Higher-numbered PRs 2958/2959/2963/2964/2965 (and 2933/2934/2936/2939) are OPEN dependabot PRs (no merged_at), not merges. ZERO PRs merged into dev in the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
-      "focus_prs": []
-    },
-    {
-      "run_at": "2026-09-23T08:29:00Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-09), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-09 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new; and the unfiltered 'is:pr is:merged base:dev merged:>=2026-09-09' => total_count=0, i.e. ZERO PRs merged into dev anywhere in the 14d window. Cross-checked list_pull_requests (closed, base=dev, updated desc, perPage=50): newest merge into dev is #2955/#2956 @2026-09-08 (both already carry post-merge-reviewed from prior runs), everything below is older/out-of-window; the four most-recent in-window-adjacent merges (2955@09-08,2956@09-08,2950@09-07,2952@09-07) are all past-reviewed. Top-of-list dependabot PRs (2959,2939,2958,2591,2933,2808,2936,2934,2867,2865,2749) closed unmerged (no merged_at). Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
       "focus_prs": []
     }
   ]
