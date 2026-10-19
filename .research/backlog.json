@@ -12210,18 +12210,20 @@
       "score": 3,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map)",
+        "PR #3092"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/price_map.rs:32-38 — PRICE_MAP_CACHE is a process-global HashMap<String, CacheEntry> with no size cap, only TTL. Key = format!(\"{}:{}:{}:{}\", mode, time_window_str, property_type.unwrap_or(\"\"), city.unwrap_or(\"\")) at :125-131; city/property_type come straight off public unauthenticated GET /api/v1/price-map.",
         "Memory-exhaustion DoS: cache.retain only runs on write-path, CACHE_TTL=3600s; attacker rotating city=<random> inserts a new entry per request. Millions of keys accumulate inside the 1h window → unbounded heap growth → OOM.",
-        "Self-inconsistency: state.rs:910-915 bounds INQUIRY_RATE_LIMIT_MAX_IPS=100_000 via with_default_bounded; the price_map cache (equally attacker-influenced key space) is unbounded. Fix: bounded LRU / size-limited insert mirroring the inquiry limiter, or allowlist + hash validated inputs."
+        "Self-inconsistency: state.rs:910-915 bounds INQUIRY_RATE_LIMIT_MAX_IPS=100_000 via with_default_bounded; the price_map cache (equally attacker-influenced key space) is unbounded. Fix: bounded LRU / size-limited insert mirroring the inquiry limiter, or allowlist + hash validated inputs.",
+        "resolved: PR #3092 merged 2026-10-19 — bound PRICE_MAP_CACHE against anonymous key-flood DoS; already status=done by dispatcher reconciliation (2026-10-19T10:36:16Z)."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/price_map.rs"
       ],
       "created_at": "2026-10-15",
-      "updated_at": "2026-10-15",
+      "updated_at": "2026-10-19",
       "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md",
       "reconciled": {
         "at": "2026-10-19T10:36:16Z",
@@ -12739,6 +12741,31 @@
       "files": [
         "backend/servers/api-server/src/routes/admin/impersonation.rs",
         "backend/servers/api-server/src/routes/admin/mod.rs"
+      ],
+      "created_at": "2026-10-19",
+      "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "dx-dispatcher-merge-deadlock-self-approval",
+      "title": "DX: dispatcher merge pipeline deadlocked — 16 PRs stuck in review; GitHub blocks self-approval, reviewer bot can only COMMENT",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 3,
+      "status": "needs-human-judgement",
+      "sources": [
+        "fire payload (dispatcher 2026-10-19 buffer-low)",
+        ".research/management/assignments.json (16 rows status=review)"
+      ],
+      "evidence": [
+        "assignments.json 2026-10-19 18:30Z: 16 rows with status=review, each with reviewer_summary beginning 'verdict=approve ...'. Blocking IDs: #3024, #3028, #3070, #3072, #3074, #3075, #3107, #3108, #3111, #3119, #3120, #3123, #3125, #3127, #3129, #3130.",
+        "Mechanism: dispatcher implementer and dispatcher reviewer run under the same GitHub identity (martin-janci). GitHub's branch-protection rule 'require review from someone other than the last pusher' rejects a self-review as an APPROVE and demotes it to a COMMENT. Review notes on #3072, #3074, #3125 explicitly cite this: 'review posted as COMMENT (self-approval blocked)'.",
+        "Impact: the planner is backlog-exhausted of claimable non-mobile-native work (fire payload: claimable=6/72), new dispatcher PRs land into the same deadlock, and real security fixes (#3072 role-authz, #3074 non-atomic payment, #3120 account-enumeration, #3123 TOTP RNG panic) sit un-merged for days.",
+        "Resolution is a human decision — three paths that cannot be chosen from a routine: (a) stand up a second GitHub bot identity for the reviewer, (b) relax the branch-protection 'require review from someone other than the last pusher' to accept the dispatcher reviewer, (c) accept that a human must do final merge-approvals and provide a batched queue. All three change account/infra configuration this session is not authorised to touch; status set to needs-human-judgement on that basis."
+      ],
+      "files": [
+        ".research/management/assignments.json",
+        ".research/dispatcher-prompt.md"
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
