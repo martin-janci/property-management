@@ -1,0 +1,24 @@
+{
+  "signals": [],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-10-20.md && head -1 == '# 2026-10-20'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "staged vs HEAD advance", "observed": "last_issue_seen 3124->3131, last_commit_sha 62aaaa5->3b97322d, stats.quiet_days 8->9, stats.runs 100->101", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal re-count", "observed": "signals empty", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "no score > 8; decay applied to open items > 14d", "observed": "all open items have updated_at >= 2026-10-11 (within 14d of 2026-10-20)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "promoted plans have adversarial-pass annotation", "observed": "0 plans promoted", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "<=2 new plans + readiness gates", "observed": "0 new plans", "expected": "<=2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached only touches .research/", "observed": "pending commit", "expected": "exit 0" },
+    { "goal": "G9", "passed": true,  "command": "no secrets/private hostnames in staged diff", "observed": "pending commit; no routine edits to the four baseline docs", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md matches regenerated view", "observed": "only timestamp refreshed; data rows unchanged (backlog.json rows unchanged)", "expected": "diff -q exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failure honesty", "observed": "no phase failures; last_pr_seen cursor held at 3123 because no PR>3123 merged", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "plan promotions converge", "observed": "no plans added/removed this run", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive only grows", "observed": "no archive changes", "expected": "ge 0 delta" },
+    { "goal": "G14", "passed": true, "command": "triage digest matches regen", "observed": "only timestamp refreshed; triage rows unchanged (53 rows)", "expected": "diff -q exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline (cap+idempotency+kill switch)", "observed": "auto_fix_actions empty; kill switch not set but no eligible candidate (deadlock blocks)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid when Phase 1.6 ran", "observed": "Phase 1.6 skipped this run; gate is a no-op", "expected": "n/a" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token value in staged diff", "observed": "pending commit; routine writes carry no token value", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "notes": "Quiet observation window: no PRs > 3123 merged; 3 new issues (#3126 cargo-deny ammonia, #3128 AML list typing, #3131 dispatcher merge deadlock) — all labeled on arrival, no untriaged-issue signals emitted. Negligible code churn (2 files, 2 lines). Phase 1.5 (rotating expert review) skipped due to the low-churn window + the known merge-pipeline deadlock that would make any new findings pile up unmergeable. Phase 1.6 (project management) skipped on this quiet day; pm_cursor + coverage_cursor held. Phase 5 auto-fix: no candidate — nothing met confidence=high + score>=3 + allowlist. Top-scored open items (score 3 bug, score 2 bugs) all already have in-flight auto-impl PRs stuck in the deadlocked review state (stem collisions in assignments.json), so plan promotion would widen stem collisions without helping throughput. Payload buffer-low: claimable=6/72 and merge pipeline deadlocked on #3131 (WIP 16/16) is operator-level work tracked in issue #3131; the research routine itself cannot resolve it (no sanctioned action to self-approve, re-identify, or relax branch protection)."
+}
