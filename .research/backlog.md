@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-19 00:46 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-20 18:41 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -8,7 +8,7 @@
 | 5 | security | SECURITY: Alexa voice webhook accepts forged requests — verify_alexa_signature never checks the signature | `backend/servers/api-server/src/routes/voice_webhooks.rs (+1)` | standing-scan-2026-07-28 | 2026-07-28 | dropped | — |
 | 3 | bug | api-server /migration/import/upload: silent dead-store drops uploaded bytes (data loss on Epic 66 bulk-import) | `backend/servers/api-server/src/routes/migration.rs` | rotating-expert-review 2026-10-19 api-handlers | 2026-10-19 | ready | plans/code-review-api-handlers-migration-upload-drops-file.md |
 | 3 | bug | SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal | `backend/servers/api-server/src/routes/violations.rs (+1)` | rotating-expert-review [api-handlers] (+1) | 2026-10-17 | open | — |
-| 3 | bug | SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map — attacker-controlled city rotates distinct keys past the 1h TTL → OOM DoS | `backend/servers/reality-server/src/routes/price_map.rs` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map) | 2026-10-15 | ready | plans/code-review-reality-server-price-map-cache-unbounded.md |
+| 3 | bug | SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map — attacker-controlled city rotates distinct keys past the 1h TTL → OOM DoS | `backend/servers/reality-server/src/routes/price_map.rs` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map) | 2026-10-15 | done | plans/code-review-reality-server-price-map-cache-unbounded.md |
 | 3 | bug | reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded | `frontend/apps/reality-web/src/app/[locale]/sell/page.tsx` | rotating-expert-review reality-web 2026-10-02 (dispatcher Tier-1d) (+1) | 2026-10-03 | done | plans/_archive/code-review-reality-web-sell-wizard-no-persist.md |
 | 3 | bug | RegistryRulesPage save silently swallows errors and gives no success feedback | `frontend/apps/ppt-web/src/features/registry/pages/RegistryRulesPage.tsx` | rotating-expert-review ppt-web-ui 2026-10-01 | 2026-10-01 | done | plans/_archive/code-review-ppt-web-ui-registry-rules-save-silent-fail.md |
 | 3 | bug | logout() AUTHED_QUERY_KEY_ROOTS allow-list omits mounted route groups; caches leak across users on shared workstation | `frontend/apps/ppt-web/src/lib/queryKeys.ts (+3)` | rotating-expert-review (dispatcher Tier-1d 2026-09-26 ppt-web-core query-cache) | 2026-09-26 | done | plans/code-review-ppt-web-core-authed-roots-session-leak.md |

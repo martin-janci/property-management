@@ -1,0 +1,210 @@
+{
+  "generated_at": "2026-10-20T18:44:03Z",
+  "scan_window": {
+    "since_iso": "2026-10-19T00:47:58Z",
+    "last_pr_seen_prev": 3123,
+    "last_issue_seen_prev": 3124,
+    "last_commit_sha_prev": "62aaaa5"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-20",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-10-19T00:47:58Z (41h ago, > 36h threshold); routine missed one tick but caught up on this fire"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3130",
+      "type": "dep-update-noise",
+      "source": "PR #3130",
+      "score_delta": 0,
+      "evidence": [
+        "Cargo.lock-only ammonia 4.1.7 -> 4.2.4 bump; clears RUSTSEC-2026-0373; closes #3126"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3133",
+      "type": "dep-update-noise",
+      "source": "PR #3133",
+      "score_delta": 0,
+      "evidence": [
+        "New dependabot PR (cargo-minor-patch group, 18 updates); supersedes closed #2981"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-2981-closed",
+      "type": "dep-update-noise",
+      "source": "PR #2981",
+      "score_delta": 0,
+      "evidence": [
+        "Closed-not-merged dependabot cargo-minor-patch group PR, superseded by #3133; author=dependabot[bot]"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "type": "churn-hotspot",
+      "source": "commit 33982b7 (PR #3092)",
+      "score_delta": 0,
+      "evidence": [
+        "167 lines changed (+163/-4) in commit 33982b7 — merged PR #3092 added bounded cache (MAX_PRICE_MAP_CACHE_ENTRIES=10_000), eviction policy, and 3 regression tests",
+        "intentional-stabilization: PR #3092 explicitly stabilizes this file against the previously-filed anonymous-flood DoS (code-review-reality-server-price-map-cache-unbounded, status=done); churn is expected not instability — score suppressed"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "code_review_slice": {
+    "segment_reviewed": "reality-server",
+    "selection_reason": "churn-aligned",
+    "findings_added": 0,
+    "notes": "price_map.rs was the churn file this run; it was just stabilized by PR #3092 (adds bounded cache + 3 regression tests). Adjacent inquiries.rs scanned for unwrap/expect in production paths — all Option::unwrap_or defaults, no risky patterns. Follow-up issue #3132 already tracks the subtler cache-thrash+eviction-amplification DoS surface."
+  },
+  "pm_rotation": {
+    "role_run": "pm-tech-lead",
+    "scan_kind": "upkeep"
+  },
+  "coverage_upkeep": {
+    "epic_rechecked": "epic-85",
+    "stories_rechecked": 2,
+    "promotions_from_merged_prs": 0
+  },
+  "buffer_low_fire": {
+    "payload": "buffer-low: claimable=7/72 — refill planner (coverage exhausted: 0 claimable stories, backlog empty)",
+    "treated_as": "normal incremental run (no 'buffer-low' trigger in routine-prompt.md)",
+    "post_run_claimable": "unchanged — no new backlog vectors to refill from (all open backlog rows already tracked as active assignments)"
+  },
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 briefs/2026-10-20.md",
+      "observed": "# 2026-10-20",
+      "expected": "# 2026-10-20"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique id count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dup signals with score_delta != 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay (no eligible candidates)",
+      "observed": "no violations",
+      "expected": "no violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plan files",
+      "observed": "0",
+      "expected": "<=2 with adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-.research/ staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md byte-diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed: none",
+      "observed": "none",
+      "expected": "all cursors advanced only when phase succeeded"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all HEAD plan slugs present",
+      "observed": "all preserved",
+      "expected": "all preserved"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md byte-diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions",
+      "expected": "within caps and idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts + pm_cursor + coverage_cursor",
+      "observed": "CC 10->11, PM 0->1, both advanced",
+      "expected": "coverage_cursor advanced when pm_cursor advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "finalized_at": "2026-10-20T18:45:47Z"
+}
