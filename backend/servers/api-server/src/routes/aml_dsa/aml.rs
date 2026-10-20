@@ -8,9 +8,12 @@ use axum::{
     Json,
 };
 use chrono::{DateTime, Utc};
-use db::models::compliance::{AmlAssessmentStatus, AmlRiskLevel, CreateAmlRiskAssessment};
+use db::models::compliance::{
+    AmlAssessmentStatus, AmlRiskLevel, CountryRiskRating, CreateAmlRiskAssessment,
+};
 use db::models::AuditAction;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::shared::*;
@@ -32,7 +35,7 @@ pub struct CreateAmlAssessmentRequest {
 }
 
 /// Risk factor in assessment.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RiskFactor {
     pub factor_type: String,
     pub description: String,
@@ -165,12 +168,102 @@ pub struct ListAmlAssessmentsQuery {
     pub offset: Option<i64>,
 }
 
+/// A single AML assessment row in the list endpoint.
+///
+/// Mirrors the persisted `db::models::compliance::AmlRiskAssessment` row that
+/// was previously serialized ad-hoc as `serde_json::Value`. Typing it gives the
+/// list endpoint an OpenAPI contract so the AML-check completion flags and the
+/// nullable `risk_factors` can no longer silently drift from the frontend
+/// client (see issue #3128 / PR #3122 / PR #3117). Field names and serialized
+/// shape are unchanged from the previous raw-row payload.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AmlAssessmentListItem {
+    pub id: Uuid,
+    pub organization_id: Uuid,
+    pub transaction_id: Option<Uuid>,
+    pub party_id: Uuid,
+    pub party_type: String,
+    pub transaction_amount_cents: Option<i64>,
+    pub currency: Option<String>,
+    pub risk_score: i32,
+    #[schema(value_type = String)]
+    pub risk_level: AmlRiskLevel,
+    #[schema(value_type = String)]
+    pub status: AmlAssessmentStatus,
+    /// Risk factors identified during assessment. `null` for rows whose
+    /// `risk_factors` column was never populated (PR #3117 symptom).
+    pub risk_factors: Option<Vec<RiskFactor>>,
+    pub country_code: Option<String>,
+    #[schema(value_type = Option<String>)]
+    pub country_risk: Option<CountryRiskRating>,
+    pub id_verified: bool,
+    pub source_of_funds_documented: bool,
+    pub pep_check_completed: bool,
+    pub is_pep: Option<bool>,
+    pub sanctions_check_completed: bool,
+    pub sanctions_match: Option<bool>,
+    pub assessor_notes: Option<String>,
+    pub assessed_by: Option<Uuid>,
+    pub assessed_at: Option<DateTime<Utc>>,
+    pub flagged_for_review: bool,
+    pub review_reason: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<db::models::compliance::AmlRiskAssessment> for AmlAssessmentListItem {
+    fn from(a: db::models::compliance::AmlRiskAssessment) -> Self {
+        // The `risk_factors` column stores a JSON array written by the create
+        // handler via `serde_json::to_value(&Vec<RiskFactor>)`, so parse it back
+        // into the typed shape; a NULL column or malformed value becomes `None`,
+        // matching how the detail handlers already treat it.
+        let risk_factors = a.risk_factors.and_then(|v| serde_json::from_value(v).ok());
+        Self {
+            id: a.id,
+            organization_id: a.organization_id,
+            transaction_id: a.transaction_id,
+            party_id: a.party_id,
+            party_type: a.party_type,
+            transaction_amount_cents: a.transaction_amount_cents,
+            currency: a.currency,
+            risk_score: a.risk_score,
+            risk_level: a.risk_level,
+            status: a.status,
+            risk_factors,
+            country_code: a.country_code,
+            country_risk: a.country_risk,
+            id_verified: a.id_verified,
+            source_of_funds_documented: a.source_of_funds_documented,
+            pep_check_completed: a.pep_check_completed,
+            is_pep: a.is_pep,
+            sanctions_check_completed: a.sanctions_check_completed,
+            sanctions_match: a.sanctions_match,
+            assessor_notes: a.assessor_notes,
+            assessed_by: a.assessed_by,
+            assessed_at: a.assessed_at,
+            flagged_for_review: a.flagged_for_review,
+            review_reason: a.review_reason,
+            created_at: a.created_at,
+            updated_at: a.updated_at,
+        }
+    }
+}
+
+/// Paginated list of AML assessments.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ListAmlAssessmentsResponse {
+    pub assessments: Vec<AmlAssessmentListItem>,
+    pub total: i64,
+    pub limit: i64,
+    pub offset: i64,
+}
+
 /// List AML assessments.
 pub(super) async fn list_aml_assessments(
     State(state): State<AppState>,
     user: AuthUser,
     Query(params): Query<ListAmlAssessmentsQuery>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<ListAmlAssessmentsResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
     let org_id = user.tenant_id.ok_or((
@@ -201,12 +294,12 @@ pub(super) async fn list_aml_assessments(
             )
         })?;
 
-    Ok(Json(serde_json::json!({
-        "assessments": assessments,
-        "total": total,
-        "limit": limit,
-        "offset": offset
-    })))
+    Ok(Json(ListAmlAssessmentsResponse {
+        assessments: assessments.into_iter().map(Into::into).collect(),
+        total,
+        limit,
+        offset,
+    }))
 }
 
 /// Get a specific AML assessment.
@@ -433,4 +526,124 @@ pub(super) async fn get_aml_thresholds(
         cumulative_threshold_eur: 15_000,
         review_threshold_score: 50,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+    use db::models::compliance::AmlRiskAssessment;
+
+    fn sample_row(risk_factors: Option<serde_json::Value>) -> AmlRiskAssessment {
+        let ts = Utc.with_ymd_and_hms(2026, 1, 2, 3, 4, 5).unwrap();
+        AmlRiskAssessment {
+            id: Uuid::nil(),
+            organization_id: Uuid::nil(),
+            transaction_id: None,
+            party_id: Uuid::nil(),
+            party_type: "individual".to_string(),
+            transaction_amount_cents: Some(123),
+            currency: Some("EUR".to_string()),
+            risk_score: 42,
+            risk_level: AmlRiskLevel::Medium,
+            status: AmlAssessmentStatus::Pending,
+            risk_factors,
+            country_code: Some("SK".to_string()),
+            country_risk: Some(CountryRiskRating::Low),
+            id_verified: true,
+            source_of_funds_documented: false,
+            pep_check_completed: true,
+            is_pep: Some(false),
+            sanctions_check_completed: true,
+            sanctions_match: Some(false),
+            assessor_notes: None,
+            assessed_by: None,
+            assessed_at: None,
+            flagged_for_review: false,
+            review_reason: None,
+            created_at: ts,
+            updated_at: ts,
+        }
+    }
+
+    /// The typed list item must serialize to the same field set the ad-hoc
+    /// `serde_json::Value` payload produced (issue #3128), so the frontend
+    /// client keeps reading the same keys.
+    #[test]
+    fn list_item_preserves_wire_contract() {
+        let item: AmlAssessmentListItem = sample_row(None).into();
+        let json = serde_json::to_value(&item).unwrap();
+        let obj = json.as_object().unwrap();
+
+        for key in [
+            "id",
+            "organization_id",
+            "transaction_id",
+            "party_id",
+            "party_type",
+            "transaction_amount_cents",
+            "currency",
+            "risk_score",
+            "risk_level",
+            "status",
+            "risk_factors",
+            "country_code",
+            "country_risk",
+            "id_verified",
+            "source_of_funds_documented",
+            "pep_check_completed",
+            "is_pep",
+            "sanctions_check_completed",
+            "sanctions_match",
+            "assessor_notes",
+            "assessed_by",
+            "assessed_at",
+            "flagged_for_review",
+            "review_reason",
+            "created_at",
+            "updated_at",
+        ] {
+            assert!(obj.contains_key(key), "missing serialized key `{key}`");
+        }
+
+        // AML-check completion flags carry through as real booleans.
+        assert_eq!(obj["id_verified"], serde_json::json!(true));
+        assert_eq!(obj["source_of_funds_documented"], serde_json::json!(false));
+        // A NULL risk_factors column serializes as JSON null (PR #3117).
+        assert_eq!(obj["risk_factors"], serde_json::Value::Null);
+    }
+
+    /// A populated `risk_factors` column round-trips into the typed array.
+    #[test]
+    fn list_item_parses_risk_factors_array() {
+        let stored = serde_json::json!([{
+            "factor_type": "high_value_transaction",
+            "description": "Transaction over threshold",
+            "weight": 30,
+            "mitigated": false,
+        }]);
+        let item: AmlAssessmentListItem = sample_row(Some(stored)).into();
+        let factors = item.risk_factors.expect("risk_factors should parse");
+        assert_eq!(factors.len(), 1);
+        assert_eq!(factors[0].factor_type, "high_value_transaction");
+        assert_eq!(factors[0].weight, 30);
+        assert!(!factors[0].mitigated);
+    }
+
+    /// The paginated envelope keeps the `assessments/total/limit/offset` shape.
+    #[test]
+    fn response_envelope_shape() {
+        let resp = ListAmlAssessmentsResponse {
+            assessments: vec![sample_row(None).into()],
+            total: 1,
+            limit: 20,
+            offset: 0,
+        };
+        let json = serde_json::to_value(&resp).unwrap();
+        let obj = json.as_object().unwrap();
+        assert!(obj["assessments"].is_array());
+        assert_eq!(obj["total"], serde_json::json!(1));
+        assert_eq!(obj["limit"], serde_json::json!(20));
+        assert_eq!(obj["offset"], serde_json::json!(0));
+    }
 }
