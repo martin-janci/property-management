@@ -17149,6 +17149,28 @@
       "merge_attempted_at": "2026-10-18T04:45:50Z"
     },
     {
+      "task_id": "gh-issue-3126",
+      "branch": "auto-impl/gh-issue-3126-f47e102e",
+      "status": "merged",
+      "claimed_at": "2026-10-19T16:33:37Z",
+      "last_updated": "2026-10-20T16:39:22Z",
+      "status_changed_at": "2026-10-20T16:39:22Z",
+      "pr_number": 3130,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3130",
+      "merged_at": "2026-10-20T16:39:22Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3130 status=done specialist=rust-backend note=bump ammonia 4.x->4.2.4, cargo-deny confirms RUSTSEC-2026-0373 gone (Cargo.lock-only); local verify exit1 only on 3 env DB tests in accounting-server; branch salvaged+PR opened by dispatcher [merged by dispatcher: ammonia RUSTSEC-2026-0373 fix landed on dev]",
+      "reviewer_summary": "verdict=approve head_oid=345c58fb99c51d90f72f5027707e2d7463ebdfc0 note=ammonia-4.2.4 Cargo.lock-only clears RUSTSEC-2026-0373; cargo-deny non-required, stays red until zip #3125 lands",
+      "last_reviewed_oid": "345c58fb99c51d90f72f5027707e2d7463ebdfc0",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -20195,5 +20217,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-19T10:37:03Z"
+  "archived_at": "2026-10-20T16:43:31Z"
 }
