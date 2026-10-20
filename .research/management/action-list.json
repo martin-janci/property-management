@@ -459,26 +459,6 @@
       }
     },
     {
-      "id": "gh-issue-3128",
-      "action": "Follow-up: type the AML assessments list endpoint instead of untyped serde_json::Value (PR #3122) (Closes #3128)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-19T08:27:06Z (#3128)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-19T08:27:06Z",
-      "issue_ref": {
-        "number": 3128,
-        "url": "https://github.com/martin-janci/property-management/issues/3128",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-3132",
       "action": "Follow-up: PRICE_MAP_CACHE size cap still allows cache-thrash/DB-load DoS and its eviction amplifies the flood (PR #3092) (Closes #3132)",
       "owner_role": "pm-tech-lead",
@@ -495,6 +475,27 @@
         "labels": [
           "follow-up",
           "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3134",
+      "action": "cargo-deny advisories FAILED on dev: zip (RUSTSEC-2026-0367/0368/0369) + ammonia (RUSTSEC-2026-0373) block every backend PR (Closes #3134)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-20T22:30:01Z (#3134)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-20T22:30:01Z",
+      "issue_ref": {
+        "number": 3134,
+        "url": "https://github.com/martin-janci/property-management/issues/3134",
+        "labels": [
+          "bug",
+          "security",
+          "backend"
         ]
       }
     }
