@@ -12689,7 +12689,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-10-19 api-handlers"
       ],
@@ -12701,7 +12701,12 @@
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
-      "plan": "plans/code-review-api-handlers-migration-upload-drops-file.md"
+      "plan": "plans/code-review-api-handlers-migration-upload-drops-file.md",
+      "reconciled": {
+        "at": "2026-10-20T20:36:03Z",
+        "assignment_status": "merged",
+        "pr_number": 3127
+      }
     },
     {
       "id": "code-review-api-handlers-migration-export-fake-url-stub",

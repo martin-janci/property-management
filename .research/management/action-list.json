@@ -387,27 +387,6 @@
       }
     },
     {
-      "id": "gh-issue-3124",
-      "action": "cargo-deny advisories FAILED on dev: RUSTSEC-2026-0368/0369 (zip 8.6.0 via rust_xlsxwriter) blocks every backend PR merge (Closes #3124)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-18T22:36:09Z (#3124)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-18T22:36:09Z",
-      "issue_ref": {
-        "number": 3124,
-        "url": "https://github.com/martin-janci/property-management/issues/3124",
-        "labels": [
-          "bug",
-          "security",
-          "backend"
-        ]
-      }
-    },
-    {
       "id": "pm-integration-audit-integration-prs-openapi-drift",
       "action": "Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift (draft #3123 is api-core TOTP RNG — no contract impact; recent merged #3121/#3122 are client-side only)",
       "owner_role": "pm-integration",
@@ -444,23 +423,6 @@
       "deadline": null,
       "source": "pm-analysis 2026-10-19",
       "first_open_at": "2026-10-19T04:00:00Z"
-    },
-    {
-      "id": "code-review-api-handlers-migration-upload-drops-file",
-      "action": "api-server /migration/import/upload: silent dead-store drops uploaded bytes (data loss on Epic 66 bulk-import)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-19T02:26:26Z (score=3 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-19T02:26:26Z",
-      "backlog_ref": {
-        "plan": "plans/code-review-api-handlers-migration-upload-drops-file.md",
-        "score": 3,
-        "vector": "bug"
-      }
     },
     {
       "id": "code-review-api-handlers-impersonation-active-raw-xff-audit",

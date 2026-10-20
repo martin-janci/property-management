@@ -3917,6 +3917,28 @@
       "merge_attempted_at": "2026-08-13T10:39:13Z"
     },
     {
+      "task_id": "code-review-api-handlers-migration-upload-drops-file",
+      "branch": "auto-impl/code-review-api-handlers-migration-uploa-8a18c4e6",
+      "status": "merged",
+      "claimed_at": "2026-10-19T02:30:04Z",
+      "last_updated": "2026-10-20T20:35:14Z",
+      "status_changed_at": "2026-10-20T20:35:14Z",
+      "pr_number": 3127,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3127",
+      "merged_at": "2026-10-20T20:32:01Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3127 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=wired storage.upload + fail-closed 503 in migration import upload; new regression test green in isolation; verify red ONLY on pre-existing unrelated api_call DNS/SSRF test (not in diff); draft PR vs dev",
+      "reviewer_summary": "verdict=approve head_oid=b9c31333260b14d87d2bdc393928de4195adc028 note=storage-upload-fix-correct-failclosed-reuse-ok-selfapprove-blocked-posted-as-comment",
+      "last_reviewed_oid": "b9c31333260b14d87d2bdc393928de4195adc028",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-missing-authz-article",
       "branch": "auto-impl/code-review-api-handlers-missing-authz-a-daba9410",
       "status": "merged",
@@ -17149,6 +17171,30 @@
       "merge_attempted_at": "2026-10-18T04:45:50Z"
     },
     {
+      "task_id": "gh-issue-3124",
+      "branch": "auto-impl/gh-issue-3124-1bb163ad",
+      "status": "merged",
+      "claimed_at": "2026-10-19T00:29:29Z",
+      "last_updated": "2026-10-20T20:35:14Z",
+      "status_changed_at": "2026-10-20T20:35:14Z",
+      "pr_number": 3125,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3125",
+      "merged_at": "2026-10-20T20:28:29Z",
+      "specialist": null,
+      "implementer_summary": "pr=3125 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=rust_xlsxwriter 0.97->0.100 clears zip RUSTSEC-2026-0367/0368/0369; residual zip 3.0.0 (utoipa-swagger-ui build-dep) got scoped deny.toml ignore+ban; clippy+fmt green. NOTE: cargo-deny still RED on dev due to separate ammonia 4.1.7 RUSTSEC-2026-0373 (sibling task). [dispatcher: ci-fail cargo-deny ammonia RUSTSEC-2026-0373; respawned to fold ammonia bump into zip-fix PR so cargo-deny greens fully] [respawn FAILED: MCP push truncated 200KB Cargo.lock; branch recovered via git to approved zip-fix state (ammonia already landed on dev via #3130). Re-review on new head b60cde679.]",
+      "reviewer_summary": "verdict=approve head_oid=b60cde679c22b4ca1ed0149bd4158dca41471f43 note=zip-8.6.0->9.0.5-real-upgrade+scoped-ignore/bans-guard-for-utoipa-zip-3.0.0; cargo-deny green on head; review-write blocked (bot cannot self-approve own PR); PR still draft",
+      "last_reviewed_oid": "b60cde679c22b4ca1ed0149bd4158dca41471f43",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "gh-issue-3126",
       "branch": "auto-impl/gh-issue-3126-f47e102e",
       "status": "merged",
@@ -17162,6 +17208,28 @@
       "implementer_summary": "pr=3130 status=done specialist=rust-backend note=bump ammonia 4.x->4.2.4, cargo-deny confirms RUSTSEC-2026-0373 gone (Cargo.lock-only); local verify exit1 only on 3 env DB tests in accounting-server; branch salvaged+PR opened by dispatcher [merged by dispatcher: ammonia RUSTSEC-2026-0373 fix landed on dev]",
       "reviewer_summary": "verdict=approve head_oid=345c58fb99c51d90f72f5027707e2d7463ebdfc0 note=ammonia-4.2.4 Cargo.lock-only clears RUSTSEC-2026-0373; cargo-deny non-required, stays red until zip #3125 lands",
       "last_reviewed_oid": "345c58fb99c51d90f72f5027707e2d7463ebdfc0",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-3128",
+      "branch": "auto-impl/gh-issue-3128-3712899a",
+      "status": "merged",
+      "claimed_at": "2026-10-19T16:33:37Z",
+      "last_updated": "2026-10-20T20:35:14Z",
+      "status_changed_at": "2026-10-20T20:35:14Z",
+      "pr_number": 3129,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3129",
+      "merged_at": "2026-10-20T20:32:10Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3129 status=done specialist=rust-backend note=typed AML assessments list endpoint (aml.rs +222/-9); local verify exit1 only on env DB/DNS tests, own tests+clippy+fmt green; branch salvaged+PR opened by dispatcher",
+      "reviewer_summary": "verdict=approve head_oid=92af4045ccb16070074a1df817d1684b7e56dab0 note=aml-list-endpoint-typed; 1:1 From impl, wire contract preserved, 3 unit tests, single-file no drift",
+      "last_reviewed_oid": "92af4045ccb16070074a1df817d1684b7e56dab0",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -20217,5 +20285,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-20T16:43:31Z"
+  "archived_at": "2026-10-20T20:38:54Z"
 }
