@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-20T16:43:42Z",
+  "generated": "2026-10-20T17:08:05Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2994-ppt",
@@ -286,15 +286,15 @@
     {
       "task_id": "gh-issue-3124",
       "branch": "auto-impl/gh-issue-3124-1bb163ad",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-19T00:29:29Z",
-      "last_updated": "2026-10-20T16:32:19Z",
+      "last_updated": "2026-10-20T17:08:05Z",
       "status_changed_at": "2026-10-20T16:32:19Z",
       "pr_number": 3125,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3125",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": "pr=3125 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=rust_xlsxwriter 0.97->0.100 clears zip RUSTSEC-2026-0367/0368/0369; residual zip 3.0.0 (utoipa-swagger-ui build-dep) got scoped deny.toml ignore+ban; clippy+fmt green. NOTE: cargo-deny still RED on dev due to separate ammonia 4.1.7 RUSTSEC-2026-0373 (sibling task). [dispatcher: ci-fail cargo-deny ammonia RUSTSEC-2026-0373; respawned to fold ammonia bump into zip-fix PR so cargo-deny greens fully]",
+      "implementer_summary": "pr=3125 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=rust_xlsxwriter 0.97->0.100 clears zip RUSTSEC-2026-0367/0368/0369; residual zip 3.0.0 (utoipa-swagger-ui build-dep) got scoped deny.toml ignore+ban; clippy+fmt green. NOTE: cargo-deny still RED on dev due to separate ammonia 4.1.7 RUSTSEC-2026-0373 (sibling task). [dispatcher: ci-fail cargo-deny ammonia RUSTSEC-2026-0373; respawned to fold ammonia bump into zip-fix PR so cargo-deny greens fully] [respawn FAILED: MCP push truncated 200KB Cargo.lock; branch recovered via git to approved zip-fix state (ammonia already landed on dev via #3130). Re-review on new head b60cde679.]",
       "reviewer_summary": "verdict=approve head_oid=f2b709392a0bc6337bdee38ecdd18d77efa6e832 note=zip-9.x-bump-sound(reachable-line->9.0.5; ignore+bans-guard-correct); only red is OOS ammonia RUSTSEC-2026-0373 cargo-deny (red on dev base, #3126); NOT respawned (base-branch failure, nothing in #3125 scope to fix); labeled needs-human-review (self-approval blocked + needs #3126 to clear advisory gate)",
       "last_reviewed_oid": "f2b709392a0bc6337bdee38ecdd18d77efa6e832",
       "scope_drift": true,
@@ -302,7 +302,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 1,
+      "fix_rounds": 0,
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
