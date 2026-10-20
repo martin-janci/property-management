@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-20",
+  "run_iso": "2026-10-20T16:47:33Z",
+  "trigger": "buffer-low: claimable=7/72 — refill planner",
+  "signals": [
+    {
+      "id": "dep-update-noise-pr-3130",
+      "type": "dep-update-noise",
+      "source": "PR #3130",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "PR #3130 (merged 2026-10-20T16:38:03Z): backend/Cargo.lock only — ammonia 4.1.7 → 4.2.4 (RUSTSEC-2026-0373 CSS url() case-insensitive matching). Closes #3126. Lockfile-only; dep-update-noise."
+      ]
+    },
+    {
+      "id": "lag-warning-2026-10-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-19T00:47:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine last ran 2026-10-19T00:47:58Z; current fire at 2026-10-20T16:47:33Z → ~40h since last incremental run. Scheduler skipped the daily tick on 2026-10-19 (cloud routine evidence: no .research/briefs/2026-10-19.md entry had been overwritten before fire)."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-10-20.md && head -1 matches ^# 2026-10-20$", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "staged state.json differs from HEAD state.json", "observed": "last_pr_seen 3123→3130; last_issue_seen 3124→3132; last_commit_sha 62aaaa5→3ee947c; stats.runs 100→101; stats.quiet_days 8→9; seen_signals 592→594", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative seen signal re-emitted with score_delta != 0", "observed": "true (both new signals are new ids)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap check: all scores ≤ 8; no new decay candidates (only triage rows older than 14d)", "observed": "cap ok; no backlog items mutated this run (none older than 14d with status open awaiting decay beyond already-dropped)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans/ files added this run", "observed": "0 new plans", "expected": "n/a (0 new plans)" },
+    { "goal": "G7", "passed": true, "command": "0 new plans ≤ 2", "observed": "0", "expected": "≤ 2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0 (all paths under .research/)", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets/private-hostname grep over staged .research/ (excluding four baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md == regenerate(backlog.json)", "observed": "backlog.json unchanged this run; only the Last-regenerated timestamp line in backlog.md moved — regen produces byte-identical output", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true, "command": "no phase marked failed; cursors advanced", "observed": "true", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "all prior-run plan slugs still present under plans/ or plans/_archive/", "observed": "true (no plan file touched this run)", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "ls-files plans/_archive/ (staged) ≥ ls-tree HEAD plans/_archive/", "observed": "equal (no archive moves)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md == regenerate(backlog.json filtered to vector==triage)", "observed": "unchanged except timestamp (regen byte-identical)", "expected": "byte-identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions capped + idempotent vs state.auto_fix_history", "observed": "auto_fix_actions=[]; killed by env=false; kill-switch not set; no candidates qualified", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run → gate is no-op; pm_cursor.next_index unchanged (0); coverage_cursor.next_index unchanged (10)", "observed": "skipped — pm_cursor and coverage_cursor untouched (gate carve-out when Phase 1.6 did not run)", "expected": "no-op pass" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram bot-token value in staged added lines", "observed": "0 matches", "expected": "0" }
+  ]
+}
