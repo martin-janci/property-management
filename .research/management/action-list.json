@@ -536,6 +536,30 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "pm-tech-lead-merge-queue-deadlock-3131",
+      "title": null,
+      "status": "open",
+      "severity": "critical",
+      "epic": null,
+      "owner": "pm-tech-lead",
+      "created_at": "2026-10-20",
+      "updated_at": "2026-10-20",
+      "source": "pm-tech-lead rotation 2026-10-20",
+      "note": "Resolve dispatcher merge-queue deadlock #3131 — architectural decision on bot identity / merge-queue bypass / human-approval batch. 16 approved PRs stuck."
+    },
+    {
+      "id": "pm-tech-lead-os-rng-expect-audit",
+      "title": null,
+      "status": "open",
+      "severity": "medium",
+      "epic": null,
+      "owner": "pm-tech-lead",
+      "created_at": "2026-10-20",
+      "updated_at": "2026-10-20",
+      "source": "pm-tech-lead rotation 2026-10-20 (code-review slice)",
+      "note": "Audit all services for .expect(\"OS rng failed\") pattern (totp.rs, auth.rs:97, oauth.rs:918) — codify a service-boundary Result error instead of process panic on CSPRNG failure."
     }
   ],
   "generated": "2026-10-19T04:00:00Z"

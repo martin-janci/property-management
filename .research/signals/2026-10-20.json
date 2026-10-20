@@ -1,0 +1,162 @@
+{
+  "schema": "signals/v1",
+  "generated_at": "2026-10-20T04:40:25+00:00",
+  "run_summary": {
+    "merged_prs": 0,
+    "open_prs_touched": 6,
+    "closed_unmerged_prs": 0,
+    "new_issues": 3,
+    "commits_on_dev": 18,
+    "churn_hotspots_this_run": 0,
+    "payload": "buffer-low: claimable=6/72 — refill planner (data from caller; treated as normal incremental run)"
+  },
+  "signals": [
+    {
+      "id": "code-review-api-core-oauth-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-20 api-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "oauth.rs:918 generate_random_b64() and auth.rs:97 generate_random_salt() both call .expect(\"OS rng failed\") on OS CSPRNG; any OS rng failure panics the whole server. Reachable from register_client (OAuth client id/secret), create_authorization_code, token exchange, refresh-token, and password-salt generation. Mirrors totp.rs pattern (already tracked)."
+    },
+    {
+      "id": "stalled-review-pr-3028",
+      "type": "stalled-review",
+      "source": "PR #3028",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": "PR #3028 (reality-server compare-list TOCTOU, draft) is 14 days old with zero reviews; stalled per routine rule (>7d open, no reviewDecision). Blocked under R-merge-queue-deadlock (#3131) — no fix-round progress will land until dispatcher merge path is restored. Process signal only; not scored (Phase 5 bar not met)."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal re-emit discipline",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open items older than 14d this run",
+      "observed": "0 candidates",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plan annotations",
+      "observed": "no new plans",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "new plans <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files all in .research/",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private-hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "none missing",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "22>=22",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps",
+      "observed": "0 actions",
+      "expected": "<=3 total, <=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts + pm_cursor + coverage_cursor liveness",
+      "observed": "all OK; cc 10->11 pm 0->1",
+      "expected": "OK"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

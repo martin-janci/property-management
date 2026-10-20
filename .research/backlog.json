@@ -12743,6 +12743,29 @@
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-oauth-rng-expect-panic",
+      "title": "api-server/services/oauth.rs:918 + auth.rs:97 .expect(\"OS rng failed\") panics server if CSPRNG fails — mirrors totp.rs; blast radius = every OAuth code/token/client-id/secret generation path",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-20 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:918 — .expect(\"OS rng failed\") in generate_random_b64() used by register_client (client_id + client_secret), create_authorization_code, token exchange, refresh token",
+        "backend/servers/api-server/src/services/auth.rs:97 — identical .expect(\"OS rng failed\") pattern on password-salt generation",
+        "Same pattern already tracked in backlog as code-review-api-core-totp-rng-expect-panic (totp.rs); fix shape should be shared Result threading at service boundary"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs",
+        "backend/servers/api-server/src/services/auth.rs"
+      ],
+      "created_at": "2026-10-20",
+      "updated_at": "2026-10-20",
+      "plan": null
     }
   ]
 }
