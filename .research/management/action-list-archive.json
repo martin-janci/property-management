@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-19T14:33:52Z",
+  "archived_at": "2026-10-20T18:34:55Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -18788,6 +18788,34 @@
         "merged_pr": 3118,
         "merged_at": "2026-10-18T04:40:17Z",
         "at": "2026-10-18T06:26:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-3126",
+      "action": "cargo-deny: ammonia 4.1.7 RUSTSEC-2026-0373 still fails advisory check on dev (second blocker after zip fix #3125) (Closes #3126)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-19T02:25:32Z (#3126) | gc1-reconcile 2026-10-20T18:29:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-19T02:25:32Z",
+      "issue_ref": {
+        "number": 3126,
+        "url": "https://github.com/martin-janci/property-management/issues/3126",
+        "labels": [
+          "bug",
+          "security",
+          "backend"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3130,
+        "merged_at": "2026-10-20T16:39:22Z",
+        "at": "2026-10-20T18:29:13Z"
       }
     },
     {
