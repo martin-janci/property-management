@@ -12743,6 +12743,67 @@
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "title": "churn-hotspot price_map.rs — add non-trivial regression coverage beyond the inline cache-cap tests",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3092 (churn window)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs — 167 lines churn in 1 commit (PR #3092 bounded cache fix); inline tests cover cache cap but not the SQL/aggregation path or query-pattern injection surface. First appearance as top-churn code file this window."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-10-20",
+      "updated_at": "2026-10-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-ilike-wildcard-unescaped",
+      "title": "reality-server city + article search ILIKE binds unescaped wildcard chars — clients bypass filter via % or _ in query input",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-20 reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:250 — city_pattern = format!(\"%{}%\", c) bound into ILIKE $3 without escaping user-supplied %, _ or backslash; a client passing city=_ or city=% bypasses the city filter entirely. Same unescaped pattern at backend/servers/reality-server/src/routes/articles.rs:158 (title/excerpt search)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs",
+        "backend/servers/reality-server/src/routes/articles.rs"
+      ],
+      "created_at": "2026-10-20",
+      "updated_at": "2026-10-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-price-map-no-ratelimit",
+      "title": "SECURITY: anonymous /price-map has no per-IP rate limit — attacker rotates city/property_type to force fresh full-table CTE scans past the cache cap",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-10-20 reality-server"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:143 — unauthenticated GET /api/v1/price-map runs two full-table listings aggregations (current_period + prior_period CTEs) per cache miss, with no per-IP rate limit; attacker-controlled mode/property_type/city feed cache key (cap 10k) so each unique combo forces a fresh heavy query. Companion to the already-merged cache size cap finding (PR #3092), which bounded memory but not DB load."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-10-20",
+      "updated_at": "2026-10-20",
+      "plan": "plans/code-review-reality-server-price-map-no-ratelimit.md"
     }
   ]
 }

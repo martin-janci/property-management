@@ -1,14 +1,14 @@
-# PPT Roadmap — upkeep 2026-10-19
+# PPT Roadmap — upkeep 2026-10-20
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 3-day lag since 2026-10-16 run._
+_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 1-day lag since 2026-10-19 run._
 
 ## State of the project
 
-- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on 10a-1 (PR #3121 evidence) and all 5 epic-84 stories (cursor re-check — negative).
-- Delta vs 2026-10-16 upkeep: **2 PRs merged** — both frontend code-review follow-ups (reality-web auth-ctx transient-logout cushion + ppt-web AML dashboard flags), both tests-included, both resolving prior backlog items.
-- **Buffer now doubly constrained:** #2966 (swagger-ui egress) gates backend builds; **#3124 cargo-deny** (new, RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) gates backend merges even on green builds; #2652 (KMP) continues to park mobile-native work.
+- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on epic-85 (coverage cursor idx 10 → 11, Build/CI).
+- Delta vs 2026-10-19 upkeep: **2 PRs merged** — #3092 reality-server `PRICE_MAP_CACHE` bounded (SECURITY, DoS cap, inline tests) and #2902 saved-searches screen-map reconcile (docs-only).
+- **Buffer now triply constrained:** #2966 (swagger-ui egress) gates backend builds; **cargo-deny stack** blocks merges — #3124 (zip 8.6.0 via rust_xlsxwriter) and #3126 (ammonia 4.1.7 RUSTSEC-2026-0373 follow-on, both now with draft fix PRs #3125 / #3130); and **#3131 (NEW critical)** — dispatcher-bot approval-identity deadlock stalls 16 approved PRs behind a self-approval wall.
 - Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3 already queued elsewhere).
-- Open PRs: 1 draft (#3123 api-core TOTP RNG expect panic — no contract impact). The accounting stall trio (#2559, #2555) remains carried.
+- Open PRs: 6 touched this window, 4 of them new drafts (#3127 migration-upload data-loss fix, #3129 AML list typing, #3130 ammonia bump; plus carried #3028, #3119, #3125). The accounting stall trio (#2559, #2555) remains carried.
 
 ## Epic status (short)
 
@@ -21,8 +21,8 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 - **Epic 81 — Reports:** 2/2 done.
 - **Epic 82 — iOS Reality Portal (SwiftUI):** 5/5 done.
 - **Epic 83 — Portal Integrations:** 3/3 done.
-- **Epic 84 — Documents & e-signature:** 5/5 done. **Re-checked this run (cursor idx 9).** No merged PR in the 2026-10-18..2026-10-19 window touched epic-84 surfaces; `last_checked = 2026-10-19` stamped on all 5 stories.
-- **Epic 85 — Build/CI configuration:** 2/2 done.
+- **Epic 84 — Documents & e-signature:** 5/5 done.
+- **Epic 85 — Build/CI configuration:** 2/2 done. **Re-checked this run (cursor idx 10 → 11).** No merged PR in the 2026-10-19..2026-10-20 window touched epic-85 story surfaces (the cargo-deny patch flow is advisory feed, not an epic-85 story); `last_checked = 2026-10-20` stamped on both stories.
 - **Epic 79 — API client integration:** 4/4 done.
 - **Epic 9 — 2FA/TOTP:** 1/1 done.
 

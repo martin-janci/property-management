@@ -536,7 +536,44 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "gh-issue-3131",
+      "action": "SECURITY/DELIVERY: resolve the dispatcher-bot approval-identity deadlock — 16 approved PRs stuck in review because the bot cannot self-approve its own PRs; pick a GitHub-App identity or a human-rota and drain the queue oldest-first",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-20 (new issue #3131)",
+      "first_open_at": "2026-10-20T03:20:00Z",
+      "issue_ref": {
+        "number": 3131,
+        "url": "https://github.com/martin-janci/property-management/issues/3131",
+        "labels": [
+          "follow-up",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "code-review-reality-server-price-map-no-ratelimit",
+      "action": "SECURITY: anonymous /price-map has no per-IP rate limit — attacker rotates city/property_type to force fresh full-table CTE scans past the cache cap; add a bounded limiter mirroring INQUIRY_RATE_LIMIT_* (plan promoted this run)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": null,
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "rotating-expert-review 2026-10-20 reality-server (plan: plans/code-review-reality-server-price-map-no-ratelimit.md)",
+      "first_open_at": "2026-10-20T03:20:00Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-reality-server-price-map-no-ratelimit.md",
+        "score": 2,
+        "vector": "security"
+      }
     }
   ],
-  "generated": "2026-10-19T04:00:00Z"
+  "generated": "2026-10-20T03:21:08Z"
 }

@@ -1,47 +1,45 @@
-# pm-scrum-master — 2026-10-19
+# pm-scrum-master — 2026-10-20
 
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+_Always-on synthesis run. 1-day lag since 2026-10-19 — on schedule._
 
 ## Summary
 
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
+Narrow but security-forward delivery window: **2 PRs merged** (#3092 reality-server price-map cache DoS cap, #2902 saved-searches screen-map reconcile). Three new drafts opened (#3127 migration-upload data-loss, #3129 AML list typing, #3130 ammonia 4.2.4). **One critical new blocker**: #3131 — the dispatcher bot cannot self-approve its own PRs, leaving 16 approved PRs stuck in review (RUSTSEC bumps and the migration-upload fix among them). The RUSTSEC chain extends: #3124 (zip) → #3126 (ammonia follow-on).
 
 ## Shipped since last run (2 PRs)
 
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
+- **#3092** reality-server PRICE_MAP_CACHE bounded (SECURITY) — anonymous key-flood DoS mitigation; inline tests included (+163/-4). Resolves `code-review-reality-server-price-map-cache-unbounded`.
+- **#2902** saved-searches screen-map i18n reconcile — docs-only (+2 lines). Resolves earlier screen-map-drift from PR #2894.
 
 ## Sprint progress
 
 - **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
+- **Epics done:** 3/5 at sprint level; coverage-level 13/13 epics complete at 49/49 stories done (coverage-cursor `next_index` advancing from 10 → 11 today, epic-85 re-checked).
 
 ## Next actions (top 3)
 
 | # | Priority | Dependency | Action | Definition of done |
 |---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
+| 1 | high | pm-devops | Fix approver-identity deadlock in #3131 (bot cannot self-approve), drain the 16-PR queue oldest-first | Bot PRs merge without manual approval; stuck queue cleared |
+| 2 | high | pm-security | Land ammonia 4.2.4 (#3130, issue #3126) and rust_xlsxwriter/zip 9.x (#3125, issue #3124) | cargo-deny green on dev; xlsx export + HTML sanitizer tests pass |
+| 3 | medium | pm-backend | Review #3127 for storage-key tenancy, size caps, and cleanup on failed import | Keys org-scoped; max-size cap; failed import leaves no orphaned object |
 
 ## Risks
 
 | Risk | P | I | Mitigation |
 |---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
-
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
-
-## Blockers
-
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
+| Merge-pipeline deadlock blocks 16 PRs including security fixes; conflict + rework risk grows per day | high | high | Fix approver identity (#3131); drain queue; rebase oldest-first |
+| RUSTSEC advisory churn (ammonia, zip) with no SLA/pin policy — cargo-deny keeps breaking CI | medium | medium | Set RUSTSEC SLA; time-box ignores with owner; scheduled dependabot |
+| Per-process caches on public endpoints (price_map pattern) not bounded across replicas | medium | medium | Shared bounded-cache helper or Redis for cross-instance consistency |
 
 ## Open questions
 
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
+- Why can the dispatcher bot not self-approve: GitHub policy or missing second identity?
+- Which security fixes are among the 16 stuck PRs?
+- Does #3127 reuse the existing documents bucket layout and tenancy keying?
 
-## Decisions needed
+## Dependency chain this run
 
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- #3131 (deadlock) blocks: #3125, #3127, #3129, #3130 (and 12 others not enumerated here).
+- #3124 (zip RUSTSEC) feeds #3125 (fix PR, draft).
+- #3126 (ammonia RUSTSEC follow-on) feeds #3130 (fix PR, draft).

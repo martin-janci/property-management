@@ -1,28 +1,35 @@
-# pm-tech-lead — 2026-05-23
+# pm-tech-lead — 2026-10-20
 
-**Summary:** The active sprint stacks three cross-cutting platform capabilities — OAuth provider (10A), notification infra (implied by 6 & 8A), and WebSocket real-time (8A.3) — but 10A is entirely `ready-for-dev` and the notification/WS substrate (architecture ADR-008, Epic 2B) is not yet built, so Epics 6 and 8A are shipping around a missing foundation. The dead/duplicate handler modules (AuthHandler/BuildingHandler) and three churn-hot route files (integrations/organizations/documents.rs, all ~4k lines) are accumulating maintainability and security-divergence risk on the busiest auth/multitenancy paths.
+**Summary:** The main architectural risk right now is the merge-pipeline deadlock from #3131: the dispatcher bot cannot self-approve its own PRs and 16 approved PRs are stuck in review, including the ammonia/zip RUSTSEC bumps and the migration-upload data-loss fix. Beyond that, the themes are RUSTSEC advisory churn (#3124/#3126) and unbounded-input hardening (price_map cache in #3092; `migration/import/upload` dead-store in #3127; `add_to_compare` TOCTOU still open in #3028). I read sprint-status.yaml only; the PR/issue facts come from Phase 1 observations, not independent re-verification.
 
 ## Next actions
 | Priority | Action | Dependency | Definition of done |
 |---|---|---|---|
-| high | Decide build order: land Epic 2B notification infra before Epic 6 publish + 8A dispatch, or formally defer those story slices | pm-scrum-master | Documented sequencing decision in decisions.md |
-| high | Remove dead duplicate AuthHandler/BuildingHandler modules so security fixes can't diverge between handler/route copies | none | `pub mod auth/buildings` handler structs deleted or wired; single live auth path |
-| medium | Split churn-hot route modules (integrations.rs 4.3k, organizations.rs 4.0k, documents.rs 3.5k) by surface (install/oauth/sync/webhook) | none | Each file < ~1.5k lines; submodules per surface |
-| medium | Define OAuth provider (10A) token/storage/rotation design before 10a-1 pickup to avoid rework | none | ADR/design note for authorization-server + token mgmt |
-| low | Confirm WebSocket infra ownership for 8A.3 sync (ADR-008) is scheduled, not implicitly assumed | pm-scrum-master | WS infra epic referenced in sprint plan |
+| high | Resolve the approval-identity deadlock in #3131: pick a separate approver identity or a GitHub App for auto-approve, drain the 16 stuck PRs | pm-devops | Bot-authored PRs merge without manual approval, branch protection intact, queue cleared |
+| high | Land the RUSTSEC bumps: ammonia 4.2.4 (#3130, issue #3126) and rust_xlsxwriter/zip 9.x (#3125, issue #3124) | pm-security | cargo-deny green in CI; xlsx export + HTML sanitizer tests pass |
+| medium | Review #3127 (migration upload persisted to storage) for storage-key tenancy, size caps, and cleanup on failure | pm-backend | Keys org-scoped; max-size cap present; failed import leaves no orphaned object |
+| medium | Audit public-endpoint in-memory caches in reality-server for the unbounded-key pattern fixed in #3092 (PRICE_MAP_CACHE) | pm-security | Every public cache has a bounded size + TTL, or shares one bounded-cache helper |
+| medium | Decide whether to keep or close the 14-day-old draft #3028 (add_to_compare TOCTOU) and fix with an atomic DB constraint / upsert instead of check-then-insert | pm-backend | Either merged with a unique constraint or closed with a reason |
+| low | Merge #3129 (type the AML assessments list response) and confirm OpenAPI + generated clients stay in sync | pm-integration | api-validation CI passes; client regenerated with no drift |
 
 ## Risks
 | Risk | Prob | Impact | Mitigation |
 |---|---|---|---|
-| Epics 6 & 8A built against a notification/WS foundation (Epic 2B, ADR-008) that does not yet exist — rework when it lands | high | high | Sequence 2B first or freeze dependent story slices behind feature flags |
-| Duplicate AuthHandler/BuildingHandler modules: a security/correctness fix to the live route copy won't propagate to the dead handler copy, misleading reviewers | medium | high | Delete dead modules; enforce single implementation per auth/building op |
-| OAuth provider (10A) started with no agreed token/rotation/storage design — divergent implementation across 3 stories | medium | high | Lock ADR for 10A before pickup |
-| Three ~4k-line route files (integrations/organizations/documents.rs) on hot multitenancy paths — review fatigue, RLS-predicate omission risk | medium | medium | Module split; RLS-predicate checklist on these files |
+| Merge-pipeline deadlock: 16 approved PRs stuck, with security fixes queued behind them; long-lived branches add conflict and rework risk | high | high | Fix the approver identity (#3131); rebase and drain the queue oldest-first |
+| Repeated dependency-advisory churn (ammonia, zip) with no RUSTSEC SLA or pin policy — cargo-deny keeps breaking CI | medium | medium | Set a RUSTSEC SLA; scheduled dependabot / cargo-deny; time-box temporary ignores with an owner |
+| Per-process in-memory caches on public routes (the price_map pattern) are bounded per instance only; not shared across replicas | medium | medium | Shared bounded-cache abstraction, or Redis for caches needing cross-instance consistency |
+| Untyped or stubbed API responses (AML list, migration upload that dropped the file) → contract drift between spec and handlers | medium | medium | Require utoipa response types; add handler-level persistence tests in review checklists |
+| sprint-status.yaml stale — sprint name/goal from 2025-12 while work has moved to hardening + security follow-ups; weak planning visibility | high | low | Refresh sprint file, or add a rolling hardening epic |
 
 ## Open questions
-- Is Epic 2B notification infrastructure (and the ADR-008 WebSocket server) in scope this sprint, or assumed pre-existing?
-- Is there an agreed ADR for the OAuth 2.0 provider token store/rotation backing Epic 10A?
+- Why can the dispatcher bot not self-approve: is it GitHub policy (no self-approval), or a missing second identity in `approve-pr.yml` / `auto-approve.yml`?
+- Are the 16 stuck PRs conflicting with each other, and are any security fixes among them?
+- Does #3127 target the same storage abstraction and bucket layout as existing document uploads?
+- Is there a documented cargo-deny exception policy, and who owns RUSTSEC triage?
+- Which reality-server public caches besides `PRICE_MAP_CACHE` are keyed by user-supplied input?
 
 ## Decisions needed
-- Build-order: Epic 2B notification/WebSocket infra before vs. after the dependent Epic 6/8A slices — owner: pm-tech-lead
-- Whether to delete the dead AuthHandler/BuildingHandler modules now vs. wire them as the canonical path — owner: pm-tech-lead
+- Approver identity for bot-authored PRs (GitHub App, second bot, or a human on a rota) — owner: pm-devops with the tech lead
+- RUSTSEC response SLA and ignore-list policy — owner: pm-security
+- Standard shared bounded-cache approach for public endpoints (in-process vs Redis) — owner: tech lead
+- Sprint reset: define the current sprint goal beyond the 2025 Epic 6/7A/8A/10A framing — owner: pm-scrum-master
