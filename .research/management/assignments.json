@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-21T04:35:36Z",
+  "generated": "2026-10-21T04:59:46Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2994-ppt",
@@ -286,18 +286,18 @@
     {
       "task_id": "gh-issue-3134",
       "branch": "auto-impl/gh-issue-3134-0efda1d7",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-21T04:33:22Z",
-      "last_updated": "2026-10-21T04:33:22Z",
-      "status_changed_at": "2026-10-21T04:33:22Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-10-21T04:59:46Z",
+      "status_changed_at": "2026-10-21T04:59:46Z",
+      "pr_number": 3135,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3135",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3135 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=zip+ammonia already fixed on dev (#3125/#3130); real blocker was new RUSTSEC-2026-0382 (rustls-webpki) — bumped reachable line 0.103.16 + scoped ignore/bans-guard for AWS-pinned 0.101.7; cargo-deny all ok",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
