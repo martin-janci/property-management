@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-19T00:47:58Z",
-  "last_run_ms": 900000,
-  "last_pr_seen": 3123,
-  "last_issue_seen": 3124,
-  "last_commit_sha": "62aaaa5",
+  "last_run_iso": "2026-10-21T12:46:00Z",
+  "last_run_ms": 60000,
+  "last_pr_seen": 3135,
+  "last_issue_seen": 3136,
+  "last_commit_sha": "bfe67080",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -611,6 +611,16 @@
       "runs_seen": 1,
       "last_seen": "2026-10-16",
       "recent_churn": 144
+    },
+    "backend/servers/api-server/src/routes/aml_dsa/aml.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-21",
+      "recent_churn": 231
+    },
+    "backend/deny.toml": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-21",
+      "recent_churn": 107
     }
   },
   "seen_signals": [
@@ -627,6 +637,8 @@
     "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
     "churn-hotspot-backend-crates-integrations-src-booking-mod-rs",
     "churn-hotspot-backend-crates-integrations-src-booking-rs",
+    "churn-hotspot-backend-deny-toml",
+    "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-aml-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-auth-rs",
@@ -781,6 +793,7 @@
     "code-review-api-core-totp-rng-expect-panic",
     "code-review-api-core-voice-device-idor",
     "code-review-api-core-vote-partial-cmp-panic",
+    "code-review-api-core-workflow-condition-err-aborts-batch",
     "code-review-api-core-workflow-eq-type-strict-no-coercion",
     "code-review-api-handlers-ai-upstream-error-leak",
     "code-review-api-handlers-booking-connect-non-manager-hijack",
@@ -795,6 +808,9 @@
     "code-review-api-handlers-decide-appeal-unvalidated",
     "code-review-api-handlers-enhanced-chat-stub",
     "code-review-api-handlers-forgot-password-no-rate-limit",
+    "code-review-api-handlers-impersonation-active-raw-xff-audit",
+    "code-review-api-handlers-migration-export-fake-url-stub",
+    "code-review-api-handlers-migration-upload-drops-file",
     "code-review-api-handlers-ocr-photo-url-silent-loss",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-report-content-unbounded",
@@ -887,9 +903,11 @@
     "code-review-ppt-web-ui-createfault-mock-ai",
     "code-review-ppt-web-ui-createrule-partial-cast-boundary",
     "code-review-ppt-web-ui-dispute-list-no-i18n",
+    "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
     "code-review-ppt-web-ui-dsa-reports-no-i18n",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
     "code-review-ppt-web-ui-emergency-dir-raw-err-message",
+    "code-review-ppt-web-ui-evidence-uploader-hardcoded-strings",
     "code-review-ppt-web-ui-facilities-fetch-no-error-ui",
     "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
     "code-review-ppt-web-ui-mediation-page-no-error-state",
@@ -1013,6 +1031,8 @@
     "dep-update-noise-pr-3007",
     "dep-update-noise-pr-3008",
     "dep-update-noise-pr-3030",
+    "dep-update-noise-pr-3089",
+    "dep-update-noise-pr-3133",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -1069,6 +1089,7 @@
     "lag-warning-2026-10-01",
     "lag-warning-2026-10-08",
     "lag-warning-2026-10-15",
+    "lag-warning-2026-10-21",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -1134,6 +1155,7 @@
     "stalled-review-pr-2555",
     "stalled-review-pr-2558",
     "stalled-review-pr-2559",
+    "stalled-review-pr-2957",
     "stalled-review-pr-3024",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
@@ -1202,25 +1224,22 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "code-review-api-handlers-migration-upload-drops-file",
-    "code-review-api-handlers-migration-export-fake-url-stub",
-    "code-review-api-handlers-impersonation-active-raw-xff-audit"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-10-19",
-    "api-core": "2026-10-17",
+    "api-core": "2026-10-21",
     "reality-server": "2026-10-17",
-    "ppt-web-ui": "2026-10-17",
+    "ppt-web-ui": "2026-10-21",
     "ppt-web-core": "2026-10-17",
     "reality-web": "2026-10-17",
     "mobile-rn": "2026-10-19",
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 100,
-    "vectors_created": 445,
+    "runs": 101,
+    "vectors_created": 450,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1236,9 +1255,9 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 0,
+    "next_index": 1,
     "role_last_run": {
-      "pm-tech-lead": "2026-07-27",
+      "pm-tech-lead": "2026-10-21",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
@@ -1249,6 +1268,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 10
+    "next_index": 11
   }
 }

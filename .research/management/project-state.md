@@ -1,8 +1,45 @@
 # PPT Project State
 
-_Generated: 2026-10-19 — routine Phase 1.6 upkeep (pm-integration rotation slot; pm-cursor idx 7 → 0, wrapping) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 9 → 10 (epic-84 Documents & e-signature re-checked, all 5 stories still done, no material change). 3-day lag since 2026-10-16 run — on schedule._
+_Generated: 2026-10-21 — routine Phase 1.6 upkeep (pm-tech-lead rotation slot; pm-cursor idx 0 → 1) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 10 → 11 (epic-85 Environment & Build Config re-checked, both 2 stories still done, no material change). ~2-day lag since 2026-10-19 run (fired on buffer-low: claimable=10/72 — refill planner, pipeline deadlocked on human self-approval gate, issue #3131)._
 
-## Delta since last routine run (2026-10-16)
+## Delta since last routine run (2026-10-19)
+
+- **5 PRs merged** (#3125, #3127, #3129, #3130, #3135) — all dispatcher-authored code-review / cargo-deny-advisory follow-ups, all tests-included, all closing their companion follow-up issues:
+  - **#3125** gh-issue-3124: `rust_xlsxwriter → zip 9.x` upgrade — clears zip RUSTSEC-2026-0367/0368/0369 (closes #3124).
+  - **#3130** gh-issue-3126: `ammonia 4.2.4` — clears ammonia RUSTSEC-2026-0373 (closes #3126).
+  - **#3135** gh-issue-3134: `rustls-webpki` bump — clears RUSTSEC-2026-0382 (closes #3134); unblocks `cargo-deny advisories`.
+  - **#3127** `code-review-api-handlers-migration-upload-drops-file` — real `storage.upload(...)` on `/migration/import/upload`, fail-closed 503 branch, regression suite registered (closes `code-review-api-handlers-migration-upload-drops-file` backlog row — plus post-merge follow-up filed as #3136).
+  - **#3129** gh-issue-3128: AML assessments list endpoint typed (replaces untyped `serde_json::Value`), closes #3128.
+- **Zero coverage status flips** — all 5 PRs touch infra / backend-internals / advisories, none map to a coverage story.
+- **3 new follow-up issues filed** (`from-merged-review`): **#3132** (`PRICE_MAP_CACHE` eviction amplifier — O(n log n) sort under write-lock, O(1) oldest-finder proposed), **#3136** (migration-upload: match on typed `StorageError::InvalidContentType` instead of `Display` substring; add happy-path persistence test), **#3131** (merge-pipeline deadlock, see Critical below).
+- **1 open draft PR: #3028** — reality-server add-to-compare TOCTOU cap (dispatcher-authored, 15 days old, no reviews). Not a stalled-review (draft).
+- **1 stalled open PR: #2957** — dependabot `tower-http 0.7.0 → 0.7.1`, 41 days open, no reviews, non-draft. Candidate for a routine-ping comment, but author is `dependabot[bot]` (process signal only).
+- **PM-tech-lead rotation note:** pm-tech-lead was last run 2026-07-27 — ~3 months stale. The architecture lens is overdue on today's merge-queue deadlock and the growing advisory-churn pattern.
+
+<sub>Prior upkeep note (archived): 2026-10-19 — pm-integration rotation; coverage_cursor 9 → 10 (epic-84 re-checked).</sub>
+
+## Critical — Merge pipeline deadlock (issue #3131)
+
+- **State:** 16 dispatcher-authored `auto-impl/*` PRs sat in `review` as of 2026-10-19; 5 landed this cycle after manual intervention, but the structural block remains.
+- **Root cause:** dispatcher token acts as `martin-janci`, who is also the author of every `auto-impl/*` PR — GitHub blocks self-approval, so the Phase-5 reviewer posts `COMMENT` not `APPROVE`. `reviewDecision` never reaches `APPROVED`, so `ppt-pr-merge`'s precondition aborts.
+- **Branch protection:** `required_approving_review_count: 1` on `dev`, `enforce_admins: false`, `check` + `test` required (cargo-deny not required).
+- **Buffer impact (today's fire payload):** `claimable=10/72` — only ~14% of the backlog is claimable because 7 of 17 active rows are dependency-blocked by other `auto-impl/*` PRs waiting to merge. Each day of deadlock stacks WIP against `DISPATCHER_WIP_CAP=8` and forces claimed=0 runs (observed: 10 consecutive dispatcher runs with claimed=0 since 2026-10-20 20:40).
+- **Operator options (unchanged from #3131 body):** (1) a second human reviews/approves; (2) run dispatcher under a different GitHub identity; (3) relax branch protection; (4) admin-merge PR #3127 first (cleanest, required checks green, non-conflicted) to confirm the unblock path.
+
+## Executive summary
+
+- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on epic-85 (cursor re-check — negative, env/build config untouched).
+- **5 PRs merged** in the observation window — ammonia, zip, rustls-webpki, migration-upload (real bug fix), AML typing. All dispatcher-authored, all closed issues.
+- **Buffer deadlocked by self-approval gate, NOT by advisory check** — advisory check is now green on dev (all three RUSTSEC advisories cleared this cycle). The remaining starvation is purely the structural self-approval problem in #3131.
+- **Code-review-finding re-emit:** `code-review-api-core-workflow-condition-err-aborts-batch` was first surfaced 2026-10-01 but never reconciled into backlog.json — re-emitted today (segment api-core) under the same id so an id-keyed reconcile upserts rather than duplicates; genuine untracked live bug.
+
+## Sprint progress
+
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · **epics_done = 3/5** at sprint level (sprint-status.yaml); coverage-level all extended epics are complete.
+
+| Epic | Sprint status | Coverage status | Shipped PRs this window |
+|---|---|---|---|
+| 6 — Announcements & Communication | in-progress (3/6)† | 6/6 done | — |
 
 - **2 PRs merged** (#3121, #3122) — both dispatcher-authored code-review follow-ups on Tier-1d signals:
   - **#3121** reality-web auth-context transient-logout cushion (+159/-2, tests included) — resolves backlog `code-review-reality-web-auth-ctx-transient-logout` (`status: done`).

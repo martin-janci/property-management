@@ -12748,6 +12748,117 @@
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "title": "api-core workflow_executor.process_event: condition-eval error (line 359 ?-propagation) aborts the whole subscribed-workflow batch for one bad stored condition",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:348-403 — process_event iterates every workflow subscribed to an event; at line 359 `if !self.evaluate_conditions(&conditions, &context)? { ... continue; }` the `?` propagates WorkflowError out of the ENTIRE batch, aborting processing of every remaining subscribed workflow.",
+        "Asymmetry: the execute_workflow Err arm in the SAME loop (lines 395-402) correctly isolates per-workflow failures with `warn!(workflow_id, error, ...)` + continue. Condition-eval path has no such isolation.",
+        "evaluate_conditions returns Err(ConditionError) on malformed/undeserializable stored condition (:523, :793). Conditions are author-supplied JSON on workflow.conditions.0 — schema drift / renamed operator in ONE workflow silently disables ALL other workflows triggered by the same event until the bad condition is corrected.",
+        "First emitted 2026-10-01 as same id but never reconciled into backlog.json; bug still live on 2026-10-21 (sed -n '359p' confirms the `?`). Re-emitted today to surface into the starved claim buffer.",
+        "Severity MEDIUM (+2): no process crash (Axum/worker isolates), but a side-effecting automation surface (email/notification/outbound api_call) is silently gated by every org-authored condition in the batch. Fix: scope the condition error to the single workflow via the same warn + continue pattern as the execute arm."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
+      "title": "ppt-web features/documents hooks + DocumentSharePanel use hardcoded Slovak toast strings — mixed locale leak when active i18n locale is not sk",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts:26-37 — success/error toast title+message are hardcoded Slovak string literals ('Dokument presunutý', 'Presun zlyhal', 'Dokument sa nepodarilo presunúť.') with no useTranslation/t().",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts and frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx carry the same pattern — move toasts, download toasts, and share-panel copy are Slovak literals, so every documents-feature toast renders Slovak regardless of i18n locale.",
+        "Mixed-locale leak class — the rest of the ppt-web app routes toasts through react-i18next; these hooks are an outlier. Severity LOW (+1): user-visible but non-blocking; fix is a mechanical move into the ppt-web i18n resource bundle."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-hardcoded-strings",
+      "title": "ppt-web features/disputes/EvidenceUploader: hardcoded English aria-labels and placeholder strings bypass react-i18next in disputes evidence flow",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx mixes proper t(...) calls (aria-labels at :167, :185, :225, :288, :297) with hardcoded English template literals (`Description for ${item.file.name}` at :278, `Remove ${item.file.name}` at :312). In a non-English locale these two aria-labels leak English while the rest of the component is translated.",
+        "Severity LOW (+1): bypasses the react-i18next contract in exactly two spots in the disputes evidence flow. Fix is additive — add two keys under the disputes i18n namespace and swap the literals for t('…')."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-aml-rs",
+      "title": "Churn hotspot: aml_dsa/aml.rs — 231 lines of churn in one PR (#3129 AML list typing +222/-9)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-21 (PR #3129)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs saw 231 lines of churn in PR #3129 (added AmlAssessmentListItem / ListAmlAssessmentsResponse + From<AmlRiskAssessment> + ToSchema derives, replacing a serde_json::Value response).",
+        "Not previously in hotspot_history (new path — the prior aml_dsa.rs row at runs_seen=1/2026-06-10 lives at a different path). Low-value signal, likely to decay unless follow-on churn arrives."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-deny-toml",
+      "title": "Churn hotspot: backend/deny.toml — 107 lines across 2 cargo-deny-advisory PRs this run (#3125 zip, #3135 rustls-webpki); 3rd advisory-ignore churn pattern in a week",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-21 (PRs #3125, #3135; also #3130 last week via ammonia)"
+      ],
+      "evidence": [
+        "backend/deny.toml saw 107 lines of churn this run across two advisory-clearance PRs (#3125 zip 9.x, #3135 rustls-webpki). Combined with last week's #3130 (ammonia) that's 3 advisory ignores touched in 7 days — a leading-indicator of upstream security-hygiene drift on transitive crates.",
+        "Not previously tracked. Possible follow-ups: (a) a cargo-deny lint on 'ignore length ever grows' instead of 'current red advisories' — the file keeps accumulating historical ignores; (b) a periodic sweep to prune no-longer-reachable ignores."
+      ],
+      "files": [
+        "backend/deny.toml"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
     }
   ]
 }

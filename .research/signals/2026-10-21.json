@@ -1,0 +1,278 @@
+{
+  "generated": "2026-10-21T12:46:48Z",
+  "trigger_payload": "buffer-low: claimable=10/72 — refill planner (merge pipeline deadlocked on human self-approval gate, issue #3131)",
+  "since_iso": "2026-10-19T00:47:58Z",
+  "last_pr_seen_was": 3123,
+  "last_issue_seen_was": 3124,
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-21",
+      "type": "lag_warning",
+      "source": "routine lag check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "last_run_iso=2026-10-19T00:47:58Z — ~2d 11h since last run; above 36h threshold. No stale_routine_alert (threshold 3d not hit)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-aml-rs",
+      "type": "churn-hotspot",
+      "source": "merged PR #3129",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs"
+      ],
+      "evidence": [
+        "231 lines of churn in one PR (#3129 AML list typing +222/-9). New path (not in prior hotspot_history)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-deny-toml",
+      "type": "churn-hotspot",
+      "source": "merged PRs #3125, #3135",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": [
+        "backend/deny.toml"
+      ],
+      "evidence": [
+        "107 lines across 2 cargo-deny advisory PRs this run (#3125 zip, #3135 rustls-webpki). Combined with #3130 (ammonia) last week — 3 advisory-ignore touches in 7 days; leading-indicator of transitive-crate security-hygiene drift."
+      ]
+    },
+    {
+      "id": "stalled-review-pr-2957",
+      "type": "stalled-review",
+      "source": "open PR #2957",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "dependabot[bot] tower-http 0.7.0 → 0.7.1 open since 2026-09-10 (41 days), no reviews, non-draft. Process signal (dep-update); comment-only Phase 5 candidate but dependabot does not reply to pings."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3133",
+      "type": "dep-update-noise",
+      "source": "open PR #3133",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "dependabot[bot] cargo-minor-patch group across 1 directory with 18 updates, opened 2026-10-20."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3089",
+      "type": "dep-update-noise",
+      "source": "open PR #3089",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "dependabot[bot] tokio group update, opened 2026-10-15."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2957",
+      "type": "dep-update-noise",
+      "source": "open PR #2957",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "dependabot[bot] axum/tower-http group update, opened 2026-09-10. Same PR as stalled-review-pr-2957; two signal types."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 api-core (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "evidence": [
+        "workflow_executor.rs:359 condition-eval `?` propagates WorkflowError out of the entire subscribed-workflow batch; execute_workflow Err arm (:395-402) correctly isolates with warn+continue. One malformed stored condition silently disables every other workflow on that event. First emitted 2026-10-01, never reconciled into backlog, still live on 2026-10-21."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx"
+      ],
+      "evidence": [
+        "Hardcoded Slovak toast strings in useMoveDocumentWithToast / useDocumentDownload / DocumentSharePanel bypass react-i18next — mixed-locale leak when active locale is not sk."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "evidence": [
+        "EvidenceUploader mixes t(...) calls with hardcoded English aria-labels at :278 (`Description for ...`) and :312 (`Remove ...`); two spots bypass react-i18next in disputes evidence flow."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-emitted with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <= 8 + decay (no items eligible for decay)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0 new plans",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; vacuous (0 new)",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches fresh regen (byte-identical)",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures to list",
+      "observed": "0 failed phases",
+      "expected": "honest"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plans present in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count now >= HEAD",
+      "observed": "22 >= 22",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches fresh regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (0 actions)",
+      "observed": "length 0, all sub-caps satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + pm_cursor advanced 0->1 + coverage_cursor advanced 10->11",
+      "observed": "all checks exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "phase_1_5_summary": {
+    "segments_reviewed": [
+      "api-core",
+      "ppt-web-ui"
+    ],
+    "selection_reason": "pre-written by dispatcher Tier-1d demand-driven generator (buffer-low fire) — both signal files landed in .research/signals/2026-10-21-*-tier1d.json before this run; folded as-is per routine Phase 1.5 contract. api-core findings=1, ppt-web-ui findings=2.",
+    "experts_used": [
+      "rust",
+      "frontend",
+      "completeness"
+    ],
+    "static_only": true
+  },
+  "phase_1_6_summary": {
+    "mode": "upkeep (cheap path)",
+    "pm_role_ran": "pm-tech-lead",
+    "coverage_epic_rechecked": "epic-85",
+    "note": "Lightweight upkeep — project-state.md refreshed, pm_cursor 0→1, coverage_cursor 10→11. No story status flips (49/49 already done)."
+  }
+}
