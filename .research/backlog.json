@@ -12541,7 +12541,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core)"
       ],
@@ -12557,7 +12557,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-21T18:26:15Z",
+        "assignment_status": "merged",
+        "pr_number": 3123
+      }
     },
     {
       "id": "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
