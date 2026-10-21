@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-19T00:47:58Z",
-  "last_run_ms": 900000,
-  "last_pr_seen": 3123,
-  "last_issue_seen": 3124,
-  "last_commit_sha": "62aaaa5",
+  "last_run_iso": "2026-10-21T03:20:05Z",
+  "last_run_ms": 180000,
+  "last_pr_seen": 3133,
+  "last_issue_seen": 3134,
+  "last_commit_sha": "ed26d17",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -795,6 +795,9 @@
     "code-review-api-handlers-decide-appeal-unvalidated",
     "code-review-api-handlers-enhanced-chat-stub",
     "code-review-api-handlers-forgot-password-no-rate-limit",
+    "code-review-api-handlers-impersonation-active-raw-xff-audit",
+    "code-review-api-handlers-migration-export-fake-url-stub",
+    "code-review-api-handlers-migration-upload-drops-file",
     "code-review-api-handlers-ocr-photo-url-silent-loss",
     "code-review-api-handlers-refresh-empty-cookie-shadows-body",
     "code-review-api-handlers-report-content-unbounded",
@@ -922,10 +925,12 @@
     "code-review-reality-server-inquiry-read-idor",
     "code-review-reality-server-list-my-reports-total-page-length",
     "code-review-reality-server-listing-viewcount-hardcoded-zero",
+    "code-review-reality-server-login-sso-account-oracle",
     "code-review-reality-server-orphan-listinghandler-stub-detail",
     "code-review-reality-server-orphan-schedule-viewing-stub",
     "code-review-reality-server-pagination-offset-overflow",
     "code-review-reality-server-price-map-cache-unbounded",
+    "code-review-reality-server-realtor-respond-no-cap",
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
     "code-review-reality-server-register-account-enumeration",
     "code-review-reality-server-report-contact-unvalidated",
@@ -933,6 +938,7 @@
     "code-review-reality-server-sso-introspect-negcache-poison",
     "code-review-reality-server-sso-per-call-client-no-timeout",
     "code-review-reality-server-submit-report-no-rate-limit",
+    "code-review-reality-server-update-agency-sqlx-leak",
     "code-review-reality-web-agency-errorstate-i18n",
     "code-review-reality-web-agency-import-i18n",
     "code-review-reality-web-auth-ctx-transient-logout",
@@ -1010,9 +1016,11 @@
     "dep-update-noise-pr-2973",
     "dep-update-noise-pr-2975",
     "dep-update-noise-pr-2981",
+    "dep-update-noise-pr-2981-closed",
     "dep-update-noise-pr-3007",
     "dep-update-noise-pr-3008",
     "dep-update-noise-pr-3030",
+    "dep-update-noise-pr-3133",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -1069,6 +1077,7 @@
     "lag-warning-2026-10-01",
     "lag-warning-2026-10-08",
     "lag-warning-2026-10-15",
+    "lag-warning-2026-10-21",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
@@ -1135,6 +1144,9 @@
     "stalled-review-pr-2558",
     "stalled-review-pr-2559",
     "stalled-review-pr-3024",
+    "stalled-review-pr-3028",
+    "stalled-review-pr-3070",
+    "stalled-review-pr-3072",
     "stalled-review-pr-988",
     "standing-scan-admin-web-noop-save-paths",
     "standing-scan-aml-review-decision-cast",
@@ -1202,16 +1214,13 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "code-review-api-handlers-migration-upload-drops-file",
-    "code-review-api-handlers-migration-export-fake-url-stub",
-    "code-review-api-handlers-impersonation-active-raw-xff-audit"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-10-19",
     "api-core": "2026-10-17",
-    "reality-server": "2026-10-17",
+    "reality-server": "2026-10-21",
     "ppt-web-ui": "2026-10-17",
     "ppt-web-core": "2026-10-17",
     "reality-web": "2026-10-17",
@@ -1219,8 +1228,8 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 100,
-    "vectors_created": 445,
+    "runs": 101,
+    "vectors_created": 448,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1236,9 +1245,9 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 0,
+    "next_index": 1,
     "role_last_run": {
-      "pm-tech-lead": "2026-07-27",
+      "pm-tech-lead": "2026-10-21",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
@@ -1249,6 +1258,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 10
+    "next_index": 11
   }
 }

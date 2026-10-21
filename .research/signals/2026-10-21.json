@@ -1,0 +1,256 @@
+{
+  "generated_at": "2026-10-21T04:00:00Z",
+  "run": {
+    "last_pr_seen_before": 3123,
+    "last_issue_seen_before": 3124,
+    "last_run_iso_before": "2026-10-19T00:47:58Z",
+    "lag_hours": 50
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-21",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "routine last ran 2026-10-19T00:47:58Z, 50h ago (>36h threshold)"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-login-sso-account-oracle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "title": "reality-server /users/login leaks SSO account existence via distinct \"Account uses SSO login\" error (public account-enum oracle)",
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs",
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:270 — UserHandler::login returns the raw &'static str \"Account uses SSO login\" when the row is SSO-only (password_hash is NULL), distinct from the generic \"Invalid email or password\" returned when the user does not exist (line 262) or the password is wrong (line 274)",
+        "backend/servers/reality-server/src/routes/users.rs:245 — login route maps every handler error to 401 but passes the handler message verbatim as the body (message.to_string()); the differential text reaches the public /api/v1/users/login client and enumerates which emails are SSO-provisioned (distinct oracle from the existing /users/register finding — different endpoint)"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-update-agency-sqlx-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "title": "reality-server PATCH /agencies leaks raw SqlxError text to clients (constraint/table/column names) — bypasses util::errors::db_error",
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:281-285 — update_agency maps non-RowNotFound SqlxError via format!(\"Failed to update agency: {}\", other) and returns raw driver text as HTTP 500 body, leaking constraint/table/column names and server-side state",
+        "backend/servers/reality-server/src/routes/agencies.rs:328,370-378,445 — sibling handlers in the same file route DB failures through crate::util::errors::db_error (which scrubs and returns a generic body); update_agency is the lone outlier bypassing the scrub"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-realtor-respond-no-cap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "title": "reality-server POST /realtors/inquiries/{id}/respond missing the 5000-char cap enforced by sibling /inquiries/{id}/respond (persistence can grow to 4MiB body-limit per message)",
+      "files": [
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/realtors.rs:277-296 — respond_to_inquiry (POST /api/v1/realtors/inquiries/{id}/respond) passes data.message straight to the repository with no empty/length validation, so an authenticated realtor can persist up to the global 4MiB body-limit of text per response",
+        "backend/servers/reality-server/src/routes/inquiries.rs:794-799 — the twin POST /api/v1/inquiries/{id}/respond enforces req.message.chars().count() > 5000; module header comment (inquiries.rs:24) claims respond_to_inquiry already caps at 5000 — a stale assumption now that there are two endpoints with that name and only one caps"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3028",
+      "type": "stalled-review",
+      "source": "PR #3028",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #3028 (code-review-reality-server-add-to-compare-toctou-max-cap) draft since 2026-10-05 (16d); dispatcher reviewer_verdict=approve but GitHub reviewDecision=null — bot can't self-approve (issue #3131)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3070",
+      "type": "stalled-review",
+      "source": "PR #3070",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #3070 (gh-issue-3069 — ViolationRepository::list_notifications cross-tenant IDOR fix) draft since 2026-10-12 (9d); approved internally, blocked by issue #3131 systemic deadlock"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3072",
+      "type": "stalled-review",
+      "source": "PR #3072",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #3072 (code-review-api-handlers-violations-missing-role-authz) draft since 2026-10-12 (9d); approved internally, blocked by issue #3131"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3133",
+      "type": "dep-update-noise",
+      "source": "PR #3133",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "dependabot opened #3133 (cargo-minor-patch group, 18 bumps); supersedes closed #2981. Blocked on #3134 cargo-deny advisories gate"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2981-closed",
+      "type": "dep-update-noise",
+      "source": "PR #2981",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "dependabot #2981 (same 18-bump cargo-minor-patch group) closed-not-merged 2026-10-20 — superseded by new #3133"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the only certainty-bar-passing allowlist signal would be stalled-review-pr-3072 (post-match score 4, confidence high), but PR #3072 and the other dispatcher drafts are all authored by the human maintainer who runs this routine; a self-ping comment adds no value, and the systemic deadlock is already filed as issue #3131",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 ...",
+      "observed": "exit 0; first line \"# 2026-10-21\"",
+      "expected": "exit 0 + match"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json staged vs HEAD advanced",
+      "observed": "true (last_pr_seen 3123→3133, seen_signals +9)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true (499 unique ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals not double-counted",
+      "observed": "true (all 9 ids new; cumulative types none this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <=8 and decay applied",
+      "observed": "cap=true; decay inapplicable (no open items >14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans annotated with adversarial pass",
+      "observed": "no new plans this run",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, each meets gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files only under .research/",
+      "observed": "0 outside paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen of backlog.json",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — brief lists failed phases",
+      "observed": "\"Phases that failed: none\" + no cursors held back",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior-run plan silently deleted",
+      "observed": "missing=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive-only-grows",
+      "observed": "HEAD=22, CUR=22, 22>=22",
+      "expected": "CUR>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen (vector=triage rows)",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline: cap + idempotency + kill-switch",
+      "observed": "auto_fix_actions=[]; kill switch off; no history collision",
+      "expected": "<=3 total, <=1 per category, no replay"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 coverage_cursor liveness",
+      "observed": "EPICS=13 CC 10→11; PM 0→1; artifacts parseable",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

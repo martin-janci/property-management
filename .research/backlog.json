@@ -11677,22 +11677,24 @@
       "title": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
+        "PR #3028 (stalled-review 16d)",
         "rotating-expert-review reality-server 2026-10-03"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT(*) (line 166) → MAX_COMPARE_LISTINGS=4 guard → separate INSERT (line 221) with no row-level lock and no DB-side constraint. Two concurrent POSTs from the same user can both see count==3 and both insert, exceeding the documented cap.",
         "Existing exists-check at line 205 only catches exact duplicates, not count violations.",
         "Fix: wrap count+insert in a serializable transaction, or add a DB-side partial unique index / check constraint.",
-        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence"
+        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence",
+        "2026-10-21: stalled-review — PR #3028 (auto-impl) in draft since 2026-10-05, dispatcher approved, GitHub reviewDecision=null; blocked by issue #3131 systemic deadlock"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/compare.rs"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-21",
       "plan": null
     },
     {
@@ -12040,25 +12042,27 @@
       "id": "code-review-api-handlers-violations-missing-role-authz",
       "title": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal",
       "vector": "bug",
-      "confidence": "medium",
-      "score": 3,
+      "confidence": "high",
+      "score": 4,
       "status": "open",
       "sources": [
-        "rotating-expert-review [api-handlers]",
-        "PR #3072"
+        "PR #3072",
+        "PR #3072 (stalled-review 9d)",
+        "rotating-expert-review [api-handlers]"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/violations.rs — EVERY handler authorizes solely on `user.tenant_id` presence (`.ok_or_else(|| forbidden_error(\"No organization context\"))`) and never consults `user.role`. The ONLY role check in the whole router is list_comments L648 (`user.is_platform_admin() || user.role.map(|r| r.is_manager())`) deciding whether internal comments are visible — proving the role model is available but was not applied to the write/decision paths.",
         "Privileged endpoints with NO role gate: create_rule/update_rule/delete_rule (community rules), create_violation, update_violation, assign_violation, create_action/update_action/mark_action_sent (issue enforcement actions + fines), record_payment, create_appeal and decide_appeal. Most severe: POST /api/v1/violations/appeals/{appeal_id}/decide → decide_appeal (repo L799) lets any authenticated org member approve an appeal, which sets the violation to 'dismissed' and reduces the fine via GREATEST(0, fine_amount - adjustment). A Resident/Tenant can file an appeal on their own violation and then approve it, zeroing their own fine.",
         "AuthUser exposes `role: Option<TenantRole>` with a hierarchy (`is_manager()`, `level()`, `is_platform_admin()` — api-core/src/extractors/auth.rs:247, rls_connection.rs:121). The router is mounted as a plain `.nest(\"/api/v1/violations\", routes::violations::router())` (lib.rs:408) with no role-enforcing Tower layer, so there is no outer authorization layer compensating. Fix: require manager/org-admin (or a committee role) on all create/update/delete/assign/action/payment/appeal-decision handlers.",
-        "In-flight: PR #3072 opened by dispatcher auto-impl flow — dispatcher-reviewer verdict=approve (role-gate-correct, 13 mutations gated, tests sound). Blocked on human merge: PR is still draft on GitHub and reviewer could only COMMENT (bots cannot self-approve). Stem-colliding with planner readiness gate; buffer-low 2026-10-17 22:30 counted this as claimable but it is already in flight."
+        "In-flight: PR #3072 opened by dispatcher auto-impl flow — dispatcher-reviewer verdict=approve (role-gate-correct, 13 mutations gated, tests sound). Blocked on human merge: PR is still draft on GitHub and reviewer could only COMMENT (bots cannot self-approve). Stem-colliding with planner readiness gate; buffer-low 2026-10-17 22:30 counted this as claimable but it is already in flight.",
+        "2026-10-21: stalled-review — PR #3072 (auto-impl) in draft since 2026-10-12, dispatcher approved, GitHub reviewDecision=null; blocked by issue #3131 systemic deadlock"
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs",
         "backend/crates/db/src/repositories/violations.rs"
       ],
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-21",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -12747,6 +12751,71 @@
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-login-sso-account-oracle",
+      "title": "reality-server /users/login leaks SSO account existence via distinct \"Account uses SSO login\" error (public account-enum oracle)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (reality-server slice 2026-10-21)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:270 — login returns \"Account uses SSO login\" when password_hash IS NULL, distinct from \"Invalid email or password\" (nonexistent at :262, wrong-password at :274)",
+        "backend/servers/reality-server/src/routes/users.rs:245 — route maps every handler error to HTTP 401 but passes the handler message verbatim as the body, so the differential text reaches the public /api/v1/users/login client and enumerates SSO-provisioned emails"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs",
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-update-agency-sqlx-leak",
+      "title": "reality-server PATCH /agencies leaks raw SqlxError text to clients (constraint / table / column names) — bypasses util::errors::db_error",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (reality-server slice 2026-10-21)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agencies.rs:281-285 — update_agency maps non-RowNotFound SqlxError via format!(\"Failed to update agency: {}\", other) and returns raw driver text as the HTTP 500 body (constraint/table/column names, server-side state)",
+        "backend/servers/reality-server/src/routes/agencies.rs:328,370-378,445 — every sibling handler in the same file routes DB failures through crate::util::errors::db_error (scrubbed body); update_agency is the lone outlier"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agencies.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-realtor-respond-no-cap",
+      "title": "reality-server POST /realtors/inquiries/{id}/respond missing the 5000-char cap enforced by sibling /inquiries/{id}/respond",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (reality-server slice 2026-10-21)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/realtors.rs:277-296 — respond_to_inquiry (POST /api/v1/realtors/inquiries/{id}/respond) passes data.message to the repository with no empty/length validation; authenticated realtors can persist up to the global 4 MiB body-limit per response",
+        "backend/servers/reality-server/src/routes/inquiries.rs:794-799 — the twin POST /api/v1/inquiries/{id}/respond enforces req.message.chars().count() > 5000; inquiries.rs:24 module comment claims respond_to_inquiry already caps at 5000 — stale assumption now that there are two endpoints with the same name and only one caps"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/realtors.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
       "plan": null
     }
   ]

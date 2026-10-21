@@ -498,7 +498,59 @@
           "backend"
         ]
       }
+    },
+    {
+      "id": "pm-tech-lead-resolve-dispatcher-deadlock-3131",
+      "action": "Resolve #3131 merge-pipeline deadlock: adopt a scoped GitHub ruleset that auto-merges auto-impl-labeled PRs on green CI + dispatcher reviewer_verdict=approve (option C); or add a second bot-approver identity (option B). Keep human review via CODEOWNERS for security/migration/auth paths. In the meantime, human sweeps the 16-PR queue oldest-first starting with #3024.",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-21",
+      "first_open_at": "2026-10-21T03:20:36Z"
+    },
+    {
+      "id": "pm-tech-lead-price-map-cache-strategy-3132",
+      "action": "Decide PRICE_MAP_CACHE DoS protection: tower-governor / Redis-limiter rate-limit in front of the endpoint, moka/TinyLFU with TTL and non-amplifying eviction, or drop the cache entirely. Normalize or whitelist cache keys so request-controlled keys cannot flood it. Add a regression test that floods distinct keys and asserts bounded per-request work. (Closes #3132)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "gh-issue-3134",
+      "depends_on": [
+        "gh-issue-3134"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-21",
+      "first_open_at": "2026-10-21T03:20:36Z"
+    },
+    {
+      "id": "pm-scrum-master-sprint-status-reconcile-2026-10-21",
+      "action": "Reconcile sprint-status.yaml: 13/13 coverage epics are 49/49 done but sprint-status still shows epic-6 at 3/6, epic-7a at 2/5, epic-10b at <7/7. Refresh epic counts to match story statuses; record a sprint rollover with next sprint name + goal; archive the current sprint header.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-21",
+      "first_open_at": "2026-10-21T03:20:36Z"
+    },
+    {
+      "id": "pm-security-cargo-deny-ignore-policy-write",
+      "action": "Write the cargo-deny advisory-ignore policy into deny.toml header or docs: transitive advisory with no upstream fix and a non-attacker-reachable path (build-script-only) gets an ID ignore + patched-floor [bans] guard + tracking issue + 30-day expiry. Reachable runtime paths must be fixed by bumping or replacing the dependency.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "gh-issue-3134",
+      "depends_on": [
+        "gh-issue-3134"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-21",
+      "first_open_at": "2026-10-21T03:20:36Z"
     }
   ],
-  "generated": "2026-10-19T04:00:00Z"
+  "generated": "2026-10-21T03:20:36Z"
 }

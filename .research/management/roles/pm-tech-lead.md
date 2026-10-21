@@ -1,28 +1,66 @@
-# pm-tech-lead — 2026-05-23
+# pm-tech-lead — 2026-10-21
 
-**Summary:** The active sprint stacks three cross-cutting platform capabilities — OAuth provider (10A), notification infra (implied by 6 & 8A), and WebSocket real-time (8A.3) — but 10A is entirely `ready-for-dev` and the notification/WS substrate (architecture ADR-008, Epic 2B) is not yet built, so Epics 6 and 8A are shipping around a missing foundation. The dead/duplicate handler modules (AuthHandler/BuildingHandler) and three churn-hot route files (integrations/organizations/documents.rs, all ~4k lines) are accumulating maintainability and security-divergence risk on the busiest auth/multitenancy paths.
+**Routine Phase 1.6 rotating slot. Prior run: 2026-07-27 (86 days ago — fresh architecture lens overdue).**
+
+## Summary
+
+The backend merge gate is a three-layer stack (**cargo-deny**, **dispatcher self-approval**, **cloud egress**) with no owner and no SLA, and it has been blocked ~16 days. `backend/deny.toml` on the checked-out tree **already ignores RUSTSEC-2026-0367/0368/0369 for `zip 3.0.0`** (the utoipa-swagger-ui build-dep path) and has a `[bans]` guard on `zip 4.x–8.x`. So **#3134 may be a different / new advisory, or a stale / mis-reported run**. I could not confirm which — the role is read-only and I have no CI log.
 
 ## Next actions
-| Priority | Action | Dependency | Definition of done |
-|---|---|---|---|
-| high | Decide build order: land Epic 2B notification infra before Epic 6 publish + 8A dispatch, or formally defer those story slices | pm-scrum-master | Documented sequencing decision in decisions.md |
-| high | Remove dead duplicate AuthHandler/BuildingHandler modules so security fixes can't diverge between handler/route copies | none | `pub mod auth/buildings` handler structs deleted or wired; single live auth path |
-| medium | Split churn-hot route modules (integrations.rs 4.3k, organizations.rs 4.0k, documents.rs 3.5k) by surface (install/oauth/sync/webhook) | none | Each file < ~1.5k lines; submodules per surface |
-| medium | Define OAuth provider (10A) token/storage/rotation design before 10a-1 pickup to avoid rework | none | ADR/design note for authorization-server + token mgmt |
-| low | Confirm WebSocket infra ownership for 8A.3 sync (ADR-008) is scheduled, not implicitly assumed | pm-scrum-master | WS infra epic referenced in sprint plan |
+
+### 1. Triage #3134 cargo-deny failure precisely — [high · pm-security]
+
+Pull the actual failing `cargo-deny` output on `dev` HEAD and name the advisory ID + crate. Three branches:
+
+- **If it is only zip 3.0.0,** find why the existing ignore + ban isn't applying — check whether the PR carrying that `deny.toml` actually merged to `dev`, and the CI's `deny.toml` path.
+- **If it is a new ID,** add a dated, scoped ignore with a deadline.
+- **Adopt a written policy:** a transitive advisory with no upstream fix and a non-attacker-reachable path (build-script-only) gets an ID ignore + a patched-floor `[bans]` guard + a tracking issue + a 30-day expiry. Reachable runtime paths must be fixed by bumping / replacing the dependency.
+
+DoD: cargo-deny advisories green on dev; policy written into `deny.toml` header or docs; stuck backend PRs can merge; every ignore has an issue link + expiry.
+
+### 2. Resolve the #3131 merge-deadlock — [high · pm-devops]
+
+Recommend **option C**: scoped GitHub ruleset that lets PRs labeled `auto-impl` merge once required CI is green **and** the dispatcher's internal `reviewer_verdict=approve` is recorded. Use **option B** (second bot identity) only if the ruleset cannot enforce it. Keep human review via **CODEOWNERS** for security / migration / auth paths. Reject **option D** (direct commits) — removes the audit trail. In the meantime, a human drains the 16-PR queue oldest-first starting with #3024. Also raise `DISPATCHER_PR_MAX` or add a stuck-PR age alert so `WIP=cap` can't silently halt the planner.
+
+DoD: a bot-authored PR with green CI merges with no human click; the queue drains below the WIP cap; the planner claims work again; the policy is documented.
+
+### 3. Decide the #3132 PRICE_MAP_CACHE design — [medium · pm-backend]
+
+Put a per-IP + global rate limit (tower-governor or the existing Redis limiter) **in front of** the price-map endpoint; make the cache a fixed-size, non-amplifying structure (moka/TinyLFU with TTL, or a plain TTL cache that rejects inserts at the cap instead of running an eviction loop). Normalise or whitelist cache keys so request-controlled keys can't flood it. Add a regression test that floods distinct keys and asserts bounded per-request work.
+
+DoD: ADR / issue comment records the chosen strategy; follow-up PR bounds per-request eviction work; a flood test passes.
 
 ## Risks
-| Risk | Prob | Impact | Mitigation |
-|---|---|---|---|
-| Epics 6 & 8A built against a notification/WS foundation (Epic 2B, ADR-008) that does not yet exist — rework when it lands | high | high | Sequence 2B first or freeze dependent story slices behind feature flags |
-| Duplicate AuthHandler/BuildingHandler modules: a security/correctness fix to the live route copy won't propagate to the dead handler copy, misleading reviewers | medium | high | Delete dead modules; enforce single implementation per auth/building op |
-| OAuth provider (10A) started with no agreed token/rotation/storage design — divergent implementation across 3 stories | medium | high | Lock ADR for 10A before pickup |
-| Three ~4k-line route files (integrations/organizations/documents.rs) on hot multitenancy paths — review fatigue, RLS-predicate omission risk | medium | medium | Module split; RLS-predicate checklist on these files |
+
+### R1 — Merge-gate stack single point of failure — probability: high, impact: high
+
+cargo-deny, bot self-approval and cloud egress (#2966, #2652) each independently block all backend merges, with no owner, SLA or escape hatch. Queue blocked ~16 days, 16 approved PRs stuck, tier-1 security fixes (#2944/#2945/#2946 IDOR) not landing. Fixes that cannot merge accumulate merge-conflict / staleness rework.
+
+Mitigation: name one owner for merge-gate health; add a `gate-red > 24h` alert; document break-glass criteria for human merges of security PRs; fix / allowlist swagger-ui egress (#2966).
+
+### R2 — Advisory-ignore debt compounds — probability: medium, impact: medium
+
+`deny.toml` carries many global ID ignores (h2, rustls, rustls-webpki, zip), each pinned to un-upgradable AWS-SDK or utoipa-swagger-ui lines. Version-scoped guards are only possible through `[bans]` (a workaround easy to forget to lift). The long-term fix needs a utoipa 6 or AWS SDK migration that nobody has scheduled.
+
+Mitigation: give every ignore an expiry + issue link; review the ignore list monthly; schedule a spike for the utoipa 6 / swagger-ui upgrade.
+
+### R3 — Unbounded / amplifying cache on a public endpoint — probability: medium, impact: medium
+
+`PRICE_MAP_CACHE` (#3132) still leaves a DoS exposure on main. Related: #3127 shipped a silent data-loss bug (dead-store of uploaded bytes) which suggests weak review / lint coverage for unused-variable + underscore-prefix patterns.
+
+Mitigation: rate limit *before* the cache; deny `clippy::let_underscore_must_use` and `clippy::used_underscore_binding` on handler code; require a persistence assertion in upload-handler tests.
 
 ## Open questions
-- Is Epic 2B notification infrastructure (and the ADR-008 WebSocket server) in scope this sprint, or assumed pre-existing?
-- Is there an agreed ADR for the OAuth 2.0 provider token store/rotation backing Epic 10A?
+
+1. What does the #3134 cargo-deny output name as the failing advisory + crate? `deny.toml` already ignores RUSTSEC-2026-0367/0368/0369 for zip 3.0.0, so is this a new advisory, a stale run, or a CI config that doesn't read this deny.toml?
+2. Can GitHub rulesets scope a bypass or auto-merge rule to the `auto-impl` label or the dispatcher app identity? Does the dispatcher have a second GitHub App or PAT identity available?
+3. What is the cargo-deny policy for ignore expiry, and who owns triage (pm-security or pm-devops)? The risk log lists both as owners of overlapping items.
+4. Current traffic profile + key cardinality of the price_map endpoint? Is there an existing rate-limit layer in reality-server?
+5. Are the 2026-10-01 risks still open (auth-header triplication #3006, voice_webhooks churn, accounting trio's reviewer starvation)? Not re-verified this run.
 
 ## Decisions needed
-- Build-order: Epic 2B notification/WebSocket infra before vs. after the dependent Epic 6/8A slices — owner: pm-tech-lead
-- Whether to delete the dead AuthHandler/BuildingHandler modules now vs. wire them as the canonical path — owner: pm-tech-lead
+
+- Merge-gate policy for bot-authored PRs: scoped ruleset bypass vs second bot identity vs human merge queue — owner: pm-devops with human maintainer sign-off.
+- cargo-deny exception policy: scoped ID ignore + `[bans]` floor guard + expiry for non-reachable transitives vs chasing every pull path — owner: pm-security.
+- Price-map protection strategy: rate limiter in front of the cache vs smarter eviction vs dropping the cache — owner: pm-tech-lead.
+- Fund the utoipa 6 / swagger-ui upgrade spike (would retire zip 3.0.0 ignore and reduce #2966 dependency) — owner: pm-tech-lead.
