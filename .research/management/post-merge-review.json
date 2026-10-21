@@ -1,9 +1,36 @@
 {
-  "generated": "2026-10-19T06:35:55Z",
+  "generated": "2026-10-21T10:34:27Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-21T10:34:27Z",
+      "prs_scanned": 5,
+      "clean": [
+        3135,
+        3125,
+        3130,
+        3129
+      ],
+      "with_issues": [
+        {
+          "pr": 3127,
+          "issue": 3136,
+          "findings": 2,
+          "specialist": "rust",
+          "note": "code-review-api-handlers-migration-upload-drops-file (persist migration import upload to storage, fix silent data loss) merged 10-20. The fix is CORRECT: upload_import_file now uploads file_data to object storage BEFORE creating the import_job row, fails closed with 503 when storage_service is None, and derives file_path from storage.upload(storage_key, file_data, content_type) instead of the old fabricated key that pointed at nothing (_file_data discard stub -> silent data loss). Ships a real fails-before-fix regression suite migration_import_upload_persists_file.rs (503 + zero job rows on unconfigured storage). 2 findings -> issue #3136. LOW (correctness): the handler classifies the storage error as 400 vs 503 by substring-matching the Display string (msg.to_lowercase().contains(\"content type\")) even though integrations::storage::StorageError has a typed InvalidContentType(String) variant (storage.rs:80, returned at :624) -- brittle, flips to 503 if the Display wording ever changes; proposal: match on the typed variant. MEDIUM (tests): the new suite only covers the fail-closed branch (storage None -> 503); the happy-path persistence the PR is NAMED for (bytes land at the returned key AND import_jobs.file_path references the real object) is never asserted, so a future refactor could reintroduce the silent-data-loss bug with the suite still green; proposal: add a storage-backed case asserting 200 + non-empty file_path + storage.download(file_path) == uploaded bytes. CLEAN siblings: #3135 (clear rustls-webpki RUSTSEC-2026-0382: cargo update to 0.103.16 on the reachable rustls 0.23.x line + [bans] floor-guard 0.103.0..0.103.16 + -0382 ignore scoped ONLY to the un-upgradable AWS-pinned 0.101.7 line, with documented reachability analysis -- same mechanism as the rustls -0346/-0349 and zip 9.x pins, thorough), #3125 (bump rust_xlsxwriter 0.97->0.100 moving transitive zip 8.6->9.0.5 to clear RUSTSEC-2026-0367/-0368/-0369 on the xlsx-export chain + [bans] guard denying zip 4.x-8.x + -0367/-0368/-0369 ignore scoped ONLY to the un-upgradable utoipa-swagger-ui 9.0.2 build-dep zip 3.0.0, documented), #3130 (bump ammonia 4.1.7->4.2.4 to clear RUSTSEC-2026-0373, semver-compatible, pulls html5ever/markup5ever/phf/string_cache/cssparser transitively -- sanitizer minor bump, no config/API change), #3129 (type the AML assessments list endpoint: replaces the ad-hoc serde_json::Value payload with a typed AmlAssessmentListItem + ListAmlAssessmentsResponse carrying ToSchema, a From<AmlRiskAssessment> impl parsing the JSON risk_factors column, and 3 unit tests pinning the wire contract/risk_factors array/envelope shape -- this IS the fix for prior-run finding #3128 on PR #3122, well-shaped). All 5 PRs labeled post-merge-reviewed via issue_write update (needs-human-review preserved on #3125; #3135/#3130/#3129/#3127 had none). Breadcrumb comment on #3127 -> #3136."
+        }
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review. repo=martin-janci/property-management, window=14d (merged>=2026-10-07), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: gh CLI GraphQL + search/* + write paths HTTP-403'd by the sandbox proxy, so READS via repo-scoped gh api REST (repos/.../pulls?state=closed&base=dev&sort=updated desc&perPage=50 pages 1-2; diffs via Accept: application/vnd.github.v3.diff) and all GitHub WRITES via GitHub MCP (issue_write create/update, add_issue_comment). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did NOT touch assignments.json/action-list.json/archives). Review-only + issue creation. No Task fan-out tool available to this subagent, so 5 diffs reviewed inline (<=5 concurrency cap honoured conceptually). 5 net-new unreviewed in-window merges (none carrying post-merge-reviewed): #3135 (10-21 06:30Z), #3129 (10-20 20:32Z), #3127 (10-20 20:32Z), #3125 (10-20 20:28Z, carried needs-human-review), #3130 (10-20 16:38Z). All other in-window merges already carry post-merge-reviewed from prior runs (page-2 sweep confirmed #3067..#3020 labeled). 4 CLEAN, 1 WITH ISSUE (#3127 -> #3136).",
+      "focus_prs": [
+        3135,
+        3129,
+        3127,
+        3125,
+        3130
+      ]
+    },
     {
       "run_at": "2026-10-19T06:35:55Z",
       "prs_scanned": 4,
@@ -596,15 +623,6 @@
       "with_issues": [],
       "skipped_already_reviewed": [],
       "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-11), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI proxy-403 unreliable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives; no MCP issues opened). Enumeration: search_pull_requests 'is:merged base:dev merged:>=2026-09-11' => total_count=0 (search index unsynced in runner, as in prior runs). Cross-checked list_pull_requests (state=closed, base=dev): sort=created desc perPage=40 AND sort=updated desc perPage=25. Newest genuine merge into dev is #2956@2026-09-08T20:33Z (then #2955@09-08, #2952/#2950@09-07) \u2014 all already carry post-merge-reviewed from prior runs and all predate the 09-11 window start. #463 (merged 2026-05-24, updated 09-22 by unrelated activity) is likewise already post-merge-reviewed and far out of window. Higher-numbered rows 2965/2964/2963/2959/2958/2939/2936/2933/2808/2591 have no merged_at (open or closed-unmerged dependabot PRs), not merges into dev. ZERO PRs merged into dev within the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
-      "focus_prs": []
-    },
-    {
-      "run_at": "2026-09-24T10:30:03Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-10), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI unavailable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives; no MCP issues opened). Enumeration: search_pull_requests 'is:merged base:dev merged:>=2026-09-10' => total_count=0 (search index unsynced in runner). Cross-checked list_pull_requests (state=closed, base=dev): sort=updated desc page1 newest merge is #2956@2026-09-08T20:33Z; sort=created desc perPage=40 confirms newest merged_at is #2956@09-08 (#2955@09-08, #2952/#2950@09-07 next) \u2014 all already carry post-merge-reviewed from prior runs and all predate the 09-10 window start. Higher-numbered PRs 2958/2959/2963/2964/2965 (and 2933/2934/2936/2939) are OPEN dependabot PRs (no merged_at), not merges. ZERO PRs merged into dev in the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
       "focus_prs": []
     }
   ]
