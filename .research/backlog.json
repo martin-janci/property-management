@@ -10772,7 +10772,7 @@
       ],
       "created_at": "2026-09-26",
       "updated_at": "2026-09-26",
-      "plan": "plans/code-review-ppt-web-core-authed-roots-session-leak.md",
+      "plan": "plans/_archive/code-review-ppt-web-core-authed-roots-session-leak.md",
       "reconciled": {
         "at": "2026-10-13T16:44:42Z",
         "assignment_status": "merged",
@@ -12222,7 +12222,7 @@
       ],
       "created_at": "2026-10-15",
       "updated_at": "2026-10-15",
-      "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md",
+      "plan": "plans/_archive/code-review-reality-server-price-map-cache-unbounded.md",
       "reconciled": {
         "at": "2026-10-19T10:36:16Z",
         "assignment_status": "merged",
@@ -12701,7 +12701,7 @@
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
-      "plan": "plans/code-review-api-handlers-migration-upload-drops-file.md",
+      "plan": "plans/_archive/code-review-api-handlers-migration-upload-drops-file.md",
       "reconciled": {
         "at": "2026-10-20T20:36:03Z",
         "assignment_status": "merged",

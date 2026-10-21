@@ -1,0 +1,34 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-21",
+      "type": "lag_warning",
+      "source": "state.json/last_run_iso=2026-10-19T00:47:58Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-10-19T00:47:58Z; current run 2026-10-21T06:35Z — 2d 5h >= 36h threshold. The 2026-10-20 brief was skipped; this run catches up both days as a single incremental.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — only emitted signal (lag_warning) is not on Phase 5 allowlist",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true, "command": "test -f .research/briefs/2026-10-21.md && head -1 | grep '^# 2026-10-21$'",                              "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true, "command": "jq slurpfile HEAD state.json vs working tree — any cursor advanced",                                      "observed": "true",   "expected": "true"   },
+    { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",                                        "observed": "true",   "expected": "true"   },
+    { "goal": "G4",  "passed": true, "command": "signal lag-warning-2026-10-21 absent from prior seen_signals AND score_delta=0",                          "observed": "true",   "expected": "true"   },
+    { "goal": "G5",  "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0' + no decay candidates (no open row older than 14d)",   "observed": "true",   "expected": "true"   },
+    { "goal": "G6",  "passed": true, "command": "no new plans this run → no adversarial-pass annotations required",                                        "observed": "0 new plans", "expected": "0 or <=2 with annotations" },
+    { "goal": "G7",  "passed": true, "command": "git diff --cached --name-only --diff-filter=A .research/plans/ | grep -v _archive | grep -c '.md$'",      "observed": "0",      "expected": "<= 2"   },
+    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",                                           "observed": "0",      "expected": "0"      },
+    { "goal": "G9",  "passed": true, "command": "git diff --cached (excluding baseline docs) | grep secrets/private-hosts | wc -l",                        "observed": "0",      "expected": "0"      },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md regen.md",                                                                             "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed: none' + no cursor rolled back",                                                 "observed": "none",   "expected": "honest"  },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug present in plans/ or plans/_archive/",                                           "observed": "0 missing", "expected": "0 missing" },
+    { "goal": "G13", "passed": true, "command": "staged archive count >= HEAD archive count",                                                               "observed": "25 >= 22", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen.md",                                                                        "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty; no PR/issue/comment opened this run",                                              "observed": "empty",   "expected": "<= caps" },
+    { "goal": "G16", "passed": true, "command": "action-list.json + risks.json parse; project-state.md non-empty; pm_cursor + coverage_cursor in range (Phase 1.6 skipped — no cursor advance required)", "observed": "all parse; no advance", "expected": "parse + bounds" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached (excluding baseline docs) | grep telegram token regex | wc -l",                          "observed": "0",      "expected": "0"      }
+  ]
+}
