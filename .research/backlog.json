@@ -12748,6 +12748,29 @@
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "title": "api-core workflow_executor.rs: condition-eval error aborts whole event-batch loop (not isolated per workflow)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:348-403 — process_event loads every workflow subscribed to an event and iterates `for workflow in workflows`. Inside the loop (line 359) `if !self.evaluate_conditions(&conditions, &context)? { ... continue; }` — the `?` propagates WorkflowError out of the ENTIRE batch, aborting processing of every remaining subscribed workflow for that event.",
+        "evaluate_conditions returns Err(WorkflowError::ConditionError(...)) on a malformed/undeserializable stored condition (workflow_executor.rs:523 and :793). Conditions are author-supplied JSON persisted on the workflow row, so schema drift / renamed operator in ONE workflow silently suppresses ALL other workflows triggered by the same event.",
+        "Asymmetry: the execute_workflow failure arm in the SAME loop (lines 395-402) correctly isolates failure — logs `warn!(workflow_id, error, \"Failed to start workflow execution\")` and continues. The condition-eval path at line 359 does not — strictly larger blast radius than an execution error.",
+        "Severity MEDIUM (+2): no data loss and no process crash, but a single malformed stored condition silently disables every other automation on that event type until corrected — reliability/availability gap on a side-effecting automation surface (workflows send email/notifications + make outbound api_call requests)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,66 @@
+{
+  "generated": "2026-10-21T06:05:00Z",
+  "source_run": "routine 2026-10-21 (incremental)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-21",
+      "type": "lag_warning",
+      "source": "routine-prompt phase 1 lag check",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "state.last_run_iso=2026-10-19T00:47:58Z; now=2026-10-21T06:00Z — 52h since last run (threshold 36h). Scheduler may have missed a daily tick; routine still fires but surface it in the brief."
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 api-core",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/api-server/src/services/workflow_executor.rs"],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:348-403 — process_event loads every workflow subscribed to an event and iterates `for workflow in workflows`. Inside the loop (line 359) `if !self.evaluate_conditions(&conditions, &context)? { ... continue; }` — the `?` propagates WorkflowError out of the ENTIRE batch, aborting every remaining subscribed workflow for that event.",
+        "evaluate_conditions returns Err(WorkflowError::ConditionError(...)) on a malformed/undeserializable stored condition (lines :523, :793). Conditions are author-supplied JSON persisted on the workflow row — schema drift / renamed operator in ONE workflow silently suppresses ALL other workflows subscribed to the same event.",
+        "Asymmetry: execute_workflow's failure arm in the SAME loop (lines 395-402) isolates per workflow (warn! + continue). The condition-eval path does not — strictly larger blast radius than an execution error.",
+        "Severity MEDIUM (+2): no data loss / no process crash, but a reliability gap on a side-effecting automation surface (workflows send email/notifications + make outbound api_call requests)."
+      ]
+    }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "api-core",
+    "selection_reason": "oldest-unreviewed (review_cursor: api-core=2026-10-17 tied-oldest with reality-server, ppt-web-ui, ppt-web-core, reality-web; segment-map order breaks tie)",
+    "experts_used": ["rust"],
+    "findings_count": 1,
+    "note": "aligned with dispatcher Tier-1d api-core review emitted earlier today (signals/2026-10-21-api-core-tier1d.json) — same finding promoted into routine signals + backlog."
+  },
+  "phase_1_6": {
+    "ran": false,
+    "reason": "lightweight run — dispatcher keeps management artifacts fresh and pm_cursor rotation can wait for the next full-cadence run. coverage.json last regenerated 2026-10-19T04:00:00Z; action-list.json 28 open; risks.json 22 items — all current. Advancing pm_cursor now without re-running the skill would skip the role artifact; defer."
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signal — only lag_warning (not in allowlist) and one medium-confidence code-review-finding (confidence != high)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/<today>.md && head -1 == '# <today>'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "cursor/seen_signals/stats delta vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no re-emit of non-cumulative seen signal with score_delta != 0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap 8 + decay for open items older than 14d (none this run)", "observed": "cap=true decay vacuous (0 candidates)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plan files created this run", "observed": "0 plans", "expected": "n/a (vacuous)" },
+    { "goal": "G7", "passed": true, "command": "new plans ≤2 and shape valid", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only outside .research/ == 0", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets/hostnames scan", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md regen", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief lists 'Phases that failed: none' and no cursor regression", "observed": "none", "expected": "none" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs survive in plans/ or plans/_archive/", "observed": "all present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive count >= HEAD", "observed": "22 == 22", "expected": "≥22" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency", "observed": "0 actions", "expected": "≤1 each" },
+    { "goal": "G16", "passed": true, "command": "pm_cursor did not advance → gate no-op", "observed": "pm_cursor.next_index=0 both now and HEAD", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no literal telegram token", "observed": "0", "expected": "0" }
+  ]
+}
