@@ -364,6 +364,57 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-21T22:25:48Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md",
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-inquiries-response-contract",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=3 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-21T22:25:48Z",
+      "backlog_ref": {
+        "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md",
+        "score": 3,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-push-fanout-client-build-expect",
+      "action": "push_fanout.rs builds 3 reqwest clients with .expect() in production constructors — a recoverable client-build error panics the push-fanout worker (hottest non-route churn file) instead of surfacing a configuration error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-21T22:25:48Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-19T04:00:00Z"
