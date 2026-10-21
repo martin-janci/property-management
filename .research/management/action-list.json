@@ -505,6 +505,26 @@
       "first_open_at": "2026-10-21T08:26:12Z",
       "retry_of": "pm-scrum-master-stalled-invoice-lifecycle-2555",
       "retry_round": 1
+    },
+    {
+      "id": "gh-issue-3136",
+      "action": "Follow-up: harden storage-error handling & add happy-path persistence test for migration import upload (PR #3127) (Closes #3136)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-21T12:29:13Z (#3136)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-21T12:29:13Z",
+      "issue_ref": {
+        "number": 3136,
+        "url": "https://github.com/martin-janci/property-management/issues/3136",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-19T04:00:00Z"
