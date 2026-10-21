@@ -33,6 +33,42 @@ ignore = [
     "RUSTSEC-2026-0099",
     "RUSTSEC-2026-0104",
 
+    # RUSTSEC-2026-0382 (added 2026-10-21, GH #3134) — rustls-webpki "may accept
+    # certificate paths containing distrusted emSign intermediate public keys
+    # when the configured trust anchors allow such paths" (the private keys for
+    # those intermediates are now public). Patched floor: `>= 0.103.16` (or
+    # `>= 0.104.0-alpha.8`). The resolved graph carries TWO rustls-webpki lines;
+    # they are handled differently — exactly like the rustls -0346/-0349 split:
+    #
+    #   * rustls-webpki 0.103.x (the REACHABLE line, via `rustls 0.23.x` ->
+    #     `reqwest` / `quinn` / the 0.23 side of `aws-smithy-http-client`) is
+    #     PATCHED, not suppressed: `cargo update -p rustls-webpki@0.103.15
+    #     --precise 0.103.16` moved it to 0.103.16 in Cargo.lock, which clears
+    #     -0382 there. It is deliberately NOT swept up by this ignore: a future
+    #     in-range downgrade of that line below the 0.103.16 floor trips the
+    #     `[bans]` rustls-webpki guard below (same mechanism as the h2 0.4.16,
+    #     rustls 0.23.46 and zip 9.0.0 pins).
+    #
+    #   * rustls-webpki 0.101.7 is transitively pinned by the AWS SDK family
+    #     (`rustls 0.21.12` <- `aws-smithy-http-client 1.1.13` / `hyper-rustls
+    #     0.24.2`), identical to the -0098/-0099/-0104 ignores above. It cannot
+    #     reach the >= 0.103.16 fix without a major AWS SDK migration onto
+    #     rustls 0.23+, out of scope here. This ignore exists SOLELY to cover
+    #     that un-upgradable 0.101.7 line.
+    #     Reachability on 0.101.7: the advisory requires a certificate PATH that
+    #     chains through a distrusted emSign intermediate AND trust anchors that
+    #     permit the path — i.e. a misissuance scenario on a trusted-CA chain.
+    #     The AWS outbound client only talks to well-behaved AWS endpoints
+    #     (S3/STS/SSO) whose chains do not involve those emSign intermediates;
+    #     we run no server-side webpki verification on this line. The vulnerable
+    #     accept-path behaviour is not exercised. (Same reachability posture as
+    #     the -0098/-0099/-0104 rustls-webpki ignores above.)
+    # Follow-up (GH #3085/#3134): remove once the AWS SDK drops its rustls 0.21 /
+    # hyper 0.14 dependency (smithy on hyper 1.x + rustls 0.23+), which also
+    # clears the rustls-webpki -0098/-0099/-0104, rustls -0346/-0349 and h2 0.3
+    # ignores above.
+    "RUSTSEC-2026-0382",
+
     # RUSTSEC-2023-0071 — "Marvin Attack" timing side-channel in the `rsa` crate
     # (0.9.x, no fixed version published upstream). Pulled in transitively by
     # `jsonwebtoken` 10's `rust_crypto` backend, which bundles RSA algorithm
@@ -216,6 +252,22 @@ deny = [
     # covers) or the patched rustls >= 0.23.46 (outside the range, allowed).
     # Lift once the AWS SDK drops rustls 0.21 and the ignore above is removed.
     { name = "rustls", version = ">=0.23.0, <0.23.46", reason = "RUSTSEC-2026-0346/-0347/-0348/-0349 patched-floor guard — the reachable rustls 0.23.x line must be >= 0.23.46; the -0346/-0349 advisory ignore is scoped to the un-upgradable AWS-pinned 0.21.x line, so an unpatched 0.23.0–0.23.45 must trip cargo-deny rather than be swept up by it (GH #3085)" },
+
+    # rustls-webpki 0.103.x PATCHED-FLOOR GUARD for RUSTSEC-2026-0382 (GH #3134).
+    # The distrusted-emSign-intermediate advisory is patched in rustls-webpki
+    # 0.103.16. The reachable rustls-webpki line (via rustls 0.23.x / reqwest /
+    # quinn) is bumped to 0.103.16 in Cargo.lock, which clears it there. The
+    # -0382 ignore on the `[advisories]` list exists ONLY to cover the
+    # un-upgradable AWS-SDK-pinned rustls-webpki 0.101.7 (via rustls 0.21.12).
+    # Because an ID ignore is global, a future in-range downgrade of the 0.103.x
+    # line below the 0.103.16 floor (a bad `cargo update` / Dependabot lockfile
+    # move) would otherwise be silently swept up by that ignore. This ban denies
+    # exactly the 0.103.0–0.103.15 window, so such a regression trips
+    # `cargo deny check bans` instead. It intentionally does NOT touch
+    # rustls-webpki 0.101.7 (< 0.103.0 — the AWS-pinned line the ignore covers)
+    # or the patched rustls-webpki >= 0.103.16 (outside the range). Lift together
+    # with the -0382 ignore once the AWS SDK drops rustls 0.21.
+    { name = "rustls-webpki", version = ">=0.103.0, <0.103.16", reason = "RUSTSEC-2026-0382 patched-floor guard — the reachable rustls-webpki 0.103.x line must be >= 0.103.16; the -0382 advisory ignore is scoped to the un-upgradable AWS-pinned 0.101.7 line, so an unpatched 0.103.0–0.103.15 must trip cargo-deny rather than be swept up by it (GH #3134)" },
 
     # zip PATCHED-FLOOR GUARD for RUSTSEC-2026-0367/-0368/-0369 (GH #3124). The
     # three zip extraction advisories are patched in zip 9.0.0. The reachable zip
