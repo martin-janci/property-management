@@ -12753,6 +12753,35 @@
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-push-fanout-client-build-expect",
+      "title": "push_fanout.rs builds 3 reqwest clients with .expect() in production constructors — a recoverable client-build error panics the push-fanout worker (hottest non-route churn file) instead of surfacing a configuration error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-core]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:433 — ServiceAccountTokenSource::new() does `reqwest::Client::builder().timeout(10s).build().expect(\"reqwest client build should not fail\")`. reqwest::ClientBuilder::build() is fallible (TLS backend init, proxy-from-env parse); on failure this panics instead of returning a Result the caller can log and fail-closed on.",
+        "Same pattern repeated at :626 (FCM push provider constructor) and :1042 (APNs provider, which additionally calls .http2_prior_knowledge() — an HTTP/2-only config that widens the build()-failure surface). All three expects live in this file's production (non-test) half; the test module starts at L1703.",
+        "Severity is LOW: these run once at service construction (bootstrap), so the practical effect is a fail-fast crash at startup rather than a per-request panic — close to the acceptable startup-validation pattern used in main.rs. Flagged because push_fanout.rs is the highest-churn non-route file (recent_churn ~2564) and the trio is the only production .expect()/unwrap() cluster in the whole api-core services layer; converting new() -> Result (or try_new) would let the composition root log a precise 'push transport misconfigured' error. No higher-severity findings exist in this segment (see note).",
+        "NOTE for triage: api-core was reviewed statically and is otherwise exceptionally clean — no unsafe, no reachable todo!()/unimplemented!(), all serde_json::from_value/from_str in prod are map_err-handled, Stripe webhook verify uses constant-time compare + replay-window + overflow-proof skew, the scheduler runs each task as its own Result with tracing::error and no silent drops, accounting uses Decimal (no float money) over RLS repo calls, CORS is an explicit origin/method/header allow-list with credentials, and client_ip prod code has zero unwraps. This +1 is the single defensible signal; do not inflate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
     }
   ]
 }
