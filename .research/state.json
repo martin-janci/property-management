@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-19T00:47:58Z",
-  "last_run_ms": 900000,
-  "last_pr_seen": 3123,
-  "last_issue_seen": 3124,
-  "last_commit_sha": "62aaaa5",
+  "last_run_iso": "2026-10-21T18:51:39Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3135,
+  "last_issue_seen": 3136,
+  "last_commit_sha": "12be5f4",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -611,6 +611,21 @@
       "runs_seen": 1,
       "last_seen": "2026-10-16",
       "recent_churn": 144
+    },
+    "backend/deny.toml": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-21",
+      "recent_churn": 2
+    },
+    "backend/servers/api-server/src/routes/migration.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-21",
+      "recent_churn": 1
+    },
+    "backend/servers/api-server/src/routes/aml_dsa/aml.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-21",
+      "recent_churn": 1
     }
   },
   "seen_signals": [
@@ -1205,12 +1220,27 @@
     "untriaged-issue-952",
     "code-review-api-handlers-migration-upload-drops-file",
     "code-review-api-handlers-migration-export-fake-url-stub",
-    "code-review-api-handlers-impersonation-active-raw-xff-audit"
+    "code-review-api-handlers-impersonation-active-raw-xff-audit",
+    "lag-warning-2026-10-21",
+    "churn-hotspot-backend/deny.toml",
+    "churn-hotspot-backend/servers/api-server/src/routes/migration.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/aml.rs",
+    "stalled-review-pr-3028",
+    "stalled-review-pr-3070",
+    "stalled-review-pr-3072",
+    "stalled-review-pr-3074",
+    "stalled-review-pr-3075",
+    "closed-not-merged-pr-2981",
+    "dep-update-noise-pr-3133",
+    "dep-update-noise-pr-3089",
+    "code-review-api-core-oauth-rng-expect-panic",
+    "code-review-api-core-auth-rng-expect-panic",
+    "code-review-api-core-reqwest-build-startup-panic"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-10-19",
-    "api-core": "2026-10-17",
+    "api-core": "2026-10-21",
     "reality-server": "2026-10-17",
     "ppt-web-ui": "2026-10-17",
     "ppt-web-core": "2026-10-17",
@@ -1219,8 +1249,8 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 100,
-    "vectors_created": 445,
+    "runs": 101,
+    "vectors_created": 456,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1236,19 +1266,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 0,
+    "next_index": 1,
     "role_last_run": {
-      "pm-tech-lead": "2026-07-27",
+      "pm-tech-lead": "2026-10-21",
       "pm-backend": "2026-07-30",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
-      "pm-integration": "2026-10-19"
+      "pm-integration": "2026-10-19",
+      "pm-scrum-master": "2026-10-21"
     }
   },
   "coverage_cursor": {
-    "next_index": 10
+    "next_index": 11
   }
 }

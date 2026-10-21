@@ -2,6 +2,84 @@
   "version": 1,
   "items": [
     {
+      "id": "pm-tech-lead-dispatcher-identity-split-3131",
+      "action": "Resolve #3131 merge-pipeline deadlock — provision a distinct dispatcher-bot GitHub identity (separate PAT or GH App) so dispatcher PRs can be APPROVED by a different actor than their author; or amend ppt-pr-merge to accept documented bot-approvals-of-self. 16 approved PRs frozen; all 5 stalled drafts (#3028/3070/3072/3074/3075) blocked here.",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-tech-lead 2026-10-21 (rotating role deep-dive)",
+      "deadline": null,
+      "dependency": "#3131",
+      "depends_on": [],
+      "first_open_at": "2026-10-21T18:50:00Z",
+      "issue_ref": {
+        "number": 3131,
+        "url": "https://github.com/martin-janci/property-management/issues/3131",
+        "labels": [
+          "follow-up",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "pm-tech-lead-collapse-authfetch-triplicate-3006",
+      "action": "Collapse @ppt/api-client triplicated auth-header + MFA-retry logic (gdprClient, paymentMatching, remaining consumers) into one shared `authenticatedFetchJson`; add a Biome rule forbidding new fetch primitives that bypass the shared module. Follow-up on #3006 and risk pm-tech-lead-auth-header-triplicate-drift-2026-10-01.",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-tech-lead 2026-10-21 (rotating role deep-dive, carried risk)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-10-21T18:50:00Z",
+      "issue_ref": {
+        "number": 3006,
+        "url": "https://github.com/martin-janci/property-management/issues/3006",
+        "labels": [
+          "refactor",
+          "security"
+        ]
+      }
+    },
+    {
+      "id": "pm-tech-lead-typed-response-rotation-post-3129",
+      "action": "Replicate the typed-response treatment from #3129 (AML list) onto remaining untyped `serde_json::Value` list endpoints in backend/servers/api-server/src/routes/ — identify next 3 candidates via grep, open one plan this cycle.",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-tech-lead 2026-10-21 (rotating role deep-dive)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-10-21T18:50:00Z"
+    },
+    {
+      "id": "pm-security-rustsec-exception-adr",
+      "action": "Author a RUSTSEC exception ADR in docs/adr/ (or append to decisions.md) covering the version-bump-vs-exception tradeoff; 4 advisories cleared this cycle were straight bumps but next advisory may lack a clean upstream. Reference from backend/deny.toml.",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "pm-tech-lead 2026-10-21 (rotating role deep-dive)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-10-21T18:50:00Z"
+    },
+    {
+      "id": "pm-scrum-master-unblock-stalled-review-drafts-3131",
+      "action": "Human-approve the top-5 stalled drafts (#3028 add-to-compare TOCTOU; #3070 ViolationRepository IDOR; #3072 violations missing-role-authz; #3074 record_payment atomic; #3075 violations number-count-race) by hand so the IDOR-adjacent tier lands even while #3131 identity split is in flight.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-21 (always-on; buffer-low=12/72)",
+      "deadline": null,
+      "dependency": "#3131",
+      "depends_on": [
+        "pm-tech-lead-dispatcher-identity-split-3131"
+      ],
+      "first_open_at": "2026-10-21T18:50:00Z"
+    },
+    {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
       "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
@@ -527,5 +605,5 @@
       }
     }
   ],
-  "generated": "2026-10-19T04:00:00Z"
+  "generated": "2026-10-21T18:50:00Z"
 }

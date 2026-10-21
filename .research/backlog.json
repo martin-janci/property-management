@@ -12541,14 +12541,16 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core)",
+        "PR #3123"
       ],
       "evidence": [
         "backend/servers/api-server/src/services/totp.rs:153 — TotpService::encrypt_secret() fills its 12-byte AES-GCM nonce with `rand::rngs::SysRng.try_fill_bytes(&mut nonce_bytes).expect(\"OS rng failed\")`. This .expect() panics the request-handling task if the OS CSPRNG errors, instead of returning the function's own error type. The function signature is `pub fn encrypt_secret(&self, plaintext: &str) -> Result<String, TotpError>` and every OTHER fallible step in the same body already threads errors through that channel: `Aes256Gcm::new_from_slice(&key).map_err(|e| TotpError::EncryptionError(e.to_string()))?` (totp.rs:149) and `cipher.encrypt(&nonce, ...).map_err(|e| TotpError::EncryptionError(e.to_string()))?` (totp.rs:162). The nonce-fill is the lone branch that aborts via panic rather than `?`.",
         "Contract violation (why this is a finding, not a nit): both production call sites consume encrypt_secret's Result gracefully and depend on it never panicking — backend/servers/api-server/src/routes/mfa.rs:228 does `state.totp_service.encrypt_secret(&secret).map_err(|e| { tracing::error!(...); <HTTP error> })?` and backend/servers/api-server/src/routes/admin/mfa/enroll.rs:130-131 does the same with `tracing::error!(error = %e, \"enroll/start: encrypt_secret failed\")`. A panic at totp.rs:153 bypasses both callers' careful map_err->logged-500 path on the MFA-enrollment endpoint, unwinding the task instead of returning a diagnosable error.",
-        "Landable Rust-only remedy: replace `.expect(\"OS rng failed\")` with `.map_err(|e| TotpError::EncryptionError(format!(\"OS rng failed: {e}\")))?`, matching the two adjacent map_err lines, so a CSPRNG failure flows out as TotpError::EncryptionError like every other error in the function. Verifiable via `cargo check -p api-server` + a unit test asserting encrypt_secret returns Err(TotpError::EncryptionError) rather than panicking under an injected failing RNG. Severity low (OS CSPRNG failure is vanishingly rare), confidence medium: the panic branch and the function's existing Result error channel are both statically confirmed, but the trigger is not reachable under normal operation. candidate_vector=bug (latent panic on an auth/MFA request path that contradicts the surrounding error-handling contract)."
+        "Landable Rust-only remedy: replace `.expect(\"OS rng failed\")` with `.map_err(|e| TotpError::EncryptionError(format!(\"OS rng failed: {e}\")))?`, matching the two adjacent map_err lines, so a CSPRNG failure flows out as TotpError::EncryptionError like every other error in the function. Verifiable via `cargo check -p api-server` + a unit test asserting encrypt_secret returns Err(TotpError::EncryptionError) rather than panicking under an injected failing RNG. Severity low (OS CSPRNG failure is vanishingly rare), confidence medium: the panic branch and the function's existing Result error channel are both statically confirmed, but the trigger is not reachable under normal operation. candidate_vector=bug (latent panic on an auth/MFA request path that contradicts the surrounding error-handling contract).",
+        "resolved: PR #3123 (commit 12be5f4) — fix(api-server): return Err instead of panicking on CSPRNG failure in TotpService::encrypt_secret. Pattern .expect(\"OS rng failed\") no longer present in backend/servers/api-server/src/services/totp.rs."
       ],
       "files": [
         "backend/servers/api-server/src/services/totp.rs",
@@ -12556,7 +12558,7 @@
         "backend/servers/api-server/src/routes/admin/mfa/enroll.rs"
       ],
       "created_at": "2026-10-17",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-21",
       "plan": null
     },
     {
@@ -12747,6 +12749,222 @@
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/deny.toml",
+      "title": "Churn hotspot: backend/deny.toml — 2 security-advisory PRs this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn analysis 2026-10-21"
+      ],
+      "evidence": [
+        "backend/deny.toml touched by 2 merged PRs this run (#3130 ammonia-4.2.4 for RUSTSEC-2026-0373; #3135 rustls-webpki for RUSTSEC-2026-0382). Hot file: cargo-deny advisory wall — repeated sweeps imply either a transient-pin pattern or an upstream rustsec cadence worth consolidating."
+      ],
+      "files": [
+        "backend/deny.toml"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/migration.rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/migration.rs — migration upload persist fix",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn analysis 2026-10-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/migration.rs touched by #3127 (persist migration import upload to storage — code-review-api-handlers-migration-upload-drops-file fix). Related open backlog item code-review-api-handlers-migration-export-fake-url-stub still cites the same file."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/aml.rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/aml_dsa/aml.rs — AML list typed response",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn analysis 2026-10-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs touched by #3129 (type the AML assessments list endpoint response — gh-issue-3128). Low-churn so far; monitor on next run."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3028",
+      "title": "Stalled PR #3028 — awaiting review, blocked by issue #3131 (merge-pipeline deadlock)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3028"
+      ],
+      "evidence": [
+        "Open PR #3028 with no reviewDecision for >7 days. Rooted in issue #3131: dispatcher bot cannot self-approve its own PRs — the merge-pipeline is deadlocked across ~16 PRs on this run. Not individually actionable; the fix is #3131 itself."
+      ],
+      "files": [],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3070",
+      "title": "Stalled PR #3070 — awaiting review, blocked by issue #3131 (merge-pipeline deadlock)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3070"
+      ],
+      "evidence": [
+        "Open PR #3070 with no reviewDecision for >7 days. Rooted in issue #3131: dispatcher bot cannot self-approve its own PRs — the merge-pipeline is deadlocked across ~16 PRs on this run. Not individually actionable; the fix is #3131 itself."
+      ],
+      "files": [],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3072",
+      "title": "Stalled PR #3072 — awaiting review, blocked by issue #3131 (merge-pipeline deadlock)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3072"
+      ],
+      "evidence": [
+        "Open PR #3072 with no reviewDecision for >7 days. Rooted in issue #3131: dispatcher bot cannot self-approve its own PRs — the merge-pipeline is deadlocked across ~16 PRs on this run. Not individually actionable; the fix is #3131 itself."
+      ],
+      "files": [],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3074",
+      "title": "Stalled PR #3074 — awaiting review, blocked by issue #3131 (merge-pipeline deadlock)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3074"
+      ],
+      "evidence": [
+        "Open PR #3074 with no reviewDecision for >7 days. Rooted in issue #3131: dispatcher bot cannot self-approve its own PRs — the merge-pipeline is deadlocked across ~16 PRs on this run. Not individually actionable; the fix is #3131 itself."
+      ],
+      "files": [],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3075",
+      "title": "Stalled PR #3075 — awaiting review, blocked by issue #3131 (merge-pipeline deadlock)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3075"
+      ],
+      "evidence": [
+        "Open PR #3075 with no reviewDecision for >7 days. Rooted in issue #3131: dispatcher bot cannot self-approve its own PRs — the merge-pipeline is deadlocked across ~16 PRs on this run. Not individually actionable; the fix is #3131 itself."
+      ],
+      "files": [],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-oauth-rng-expect-panic",
+      "title": "api-core: OAuthService::generate_random_b64() panics on CSPRNG failure via .expect() (hot token-minting path)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:918 — generate_random_b64() calls `SysRng.try_fill_bytes(..).expect(\"OS rng failed\")` on the hot OAuth path. Mints access tokens, refresh tokens, auth codes, client secrets, client IDs (comment lines 907-910). CSPRNG failure panics every /oauth/token and /oauth/authorize request task. Mirror of the resolved TOTP finding (PR #3123) in a distinct, higher-traffic module. Remediation: map err -> OAuthServiceError::InternalError (already defined) and bubble up via `?`. Confidence medium (static analysis; trigger is reachable but rare in normal operation)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-auth-rng-expect-panic",
+      "title": "api-core: AuthService::generate_token() panics on CSPRNG failure via .expect() (email-verification + password-reset paths)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:97 — AuthService::generate_token() calls `rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` when minting email-verification + password-reset tokens. AuthError::TokenGenerationFailed (line 24) is defined for this case but unused. Same bug class as TOTP RNG finding (resolved by PR #3123) but on a distinct code path — AuthService is used by registration/password-reset without going through totp.rs. Remediation: map err -> AuthError::TokenGenerationFailed; return Result from generate_token."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-reqwest-build-startup-panic",
+      "title": "api-core: four reqwest client builders in push_fanout.rs + api_call.rs .expect() at construction — api-server crashes at boot on client-build error instead of fail-soft",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:433 — ServiceAccountTokenSource::new .expect(\"reqwest client build should not fail\")",
+        "backend/servers/api-server/src/services/push_fanout.rs:626 — FcmHttpAdapter::with_token_provider — same pattern",
+        "backend/servers/api-server/src/services/push_fanout.rs:1042 — ApnsHttpAdapter::new — same pattern plus http2_prior_knowledge (future TLS backend change could reject the combination)",
+        "backend/servers/api-server/src/services/actions/api_call.rs:308 — ApiCallExecutor::new .expect(\"Failed to create HTTP client\") after installing a custom dns_resolver + redirect policy — config regression most likely failure mode.",
+        "Low severity (startup-only, obvious), but all four are infallible-looking constructors crashing boot. Consolidation into one of_env/Result builder pattern (see storage-service in main.rs:616) is cleaner than four map_err spots."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs",
+        "backend/servers/api-server/src/services/actions/api_call.rs",
+        "backend/servers/api-server/src/services/mod.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
       "plan": null
     }
   ]

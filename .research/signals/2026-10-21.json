@@ -1,0 +1,302 @@
+{
+  "date": "2026-10-21",
+  "generated_at": "2026-10-21T18:51:56Z",
+  "phase": "post-stage",
+  "segment_reviewed": "api-core",
+  "experts_consulted": [
+    "rust"
+  ],
+  "next_segment": "mobile-native-kmp (2026-10-18 is now the oldest after api-core advanced to today)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-19T00:47:58Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine lag 2d 65h since last run (>36h threshold)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/deny.toml",
+      "type": "churn-hotspot",
+      "source": "PRs #3125, #3135",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "deny.toml touched by 2 merged PRs this run (cargo-deny advisory bumps)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/migration.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3127",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/migration.rs touched by PR #3127 (persist migration import upload)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/aml.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3129",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs touched by PR #3129 (typed AML list response)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3028",
+      "type": "stalled-review",
+      "source": "PR #3028",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "draft PR #3028 (code-review-reality-server-add-to-compare-toctou-max-cap) ~16d idle, labels=[needs-human-review], blocked on bot-self-approval (#3131)"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3070",
+      "type": "stalled-review",
+      "source": "PR #3070",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "draft PR #3070 (scope ViolationRepository::list_notifications by org IDOR) ~8d idle, labels=[needs-human-review]"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3072",
+      "type": "stalled-review",
+      "source": "PR #3072",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "draft PR #3072 (violations missing-role-authz) ~8d idle, labels=[needs-human-review]"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3074",
+      "type": "stalled-review",
+      "source": "PR #3074",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "draft PR #3074 (violations record-payment atomic) ~8d idle, labels=[needs-human-review]"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3075",
+      "type": "stalled-review",
+      "source": "PR #3075",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "draft PR #3075 (violations number-count-race) ~8d idle, labels=[needs-human-review]"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-2981",
+      "type": "dep-update-noise",
+      "source": "PR #2981",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot cargo-minor-patch group PR superseded (closed) in favor of #3133"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3133",
+      "type": "dep-update-noise",
+      "source": "PR #3133",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "open dependabot cargo-minor-patch 18 updates (replaces #2981)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3089",
+      "type": "dep-update-noise",
+      "source": "PR #3089",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "open dependabot tokio group bump"
+      ]
+    },
+    {
+      "id": "code-review-api-core-oauth-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:918 — generate_random_b64() uses SysRng.try_fill_bytes(...).expect() on OAuth hot path (mints access/refresh tokens, auth codes, client secrets); CSPRNG failure panics every /oauth/token and /oauth/authorize request. Mirror of the resolved TOTP finding (PR #3123) but distinct module. Remediation: map err to OAuthServiceError::InternalError and bubble up."
+      ]
+    },
+    {
+      "id": "code-review-api-core-auth-rng-expect-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:97 — AuthService::generate_token() calls rng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\") for email-verification + password-reset tokens; AuthError::TokenGenerationFailed is already defined (line 24) but unused. Same bug class as the resolved TOTP finding (PR #3123) in a distinct code path. Remediation: map err to AuthError::TokenGenerationFailed."
+      ]
+    },
+    {
+      "id": "code-review-api-core-reqwest-build-startup-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:433 — ServiceAccountTokenSource::new .expect(\"reqwest client build should not fail\")",
+        "backend/servers/api-server/src/services/push_fanout.rs:626 — FcmHttpAdapter::with_token_provider same pattern",
+        "backend/servers/api-server/src/services/push_fanout.rs:1042 — ApnsHttpAdapter::new same pattern (adds http2_prior_knowledge — a future TLS backend change could reject the combo)",
+        "backend/servers/api-server/src/services/actions/api_call.rs:308 — ApiCallExecutor::new .expect(\"Failed to create HTTP client\") after custom dns_resolver + redirect policy. Four infallible-looking constructors crash boot instead of fail-soft/Result; mirror the storage-service of_env pattern used in main.rs:616."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (confidence=high + score>=3 + allowlist); code-review findings are medium-confidence and not on the Phase 5 allowlist; stalled-review comments suppressed because 5 PRs share root cause #3131",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches # <today>",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json changed vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signal re-score == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap 8 + decay applied",
+      "observed": "cap PASS; 0 items required decay",
+      "expected": "both PASS"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures section",
+      "observed": "none",
+      "expected": "no un-reported failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans dont silently vanish",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "staged=22 head=22",
+      "expected": "staged >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "0 actions this run (no candidate)",
+      "expected": "<=1 per category"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 coverage_cursor advanced",
+      "observed": "EPICS=13 CC_NOW=11 CC_HEAD=10 PM_NOW=1 PM_HEAD=0",
+      "expected": "all gates pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

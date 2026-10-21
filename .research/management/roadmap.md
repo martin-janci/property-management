@@ -1,76 +1,36 @@
-# PPT Roadmap — upkeep 2026-10-19
+# PPT Delivery Roadmap
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 3-day lag since 2026-10-16 run._
+_Generated: 2026-10-21T18:50:00Z — ranker mode: default (balanced rubric: priority × dependency-foundationality × role-capacity-spread × recency boost for new-this-run items). Coverage 49/49 stories done → sprint delivery is complete at coverage level; the roadmap is now the dispatcher merge-pipeline + follow-up queue, not epic progression._
 
-## State of the project
+## Top 10 ranked next steps
 
-- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on 10a-1 (PR #3121 evidence) and all 5 epic-84 stories (cursor re-check — negative).
-- Delta vs 2026-10-16 upkeep: **2 PRs merged** — both frontend code-review follow-ups (reality-web auth-ctx transient-logout cushion + ppt-web AML dashboard flags), both tests-included, both resolving prior backlog items.
-- **Buffer now doubly constrained:** #2966 (swagger-ui egress) gates backend builds; **#3124 cargo-deny** (new, RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) gates backend merges even on green builds; #2652 (KMP) continues to park mobile-native work.
-- Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3 already queued elsewhere).
-- Open PRs: 1 draft (#3123 api-core TOTP RNG expect panic — no contract impact). The accounting stall trio (#2559, #2555) remains carried.
+| Rank | Action | Owner | Priority | Reason / dependency |
+|------|--------|-------|----------|--------------------|
+| 1 | **Resolve #3131** — dispatcher-bot identity split (new PAT or GH App) so dispatcher PRs can be APPROVED by a different actor than their author; alt: amend `ppt-pr-merge` to accept documented bot-approvals-of-self. | pm-tech-lead | high | **Single structural blocker on everything downstream.** 16 approved PRs frozen; all 5 stalled drafts (#3028/3070/3072/3074/3075) share this root cause. Must be first. |
+| 2 | **Human-approve the top-5 stalled drafts** (#3028 add-to-compare TOCTOU; #3070 ViolationRepository IDOR; #3072 violations role-authz; #3074 record_payment atomic; #3075 violations number-count-race) so the IDOR-adjacent tier lands even while #3131 is in flight. | pm-scrum-master | high | Short-term workaround while #3131 is in flight; unblocks ~5 security-tier PRs in-hand. |
+| 3 | **Address #3132 PRICE_MAP_CACHE DoS** — replace O(n log n) sort-on-every-insert with LRU; constrain attacker-controlled cache keys (whitelist + length cap). Both dimensions in one PR. | pm-backend | high | Two-attribute vulnerability; cache-thrash converts into DB-load DoS. |
+| 4 | **Address #3136 migration-upload typed storage-error + happy-path test** — match on typed `StorageError::InvalidContentType` variant rather than `Display` string; add happy-path persistence test. | pm-backend | medium | Prevents regression on migration.rs churn hotspot (2nd follow-up in 36h). |
+| 5 | **Unblock #2966 swagger-ui egress** — carried from prior runs; still gates backend cloud builds and (together with #3131) is the two-key lock on the IDOR tier. | pm-devops | high | Carried blocker; combined with #3131 resolution unblocks #2946/2944/2945 IDOR retries. |
+| 6 | **Close #3006** — collapse @ppt/api-client triplicated auth-header + MFA-retry logic into one shared `authenticatedFetchJson`; add Biome rule banning new fetch primitives. | pm-tech-lead | medium | Carried risk pm-tech-lead-auth-header-triplicate-drift-2026-10-01 — classic security-overtones refactor; three copies will drift. |
+| 7 | **Typed-response rotation post-#3129** — identify next 3 untyped `serde_json::Value` list endpoints in api-server routes and open one plan this cycle. | pm-tech-lead | medium | Schema stability for generated OpenAPI/TypeSpec; prevents client-break-via-regen. |
+| 8 | **Unblock #2652 mobile-native/KMP cloud builds** — carried; 5+ open backlog items structurally unclaimable in cloud. | pm-devops | high | Carried structural blocker on mobile-native work. |
+| 9 | **pm-integration-document-sso-transient-401-contract** — document the reality-server SSO consumer transient-401 contract in docs/api/README.md so client/server treat transient vs permanent 401 symmetrically (follow-up to PR #3121 cushion). | pm-integration | low | Carried item from 2026-10-19 run. |
+| 10 | **RUSTSEC exception ADR** — author policy for when a version-bump path is unavailable (version-bump-vs-exception tradeoff). Reference from `backend/deny.toml`. | pm-security | low | Pre-emptive; 4 advisories this cycle were straight bumps but next may not have a clean upstream. |
 
-## Epic status (short)
+## Spread by owner (current open items in action-list)
 
-- **Epic 6 — Announcements & Communication:** 6/6 done in coverage; sprint-status.yaml drift (safe to re-reconcile next deep scan).
-- **Epic 7A — Basic Document Management:** 5/5 done.
-- **Epic 8A — Basic Notification Preferences:** 3/3 done.
-- **Epic 10A — OAuth Provider Foundation:** 3/3 done. PR #3121 adds SSO-consumer-side evidence on 10a-1 (reality-web auth-context transient-logout cushion).
-- **Epic 10B — Platform Administration:** 7/7 done.
-- **Epic 80 — Dispute Resolution:** 3/3 done in coverage (sprint-status still shows partial).
-- **Epic 81 — Reports:** 2/2 done.
-- **Epic 82 — iOS Reality Portal (SwiftUI):** 5/5 done.
-- **Epic 83 — Portal Integrations:** 3/3 done.
-- **Epic 84 — Documents & e-signature:** 5/5 done. **Re-checked this run (cursor idx 9).** No merged PR in the 2026-10-18..2026-10-19 window touched epic-84 surfaces; `last_checked = 2026-10-19` stamped on all 5 stories.
-- **Epic 85 — Build/CI configuration:** 2/2 done.
-- **Epic 79 — API client integration:** 4/4 done.
-- **Epic 9 — 2FA/TOTP:** 1/1 done.
+- **pm-tech-lead**: 10 (dispatcher split, api-client collapse, typed-response, 2 accounting stalls, #3098/3104/3109/3116/3132/3136 placeholders)
+- **pm-backend**: 13 (mobile-native-kmp cluster, violations trio, add-to-compare TOCTOU, enumeration/replay, totp-rng-panic, formatprice-locale, impersonation-xff, migration-export-stub)
+- **pm-devops**: 1 (mobile-native cloud builds) — carried
+- **pm-integration**: 3 (openapi-drift audit, rustsec-exception-policy, sso-transient-401 doc)
+- **pm-qa**: 2 (ssoservice-untested, screen-map-drift PR 2994)
+- **pm-security**: 1 (RUSTSEC-exception ADR — new this cycle)
+- **pm-scrum-master**: 1 (stalled-prs human-approve workaround)
 
-## Ranked plan
+## Health signals
 
-### merge-queue unblock (highest leverage, score 10)
-
-- [high] **Resolve #3124 cargo-deny advisories** (RUSTSEC-2026-0368 / RUSTSEC-2026-0369 on zip 8.6.0 via rust_xlsxwriter) — bump the version or add a bounded cargo-deny exception with deadline — gates every backend merge — owner: **pm-security**
-- [high] **Unblock #2966 utoipa-swagger-ui egress** for api-server cloud builds — gates every backend build — owner: **pm-devops**
-- [high] Unblock mobile-native/KMP builds in cloud runner (**#2652**) — 5+ KMP items structurally unclaimable — owner: **pm-devops**
-
-### security tier-1 (score 8-9, all blocked on the merge-queue above)
-
-- [high] Land #2946 fix (portfolio_analytics IDOR) — retry 2/2 draft open as `gh-issue-2946-retry2` — blocked by #2966 **AND** #3124 — owner: **pm-security**
-- [high] Land #2944 fix (violation comments/evidence/payments IDOR + internal-notes leak) — retry 1/2 — blocked by #2966 + #3124 — owner: **pm-security**
-- [high] Land #2945 fix (portfolio_properties IDOR) — retry 1/2 — blocked by #2966 + #3124 — owner: **pm-security**
-
-### refactor-with-security-overtones (score 6)
-
-- [medium] #3006 — unify triplicated auth-header + MFA-retry in @ppt/api-client fetch primitives — owner: **pm-tech-lead** (carried)
-
-### reviewer-starvation (score 5-6)
-
-- [medium] Reviewer slot for stalled accounting trio **#2559** (PAY by Square) and **#2555** (invoice lifecycle) — 67d idle — owner: **pm-tech-lead**
-
-### pm-integration follow-ups (new this run, score 4-5)
-
-- [medium] Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift — owner: **pm-integration**
-- [medium] Surface the RUSTSEC-exception policy in the cargo-deny CI gate description so #3124-class blockers triage faster next time — owner: **pm-integration** (depends on #3124)
-- [low] Document the reality-server SSO consumer transient-401 contract vs reality-web auth-context cushion (PR #3121) in docs/api/README.md — owner: **pm-integration**
-
-### quality / RN lint (score 4-5, carried)
-
-- [medium] Resolve mobile RN jest-expo version rot (**#2951**) — owner: **pm-devops**
-
-### KMP code-review backlog (score 2-3, all blocked on #2652)
-
-- InquiriesResponse page_size vs reality-server `limit` mismatch
-- Ktor HttpClient has no HttpTimeout
-- CancellationException swallowed in repos
-- getPortfolioAnalytics() 100-cap + unbounded fan-out
-- CreateListingScreen onSubmit stub
-- SsoService untested
-
-### carried refactors (score 2-3)
-
-- reality-server duplicated URL-validation helper — merge into shared crate
-- api-server routes/integrations/webhook.rs repeated-churn (3 hotspot windows)
-- logout() AUTHED_QUERY_KEY_ROOTS allow-list gap (session leak)
-
-Buffer: **26/36 open** (floor 36) · candidates remaining ranked but unqueued: ~10. Buffer below floor by 10 but above half; the twin merge-gate (#2966 + #3124) is still the top lever — unblocking either frees the IDOR tier back onto the runner.
+- **Merge pipeline**: 🔴 DEADLOCKED (16 PRs blocked on #3131); workaround available (human-approve) but structural fix required.
+- **Delivery velocity**: 🟢 5 PRs merged in 36h (prior window: 2 in 72h); dispatcher is producing fixes faster than the merge gate accepts them.
+- **Buffer**: 🟡 claimable=12/72 (buffer-low trigger); below 30% refill target but up from 9/72 last cycle.
+- **Churn hotspots**: `backend/deny.toml` (2 PRs this run), `backend/servers/api-server/src/routes/migration.rs` (1 PR + 1 follow-up), `backend/servers/api-server/src/routes/aml_dsa/aml.rs` (typed-response pattern).
+- **Code review (Phase 1.5)**: 3 new findings expected into backlog this run.
