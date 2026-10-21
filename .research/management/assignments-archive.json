@@ -17239,6 +17239,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "gh-issue-3134",
+      "branch": "auto-impl/gh-issue-3134-0efda1d7",
+      "status": "merged",
+      "claimed_at": "2026-10-21T04:33:22Z",
+      "last_updated": "2026-10-21T06:31:59Z",
+      "status_changed_at": "2026-10-21T06:31:59Z",
+      "pr_number": 3135,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3135",
+      "merged_at": "2026-10-21T06:30:45Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3135 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=zip+ammonia already fixed on dev (#3125/#3130); real blocker was new RUSTSEC-2026-0382 (rustls-webpki) — bumped reachable line 0.103.16 + scoped ignore/bans-guard for AWS-pinned 0.101.7; cargo-deny all ok",
+      "reviewer_summary": "verdict=approve head_oid=00daea92ed16bb375fe9333dad8cfe798b131872 note=rustls-webpki-0382-remediation-clean-self-approve-blocked-posted-as-comment",
+      "last_reviewed_oid": "00daea92ed16bb375fe9333dad8cfe798b131872",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-21T06:31:59Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -20285,5 +20307,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-20T20:38:54Z"
+  "archived_at": "2026-10-21T06:33:48Z"
 }

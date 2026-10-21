@@ -1,0 +1,57 @@
+{
+  "generated": "2026-10-21T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable~8 < floor=36; deterministic refill sources backlog.json/retry-remint/coverage empty this run). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md - no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push and no branch/checkout performed - the orchestrator folds .research deltas into its Phase 6 commit. Segment selection: no Phase-1 churn list was handed to this invocation. state.json review_cursor dates: api-handlers=2026-10-19 (saturated - 3 open code-review-finding rows with segment==api-handlers && status==open in backlog.json, so skipped per SKILL Step 1 saturation rule), mobile-rn=2026-10-19, mobile-native-kmp=2026-10-18, and api-core/reality-server/ppt-web-ui/ppt-web-core/reality-web all tied at 2026-10-17 (oldest). api-core already has a signal file dated today (signals/2026-10-21-api-core-tier1d.json) from an earlier Tier-1d invocation this cycle, so it was skipped to avoid same-cycle duplication. Among the remaining tied-oldest segments, ppt-web-ui is churn-aligned per state.json hotspot_history (ppt-web disputes feature cluster: MediationWorkspacePage/MediationResolutionForm/MediationChatThread, plus documents feature: MoveFolderDialog) and is NOT saturated (0 open code-review-finding rows for segment==ppt-web-ui). Scope mapped to this repo's actual layout: the skill's ppt-web-ui (frontend/ppt-web/src/pages + components) maps to frontend/apps/ppt-web/src/{pages,components,features}; review focused on the churn-warm feature dirs disputes/ and documents/ plus the shared components/ and pages/ dirs. VERIFIED-CLEAN / NOT-FINDINGS this pass: (a) the disputes feature is high quality - MediationWorkspacePage has full error handling (isError disputeError + error banner with retry affordance + try/catch on all six mutations), MediationChatThread and MediationResolutionForm are fully i18n'd with proper error branches, useDraftStorage.ts is a correct localStorage-available-guarded debounced hook with unmount-flush; (b) both dangerouslySetInnerHTML usages are properly guarded - news/ArticleDetailPage.tsx:306 uses DOMPurify.sanitize with an explicit ALLOWED_TAGS allowlist, documents/DocumentSearchResult.tsx:77 uses DOMPurify with ALLOWED_TAGS:['mark'] and ALLOWED_ATTR:[] - no XSS; (c) no production `as any`/`as unknown as` crossing an API boundary (all hits are in *.test.tsx); (d) the evidence-upload failure path in FileDisputePageRoute.tsx:50-83 is correctly handled - per-file try/catch, failure count surfaced via a warning toast, failedEvidence threaded through router state, and the outer error re-throws to preserve the auto-saved draft; the TODO(#627) there is a tracked future retry-UI enhancement, not a present gap; (e) EvidenceUploader object-URL lifecycle is correct (createdPreviewsRef Set revoked on unmount + per-item revoke on remove). Honest de-duplication performed against backlog.json: the ppt-web i18n-gap vector is heavily mined (30+ done rows incl. code-review-ppt-web-ui-file-dispute-page-partial-i18n, code-review-ppt-web-ui-dispute-list-no-i18n, code-review-ppt-web-ui-workflow-automation-toasts-hardcoded-english, code-review-ppt-web-core-route-group-toast-i18n), BUT the two files/clusters below are specific instances NOT covered by any existing row (the file-dispute finding covered the page h1/placeholders, not EvidenceUploader internals; no row covers the documents-feature toast hooks). Stopped at 2 genuine fresh findings rather than padding to the 3-cap with known i18n duplicates.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned (ppt-web-ui is tied-oldest at review_cursor=2026-10-17 AND aligns with state.json hotspot_history disputes/documents feature churn); api-handlers skipped (saturated, 3 open findings), api-core skipped (already has a signal file dated today this cycle). ppt-web-ui is not saturated (0 open code-review-finding rows).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Both findings are frontend-only ppt-web edits: move user-facing strings into react-i18next (add keys to the ppt-web i18n resource bundles under features/*/i18n or the shared catalogue, swap literals for t('...')). No backend, no migration, no openapi/api-client regen. Verifiable with `pnpm --filter @ppt/web typecheck` + `pnpm --filter @ppt/web test` and `pnpm check` (Biome). Small, well-scoped, directly claimable to relieve the starved buffer.",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 ppt-web-ui",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts:26-37 - success/error toast title+message are hardcoded Slovak string literals ('Dokument presunuty', '„${doc.title}“ bol presunuty do priecinka.', 'Presun zlyhal', 'Dokument sa nepodarilo presunut.') with no useTranslation/t(); every move toast renders Slovak regardless of the active i18n locale.",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts:47-48 - download-failure toast is hardcoded Slovak ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo stiahnut.'), same i18n bypass.",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx:275-385 - the SAME feature hardcodes toast strings in ENGLISH ('Copy failed', 'Could not copy to clipboard.', 'Revoke failed', 'Share created', 'Public link copied.', `Link: ${shareUrl}`). So the documents feature mixes two hardcoded languages across its toasts.",
+        "Asymmetry confirming this is an accidental gap, not a deliberate opt-out: the sibling file documents/components/MoveFolderDialog.tsx (same feature) DOES use useTranslation()/t() throughout (import at :20, const {t}=useTranslation() at :143 and :295). The toast hooks and DocumentSharePanel were simply not wired to i18n.",
+        "Severity LOW (+1), i18n gap: ppt-web is a react-i18next app; these user-facing move/download/share toasts render in a fixed language (Slovak in the hooks, English in the share panel) for every locale. Confidence medium - the hardcoded literals and the absence of t() are confirmed by static read; whether any non-matching locale is actively configured is runtime/config-dependent. Not covered by any existing backlog row (the tracked toast-i18n rows are workflow-automation and route-group action toasts, not the documents feature)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 ppt-web-ui",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 - user-facing validation error messages are hardcoded English string literals ('Unsupported file type: ${...}', 'File too large (max 50 MB): ${file.name}') and are rendered to the user at :267 (<p className=text-xs text-red-600>{item.error}</p>). A rejected upload therefore always shows English regardless of locale.",
+        "EvidenceUploader.tsx:214,217 - drop-zone copy is hardcoded English ('Drop files here or ... browse' and 'JPG, PNG, PDF, MP3, MP4 . max 50 MB per file . up to {MAX_FILES} files'), as is the description-input placeholder at :274 ('Short description (optional)').",
+        "Inconsistency confirming the gap is accidental: the component already imports and uses useTranslation()/t() (:53) for SOME aria-labels (t('aria.addEvidenceFiles') :167, t('aria.dropEvidenceFiles') :185, t('aria.evidenceFiles') :225, t('aria.uploading') :288, t('aria.uploaded') :297), yet the visible copy, the validation error strings, and two aria-labels (:278 `Description for ${item.file.name}`, :312 `Remove ${item.file.name}`) remain hardcoded English.",
+        "Severity LOW (+1), i18n gap on a legally-meaningful flow (Epic 80 Story 80.2 dispute filing). Not a duplicate: backlog row code-review-ppt-web-ui-file-dispute-page-partial-i18n covered the FileDisputePage h1/placeholders and refactor-evidenceuploader-test-tsx-churn covered the EvidenceUploader TEST file - neither covers the EvidenceUploader component's own hardcoded strings. Confidence medium: literals confirmed by static read; triggering requires a non-matching active locale (config-dependent)."
+      ]
+    }
+  ]
+}
