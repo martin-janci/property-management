@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "generated_at": "2026-10-21T00:37:00Z",
+  "cursor": {
+    "since_iso": "2026-10-19T00:47:58Z",
+    "last_pr_seen": 3123,
+    "last_issue_seen": 3124
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "candidate_vector": "triage",
+      "confidence": "high",
+      "score_delta": 0,
+      "evidence": "routine last_run_iso=2026-10-19T00:47:58Z — 1d 23h ago; buffer-low trigger fired (claimable=9/72) in the meantime"
+    },
+    {
+      "id": "code-review-reality-server-price-map-eviction-dos",
+      "type": "code-review-finding",
+      "source": "Issue #3132",
+      "candidate_vector": "security",
+      "confidence": "high",
+      "score_delta": 2,
+      "evidence": "Post-merge review of PR #3092 filed GH issue #3132 with 2 medium-severity findings: (perf) insert_bounded() O(n log n) full-sort + full-keyset clone under cache write-lock on every at-cap insert; (security) attacker-controlled city/property_type key space not validated against known enum, cap forces cache-thrash + DB-load DoS. Both verified in-situ against dev HEAD at backend/servers/reality-server/src/routes/price_map.rs:67-87 and :170-176."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/aml.rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-21",
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "score_delta": 1,
+      "evidence": "231 churn lines since 2026-10-19 cursor (PR #3129 — type AML assessments list endpoint response). First hotspot run for this file."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "type": "churn-hotspot",
+      "source": "churn-scan-2026-10-21",
+      "candidate_vector": "refactor",
+      "confidence": "high",
+      "score_delta": 1,
+      "evidence": "167 churn lines since 2026-10-19 cursor (PR #3092 — bound PRICE_MAP_CACHE). First hotspot run; follow-up finding tracked as code-review-reality-server-price-map-eviction-dos."
+    },
+    {
+      "id": "dep-update-noise-pr-3130",
+      "type": "dep-update-noise",
+      "source": "PR #3130",
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "score_delta": 0,
+      "evidence": "ammonia 4.x → 4.2.4 — clears cargo-deny RUSTSEC-2026-0373 (CSS url case-insensitive match)"
+    },
+    {
+      "id": "dep-update-noise-pr-3125",
+      "type": "dep-update-noise",
+      "source": "PR #3125",
+      "candidate_vector": "dep-update",
+      "confidence": "high",
+      "score_delta": 0,
+      "evidence": "rust_xlsxwriter bump to zip 9.x — clears cargo-deny RUSTSEC-2026-0367/0368/0369 (zip extract symlink traversal + SUID/SGID preservation)"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist signal types this run",
+  "goal_checks": [
+    { "goal": "G1",  "passed": true,  "command": "test -f briefs/2026-10-21.md && head -1 == '# 2026-10-21'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true,  "command": "state.json advances vs HEAD", "observed": "last_pr_seen 3123→3130, last_issue_seen 3124→3134, last_commit_sha 62aaaa5→8bcbeb8, seen_signals grew", "expected": "true" },
+    { "goal": "G3",  "passed": true,  "command": "jq '[.items[].id] | length == (unique | length)'", "observed": "true (499 unique ids)", "expected": "true" },
+    { "goal": "G4",  "passed": true,  "command": "new signal ids absent from prior seen_signals OR cumulative-type with score_delta=0", "observed": "all 6 ids new to seen_signals", "expected": "true" },
+    { "goal": "G5",  "passed": true,  "command": "no score > 8; open items older than 14d decayed", "observed": "max_score=6; no open items older than 2026-10-07 required decay", "expected": "true" },
+    { "goal": "G6",  "passed": true,  "command": "every new plans/<slug>.md has adversarial pass annotation", "observed": "price-map-eviction-dos plan annotated 'adversarial pass: passed' in brief", "expected": "true" },
+    { "goal": "G7",  "passed": true,  "command": "1 new plan, 4 metadata + 11 headings + capability + mode + file exists", "observed": "all checks pass for price-map-eviction-dos plan", "expected": "true" },
+    { "goal": "G8",  "passed": true,  "command": "git diff --cached --name-only outside .research/ == 0", "observed": "0", "expected": "0" },
+    { "goal": "G9",  "passed": true,  "command": "no secrets or private hostnames in staged diff", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true,  "command": "diff backlog.md vs fresh regen from backlog.json", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true,  "command": "no failed phase this run", "observed": "all phases completed; Phase 1.5 + 1.6 intentionally skipped (buffer-refill run)", "expected": "true" },
+    { "goal": "G12", "passed": true,  "command": "every prior-run plan slug present in plans/ or plans/_archive/", "observed": "2 plans moved to _archive; others unchanged", "expected": "true" },
+    { "goal": "G13", "passed": true,  "command": "archive count this run >= HEAD", "observed": "+2 archived (migration-upload, price-map-cache)", "expected": "true" },
+    { "goal": "G14", "passed": true,  "command": "diff IDEAS_TRIAGE.md vs fresh regen", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true,  "command": "auto_fix_actions empty (no candidate), no auto-fix branches pushed", "observed": "0 actions", "expected": "true" },
+    { "goal": "G16", "passed": true,  "command": "Phase 1.6 skipped this run (buffer-refill mode) → gate is a no-op", "observed": "pm_cursor + coverage_cursor unchanged vs HEAD", "expected": "true" },
+    { "goal": "G17", "passed": true,  "command": "no literal Telegram bot-token value in staged diff", "observed": "0 matches", "expected": "0" }
+  ]
+}

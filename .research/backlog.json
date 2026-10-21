@@ -12210,19 +12210,21 @@
       "score": 3,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map)",
+        "PR #3092"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/price_map.rs:32-38 — PRICE_MAP_CACHE is a process-global HashMap<String, CacheEntry> with no size cap, only TTL. Key = format!(\"{}:{}:{}:{}\", mode, time_window_str, property_type.unwrap_or(\"\"), city.unwrap_or(\"\")) at :125-131; city/property_type come straight off public unauthenticated GET /api/v1/price-map.",
         "Memory-exhaustion DoS: cache.retain only runs on write-path, CACHE_TTL=3600s; attacker rotating city=<random> inserts a new entry per request. Millions of keys accumulate inside the 1h window → unbounded heap growth → OOM.",
-        "Self-inconsistency: state.rs:910-915 bounds INQUIRY_RATE_LIMIT_MAX_IPS=100_000 via with_default_bounded; the price_map cache (equally attacker-influenced key space) is unbounded. Fix: bounded LRU / size-limited insert mirroring the inquiry limiter, or allowlist + hash validated inputs."
+        "Self-inconsistency: state.rs:910-915 bounds INQUIRY_RATE_LIMIT_MAX_IPS=100_000 via with_default_bounded; the price_map cache (equally attacker-influenced key space) is unbounded. Fix: bounded LRU / size-limited insert mirroring the inquiry limiter, or allowlist + hash validated inputs.",
+        "resolved: PR #3092 merged 2026-10-19 — bound PRICE_MAP_CACHE against anonymous key-flood DoS"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/price_map.rs"
       ],
       "created_at": "2026-10-15",
-      "updated_at": "2026-10-15",
-      "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md",
+      "updated_at": "2026-10-21",
+      "plan": "plans/_archive/code-review-reality-server-price-map-cache-unbounded.md",
       "reconciled": {
         "at": "2026-10-19T10:36:16Z",
         "assignment_status": "merged",
@@ -12691,17 +12693,19 @@
       "score": 3,
       "status": "done",
       "sources": [
-        "rotating-expert-review 2026-10-19 api-handlers"
+        "rotating-expert-review 2026-10-19 api-handlers",
+        "PR #3127"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/migration.rs:678-798 upload_import_file (POST /api/v1/migration/import/upload, wired at routes/migration.rs:59 and lib.rs:320) is a silent stub that drops the uploaded file bytes. At line 693 it declares `let mut _file_data: Vec<u8> = Vec::new();` (the leading underscore is the Rust 'intentionally unused' marker that suppresses the dead-store warning). At line 715-720 it reads the full multipart body into memory with `field.bytes().await` and assigns it to `_file_data = data.to_vec();`. That buffer is never used again anywhere in the file (grep for `_file_data` returns only these two lines). At line 757 it fabricates a storage path `let file_path = format!(\"imports/{}/{}\", org_id, Uuid::new_v4());` with NO call to any S3/MinIO/filesystem writer, then at line 764-779 passes that non-existent path to `migration_repo.create_import_job(...)` and returns 200 with job_id + 'File uploaded successfully. Validation will begin shortly.' (line 796). Impact: (a) data loss — platform admins who upload a bulk-import file (buildings/units/residents/financial records, up to 100 MB per MAX_IMPORT_SIZE at line 734) receive a success response and a job_id but no file was ever persisted; (b) silent broken feature — downstream processing (`get_import_job_status`, `validate_import`, `approve_import`) references a `file_path` that resolves to nothing; (c) memory bloat — the handler still allocates up to 100 MB into a Vec<u8> per concurrent request before dropping it. Reachability: router nested at lib.rs:320 under `/api/v1/migration`, mod declared at routes/mod.rs:101 `pub mod migration;`. Confidence HIGH: the `_file_data` dead-store and the lack of any writer call are directly observable; the fabricated file_path pattern and the `Pending` status at line 770 confirm the stub intent. Severity HIGH (+3): data-loss class on a platform-admin migration endpoint whose entire purpose is to persist tenant data, not a mere I/O bug. Fix: route the uploaded bytes through `state.storage_service` (same pattern as other upload sites, e.g. documents) BEFORE creating the import job, use the actual storage key as `file_path`, and reject the request if `storage_service` is not configured (fail-closed) instead of returning success."
+        "backend/servers/api-server/src/routes/migration.rs:678-798 upload_import_file (POST /api/v1/migration/import/upload, wired at routes/migration.rs:59 and lib.rs:320) is a silent stub that drops the uploaded file bytes. At line 693 it declares `let mut _file_data: Vec<u8> = Vec::new();` (the leading underscore is the Rust 'intentionally unused' marker that suppresses the dead-store warning). At line 715-720 it reads the full multipart body into memory with `field.bytes().await` and assigns it to `_file_data = data.to_vec();`. That buffer is never used again anywhere in the file (grep for `_file_data` returns only these two lines). At line 757 it fabricates a storage path `let file_path = format!(\"imports/{}/{}\", org_id, Uuid::new_v4());` with NO call to any S3/MinIO/filesystem writer, then at line 764-779 passes that non-existent path to `migration_repo.create_import_job(...)` and returns 200 with job_id + 'File uploaded successfully. Validation will begin shortly.' (line 796). Impact: (a) data loss — platform admins who upload a bulk-import file (buildings/units/residents/financial records, up to 100 MB per MAX_IMPORT_SIZE at line 734) receive a success response and a job_id but no file was ever persisted; (b) silent broken feature — downstream processing (`get_import_job_status`, `validate_import`, `approve_import`) references a `file_path` that resolves to nothing; (c) memory bloat — the handler still allocates up to 100 MB into a Vec<u8> per concurrent request before dropping it. Reachability: router nested at lib.rs:320 under `/api/v1/migration`, mod declared at routes/mod.rs:101 `pub mod migration;`. Confidence HIGH: the `_file_data` dead-store and the lack of any writer call are directly observable; the fabricated file_path pattern and the `Pending` status at line 770 confirm the stub intent. Severity HIGH (+3): data-loss class on a platform-admin migration endpoint whose entire purpose is to persist tenant data, not a mere I/O bug. Fix: route the uploaded bytes through `state.storage_service` (same pattern as other upload sites, e.g. documents) BEFORE creating the import job, use the actual storage key as `file_path`, and reject the request if `storage_service` is not configured (fail-closed) instead of returning success.",
+        "resolved: PR #3127 merged 2026-10-20 — persist migration import upload to storage (fix silent data loss)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/migration.rs"
       ],
       "created_at": "2026-10-19",
-      "updated_at": "2026-10-19",
-      "plan": "plans/code-review-api-handlers-migration-upload-drops-file.md",
+      "updated_at": "2026-10-21",
+      "plan": "plans/_archive/code-review-api-handlers-migration-upload-drops-file.md",
       "reconciled": {
         "at": "2026-10-20T20:36:03Z",
         "assignment_status": "merged",
@@ -12747,6 +12751,70 @@
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-price-map-eviction-dos",
+      "title": "SECURITY/PERF: price_map insert_bounded O(n log n) full sort + full-keyset clone under flood converts OOM mitigation into CPU/lock DoS; attacker-controlled key space uncapped",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "Issue #3132",
+        "PR #3092"
+      ],
+      "evidence": [
+        "post-merge review of PR #3092 (bounded PRICE_MAP_CACHE) filed GitHub issue #3132 with 2 medium-severity findings; both reproducible on current dev HEAD",
+        "backend/servers/reality-server/src/routes/price_map.rs:67-87 — insert_bounded() at cap: collects every (key, expires_at) via .iter().map(k.clone()) into Vec, then sort_by_key(..) O(n log n); runs under cache write-lock on every anonymous insert once at cap (10_000)",
+        "backend/servers/reality-server/src/routes/price_map.rs:170-176 — city/property_type query params go into cache_key with no validation against a known-enumeration set; distinct-key flood forces constant eviction of live entries, collapsing hit rate and falling through to full DB aggregation on every request",
+        "fix shape: (a) O(n) single-pass oldest-eviction (min_by_key, 1 clone) since overflow is always 1; (b) city/property_type validation against known enumeration (reject or 400 on unknown) OR per-IP distinct-key / request-rate limit mirroring INQUIRY_RATE_LIMIT_MAX_IPS"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": "plans/code-review-reality-server-price-map-eviction-dos.md"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/aml.rs",
+      "title": "Churn hotspot: aml.rs — 231 lines of churn this run (PR #3129 AML list typing)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-21"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs — 231 lines churn since 2026-10-19 cursor (PR #3129 — type AML assessments list endpoint response)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "title": "Churn hotspot: price_map.rs — 167 lines of churn this run (PR #3092 bound cache)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-scan-2026-10-21"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs — 167 lines churn since 2026-10-19 cursor (PR #3092 — bound PRICE_MAP_CACHE against anonymous key-flood DoS). Second hotspot run; add_to_compare.rs sibling follow-up #3132 already in backlog."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
       "plan": null
     }
   ]
