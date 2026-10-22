@@ -1,22 +1,20 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatNumber, formatPrice } from '@/lib/format';
 import type { ListingSectionProps } from './registry';
 
-function formatPrice(price: number, currency: string) {
+function formatListingPrice(price: number, currency: string, locale: string) {
   const value = Number.isFinite(price) ? price : 0;
   if (typeof currency !== 'string' || currency.length === 0) {
-    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+    return formatNumber(value, locale, { maximumFractionDigits: 0 });
   }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatPrice(value, locale, { currency });
 }
 
 export function AdditionalInfo({ listing }: ListingSectionProps) {
   const t = useTranslations('listing');
+  const locale = useLocale();
   return (
     <section className="section">
       <h2 className="section-title">{t('additionalInfo')}</h2>
@@ -31,7 +29,7 @@ export function AdditionalInfo({ listing }: ListingSectionProps) {
           <div className="info-item">
             <span className="info-label">{t('monthlyCharges')}</span>
             <span className="info-value">
-              {formatPrice(listing.monthlyCharges, listing.currency)}
+              {formatListingPrice(listing.monthlyCharges, listing.currency, locale)}
             </span>
           </div>
         )}
