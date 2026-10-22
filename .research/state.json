@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-19T00:47:58Z",
-  "last_run_ms": 900000,
-  "last_pr_seen": 3123,
-  "last_issue_seen": 3124,
-  "last_commit_sha": "62aaaa5",
+  "last_run_iso": "2026-10-22T00:38:57Z",
+  "last_run_ms": 300000,
+  "last_pr_seen": 3135,
+  "last_issue_seen": 3136,
+  "last_commit_sha": "8c2fa91",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1205,7 +1205,12 @@
     "untriaged-issue-952",
     "code-review-api-handlers-migration-upload-drops-file",
     "code-review-api-handlers-migration-export-fake-url-stub",
-    "code-review-api-handlers-impersonation-active-raw-xff-audit"
+    "code-review-api-handlers-impersonation-active-raw-xff-audit",
+    "lag-warning-2026-10-22",
+    "stale-routine-alert-2026-10-22",
+    "code-review-finding-reality-server-price-map-cache-thrash-dos",
+    "code-review-finding-api-handlers-migration-upload-storage-error-tests",
+    "triage-dispatcher-merge-deadlock-issue-3131"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1219,9 +1224,9 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 100,
-    "vectors_created": 445,
-    "plans_created": 35,
+    "runs": 101,
+    "vectors_created": 448,
+    "plans_created": 36,
     "quiet_days": 8,
     "auto_fix_count": 0
   },

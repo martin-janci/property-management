@@ -1,0 +1,72 @@
+{
+  "run_iso": "2026-10-22T00:36:00Z",
+  "trigger": "scheduled: buffer-low claimable=13/72 — dispatcher Tier-2 refill planner kick",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-22",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-19T00:47:58Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 71h ~ 3d — last run 2026-10-19T00:47:58Z; cloud routine likely wedged or scheduler paused",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-10-22",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-19T00:47:58Z",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 3d old; cloud routine may be paused. Dispatcher state (.research/management/assignments.json) is still updating per 2026-10-21 22:36 commit, so dispatcher cron is alive but research cron is not.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-finding-reality-server-price-map-cache-thrash-dos",
+      "type": "code-review-finding",
+      "source": "Issue #3132 (post-merge review of PR #3092 by ppt-review-merged skill)",
+      "score_delta": 3,
+      "evidence": "insert_bounded at price_map.rs:67-85 clones+sorts whole keyset O(n log n) under write lock; city/property_type attacker-controlled → OOM mitigation becomes cache-thrash+DB-load DoS on unauthenticated endpoint. Security medium + perf medium findings with concrete proposed patches, confirmed on disk.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-finding-api-handlers-migration-upload-storage-error-tests",
+      "type": "code-review-finding",
+      "source": "Issue #3136 (post-merge review of PR #3127 by ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "upload_import_file classifies StorageError by Display-string substring instead of typed variant (correctness: low). Regression suite only exercises fail-closed branch; happy-path persistence contract not asserted (tests: medium). Both findings concrete; code paths confirmed on disk.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "triage-dispatcher-merge-deadlock-issue-3131",
+      "type": "untriaged-issue",
+      "source": "Issue #3131 (labels: follow-up, blocked)",
+      "score_delta": 1,
+      "evidence": "Dispatcher merge pipeline fully deadlocked — bot cannot self-approve its own PRs (GitHub blocks self-approval; dispatcher token acts as martin-janci who authors the auto-impl PRs). 16 PRs sitting in review; WIP cap 8 exceeded; Phase 3 claims 0/run. Routine surfaces alert; operator decision required (second human/identity, different GH identity, or branch-protection relaxation).",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the three new high-confidence signals this run are code-review-finding + untriaged-issue types; Phase-5 allowlist does not include either type",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-10-22.md && head -1 == '# 2026-10-22'", "observed": "ok", "expected": "ok"},
+    {"goal": "G2", "passed": true, "command": "staged state.json differs from HEAD state.json", "observed": "cursors advanced (last_pr_seen 3123->3135, last_issue_seen 3124->3136, last_commit_sha advanced, seen_signals grew by 5)", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | length == (unique | length)' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no non-cumulative signal id in prior seen_signals with score_delta != 0", "observed": "all 5 signals have new IDs this run", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "no score > 8; decay applied to items with updated_at <= today-14", "observed": "max score 6 (unchanged); no open items older than 14d required decay (oldest open updated_at 2026-10-11, within 11d)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "every new plan has brief annotation 'adversarial pass: ...'", "observed": "1 new plan: code-review-reality-server-price-map-cache-thrash-dos.md — brief notes 'adversarial pass: passed'", "expected": "ok"},
+    {"goal": "G7", "passed": true, "command": "<=2 new plans; each contains 15 required sections; files resolve", "observed": "1 new plan; all 15 sections present; both files resolve on disk", "expected": "ok"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0"},
+    {"goal": "G9", "passed": true, "command": "git diff --cached (minus baseline doc exceptions) | grep -E '<secret-patterns>' | wc -l", "observed": "0", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff -q backlog.md <regen>", "observed": "identical", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "every failed phase listed in brief; cursors not advanced for failed phases", "observed": "no phase failures this run (Phase 1.5 and Phase 1.6 skipped intentionally; brief lists under Phases that failed as 'none — Phase 1.5/1.6 skipped due to routine-lag catch-up focus and 72h staleness; see Code review slice section')", "expected": "ok"},
+    {"goal": "G12", "passed": true, "command": "every prior-run plan slug still present in plans/ or plans/_archive/", "observed": "no plans deleted or moved this run; prior plans all still present", "expected": "ok"},
+    {"goal": "G13", "passed": true, "command": "archive-count-now >= archive-count-at-HEAD", "observed": "21 == 21 (no archive changes this run)", "expected": "exit 0"},
+    {"goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md <regen>", "observed": "identical", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto-fix cap + idempotency", "observed": "auto_fix_actions is empty (no candidate matched allowlist + certainty bar)", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 artifacts valid when run; pm_cursor + coverage_cursor liveness", "observed": "Phase 1.6 skipped this run — pm_cursor and coverage_cursor unchanged; G16 no-op per spec", "expected": "no-op"},
+    {"goal": "G17", "passed": true, "command": "no Telegram bot-token literal in staged diff", "observed": "0 matches", "expected": "0"}
+  ]
+}

@@ -12051,14 +12051,15 @@
         "backend/servers/api-server/src/routes/violations.rs — EVERY handler authorizes solely on `user.tenant_id` presence (`.ok_or_else(|| forbidden_error(\"No organization context\"))`) and never consults `user.role`. The ONLY role check in the whole router is list_comments L648 (`user.is_platform_admin() || user.role.map(|r| r.is_manager())`) deciding whether internal comments are visible — proving the role model is available but was not applied to the write/decision paths.",
         "Privileged endpoints with NO role gate: create_rule/update_rule/delete_rule (community rules), create_violation, update_violation, assign_violation, create_action/update_action/mark_action_sent (issue enforcement actions + fines), record_payment, create_appeal and decide_appeal. Most severe: POST /api/v1/violations/appeals/{appeal_id}/decide → decide_appeal (repo L799) lets any authenticated org member approve an appeal, which sets the violation to 'dismissed' and reduces the fine via GREATEST(0, fine_amount - adjustment). A Resident/Tenant can file an appeal on their own violation and then approve it, zeroing their own fine.",
         "AuthUser exposes `role: Option<TenantRole>` with a hierarchy (`is_manager()`, `level()`, `is_platform_admin()` — api-core/src/extractors/auth.rs:247, rls_connection.rs:121). The router is mounted as a plain `.nest(\"/api/v1/violations\", routes::violations::router())` (lib.rs:408) with no role-enforcing Tower layer, so there is no outer authorization layer compensating. Fix: require manager/org-admin (or a committee role) on all create/update/delete/assign/action/payment/appeal-decision handlers.",
-        "In-flight: PR #3072 opened by dispatcher auto-impl flow — dispatcher-reviewer verdict=approve (role-gate-correct, 13 mutations gated, tests sound). Blocked on human merge: PR is still draft on GitHub and reviewer could only COMMENT (bots cannot self-approve). Stem-colliding with planner readiness gate; buffer-low 2026-10-17 22:30 counted this as claimable but it is already in flight."
+        "In-flight: PR #3072 opened by dispatcher auto-impl flow — dispatcher-reviewer verdict=approve (role-gate-correct, 13 mutations gated, tests sound). Blocked on human merge: PR is still draft on GitHub and reviewer could only COMMENT (bots cannot self-approve). Stem-colliding with planner readiness gate; buffer-low 2026-10-17 22:30 counted this as claimable but it is already in flight.",
+        "2026-10-22: NOT promoted this run — stem-collides with .research/management/assignments.json row task_id=code-review-api-handlers-violations-missing-role-authz status=review PR #3072 (opened 2026-10-12, draft, reviewer verdict=approve, blocked by dispatcher self-approval deadlock per #3131)."
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs",
         "backend/crates/db/src/repositories/violations.rs"
       ],
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-22",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -12782,6 +12783,70 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-price-map-cache-thrash-dos",
+      "title": "SECURITY: reality-server PRICE_MAP_CACHE size cap still thrashes legitimate entries and amplifies CPU/lock contention on anonymous /price-map (post-fix follow-up)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #3132"
+      ],
+      "evidence": [
+        "post-merge review of PR #3092 (merged 2026-10-19). insert_bounded at backend/servers/reality-server/src/routes/price_map.rs:67-85 evicts via a full-keyset clone (Vec<(String, Instant)>) + sort_by_key under the global RwLock write guard, so once the cache plateaus at MAX_PRICE_MAP_CACHE_ENTRIES=10_000 every anonymous distinct-key request pays O(n log n) + a 10k-String clone while holding the write lock → OOM mitigation becomes CPU/lock-contention amplifier.",
+        "city/property_type are not validated at the top of get_price_map, so an attacker rotating distinct ?city= values thrashes legitimate entries out of the cache (hit rate -> ~0) and every anonymous request falls through to the full price-map aggregation query on Postgres. The OOM DoS is traded for a cache-thrash + DB-load DoS on an unauthenticated endpoint. Confidence HIGH — code paths confirmed on disk.",
+        "Suggested fix (from #3132): single-pass min_by_key eviction instead of clone+sort; validate city/property_type against known enumerations and 400 unknown values before acquiring the cache lock."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs",
+        "backend/servers/reality-server/tests/suites/price_map_tests.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": "plans/code-review-reality-server-price-map-cache-thrash-dos.md"
+    },
+    {
+      "id": "code-review-api-handlers-migration-upload-storage-error-tests",
+      "title": "api-server /migration/import/upload: typed StorageError match + happy-path persistence test (follow-up to PR #3127)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Issue #3136"
+      ],
+      "evidence": [
+        "post-merge review of PR #3127 (merged 2026-10-20). upload_import_file in backend/servers/api-server/src/routes/migration.rs classifies storage failures as 400 vs 503 by substring-matching the Display string of StorageError; the typed InvalidContentType variant already exists and should be matched directly (confidence HIGH — code paths confirmed).",
+        "The new regression suite migration_import_upload_persists_file.rs only exercises the fail-closed branch (storage_service: None -> 503). It never asserts that uploaded bytes actually land in object storage at the returned import_jobs.file_path on the happy path, so a future refactor could re-introduce silent data loss and the suite would still pass (severity: medium — tests)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs",
+        "backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "triage-dispatcher-merge-deadlock-issue-3131",
+      "title": "Triage: dispatcher merge pipeline fully deadlocked — bot cannot self-approve its own PRs; 16 approved PRs stuck in review (#3131)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "Issue #3131"
+      ],
+      "evidence": [
+        "Issue #3131 (labels: follow-up, blocked). Dispatcher token acts as martin-janci who is also the PR author — GitHub blocks self-approval, so Phase-5 reviewer can only COMMENT, never APPROVE. ppt-pr-merge requires reviewDecision==APPROVED, so the queue is structurally unmergeable through the bot. 16 PRs sitting in review (oldest #3024 open since 2026-10-05). Phase 3 claims 0 new tasks/run against WIP cap 8.",
+        "Not a code vector. Operator options per the issue: (1) a second human/identity approves, (2) run dispatcher under a different GitHub identity, (3) relax branch protection for the bot lane. Routine surfaces the alert but does NOT change branch protection or admin-merge PRs."
+      ],
+      "files": [],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
     }
   ]
 }
