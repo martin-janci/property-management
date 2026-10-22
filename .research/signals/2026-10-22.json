@@ -143,7 +143,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-22 api-core",
       "segment": "api-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -153,14 +153,15 @@
       "evidence": [
         "workflow_executor.rs:348-403 process_event — `?` on evaluate_conditions at :359 aborts the whole batch on one malformed stored condition; execute_workflow failure arm at :395-402 correctly isolates with warn!() + continue — asymmetry confirms gap.",
         "Folded in by the 2026-10-22 08:41 UTC rerun (buffer-low fire): the file 2026-10-22-api-core-tier1d.json landed at 08:33 UTC, after the daily routine's 03:18 UTC run."
-      ]
+      ],
+      "applied_in": "08:41 rerun — score_delta preserved for audit trail"
     },
     {
       "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-22 ppt-web-core",
       "segment": "ppt-web-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -170,14 +171,15 @@
       "evidence": [
         "useIotWebSocket.ts:84-96 fixed 5s reconnect; no backoff/cap/give-up; shared stack (websocket.ts:600-632 + WebSocketContext.tsx:304-320) implements all three correctly — reimplementation gap.",
         "Folded in by the 2026-10-22 08:41 UTC rerun (buffer-low fire): the file 2026-10-22-ppt-web-core-tier1d.json landed at 08:33 UTC, after the daily routine's 03:18 UTC run."
-      ]
+      ],
+      "applied_in": "08:41 rerun — score_delta preserved for audit trail"
     },
     {
       "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-22 ppt-web-core",
       "segment": "ppt-web-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -187,7 +189,8 @@
       "evidence": [
         "useWebSocket.ts:83-95 — subscribe effect gates on handlerRef at mount but omits it from deps; a handler produced after mount never triggers subscribe() for an unchanged eventType.",
         "Folded in by the 2026-10-22 08:41 UTC rerun (buffer-low fire): the file 2026-10-22-ppt-web-core-tier1d.json landed at 08:33 UTC, after the daily routine's 03:18 UTC run."
-      ]
+      ],
+      "applied_in": "08:41 rerun — score_delta preserved for audit trail"
     },
     {
       "id": "code-review-api-core-auth-password-no-maxlen",
@@ -209,6 +212,24 @@
         "backend/servers/api-server/src/main.rs:230 — the only backstop is the coarse global DefaultBodyLimit::max(16 * 1024 * 1024) = 16 MiB. That permits a ~16 MiB password string per request, each forcing a 64 MiB Argon2id computation. Unauthenticated login lets an attacker amplify request cost (CPU + 64 MiB RSS spikes under concurrency) with no password-specific size gate — a resource-exhaustion / DoS-hardening gap. Fix: cap password length (e.g. reject > 256–1024 chars) inside validate_password and before verify_password on the login path.",
         "Severity LOW (+1): no auth bypass, no data corruption; Argon2 memory cost is input-length-independent so amplification is modest and bounded by the 16 MiB body limit. Confidence medium: the absence of a max-length check is confirmed by static read of validate_password / verify_password and the login call site; runtime DoS impact is traffic/concurrency dependent, so latent rather than confirmed. Previously-UNFLAGGED: no prior api-core finding covers password length bounds (the only open api-core findings concern workflow-condition error handling)."
       ]
+    },
+    {
+      "id": "code-review-reality-web-compliance-aml-wrong-api-base",
+      "type": "code-review-finding",
+      "source": "docs/api/audits/2026-10-22-integration-openapi-drift.md (committed via PR #3139)",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/packages/api-client/src/compliance/api.ts API_BASE='/api/v1/compliance' + GET ${API_BASE}/aml/assessments → actual URL /api/v1/compliance/aml/assessments, but backend mounts AML router at /api/v1/aml-dsa (backend/servers/api-server/src/lib.rs:322). Every AML list/thresholds/country-risks/EDD/review call from the frontend 404s. Hand-maintained client — outside TypeSpec + api-validation.yml guard, so no CI catches this."
+    },
+    {
+      "id": "code-review-reality-web-compliance-aml-client-type-divergence",
+      "type": "code-review-finding",
+      "source": "docs/api/audits/2026-10-22-integration-openapi-drift.md (committed via PR #3139)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/packages/api-client/src/compliance/types.ts AmlRiskAssessment vs backend AmlAssessmentListItem: subject_*/party_* field renames, triggered/mitigated flag rename, required-vs-nullable risk_factors (null breaks non-optional FE type — the PR #3117 symptom #3129 cites), 11 server fields unmodeled on FE. Latent today because FE reads defensively."
     }
   ],
   "goal_checks": [
@@ -223,116 +244,117 @@
       "goal": "G2",
       "passed": true,
       "command": "state.json cursors advanced vs HEAD",
-      "observed": "last_pr_seen 3123→3135, last_commit_sha 62aaaa5→9553c4e, seen_signals grew by 7",
+      "observed": "last_pr_seen 3135→3142; last_run_iso 08:41→20:31; seen_signals grew by 2; stats.runs 102→103",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq [.items[].id] unique length == length",
-      "observed": "true (500/500)",
+      "command": "backlog.json ids unique",
+      "observed": "unique id count == total count (505)",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no non-cumulative dup signal with score_delta != 0",
-      "observed": "true — all new ids absent from prior seen_signals",
+      "command": "no non-cumulative signal id in prev seen_signals got score_delta != 0",
+      "observed": "the 2 new AML signal ids are fresh (not in HEAD seen_signals); 3 signals already applied in 08:41 rerun had score_delta zeroed on this re-emit (audit note in applied_in field); churn-* re-emits already had score_delta=0",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "cap: no score>8; decay: all open items with updated_at ≤ 2026-10-08 lost ≥1 or dropped",
-      "observed": "cap: true; decay: no candidates (none older than 14d)",
+      "command": "score cap <= 8; decay applied to open items older than 14d",
+      "observed": "max open-row score = 3 (AML wrong-base); no open row updated_at <= 2026-10-08 after prior decay sweep",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run → no adversarial annotations required",
-      "observed": "0 new plans",
-      "expected": "0"
+      "command": "every new plan in plans/ has adversarial-pass annotation in brief",
+      "observed": "no new plans this rerun — N/A",
+      "expected": "N/A"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans; each has required sections",
-      "observed": "0 new plans (vacuously true)",
+      "command": "<=2 new plans; each meets 15-section + capability + mode + files-exist gates",
+      "observed": "0 new plans this rerun",
       "expected": "true"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached only .research/",
-      "observed": "0 non-.research paths",
-      "expected": "0 non-.research paths"
+      "command": "git diff --cached --name-only | grep -v '^.research/'  | wc -l",
+      "observed": "0 (only .research/ paths staged)",
+      "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets in staged diff",
-      "observed": "0 secret matches",
-      "expected": "0 matches"
+      "command": "secrets/private-hostname regex scan on staged diff",
+      "observed": "0 matches (no secret/token patterns in added lines outside the 4 baseline doc files)",
+      "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q /tmp/backlog.regen.md backlog.md",
-      "observed": "byte-identical",
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "byte-identical (regen just ran immediately before stage)",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "no failed phases to record",
-      "observed": "all phases passed",
-      "expected": "true"
+      "command": "phase-failure honesty: failed phases list vs cursor advances",
+      "observed": "no phases failed this rerun",
+      "expected": "N/A"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "every prior-run plan still in plans/ or _archive/",
-      "observed": "0 missing",
-      "expected": "0 missing"
+      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
+      "observed": "no plan slugs lost (archive untouched; active plans unchanged)",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "_archive count ≥ HEAD count",
-      "observed": "21 ≥ 21",
-      "expected": "≥"
+      "command": "archive-count this run >= archive-count at HEAD",
+      "observed": "archive count unchanged",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q /tmp/ideas-triage.regen.md IDEAS_TRIAGE.md",
-      "observed": "byte-identical",
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "byte-identical (regen just ran immediately before stage)",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions length ≤ 3, each category ≤ 1; kill switch unset but no candidate anyway",
-      "observed": "auto_fix_actions=[] (no candidate)",
+      "command": "auto_fix caps + idempotency + kill switch",
+      "observed": "auto_fix_actions == [] — no eligible candidate, no new auto_fix_history entry",
       "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "mgmt artifacts valid + pm_cursor in 0..7 + GC7 coverage_cursor live & advanced",
-      "observed": "action-list.json/risks.json valid; project-state.md non-empty; pm_cursor=1 (prev 0); coverage_cursor=11 (prev 10, EPICS=13)",
-      "expected": "true"
+      "command": "management artifacts valid; pm_cursor & coverage_cursor in-range",
+      "observed": "Phase 1.6 did not run this rerun (same-day re-tick); artifacts untouched; pm_cursor.next_index=1 in [0,7]; coverage_cursor.next_index=11 in [0,13)",
+      "expected": "exit 0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token value in staged diff",
-      "observed": "0 Telegram token matches",
-      "expected": "0 matches"
+      "command": "no literal Telegram token in staged added lines",
+      "observed": "0 matches on URL-form or bare-token regex outside the 4 baseline doc files",
+      "expected": "0"
     }
   ],
   "auto_fix_actions": [],
   "reviewed_segment": "api-core",
-  "reviewed_segment_findings": 1
+  "reviewed_segment_findings": 1,
+  "auto_fix_skipped_reason": "no eligible candidate — AML findings require manual investigation of hand-maintained client and are not in the Phase-5 allowlist (screen-map-drift / fixme-in-merged-code / dep-update-noise lockfile / stalled-review)"
 }

@@ -5,9 +5,9 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-22T08:41:00Z",
+  "last_run_iso": "2026-10-22T20:31:34Z",
   "last_run_ms": 60000,
-  "last_pr_seen": 3135,
+  "last_pr_seen": 3142,
   "last_issue_seen": 3136,
   "last_commit_sha": "9553c4e",
   "paused": false,
@@ -793,6 +793,7 @@
     "code-review-api-core-totp-rng-expect-panic",
     "code-review-api-core-voice-device-idor",
     "code-review-api-core-vote-partial-cmp-panic",
+    "code-review-api-core-workflow-condition-err-aborts-batch",
     "code-review-api-core-workflow-eq-type-strict-no-coercion",
     "code-review-api-handlers-ai-upstream-error-leak",
     "code-review-api-handlers-booking-connect-non-manager-hijack",
@@ -877,6 +878,7 @@
     "code-review-ppt-web-core-hardcoded-dispute-strings",
     "code-review-ppt-web-core-home-cta-role-drift",
     "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+    "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
     "code-review-ppt-web-core-logout-cache-purge-gap",
     "code-review-ppt-web-core-mutation-no-onerror",
     "code-review-ppt-web-core-notfound-i18n-gap",
@@ -884,6 +886,7 @@
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-rentals-mutation-silent",
     "code-review-ppt-web-core-route-error-boundary-gap",
+    "code-review-ppt-web-core-usewebsocket-subscribe-gate",
     "code-review-ppt-web-core-ws-category-map-gap",
     "code-review-ppt-web-core-ws-event-name-mismatch",
     "code-review-ppt-web-core-ws-giveup-no-resume",
@@ -959,6 +962,8 @@
     "code-review-reality-web-comparison-share-all-or-nothing",
     "code-review-reality-web-comparison-url-i18n",
     "code-review-reality-web-comparison-view-i18n",
+    "code-review-reality-web-compliance-aml-client-type-divergence",
+    "code-review-reality-web-compliance-aml-wrong-api-base",
     "code-review-reality-web-featured-fav-silent-fail",
     "code-review-reality-web-formatprice-hardcoded-locale",
     "code-review-reality-web-i18n-error-state-gap",
@@ -1222,10 +1227,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "code-review-api-core-workflow-condition-err-aborts-batch",
-    "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
-    "code-review-ppt-web-core-usewebsocket-subscribe-gate"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1239,8 +1241,8 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 102,
-    "vectors_created": 451,
+    "runs": 103,
+    "vectors_created": 453,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

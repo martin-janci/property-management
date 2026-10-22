@@ -12675,19 +12675,21 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)",
+        "PR #3140"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx:6-16 and frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:373-378 each define a LOCAL formatPrice that hardcodes the locale to 'en-US' in `new Intl.NumberFormat('en-US', { style: 'currency', currency, ... })`, so the price number grouping/format ignores the active next-intl locale on a 4-language portal (sk, cs, de, en).",
         "Diverges from the canonical helper frontend/apps/reality-web/src/lib/format.ts:48 `formatPrice(value, locale, options)`, which takes the locale precisely so output follows the user's language; ListingCard.tsx:106 uses it correctly (`formatPrice(listing.price, locale, { currency: listing.currency })`). The two local copies are both a locale/i18n gap and a duplication smell (three parallel formatPrice implementations).",
-        "Impact (low): on sk/cs/de locales the listing-detail header price and the agency-listings table price render with en-US number conventions instead of the active locale, inconsistent with the locale-aware price shown everywhere ListingCard is used. Fix: delete the two local formatPrice helpers and call lib/format.ts formatPrice with the component's active locale (useLocale()/useTranslations locale)."
+        "Impact (low): on sk/cs/de locales the listing-detail header price and the agency-listings table price render with en-US number conventions instead of the active locale, inconsistent with the locale-aware price shown everywhere ListingCard is used. Fix: delete the two local formatPrice helpers and call lib/format.ts formatPrice with the component's active locale (useLocale()/useTranslations locale).",
+        "resolved: PR #3140 merged 2026-10-22 — format listing prices with active locale (ListingHeader + AdditionalInfo + AgencyListings now use lib/format.formatPrice with useLocale(); ListingHeader.test.tsx covers de-DE grouping regression)"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
         "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx"
       ],
       "created_at": "2026-10-17",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-22",
       "plan": null,
       "reconciled": {
         "at": "2026-10-22T16:42:56Z",
@@ -12728,16 +12730,18 @@
       "score": 2,
       "status": "done",
       "sources": [
-        "rotating-expert-review 2026-10-19 api-handlers"
+        "rotating-expert-review 2026-10-19 api-handlers",
+        "PR #3142"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/migration.rs:1241-1398 — the migration export flow (POST /api/v1/migration/export → GET /api/v1/migration/export/{id} → GET /api/v1/migration/export/{id}/download) is a stub that fabricates its outputs. In `get_export_status` the explicit comment at line 1268 says `// Auto-transition to Ready in mock setup`, and lines 1269-1291 unconditionally flip the record from Pending to Ready, writing a hardcoded placeholder file_path `let path = format!(\"https://storage.example.com/exports/{}.zip\", export_id);` (line 1270), a hardcoded fake file_size_bytes `Some(15_234_567)` (line 1278), and a fabricated completed_at `Some(chrono::Utc::now())` (line 1283). No real export job has run — `request_migration_export` (lines 1183-1239) only inserts a DB row, there is no backing worker or writer that materialises the archive. Then at lines 1312-1316 the response hands the admin a hardcoded fake record_counts payload `{ \"buildings\": 45, \"units\": 320, \"residents\": 580 }` regardless of the org's actual data. Finally `download_export` (line 1393-1395) returns `download_url: updated.file_path.unwrap_or_else(|| format!(\"https://storage.example.com/exports/{}.zip\", export_id))` — the admin UI gets a `storage.example.com` URL (an IANA reserved illustration domain, RFC 2606, that will never resolve to real content). Reachability: router nested at lib.rs:320, `pub mod migration;` at routes/mod.rs:101, routes wired at routes/migration.rs:66-69. Impact: silent broken feature — platform admins requesting a migration export see 'Ready' with a plausible file size and record counts, but every download URL is a dead `storage.example.com` link and no archive exists. This is distinct from the already-flagged `code-review-api-handlers-data-export-report-stub` / `code-review-api-handlers-report-dl-deadlink` findings (different modules: reports/mod.rs vs. migration.rs) and from `multi-currency-refresh-stub-success` (different domain). Confidence HIGH: the hardcoded example.com URL, the fabricated record counts, and the 'mock setup' author comment at line 1268 are direct quotes from the source. Severity MEDIUM (+2): platform-admin-only, no data loss, but a silently broken customer-visible feature on a flagship Epic 66.3 migration-export surface, with user-trust and compliance impact (admin thinks data was exported). Fix: either (a) hide the endpoints behind a feature flag until a real exporter lands, or (b) implement the backing export job and persist a real presigned URL from the storage service in the file_path column, and drop the hardcoded `storage.example.com` fallback at line 1395."
+        "backend/servers/api-server/src/routes/migration.rs:1241-1398 — the migration export flow (POST /api/v1/migration/export → GET /api/v1/migration/export/{id} → GET /api/v1/migration/export/{id}/download) is a stub that fabricates its outputs. In `get_export_status` the explicit comment at line 1268 says `// Auto-transition to Ready in mock setup`, and lines 1269-1291 unconditionally flip the record from Pending to Ready, writing a hardcoded placeholder file_path `let path = format!(\"https://storage.example.com/exports/{}.zip\", export_id);` (line 1270), a hardcoded fake file_size_bytes `Some(15_234_567)` (line 1278), and a fabricated completed_at `Some(chrono::Utc::now())` (line 1283). No real export job has run — `request_migration_export` (lines 1183-1239) only inserts a DB row, there is no backing worker or writer that materialises the archive. Then at lines 1312-1316 the response hands the admin a hardcoded fake record_counts payload `{ \"buildings\": 45, \"units\": 320, \"residents\": 580 }` regardless of the org's actual data. Finally `download_export` (line 1393-1395) returns `download_url: updated.file_path.unwrap_or_else(|| format!(\"https://storage.example.com/exports/{}.zip\", export_id))` — the admin UI gets a `storage.example.com` URL (an IANA reserved illustration domain, RFC 2606, that will never resolve to real content). Reachability: router nested at lib.rs:320, `pub mod migration;` at routes/mod.rs:101, routes wired at routes/migration.rs:66-69. Impact: silent broken feature — platform admins requesting a migration export see 'Ready' with a plausible file size and record counts, but every download URL is a dead `storage.example.com` link and no archive exists. This is distinct from the already-flagged `code-review-api-handlers-data-export-report-stub` / `code-review-api-handlers-report-dl-deadlink` findings (different modules: reports/mod.rs vs. migration.rs) and from `multi-currency-refresh-stub-success` (different domain). Confidence HIGH: the hardcoded example.com URL, the fabricated record counts, and the 'mock setup' author comment at line 1268 are direct quotes from the source. Severity MEDIUM (+2): platform-admin-only, no data loss, but a silently broken customer-visible feature on a flagship Epic 66.3 migration-export surface, with user-trust and compliance impact (admin thinks data was exported). Fix: either (a) hide the endpoints behind a feature flag until a real exporter lands, or (b) implement the backing export job and persist a real presigned URL from the storage service in the file_path column, and drop the hardcoded `storage.example.com` fallback at line 1395.",
+        "resolved: PR #3142 merged 2026-10-22 — stop fabricating ready state for /migration/export (get_export_status no longer flips Pending→Ready, drops storage.example.com URL + fake record_counts + fake file_size_bytes; download_export returns 500 on Ready-without-file_path; test suite rewritten to assert pending persistence + 400 on download)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/migration.rs"
       ],
       "created_at": "2026-10-19",
-      "updated_at": "2026-10-19",
+      "updated_at": "2026-10-22",
       "plan": null,
       "reconciled": {
         "at": "2026-10-22T16:42:56Z",
@@ -12753,17 +12757,19 @@
       "score": 2,
       "status": "done",
       "sources": [
-        "rotating-expert-review 2026-10-19 api-handlers"
+        "rotating-expert-review 2026-10-19 api-handlers",
+        "PR #3141"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/admin/impersonation.rs:114 `list_active` reads the raw X-Forwarded-For header verbatim for audit logging: `let ip = headers.get(\"x-forwarded-for\").and_then(|h| h.to_str().ok());`, then passes the full comma-separated chain to `audit.record(..., ip, ua)` at line 126. This bypasses the shared helper `audit_ip_from_headers` defined at routes/admin/mod.rs:60-75, which the sibling `start` handler in the SAME file uses correctly at line 195 (`let ip = super::audit_ip_from_headers(&headers);`). The helper's doc comment (admin/mod.rs:41-55) states it exists specifically to prevent silent audit-row drops: `audit_logs.ip_address` is VARCHAR(45) (admin/mod.rs:44 `AUDIT_IP_MAX_LEN: usize = 45`), and a typical multi-hop X-Forwarded-For chain (e.g. `203.0.113.7, 198.51.100.1, 10.0.0.1` = 36 chars; three IPv6 hops easily exceed 45) overflows the column. Impact: when the audit INSERT fails on an overlong IP string, the handler's error branch at line 130-132 only emits `tracing::warn!(error = %e, \"audit write for impersonation/active failed\")` and returns 200 OK with the full cross-tenant impersonation list — so the compliance-mandated audit trail of 'who viewed the active-impersonation dashboard' silently has gaps for any viewer behind >1 proxy. Divergence is clear within the file itself: `start` (line 195), `stop` (not applicable — no audit call), and every audit site in sibling admin/* files use `audit_ip_from_headers`. Reachability: `GET /api/v1/admin/impersonation/active` is wired via lib.rs:145 (`admin::router()`) → admin/mod.rs:94 (`impersonation::router()`) → impersonation.rs:28 (`.route(\"/active\", get(list_active)...)`). This is DISTINCT from the prior finding `code-review-api-handlers-share-log-proxy-ip` which is about `documents/shares.rs` share access logs, not admin impersonation. Confidence HIGH: the raw-XFF read, the helper's existence, and the sibling `start` call-site all read directly from the file. Severity MEDIUM (+2): compliance/audit-trail integrity on a platform-admin impersonation surface — an attacker-controlled or merely multi-proxy X-Forwarded-For value silently drops the 'who viewed active impersonations' audit row. No crash, no data loss, no auth bypass. Fix: replace line 114 with `let ip = super::audit_ip_from_headers(&headers);` to mirror the `start` handler's call site."
+        "backend/servers/api-server/src/routes/admin/impersonation.rs:114 `list_active` reads the raw X-Forwarded-For header verbatim for audit logging: `let ip = headers.get(\"x-forwarded-for\").and_then(|h| h.to_str().ok());`, then passes the full comma-separated chain to `audit.record(..., ip, ua)` at line 126. This bypasses the shared helper `audit_ip_from_headers` defined at routes/admin/mod.rs:60-75, which the sibling `start` handler in the SAME file uses correctly at line 195 (`let ip = super::audit_ip_from_headers(&headers);`). The helper's doc comment (admin/mod.rs:41-55) states it exists specifically to prevent silent audit-row drops: `audit_logs.ip_address` is VARCHAR(45) (admin/mod.rs:44 `AUDIT_IP_MAX_LEN: usize = 45`), and a typical multi-hop X-Forwarded-For chain (e.g. `203.0.113.7, 198.51.100.1, 10.0.0.1` = 36 chars; three IPv6 hops easily exceed 45) overflows the column. Impact: when the audit INSERT fails on an overlong IP string, the handler's error branch at line 130-132 only emits `tracing::warn!(error = %e, \"audit write for impersonation/active failed\")` and returns 200 OK with the full cross-tenant impersonation list — so the compliance-mandated audit trail of 'who viewed the active-impersonation dashboard' silently has gaps for any viewer behind >1 proxy. Divergence is clear within the file itself: `start` (line 195), `stop` (not applicable — no audit call), and every audit site in sibling admin/* files use `audit_ip_from_headers`. Reachability: `GET /api/v1/admin/impersonation/active` is wired via lib.rs:145 (`admin::router()`) → admin/mod.rs:94 (`impersonation::router()`) → impersonation.rs:28 (`.route(\"/active\", get(list_active)...)`). This is DISTINCT from the prior finding `code-review-api-handlers-share-log-proxy-ip` which is about `documents/shares.rs` share access logs, not admin impersonation. Confidence HIGH: the raw-XFF read, the helper's existence, and the sibling `start` call-site all read directly from the file. Severity MEDIUM (+2): compliance/audit-trail integrity on a platform-admin impersonation surface — an attacker-controlled or merely multi-proxy X-Forwarded-For value silently drops the 'who viewed active impersonations' audit row. No crash, no data loss, no auth bypass. Fix: replace line 114 with `let ip = super::audit_ip_from_headers(&headers);` to mirror the `start` handler's call site.",
+        "resolved: PR #3141 merged 2026-10-22 — derive audit IP via audit_ip_from_headers in list_active (impersonation.rs:111-117); IG3 regression test impersonation_active_audit_ip_truncated_not_raw_xff asserts exactly one audit row carrying the truncated first-hop IP"
       ],
       "files": [
         "backend/servers/api-server/src/routes/admin/impersonation.rs",
         "backend/servers/api-server/src/routes/admin/mod.rs"
       ],
       "created_at": "2026-10-19",
-      "updated_at": "2026-10-19",
+      "updated_at": "2026-10-22",
       "plan": null,
       "reconciled": {
         "at": "2026-10-22T16:42:56Z",
@@ -12934,6 +12940,54 @@
       ],
       "files": [
         "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-compliance-aml-wrong-api-base",
+      "title": "frontend compliance client calls /api/v1/compliance/aml/* but server mounts AML at /api/v1/aml-dsa — every AML list/thresholds/country-risks/EDD/review call 404s",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "docs/api/audits/2026-10-22-integration-openapi-drift.md Finding 2",
+        "PR #3139"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/compliance/api.ts sets `API_BASE = '/api/v1/compliance'` and calls `GET ${API_BASE}/aml/assessments` → actual URL `/api/v1/compliance/aml/assessments`. The backend mounts the AML router at `/api/v1/aml-dsa` (backend/servers/api-server/src/lib.rs:322), so the real handler is at `/api/v1/aml-dsa/aml/assessments`. The `routes/compliance.rs` router (lib.rs:243, mounted at `/api/v1/compliance`) exposes only audit-log / GDPR / security-report routes — no `aml/*`.",
+        "Same `API_BASE` is reused for `/aml/thresholds`, `/aml/country-risks`, `/aml/assessments/{id}/edd`, and `/aml/assessments/{id}/review` — all five hand-written AML client surfaces 404 against the live server.",
+        "Impact (high): the entire frontend AML/DSA compliance surface is unreachable; every list/edit action from the compliance UI fails. This is a hand-maintained client (outside the TypeSpec + api-validation.yml guard — Finding 3 in the same audit), so no CI gate catches it. Confidence HIGH — path mismatch is a direct quote from source."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/compliance/api.ts",
+        "backend/servers/api-server/src/lib.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-compliance-aml-client-type-divergence",
+      "title": "frontend AmlRiskAssessment type diverges from reality-server AmlAssessmentListItem (field renames, nullability, missing fields) — null risk_factors breaks non-optional frontend type",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "docs/api/audits/2026-10-22-integration-openapi-drift.md Finding 1",
+        "PR #3139"
+      ],
+      "evidence": [
+        "frontend/packages/api-client/src/compliance/types.ts (lines ~102-133) `AmlRiskAssessment` vs server `AmlAssessmentListItem` in backend/servers/api-server/src/routes/aml_dsa/aml.rs (post-#3129).",
+        "Divergences: (1) field naming — frontend `subject_id/subject_type/subject_name` vs server `party_id/party_type` (no `subject_name`); (2) risk-factor flag — frontend `AmlRiskFactor.triggered: boolean` vs server `RiskFactor.mitigated: bool`; (3) nullability — frontend `risk_factors: AmlRiskFactor[]` (required) vs server `Option<Vec<RiskFactor>>` — a `null` breaks the non-optional frontend type (exactly the PR #3117 symptom #3129 cites); (4) unmodeled wire fields — server emits `organization_id`, `transaction_id`, `transaction_amount_cents`, `currency`, `country_code`, `country_risk`, `is_pep`, `sanctions_match`, `assessor_notes`, `assessed_by`, `assessed_at`, `review_reason` — none present on the frontend type.",
+        "Follow-up: either lift `AmlAssessmentListItem` into docs/api/typespec/domains/compliance.tsp so the client is generated, or reconcile compliance/types.ts by hand (rename triggered→mitigated, make risk_factors optional, align subject_*→party_*). Pre-existing (predates #3129); #3129 enables the fix by giving the endpoint a real schema. Confidence MEDIUM — frontend reads defensively, so the current symptom is latent null-of-nulls crashes rather than guaranteed breakage."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/compliance/types.ts",
+        "backend/servers/api-server/src/routes/aml_dsa/aml.rs"
       ],
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
