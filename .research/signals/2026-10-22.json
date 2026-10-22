@@ -188,6 +188,27 @@
         "useWebSocket.ts:83-95 — subscribe effect gates on handlerRef at mount but omits it from deps; a handler produced after mount never triggers subscribe() for an unchanged eventType.",
         "Folded in by the 2026-10-22 08:41 UTC rerun (buffer-low fire): the file 2026-10-22-ppt-web-core-tier1d.json landed at 08:33 UTC, after the daily routine's 03:18 UTC run."
       ]
+    },
+    {
+      "id": "code-review-api-core-auth-password-no-maxlen",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 api-core",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs",
+        "backend/servers/api-server/src/routes/auth/registration.rs",
+        "backend/crates/db/src/models/auth_policy.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:112-132 — AuthService::validate_password enforces a MINIMUM length (>=8) plus uppercase+digit, but imposes NO MAXIMUM length. hash_password (auth.rs:69-77) and verify_password (auth.rs:80-86) pass the raw user-supplied password straight into Argon2id (configured at m_cost=65536 KiB / 64 MiB, t=3 per auth.rs:48-66) with no length ceiling. Every call allocates 64 MiB of memory and does an O(n) Blake2b pre-hash over the full input.",
+        "backend/servers/api-server/src/routes/auth/registration.rs:71-72 and routes/auth/password_reset.rs:156-157 — validate_password is only invoked when SETTING a password (registration + reset). The LOGIN path calls verify_password directly with zero length validation, so an UNAUTHENTICATED caller controls the input length on an unauthenticated endpoint. backend/crates/db/src/models/auth_policy.rs:129-133 (per-org PasswordPolicy) likewise only checks min_password_length, never a max — so even the policy layer provides no upper bound.",
+        "backend/servers/api-server/src/main.rs:230 — the only backstop is the coarse global DefaultBodyLimit::max(16 * 1024 * 1024) = 16 MiB. That permits a ~16 MiB password string per request, each forcing a 64 MiB Argon2id computation. Unauthenticated login lets an attacker amplify request cost (CPU + 64 MiB RSS spikes under concurrency) with no password-specific size gate — a resource-exhaustion / DoS-hardening gap. Fix: cap password length (e.g. reject > 256–1024 chars) inside validate_password and before verify_password on the login path.",
+        "Severity LOW (+1): no auth bypass, no data corruption; Argon2 memory cost is input-length-independent so amplification is modest and bounded by the 16 MiB body limit. Confidence medium: the absence of a max-length check is confirmed by static read of validate_password / verify_password and the login call site; runtime DoS impact is traffic/concurrency dependent, so latent rather than confirmed. Previously-UNFLAGGED: no prior api-core finding covers password length bounds (the only open api-core findings concern workflow-condition error handling)."
+      ]
     }
   ],
   "goal_checks": [
@@ -312,6 +333,6 @@
     }
   ],
   "auto_fix_actions": [],
-  "reviewed_segment": "ppt-web-ui",
-  "reviewed_segment_findings": 0
+  "reviewed_segment": "api-core",
+  "reviewed_segment_findings": 1
 }
