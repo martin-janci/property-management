@@ -11677,22 +11677,24 @@
       "title": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "rotating-expert-review reality-server 2026-10-03"
+        "rotating-expert-review reality-server 2026-10-03",
+        "rotating-expert-review 2026-10-22 reality-server (dispatcher Tier-1d)"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT(*) (line 166) → MAX_COMPARE_LISTINGS=4 guard → separate INSERT (line 221) with no row-level lock and no DB-side constraint. Two concurrent POSTs from the same user can both see count==3 and both insert, exceeding the documented cap.",
         "Existing exists-check at line 205 only catches exact duplicates, not count violations.",
         "Fix: wrap count+insert in a serializable transaction, or add a DB-side partial unique index / check constraint.",
-        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence"
+        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence",
+        "[2026-10-22] re-emitted by dispatcher Tier-1d compare-add-limit-toctou review — second independent confirmation; migration 00105 comment states 'max 4 enforced in application layer' (no DB constraint)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/compare.rs"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-22",
       "plan": null
     },
     {
@@ -12782,6 +12784,288 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-delay-action-duration-overflow",
+      "title": "api-server delay action: DelayConfig::to_duration() multiplies before the 7-day cap check — large signed values overflow u64 before clamp fires",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-19 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:54-61 — DelayConfig::to_duration() computes Duration::from_secs(self.duration * 60) (Minutes), * 3600 (Hours), * 86400 (Days) on self.duration before any range check.",
+        "The 7-day cap is enforced only AFTER the multiply at delay.rs:103-108 (execute() calls to_duration() at :100 then compares duration.as_secs() against MAX_DELAY_SECONDS); u64 overflow may wrap before the clamp fires."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-argon2-env-params-no-floor",
+      "title": "api-server AuthService::new() has no lower-bound floor on PPT_ARGON2_* env — sub-minimum values crash startup via .expect()",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-19 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:48-66 AuthService::new() reads Argon2id cost parameters from env (PPT_ARGON2_M_COST_KIB, PPT_ARGON2_T_COST, PPT_ARGON2_P_COST) with safe numeric parsing but no floor against the argon2 crate minimum.",
+        "Fail-not-soft: an operator value below the argon2 crate minimum (e.g. PPT_ARGON2_M_COST_KIB below 8*p_cost, or a zero cost) makes Params::new return Err; .expect() panics server startup. No regression test covers the fallback."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "title": "workflow_executor process_event aborts the whole batch on one ConditionError — a single malformed workflow halts delivery for every unrelated workflow on that event",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:348-403 process_event loads every workflow subscribed to an event and iterates for workflow in workflows. Inside the loop (line 359) evaluate_conditions is called with ?; its Err propagates up and the whole batch halts.",
+        "evaluate_conditions returns Err(WorkflowError::ConditionError(...)) on malformed/undeserializable stored condition (workflow_executor.rs:523, :793). Author-supplied JSON persisted in DB; one bad row poisons the shared event fanout."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-storage-unguarded-parse",
+      "title": "mobile-rn FeedbackManager: getDrafts/getPendingFeedback JSON.parse AsyncStorage with no try/catch — corruption throws uncaught through the UI",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-19 mobile-rn (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:138-140 getDrafts() does const stored = await AsyncStorage.getItem(FEEDBACK_DRAFTS_KEY); return stored ? JSON.parse(stored) : []; with NO try/catch.",
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:229-231 getPendingFeedback() has the identical unguarded pattern on PENDING_FEEDBACK_KEY."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-accesscontroller-untested",
+      "title": "mobile-rn NFCAccessController (478 lines, access-grant decision engine) has zero tests — validateAccess credential/expiry/membership/time-window logic is unverified",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-19 mobile-rn (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — grep for 'NFCAccessController'/'AccessController' across *.test.ts/*.test.tsx returns ZERO hits.",
+        "The class is the access-grant decision engine: validateAccess() (L249) enforces credential status, validUntil expiry, access-point membership, time-restriction windows — a security-critical allow/deny path with no regression tests."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-timerestrict-midnight-day",
+      "title": "mobile-rn NFCAccessController validateAccess: time-restriction day gate rejects post-midnight portion of windows that cross day boundary (Mon 23:00-01:00 denies Tue 00:30)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-19 mobile-rn (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:300-324 validateAccess() — time-restriction check gates on restriction.days.includes(currentDay) where currentDay = now.getDay() at tap time (L301).",
+        "Bug: for a window defined on day D spanning midnight (e.g. days:[1]=Mon, 23:00->01:00), the post-midnight portion falls on day D+1 (Tue). At Tue 00:30 currentDay=2 is NOT in days:[1] so L311 returns false — legitimate credential rejected."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-votes-dead-invalidation",
+      "title": "ppt-web WebSocketContext categoryToQueryKeys maps votes→['votes'] while votingKeys = ['voting'] — realtime vote notifications never invalidate the real voting cache",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 ppt-web-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:72 categoryToQueryKeys maps the voting notification category to votes: ['votes'] (map KEY votes is correct per backend NotificationCategory enum, but VALUE queryKey ['votes'] is wrong).",
+        "frontend/packages/api-client/src/voting/hooks.ts:24 — the voting query factory is votingKeys = { all: ['voting'] as const, ... }. The voting UI uses it (frontend/apps/ppt-web/src/features/voting/pages/...). WS invalidation calls queryClient.invalidateQueries({queryKey: ['votes']}) but nothing is cached under that root — vote-cast notifications stale the UI silently."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/packages/api-client/src/voting/hooks.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
+      "title": "ppt-web documents hooks hardcode Slovak toast titles/messages — i18n bypass on a 4-language product",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts:26-37 success/error toast title+message are hardcoded Slovak string literals ('Dokument presunutý', '„${doc.title}\" bol …').",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts:47-48 download-failure toast is hardcoded Slovak ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo stiahnuť.')."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-hardcoded-strings",
+      "title": "ppt-web EvidenceUploader hardcodes English validation errors + drop-zone copy — i18n bypass",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 user-facing validation error messages are hardcoded English string literals ('Unsupported file type: ${...}', 'File …').",
+        "EvidenceUploader.tsx:214,217 drop-zone copy is hardcoded English ('Drop files here or ... browse' and 'JPG, PNG, PDF, MP3, MP4 . max 50 MB per file . up to {MAX_FILES} files')."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-limit-unclamped",
+      "title": "reality-server GET /api/v1/imports/jobs passes user-supplied page size straight into LIMIT bind — unbounded fetch_all enables memory/DB load",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-21 reality-server (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:115-134 list_import_jobs (GET /api/v1/imports/jobs, authenticated PortalPrincipal) passes the user-supplied page size straight through as query.limit.",
+        "backend/crates/db/src/repositories/reality_portal/imports.rs:36-69 — the repo binds that i32 limit directly into ... ORDER BY j.created_at DESC LIMIT $3 OFFSET $4 via .bind(limit) and fetch_all — any authenticated portal user can request limit=i32::MAX."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/crates/db/src/repositories/reality_portal/imports.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-gradient-color-unsanitized",
+      "title": "reality-web agency/[slug] interpolates agency.primaryColor directly into inline style — the project's own sanitizeCssValue denylist isn't called here (CSS injection)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-22 reality-web (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:64-66 interpolates agency-authored colors directly into an inline style value: background: agency.primaryColor ? `linear-gradient(135deg, ${agency.primaryColor}, ${agency.secondaryColor ?? '#2563eb'})` : …",
+        "This is the exact tenant-controlled-CSS class the project already hardened elsewhere: lib/tenant-config.ts:243-279 sanitizeCssValue was written specifically to guard tenant color/style values (denylist) but is not called here."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-href-scheme-xss",
+      "title": "SECURITY: reality-web agency profile and listing Resources render raw agency/listing URLs as <a href=...> without scheme validation — javascript: URL XSS",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-10-22 reality-web (dispatcher Tier-1d)",
+        "diff verified 2026-10-22 (routine)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:297 renders <a href={agency.website} target=\"_blank\" rel=\"noreferrer\"> with the agency-supplied website string — no scheme validation. javascript:alert(1) in agency.website executes in the page origin on click; rel=\"noreferrer\" and target=\"_blank\" do not block javascript: URLs.",
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx:17 and :39 repeat the same raw-href pattern for listing-authored URLs: href={listing.virtualTourUrl} and href={listing.floorPlanUrl}.",
+        "Confidence upgraded medium→high after reading the diff in this run — vulnerability confirmed on current reality-web source."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": "plans/code-review-reality-web-agency-href-scheme-xss.md"
+    },
+    {
+      "id": "code-review-reality-web-agency-page-i18n-gap",
+      "title": "reality-web agency/[slug] is 'use client' with hardcoded strings on a 4-language portal — sibling realtor/[id] uses next-intl, agency never got wired",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-22 reality-web (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx is a 'use client' component on a portal that is explicitly multi-language (sk/cs/de/en per frontend/apps/reality-web/CLAUDE.md).",
+        "The file's own header comment (:7-9) says it 'Mirrors the realtor/[id] public-profile pattern' and references 'next-intl', so i18n was intended but never wired — the sibling app/[locale]/realtor/[id]/page.tsx DOES use next-intl messages correctly."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
     }
   ]
 }

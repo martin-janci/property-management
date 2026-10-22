@@ -1,0 +1,415 @@
+{
+  "generated": "2026-10-22T02:45:15Z",
+  "since": "2026-10-19T00:47:58Z",
+  "cursors": {
+    "last_pr_seen": 3123,
+    "last_issue_seen": 3124,
+    "last_commit_sha": "62aaaa5"
+  },
+  "observed": {
+    "merged_prs": 5,
+    "open_prs_touched": 5,
+    "closed_not_merged_prs": 1,
+    "new_or_updated_issues": 7,
+    "code_commits": 8
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-22",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "last_run_iso=2026-10-19T00:47:58Z — 3d 1h since last run (threshold 36h)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/deny.toml",
+      "type": "churn-hotspot",
+      "source": "PR #3125, PR #3130",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/deny.toml touched 2x in the 2026-10-19 → 2026-10-22 window — RUSTSEC-2026-0367/0368/0369/0373/0382 cluster indicates ongoing crypto/zip supply-chain churn"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3130",
+      "type": "dep-update-noise",
+      "source": "PR #3130",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "fix(api-server): bump ammonia to 4.2.4 to clear RUSTSEC-2026-0373 — security advisory bump, no code change"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3125",
+      "type": "dep-update-noise",
+      "source": "PR #3125",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "gh-issue-3124: bump rust_xlsxwriter to zip 9.x — clears zip RUSTSEC-2026-0367/0368/0369"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3135",
+      "type": "dep-update-noise",
+      "source": "PR #3135",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "gh-issue-3134: clear rustls-webpki RUSTSEC-2026-0382 to unblock cargo-deny advisories"
+      ]
+    },
+    {
+      "id": "code-review-api-core-delay-action-duration-overflow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-19 api-core (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:54-61 DelayConfig::to_duration() multiplies self.duration by 60/3600/86400 BEFORE the 7-day cap check at :103-108; large signed values overflow u64 before the clamp fires.",
+        "ingested from .research/signals/2026-10-19-api-core-tier1d.json (dispatcher-produced; not yet in state.seen_signals)"
+      ]
+    },
+    {
+      "id": "code-review-api-core-argon2-env-params-no-floor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-19 api-core (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:48-66 AuthService::new() reads PPT_ARGON2_* env with no lower-bound floor; sub-minimum values hit Params::new() Err → .expect() panics server startup. No test asserts the fallback.",
+        "ingested from .research/signals/2026-10-19-api-core-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-timerestrict-midnight-day",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-19 mobile-rn (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts:300-324 validateAccess() uses now.getDay() at tap time; a window on day D that spans midnight (e.g. Mon 23:00-01:00) rejects the post-midnight portion because currentDay becomes D+1.",
+        "ingested from .research/signals/2026-10-19-mobile-rn-tier1d-2.json"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-accesscontroller-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-19 mobile-rn (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCAccessController.ts (478 lines) — grep across *.test.ts/*.test.tsx returns zero hits. validateAccess() is the access-grant decision engine (credential status, validUntil expiry, access-point membership, time windows) with no regression tests.",
+        "ingested from .research/signals/2026-10-19-mobile-rn-tier1d-2.json"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-storage-unguarded-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-19 mobile-rn (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:138-140 getDrafts() and :229-231 getPendingFeedback() both JSON.parse(AsyncStorage.getItem(...)) with no try/catch — any corruption throws uncaught through the UI.",
+        "ingested from .research/signals/2026-10-19-mobile-rn-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 api-core (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:348-403 process_event iterates subscribed workflows; evaluate_conditions returning Err(WorkflowError::ConditionError) propagates up and aborts the whole batch — one malformed stored condition halts delivery for every unrelated workflow on that event.",
+        "ingested from .research/signals/2026-10-21-api-core-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-votes-dead-invalidation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 ppt-web-core (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/packages/api-client/src/voting/hooks.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:72 categoryToQueryKeys maps votes category to ['votes']; voting UI uses votingKeys = ['voting'] (packages/api-client/src/voting/hooks.ts:24). Realtime vote notifications never invalidate the real voting cache.",
+        "ingested from .research/signals/2026-10-21-ppt-web-core-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx"
+      ],
+      "evidence": [
+        "useMoveDocumentWithToast.ts:26-37 and useDocumentDownload.ts:47-48 hardcode Slovak toast titles/messages; i18n bypass on a 4-language product.",
+        "ingested from .research/signals/2026-10-21-ppt-web-ui-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-hardcoded-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 ppt-web-ui (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "evidence": [
+        "EvidenceUploader.tsx:71,74,214,217 hardcode English error + drop-zone copy, same i18n bypass.",
+        "ingested from .research/signals/2026-10-21-ppt-web-ui-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-limit-unclamped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-21 reality-server (dispatcher Tier-1d)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/crates/db/src/repositories/reality_portal/imports.rs"
+      ],
+      "evidence": [
+        "list_import_jobs (GET /api/v1/imports/jobs, authenticated) passes user-supplied page size straight into LIMIT bind with no clamp — unbounded fetch_all enables memory/DB load.",
+        "ingested from .research/signals/2026-10-21-reality-server-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-compare-add-limit-toctou",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 reality-server (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/compare.rs",
+        "backend/crates/db/migrations/00105_create_compare_lists.sql"
+      ],
+      "evidence": [
+        "compare.rs:155-227 add_to_compare — classic SELECT COUNT(*) then INSERT TOCTOU; migration 00105 explicitly states 'max 4 enforced in application layer', no DB constraint.",
+        "re-emits existing backlog item code-review-reality-server-add-to-compare-toctou-max-cap with a second independent review source"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-href-scheme-xss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 reality-web (dispatcher Tier-1d) — diff verified this run",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx"
+      ],
+      "evidence": [
+        "agency/[slug]/page.tsx:297 renders <a href={agency.website}> without scheme validation — javascript: URL executes in page origin on click, bypassing noreferrer.",
+        "Resources.tsx:17,39 repeats the same raw-href pattern for listing.virtualTourUrl and listing.floorPlanUrl.",
+        "confidence upgraded medium→high after reading the diff this run (verified at frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx and components/listings/sections/Resources.tsx)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-page-i18n-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 reality-web (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "agency/[slug]/page.tsx is 'use client' with hardcoded strings on an sk/cs/de/en portal; sibling realtor/[id] uses next-intl, agency page never got wired.",
+        "ingested from .research/signals/2026-10-22-reality-web-tier1d.json"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-agency-gradient-color-unsanitized",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 reality-web (dispatcher Tier-1d)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "evidence": [
+        "agency/[slug]/page.tsx:64-66 interpolates agency.primaryColor directly into inline style — the project's own lib/tenant-config.ts:243-279 sanitizeCssValue denylist exists for exactly this but isn't called here.",
+        "ingested from .research/signals/2026-10-22-reality-web-tier1d.json"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f + head -1 brief",
+      "observed": "exit 0, header matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq cumulative-signal discipline",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq max score, decay (no items eligible)",
+      "observed": "cap=true, decay candidates=0",
+      "expected": "cap=true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep plan+adversarial pass in brief",
+      "observed": "1 line matched",
+      "expected": ">=1 per new plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count + metadata/headings/mode/files",
+      "observed": "1 new plan, all 15 sections present, files resolve",
+      "expected": "<=2 plans, all gates pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures this run",
+      "observed": "Phases that failed: none",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or _archive",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count NOW >= HEAD",
+      "observed": "22 >= 22",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op",
+      "observed": "pm_cursor unchanged vs HEAD",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached | grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — eligible signals this run were medium confidence or score<3, outside Phase 5 allowlist (14 code-review-finding signals are not in the Phase 5 allowlist regardless)"
+}
