@@ -466,6 +466,57 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "action": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T10:33:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
+      "action": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T10:33:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
+      "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T10:33:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-19T04:00:00Z"
