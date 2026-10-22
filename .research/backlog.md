@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-22 03:16 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-22 08:41 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -47,6 +47,8 @@
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
 | 2 | bug | reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap | `backend/servers/reality-server/src/routes/compare.rs` | rotating-expert-review reality-server 2026-10-03 (+1) | 2026-10-22 | open | — |
 | 2 | bug | reality-web: public agency profile + listing Resources render agency-authored URLs with no http(s) scheme check — stored-XSS vector via javascript: href | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | signal:code-review-reality-web-agency-href-scheme-xss (+1) | 2026-10-22 | open | — |
+| 2 | bug | api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event | `backend/servers/api-server/src/services/workflow_executor.rs` | rotating-expert-review api-core 2026-10-01 (+1) | 2026-10-22 | open | — |
+| 2 | bug | ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts` | rotating-expert-review 2026-10-22 ppt-web-core | 2026-10-22 | open | — |
 | 2 | bug | api-server /migration/export: auto-ready with fake example.com URL + fabricated record counts (silent broken feature) | `backend/servers/api-server/src/routes/migration.rs` | rotating-expert-review 2026-10-19 api-handlers | 2026-10-19 | open | — |
 | 2 | bug | admin /impersonation/active audit skips `audit_ip_from_headers` → raw XFF overflows VARCHAR(45), audit INSERT fails silently | `backend/servers/api-server/src/routes/admin/impersonation.rs (+1)` | rotating-expert-review 2026-10-19 api-handlers | 2026-10-19 | open | — |
 | 2 | bug | ppt-web-core: useAmlDashboard assessment transform calls a.risk_factors.map with no ?? [] guard — crashes dashboard on null | `frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts (+1)` | rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web) | 2026-10-17 | done | — |
@@ -225,6 +227,7 @@
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
 | 1 | bug | reality-web agency/[slug]/page.tsx renders user-facing copy as Slovak literals on a 4-language portal (no next-intl wiring) | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx` | signal:code-review-reality-web-agency-page-i18n-gap (+1) | 2026-10-22 | open | — |
 | 1 | bug | reality-web agency page interpolates agency.primaryColor/secondaryColor into inline linear-gradient without sanitizeCssValue (consistency gap) | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | signal:code-review-reality-web-agency-gradient-color-unsanitized (+1) | 2026-10-22 | open | — |
+| 1 | bug | ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe() | `frontend/apps/ppt-web/src/hooks/useWebSocket.ts` | rotating-expert-review 2026-10-22 ppt-web-core | 2026-10-22 | open | — |
 | 1 | bug | push_fanout.rs builds 3 reqwest clients with .expect() in production constructors — a recoverable client-build error panics the push-fanout worker (hottest non-route churn file) instead of surfacing a configuration error | `backend/servers/api-server/src/services/push_fanout.rs` | rotating-expert-review [api-core] | 2026-10-21 | open | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/App.outageNewsDetail.test.tsx — new in PR #3094 (OutageDetail/ArticleDetail route-wiring regression test) | `frontend/apps/mobile/src/App.outageNewsDetail.test.tsx` | PR #3094 (+1) | 2026-10-17 | done | — |
 | 1 | refactor | Churn hotspot: frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts — new in PR #3093 (narrow/toUiOutage/formatRange transform unit tests) | `frontend/apps/mobile/src/screens/outages/OutagesScreen.transforms.test.ts` | PR #3093 (+1) | 2026-10-17 | done | — |

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-22T03:19:04Z",
+  "generated": "2026-10-22T08:41:00Z",
   "signals": [
     {
       "id": "lag-warning-2026-10-22",
@@ -10,7 +10,8 @@
       "candidate_vector": null,
       "evidence": [
         "routine last ran 2026-10-19T00:47:58Z — 3 days / ~74h ago (threshold 36h). stale_routine_alert also fires at >=3d."
-      ]
+      ],
+      "_rerun_zeroed": "score_delta zeroed on 2026-10-22 08:41 rerun — already counted in the 03:18 run (dedup rule: non-cumulative re-emit)"
     },
     {
       "id": "churn-hotspot-backend/deny.toml",
@@ -59,7 +60,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-22 reality-server",
       "segment": "reality-server",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
@@ -72,14 +73,15 @@
         "backend/crates/db/migrations/00105_create_compare_lists.sql:1-12 — the migration comment states 'max 4 entries enforced in application layer' and the table has NO CHECK constraint, trigger, or any DB-level mechanism bounding rows-per-user. So the cap exists ONLY in the racy application check above; the database will happily persist >4 rows. This confirms the TOCTOU is unprotected for the count invariant (unlike the duplicate invariant, which IS backstopped — see next).",
         "backend/crates/db/migrations/00105_create_compare_lists.sql:11 — CONSTRAINT uq_compare_user_listing UNIQUE (user_id, listing_id) DOES protect data integrity against the separate duplicate-insert race (compare.rs:205-219 checks `already_in` then inserts), so two concurrent adds of the SAME listing cannot create duplicate rows. BUT the losing request's INSERT (compare.rs:221) then fails with a unique violation that is mapped by crate::util::errors::db_error(\"add to compare list\", e) to a generic 500 Internal Server Error, instead of the intended 400 'Listing already in compare list' (compare.rs:214-219). A benign concurrent double-click thus surfaces a 500 — an error-mapping gap on the same handler.",
         "Severity LOW (+1): no auth bypass and no data-integrity corruption (the unique constraint protects uniqueness). Blast radius is a soft UX cap — a user can end up with 5-6 compare entries instead of 4, and a concurrent double-add of one listing returns 500 rather than 400. Confidence medium: the check-then-act propagation is confirmed by static read and the absence of a count-bounding DB constraint is confirmed in the migration; whether the race is hit in practice is traffic/timing-dependent, so the defect is latent rather than runtime-confirmed. Previously-UNFLAGGED location: the only prior TOCTOU/limit findings in the reality-server corpus are code-review-reality-server-favorites-limit-toctou (2026-10-13, handlers/favorites/mod.rs) and favorites-add-error-mapping-500 (2026-10-01) — both on the favorites path; compare.rs has the same two bug classes and has never been flagged for them."
-      ]
+      ],
+      "_rerun_zeroed": "score_delta zeroed on 2026-10-22 08:41 rerun — already counted in the 03:18 run (dedup rule: non-cumulative re-emit)"
     },
     {
       "id": "code-review-reality-web-agency-href-scheme-xss",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-22 reality-web",
       "segment": "reality-web",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -92,14 +94,15 @@
         "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx:17 and :39 - the same raw-href pattern for listing-authored URLs: `href={listing.virtualTourUrl}` and `href={listing.floorPlanUrl}`, both target=_blank anchors with no http(s) scheme check. Same `javascript:` / `data:text/html` vector, authored at listing-edit time.",
         "Project IS aware of the javascript:/data: URL class - lib/tenant-config.ts:243-262 sanitizeCssValue explicitly denylists `javascript:`/`data:`/`url(`/`expression(` for tenant css_vars, and its own comment (:231) notes logo URLs are deliberately routed to a non-executing `<link rel=\"icon\">` to avoid exactly this. That guard is NOT applied to these three user-authored anchor hrefs - no safeExternalHref / isSafeUrl helper exists in reality-web, and grep for scheme checks (`https?:` / `startsWith('http`) over src/ returns only the tenant-config css path. This is the lone gap in an otherwise href-safe app.",
         "Severity MEDIUM (+2): true stored-XSS vector but it requires (i) a semi-trusted authenticated agency/listing author to plant the payload and (ii) a victim click on the rendered link, which bounds blast radius below an unauthenticated reflected XSS. Confidence medium: the raw-href render path is confirmed by static read and React's non-sanitization of href is well established, but this pass did NOT confirm the absence of a server-side scheme validation on agency.website / *Url at write time in reality-server (not in scope for a frontend static pass) - if the backend already rejects non-http(s) schemes on write, this degrades to defense-in-depth. The remedy (an http(s)-only href guard at the three sites) is cheap and correct regardless."
-      ]
+      ],
+      "_rerun_zeroed": "score_delta zeroed on 2026-10-22 08:41 rerun — already counted in the 03:18 run (dedup rule: non-cumulative re-emit)"
     },
     {
       "id": "code-review-reality-web-agency-page-i18n-gap",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-22 reality-web",
       "segment": "reality-web",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -111,14 +114,15 @@
         "The file's own header comment (:7-9) says it \"Mirrors the realtor/[id] public-profile pattern\" and references \"next-intl\", so i18n was intended but never wired - the sibling app/[locale]/realtor/[id]/page.tsx is the correct template to copy. Result: Czech, German, and English visitors to any agency public profile see Slovak UI chrome (loading state, empty state, not-found state, section headings, CTA).",
         "Severity LOW (+1): i18n gap, no correctness/security impact, but a visible localization regression on a public SEO-indexed route. Confidence medium: directly observed from source (hardcoded literals + absence of any translation hook); the only reason it is not `high` is that this pass did not confirm whether these exact strings already have keys in messages/*.json awaiting wiring.",
         "Not a duplicate: no existing reality-web code-review-finding row in backlog.json concerns agency-page i18n."
-      ]
+      ],
+      "_rerun_zeroed": "score_delta zeroed on 2026-10-22 08:41 rerun — already counted in the 03:18 run (dedup rule: non-cumulative re-emit)"
     },
     {
       "id": "code-review-reality-web-agency-gradient-color-unsanitized",
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-22 reality-web",
       "segment": "reality-web",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -131,6 +135,58 @@
         "This is the exact tenant-controlled-CSS class the project already hardened elsewhere: lib/tenant-config.ts:243-279 sanitizeCssValue was written specifically to guard tenant color/style values (denylists url(/expression(/javascript:/data:, enforces a color-literal shape for color-named vars, returns null to drop unsafe values). That helper is applied to css_vars but is NOT applied to these inline agency gradient colors - a consistency gap with the app's own security posture.",
         "Severity LOW (+1): exploitability is limited because the value is assigned via a React inline-style object (el.style.background), where the CSSOM setter treats the whole string as a single property value and drops it if invalid - breaking out to a new declaration or to script is not straightforward, so this is primarily a defense-in-depth / consistency gap rather than a confirmed injection. Confidence medium: the unsanitized interpolation is confirmed by static read; actual exploitability was not runtime-verified (and is believed low per the CSSOM-setter behavior). Remedy is cheap and matches existing code: pass primaryColor/secondaryColor through sanitizeCssValue (or a hex/rgb/hsl color-literal guard) before interpolation.",
         "Not a duplicate: no existing reality-web code-review-finding row covers inline agency gradient color sanitization."
+      ],
+      "_rerun_zeroed": "score_delta zeroed on 2026-10-22 08:41 rerun — already counted in the 03:18 run (dedup rule: non-cumulative re-emit)"
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 api-core",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "evidence": [
+        "workflow_executor.rs:348-403 process_event — `?` on evaluate_conditions at :359 aborts the whole batch on one malformed stored condition; execute_workflow failure arm at :395-402 correctly isolates with warn!() + continue — asymmetry confirms gap.",
+        "Folded in by the 2026-10-22 08:41 UTC rerun (buffer-low fire): the file 2026-10-22-api-core-tier1d.json landed at 08:33 UTC, after the daily routine's 03:18 UTC run."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 ppt-web-core",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"
+      ],
+      "evidence": [
+        "useIotWebSocket.ts:84-96 fixed 5s reconnect; no backoff/cap/give-up; shared stack (websocket.ts:600-632 + WebSocketContext.tsx:304-320) implements all three correctly — reimplementation gap.",
+        "Folded in by the 2026-10-22 08:41 UTC rerun (buffer-low fire): the file 2026-10-22-ppt-web-core-tier1d.json landed at 08:33 UTC, after the daily routine's 03:18 UTC run."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-22 ppt-web-core",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "evidence": [
+        "useWebSocket.ts:83-95 — subscribe effect gates on handlerRef at mount but omits it from deps; a handler produced after mount never triggers subscribe() for an unchanged eventType.",
+        "Folded in by the 2026-10-22 08:41 UTC rerun (buffer-low fire): the file 2026-10-22-ppt-web-core-tier1d.json landed at 08:33 UTC, after the daily routine's 03:18 UTC run."
       ]
     }
   ],

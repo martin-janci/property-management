@@ -5,8 +5,8 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-22T03:18:14Z",
-  "last_run_ms": 425830,
+  "last_run_iso": "2026-10-22T08:41:00Z",
+  "last_run_ms": 60000,
   "last_pr_seen": 3135,
   "last_issue_seen": 3136,
   "last_commit_sha": "9553c4e",
@@ -1222,22 +1222,25 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-api-core-workflow-condition-err-aborts-batch",
+    "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
+    "code-review-ppt-web-core-usewebsocket-subscribe-gate"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-10-19",
-    "api-core": "2026-10-21",
+    "api-core": "2026-10-22",
     "reality-server": "2026-10-22",
     "ppt-web-ui": "2026-10-22",
-    "ppt-web-core": "2026-10-17",
+    "ppt-web-core": "2026-10-22",
     "reality-web": "2026-10-17",
     "mobile-rn": "2026-10-19",
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 101,
-    "vectors_created": 448,
+    "runs": 102,
+    "vectors_created": 451,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

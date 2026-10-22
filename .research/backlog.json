@@ -12856,6 +12856,73 @@
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
       "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "title": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-10-01",
+        "rotating-expert-review 2026-10-22 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:348-403 — process_event loads every workflow subscribed to an event; the loop at 359 does `if !self.evaluate_conditions(&conditions, &context)? { ... continue; }`. The `?` propagates a WorkflowError out of the ENTIRE batch function, aborting processing of every remaining subscribed workflow.",
+        "evaluate_conditions returns Err on malformed/undeserializable stored condition JSON (author-supplied, persisted on the workflow row); the execute_workflow failure arm in the SAME loop (:395-402) correctly isolates failures via warn!() + continue — asymmetry confirms this is a bug, not intent.",
+        "Severity MEDIUM (+2): a single malformed condition silently disables every other automation on the same event type (email, notifications, outbound api_call) until manually corrected — reliability/availability gap on a side-effecting automation surface."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
+      "title": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-22 ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:84-96 — reconnectTimer re-arms every WS_RECONNECT_MS=5_000 (:26) on ws.onclose; ws.onerror funnels every error into onclose, so sustained failures hammer api-server with a new upgrade every 5s for every mounted IoT view.",
+        "Shared stack already does this correctly: lib/websocket.ts scheduleReconnect (:600-632) + contexts/WebSocketContext.tsx (:304-320) implement exponential backoff `minReconnectDelay * 2 ** reconnectAttempts`, a maxReconnectAttempts cap that flips shouldReconnect off, and `connection:max-retries-exceeded` for a UI affordance plus a network-status resume. useIotWebSocket reimplements connection management and omits all three mechanisms.",
+        "Severity MEDIUM (+2): user-facing realtime path; no crash/data-loss but amplifies an outage into a client-driven retry storm. Preferred fix: consume shared WebSocketService; minimal fix: add backoff + attempt cap + give-up to the local loop."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
+      "title": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-22 ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 — the subscribe effect reads handlerRef.current at run-time (`if (!eventType || !handlerRef.current) return;`) but its dep array is `[eventType, subscribe]`; the ref is updated on every render (:80) specifically so handler-identity changes do NOT re-run the effect.",
+        "Consequence: if a consumer mounts with handler===undefined on first render (handler produced conditionally, or after an async value resolves) and supplies a defined handler on a later render without changing eventType, the effect never re-runs — subscribe() is never called and the component silently receives no events.",
+        "Severity LOW (+1): no crash and the dominant usage (handler-at-mount) is unaffected; latent correctness smell. Fix: depend on `Boolean(handler)` or move the gate so a later-arriving handler triggers a one-time subscribe."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
     }
   ]
 }
