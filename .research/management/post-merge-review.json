@@ -1,9 +1,18 @@
 {
-  "generated": "2026-10-21T10:34:27Z",
+  "generated": "2026-10-22T12:32:50Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-22T12:32:50Z",
+      "prs_scanned": 1,
+      "clean": [
+        3123
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (24h cadence). repo=martin-janci/property-management, window=14d (merged>=2026-10-08), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: gh GraphQL 403'd, so reads via GitHub MCP list_pull_requests (closed,base=dev,sort=updated desc, pages 1-2) + pull_request_read get/get_diff; label-add via gh api REST (POST issues/3123/labels, preserving needs-human-review). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only, deferred commit/push to orchestrator Phase 6. Of all merged-into-dev PRs in window, every one except #3123 already carried post-merge-reviewed/no-review-needed and was skipped. Scanned 1 (#3123), 0 follow-up issues. #3123 (code-review-api-core-totp-rng-expect-panic, rust-backend, merged 2026-10-21): CLEAN. 3-add/1-del one-file defensive fix in backend/servers/api-server/src/services/totp.rs \u2014 replaced SysRng.try_fill_bytes(...).expect(\"OS rng failed\") in encrypt_secret() with map_err(|e| TotpError::EncryptionError(format!(\"secure RNG failed to generate nonce: {e}\")))?. Removes a panic/DoS vector on CSPRNG failure; uses the existing EncryptionError variant and matches the sibling map_err(?) idiom already at totp.rs:85 and :102; encrypt_secret already returns Result<String,TotpError> so no signature/caller changes; happy path + nonce:ciphertext format untouched (existing test_encrypt_decrypt_secret still covers it). Only gap: no fault-injection test for the unreachable RNG-failure branch \u2014 well-justified in the PR body (would require restructuring the function, which the task explicitly forbade). Not actionable; no follow-up issue warranted. Labeled post-merge-reviewed."
+    },
     {
       "run_at": "2026-10-21T10:34:27Z",
       "prs_scanned": 5,
@@ -615,15 +624,6 @@
         2979,
         2980
       ]
-    },
-    {
-      "run_at": "2026-09-25T12:25:47Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-11), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI proxy-403 unreliable; direct git push proxy-403); DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; did not touch assignments.json/action-list.json/archives; no MCP issues opened). Enumeration: search_pull_requests 'is:merged base:dev merged:>=2026-09-11' => total_count=0 (search index unsynced in runner, as in prior runs). Cross-checked list_pull_requests (state=closed, base=dev): sort=created desc perPage=40 AND sort=updated desc perPage=25. Newest genuine merge into dev is #2956@2026-09-08T20:33Z (then #2955@09-08, #2952/#2950@09-07) \u2014 all already carry post-merge-reviewed from prior runs and all predate the 09-11 window start. #463 (merged 2026-05-24, updated 09-22 by unrelated activity) is likewise already post-merge-reviewed and far out of window. Higher-numbered rows 2965/2964/2963/2959/2958/2939/2936/2933/2808/2591 have no merged_at (open or closed-unmerged dependabot PRs), not merges into dev. ZERO PRs merged into dev within the 14d window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass.",
-      "focus_prs": []
     }
   ]
 }
