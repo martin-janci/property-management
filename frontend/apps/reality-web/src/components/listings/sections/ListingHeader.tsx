@@ -1,22 +1,20 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatNumber, formatPrice } from '@/lib/format';
 import type { ListingSectionProps } from './registry';
 
-function formatPrice(price: number, currency: string) {
+function formatListingPrice(price: number, currency: string, locale: string) {
   const value = Number.isFinite(price) ? price : 0;
   if (typeof currency !== 'string' || currency.length === 0) {
-    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+    return formatNumber(value, locale, { maximumFractionDigits: 0 });
   }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatPrice(value, locale, { currency });
 }
 
 export function ListingHeader({ listing }: ListingSectionProps) {
   const t = useTranslations('listing');
+  const locale = useLocale();
   return (
     <div className="listing-header">
       <div className="badges">
@@ -44,13 +42,13 @@ export function ListingHeader({ listing }: ListingSectionProps) {
         {listing.address?.district && `, ${listing.address.district}`}
       </p>
       <div className="price-row">
-        <span className="price">{formatPrice(listing.price, listing.currency)}</span>
+        <span className="price">{formatListingPrice(listing.price, listing.currency, locale)}</span>
         {listing.transactionType === 'rent' && (
           <span className="price-suffix">{t('perMonth')}</span>
         )}
         {listing.pricePerSqm && (
           <span className="price-per-sqm">
-            ({formatPrice(listing.pricePerSqm, listing.currency)}/m²)
+            ({formatListingPrice(listing.pricePerSqm, listing.currency, locale)}/m²)
           </span>
         )}
       </div>
