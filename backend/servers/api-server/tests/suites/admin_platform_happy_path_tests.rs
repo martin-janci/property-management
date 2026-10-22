@@ -246,6 +246,71 @@ async fn admin_impersonation_active_2xx(pool: PgPool) {
     get_2xx(&app, url, &token, "imp_active").await;
 }
 
+/// IG3 regression — code-review-api-handlers-impersonation-active-raw-xff-audit.
+///
+/// `GET /admin/impersonation/active` must derive the audit client IP through
+/// the shared `audit_ip_from_headers` helper (first `X-Forwarded-For` entry,
+/// truncated to `audit_logs.ip_address`'s `VARCHAR(45)` width), NOT write the
+/// raw XFF chain verbatim. A long / spoofed chain written as-is overflows the
+/// column, the audit `INSERT` fails, and the handler swallows the error — so
+/// the audit row is silently dropped.
+///
+/// Before the fix this test finds zero audit rows (overflow); after the fix it
+/// finds exactly one carrying the genuine first-hop IP.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn impersonation_active_audit_ip_truncated_not_raw_xff(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, admin_id, _granter) = authorized_admin(&pool, "xff", "users_impersonate").await;
+
+    // A spoofed XFF chain whose *raw* form (> 45 chars) overflows VARCHAR(45);
+    // the genuine client IP is the first entry (11 chars) and must survive.
+    let spoofed_xff = "203.0.113.7, 198.51.100.23, 203.0.113.195, 198.51.100.77, 10.11.12.13";
+    assert!(
+        spoofed_xff.len() > 45,
+        "fixture must exceed the ip_address column width to exercise the overflow"
+    );
+
+    let resp = app
+        .get("/api/v1/admin/impersonation/active")
+        .bearer(&token)
+        .header("x-forwarded-for", spoofed_xff)
+        .send()
+        .await;
+    assert!(
+        resp.status.is_success(),
+        "expected 2xx, got {} — body: {}",
+        resp.status,
+        resp.text()
+    );
+
+    // The audit row must have been written (INSERT did not overflow).
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM audit_logs WHERE user_id = $1 AND resource_type = 'impersonation_active'",
+    )
+    .bind(admin_id)
+    .fetch_one(&pool)
+    .await
+    .expect("count impersonation_active audit rows");
+    assert_eq!(
+        count, 1,
+        "impersonation/active must write exactly one audit row; a raw XFF chain overflows VARCHAR(45) and drops it"
+    );
+
+    // …and it must record the truncated first-hop IP, not the raw chain.
+    let ip: Option<String> = sqlx::query_scalar(
+        "SELECT ip_address FROM audit_logs WHERE user_id = $1 AND resource_type = 'impersonation_active'",
+    )
+    .bind(admin_id)
+    .fetch_one(&pool)
+    .await
+    .expect("fetch impersonation_active audit ip");
+    assert_eq!(
+        ip.as_deref(),
+        Some("203.0.113.7"),
+        "audit row must record the first XFF hop, not the raw chain"
+    );
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_memberships_merge_collisions_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
