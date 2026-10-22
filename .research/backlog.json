@@ -12673,7 +12673,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)"
       ],
@@ -12688,7 +12688,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-22T16:42:56Z",
+        "assignment_status": "merged",
+        "pr_number": 3140
+      }
     },
     {
       "id": "code-review-api-handlers-migration-upload-drops-file",
@@ -12721,7 +12726,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-10-19 api-handlers"
       ],
@@ -12733,7 +12738,12 @@
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-22T16:42:56Z",
+        "assignment_status": "merged",
+        "pr_number": 3142
+      }
     },
     {
       "id": "code-review-api-handlers-impersonation-active-raw-xff-audit",
@@ -12741,7 +12751,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-10-19 api-handlers"
       ],
@@ -12754,7 +12764,12 @@
       ],
       "created_at": "2026-10-19",
       "updated_at": "2026-10-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-22T16:42:56Z",
+        "assignment_status": "merged",
+        "pr_number": 3141
+      }
     },
     {
       "id": "code-review-api-core-push-fanout-client-build-expect",

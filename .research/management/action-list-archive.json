@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-21T20:32:36Z",
+  "archived_at": "2026-10-22T16:45:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3889,6 +3889,30 @@
       }
     },
     {
+      "id": "code-review-api-handlers-impersonation-active-raw-xff-audit",
+      "action": "admin /impersonation/active audit skips `audit_ip_from_headers` → raw XFF overflows VARCHAR(45), audit INSERT fails silently",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-19T02:26:26Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-10-22T16:42:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-19T02:26:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3141,
+        "merged_at": "2026-10-22T16:41:47Z",
+        "at": "2026-10-22T16:42:56Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-marketplace-award-quote-idor",
       "action": "backend/servers/api-server/src/routes/marketplace.rs:922-951 — award_quote (wired POST /api/v1/marketplace/rfqs/{id}/award at marketplace.rs:246) authorizes ONLY the parent RFQ: load_rfq_for_org(&state, user.user_id, id) verifies the path {",
       "owner_role": "pm-security",
@@ -3932,6 +3956,30 @@
         "merged_pr": 2747,
         "merged_at": "2026-08-13T10:39:42Z",
         "at": "2026-08-13T12:25:29Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-migration-export-fake-url-stub",
+      "action": "api-server /migration/export: auto-ready with fake example.com URL + fabricated record counts (silent broken feature)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-19T02:26:26Z (score=2 conf=high vector=bug) | gc1-reconcile 2026-10-22T16:42:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-19T02:26:26Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3142,
+        "merged_at": "2026-10-22T16:41:59Z",
+        "at": "2026-10-22T16:42:56Z"
       }
     },
     {
@@ -8416,6 +8464,30 @@
         "commit": "ff63f9702bc3e57230ccdef842c5431897706be2",
         "subject": "code-review-reality-web-featured-fav-silent-fail: surface favorite-toggle errors on FeaturedListings (#3015)",
         "at": "2026-10-02T20:28:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-formatprice-hardcoded-locale",
+      "action": "reality-web: ListingHeader & AgencyListings hardcode locale=en-US in formatPrice on a 4-language portal",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-10-22T16:42:56Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3140,
+        "merged_at": "2026-10-22T16:41:47Z",
+        "at": "2026-10-22T16:42:56Z"
       }
     },
     {
@@ -19312,6 +19384,44 @@
       "source": "pm-analysis 2026-05-25",
       "resolved": "PR #492 merged 2026-05-25",
       "depends_on": []
+    },
+    {
+      "id": "pm-integration-audit-integration-prs-openapi-drift",
+      "action": "Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift (draft #3123 is api-core TOTP RNG — no contract impact; recent merged #3121/#3122 are client-side only)",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-19 | gc1-reconcile 2026-10-22T16:42:56Z",
+      "first_open_at": "2026-10-19T04:00:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3139,
+        "merged_at": "2026-10-22T16:41:47Z",
+        "at": "2026-10-22T16:42:56Z"
+      }
+    },
+    {
+      "id": "pm-integration-document-sso-transient-401-contract",
+      "action": "Document the reality-server SSO consumer transient-401 contract vs reality-web auth-context cushion (PR #3121) in docs/api/README.md — ensure client/server treat transient vs permanent 401 symmetrically",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-19 | gc1-reconcile 2026-10-22T16:42:56Z",
+      "first_open_at": "2026-10-19T04:00:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3138,
+        "merged_at": "2026-10-22T16:41:47Z",
+        "at": "2026-10-22T16:42:56Z"
+      }
     },
     {
       "id": "pm-integration-rustsec-exception-policy-ci-surface",
