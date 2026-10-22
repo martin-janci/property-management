@@ -11677,22 +11677,24 @@
       "title": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "rotating-expert-review reality-server 2026-10-03"
+        "rotating-expert-review reality-server 2026-10-03",
+        "signal:code-review-reality-server-compare-add-limit-toctou"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT(*) (line 166) → MAX_COMPARE_LISTINGS=4 guard → separate INSERT (line 221) with no row-level lock and no DB-side constraint. Two concurrent POSTs from the same user can both see count==3 and both insert, exceeding the documented cap.",
         "Existing exists-check at line 205 only catches exact duplicates, not count violations.",
         "Fix: wrap count+insert in a serializable transaction, or add a DB-side partial unique index / check constraint.",
-        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence"
+        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence",
+        "2026-10-22 reality-server Tier-1D re-flag: same TOCTOU re-confirmed via static read of compare.rs:155-227 — count-cap race unchanged; duplicate-insert race surfaces 500 instead of mapped 400 (compare.rs:214-219 vs util::errors::db_error mapping)."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/compare.rs"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-22",
       "plan": null
     },
     {
@@ -12782,6 +12784,78 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-agency-href-scheme-xss",
+      "title": "reality-web: public agency profile + listing Resources render agency-authored URLs with no http(s) scheme check — stored-XSS vector via javascript: href",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signal:code-review-reality-web-agency-href-scheme-xss",
+        "rotating-expert-review 2026-10-22 reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:297 renders `<a href={agency.website} target=\"_blank\">` with agency-authored URL — React does not sanitize javascript:/data: href values (renders attribute with dev-only warning).",
+        "Same raw-href pattern at frontend/apps/reality-web/src/components/listings/sections/Resources.tsx:17,:39 for listing.virtualTourUrl / listing.floorPlanUrl.",
+        "App has sanitizeCssValue (lib/tenant-config.ts:243-279) denylisting javascript:/data:/url(/expression( for css_vars — the same guard class is NOT applied to the three agency/listing anchor hrefs. No safeExternalHref helper exists in reality-web.",
+        "Severity MEDIUM (+2): stored-XSS requires authored payload + victim click. Remedy: route all three sites through an http(s)-only scheme guard."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-page-i18n-gap",
+      "title": "reality-web agency/[slug]/page.tsx renders user-facing copy as Slovak literals on a 4-language portal (no next-intl wiring)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "signal:code-review-reality-web-agency-page-i18n-gap",
+        "rotating-expert-review 2026-10-22 reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx renders hardcoded Slovak copy at :36 (Načítavam…), :46 (Kancelária sa nenašla.), :223 (Žiadne aktívne ponuky.), :279 (Kontakt), :302 (🌐 Navštíviť web). grep for useTranslations/getTranslations/`t(` returns zero hits in the file.",
+        "File header (:7-9) says it \"Mirrors the realtor/[id] public-profile pattern\" and references next-intl — intended but never wired. Sibling app/[locale]/realtor/[id]/page.tsx is the correct template to copy.",
+        "Severity LOW (+1): visible localization regression on an SEO-indexed public route. Czech/German/English visitors see Slovak chrome."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-gradient-color-unsanitized",
+      "title": "reality-web agency page interpolates agency.primaryColor/secondaryColor into inline linear-gradient without sanitizeCssValue (consistency gap)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "signal:code-review-reality-web-agency-gradient-color-unsanitized",
+        "rotating-expert-review 2026-10-22 reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:64-66 interpolates agency-authored colors directly into inline style `background: `linear-gradient(135deg, ${agency.primaryColor}, ${agency.secondaryColor ?? #2563eb})``.",
+        "lib/tenant-config.ts:243-279 sanitizeCssValue (which denylists url(/expression(/javascript:/data: and enforces color-literal shapes) is applied to css_vars but NOT to inline agency gradient colors — consistency gap.",
+        "Severity LOW (+1): CSSOM setter drops malformed `background` values so direct injection is limited, but it is a defense-in-depth gap and the fix is one-line (route primaryColor/secondaryColor through sanitizeCssValue)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
     }
   ]
 }
