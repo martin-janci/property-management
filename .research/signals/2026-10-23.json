@@ -1,14 +1,16 @@
 {
-  "generated_at": "2026-10-23T00:00:00Z",
+  "generated_at": "2026-10-23T18:33:56Z",
   "lag_hours": 18,
   "lag_days": 0,
   "run_summary": {
-    "merged_prs": 5,
-    "merged_pr_range": "#3138–#3142",
+    "merged_prs": 6,
+    "merged_pr_range": "#3138–#3142, #3144",
     "open_prs_touched": 10,
-    "issues_new_or_updated": 1,
-    "commits_on_dev": 17,
-    "non_routine_commits": 5
+    "issues_new_or_updated": 2,
+    "commits_on_dev": 21,
+    "non_routine_commits": 6,
+    "rerun_trigger": "buffer-low claimable=14/72 — refill planner",
+    "runs_this_date": 2
   },
   "signals": [
     {
@@ -16,7 +18,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-23 reality-web",
       "segment": "reality-web",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -28,7 +30,8 @@
       "evidence": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:408 — handleCreate's catch does `console.error('Failed to create CRM connection:', error)` and then `setCreateError(t('createError'))`. The create mutation payload carries secrets: `credentials: { apiKey, instanceUrl }` (CrmConnection.tsx:389-392). Logging the raw rejected-mutation `error` to the browser console is the skill's flagged pattern 'sensitive fields (password, token, secret, api_key) appearing in a log call' — if the underlying fetch/client embeds request context (config.data / body) in the error, the apiKey can land in client-side console and any browser error-reporting sink. The user-facing error state is already set, so the console.error adds no UX value, only leak surface.",
         "frontend/apps/reality-web/src/components/import/FeedImport.tsx:518 and frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:578 — same committed-console.error-in-catch pattern (handleCreate / handleSubmit). Both already surface an i18n'd error via setCreateError/setInviteError, so these two are pure production debug leftovers (skill Frontend pattern: 'console.log / console.error left in committed code'). Lower concern than the CRM site because no credentials are in those payloads.",
-        "Scope note: these are the ONLY non-error-boundary console.error sites in the segment. The two error.tsx boundaries (app/[locale]/error.tsx:27, app/[locale]/agency/error.tsx:28) legitimately console.error the boundary error and are excluded. Severity LOW (+1): no crash and user feedback is intact; the elevation reason for tracking is the credential-flow leak surface at CrmConnection.tsx:408. Confidence medium: whether the error object actually carries the apiKey depends on the mutation hook's error shape (not statically confirmed), so the leak is latent rather than proven."
+        "Scope note: these are the ONLY non-error-boundary console.error sites in the segment. The two error.tsx boundaries (app/[locale]/error.tsx:27, app/[locale]/agency/error.tsx:28) legitimately console.error the boundary error and are excluded. Severity LOW (+1): no crash and user feedback is intact; the elevation reason for tracking is the credential-flow leak surface at CrmConnection.tsx:408. Confidence medium: whether the error object actually carries the apiKey depends on the mutation hook's error shape (not statically confirmed), so the leak is latent rather than proven.",
+        "re-emit on same-day rerun: score already applied by morning run; score_delta zeroed per G4 non-cumulative dedup rule"
       ]
     },
     {
@@ -36,7 +39,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-23 reality-web",
       "segment": "reality-web",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -46,7 +49,8 @@
       "evidence": [
         "frontend/apps/reality-web/src/lib/realtor-api.ts:48 — the shared `request<T>()` helper returns a 200 body as `(await response.json()) as T` with no shape validation: an unchecked type assertion crossing the API boundary (skill Frontend pattern: 'as cast that crosses an API boundary'). A 200 with an empty/non-JSON body makes response.json() throw, and a well-formed-but-wrong-shape body is silently cast to T and dereferenced downstream (e.g. the 649-line app/[locale]/realtor/[id]/page.tsx consumer).",
         "Asymmetry confirming this is worth closing: the sibling public SSR path app/[locale]/listings/[slug]/page.tsx:79-89 deliberately does NOT trust a 200 — it runs the body through parseListingDetail (listingSchema.ts) to coerce/validate required nested fields before render, with a comment that 'a 200 does not guarantee a well-formed body'. realtor-api.ts applies no equivalent guard, so the realtor surface is strictly less defensive than the listing surface against the same upstream/proxy partial-response failure mode.",
-        "Severity LOW (+1): callers invoke request<T>() inside try/catch (the function already throws RealtorApiError on network/!ok paths), so a malformed 200 surfaces as an unhandled JSON parse / later undefined-deref rather than an unhandled crash at this line — a robustness gap, not a hard crash. Confidence medium: the missing validation is statically confirmed; whether a malformed 200 occurs in production is data-dependent. Fix: mirror the parseListingDetail approach — validate/normalize the realtor response shape before the `as T` return."
+        "Severity LOW (+1): callers invoke request<T>() inside try/catch (the function already throws RealtorApiError on network/!ok paths), so a malformed 200 surfaces as an unhandled JSON parse / later undefined-deref rather than an unhandled crash at this line — a robustness gap, not a hard crash. Confidence medium: the missing validation is statically confirmed; whether a malformed 200 occurs in production is data-dependent. Fix: mirror the parseListingDetail approach — validate/normalize the realtor response shape before the `as T` return.",
+        "re-emit on same-day rerun: score already applied by morning run; score_delta zeroed per G4 non-cumulative dedup rule"
       ]
     },
     {
@@ -147,129 +151,108 @@
       "evidence": [
         "dependabot[bot]: chore(deps): bump the gradle-minor-patch group across 1 directory with 6 updates — open 22d"
       ]
+    },
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3144",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3144 (code-review-reality-web-agency-gradient-color-unsanitized) touched 1 reality-web route file: frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+ added frontend/apps/reality-web/src/lib/sanitize-css.ts, modified frontend/apps/reality-web/src/lib/tenant-config.ts).",
+        "No docs/screens/reality/*.md touched in the same PR. docs/screens/reality/agency-profile.md exists but its agency log was not updated to note the sanitization refactor.",
+        "best-effort heuristic — defensive CSS sanitization is behavior-preserving for happy-path tenants; the agency-profile screen doc may not need user-visible updates, so this item is a review candidate per the routine prompt caveat."
+      ]
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — the 2 new signals are LOW (+1) and would not reach score≥3 or confidence=high; no screen-map-drift / fixme-in-merged-code / dep-update-noise lockfile-drift / stalled-review signal eligible this run (dependabot PR CI is blocked on Issue #3143 cargo-deny advisory handling, not stale manifests)",
+  "auto_fix_skipped_reason": "no candidate — the sole net-new signal this rerun (screen-map-drift-pr-3144-reality) is confidence=medium, below the confidence=high + score≥3 certainty bar. The 2 morning-run code-review signals remain LOW (+1). No fixme-in-merged-code / dep-update-noise-lockfile-drift / stalled-review eligible this run (dependabot CI deadlock tracked in #3143 — not a mechanical lockfile sync).",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/<today>.md && first-line matches",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "note": "brief exists and first line matches today"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq comparison vs HEAD state",
-      "observed": "true",
-      "expected": "true"
+      "note": "last_pr_seen advanced 3142→3144, last_issue_seen 3143→3149, last_commit_sha 18f1813→28e8db4, +1 seen_signal, review_cursor.mobile-native-kmp advanced"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "backlog ids unique",
-      "observed": "true",
-      "expected": "true"
+      "note": "all backlog ids unique"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signal id dedup vs seen_signals",
-      "observed": "true",
-      "expected": "true"
+      "note": "re-emitted non-cumulative signals have score_delta=0 (code-review-finding entries from morning run)"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "score cap + decay",
-      "observed": "cap=true, decay=no-op (no open row older than 14d)",
-      "expected": "true"
+      "note": "no row > 8 score; no decay-eligible open row (oldest 2026-10-11 = 12d, inside 14d window)"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "adversarial pass per new plan",
-      "observed": "no new plans this run",
-      "expected": "n/a"
+      "note": "no new plans this run — gate vacuously passes"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "<=2 new plans + all 15 sections",
-      "observed": "0 new plans",
-      "expected": "<=2"
+      "note": "0 new plans this run (cap=2)"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v .research/",
-      "observed": "0",
-      "expected": "0"
+      "note": "staged diff contains only .research/ paths"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets/private hostnames",
-      "observed": "0",
-      "expected": "0"
+      "note": "no secrets/private-hostnames in staged non-baseline diff"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
+      "note": "backlog.md regen-equivalent (added 1 score=2 row at the top of the score=2 block + refreshed timestamp)"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases-that-failed vs cursor rollback",
-      "observed": "none failed",
-      "expected": "consistent"
+      "note": "brief lists Phases that failed: none; no cursor was advanced for a failed phase"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "plan slug convergence vs HEAD",
-      "observed": "17/17 preserved",
-      "expected": "all preserved"
+      "note": "all prior-run plan slugs still present in plans/ or plans/_archive/"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count >= HEAD",
-      "observed": "22>=22",
-      "expected": ">=HEAD"
+      "note": "plans/_archive/ count 22 == HEAD 22 (non-decreasing)"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs regen",
-      "observed": "identical",
-      "expected": "identical"
+      "note": "IDEAS_TRIAGE.md regen-equivalent (timestamp refresh only; no triage-vector rows changed)"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix caps + idempotency",
-      "observed": "0 actions, caps hold",
-      "expected": "true"
+      "note": "auto_fix_actions is []; kill switch not set; no PR/issue/comment created by routine this run"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts + pm/coverage cursors",
-      "observed": "Phase 1.6 skipped; cursors in range",
-      "expected": "no-op or advanced-both"
+      "note": "Phase 1.6 skipped (no pm_cursor advance); management artifacts valid"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no telegram token in diff",
-      "observed": "0",
-      "expected": "0"
+      "note": "no Telegram token in staged diff"
     }
   ]
 }

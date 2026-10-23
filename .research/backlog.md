@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-23 03:12 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-23 18:33 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -45,6 +45,7 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs (+2)` | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs (+1)` | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | test-gap | reality-web agency/[slug] PR #3144 touched 1 route (brand-color sanitization refactor) with no docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | PR #3144 (+1) | 2026-10-23 | open | — |
 | 2 | bug | reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap | `backend/servers/reality-server/src/routes/compare.rs` | rotating-expert-review reality-server 2026-10-03 (+1) | 2026-10-22 | open | — |
 | 2 | bug | reality-web: public agency profile + listing Resources render agency-authored URLs with no http(s) scheme check — stored-XSS vector via javascript: href | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | signal:code-review-reality-web-agency-href-scheme-xss (+1) | 2026-10-22 | open | — |
 | 2 | bug | api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event | `backend/servers/api-server/src/services/workflow_executor.rs` | rotating-expert-review api-core 2026-10-01 (+1) | 2026-10-22 | open | — |

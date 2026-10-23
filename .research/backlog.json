@@ -12991,6 +12991,29 @@
       "created_at": "2026-10-23",
       "updated_at": "2026-10-23",
       "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "title": "reality-web agency/[slug] PR #3144 touched 1 route (brand-color sanitization refactor) with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3144",
+        "signal:screen-map-drift-pr-3144-reality"
+      ],
+      "evidence": [
+        "PR #3144 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (route in the reality-web trigger set) + added src/lib/sanitize-css.ts and refactored src/lib/tenant-config.ts; no docs/screens/reality/*.md touched in the same PR.",
+        "docs/screens/reality/agency-profile.md exists. The change is defense-in-depth CSS sanitization (functionally behavior-preserving for happy-path tenants); best-effort heuristic — may be a review candidate rather than a doc-update task."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ],
+      "created_at": "2026-10-23",
+      "updated_at": "2026-10-23",
+      "plan": null
     }
   ]
 }
