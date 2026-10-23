@@ -478,6 +478,40 @@
       "first_open_at": "2026-10-22T16:46:36Z",
       "retry_of": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-crm-console-error-leak",
+      "action": "reality-web CrmConnection/FeedImport/RealtorManagement catch handlers `console.error(error)` after secrets payloads — latent credential leak surface at CrmConnection.tsx:408 (apiKey)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-23T04:27:09Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-23T04:27:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-unvalidated-json-cast",
+      "action": "reality-web lib/realtor-api.ts request<T>() returns `(await response.json()) as T` with no shape validation — API-boundary unchecked cast; sibling listing SSR already uses parseListingDetail guard",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-23T04:27:09Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-23T04:27:09Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-19T04:00:00Z"
