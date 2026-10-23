@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-23T20:44:06Z",
+  "generated": "2026-10-23T22:37:47Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2994-ppt",
@@ -358,21 +358,21 @@
       "branch": "auto-impl/gh-issue-3149-79e592f2",
       "status": "review",
       "claimed_at": "2026-10-23T20:29:48Z",
-      "last_updated": "2026-10-23T20:44:06Z",
-      "status_changed_at": "2026-10-23T20:44:06Z",
+      "last_updated": "2026-10-23T22:37:47Z",
+      "status_changed_at": "2026-10-23T22:37:47Z",
       "pr_number": 3150,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3150",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=3150 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=added AML_DSA_BASE=/api/v1/aml-dsa for aml/* + dsa/* client calls (moderation stays /compliance); no TypeSpec for domain so backend router is source of truth; IG3 two-commit test:/fix: (test fails on dev, passes after); verify green VERIFY OK 4f62fc19; drift: frontend/packages/api-client outside pm-tech-lead area; noted out-of-scope initiateEdd subpath/body divergence + Findings 2&3 as follow-ups",
       "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "last_reviewed_oid": "8f496d099910051df3cc58ebf6b80e879fa99187",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]
