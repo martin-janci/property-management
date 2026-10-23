@@ -13,6 +13,7 @@ import { useAgencyBySlug, useAgencyListings, useRealtors } from '@ppt/reality-ap
 import { useParams } from 'next/navigation';
 import { Footer, Header } from '@/components/ui';
 import { Link } from '@/i18n/routing';
+import { sanitizeCssValue } from '@/lib/sanitize-css';
 
 const PAGE_BG: React.CSSProperties = {
   minHeight: '100vh',
@@ -52,6 +53,19 @@ export default function AgencyProfilePage() {
   const team = realtors ?? [];
   const listings = listingsData?.listings ?? [];
 
+  // Tenant-controlled brand colors must be sanitized before they land in an
+  // inline style (same defense as brandingToStyleObject). Reject anything that
+  // isn't a CSS color literal and fall back to the default gradient.
+  const safePrimary = agency.primaryColor
+    ? sanitizeCssValue(agency.primaryColor, '--ppt-color-primary')
+    : null;
+  const safeSecondary = agency.secondaryColor
+    ? sanitizeCssValue(agency.secondaryColor, '--ppt-color-secondary')
+    : null;
+  const coverGradient = safePrimary
+    ? `linear-gradient(135deg, ${safePrimary}, ${safeSecondary ?? '#2563eb'})`
+    : 'linear-gradient(135deg, #1e3a5f, #2563eb)';
+
   return (
     <div data-i18n="pages.agency-profile.root" style={PAGE_BG}>
       <Header />
@@ -61,9 +75,7 @@ export default function AgencyProfilePage() {
         <div
           style={{
             height: 200,
-            background: agency.primaryColor
-              ? `linear-gradient(135deg, ${agency.primaryColor}, ${agency.secondaryColor ?? '#2563eb'})`
-              : 'linear-gradient(135deg, #1e3a5f, #2563eb)',
+            background: coverGradient,
           }}
         />
 
