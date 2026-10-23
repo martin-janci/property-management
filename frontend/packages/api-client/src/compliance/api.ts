@@ -23,7 +23,12 @@ import type {
   TakeModerationActionRequest,
 } from './types';
 
+// Content-moderation handlers are mounted under `/api/v1/compliance`
+// (`routes::compliance::router()`), while the AML and DSA handlers live on a
+// separate router mounted at `/api/v1/aml-dsa` (`routes::aml_dsa::router()`).
+// They are NOT the same prefix — see #3149.
 const API_BASE = '/api/v1/compliance';
+const AML_DSA_BASE = '/api/v1/aml-dsa';
 
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
   // TODO(Phase-1): Add authentication headers to fetchApi
@@ -135,19 +140,19 @@ export async function listAmlAssessments(params?: {
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
   const queryString = searchParams.toString();
-  return fetchApi(`${API_BASE}/aml/assessments${queryString ? `?${queryString}` : ''}`);
+  return fetchApi(`${AML_DSA_BASE}/aml/assessments${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function getAmlThresholds(): Promise<AmlThresholdsResponse> {
-  return fetchApi(`${API_BASE}/aml/thresholds`);
+  return fetchApi(`${AML_DSA_BASE}/aml/thresholds`);
 }
 
 export async function getCountryRisks(): Promise<CountryRisksResponse> {
-  return fetchApi(`${API_BASE}/aml/country-risks`);
+  return fetchApi(`${AML_DSA_BASE}/aml/country-risks`);
 }
 
 export async function initiateEdd(request: InitiateEddRequest): Promise<{ message: string }> {
-  return fetchApi(`${API_BASE}/aml/assessments/${request.assessment_id}/edd`, {
+  return fetchApi(`${AML_DSA_BASE}/aml/assessments/${request.assessment_id}/edd`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -157,7 +162,7 @@ export async function reviewAmlAssessment(
   assessmentId: string,
   request: ReviewAmlAssessmentRequest
 ): Promise<{ message: string }> {
-  return fetchApi(`${API_BASE}/aml/assessments/${assessmentId}/review`, {
+  return fetchApi(`${AML_DSA_BASE}/aml/assessments/${assessmentId}/review`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -178,17 +183,17 @@ export async function listDsaReports(params?: {
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
   const queryString = searchParams.toString();
-  return fetchApi(`${API_BASE}/dsa/reports${queryString ? `?${queryString}` : ''}`);
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function getDsaMetrics(): Promise<DsaMetricsResponse> {
-  return fetchApi(`${API_BASE}/dsa/metrics`);
+  return fetchApi(`${AML_DSA_BASE}/dsa/metrics`);
 }
 
 export async function generateDsaReport(
   request: GenerateDsaReportRequest
 ): Promise<{ report: DsaTransparencyReport }> {
-  return fetchApi(`${API_BASE}/dsa/reports/generate`, {
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports/generate`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -197,11 +202,11 @@ export async function generateDsaReport(
 export async function publishDsaReport(
   reportId: string
 ): Promise<{ report: DsaTransparencyReport }> {
-  return fetchApi(`${API_BASE}/dsa/reports/${reportId}/publish`, { method: 'POST' });
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports/${reportId}/publish`, { method: 'POST' });
 }
 
 export async function downloadDsaReportPdf(
   reportId: string
 ): Promise<{ url: string; filename: string }> {
-  return fetchApi(`${API_BASE}/dsa/reports/${reportId}/download`);
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports/${reportId}/download`);
 }
