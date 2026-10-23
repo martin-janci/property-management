@@ -305,17 +305,6 @@ pub async fn get_price_map(
 mod tests {
     use super::*;
 
-    /// A live cache entry (empty payload) that expires `offset` into the
-    /// future relative to `base`. Monotonic `offset`s make eviction order
-    /// deterministic while keeping every entry comfortably live (> now), so
-    /// the test isolates the size cap from the TTL sweep.
-    fn live_entry(base: Instant, offset_secs: u64) -> CacheEntry {
-        CacheEntry {
-            data: Vec::new(),
-            expires_at: base + CACHE_TTL + Duration::from_secs(offset_secs),
-        }
-    }
-
     /// Regression for the unbounded-cache DoS: an anonymous caller rotating
     /// distinct `city` values inserts a brand-new key every time within the TTL
     /// window. Without the size cap the map grows past the cap; with it the map
@@ -324,13 +313,15 @@ mod tests {
     #[test]
     fn price_map_cache_bounded_under_distinct_key_flood() {
         let base = Instant::now();
-        let mut cache: HashMap<String, CacheEntry> = HashMap::new();
+        let mut cache = BoundedCache::new();
         let n = MAX_PRICE_MAP_CACHE_ENTRIES + 10;
         for i in 0..n {
-            insert_bounded(
-                &mut cache,
+            // Monotonic, comfortably-live expiries keep every entry past `now`
+            // so this test isolates the size cap from the TTL sweep.
+            cache.insert(
                 format!("sale:3m::city-{i:08}"),
-                live_entry(base, i as u64),
+                Vec::new(),
+                base + CACHE_TTL + Duration::from_secs(i as u64),
             );
         }
 
@@ -349,27 +340,83 @@ mod tests {
         );
     }
 
+    /// Follow-up regression (#3132): under a burst where every entry lands in
+    /// the same clock tick (identical `expires_at`), size-cap eviction must
+    /// still be deterministic oldest-inserted-first. The previous
+    /// sort-by-`expires_at` eviction broke ties by `HashMap` iteration order
+    /// (nondeterministic); the insertion-order index makes it exact. The first
+    /// `EVICTED` inserted keys are dropped; the last `MAX` are retained.
+    #[test]
+    fn price_map_cache_evicts_in_insertion_order_under_tied_expiry() {
+        // All entries share one expiry — the realistic coarse-clock / burst
+        // case — so eviction order is decided purely by insertion order.
+        let tied = Instant::now() + CACHE_TTL;
+        let mut cache = BoundedCache::new();
+        const EVICTED: usize = 256;
+        let n = MAX_PRICE_MAP_CACHE_ENTRIES + EVICTED;
+        for i in 0..n {
+            cache.insert(format!("city-{i:08}"), Vec::new(), tied);
+        }
+
+        assert_eq!(cache.len(), MAX_PRICE_MAP_CACHE_ENTRIES);
+        for i in 0..EVICTED {
+            assert!(
+                !cache.contains_key(&format!("city-{i:08}")),
+                "oldest-inserted key city-{i:08} must be evicted first under tied expiry"
+            );
+        }
+        for i in EVICTED..n {
+            assert!(
+                cache.contains_key(&format!("city-{i:08}")),
+                "recently-inserted key city-{i:08} must be retained"
+            );
+        }
+    }
+
+    /// Re-inserting an existing key refreshes it in place: the map does not
+    /// grow, and the refreshed key moves to the youngest slot so it survives
+    /// a subsequent size-cap eviction (it is no longer the oldest).
+    #[test]
+    fn price_map_cache_replace_refreshes_without_growing() {
+        let tied = Instant::now() + CACHE_TTL;
+        let mut cache = BoundedCache::new();
+        for i in 0..MAX_PRICE_MAP_CACHE_ENTRIES {
+            cache.insert(format!("city-{i:08}"), Vec::new(), tied);
+        }
+        assert_eq!(cache.len(), MAX_PRICE_MAP_CACHE_ENTRIES);
+
+        // Refresh the oldest key — must not grow the map and must move it to
+        // the back of the eviction order.
+        cache.insert("city-00000000".to_string(), Vec::new(), tied);
+        assert_eq!(
+            cache.len(),
+            MAX_PRICE_MAP_CACHE_ENTRIES,
+            "replacing an existing key must not grow the map"
+        );
+
+        // One genuinely new key now evicts the *new* oldest (city-00000001),
+        // not the just-refreshed city-00000000.
+        cache.insert("city-new".to_string(), Vec::new(), tied);
+        assert_eq!(cache.len(), MAX_PRICE_MAP_CACHE_ENTRIES);
+        assert!(
+            cache.contains_key("city-00000000"),
+            "refreshed key must survive — it is no longer the oldest"
+        );
+        assert!(
+            !cache.contains_key("city-00000001"),
+            "the new oldest key must be the one evicted"
+        );
+        assert!(cache.contains_key("city-new"));
+    }
+
     /// The TTL sweep alone keeps already-expired entries from accumulating,
     /// independently of the size cap.
     #[test]
     fn price_map_cache_drops_ttl_expired_entries_on_insert() {
-        let mut cache: HashMap<String, CacheEntry> = HashMap::new();
+        let mut cache = BoundedCache::new();
         // Pre-seed an already-expired entry.
-        cache.insert(
-            "stale".to_string(),
-            CacheEntry {
-                data: Vec::new(),
-                expires_at: Instant::now() - Duration::from_secs(1),
-            },
-        );
-        insert_bounded(
-            &mut cache,
-            "fresh".to_string(),
-            CacheEntry {
-                data: Vec::new(),
-                expires_at: Instant::now() + CACHE_TTL,
-            },
-        );
+        cache.insert("stale".to_string(), Vec::new(), Instant::now() - Duration::from_secs(1));
+        cache.insert("fresh".to_string(), Vec::new(), Instant::now() + CACHE_TTL);
 
         assert!(
             !cache.contains_key("stale"),
@@ -383,7 +430,7 @@ mod tests {
     /// the shared write lock; the final size must still respect the cap.
     #[tokio::test]
     async fn price_map_cache_bounded_under_concurrent_distinct_key_flood() {
-        let cache: Arc<RwLock<HashMap<String, CacheEntry>>> = Arc::new(RwLock::new(HashMap::new()));
+        let cache: Arc<RwLock<BoundedCache>> = Arc::new(RwLock::new(BoundedCache::new()));
         let per_task = MAX_PRICE_MAP_CACHE_ENTRIES / 2 + 1;
 
         let mut handles = Vec::new();
@@ -391,12 +438,8 @@ mod tests {
             let cache = cache.clone();
             handles.push(tokio::spawn(async move {
                 for i in 0..per_task {
-                    let entry = CacheEntry {
-                        data: Vec::new(),
-                        expires_at: Instant::now() + CACHE_TTL,
-                    };
                     let mut w = cache.write().await;
-                    insert_bounded(&mut w, format!("t{t}:city-{i}"), entry);
+                    w.insert(format!("t{t}:city-{i}"), Vec::new(), Instant::now() + CACHE_TTL);
                 }
             }));
         }
