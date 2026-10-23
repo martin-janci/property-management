@@ -12938,6 +12938,54 @@
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-crm-console-error-leak",
+      "title": "reality-web CrmConnection/FeedImport/RealtorManagement catch handlers `console.error(error)` after secrets payloads — latent credential leak surface at CrmConnection.tsx:408 (apiKey)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-23 reality-web",
+        "signal:code-review-reality-web-crm-console-error-leak"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:408 — handleCreate's catch does `console.error('Failed to create CRM connection:', error)` and then `setCreateError(t('createError'))`. Create payload carries credentials: { apiKey, instanceUrl } (CrmConnection.tsx:389-392); if the error object embeds request context the apiKey can land in the browser console and any error-reporting sink. User-facing error state already set — console.error adds leak surface, no UX value.",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:518 and frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:578 — same committed-console.error-in-catch pattern (handleCreate / handleSubmit). No credentials in those payloads but still skill-flagged debug leftovers.",
+        "Scope note: these are the ONLY non-error-boundary console.error sites in the segment. The two error.tsx boundaries legitimately console.error the boundary error and are excluded. Severity LOW (+1); confidence medium (latent, not proven)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-10-23",
+      "updated_at": "2026-10-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-unvalidated-json-cast",
+      "title": "reality-web lib/realtor-api.ts request<T>() returns `(await response.json()) as T` with no shape validation — API-boundary unchecked cast; sibling listing SSR already uses parseListingDetail guard",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-23 reality-web",
+        "signal:code-review-reality-web-realtor-api-unvalidated-json-cast"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:48 — shared `request<T>()` helper returns a 200 body as `(await response.json()) as T` with no shape validation; empty/non-JSON body throws, well-formed-but-wrong-shape body is silently cast and dereferenced downstream (e.g. 649-line app/[locale]/realtor/[id]/page.tsx).",
+        "Asymmetry: sibling SSR path app/[locale]/listings/[slug]/page.tsx:79-89 runs the 200 body through parseListingDetail (listingSchema.ts) with the comment 'a 200 does not guarantee a well-formed body'. realtor-api.ts has no equivalent guard — strictly less defensive than the listing surface against the same upstream/proxy partial-response failure mode.",
+        "Severity LOW (+1): callers invoke request<T>() inside try/catch (RealtorApiError on network/!ok paths), so a malformed 200 surfaces as unhandled JSON parse / later undefined-deref rather than a hard crash. Confidence medium: missing validation statically confirmed; frequency data-dependent. Fix: mirror parseListingDetail approach."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "created_at": "2026-10-23",
+      "updated_at": "2026-10-23",
+      "plan": null
     }
   ]
 }
