@@ -13,7 +13,7 @@ import { useAgencyBySlug, useAgencyListings, useRealtors } from '@ppt/reality-ap
 import { useParams } from 'next/navigation';
 import { Footer, Header } from '@/components/ui';
 import { Link } from '@/i18n/routing';
-import { sanitizeCssValue } from '@/lib/tenant-config';
+import { sanitizeCssValue } from '@/lib/sanitize-css';
 
 const PAGE_BG: React.CSSProperties = {
   minHeight: '100vh',
