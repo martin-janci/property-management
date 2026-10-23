@@ -160,3 +160,185 @@ async fn upload_import_file_fails_closed_without_storage(pool: PgPool) {
         "no import_job row may be created when the file was not stored"
     );
 }
+
+/// Happy path: with a storage backend configured, the upload must persist the
+/// exact uploaded bytes to object storage at the key recorded on the
+/// `import_jobs` row, and that key must be downloadable.
+///
+/// This is the positive counterpart to the fail-closed test above. The
+/// fail-closed case only proves the handler rejects when storage is absent; it
+/// says nothing about whether the bytes actually reach storage on success. A
+/// future refactor could re-introduce the original silent-data-loss bug
+/// (upload to the wrong key, upload an empty/discarded buffer, or skip the
+/// upload entirely) and the fail-closed test would still pass. This test
+/// pins the "persist to storage" contract the PR is named for:
+///
+/// (a) `200 OK`,
+/// (b) an `import_jobs` row exists with a non-empty `file_path`,
+/// (c) the exact uploaded CSV bytes were PUT to object storage at that
+///     `file_path` (asserted against the recorded S3 request body), and
+/// (d) `storage.download(file_path)` returns those same bytes.
+///
+/// A wiremock `MockServer` stands in for S3 (the same hermetic pattern the
+/// document-upload suite uses), so the test needs no live MinIO / dev-stack.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn upload_import_file_persists_bytes_to_storage(pool: PgPool) {
+    use api_server::services::{EmailService, JwtService};
+    use api_server::state::AppState;
+    use integrations::{StorageConfig, StorageService};
+    use tower::ServiceExt;
+    use wiremock::matchers::{method, path_regex};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    const JWT: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+    static JWT_ONCE: std::sync::Once = std::sync::Once::new();
+    JWT_ONCE.call_once(|| {
+        if std::env::var("JWT_SECRET").is_err() {
+            std::env::set_var("JWT_SECRET", JWT);
+        }
+        if std::env::var("RUST_ENV").is_err() {
+            std::env::set_var("RUST_ENV", "development");
+        }
+    });
+
+    let csv = "name,address\nTest Building,1 Main St\n";
+    let csv_bytes = csv.as_bytes().to_vec();
+
+    // Wiremock stands in for S3. Accept the PutObject (exactly one upload) and
+    // echo the CSV back on any GetObject so `download` round-trips.
+    let s3_mock = MockServer::start().await;
+    Mock::given(method("PUT"))
+        .and(path_regex(r".*"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&s3_mock)
+        .await;
+    Mock::given(method("GET"))
+        .and(path_regex(r".*"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_bytes(csv_bytes.clone())
+                .insert_header("content-type", "text/csv"),
+        )
+        .mount(&s3_mock)
+        .await;
+
+    let config = StorageConfig::new("test-bucket", "us-east-1", "testkey", "testsecret")
+        .with_endpoint(s3_mock.uri());
+    let storage = StorageService::with_s3_client(config)
+        .await
+        .expect("StorageService construction must succeed");
+    assert!(storage.has_s3_client(), "storage must have an S3 client");
+
+    // Register + seed the platform-admin against the shared pool via a default
+    // TestApp, then also use it to resolve a system template id.
+    let bare_app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_platform_admin(&bare_app, &user, "miguploadok").await;
+    let template_id = first_system_template_id(&bare_app, &token, org_id).await;
+
+    // Build a storage-backed router (the default TestApp carries no storage).
+    let email_service = EmailService::new("http://localhost:8080".to_string(), false);
+    let jwt_service = JwtService::new(JWT).expect("jwt service");
+    let tenant_cache = std::sync::Arc::new(api_core::middleware::TenantResolutionCache::new(
+        300, 30, 10_000,
+    ));
+    let tenant_rate_limiters =
+        std::sync::Arc::new(api_core::middleware::TenantRateLimiterSet::new());
+    let state = AppState::new(
+        pool.clone(),
+        email_service,
+        jwt_service,
+        tenant_cache,
+        tenant_rate_limiters,
+    )
+    .with_storage(storage.clone());
+    let router =
+        api_server::create_router(state).layer(axum::extract::connect_info::MockConnectInfo(
+            std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
+        ));
+
+    let boundary = "bit420migrationuploadokboundary";
+    let body = format!(
+        "--{boundary}\r\n\
+         Content-Disposition: form-data; name=\"template_id\"\r\n\
+         \r\n\
+         {template_id}\r\n\
+         --{boundary}\r\n\
+         Content-Disposition: form-data; name=\"file\"; filename=\"buildings.csv\"\r\n\
+         Content-Type: text/csv\r\n\
+         \r\n\
+         {csv}\r\n\
+         --{boundary}--\r\n"
+    );
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/migration/import/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={boundary}"),
+        )
+        .body(Body::from(body))
+        .expect("build multipart upload request");
+
+    let resp = router.oneshot(req).await.expect("request must not panic");
+    let status = resp.status();
+    let resp_bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .expect("read response body");
+
+    // (a) 200 OK.
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "upload must succeed with storage configured, got {status}. Body: {}",
+        String::from_utf8_lossy(&resp_bytes)
+    );
+
+    // (b) import_jobs row exists with a non-empty file_path.
+    let file_path: String =
+        sqlx::query_scalar("SELECT file_path FROM import_jobs WHERE organization_id = $1")
+            .bind(org_id)
+            .fetch_one(&pool)
+            .await
+            .expect("an import_jobs row must exist after a successful upload");
+    assert!(
+        !file_path.is_empty(),
+        "import_jobs.file_path must reference a real storage key, got empty string"
+    );
+
+    // (c) the exact CSV bytes were PUT to storage at that key. Inspecting the
+    // recorded S3 request guards against the original silent-data-loss bug,
+    // where the handler discarded the body and fabricated a key: an empty /
+    // wrong body or a mismatched key here would fail.
+    let requests = s3_mock
+        .received_requests()
+        .await
+        .expect("wiremock records requests");
+    let put = requests
+        .iter()
+        .find(|r| r.method == Method::PUT)
+        .expect("a PutObject request must have been made");
+    assert!(
+        put.url.path().ends_with(&file_path),
+        "upload must PUT to the key recorded on import_jobs.file_path; \
+         got PUT {} vs file_path {file_path}",
+        put.url.path()
+    );
+    assert_eq!(
+        put.body, csv_bytes,
+        "the exact uploaded CSV bytes must be persisted to storage"
+    );
+
+    // (d) download(file_path) round-trips the stored bytes.
+    let (downloaded, _content_type) = storage
+        .download(&file_path)
+        .await
+        .expect("stored object must be downloadable at file_path");
+    assert_eq!(
+        downloaded, csv_bytes,
+        "download(file_path) must return the exact uploaded bytes"
+    );
+}
