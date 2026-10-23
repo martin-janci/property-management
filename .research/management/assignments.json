@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-23T08:34:07Z",
+  "generated": "2026-10-23T08:40:36Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2994-ppt",
@@ -253,7 +253,7 @@
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": " [pr=3120 in-progress->review; approved; parked needs-human-review (self-approval guard)]",
-      "reviewer_summary": "verdict=approve head_oid=9337c3d497b89a1032c73c93e4de62dd1ac73391 note=enumeration-oracle closed; required check+test green; cargo-deny red is unrelated pre-existing (zip RUSTSEC); self-approval guard blocked auto-merge -> labeled needs-human-review",
+      "reviewer_summary": "verdict=approve head_oid=9337c3d497b89a1032c73c93e4de62dd1 ac73391 note=enumeration-oracle closed; required check+test green; cargo-deny red is unrelated pre-existing (zip RUSTSEC); self-approval guard blocked auto-merge -> labeled needs-human-review",
       "last_reviewed_oid": "9337c3d497b89a1032c73c93e4de62dd1ac73391",
       "scope_drift": false,
       "code_reuse_warn": null,
@@ -356,10 +356,10 @@
     {
       "task_id": "code-review-reality-web-agency-gradient-color-unsanitized",
       "branch": "auto-impl/code-review-reality-web-agency-gradient-a4e20101",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-23T02:30:05Z",
-      "last_updated": "2026-10-23T08:32:25Z",
-      "status_changed_at": "2026-10-23T08:32:25Z",
+      "last_updated": "2026-10-23T08:40:36Z",
+      "status_changed_at": "2026-10-23T08:40:36Z",
       "pr_number": 3144,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3144",
       "merged_at": null,
