@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-22T08:41:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 3135,
-  "last_issue_seen": 3136,
-  "last_commit_sha": "9553c4e",
+  "last_run_iso": "2026-10-23T02:36:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3142,
+  "last_issue_seen": 3143,
+  "last_commit_sha": "094a34a",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -621,6 +621,21 @@
       "runs_seen": 1,
       "last_seen": "2026-10-22",
       "recent_churn": 1
+    },
+    "backend/servers/api-server/src/routes/migration.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-23",
+      "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-23",
+      "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-23",
+      "recent_churn": 1
     }
   },
   "seen_signals": [
@@ -670,6 +685,7 @@
     "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/migration.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
@@ -747,6 +763,8 @@
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/lib/realtor-api.ts",
     "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts",
     "churn-hotspot-frontend/packages/api-client/src/auth/index.ts",
@@ -763,6 +781,7 @@
     "closed-not-merged-pr-2387",
     "closed-not-merged-pr-2489",
     "closed-not-merged-pr-2705",
+    "closed-not-merged-pr-3091",
     "closed-not-merged-pr-507",
     "closed-not-merged-pr-512",
     "closed-not-merged-pr-599",
@@ -793,6 +812,7 @@
     "code-review-api-core-totp-rng-expect-panic",
     "code-review-api-core-voice-device-idor",
     "code-review-api-core-vote-partial-cmp-panic",
+    "code-review-api-core-workflow-condition-err-aborts-batch",
     "code-review-api-core-workflow-eq-type-strict-no-coercion",
     "code-review-api-handlers-ai-upstream-error-leak",
     "code-review-api-handlers-booking-connect-non-manager-hijack",
@@ -877,6 +897,7 @@
     "code-review-ppt-web-core-hardcoded-dispute-strings",
     "code-review-ppt-web-core-home-cta-role-drift",
     "code-review-ppt-web-core-iot-sensor-delete-confirm-hardcoded",
+    "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
     "code-review-ppt-web-core-logout-cache-purge-gap",
     "code-review-ppt-web-core-mutation-no-onerror",
     "code-review-ppt-web-core-notfound-i18n-gap",
@@ -884,6 +905,7 @@
     "code-review-ppt-web-core-rentals-auth-nonnull-mutation",
     "code-review-ppt-web-core-rentals-mutation-silent",
     "code-review-ppt-web-core-route-error-boundary-gap",
+    "code-review-ppt-web-core-usewebsocket-subscribe-gate",
     "code-review-ppt-web-core-ws-category-map-gap",
     "code-review-ppt-web-core-ws-event-name-mismatch",
     "code-review-ppt-web-core-ws-giveup-no-resume",
@@ -1032,6 +1054,10 @@
     "dep-update-noise-pr-3007",
     "dep-update-noise-pr-3008",
     "dep-update-noise-pr-3030",
+    "dep-update-noise-pr-3089",
+    "dep-update-noise-pr-3090",
+    "dep-update-noise-pr-3133",
+    "dep-update-noise-pr-3137",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -1222,10 +1248,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "code-review-api-core-workflow-condition-err-aborts-batch",
-    "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
-    "code-review-ppt-web-core-usewebsocket-subscribe-gate"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1235,12 +1258,12 @@
     "ppt-web-ui": "2026-10-22",
     "ppt-web-core": "2026-10-22",
     "reality-web": "2026-10-17",
-    "mobile-rn": "2026-10-19",
+    "mobile-rn": "2026-10-23",
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 102,
-    "vectors_created": 451,
+    "runs": 103,
+    "vectors_created": 454,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1256,10 +1279,10 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
-      "pm-backend": "2026-07-30",
+      "pm-backend": "2026-10-23",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
@@ -1269,6 +1292,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 11
+    "next_index": 12
   }
 }

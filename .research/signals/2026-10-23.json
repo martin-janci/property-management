@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "generated": "2026-10-23T02:32:06Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/migration.rs",
+      "type": "churn-hotspot",
+      "source": "commit 9af2dd2 (#3142)",
+      "score_delta": 1,
+      "evidence": [
+        "68 lines changed in migration.rs via #3142 (code-review-api-handlers-migration-export-fake-url-stub) — top code hotspot this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+      "type": "churn-hotspot",
+      "source": "commit c662ea1 (#3140)",
+      "score_delta": 1,
+      "evidence": [
+        "18 lines changed in ListingHeader.tsx via #3140 (reality-web formatprice-hardcoded-locale)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx",
+      "type": "churn-hotspot",
+      "source": "commit c662ea1 (#3140)",
+      "score_delta": 1,
+      "evidence": [
+        "16 lines changed in AdditionalInfo.tsx via #3140 (reality-web formatprice-hardcoded-locale)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-3091",
+      "type": "closed-not-merged-pr",
+      "source": "PR #3091",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot npm-minor-patch group PR #3091 closed unmerged on 2026-10-22 — superseded by #3137; no action needed (dependabot churn)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3137",
+      "type": "dep-update-noise",
+      "source": "PR #3137",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot npm-minor-patch group PR open; aggregated 29 updates (replaces #3091)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3133",
+      "type": "dep-update-noise",
+      "source": "PR #3133",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot cargo-minor-patch group PR open; 18 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3089",
+      "type": "dep-update-noise",
+      "source": "PR #3089",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot tokio group PR open; 2 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3090",
+      "type": "dep-update-noise",
+      "source": "PR #3090",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot serde_json 1.0.151 → 1.0.154 PR open"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs + header grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative double-count check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay check",
+      "observed": "cap=true, 0 items eligible for decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "newly-promoted plans adversarial-pass annotations",
+      "observed": "0 new plans",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count + readiness",
+      "observed": "0 new",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases that failed cross-ref cursor advancement",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs present in plans/ or _archive/",
+      "observed": "no deletions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count >= HEAD count",
+      "observed": "21>=21",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm/coverage cursors advanced",
+      "observed": "pm 1->2, cc 11->12, epics=13",
+      "expected": "advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token value grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
