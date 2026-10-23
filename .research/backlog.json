@@ -12854,7 +12854,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "signal:code-review-reality-web-agency-gradient-color-unsanitized",
         "rotating-expert-review 2026-10-22 reality-web"
@@ -12870,7 +12870,12 @@
       ],
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-23T16:25:46Z",
+        "assignment_status": "merged",
+        "pr_number": 3144
+      }
     },
     {
       "id": "code-review-api-core-workflow-condition-err-aborts-batch",

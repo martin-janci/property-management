@@ -359,23 +359,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-agency-gradient-color-unsanitized",
-      "action": "reality-web agency page interpolates agency.primaryColor/secondaryColor into inline linear-gradient without sanitizeCssValue (consistency gap)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-22T06:26:52Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-22T06:26:52Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-web-agency-page-i18n-gap",
       "action": "reality-web agency/[slug]/page.tsx renders user-facing copy as Slovak literals on a 4-language portal (no next-intl wiring)",
       "owner_role": "pm-backend",

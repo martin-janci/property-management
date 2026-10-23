@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-23T12:37:38Z",
+  "generated": "2026-10-23T16:35:36Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2994-ppt",
@@ -36,7 +36,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3028",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3028 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=advisory-lock fixes compare TOCTOU; fmt+scope+reuse clean, clippy/verify blocked by utoipa-swagger-ui egress (#2966) \u2014 draft flagged for human verify+merge [ci-fix respawn 2026-10-19: approved but required `test` red 14d; dispatched rust-backend to fix flaky add_to_compare_concurrent_never_exceeds_max]",
+      "implementer_summary": "pr=3028 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=advisory-lock fixes compare TOCTOU; fmt+scope+reuse clean, clippy/verify blocked by utoipa-swagger-ui egress (#2966) — draft flagged for human verify+merge [ci-fix respawn 2026-10-19: approved but required `test` red 14d; dispatched rust-backend to fix flaky add_to_compare_concurrent_never_exceeds_max]",
       "reviewer_summary": "verdict=approve head_oid=1853180606afbff9302221c4c339efb9f3aa4bde note=re-review (oid drift): new head is test-seed FK fix only to green required test check; prod TOCTOU fix unchanged, still approved",
       "last_reviewed_oid": "1853180606afbff9302221c4c339efb9f3aa4bde",
       "scope_drift": null,
@@ -228,8 +228,8 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3119",
       "merged_at": null,
       "specialist": "frontend",
-      "implementer_summary": " [pr=3119 in-progress->review; approved but now dirty after sibling #3118 merge] [2026-10-18: labeled needs-human-review \u2014 non-mechanical test-file conflict (ArticleDetailScreen.test.tsx) vs dev; mechanical rebaser cannot resolve]",
-      "reviewer_summary": "verdict=approve head_oid=5a9561434dee7fa86560781cacfdd8b267fc08db note=i18n defaultValue parity; CONFLICT vs dev in ArticleDetailScreen.test.tsx after #3118 merge \u2014 needs rebase+manual test resolve",
+      "implementer_summary": " [pr=3119 in-progress->review; approved but now dirty after sibling #3118 merge] [2026-10-18: labeled needs-human-review — non-mechanical test-file conflict (ArticleDetailScreen.test.tsx) vs dev; mechanical rebaser cannot resolve]",
+      "reviewer_summary": "verdict=approve head_oid=5a9561434dee7fa86560781cacfdd8b267fc08db note=i18n defaultValue parity; CONFLICT vs dev in ArticleDetailScreen.test.tsx after #3118 merge — needs rebase+manual test resolve",
       "last_reviewed_oid": "5a9561434dee7fa86560781cacfdd8b267fc08db",
       "scope_drift": false,
       "code_reuse_warn": null,
@@ -299,7 +299,7 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=c7f305de0589819a7d5440400c01f6b8ca770d92 note=BoundedCache(HashMap+BTreeMap seq-index) correctly fixes eviction amplifier; 5 tests incl FIFO regression; fmt/clippy clean, 115 lib tests pass (DB band cloud-blocked). Advisory(non-blocking): Closes #3132 would auto-close a deferred key-space-DoS sub-finding \u2014 recommend Refs or tracking issue. self-approve blocked (token==author).",
+      "reviewer_summary": "verdict=approve head_oid=c7f305de0589819a7d5440400c01f6b8ca770d92 note=BoundedCache(HashMap+BTreeMap seq-index) correctly fixes eviction amplifier; 5 tests incl FIFO regression; fmt/clippy clean, 115 lib tests pass (DB band cloud-blocked). Advisory(non-blocking): Closes #3132 would auto-close a deferred key-space-DoS sub-finding — recommend Refs or tracking issue. self-approve blocked (token==author).",
       "last_reviewed_oid": "c7f305de0589819a7d5440400c01f6b8ca770d92",
       "scope_drift": null,
       "code_reuse_warn": null,
@@ -351,28 +351,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-reality-web-agency-gradient-color-unsanitized",
-      "branch": "auto-impl/code-review-reality-web-agency-gradient-a4e20101",
-      "status": "review",
-      "claimed_at": "2026-10-23T02:30:05Z",
-      "last_updated": "2026-10-23T12:37:38Z",
-      "status_changed_at": "2026-10-23T08:40:36Z",
-      "pr_number": 3144,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3144",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=9af33ce74552e62732afa595a19b72a22e868d94 note=re-review-clean-scope-split-justified-ci-green",
-      "last_reviewed_oid": "9af33ce74552e62732afa595a19b72a22e868d94",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
       "merge_attempted_at": null
     }
   ]

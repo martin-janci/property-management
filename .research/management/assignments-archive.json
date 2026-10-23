@@ -8168,6 +8168,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-web-agency-gradient-color-unsanitized",
+      "branch": "auto-impl/code-review-reality-web-agency-gradient-a4e20101",
+      "status": "merged",
+      "claimed_at": "2026-10-23T02:30:05Z",
+      "last_updated": "2026-10-23T16:25:35Z",
+      "status_changed_at": "2026-10-23T16:25:35Z",
+      "pr_number": 3144,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3144",
+      "merged_at": "2026-10-23T14:28:28Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=9af33ce74552e62732afa595a19b72a22e868d94 note=re-review-clean-scope-split-justified-ci-green",
+      "last_reviewed_oid": "9af33ce74552e62732afa595a19b72a22e868d94",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-web-agency-import-i18n",
       "branch": "auto-impl/code-review-reality-web-agency-import-i1-9d243c8d",
       "status": "merged",
@@ -20439,5 +20461,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-22T16:42:36Z"
+  "archived_at": "2026-10-23T16:32:30Z"
 }

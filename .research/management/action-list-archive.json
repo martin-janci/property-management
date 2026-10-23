@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-22T16:45:28Z",
+  "archived_at": "2026-10-23T16:32:39Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8324,6 +8324,29 @@
         "at": "2026-08-25T20:29:20Z",
         "landed_pr": 2781,
         "merged_at": "2026-08-17T12:35:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-gradient-color-unsanitized",
+      "action": "reality-web agency page interpolates agency.primaryColor/secondaryColor into inline linear-gradient without sanitizeCssValue (consistency gap)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-22T06:26:52Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-23T16:25:45Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T06:26:52Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "932f50aef32b7e805d1e7ebe25dc5d5eb94c79a2",
+        "subject": "code-review-reality-web-agency-gradient-color-unsanitized: sanitize agency brand colors in cover gradient (#3144)",
+        "at": "2026-10-23T16:25:45Z"
       }
     },
     {
