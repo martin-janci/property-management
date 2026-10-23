@@ -23,11 +23,12 @@ import type {
   TakeModerationActionRequest,
 } from './types';
 
-// Content-moderation handlers are mounted under `/api/v1/compliance`
-// (`routes::compliance::router()`), while the AML and DSA handlers live on a
-// separate router mounted at `/api/v1/aml-dsa` (`routes::aml_dsa::router()`).
-// They are NOT the same prefix — see #3149.
-const API_BASE = '/api/v1/compliance';
+// The AML, DSA, and content-moderation handlers all live on a single router
+// mounted at `/api/v1/aml-dsa` (`routes::aml_dsa::router()` in
+// `backend/servers/api-server/src/routes/aml_dsa/mod.rs`). The
+// `/api/v1/compliance` router (`routes::compliance::router()`) serves only
+// audit-logs / gdpr / security and has NO `/moderation/*` routes, so routing
+// moderation calls there 404'd — see #3149.
 const AML_DSA_BASE = '/api/v1/aml-dsa';
 
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -78,34 +79,34 @@ export async function listModerationCases(params?: {
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
   const queryString = searchParams.toString();
-  return fetchApi(`${API_BASE}/moderation/cases${queryString ? `?${queryString}` : ''}`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function getModerationCase(id: string): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${id}`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${id}`);
 }
 
 export async function getModerationStats(): Promise<ModerationStatsResponse> {
-  return fetchApi(`${API_BASE}/moderation/stats`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/stats`);
 }
 
 export async function getModerationTemplates(): Promise<ModerationTemplatesResponse> {
-  return fetchApi(`${API_BASE}/moderation/templates`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/templates`);
 }
 
 export async function assignModerationCase(caseId: string): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/assign`, { method: 'POST' });
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/assign`, { method: 'POST' });
 }
 
 export async function unassignModerationCase(caseId: string): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/unassign`, { method: 'POST' });
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/unassign`, { method: 'POST' });
 }
 
 export async function takeModerationAction(
   caseId: string,
   request: TakeModerationActionRequest
 ): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/action`, {
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/action`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -115,7 +116,7 @@ export async function decideModerationAppeal(
   caseId: string,
   request: DecideAppealRequest
 ): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/appeal/decide`, {
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/appeal/decide`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
