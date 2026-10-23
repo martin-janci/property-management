@@ -770,14 +770,18 @@ async fn upload_import_file(
     let file_path = storage
         .upload(&storage_key, file_data, content_type)
         .await
-        .map_err(|e| {
-            let msg = e.to_string();
-            // An unsupported MIME type is a client error; anything else is a
-            // transient storage failure.
-            if msg.to_lowercase().contains("content type") {
-                (StatusCode::BAD_REQUEST, msg)
-            } else {
-                tracing::error!(error = %e, "Failed to upload import file to storage");
+        .map_err(|e| match e {
+            // An unsupported MIME type is a client error (400). Match on the
+            // typed variant rather than substring-matching the rendered
+            // `Display` message: the latter silently misclassifies the status
+            // if the error wording ever changes, or if some other variant's
+            // message happens to contain "content type".
+            integrations::StorageError::InvalidContentType(_) => {
+                (StatusCode::BAD_REQUEST, e.to_string())
+            }
+            // Anything else is a transient/server-side storage failure (503).
+            other => {
+                tracing::error!(error = %other, "Failed to upload import file to storage");
                 (
                     StatusCode::SERVICE_UNAVAILABLE,
                     "Failed to store uploaded file. Please try again later.".to_string(),
