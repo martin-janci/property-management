@@ -16,7 +16,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-23 reality-web",
       "segment": "reality-web",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -28,7 +28,8 @@
       "evidence": [
         "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:408 — handleCreate's catch does `console.error('Failed to create CRM connection:', error)` and then `setCreateError(t('createError'))`. The create mutation payload carries secrets: `credentials: { apiKey, instanceUrl }` (CrmConnection.tsx:389-392). Logging the raw rejected-mutation `error` to the browser console is the skill's flagged pattern 'sensitive fields (password, token, secret, api_key) appearing in a log call' — if the underlying fetch/client embeds request context (config.data / body) in the error, the apiKey can land in client-side console and any browser error-reporting sink. The user-facing error state is already set, so the console.error adds no UX value, only leak surface.",
         "frontend/apps/reality-web/src/components/import/FeedImport.tsx:518 and frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:578 — same committed-console.error-in-catch pattern (handleCreate / handleSubmit). Both already surface an i18n'd error via setCreateError/setInviteError, so these two are pure production debug leftovers (skill Frontend pattern: 'console.log / console.error left in committed code'). Lower concern than the CRM site because no credentials are in those payloads.",
-        "Scope note: these are the ONLY non-error-boundary console.error sites in the segment. The two error.tsx boundaries (app/[locale]/error.tsx:27, app/[locale]/agency/error.tsx:28) legitimately console.error the boundary error and are excluded. Severity LOW (+1): no crash and user feedback is intact; the elevation reason for tracking is the credential-flow leak surface at CrmConnection.tsx:408. Confidence medium: whether the error object actually carries the apiKey depends on the mutation hook's error shape (not statically confirmed), so the leak is latent rather than proven."
+        "Scope note: these are the ONLY non-error-boundary console.error sites in the segment. The two error.tsx boundaries (app/[locale]/error.tsx:27, app/[locale]/agency/error.tsx:28) legitimately console.error the boundary error and are excluded. Severity LOW (+1): no crash and user feedback is intact; the elevation reason for tracking is the credential-flow leak surface at CrmConnection.tsx:408. Confidence medium: whether the error object actually carries the apiKey depends on the mutation hook's error shape (not statically confirmed), so the leak is latent rather than proven.",
+        "(buffer-low rerun 12:35Z: score already applied by morning run — score_delta reset to 0 for same-day re-emit, per G4 cumulative discipline)"
       ]
     },
     {
@@ -36,7 +37,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review 2026-10-23 reality-web",
       "segment": "reality-web",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "frontend",
@@ -46,7 +47,8 @@
       "evidence": [
         "frontend/apps/reality-web/src/lib/realtor-api.ts:48 — the shared `request<T>()` helper returns a 200 body as `(await response.json()) as T` with no shape validation: an unchecked type assertion crossing the API boundary (skill Frontend pattern: 'as cast that crosses an API boundary'). A 200 with an empty/non-JSON body makes response.json() throw, and a well-formed-but-wrong-shape body is silently cast to T and dereferenced downstream (e.g. the 649-line app/[locale]/realtor/[id]/page.tsx consumer).",
         "Asymmetry confirming this is worth closing: the sibling public SSR path app/[locale]/listings/[slug]/page.tsx:79-89 deliberately does NOT trust a 200 — it runs the body through parseListingDetail (listingSchema.ts) to coerce/validate required nested fields before render, with a comment that 'a 200 does not guarantee a well-formed body'. realtor-api.ts applies no equivalent guard, so the realtor surface is strictly less defensive than the listing surface against the same upstream/proxy partial-response failure mode.",
-        "Severity LOW (+1): callers invoke request<T>() inside try/catch (the function already throws RealtorApiError on network/!ok paths), so a malformed 200 surfaces as an unhandled JSON parse / later undefined-deref rather than an unhandled crash at this line — a robustness gap, not a hard crash. Confidence medium: the missing validation is statically confirmed; whether a malformed 200 occurs in production is data-dependent. Fix: mirror the parseListingDetail approach — validate/normalize the realtor response shape before the `as T` return."
+        "Severity LOW (+1): callers invoke request<T>() inside try/catch (the function already throws RealtorApiError on network/!ok paths), so a malformed 200 surfaces as an unhandled JSON parse / later undefined-deref rather than an unhandled crash at this line — a robustness gap, not a hard crash. Confidence medium: the missing validation is statically confirmed; whether a malformed 200 occurs in production is data-dependent. Fix: mirror the parseListingDetail approach — validate/normalize the realtor response shape before the `as T` return.",
+        "(buffer-low rerun 12:35Z: score already applied by morning run — score_delta reset to 0 for same-day re-emit, per G4 cumulative discipline)"
       ]
     },
     {
@@ -147,6 +149,21 @@
       "evidence": [
         "dependabot[bot]: chore(deps): bump the gradle-minor-patch group across 1 directory with 6 updates — open 22d"
       ]
+    },
+    {
+      "id": "buffer-low-rerun-2026-10-23-1235z",
+      "type": "buffer-low-rerun",
+      "source": "scheduled trigger payload (claimable=13/72 — refill planner)",
+      "score_delta": 0,
+      "evidence": [
+        "buffer-low rerun fired 2026-10-23T12:35:45Z (9h after morning run 03:15Z)",
+        "nothing new since last run — 0 merged PRs, 0 new issues, only dispatcher-authored draft PRs #3145-3148 added since 03:15Z",
+        "only promotable candidate (code-review-api-handlers-violations-missing-role-authz, score=3) remains stem-blocked by active draft PR #3072 (open since 2026-10-13)",
+        "all other open scored items already carry an active assignment + PR; buffer-low is structural (merge pipeline deadlocked on #3131, #3143), not a routine shortfall"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "run_iso": "2026-10-23T12:35:45Z"
     }
   ],
   "auto_fix_actions": [],
@@ -271,5 +288,6 @@
       "observed": "0",
       "expected": "0"
     }
-  ]
+  ],
+  "run_iso": "2026-10-23T12:35:45Z"
 }
