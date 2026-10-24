@@ -34,9 +34,7 @@ describe('sanitizeHref', () => {
     expect(sanitizeHref('https://agency.example.com')).toBe('https://agency.example.com');
     expect(sanitizeHref('http://tour.example.com/360')).toBe('http://tour.example.com/360');
     // Preserves original casing/content of a safe URL (only the scheme is checked).
-    expect(sanitizeHref('HTTPS://Agency.Example.com/Path')).toBe(
-      'HTTPS://Agency.Example.com/Path',
-    );
+    expect(sanitizeHref('HTTPS://Agency.Example.com/Path')).toBe('HTTPS://Agency.Example.com/Path');
   });
 
   it('allows scheme-less relative and protocol-relative URLs', () => {
