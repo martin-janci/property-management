@@ -1,0 +1,46 @@
+{
+  "generated": "2026-10-10T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=12 < floor=36; cheaper refill tiers exhausted). Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh frontend (React Native) backlog vectors for the mobile-rn segment.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed: review_cursor's oldest dates are a tie at 2026-10-01 between ppt-web-ui and mobile-rn. ppt-web-ui was skipped because it was already demand-mined three times in the last three days (tier1d signal files 2026-10-08/09/10, saturated for today); mobile-rn was last demand-mined 2026-10-08. Tie broken toward mobile-rn as the less-recently-hammered of the two cloud-landable frontend segments. NOT saturated by the skill's rule (only 1 open code-review-finding in backlog, floor is >=3 status==open). NOTE: mobile-rn is deeply mined historically (~80 prior finding IDs) so cloud-landable surface is nearly exhausted; this pass returns the two genuinely-new, non-duplicate findings located after confirming all other candidates (features/faults orphaned, voice/widget/onboarding/qr test gaps, NFC parse guards, offline-queue data loss, i18n gaps) already exist in the backlog.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": "partial",
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-profile-local-only-save",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/mobile/src/screens/profile/ProfileScreen.tsx"],
+      "evidence": [
+        "ProfileScreen.handleSave() (:44-71) persists an edited first/last name ONLY to local device storage: `await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updated))` (:61), then sets `savedAt = Date.now()` (:62) which drives a user-visible 'saved' confirmation (:124). The screen has ZERO API wiring — grep for useApi/apiRequest/useMutation in the file returns 0 matches; no addToQueue either.",
+        "There is NO backend profile-update call anywhere in the mobile app (repo-wide grep for users/me PATCH / updateProfile / updateUser outside push-token handlers finds nothing). The screen's own header docstring (:6) confirms this is a known stub: 'keys until the backend `PATCH /me` endpoint is wired in.'",
+        "Consequence: the name change never reaches the server and never syncs to web / other devices; it silently reverts the moment the cached User is overwritten by a login or a session-restore refetch (AuthContext writes USER_KEY on login), and is wiped by resetLocalData()/logout. Yet the user is shown a success state — a false-persistence data-integrity bug.",
+        "Cloud-landable (frontend-only) portion: either (a) route the edit through useOfflineSupport.addToQueue({endpoint:'/api/v1/users/me', method:'PATCH', body:{first_name,last_name}}) mirroring the ReportFault online/offline pattern so it actually syncs, or (b) at minimum stop presenting a device-only write as a persisted 'saved' profile update. Full server wiring additionally depends on the PATCH /me endpoint existing in api-server (verify before claiming the happy path)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-notifications-still-mock",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": ["frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"],
+      "evidence": [
+        "INCOMPLETE REMEDIATION of the blanket finding code-review-mobile-rn-screens-mock-data (status: done), whose title explicitly lists 'Notifications' among the mock-data screens. Sibling screens were migrated to the real API (BuildingsScreen.test.ts:23 notes MOCK_BUILDINGS was removed; NewsScreen.tsx:64 and OutagesScreen.tsx:123 now use useApiQuery with full loading/error/empty states) — but NotificationsScreen was left behind, so marking the parent finding 'done' was premature for this screen.",
+        "NotificationsScreen.tsx still imports no API hook (no useApi/useApiQuery/apiRequest), seeds state from a hardcoded array `useState<AppNotification[]>(MOCK_NOTIFICATIONS)` (:116, array defined :37), and its pull-to-refresh is a fake `await new Promise((r) => setTimeout(r, 600))` (:120) that fetches nothing. markAllRead() (:132) only mutates local state and never POSTs a read-receipt.",
+        "Also ships hardcoded English in the header: 'Notifications' (:138) and `{unread} unread` (:139) are not wrapped in t(), unlike the rest of the migrated screens.",
+        "Per the screen's own docstring (:8-10) the REST list needs backend `GET /api/v1/users/me/notifications` first, so the data-source fix is backend-gated (not fully cloud-landable); the i18n header fix and removing the fake setTimeout 'refresh' are frontend-only / cloud-landable."
+      ]
+    }
+  ]
+}

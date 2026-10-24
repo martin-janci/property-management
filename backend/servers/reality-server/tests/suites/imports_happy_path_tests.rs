@@ -104,6 +104,24 @@ async fn create_import_job_returns_2xx(pool: PgPool) {
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
 
+// Regression: the utoipa contract documents `201 Created` for this
+// resource-creation POST; the handler must agree (it previously returned 200).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_import_job_returns_201(pool: PgPool) {
+    let user = seed_user(&pool, "create-job-201").await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        "/api/v1/imports/jobs",
+        Some(&token),
+        json!({ "source_type": "csv" }),
+    )
+    .await;
+    assert_eq!(status, 201, "create_import_job must return 201 Created");
+}
+
 // ── get_import_job (GET /jobs/{id}) ──────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -147,4 +165,27 @@ async fn list_feeds_returns_2xx(pool: PgPool) {
     let app = imports_router(pool);
     let status = send(&app, Method::GET, "/api/v1/imports/feeds", Some(&token)).await;
     assert!(status.is_success(), "expected 2xx, got {status}");
+}
+
+// ── create_feed (POST /feeds) ────────────────────────────────────────────────
+
+// Regression: the utoipa contract documents `201 Created` for this
+// resource-creation POST; the handler must agree (it previously returned 200).
+// `create_feed` resolves the caller's agency, so the user needs an active
+// `reality_agency_members` row.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_feed_returns_201(pool: PgPool) {
+    let user = seed_user(&pool, "create-feed-201").await;
+    seed_agency_membership(&pool, user).await;
+    let token = mint_token(user);
+    let app = imports_router(pool);
+    let status = send_json(
+        &app,
+        Method::POST,
+        "/api/v1/imports/feeds",
+        Some(&token),
+        json!({ "name": "Nightly feed", "feed_url": "https://example.com/feed.xml" }),
+    )
+    .await;
+    assert_eq!(status, 201, "create_feed must return 201 Created");
 }

@@ -15,7 +15,10 @@ import { useToast } from '../../../components';
 import { TemplateCard } from '../components/TemplateCard';
 import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
 
-const categories: { value: TemplateCategory | 'all'; labelKey: string; icon: string }[] = [
+/** A selectable template category, including the "all" pseudo-category used by the filter. */
+type CategoryFilter = TemplateCategory | 'all';
+
+const categories: { value: CategoryFilter; labelKey: string; icon: string }[] = [
   { value: 'all', labelKey: 'automation.templateLibrary.categoryAll', icon: '📚' },
   { value: 'faults', labelKey: 'automation.templateLibrary.categoryFaults', icon: '🔧' },
   { value: 'payments', labelKey: 'automation.templateLibrary.categoryPayments', icon: '💰' },
@@ -41,7 +44,7 @@ export function TemplateLibraryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [previewTemplate, setPreviewTemplate] = useState<AutomationTemplate | null>(null);
 

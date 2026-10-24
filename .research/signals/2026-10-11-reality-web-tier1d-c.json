@@ -1,0 +1,73 @@
+{
+  "generated": "2026-10-11T00:00:00Z",
+  "source_run": "dispatcher Phase 2.6 Tier-1d demand-driven vector generator (claim buffer starved: honest claimable=6 < floor=36; backlog-refill + retry-remint produced nothing). Phase 2.5 already ran review-merged this run, so this is the dev-review slice. Static single-segment rotating code review via ppt-dev-review SKILL — no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the reality-web segment. Third Tier-1d reality-web slice today (suffix -c); all three findings verified net-new against the full reality-web signal history (incl. 2026-10-11 base + -b, 2026-10-08, 2026-10-03, 2026-09-05 auth-nav-drops-locale, 2026-09-07 categorycards-tolocale) and the open reality-web code-review items in backlog.json.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-web = 2026-10-02, oldest of 8 segments; no CHURN_FILES passed to this invocation; no saturation — 0 open code-review-finding items for reality-web in backlog.json, the 3 reality-web items present are all status=done)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-anchor-nav-drops-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/ListingDetailContent.tsx",
+        "frontend/apps/reality-web/src/components/auth-button.tsx",
+        "frontend/apps/reality-web/src/components/import/CsvImport.tsx"
+      ],
+      "evidence": [
+        "Several internal navigations use a raw HTML `<a href=\"/...\">` anchor with an unprefixed absolute path instead of the app's locale-aware `Link` from `@/i18n/routing`. The i18n router is configured `localePrefix: 'as-needed'` (src/i18n/routing.ts:8), so non-default locales carry a prefix (/de/listings, /cs/listings) while sk (default) does not. A bare `<a href=\"/listings\">` therefore always resolves to the NO-PREFIX = default-locale (sk) route, so a de/cs/en visitor who clicks it is dropped out of their language mid-session (and gets a full document reload, losing client state).",
+        "ListingDetailContent.tsx:145 `<a href=\"/\">` and :147 `<a href=\"/listings\">` are the breadcrumb on the PUBLIC, SEO-indexed listing detail page (the highest-traffic entry point); ListingDetailContent.tsx:38 `<a href=\"/listings\">` is the not-found back-link. auth-button.tsx:158 `<a href=\"/favorites\">` and :162 `<a href=\"/profile\">` are in the global header account menu shown on every page. CsvImport.tsx:996 `<a href=\"/agency/listings\">` is the post-import 'view listings' action.",
+        "This is DISTINCT from the already-logged `code-review-reality-web-auth-nav-drops-locale` (2026-09-05), which covers programmatic `router.push`/`router.replace` imported from `next/navigation` in the three auth PAGES (register/reset-password/login) — a different mechanism in different files. The anchor case here was not previously flagged. Confidence medium: the locale-drop is inferred from the documented `as-needed` config + the app's own convention (sell/page.tsx and the rest of the app use `Link` from `@/i18n/routing`, which sell/page.tsx:17-22 explicitly documents as required to keep a SK user on /sk/terms), not runtime-confirmed. Fix (cloud-landable, frontend-only): replace each plain `<a href>` internal link with `import { Link } from '@/i18n/routing'`; no backend/DB work."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-date-tolocale-no-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/import/SyncSchedule.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx",
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx"
+      ],
+      "evidence": [
+        "A cluster of date renders call `new Date(...).toLocaleString()` / `.toLocaleDateString()` with NO locale argument and no timeZone. In a Next.js SSR app this formats on the Node server with the server's default locale/timezone during SSR, then re-formats in the browser with the visitor's locale/timezone on hydration — a classic React hydration-mismatch source — and either way ignores the active next-intl locale, so a cs/de/en visitor sees dates in the server/browser default format rather than their chosen app language.",
+        "SyncSchedule.tsx:232 `new Date(schedule.nextRunAt).toLocaleString()` and :526 `new Date(item.startedAt).toLocaleString()`; FeedImport.tsx:207 `new Date(feed.lastFetchAt).toLocaleDateString()` and :263 `new Date(item.startedAt).toLocaleString()`; CrmConnection.tsx:196 `new Date(connection.lastSyncAt).toLocaleString()` and :202 `new Date(connection.nextSyncAt).toLocaleString()`; AgencyListings.tsx:406 `new Date(listing.updatedAt).toLocaleDateString()`; AdditionalInfo.tsx:42 `new Date(listing.availableFrom).toLocaleDateString()` and :48 `new Date(listing.createdAt).toLocaleDateString()`.",
+        "Net-new: the prior `code-review-reality-web-categorycards-tolocalestring-no-locale` (2026-09-07) is a NUMBER count on CategoryCards, and the en-US price findings (listingheader/agencylistings/additionalinfo -en-us-price) are explicit-`'en-US'` price formats — both different from these no-arg DATE calls (AdditionalInfo's date lines are separate from its already-flagged price line). Severity low (i18n/UX + potential hydration warning; no data/auth impact). Confidence medium (static read; default-locale landing + hydration behaviour inferred from Next.js/Intl semantics). Fix (cloud-landable, frontend-only): pass the active next-intl locale (via `useLocale()` / `useFormatter()`) or a shared date formatter with an explicit timeZone; no backend/DB work."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-authbutton-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/auth-button.tsx"
+      ],
+      "evidence": [
+        "auth-button.tsx — the global header auth control (sign-in button + logged-in account dropdown, rendered on every page via the shared Header) — has ZERO next-intl usage (no `useTranslations` import, no `t(` call in the file) and ships its user-facing strings hardcoded in English: 'Sign In' (:127), 'My Favorites' (:159), 'Profile' (:162), 'Sign Out' (:165). A sk/cs/de visitor sees an English account menu on every page, which contradicts the app's i18n convention (all user-facing copy comes from `messages/<locale>.json`).",
+        "Net-new: auth-button.tsx is not referenced in any prior reality-web signal; the earlier i18n-gap findings target realtor/account/import/comparison/listing-grid surfaces, not this shared header component. Severity low (i18n gap, no data/auth impact; high visibility because it is global). Confidence medium (static read confirms the literals and the absence of any translation call). Fix (cloud-landable, frontend-only): add `useTranslations` and move the four strings into `messages/<locale>.json`; no backend/DB work."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "generated": "2026-10-09T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (buffer starved: claimable=13 < floor=36; no deterministic refill source). Static single-segment rotating code review via ppt-dev-review skill — NO compilation / NO test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend (React/Vite ppt-web) backlog vectors for the ppt-web-ui segment. This is the THIRD same-day ppt-web-ui run; the earlier 2026-10-09-ppt-web-ui-tier1d.json mined privacy/sentiment/oauth-grants pages and 2026-10-09-ppt-web-ui-tier1d-b.json mined DocumentSearchResult + 2FA QR. ppt-web-ui is heavily pre-mined, so this pass deliberately targeted the news feature, which prior runs touched ONLY for the dangerouslySetInnerHTML sink (confirmed DOMPurify-safe, non-issue) and never for its i18n surface. Verified both findings are net-new: grep of backlog.json + all prior signal files shows NO existing row for ArticleDetailPage/NewsArticleCard/PinnedAnnouncementsBand i18n gaps. Non-issues confirmed this pass (NOT filed): ArticleDetailPage/DocumentSearchResult dangerouslySetInnerHTML both correctly DOMPurify-allowlist-sanitized; useActionQueue.ts stub intentionally returns emptyQueue()/throws-loudly in prod with explanatory comments (by design); MediationChatThread/MediationResolutionForm/MediationWorkspacePage/MoveFolderDialog (the churn hotspots) all have proper loading+error+empty states, i18n, and a11y; EmergencyContactDirectoryPage routes all user-facing errors through t('emergency.errors.*'); MeterCard `return null` is a legit unknown-icon fallback. Only the two i18n findings below are net-new, wired, and qualifying.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed. REVIEW_CURSOR.ppt-web-ui = 2026-10-01, tied oldest with mobile-rn (also 2026-10-01); tiebreak by the skill's segment-map table order -> ppt-web-ui wins. No CHURN_FILES passed (Tier-1d generator invocation). Not saturation-skipped: 0 open code-review-finding rows for ppt-web-ui in backlog.json (skill saturation floor is >=3 status==open; reality-server has 3 open and WOULD be skipped). mobile-rn (the tied alternative) is equally pre-mined historically and also not >=3 open, so the literal skill order governs.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-articledetail-i18n-gaps",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/features/news/pages/ArticleDetailPage.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/news/pages/ArticleDetailPage.tsx imports useTranslation (:8) and uses t() for most copy, yet hardcodes several VISIBLE English strings that bypass i18n: `return <div className=\"article-error\">Please select an organization</div>` (:245), `return <div className=\"article-not-found\">Article not found</div>` (:264), the pinned badge `<span className=\"pinned-badge\">Pinned</span>` (:274), and the view counter `<span className=\"views\">{article.viewCount} views</span>` (:294, both the ' views' label and the lack of locale number formatting).",
+        "ppt-web ships sk/cs/de/en locales, so Slovak/Czech/German users see English-only text for the no-org guard, the not-found state, the Pinned badge, and the view count on this wired customer-facing route. This is a cloud-landable frontend-only i18n gap.",
+        "NET-NEW: all prior signal mentions of ArticleDetailPage concern ONLY its dangerouslySetInnerHTML sink (2026-09-11 'ArticleDetailPage.tsx:331 ... is SAFE', 2026-09-23 same) or its endpoint auth (2026-08-29); none filed these rendered i18n gaps. No backlog.json row exists for news/article i18n.",
+        "Secondary (same file): the thrown load error `new Error(status === 404 ? 'Article not found' : 'Failed to load article')` (:57) is also an untranslated literal; if surfaced to the user it should map to a t('news.article.*') key.",
+        "Fix (frontend-only): route the four rendered strings through t('news.article.*') keys across en/sk/cs/de bundles and format viewCount with the active locale (reuse the shared number/formatDate util). Low severity, i18n gap on a wired surface."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-pinned-badge-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/announcements/components/PinnedAnnouncementsBand.tsx",
+        "frontend/apps/ppt-web/src/features/news/components/NewsArticleCard.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/announcements/components/PinnedAnnouncementsBand.tsx:36 renders a hardcoded visible badge `<span>Pinned</span>` with no t() wrapping, in a component that otherwise imports useTranslation. The Pinned label is shown on every pinned-announcement chip and stays English for sk/cs/de users.",
+        "frontend/apps/ppt-web/src/features/news/components/NewsArticleCard.tsx:53 hardcodes the SVG accessibility label `<title>Pinned</title>`. This is screen-reader-facing text (announced by assistive tech) and must also be localized; it is an a11y + i18n gap on the news list card.",
+        "Same class as the ArticleDetailPage pinned badge above but in two distinct, independently-wired components (announcements band + news card), so filed separately for independent remediation. NET-NEW: no backlog.json row or prior signal names PinnedAnnouncementsBand or NewsArticleCard i18n.",
+        "Fix (frontend-only, cloud-landable): replace both literals with t('announcements.pinned') / t('news.pinnedLabel') (SVG <title> included) across en/sk/cs/de bundles. Low severity i18n/a11y gap."
+      ]
+    }
+  ]
+}

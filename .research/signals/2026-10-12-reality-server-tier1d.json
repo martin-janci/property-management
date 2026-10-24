@@ -1,0 +1,48 @@
+{
+  "generated": "2026-10-12T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=5 < floor=36; deterministic refill tiers found no fresh candidates). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE backend backlog vectors for the reality-server segment. Segment preferred over the co-oldest mobile-native-kmp because KMP work is structurally unlandable in the cloud runner. Findings verified net-new against prior reality-server signal files and backlog code-review-finding items.",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-server = 2026-10-03, tied-oldest with mobile-native-kmp; reality-server chosen as the cloud-verifiable Rust segment per dispatcher preference. No churn files provided for this segment; no saturation — 0 open code-review-finding items in backlog.json for reality-server)",
+  "experts_used": ["rust"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-server-branding-coalesce-no-clear",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/agency_branding.rs"],
+      "evidence": ["backend/servers/reality-server/src/routes/agency_branding.rs:300-325 — update_branding (PUT /api/v1/agencies/{id}/branding) upserts every field with `COALESCE(EXCLUDED.<col>, agency_branding.<col>)` (logo_url, banner_url, primary_color, secondary_color, watermark_style, watermark_opacity, watermark_position, watermark_url). All request fields are `Option<_>` (UpdateBrandingRequest, :126-137), so a JSON `null` for a field binds SQL NULL and COALESCE keeps the PREVIOUS value — meaning there is NO way to CLEAR a previously-set branding element (e.g. remove an agency logo) through this endpoint by sending null. The only value that clears is an empty string `\"\"`, which binds a non-NULL '' that COALESCE writes verbatim — but empty strings are silently skipped by check_optional_url_field (:46 `if !s.is_empty() && ...`), so '' is never rejected yet also never documented as the clear sentinel. Net: clear semantics are inconsistent (null = no-op, '' = clear-to-empty-string) and a UI that sends null to remove a logo finds the old logo sticks. Fix (backend-only, cloud-landable): either (a) treat an explicitly-present null as a clear by binding the column unconditionally with a tri-state wrapper, or (b) document '' as the clear sentinel and normalize null->'' for clearable fields. Add a unit/integration test that sets then clears logo_url and asserts the row goes NULL/empty."]
+    },
+    {
+      "id": "code-review-reality-server-url-validator-triplicated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/agency_branding.rs", "backend/servers/reality-server/src/routes/reports.rs", "backend/servers/reality-server/src/routes/users.rs", "backend/servers/reality-server/src/util/url_validator.rs"],
+      "evidence": ["Three near-identical private copies of `fn validate_image_or_link_url` exist — agency_branding.rs:28, reports.rs:38, users.rs:28 — each with its own duplicated MAX_URL_LEN/MAX_PROFILE_URL_LEN = 2048 const and each carrying the SAME stale comment 'Inlined locally ... swap for a shared url_validator module once it lands on main.' That shared module HAS already landed: backend/servers/reality-server/src/util/url_validator.rs (exports validate_fetch_url + full SSRF/scheme policy) and is actively used by routes/agency_imports.rs:7,238,290. The three inline copies also DIVERGE from the shared validator: they accept `http://` in production (the shared url_validator rejects plain http outside RUST_ENV=development, PlainHttpNotAllowed) and perform no private/reserved-IP check. Because these three validators gate strings that are rendered in `<img src=>` / `<a href=>` on the frontend (stored-XSS guard), any future hardening of the scheme/length policy must be remembered in three places. Fix (backend-only, cloud-landable): extract one shared `validate_display_url` helper (scheme allowlist + max-len, no SSRF/IP policy needed for render-only URLs) into util/url_validator.rs, replace the three inline copies and the duplicated consts, and delete the now-stale TODO comments. No behavior change for callers beyond optionally aligning the prod-http policy."]
+    },
+    {
+      "id": "code-review-reality-server-branding-color-no-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/agency_branding.rs"],
+      "evidence": ["backend/servers/reality-server/src/routes/agency_branding.rs:252-254 + :322-325 — update_branding carefully validates the three URL fields (check_optional_url_field for logo_url/banner_url/watermark_url, H7 stored-XSS guard) but binds `primary_color` and `secondary_color` straight into the INSERT (:325 `.bind(&data.primary_color).bind(&data.secondary_color)`) with NO format or length validation. These values are served back via GET branding and consumed by reality-web, which applies them as CSS on `<html>` (app/[locale]/layout.tsx:168,187 brandingToStyleObject; also brandingToStyleString). The ONLY thing preventing CSS/attribute injection today is reality-web's client-side `sanitizeCssValue()` (frontend/apps/reality-web/src/lib/tenant-config.ts) — a single front-end guard. This is a defense-in-depth asymmetry: an agency member can persist arbitrary strings in these columns, and any OTHER consumer of agency_branding that does not replicate sanitizeCssValue (mobile-native Reality app, server-rendered PDF/email branding, a future export) would render attacker-controlled CSS. Fix (backend-only, cloud-landable): validate primary_color/secondary_color against a strict pattern (e.g. `#` + 3/6/8 hex, or a small named-color/`rgb()/hsl()` allowlist) with a max length, rejecting on mismatch with 400, mirroring the URL-field hardening already in the same handler. Low severity, defense-in-depth + consistency."]
+    }
+  ]
+}

@@ -109,6 +109,15 @@ export interface AmlRiskAssessment {
   risk_score: number;
   flagged_for_review: boolean;
   risk_factors: AmlRiskFactor[];
+  // AML-check completion flags, serialized from the backend assessment row
+  // (db::models::compliance::AmlRiskAssessment). The list endpoint
+  // (GET /api/v1/compliance/aml/assessments) returns an untyped JSON payload
+  // (serde_json::Value) with no OpenAPI contract, so these are modeled optional
+  // and must be read defensively (older rows may predate the columns).
+  id_verified?: boolean;
+  source_of_funds_documented?: boolean;
+  pep_check_completed?: boolean;
+  sanctions_check_completed?: boolean;
   created_at: string;
   updated_at: string;
   reviewed_by_id?: string;

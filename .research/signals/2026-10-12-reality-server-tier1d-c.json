@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-12",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved: claimable=8 < floor=36; all other refill sources dry). Oldest-unreviewed cursor: review_cursor.reality-server=2026-10-03 (tied with mobile-native-kmp=2026-10-03, tie broken by segment-map order -> reality-server). Not backlog-saturated (0 open code-review-finding items for reality-server; only api-handlers saturated at 3). THIRD slice (-c) complementing 2026-10-12-reality-server-tier1d.json (SSO raw-error-leak) and 2026-10-12-reality-server-tier1d-b.json (anonymous rate-limit, branding validation, worker supervision). This slice targets a distinct, untouched subsystem: the portal IMPORT endpoints (routes/imports.rs, routes/agency_imports.rs) and their pagination/limit contracts. Static analysis only, no compilation. Note: skill segment-map path 'backend/reality-server/src/' is stale; crate lives at 'backend/servers/reality-server/src/'.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-server-imports-limit-unclamped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:125 — `list_import_jobs` (GET /api/v1/imports/jobs, authenticated PortalPrincipal) passes `query.limit.unwrap_or(20)` straight to the repo, which binds it to `LIMIT $3` in backend/crates/db/src/repositories/reality_portal/imports.rs:36-70 with NO clamp. The sibling `offset` IS clamped (`crate::util::clamp_offset_i32(query.offset)`), so the omission is an oversight, not a policy.",
+        "This violates the clamp-then-wire contract used by EVERY other list endpoint in the same crate: listings.rs:28-33 `clamp_pagination` -> `.clamp(1, MAX_LISTINGS_LIMIT=100)` (with a docstring: 'a negative `limit` would otherwise surface a raw DB error (\"LIMIT must not be negative\") as a 500, and an unbounded `limit`/`page` is a latent resource-exhaustion vector'); portal_listings.rs:437 `.clamp(1, 100)`; saved_searches.rs:324 `.clamp(1, ALERTS_MAX_LIMIT)`; favorites.rs:276 `.clamp(1, ALERTS_MAX_LIMIT)`; agencies.rs:125 `.clamp(1, 200)`; realtors.rs:214 / inquiries.rs:589,650 `.clamp(1, 100)`.",
+        "Impact: `?limit=-1` reaches Postgres as `LIMIT -1` -> raw DB error surfaced as HTTP 500 (the exact failure listings.rs documents guarding against); `?limit=2000000000` is an unbounded row-fetch / resource-exhaustion vector. FIX: mirror the siblings — `query.limit.unwrap_or(20).clamp(1, 100)`."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-total-pagelen",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:131-135 — `list_import_jobs` is paginated (limit/offset) but sets `let total = jobs.len() as i64;` and returns it as `ImportJobsResponse.total`. Because `jobs.len() <= limit`, `total` can never exceed the current page size, so a client computing `total / limit` can never page past page 1 — the full filtered count is lost.",
+        "This is the exact 'page-length-as-total' regression already identified and fixed elsewhere in the SAME crate, where the fix was a parallel COUNT query: realtors.rs:207-209 comments '(the previous behaviour, #774 item 3) silently lied on every non-final page: it reported the page size, not the real total'; inquiries.rs:600-603 / 646-648 '(the page-length-as-total bug fixed for the realtor axis in PR #919)'. Those handlers use `tokio::try_join!(get_*, count_*)`; `list_import_jobs` has no matching `count_import_jobs` call.",
+        "FIX: add a `count_import_jobs(user_id, status)` repo method and populate `total` from it (parallel `tokio::try_join!`), matching realtors.rs / inquiries.rs / saved_searches.rs."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-import-history-trunc",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agency_imports.rs:153-185 — `list_import_history` (GET /api/v1/agencies/{id}/imports) hardcodes `ORDER BY created_at DESC LIMIT 100` with NO limit/offset query params, so an agency with more than 100 import jobs silently loses all history older than the newest 100 with no way to page to it.",
+        "Compounding the truncation, `let total = rows.len() as i64;` (agency_imports.rs:183) caps the reported `total` at 100 as well (same page-length-as-total class as the imports.rs:131 finding), so clients cannot even detect that older history exists.",
+        "FIX: accept `limit` (clamped, e.g. `.clamp(1, 100)`) + `offset` (via `crate::util::clamp_offset`) query params and return `total` from a separate COUNT over `portal_import_jobs WHERE agency_id = $1`, consistent with the crate's other paginated list endpoints."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

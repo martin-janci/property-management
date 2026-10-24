@@ -267,12 +267,33 @@ mkdir -p "$(dirname "$WORKTREE_PATH")"
 git worktree add -B "$BRANCH" "$WORKTREE_PATH" origin/dev 2>&1 \
   || git worktree add "$WORKTREE_PATH" "$BRANCH"
 cd "$WORKTREE_PATH"
+# Disk (issue #3073): share ONE Cargo target across sibling worktrees instead
+# of each materializing its own ~24 GB target/. Parallel Rust implementers used
+# to sum their targets (observed 24 GB + 4.6 GB against a ~40 GB allowance) and
+# the second build hit ENOSPC mid-`scripts/verify-impact.sh`, so it could not
+# emit VERIFY OK and opened no PR. A shared target means the second build reuses
+# the first's artifacts (also a big wall-clock win) instead of duplicating them.
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/ppt-cargo-target}"
 trap 'cd / && git worktree remove --force "$WORKTREE_PATH" 2>/dev/null' EXIT
 ```
 
 The trap removes the worktree on exit — `.gitignore` already excludes
 `.worktrees/` from the repo, and `/tmp/ppt-worktrees/` is outside the repo
-entirely, so no in-tree pollution either way.
+entirely, so no in-tree pollution either way. The shared `CARGO_TARGET_DIR`
+lives **outside** each worktree (`/tmp/ppt-cargo-target`), so the worktree trap
+and the Phase 1 worktree prune never delete it — it persists hot across runs.
+
+**Why a shared target is safe here (supersedes the 2026-07-22 "per-worktree
+targets" verdict for the dispatcher path — issue #3073).** That verdict's one
+objection was that a shared target "serializes every agent on cargo's build
+lock." But every cargo invocation in the verify gate **already** serializes
+host-wide on `flock /tmp/ppt-cargo.lock` (see `scripts/verify-impact.sh`), and
+cargo's own package-cache lock serializes any direct cargo runs — so the shared
+target is never written concurrently and the serialization cost is already paid
+regardless. The remaining downside (cross-branch incremental thrash) is
+wall-clock only, and the disk win (no ENOSPC, no wasted cycle) dominates for
+parallel worktree builds. Inject this `export` into every Phase 4 / 5.6 / 5.7
+subagent brief alongside the preamble.
 
 **NEVER `git stash` inside a `/tmp/ppt-worktrees/` worktree (issue #3012).**
 A `git worktree` shares the *common git directory* of the clone it was created
@@ -506,6 +527,12 @@ TTL steals are visible per-run in the commit log.
      # (observed 2026-05-27: 15 GB incremental dir on dev). Drop entries idle
      # for >4h — current-run artifacts stay hot, only multi-branch debris goes.
      find backend/target/debug/incremental -maxdepth 1 -mindepth 1 \
+          -mmin +240 -exec rm -rf {} + 2>/dev/null || true
+     # Same prune for the SHARED worktree target (issue #3073): implementers
+     # export CARGO_TARGET_DIR=/tmp/ppt-cargo-target, so its incremental dir
+     # accumulates cross-branch fingerprints too. Drop entries idle >4h; the
+     # compiled crate artifacts (the reuse win) stay, only incremental debris goes.
+     find /tmp/ppt-cargo-target/debug/incremental -maxdepth 1 -mindepth 1 \
           -mmin +240 -exec rm -rf {} + 2>/dev/null || true
      # Same treatment for sub-agent worktrees from prior runs whose trap missed.
      find /tmp/ppt-worktrees -maxdepth 1 -mindepth 1 -type d \

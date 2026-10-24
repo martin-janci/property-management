@@ -1,0 +1,46 @@
+{
+  "generated": "2026-10-16T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=6 < floor=36). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner, file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push performed and no assignments.json touched — the orchestrator folds .research deltas into its own Phase 6 commit. Segment selection: no Phase-1 churn list was supplied to this demand-driven invocation, so priority-1 churn-alignment did not apply. The 7-day git churn hotspots map either to already-reviewed-today segments (frontend/apps/mobile -> mobile-rn, frontend/apps/ppt-web + packages/api-client -> ppt-web-core, both already signalled today 2026-10-16) or to backend/crates/common/url_validation.rs which is outside any mapped segment root. Priority-2 oldest-unreviewed: review_cursor oldest is 2026-10-11 (api-handlers, reality-web). api-handlers skipped for saturation (3 open code-review-finding rows with status==open in backlog.json). reality-web already has a tier1d signal emitted today (2026-10-16-reality-web-tier1d.json), as do ppt-web-core and mobile-rn — re-reviewing any of them today would only produce duplicate backlog. Treating segments already signalled today as effectively-reviewed-today, the oldest remaining untouched non-saturated segment is api-core (cursor 2026-10-12), which has 0 open code-review-finding rows. Selected: api-core (Rust, no secondary expert per skill Step 2).",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (non-saturated, not-yet-touched-today). 2026-10-11 cursor tie skipped: api-handlers saturated (3 open findings); reality-web/ppt-web-core/mobile-rn already emitted tier1d signals today. api-core is the oldest remaining segment (cursor 2026-10-12) with no existing open findings and no signal today.",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-api-core-tenant-filter-dead-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs",
+        "backend/crates/api-core/src/middleware/mod.rs"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/tenant_filter.rs:14 — `tenant_filter` is a dead, stubbed tenant-isolation middleware that is MISLEADING rather than merely unused. It is exported (`middleware/mod.rs:9 pub mod tenant_filter; :18 pub use tenant_filter::*;`) but wired into NO router: a repo-wide grep for `tenant_filter(` outside its own definition returns zero hits (the real RLS/tenant enforcement is the `RlsConnection` extractor, referenced in 108 route files under servers/api-server/src/routes, plus the host-based `ResolvedTenant` resolver). The function's own body (`:30`-`:36`) documents the three validations it is SUPPOSED to perform — `// 1. Tenant exists and is active // 2. User has access to this tenant // 3. Rate limiting per tenant` — and implements NONE of them: on the `Some(_id)` arm it simply runs the request (`Ok(next.run(request).await)`), so any caller presenting a well-formed (but otherwise unverified, client-supplied, spoofable) `X-Tenant-ID` header passes. As dead code today it is harmless, but it is a security-shaped trap: its name, doc-comment (`:12`-`:13` \"ensure tenant isolation\" / \"Validates ... X-Tenant-ID\"), and TODO list invite a future developer to `.layer()` it believing it enforces tenant isolation, when it neither validates DB membership nor cross-checks the header against the authenticated JWT principal — exactly the IDOR class that issue #1525 already had to remediate elsewhere (servers/api-server/src/routes/integrations/sync.rs:151-160). Severity LOW (+1): not reachable in production (unwired), so this is a maintenance-hazard / latent-security-trap tech-debt finding, not a live auth bypass — hence confidence medium (statically confirmed unwired; cannot rule out a future wiring). NET-NEW vs backlog: no open code-review-finding row references tenant_filter or rls_context (the only backlog hit, code-review-api-handlers-compliance-superadmin-exact-match, is a distinct done api-handlers item). Suggested cloud-landable fix (backend-only, verifiable with `cargo clippy` dead-code lint + a router wiring test): DELETE `tenant_filter` + `tenant_logging` and their `pub use` (preferred — they duplicate functionality the `RlsConnection` extractor + `host_tenant`/`TenantExtractor` already own); or, if retained, gate them behind `#[deprecated]` + a doc note that they are NOT an isolation boundary and must not be layered."
+      ]
+    },
+    {
+      "id": "code-review-api-core-rls-ctx-mw-dead-xtenant-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/crates/api-core/src/middleware/rls_context.rs",
+        "backend/crates/api-core/src/extractors/tenant.rs"
+      ],
+      "evidence": [
+        "backend/crates/api-core/src/middleware/rls_context.rs:70 — `rls_context_middleware` (and its stricter sibling `require_rls_context` at `:185`) is dead code AND, if ever wired, would set an incorrect RLS tenant scope for host/subdomain-based clients. (a) Dead: a repo-wide grep for `rls_context_middleware`/`require_rls_context` outside their definitions returns zero call sites; lib.rs wires `security_headers`, `TraceLayer`, CORS, and state/extension layers but never this middleware. The live RLS enforcement is the per-connection `RlsConnection` extractor (108 route references), which sets the Postgres GUCs on the SAME pooled connection the handler then queries. (b) Latent correctness gap: this middleware derives the tenant ONLY from the `X-Tenant-ID` header (`:87`-`:91` `.get(\"X-Tenant-ID\")...Uuid::parse_str`), but the authoritative tenant source has since moved to the host-resolved `ResolvedTenant` extension — see extractors/tenant.rs:44-60, whose own doc states the host-resolved tenant \"is authoritative\" and the `X-Tenant-ID` header is the LEGACY fallback. So a request arriving via host/subdomain tenant resolution (no `X-Tenant-ID` header) reaches `:106 let should_set_rls = user_id.is_some() || tenant_id.is_some();` with `tenant_id = None`, and if `user_id` is present it calls `set_request_context(pool, None, user_id, ...)` (`:110`-`:116`) — i.e. it would install an RLS context whose org scope is NULL for exactly the modern subdomain clients, silently widening/disabling org-scoping at the DB layer for those requests were this middleware ever activated. It also acquires/sets context on a pooled connection separate from the one the handler later borrows (`set_request_context(pool.as_ref(), ...)`), so the GUCs would not even apply to the handler's query — a second reason it cannot be a correct substitute for `RlsConnection`. Severity LOW (+1): unreachable today (unwired), so maintenance-hazard tech-debt rather than a live isolation break — confidence medium (statically traced; dead-code + source-of-truth divergence confirmed, production impact contingent on a future wiring). NET-NEW vs backlog: no open finding references rls_context. Suggested cloud-landable fix (backend-only, verifiable with `cargo clippy` dead-code lint): DELETE `rls_context_middleware` + `require_rls_context` (the `RlsConnection` extractor is the single source of truth); or, if a global pre-handler RLS layer is genuinely wanted, rewrite it to read `ResolvedTenant` first (header only as legacy fallback) AND set the GUCs on the handler's own connection, then add a wiring + cross-tenant regression test before layering it."
+      ]
+    }
+  ]
+}

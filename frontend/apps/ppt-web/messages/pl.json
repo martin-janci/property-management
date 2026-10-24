@@ -2570,7 +2570,10 @@
     "groupJoined": "Dołączono do grupy.",
     "joinFailed": "Nie udało się dołączyć do grupy",
     "groupLeft": "Opuszczono grupę.",
-    "leaveFailed": "Nie udało się opuścić grupy"
+    "leaveFailed": "Nie udało się opuścić grupy",
+    "groupDeleted": "Grupa usunięta.",
+    "deleteFailed": "Nie udało się usunąć grupy",
+    "deleteGroupConfirm": "Usunąć tę grupę? Tej akcji nie można cofnąć."
   },
   "leases": {
     "created": "Umowa najmu utworzona",

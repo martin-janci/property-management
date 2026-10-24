@@ -1,0 +1,28 @@
+{
+  "generated": "2026-10-10T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: open_claimable=14 < floor=36; backlog had no fresh landable candidates). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-ui segment. This segment is heavily mined (dozens of prior tier1d slices); the single finding below was verified net-new against all prior ppt-web-ui signal files. Several candidate findings were DROPPED as duplicates (loginpage-raw-error-message already filed 2026-10-08; AdvancedNotificationSettingsPage hardcoded error strings already filed 2026-08-05 as error-strings-i18n; portfolio-perf no-i18n already filed 2026-09-05; ConnectionStatus interactive-on-status-role already filed 2026-10-08) or skipped as unwired/known-state (portfolio-performance mock data is a registered unwired feature per unwired-features.ts).",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-ui = 2026-10-01, tied-oldest of 8 segments with mobile-rn; ppt-web-ui preferred as a cloud-landable frontend-web segment per the Tier-1d landability steer, mobile-rn deprioritised. No churn files provided to this generator. No saturation — 0 open code-review-finding items in backlog.json for this segment.)",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-toast-copy-timer-no-cleanup",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/components/Toast.tsx"],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:172-189 — ToastItem.handleCopy() schedules `setTimeout(() => setCopied(false), 2000)` on BOTH the success path (:177) and the execCommand fallback path (:187) to reset the 'Copied' button label, but the timer id is neither stored in a ref nor cleared on unmount. ToastItem unmounts whenever its toast auto-dismisses (ToastProvider auto-dismiss via getDefaultDuration — error toasts, which are the ones that render this copy button, default to a finite duration) or is manually dismissed. If the user clicks copy and the toast then unmounts within the 2s window, the pending timer fires setCopied(false) on an unmounted component — a setState-after-unmount leak.",
+        "This is an internal-consistency defect: every OTHER timer in the same file and its sibling are tracked and cleaned up — ToastProvider tracks auto-dismiss timers in `timeoutRefs` (Map) and clears them all in a useEffect cleanup (Toast.tsx:97-107, and per-toast in removeToast :109-117), and components/Announcer.tsx:85-93 clears all four of its setTimeout refs on unmount. ToastItem's copy-feedback timer is the lone unmanaged timer.",
+        "Severity low: React 18 silently no-ops a setState on an unmounted component (no console warning, no crash, no user-visible breakage), so this is a latent smell rather than an active bug — but it violates the team's own established cleanup pattern and would resurface as a real warning under React 19 strict/concurrent flows or in test teardown. Fix (frontend-only, cloud-landable, no backend/DB): store the timer id in a useRef inside ToastItem and clearTimeout it in a useEffect(() => () => clearTimeout(ref.current), []) cleanup, mirroring ToastProvider/Announcer; or gate the setCopied(false) behind a mounted ref. Add a Vitest case that unmounts ToastItem immediately after a copy click and asserts no act() warning / no state update."
+      ]
+    }
+  ]
+}

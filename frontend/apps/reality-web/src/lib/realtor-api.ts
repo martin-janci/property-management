@@ -131,16 +131,16 @@ export function createListing(data: ListingDraft): Promise<ListingResponse> {
 }
 
 export function getListing(id: string): Promise<ListingResponse> {
-  return request<ListingResponse>(`/api/v1/listings/${id}`);
+  return request<ListingResponse>(`/api/v1/listings/${encodeURIComponent(id)}`);
 }
 
 /** Get an owned listing for editing (includes drafts). Requires auth. */
 export function getMyListing(id: string): Promise<ListingResponse> {
-  return request<ListingResponse>(`/api/v1/my/listings/${id}`);
+  return request<ListingResponse>(`/api/v1/my/listings/${encodeURIComponent(id)}`);
 }
 
 export function updateListing(id: string, data: Partial<ListingDraft>): Promise<ListingResponse> {
-  return request<ListingResponse>(`/api/v1/my/listings/${id}`, {
+  return request<ListingResponse>(`/api/v1/my/listings/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });

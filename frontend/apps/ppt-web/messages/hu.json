@@ -2564,7 +2564,10 @@
     "groupJoined": "Csatlakozott a csoporthoz.",
     "joinFailed": "Nem sikerült csatlakozni a csoporthoz",
     "groupLeft": "Elhagyta a csoportot.",
-    "leaveFailed": "Nem sikerült elhagyni a csoportot"
+    "leaveFailed": "Nem sikerült elhagyni a csoportot",
+    "groupDeleted": "Csoport törölve.",
+    "deleteFailed": "Nem sikerült törölni a csoportot",
+    "deleteGroupConfirm": "Törli ezt a csoportot? Ez a művelet nem vonható vissza."
   },
   "leases": {
     "created": "Bérleti szerződés létrehozva",

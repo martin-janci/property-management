@@ -117,4 +117,76 @@ describe('FeaturedListings — favorite-toggle error handling', () => {
     });
     expect(screen.queryByRole('alert')).toBeNull();
   });
+
+  it('clears the error alert once a retried toggle succeeds', async () => {
+    let failNext = true;
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      if (method === 'POST' || method === 'DELETE') {
+        const ok = !failNext;
+        failNext = false;
+        return Promise.resolve({ ok, status: ok ? 200 : 500, json: async () => ({}) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => featuredPayload() });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderFeatured();
+
+    fireEvent.click(await screen.findByLabelText('Add to favorites'));
+    await screen.findByRole('alert');
+
+    fireEvent.click(screen.getByLabelText(/favorites/i));
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+  });
+});
+
+describe('FeaturedListings — query states', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('renders nothing (and no alert) when the featured query fails', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({ ok: false, status: 500, json: async () => ({}) })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderFeatured();
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await waitFor(() => expect(container.querySelector('.skeleton-card')).toBeNull());
+    expect(container.querySelector('section')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('renders the empty-state CTA when every section is empty', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ sale: [], rent: [], new: [] }),
+        })
+      )
+    );
+
+    renderFeatured();
+
+    expect(await screen.findByText('emptyTitle')).toBeInTheDocument();
+    expect(screen.getByText('emptyBrowseAll')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows skeleton cards while loading', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {}))
+    );
+
+    const { container } = renderFeatured();
+
+    expect(container.querySelectorAll('.skeleton-card').length).toBe(12);
+  });
 });

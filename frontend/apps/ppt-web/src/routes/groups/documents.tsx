@@ -6,7 +6,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { Link, Route, useParams } from 'react-router-dom';
-import { ProtectedRoute } from '../../components';
+import { AuthRequiredGate, ProtectedRoute } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   ArticleDetailPage,
@@ -20,17 +20,30 @@ import {
 } from '../lazyRoutes';
 
 /** Route wrapper for documents page */
-function DocumentsPageRoute() {
+export function DocumentsPageRoute() {
   const { user } = useAuth();
-  const organizationId = user?.organizationId ?? 'default-org';
-  return <DocumentsPage organizationId={organizationId} />;
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
+  return <DocumentsPage organizationId={user.organizationId} />;
 }
 
 /** Route wrapper for folder-tree page (gap-7a-2) */
-function FolderTreePageRoute() {
+export function FolderTreePageRoute() {
   const { user } = useAuth();
-  const organizationId = user?.organizationId ?? 'default-org';
-  return <FolderTreePage organizationId={organizationId} />;
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
+  return <FolderTreePage organizationId={user.organizationId} />;
+}
+
+/** Route wrapper for the document upload page (Story 39.2) */
+export function DocumentUploadPageRoute() {
+  const { user } = useAuth();
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
+  return <DocumentUploadPage organizationId={user.organizationId} />;
 }
 
 /** Route wrapper for document detail page to extract params */
@@ -81,7 +94,7 @@ export function documentRoutes() {
         path="/documents/upload"
         element={
           <ProtectedRoute>
-            <DocumentUploadPage />
+            <DocumentUploadPageRoute />
           </ProtectedRoute>
         }
       />

@@ -302,7 +302,8 @@ pub async fn send_contact_message(
     Path(listing_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ContactMessageRequest>,
-) -> Result<Json<ContactMessageResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<ContactMessageResponse>), (axum::http::StatusCode, String)>
+{
     // Per-IP throttle FIRST: an anonymous flood must be rejected before any
     // validation, DB connection, listing lookup, row insert, or realtor
     // notification (the spam / DB-exhaustion vector this endpoint exposed).
@@ -393,10 +394,13 @@ pub async fn send_contact_message(
         "Contact message sent"
     );
 
-    Ok(Json(ContactMessageResponse {
-        message: "Your message has been sent. The realtor will respond soon.".to_string(),
-        inquiry_id,
-    }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ContactMessageResponse {
+            message: "Your message has been sent. The realtor will respond soon.".to_string(),
+            inquiry_id,
+        }),
+    ))
 }
 
 /// Request a viewing for a listing.
@@ -417,7 +421,8 @@ pub async fn request_viewing(
     Path(listing_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ViewingRequest>,
-) -> Result<Json<ViewingRequestResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<ViewingRequestResponse>), (axum::http::StatusCode, String)>
+{
     // Per-IP throttle FIRST (same anonymous abuse vector as the contact form).
     enforce_inquiry_rate_limit(&state, &headers, listing_id).await?;
 
@@ -561,12 +566,15 @@ pub async fn request_viewing(
         "Viewing request sent"
     );
 
-    Ok(Json(ViewingRequestResponse {
-        message:
-            "Your viewing request has been sent. The realtor will contact you to confirm the time."
-                .to_string(),
-        inquiry_id,
-    }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ViewingRequestResponse {
+            message:
+                "Your viewing request has been sent. The realtor will contact you to confirm the time."
+                    .to_string(),
+            inquiry_id,
+        }),
+    ))
 }
 
 /// List my inquiries (as a realtor or user).

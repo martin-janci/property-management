@@ -1,0 +1,68 @@
+{
+  "generated": "2026-10-10T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: open_claimable=12 < floor=36). Static single-segment rotating code review via the ppt-dev-review skill — no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE frontend backlog vectors for the ppt-web-ui segment. This segment is heavily mined (hundreds of prior findings); per the skill's >40-file narrowing rule the slice targeted recently-churned feature files (git since 2026-09-20) and verified each finding net-new against all prior ppt-web-ui signal files. DROPPED as duplicates: LanguageSwitcher.tsx:19 hardcoded aria-label + L11 unawaited changeLanguage promise (both already filed 2026-08-16 as code-review-ppt-web-ui-langswitcher-aria-i18n); Toast.tsx copy-timer cleanup (already filed earlier today, 2026-10-10-ppt-web-ui-tier1d). SKIPPED as registered unwired/known-state: the entire `subscription` feature (listed in features/unwired-features.ts:45) — not flagged for missing API wiring. Verified NOT bugs: voting `participationPercent()` (types.ts:42-45) correctly guards eligible<=0 so no division-by-zero/NaN in QuorumTile. The 3 findings below are all in the recently-churned voting cluster (Epic 5) and are net-new (0 prior signal mentions for QuorumTile/QuestionResults/BallotQuestion).",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-ui = 2026-10-01, tied-oldest of 8 segments with mobile-rn; ppt-web-ui preferred over mobile-rn as a cloud-landable frontend-web segment per the Tier-1d landability steer and segment-map table order. No churn files supplied to this generator. No saturation — 0 open code-review-finding items in backlog.json for this segment, all 19 historical ppt-web-ui+others findings are status=done.)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/components/BallotQuestion.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/components/BallotQuestion.tsx:62-64,80 — the YesNo ballot sub-component hardcodes the answer button labels `{ label: 'Yes', val: true }` / `{ label: 'No', val: false }` and renders `{opt.label}` directly. These are the actual vote-answer buttons a resident clicks on the vote-detail screen (Epic 5), so they render in English for every sk/cs/de locale on a multi-locale app (ppt-web ships i18n via src/i18n + LanguageSwitcher).",
+        "Net-new and internally inconsistent: the SAME file already imports and uses useTranslation — the Ranked sub-component (L152, L179, L188) wraps its reorder aria-labels in t('aria.moveUp')/t('aria.moveDown'). i18n is wired into the file; the YesNo labels were simply missed. No prior signal references BallotQuestion.tsx (0 hits across all ppt-web-ui signals).",
+        "Fix (frontend-only, cloud-landable, no backend/DB): add `const { t } = useTranslation()` to the YesNo sub-component and replace the two literals with t('voting.ballot.yes') / t('voting.ballot.no'); add the keys to the ppt-web i18n namespace for en/sk/cs/de. Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-quorumtile-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/components/QuorumTile.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/components/QuorumTile.tsx — component imports NO useTranslation (only participationPercent) yet renders user-facing English: L22 `{quorumMet ? 'Quorum met' : `${pct}%`}` and L29 `{participation} of {eligible} eligible voted`. QuorumTile is shared by both the vote list and vote detail views (per its own docstring), so this English text surfaces on two wired Epic-5 screens for all sk/cs/de visitors.",
+        "Net-new: 0 prior signal/backlog mentions of QuorumTile.tsx. The `participationPercent(participation, eligible)` helper it calls (types.ts:42-45) is correctly guarded against eligible<=0 (returns 0), so there is no NaN/division-by-zero bug — the only defect here is the missing i18n.",
+        "Fix (frontend-only, cloud-landable): add useTranslation; move 'Quorum met' and the 'N of M eligible voted' line into the voting i18n namespace (the count sentence needs interpolation + plural handling for Slavic locales). Severity low (i18n gap, +1)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-questionresults-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/components/QuestionResults.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/components/QuestionResults.tsx:8-9 — the per-question results bar hardcodes `{result.total_responses} response{result.total_responses === 1 ? '' : 's'}`. The component imports NO useTranslation; the 'response/responses' label and its English-only singular/plural rule (append 's') render on the wired vote-results view for all locales. English pluralization is incorrect for sk/cs (which have 1 / 2-4 / 5+ plural forms), so even a naive translation of the two literals would be wrong without ICU plural rules.",
+        "Net-new: 0 prior signal/backlog mentions of QuestionResults.tsx.",
+        "Fix (frontend-only, cloud-landable): add useTranslation and use an i18next plural key, e.g. t('voting.results.responses', { count: result.total_responses }), with the _one/_few/_many forms defined per locale in the ppt-web i18n namespace. Severity low (i18n gap, +1)."
+      ]
+    }
+  ]
+}

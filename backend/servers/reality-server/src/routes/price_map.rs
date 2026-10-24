@@ -40,6 +40,52 @@ fn price_map_cache() -> &'static Arc<RwLock<HashMap<String, CacheEntry>>> {
 /// Cache TTL: 1 hour.
 const CACHE_TTL: Duration = Duration::from_secs(3600);
 
+/// Hard cap on the number of distinct entries held by [`PRICE_MAP_CACHE`].
+///
+/// The cache key embeds the attacker-controlled `city` / `property_type` query
+/// parameters off the public, unauthenticated `GET /api/v1/price-map` handler,
+/// so an anonymous client looping distinct `?city=<random>` values would
+/// otherwise accumulate a brand-new entry per value inside the 1 h TTL window
+/// and grow the heap without bound (OOM DoS). Bounding the map inline on every
+/// insert caps memory regardless of how many distinct keys are presented —
+/// mirroring `INQUIRY_RATE_LIMIT_MAX_IPS` for the sibling anonymous-abuse
+/// surface in `state.rs`. Kept well below that 100k cap because each entry
+/// carries a `Vec<DistrictPriceData>`, not a bare counter.
+const MAX_PRICE_MAP_CACHE_ENTRIES: usize = 10_000;
+
+/// Insert `entry` under `key`, keeping [`PRICE_MAP_CACHE`] both correct and
+/// bounded. Two eviction policies compose here:
+///
+/// 1. **TTL (correctness):** entries past `CACHE_TTL` are always dropped first
+///    so a stale aggregation is never served.
+/// 2. **Size cap (memory bound):** if the map is still at
+///    `MAX_PRICE_MAP_CACHE_ENTRIES` live entries after the TTL sweep, evict the
+///    oldest-inserted ones (smallest `expires_at`, since every entry shares the
+///    same `CACHE_TTL`) until there is room for exactly one more. This is the
+///    DoS-relevant invariant: the map never exceeds the cap no matter how many
+///    distinct keys an anonymous caller rotates through within the TTL.
+fn insert_bounded(cache: &mut HashMap<String, CacheEntry>, key: String, entry: CacheEntry) {
+    let now = Instant::now();
+    // (1) Correctness: drop TTL-expired entries.
+    cache.retain(|_, v| now < v.expires_at);
+    // (2) Memory bound: inserting a genuinely new key while the map is already
+    // at the cap would push it over, so first evict the oldest-inserted live
+    // entries (smallest `expires_at`) to make room for exactly one more.
+    // Replacing an existing key does not grow the map, so it skips eviction.
+    if !cache.contains_key(&key) && cache.len() >= MAX_PRICE_MAP_CACHE_ENTRIES {
+        let overflow = cache.len() + 1 - MAX_PRICE_MAP_CACHE_ENTRIES;
+        let mut by_age: Vec<(String, Instant)> = cache
+            .iter()
+            .map(|(k, v)| (k.clone(), v.expires_at))
+            .collect();
+        by_age.sort_by_key(|(_, expires_at)| *expires_at);
+        for (k, _) in by_age.into_iter().take(overflow) {
+            cache.remove(&k);
+        }
+    }
+    cache.insert(key, entry);
+}
+
 /// Create price map router.
 pub fn router() -> Router<AppState> {
     Router::new().route("/", get(get_price_map))
@@ -203,6 +249,13 @@ pub async fn get_price_map(
 
     let city_pattern = query.city.as_ref().map(|c| format!("%{}%", c));
 
+    // SAFETY (sqlx::AssertSqlSafe): the only value interpolated into `sql` via
+    // `format!` is `interval`, a `&'static str` chosen from the closed match on
+    // `time_window_str` above (any other value already returned 400). It is
+    // never derived from request input. All request-controlled values — mode,
+    // property_type and the city pattern — are passed as bound parameters
+    // ($1/$2/$3), so no untrusted data reaches the query text. Opting out of the
+    // SQL-injection guard here is sound.
     let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&mode)
         .bind(&query.property_type)
@@ -222,12 +275,14 @@ pub async fn get_price_map(
         })
         .collect();
 
-    // Store in cache (async write lock — never blocks Tokio worker)
+    // Store in cache (async write lock — never blocks Tokio worker).
+    // `insert_bounded` evicts TTL-expired entries and enforces the size cap so
+    // the map can never grow past `MAX_PRICE_MAP_CACHE_ENTRIES`, even when an
+    // anonymous caller rotates distinct `city` / `property_type` values.
     {
         let mut cache = price_map_cache().write().await;
-        // Evict expired entries to avoid unbounded growth
-        cache.retain(|_, v| Instant::now() < v.expires_at);
-        cache.insert(
+        insert_bounded(
+            &mut cache,
             cache_key,
             CacheEntry {
                 data: districts.clone(),
@@ -244,4 +299,115 @@ pub async fn get_price_map(
         time_window: time_window_str,
         cached: false,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A live cache entry (empty payload) that expires `offset` into the
+    /// future relative to `base`. Monotonic `offset`s make eviction order
+    /// deterministic while keeping every entry comfortably live (> now), so
+    /// the test isolates the size cap from the TTL sweep.
+    fn live_entry(base: Instant, offset_secs: u64) -> CacheEntry {
+        CacheEntry {
+            data: Vec::new(),
+            expires_at: base + CACHE_TTL + Duration::from_secs(offset_secs),
+        }
+    }
+
+    /// Regression for the unbounded-cache DoS: an anonymous caller rotating
+    /// distinct `city` values inserts a brand-new key every time within the TTL
+    /// window. Without the size cap the map grows past the cap; with it the map
+    /// plateaus at `MAX_PRICE_MAP_CACHE_ENTRIES` and the oldest-inserted keys
+    /// are the ones evicted.
+    #[test]
+    fn price_map_cache_bounded_under_distinct_key_flood() {
+        let base = Instant::now();
+        let mut cache: HashMap<String, CacheEntry> = HashMap::new();
+        let n = MAX_PRICE_MAP_CACHE_ENTRIES + 10;
+        for i in 0..n {
+            insert_bounded(
+                &mut cache,
+                format!("sale:3m::city-{i:08}"),
+                live_entry(base, i as u64),
+            );
+        }
+
+        assert_eq!(
+            cache.len(),
+            MAX_PRICE_MAP_CACHE_ENTRIES,
+            "cache must stay bounded at MAX_PRICE_MAP_CACHE_ENTRIES after a distinct-key flood within the TTL"
+        );
+        assert!(
+            !cache.contains_key("sale:3m::city-00000000"),
+            "oldest-inserted key must have been evicted under the size cap"
+        );
+        assert!(
+            cache.contains_key(&format!("sale:3m::city-{:08}", n - 1)),
+            "most-recently-inserted key must be retained"
+        );
+    }
+
+    /// The TTL sweep alone keeps already-expired entries from accumulating,
+    /// independently of the size cap.
+    #[test]
+    fn price_map_cache_drops_ttl_expired_entries_on_insert() {
+        let mut cache: HashMap<String, CacheEntry> = HashMap::new();
+        // Pre-seed an already-expired entry.
+        cache.insert(
+            "stale".to_string(),
+            CacheEntry {
+                data: Vec::new(),
+                expires_at: Instant::now() - Duration::from_secs(1),
+            },
+        );
+        insert_bounded(
+            &mut cache,
+            "fresh".to_string(),
+            CacheEntry {
+                data: Vec::new(),
+                expires_at: Instant::now() + CACHE_TTL,
+            },
+        );
+
+        assert!(
+            !cache.contains_key("stale"),
+            "expired entry must be reclaimed"
+        );
+        assert!(cache.contains_key("fresh"));
+        assert_eq!(cache.len(), 1);
+    }
+
+    /// Thread-safety: two tasks each flood `MAX/2 + 1` distinct keys through
+    /// the shared write lock; the final size must still respect the cap.
+    #[tokio::test]
+    async fn price_map_cache_bounded_under_concurrent_distinct_key_flood() {
+        let cache: Arc<RwLock<HashMap<String, CacheEntry>>> = Arc::new(RwLock::new(HashMap::new()));
+        let per_task = MAX_PRICE_MAP_CACHE_ENTRIES / 2 + 1;
+
+        let mut handles = Vec::new();
+        for t in 0..2u64 {
+            let cache = cache.clone();
+            handles.push(tokio::spawn(async move {
+                for i in 0..per_task {
+                    let entry = CacheEntry {
+                        data: Vec::new(),
+                        expires_at: Instant::now() + CACHE_TTL,
+                    };
+                    let mut w = cache.write().await;
+                    insert_bounded(&mut w, format!("t{t}:city-{i}"), entry);
+                }
+            }));
+        }
+        for h in handles {
+            h.await.unwrap();
+        }
+
+        let len = cache.read().await.len();
+        assert!(
+            len <= MAX_PRICE_MAP_CACHE_ENTRIES,
+            "concurrent flood pushed cache to {len}, over the {MAX_PRICE_MAP_CACHE_ENTRIES} cap"
+        );
+    }
 }

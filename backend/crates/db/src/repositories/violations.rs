@@ -446,15 +446,27 @@ impl ViolationRepository {
         .ok_or(sqlx::Error::RowNotFound)
     }
 
-    /// List evidence for a violation.
+    /// List evidence for a violation (tenant-scoped via parent violation).
+    ///
+    /// `violation_evidence` carries no `organization_id` of its own, so the read
+    /// is gated on the parent `violations` row matching `org_id`. An Org B caller
+    /// passing an Org A `violation_id` gets an empty list, not the rows (IDOR fix,
+    /// issue #2944).
     pub async fn list_evidence(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Vec<ViolationEvidence>, sqlx::Error> {
         sqlx::query_as::<_, ViolationEvidence>(
-            "SELECT * FROM violation_evidence WHERE violation_id = $1 ORDER BY created_at",
+            r#"
+            SELECT ve.* FROM violation_evidence ve
+            JOIN violations v ON v.id = ve.violation_id
+            WHERE ve.violation_id = $1 AND v.organization_id = $2
+            ORDER BY ve.created_at
+            "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }
@@ -897,27 +909,37 @@ impl ViolationRepository {
         .ok_or(sqlx::Error::RowNotFound)
     }
 
-    /// List comments for a violation.
+    /// List comments for a violation (tenant-scoped via parent violation).
+    ///
+    /// `violation_comments` carries no `organization_id` of its own, so the read
+    /// is gated on the parent `violations` row matching `org_id`. An Org B caller
+    /// passing an Org A `violation_id` gets an empty list (IDOR fix, issue #2944).
+    ///
+    /// `include_internal` controls whether `is_internal` notes are returned. The
+    /// caller (route layer) is responsible for only setting it for privileged
+    /// roles — see `list_comments` in `routes/violations.rs` (internal-notes
+    /// privilege-leak fix, issue #2944).
     pub async fn list_comments(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
         include_internal: bool,
     ) -> Result<Vec<ViolationComment>, sqlx::Error> {
-        if include_internal {
-            sqlx::query_as::<_, ViolationComment>(
-                "SELECT * FROM violation_comments WHERE violation_id = $1 ORDER BY created_at",
-            )
-            .bind(violation_id)
-            .fetch_all(&self.pool)
-            .await
-        } else {
-            sqlx::query_as::<_, ViolationComment>(
-                "SELECT * FROM violation_comments WHERE violation_id = $1 AND is_internal = false ORDER BY created_at",
-            )
-            .bind(violation_id)
-            .fetch_all(&self.pool)
-            .await
-        }
+        sqlx::query_as::<_, ViolationComment>(
+            r#"
+            SELECT c.* FROM violation_comments c
+            JOIN violations v ON v.id = c.violation_id
+            WHERE c.violation_id = $1
+              AND v.organization_id = $2
+              AND ($3 OR c.is_internal = false)
+            ORDER BY c.created_at
+            "#,
+        )
+        .bind(violation_id)
+        .bind(org_id)
+        .bind(include_internal)
+        .fetch_all(&self.pool)
+        .await
     }
 
     // =========================================================================
@@ -988,12 +1010,21 @@ impl ViolationRepository {
         Ok(payment)
     }
 
-    /// List payments for an enforcement action.
-    pub async fn list_payments(&self, action_id: Uuid) -> Result<Vec<FinePayment>, sqlx::Error> {
+    /// List payments for an enforcement action (tenant-scoped).
+    ///
+    /// `fine_payments` carries its own `organization_id`, so the read is gated on
+    /// it directly. An Org B caller passing an Org A `action_id` gets an empty
+    /// list, not the payment records (IDOR fix, issue #2944).
+    pub async fn list_payments(
+        &self,
+        action_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Vec<FinePayment>, sqlx::Error> {
         sqlx::query_as::<_, FinePayment>(
-            "SELECT * FROM fine_payments WHERE enforcement_action_id = $1 ORDER BY created_at",
+            "SELECT * FROM fine_payments WHERE enforcement_action_id = $1 AND organization_id = $2 ORDER BY created_at",
         )
         .bind(action_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }

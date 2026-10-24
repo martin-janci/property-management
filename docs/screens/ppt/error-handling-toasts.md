@@ -114,6 +114,17 @@ underneath them.
 
 ### Specific (recent)
 
+- 2026-10-10 — PR #3036 routed the success/error toast copy in the six ppt-web
+  route groups — `routes/groups/{community,faults,iot,leases,meters,person-months}.tsx`
+  — through react-i18next. Toast `title`/`message` strings fired from these route
+  handlers are now resolved via `t('<ns>.<key>', { defaultValue: '<English>' })`
+  (e.g. `meters.tsx`: `title: t('common.submitted', …)`,
+  `message: t('meters.readingSubmitted', …)`) instead of being hardcoded, so every
+  `showToast({ … })` call in a route group carries a translation key + English
+  default. When adding a toast in these (or other) route groups, use a `t()` key
+  with a `defaultValue` rather than a literal string. Pure copy-routing change: the
+  `ToastProvider`/`useToast` API, the toast types/durations, and the `parseApiError`
+  normalisation path are unchanged — so no `buildStatus`/`apiStatus` movement.
 - 2026-08-11 — PR #2646 added a second error-boundary tier: `RouteErrorBoundary`
   in `App.tsx` wraps `<AppRoutes />` (inside `<main>`, below `<AppNavigation>`)
   and is keyed on `pathname`. It reuses the same `ErrorBoundary` component/fallback
@@ -144,5 +155,6 @@ underneath them.
 
 <!-- newest entries on top -->
 
+- 2026-10-10 — agent: reconciled screen-map with merged PR #3036 (ppt-web route-group toast i18n, 2026-10-08). PR routed success/error toast copy in `routes/groups/{community,faults,iot,leases,meters,person-months}.tsx` through react-i18next (`t('<ns>.<key>', { defaultValue })`). Verified all six route groups use `showToast` + `t()` on `dev` (e.g. `meters.tsx` `common.submitted`/`meters.readingSubmitted`). Added a Notes > Specific (recent) entry documenting the i18n copy-routing convention for route-group toasts. Pure i18n/copy-routing refactor — no route added/removed, no API contract change — so NO frontmatter change (still `buildStatus: shipped`, `apiStatus: n/a`, `sitemapRefs {}`); no per-domain screen-map edits as the change is cross-cutting and owned by this feedback-layer doc. `/screens validate` clean.
 - 2026-08-11 — agent: reconciled screen-map with PR #2646 (ppt-web route-wrapper change, App.tsx). Documented the new route-outlet-level `RouteErrorBoundary` as a second error-boundary tier alongside the root `main.tsx` boundary: updated the capability description (piece 2 → "Error boundaries (two-tier)"), the checklist, the States section (route render crash keeps the shell mounted; keyed on pathname for auto-recovery), and Notes. Also noted the `App.route-error-boundary.test.tsx` regression coverage. No frontmatter status change — still `buildStatus: shipped`, `error-boundary` already in sharedComponents; non-routed cross-cutting capability so `sitemapRefs {}` unchanged.
 - 2026-06-28 — agent: created screen-map for the orphan "Error Handling & Toast Notifications" capability; verified ppt-web implementation shipped (Toast/ErrorBoundary/OfflineIndicator/errorHandler) and wired in App.tsx + main.tsx; checklist marked shipped; sitemapRefs left `{}` (non-routed cross-cutting capability); related to server-error/session-expired/forbidden.
