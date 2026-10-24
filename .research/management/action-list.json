@@ -495,26 +495,6 @@
         "score": 1,
         "vector": "bug"
       }
-    },
-    {
-      "id": "gh-issue-3149",
-      "action": "Follow-up: AML/DSA frontend client calls /api/v1/compliance/* but handlers are mounted at /api/v1/aml-dsa/* (PR #3139) (Closes #3149)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-23T18:26:06Z (#3149)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-23T18:26:06Z",
-      "issue_ref": {
-        "number": 3149,
-        "url": "https://github.com/martin-janci/property-management/issues/3149",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     }
   ],
   "generated": "2026-10-19T04:00:00Z"

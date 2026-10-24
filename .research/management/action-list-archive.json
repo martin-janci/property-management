@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-23T16:32:39Z",
+  "archived_at": "2026-10-24T02:28:11Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -19170,6 +19170,33 @@
         "merged_pr": 3135,
         "merged_at": "2026-10-21T06:30:45Z",
         "at": "2026-10-21T06:36:25Z"
+      }
+    },
+    {
+      "id": "gh-issue-3149",
+      "action": "Follow-up: AML/DSA frontend client calls /api/v1/compliance/* but handlers are mounted at /api/v1/aml-dsa/* (PR #3139) (Closes #3149)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-23T18:26:06Z (#3149) | gc1-reconcile 2026-10-24T02:26:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-23T18:26:06Z",
+      "issue_ref": {
+        "number": 3149,
+        "url": "https://github.com/martin-janci/property-management/issues/3149",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3150,
+        "merged_at": "2026-10-24T00:33:12Z",
+        "at": "2026-10-24T02:26:11Z"
       }
     },
     {
