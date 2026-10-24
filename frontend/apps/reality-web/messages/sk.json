@@ -175,7 +175,7 @@
     "message": "Správa",
     "messageSent": "Správa odoslaná!",
     "name": "Vaše meno",
-    "optional": "(voliteľné)",
+    "optional": "(volitelné)",
     "phone": "Telefón",
     "placeholder": "Dobrý deň, mám záujem o túto nehnuteľnosť...",
     "preferredDate": "Preferovaný dátum",
@@ -797,6 +797,19 @@
       "error": "Nepodarilo sa načítať ponuky.",
       "empty": "Zatiaľ ste nezverejnili žiadne ponuky.",
       "createFirst": "Vytvorte svoju prvú ponuku"
+    },
+    "agencyProfile": {
+      "loading": "Načítavam…",
+      "notFound": "Kancelária sa nenašla.",
+      "verified": "Overená",
+      "about": "O kancelárii",
+      "team": "Náš tím ({count})",
+      "activeListings": "Aktívne ponuky ({count})",
+      "noListings": "Žiadne aktívne ponuky.",
+      "rentSuffix": "/mes",
+      "contact": "Kontakt",
+      "visitWebsite": "Navštíviť web",
+      "license": "Licencia: {number}"
     }
   },
   "search": {
@@ -840,9 +853,9 @@
   },
   "cookieBanner": {
     "title": "Používame cookies",
-    "body": "Nevyhnutné cookies udržujú stránku funkčnú. Voliteľné analytické a marketingové cookies nám pomáhajú ju zlepšovať — nenastavíme ich, pokiaľ ich neprijmete.",
+    "body": "Nevyhnutné cookies udržujú stránku funkčnú. Volitelné analytické a marketingové cookies nám pomáhajú ju zlepšovať — nenastavíme ich, pokiaľ ich neprijmete.",
     "accept": "Prijať všetky",
-    "reject": "Odmietnuť voliteľné",
+    "reject": "Odmietnuť volitelné",
     "manage": "Nastavenia cookies"
   },
   "priceAlerts": {
@@ -1019,7 +1032,7 @@
       "modalConfigure": "Konfigurácia pripojenia",
       "modalMapping": "Priradenie polí",
       "closeModal": "Zavrieť okno",
-      "connectionName": "Názov pripojenia (voliteľné)",
+      "connectionName": "Názov pripojenia (volitelné)",
       "connectionNamePlaceholder": "Moje {provider}",
       "apiKey": "API kľúč",
       "apiKeyPlaceholder": "Zadajte svoj API kľúč",
@@ -1066,7 +1079,7 @@
       "closeModal": "Zavrieť okno",
       "feedUrl": "URL feedu",
       "feedUrlHint": "Podporuje feedy XML, RSS, Atom a JSON",
-      "feedName": "Názov feedu (voliteľné)",
+      "feedName": "Názov feedu (volitelné)",
       "feedNamePlaceholder": "Môj feed nehnuteľností",
       "fetchError": "Nepodarilo sa načítať feed. Skontrolujte URL a skúste to znova.",
       "updateError": "Nepodarilo sa aktualizovať feed. Skúste to znova.",
