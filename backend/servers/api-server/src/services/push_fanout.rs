@@ -412,6 +412,29 @@ fn token_is_fresh(cached: &CachedAccessToken, now: chrono::DateTime<chrono::Utc>
     now < cached.refresh_after
 }
 
+/// Build the shared `reqwest::Client` used by a push transport.
+///
+/// `reqwest::Client::builder().build()` only fails when the underlying TLS
+/// backend or DNS resolver cannot be initialised — a recoverable environment /
+/// configuration problem, not a logic bug. The push-fanout worker previously
+/// `.expect()`-panicked at this point, so a transient init failure took the
+/// whole worker (and, on the synchronous pipeline path, request handling) down
+/// instead of degrading to "push skipped". Returning the error lets each
+/// constructor log it and fall back to a disabled (no-op) transport, matching
+/// how the rest of this module degrades when a provider is misconfigured.
+fn build_push_http_client(
+    timeout: Duration,
+    http2_prior_knowledge: bool,
+) -> Result<reqwest::Client, reqwest::Error> {
+    let mut builder = reqwest::Client::builder().timeout(timeout);
+    if http2_prior_knowledge {
+        // APNs requires HTTP/2; enabling http2_prior_knowledge avoids the TLS
+        // ALPN upgrade round-trip to the known-H2 gateway.
+        builder = builder.http2_prior_knowledge();
+    }
+    builder.build()
+}
+
 /// A service-account-backed source of auto-refreshed FCM access tokens.
 ///
 /// Holds the current token behind an async `Mutex`; the first caller past the
@@ -419,18 +442,29 @@ fn token_is_fresh(cached: &CachedAccessToken, now: chrono::DateTime<chrono::Utc>
 /// is in flight at a time.
 struct ServiceAccountTokenSource {
     service_account: FcmServiceAccount,
-    http: reqwest::Client,
+    /// Shared HTTP client for the OAuth2 token exchange. `None` when the client
+    /// could not be built at startup (TLS/resolver init failure); token refresh
+    /// is then skipped rather than panicking the fanout worker.
+    http: Option<reqwest::Client>,
     cache: Mutex<Option<CachedAccessToken>>,
 }
 
 impl ServiceAccountTokenSource {
     fn new(service_account: FcmServiceAccount) -> Self {
+        let http = match build_push_http_client(Duration::from_secs(10), false) {
+            Ok(client) => Some(client),
+            Err(e) => {
+                tracing::error!(
+                    error = %e,
+                    "[8A-3] FCM: failed to build OAuth2 token-exchange HTTP client; \
+                     access-token refresh will be skipped until the process restarts"
+                );
+                None
+            }
+        };
         Self {
             service_account,
-            http: reqwest::Client::builder()
-                .timeout(Duration::from_secs(10))
-                .build()
-                .expect("reqwest client build should not fail"),
+            http,
             cache: Mutex::new(None),
         }
     }
@@ -470,9 +504,12 @@ impl ServiceAccountTokenSource {
         &self,
         now: chrono::DateTime<chrono::Utc>,
     ) -> Result<CachedAccessToken, String> {
-        let assertion = self.mint_assertion(now)?;
-        let resp = self
+        let http = self
             .http
+            .as_ref()
+            .ok_or("OAuth2 token-exchange HTTP client unavailable (build failed at startup)")?;
+        let assertion = self.mint_assertion(now)?;
+        let resp = http
             .post(&self.service_account.token_uri)
             .form(&[
                 ("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
@@ -590,7 +627,10 @@ impl FcmTokenProvider {
 pub struct FcmHttpAdapter {
     token_repo: DevicePushTokenRepository,
     fcm_config: FcmConfig,
-    http: reqwest::Client,
+    /// Shared HTTP client for FCM HTTP v1 sends. `None` when the client could
+    /// not be built at startup (TLS/resolver init failure); sends are then
+    /// skipped rather than panicking the fanout worker.
+    http: Option<reqwest::Client>,
     /// Source of the OAuth2 bearer token for FCM HTTP v1 sends. Refreshes
     /// automatically when backed by a service account (see [`FcmTokenProvider`]).
     token_provider: FcmTokenProvider,
@@ -617,13 +657,21 @@ impl FcmHttpAdapter {
         fcm_config: FcmConfig,
         token_provider: FcmTokenProvider,
     ) -> Self {
+        let http = match build_push_http_client(Duration::from_secs(10), false) {
+            Ok(client) => Some(client),
+            Err(e) => {
+                tracing::error!(
+                    error = %e,
+                    "[8A-3] FCM: failed to build HTTP v1 send client; \
+                     Android push will be skipped until the process restarts"
+                );
+                None
+            }
+        };
         Self {
             token_repo: DevicePushTokenRepository::new(pool),
             fcm_config,
-            http: reqwest::Client::builder()
-                .timeout(Duration::from_secs(10))
-                .build()
-                .expect("reqwest client build should not fail"),
+            http,
             token_provider,
         }
     }
@@ -687,8 +735,14 @@ impl FcmHttpAdapter {
             }
         };
 
-        let resp = match self
-            .http
+        let Some(http) = self.http.as_ref() else {
+            tracing::warn!(
+                "[8A-3] FCM HTTP v1 send skipped — HTTP client unavailable (build failed at startup)"
+            );
+            return (false, false);
+        };
+
+        let resp = match http
             .post(&url)
             .bearer_auth(&bearer)
             .json(&body)
@@ -1024,22 +1078,30 @@ struct ApnsErrorBody {
 pub struct ApnsHttpAdapter {
     token_repo: DevicePushTokenRepository,
     apns_config: ApnsConfig,
-    http: reqwest::Client,
+    /// Shared HTTP/2 client for APNs sends. `None` when the client could not be
+    /// built at startup (TLS/resolver init failure); sends are then skipped
+    /// rather than panicking the fanout worker.
+    http: Option<reqwest::Client>,
 }
 
 impl ApnsHttpAdapter {
     /// Create a new adapter backed by the given pool and APNs config.
     pub fn new(pool: DbPool, apns_config: ApnsConfig) -> Self {
+        let http = match build_push_http_client(Duration::from_secs(15), true) {
+            Ok(client) => Some(client),
+            Err(e) => {
+                tracing::error!(
+                    error = %e,
+                    "[8A-3] APNs: failed to build HTTP/2 send client; \
+                     iOS push will be skipped until the process restarts"
+                );
+                None
+            }
+        };
         Self {
             token_repo: DevicePushTokenRepository::new(pool),
             apns_config,
-            http: reqwest::Client::builder()
-                .timeout(Duration::from_secs(15))
-                // APNs requires HTTP/2; enabling http2_prior_knowledge avoids the
-                // TLS ALPN upgrade round-trip to the known-H2 gateway.
-                .http2_prior_knowledge()
-                .build()
-                .expect("reqwest APNs client build should not fail"),
+            http,
         }
     }
 
@@ -1079,8 +1141,14 @@ impl ApnsHttpAdapter {
             "priority": notification.priority.as_str(),
         });
 
-        let resp = match self
-            .http
+        let Some(http) = self.http.as_ref() else {
+            tracing::warn!(
+                "[8A-3] APNs send skipped — HTTP client unavailable (build failed at startup)"
+            );
+            return (false, false);
+        };
+
+        let resp = match http
             .post(&url)
             .bearer_auth(jwt)
             .header("apns-topic", &self.apns_config.topic)
@@ -1901,6 +1969,25 @@ mod tests {
         let config = PushFanoutConfig::default();
         assert!(config.enabled);
         assert_eq!(config.poll_interval_secs, 30);
+    }
+
+    #[test]
+    fn build_push_http_client_succeeds_for_both_profiles() {
+        // Regression guard: the production push transports build their reqwest
+        // client through this helper instead of `.expect()`-panicking. Both the
+        // plain (FCM / OAuth token-exchange) and the HTTP/2-prior-knowledge
+        // (APNs) profiles must build cleanly so a healthy process keeps a usable
+        // client (`Some`) rather than degrading to the no-op skip path. A build
+        // failure here is surfaced as `Err` and logged by the constructor —
+        // never a panic that would take down the fanout worker.
+        assert!(
+            build_push_http_client(Duration::from_secs(10), false).is_ok(),
+            "FCM/OAuth client profile must build without panicking"
+        );
+        assert!(
+            build_push_http_client(Duration::from_secs(15), true).is_ok(),
+            "APNs HTTP/2 client profile must build without panicking"
+        );
     }
 
     #[test]
