@@ -954,16 +954,30 @@ impl ViolationRepository {
         req: RecordFinePayment,
         recorded_by: Uuid,
     ) -> Result<FinePayment, sqlx::Error> {
+        // The ownership check, the `fine_payments` INSERT, and the
+        // `enforcement_actions` running-balance UPDATE must be atomic. Running
+        // them as three independent pool checkouts (the pre-fix behaviour)
+        // meant a failure between the INSERT and the UPDATE recorded money in
+        // `fine_payments` without advancing `paid_amount` — a partial write
+        // that leaves the fine looking unpaid. Wrapping them in one transaction
+        // makes the write all-or-nothing. The `FOR UPDATE` row lock additionally
+        // serializes concurrent payments against the same action, so the
+        // read-modify-write on `paid_amount` can't lose an increment
+        // (lost-update race, follow-up #1361).
+        let mut tx = self.pool.begin().await?;
+
         // Verify the enforcement action belongs to this org before recording a
-        // payment against it (prevents cross-tenant payment injection).
-        let owns_action: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM enforcement_actions WHERE id = $1 AND organization_id = $2)",
+        // payment against it (prevents cross-tenant payment injection), and take
+        // a row lock so concurrent payments serialize on the balance update.
+        let owns_action: Option<Uuid> = sqlx::query_scalar(
+            "SELECT id FROM enforcement_actions WHERE id = $1 AND organization_id = $2 FOR UPDATE",
         )
         .bind(action_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_optional(&mut *tx)
         .await?;
-        if !owns_action {
+        if owns_action.is_none() {
+            // `tx` is dropped here, rolling back — nothing was written.
             return Err(sqlx::Error::RowNotFound);
         }
 
@@ -987,7 +1001,7 @@ impl ViolationRepository {
         .bind(&req.payer_name)
         .bind(&req.notes)
         .bind(recorded_by)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         // Update enforcement action paid amount (tenant-scoped)
@@ -1004,9 +1018,10 @@ impl ViolationRepository {
         .bind(action_id)
         .bind(req.amount)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
+        tx.commit().await?;
         Ok(payment)
     }
 
