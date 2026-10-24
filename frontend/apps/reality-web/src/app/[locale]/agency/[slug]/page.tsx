@@ -14,6 +14,7 @@ import { useParams } from 'next/navigation';
 import { Footer, Header } from '@/components/ui';
 import { Link } from '@/i18n/routing';
 import { sanitizeCssValue } from '@/lib/sanitize-css';
+import { sanitizeHref } from '@/lib/sanitize-url';
 
 const PAGE_BG: React.CSSProperties = {
   minHeight: '100vh',
@@ -52,6 +53,10 @@ export default function AgencyProfilePage() {
 
   const team = realtors ?? [];
   const listings = listingsData?.listings ?? [];
+
+  // Agency-authored website URL lands in an `href`; enforce an http(s)-only
+  // scheme allowlist so a `javascript:` / `data:` URL can't execute (XSS).
+  const safeWebsite = agency.website ? sanitizeHref(agency.website) : null;
 
   // Tenant-controlled brand colors must be sanitized before they land in an
   // inline style (same defense as brandingToStyleObject). Reject anything that
@@ -304,9 +309,9 @@ export default function AgencyProfilePage() {
                 >
                   ✉️ {agency.email}
                 </a>
-                {agency.website && (
+                {safeWebsite && (
                   <a
-                    href={agency.website}
+                    href={safeWebsite}
                     target="_blank"
                     rel="noreferrer"
                     style={{ color: 'var(--ppt-color-primary, #2563eb)' }}
