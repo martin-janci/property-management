@@ -6,7 +6,7 @@
  */
 
 import type { PaginatedResponse } from '../announcements';
-import { getToken } from '../auth';
+import { bearerAuthHeader } from '../auth';
 import type {
   CommunityEvent,
   CommunityGroup,
@@ -51,14 +51,6 @@ function buildQueryString(params: object): string {
 }
 
 /**
- * Get authorization header from the configured token provider.
- */
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-/**
  * Helper for API requests with error handling.
  */
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -66,7 +58,7 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+      ...bearerAuthHeader(),
       ...options.headers,
     },
   });

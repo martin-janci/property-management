@@ -4,7 +4,7 @@
  * API functions for Outages (UC-12).
  */
 
-import { getToken } from '../auth';
+import { bearerAuthHeader } from '../auth';
 import type {
   CancelOutageRequest,
   CreateOutageRequest,
@@ -41,21 +41,13 @@ function buildQueryString(params: object): string {
   return queryString ? `?${queryString}` : '';
 }
 
-/**
- * Get authorization header from the configured token provider.
- */
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 // Helper for API requests
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+      ...bearerAuthHeader(),
       ...options.headers,
     },
   });
