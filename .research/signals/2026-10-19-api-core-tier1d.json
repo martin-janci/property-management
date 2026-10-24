@@ -1,0 +1,48 @@
+{
+  "generated": "2026-10-19T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable backlog starved: claimable=8 < floor=36; deterministic backlog/retry sources exhausted). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree ONLY; no git add/commit/push performed; the orchestrator folds .research deltas into its Phase 6 commit. .research/management/assignments.json was NOT touched. SEGMENT SELECTION: no Phase-1 churn list was handed to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. review_cursor dates: api-handlers=2026-10-19, api-core=2026-10-17, reality-server=2026-10-17, ppt-web-ui=2026-10-17, ppt-web-core=2026-10-17, reality-web=2026-10-17, mobile-native-kmp=2026-10-18, mobile-rn=2026-10-19. Oldest date is 2026-10-17 (5-way tie: api-core, reality-server, ppt-web-ui, ppt-web-core, reality-web); per the skill the tie is broken deterministically by segment-map order -> api-core (priority 2). Saturation check: backlog.json has 1 open code-review-finding row with segment-inferred api-core (totp-rng-expect-panic) -> 1 < 3, NOT saturated. No api-core signal file exists for today (2026-10-19), so the same-day double-review guard does not fire. HONEST DISCLOSURE: an api-core pass ran yesterday (2026-10-18-api-core-tier1d.json, CORS prod/test divergence in main.rs+lib.rs); to avoid redundancy this pass deliberately steered AWAY from main.rs/lib.rs/CORS and AWAY from every file that run already verified SOUND (jwt.rs, totp.rs, client_ip.rs, scheduler/mod.rs, push_fanout.rs, oauth.rs), and instead reviewed the workflow-actions subsystem (services/actions/*) and the auth.rs credential-service env path — neither of which any prior api-core pass examined. SCOPE NOTE: the segment-map path `backend/api-server/src/` is stale; the real tree is `backend/servers/api-server/src/`. Route handlers live in `routes/` (that IS the saturated-adjacent `api-handlers` segment, excluded here); api-core was reviewed as the NON-route core: services/ (incl. services/actions/, services/scheduler/), state.rs, client_ip.rs, observability.rs, preflight.rs, lib.rs, main.rs, bin/. MATURITY / NOT-FLAGGED (verified SOUND this pass): stripe.rs webhook verify_signature (constant-time ct_eq, overflow-proof replay window via timestamp_within_tolerance #2330, full test matrix); auth_policy.rs strictest_policy_across (correct tighten-never-loosen merge, 0=no-cap handled); notification_pipeline.rs (explicitly fail-closed, 'DB error must hold the push' gate); id_ocr.rs (fail-closed NotConfigured stub); api_call.rs SSRF layer (dns_resolver pin + same-origin redirect pinning + http(s) scheme allowlist, dev-gated plain-http) and its reqwest .expect at :308 is a build-once CONSTRUCTOR (boot-only, not a crash path — consistent with the 2026-10-18 push_fanout determination); email.rs (lettre typed Message/Mailbox prevents CRLF header injection). De-dup vs backlog.json: the open totp-rng-expect-panic and the done osrng-expect findings already cover the OsRng .expect pattern class; the auth.rs:97 generate_token OsRng .expect is the SAME class and is therefore NOT re-emitted. The two findings below are genuinely net-new (no prior api-core row covers delay-action duration overflow or the argon2 env-override floor gap); no padding toward the 3-finding cap.",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed (review_cursor oldest=2026-10-17 is a 5-way tie {api-core, reality-server, ppt-web-ui, ppt-web-core, reality-web}; broken by segment-map order to api-core, priority 2; 1 open api-core code-review-finding row in backlog.json -> NOT saturated. No Phase-1 churn list supplied, so priority-1 churn-alignment was empty. This pass steered to the workflow-actions subsystem + auth.rs env path, which the 2026-10-18 api-core CORS pass did not examine, to keep findings net-new.)",
+  "experts_used": ["rust"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-api-core-delay-action-duration-overflow",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/actions/delay.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/delay.rs:54-61 `DelayConfig::to_duration()` computes `Duration::from_secs(self.duration * 60)` (Minutes), `* 3600` (Hours) and `* 86400` (Days) on `self.duration: u64` (delay.rs:44), which is deserialized directly from user-supplied workflow action config JSON via `parse_config` (delay.rs:77-80) -> `serde_json::from_value`. The multiplication is UNCHECKED and is evaluated BEFORE any bound is applied.",
+        "The 7-day cap is enforced only AFTER the multiply: `execute()` calls `to_duration()` at delay.rs:100 and then checks `if duration.as_secs() > MAX_DELAY_SECONDS` at delay.rs:103-108. Because the cap runs on the already-computed (possibly wrapped) value, it cannot catch an overflow: a large `duration` with unit=Days overflows `u64` in the `* 86400` step. In debug / `cargo test` builds (overflow-checks default ON) this PANICS with 'attempt to multiply with overflow', crashing the action-executor task — reachable from user-controlled workflow config and exercised by any test that constructs an overflowing DelayConfig. backend/Cargo.toml `[profile.release]` (lines 180-183) does NOT set `overflow-checks`, so in production release the multiply WRAPS instead: a huge configured value silently wraps to a small number that slips under MAX_DELAY_SECONDS, so the documented 7-day cap is bypassable and the workflow delays for an arbitrary wrong (shorter) duration with no error.",
+        "FIX: validate `self.duration` against the per-unit maximum BEFORE converting (or use `u64::checked_mul` and map `None` -> `ActionError::ConfigurationError`), i.e. reject/clamp at parse time rather than multiplying first and range-checking the product. Add a regression test with `duration=u64::MAX, unit=Days` asserting a clean ConfigurationError (not a panic, not a wrapped sub-cap Duration). Backend-only, statically landable."
+      ]
+    },
+    {
+      "id": "code-review-api-core-argon2-env-params-no-floor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/services/auth.rs"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/auth.rs:48-66 `AuthService::new()` reads Argon2id cost parameters from env (`PPT_ARGON2_M_COST_KIB`, `PPT_ARGON2_T_COST`, `PPT_ARGON2_P_COST`) with safe numeric fallbacks (m=65536, t=3, p=1), then builds `Params::new(m_cost, t_cost, p_cost, None).expect(\"argon2 params hard-coded above the library minimum, cannot fail\")` (auth.rs:61-62). The `.expect()` justification is STALE/incorrect: the params are env-DERIVED, not hard-coded, so 'cannot fail' no longer holds.",
+        "Two concrete gaps. (a) Fail-not-soft: an operator value below the argon2 crate minimum (e.g. `PPT_ARGON2_M_COST_KIB` below `8*p_cost`, or a zero cost) makes `Params::new` return Err, and `.expect()` PANICS at AuthService construction -> process aborts at boot with a non-actionable message, unlike the fail-fast-with-guidance pattern used for JWT_SECRET (main.rs ~539-547) and the operator-actionable panics in totp.rs. (b) Silent weakening: a value that is low-but-still-valid (above the library floor yet below the OWASP/P1-08 floor the doc comment at auth.rs:42-47 promises) is accepted with NO warning, so a misconfigured deploy hashes passwords weaker than the code claims to guarantee — defeating the documented 'tune above the OWASP minimum' hardening with zero signal.",
+        "FIX: clamp each env override up to the documented P1-08 floor (m>=19456 KiB, t>=2, p>=1) via `.max(FLOOR)` before `Params::new`, and replace the `.expect()` with a `match` that logs the effective params (so weakening is visible) and, on a genuine `Params::new` error, emits an operator-actionable message. Update the stale 'hard-coded ... cannot fail' comment. Backend-only, statically landable."
+      ]
+    }
+  ]
+}

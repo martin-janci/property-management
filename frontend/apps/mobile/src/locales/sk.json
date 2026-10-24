@@ -177,6 +177,11 @@
       "building": "Budova",
       "district": "Štvrť",
       "partner": "Partneri"
+    },
+    "categories": {
+      "building": "Budova",
+      "district": "Štvrť",
+      "partner": "Partner"
     }
   },
   "voting": {
@@ -582,7 +587,12 @@
     "personCount_one": "{{count}} osoba",
     "personCount_few": "{{count}} osoby",
     "personCount_many": "{{count}} osoby",
-    "personCount_other": "{{count}} osôb"
+    "personCount_other": "{{count}} osôb",
+    "status": {
+      "draft": "Koncept",
+      "submitted": "Odoslané",
+      "confirmed": "Potvrdené"
+    }
   },
   "outages": {
     "backToList": "‹ Výpadky",

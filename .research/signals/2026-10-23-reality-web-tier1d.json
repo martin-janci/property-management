@@ -1,0 +1,51 @@
+{
+  "generated": "2026-10-23T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator. Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push and no branch/checkout performed — the orchestrator folds .research deltas into its Phase 6 commit. Segment selection: no Phase-1 churn list was handed to this invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. state.json review_cursor dates: reality-web=2026-10-17 is the single oldest (api-handlers=2026-10-19, mobile-rn=2026-10-19, mobile-native-kmp=2026-10-18, api-core/reality-server/ppt-web-ui/ppt-web-core all=2026-10-22). reality-web is NOT saturated (0 open code-review-finding rows for segment==reality-web in backlog.json; only api-handlers=3 and api-core=1 carry open rows). Scope mapped to this repo's actual pnpm layout: the skill's reality-web root frontend/reality-web/src/ is stale — the app lives at frontend/apps/reality-web/src/ (230 ts/tsx files). Primary expert Frontend only (segment has no secondary per Step 2). Finding: the segment is high quality — the SSR-critical paths are hardened and were cleared with no findings: app/[locale]/listings/[slug]/page.tsx validates every 200 body via parseListingDetail and emits a real notFound() 404; app/api/layout-revalidate/route.ts uses HMAC-over-{timestamp}.{body} with timingSafeEqual, replay-window rejection, body-size cap, and a '*' tenant sentinel pre-auth; inferApiBaseFromHost only returns hardcoded api(.staging).rlt.sk hosts (no host concatenation → no SSRF). All `as unknown as` casts are confined to *.test.tsx mock wiring. Mutation catch-handlers in import/agency components surface i18n'd user errors via local state (setCreateError/setInviteError/setSaveError) rather than swallowing. Only two low-severity residual findings remained after that pass.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (state.json review_cursor: reality-web=2026-10-17 is the single oldest; all other segments 2026-10-18 or later. Not saturated: 0 open code-review-finding rows for segment==reality-web in backlog.json)",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Both findings are frontend-only edits confined to reality-web (no backend, no migration, no openapi/client regen). Finding 1 is a one-line removal per site (drop the console.error; the i18n error state is already set). Finding 2 adds a shape guard/validator on the realtor-api success body mirroring the existing parseListingDetail pattern already in this app. Verifiable via `pnpm --filter @ppt/reality-web typecheck` + `pnpm --filter @ppt/reality-web test`; no runtime stack required.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-crm-console-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-23 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:408 — handleCreate's catch does `console.error('Failed to create CRM connection:', error)` and then `setCreateError(t('createError'))`. The create mutation payload carries secrets: `credentials: { apiKey, instanceUrl }` (CrmConnection.tsx:389-392). Logging the raw rejected-mutation `error` to the browser console is the skill's flagged pattern 'sensitive fields (password, token, secret, api_key) appearing in a log call' — if the underlying fetch/client embeds request context (config.data / body) in the error, the apiKey can land in client-side console and any browser error-reporting sink. The user-facing error state is already set, so the console.error adds no UX value, only leak surface.",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:518 and frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:578 — same committed-console.error-in-catch pattern (handleCreate / handleSubmit). Both already surface an i18n'd error via setCreateError/setInviteError, so these two are pure production debug leftovers (skill Frontend pattern: 'console.log / console.error left in committed code'). Lower concern than the CRM site because no credentials are in those payloads.",
+        "Scope note: these are the ONLY non-error-boundary console.error sites in the segment. The two error.tsx boundaries (app/[locale]/error.tsx:27, app/[locale]/agency/error.tsx:28) legitimately console.error the boundary error and are excluded. Severity LOW (+1): no crash and user feedback is intact; the elevation reason for tracking is the credential-flow leak surface at CrmConnection.tsx:408. Confidence medium: whether the error object actually carries the apiKey depends on the mutation hook's error shape (not statically confirmed), so the leak is latent rather than proven."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-unvalidated-json-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-23 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:48 — the shared `request<T>()` helper returns a 200 body as `(await response.json()) as T` with no shape validation: an unchecked type assertion crossing the API boundary (skill Frontend pattern: 'as cast that crosses an API boundary'). A 200 with an empty/non-JSON body makes response.json() throw, and a well-formed-but-wrong-shape body is silently cast to T and dereferenced downstream (e.g. the 649-line app/[locale]/realtor/[id]/page.tsx consumer).",
+        "Asymmetry confirming this is worth closing: the sibling public SSR path app/[locale]/listings/[slug]/page.tsx:79-89 deliberately does NOT trust a 200 — it runs the body through parseListingDetail (listingSchema.ts) to coerce/validate required nested fields before render, with a comment that 'a 200 does not guarantee a well-formed body'. realtor-api.ts applies no equivalent guard, so the realtor surface is strictly less defensive than the listing surface against the same upstream/proxy partial-response failure mode.",
+        "Severity LOW (+1): callers invoke request<T>() inside try/catch (the function already throws RealtorApiError on network/!ok paths), so a malformed 200 surfaces as an unhandled JSON parse / later undefined-deref rather than an unhandled crash at this line — a robustness gap, not a hard crash. Confidence medium: the missing validation is statically confirmed; whether a malformed 200 occurs in production is data-dependent. Fix: mirror the parseListingDetail approach — validate/normalize the realtor response shape before the `as T` return."
+      ]
+    }
+  ]
+}

@@ -221,5 +221,118 @@
       "transition": "dropped→done (retry1 landed)"
     }
   ],
-  "rerun_goal_checks_at": "2026-10-16T06:47:16Z"
+  "rerun_goal_checks_at": "2026-10-16T06:47:16Z",
+  "rerun2_at": "2026-10-16T16:38:59Z",
+  "rerun2_trigger": "buffer-low-refire-2 (claimable=6/72)",
+  "rerun2_note": "Second buffer-low re-fire of 2026-10-16 (first at 06:42Z captured 3 implementer PRs; this re-fire captures 3 more). Trigger note explicitly stated: deficit is human-approval throughput, not supply — confirmed in-run. No new scoring signals; 3 additional resolution-updates on items already done.",
+  "resolutions_this_rerun2": [
+    {
+      "item_id": "code-review-mobile-rn-detail-back-button-hardcoded-en",
+      "pr": 3105,
+      "transition": "done→done (resolving-PR source appended)"
+    },
+    {
+      "item_id": "code-review-mobile-rn-outage-status-untranslated",
+      "pr": 3106,
+      "transition": "done→done (resolving-PR source appended)"
+    },
+    {
+      "item_id": "code-review-api-core-ssrf-validator-drift",
+      "pr": 3103,
+      "transition": "done→done (NAT64 follow-up PR appended as reinforcement source)"
+    }
+  ],
+  "rerun2_goal_checks_at": "2026-10-16T16:41:16Z",
+  "rerun2_goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "brief exists, matches today"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "last_pr_seen 3102→3106; last_commit_sha 6b790f3d→eb76f9d6"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "ids unique"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "no non-cumulative dup signals with score_delta"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "observed": "no score > 8"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "observed": "no open items past 14d threshold needed decay this re-fire"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "no new plans this re-fire — vacuous"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "observed": "0 new plans ≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0 files outside .research/"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0 secret pattern matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md == regen(backlog.json) — drift from pre-run dispatcher commits repaired"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no phase failed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "no plan deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive count 22 == 22 (unchanged)"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md == regen(backlog.json)"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "no auto-fix actions (certainty bar not met)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped this re-fire — gate is no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "no Telegram token patterns"
+    }
+  ]
 }
