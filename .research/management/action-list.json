@@ -399,6 +399,20 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "stalled-review-pr-3024-retry1",
+      "action": "Stalled review: PR #3024 docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3024]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-10-24T12:30:11Z (retry_of=stalled-review-pr-3024 reason=failed-no-pr cooldown_ok newest_failure=2026-10-17T10:40:40Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-24T12:30:11Z",
+      "retry_of": "stalled-review-pr-3024",
+      "retry_round": 1
     }
   ],
   "generated": "2026-10-19T04:00:00Z"
