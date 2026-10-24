@@ -13001,6 +13001,112 @@
       "created_at": "2026-10-23",
       "updated_at": "2026-10-23",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-reality-web-sanitize-css-ts",
+      "title": "Churn hotspot: 75 lines in frontend/apps/reality-web/src/lib/sanitize-css.ts (window 2026-10-23T03:15Z→2026-10-24T11:00Z)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-10-23T03:15:00Z",
+        "PR #3144"
+      ],
+      "evidence": [
+        "75 lines changed in sanitize-css.ts across the agency sanitization hardening PRs #3144 + #3151 window; first-time hotspot (runs_seen=1)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/sanitize-css.ts"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-reality-web-tenant-config-ts",
+      "title": "Churn hotspot: 71 lines in frontend/apps/reality-web/src/lib/tenant-config.ts (window 2026-10-23T03:15Z→2026-10-24T11:00Z)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-10-23T03:15:00Z",
+        "PR #3144"
+      ],
+      "evidence": [
+        "71 lines changed in tenant-config.ts on PR #3144 window; first-time hotspot"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-reality-web-agency-slug-page-tsx",
+      "title": "Churn hotspot: 18 lines in frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (window 2026-10-23T03:15Z→2026-10-24T11:00Z)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-10-23T03:15:00Z",
+        "PR #3144",
+        "PR #3151"
+      ],
+      "evidence": [
+        "18 lines changed in agency slug page across PRs #3144 + #3151; first-time hotspot. Also implicated in two screen-map-drift signals this run (false-positive risk — hardening, not UX change)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "title": "Screen-map drift (heuristic): PR #3144 touched reality-web agency slug route without updating docs/screens/reality/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3144"
+      ],
+      "evidence": [
+        "PR #3144 (sanitize agency brand colors) touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx without touching docs/screens/reality/*.md. Heuristic flag only — the PR is a sanitization hardening, not a UX change; treat as a review candidate per routine-prompt best-effort caveat."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3151-reality",
+      "title": "Screen-map drift (heuristic): PR #3151 touched reality-web agency slug route + Resources section without updating docs/screens/reality/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3151"
+      ],
+      "evidence": [
+        "PR #3151 (XSS href scheme fix) touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx and components/listings/sections/Resources.tsx without touching docs/screens/reality/*.md. Heuristic flag only — the PR is a security fix, not a UX change; treat as a review candidate per routine-prompt best-effort caveat."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
     }
   ]
 }

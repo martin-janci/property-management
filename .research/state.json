@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-23T03:15:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 3142,
-  "last_issue_seen": 3143,
-  "last_commit_sha": "18f1813",
+  "last_run_iso": "2026-10-24T11:00:00Z",
+  "last_run_ms": 3200,
+  "last_pr_seen": 3151,
+  "last_issue_seen": 3149,
+  "last_commit_sha": "eb410a8",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -621,6 +621,21 @@
       "runs_seen": 1,
       "last_seen": "2026-10-22",
       "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/lib/sanitize-css.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-24",
+      "recent_churn": 75
+    },
+    "frontend/apps/reality-web/src/lib/tenant-config.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-24",
+      "recent_churn": 71
+    },
+    "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-24",
+      "recent_churn": 18
     }
   },
   "seen_signals": [
@@ -1231,7 +1246,12 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-frontend-apps-reality-web-src-lib-sanitize-css-ts",
+    "churn-hotspot-frontend-apps-reality-web-src-lib-tenant-config-ts",
+    "churn-hotspot-frontend-apps-reality-web-src-app-locale-agency-slug-page-tsx",
+    "screen-map-drift-pr-3144-reality",
+    "screen-map-drift-pr-3151-reality"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1245,8 +1265,8 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 103,
-    "vectors_created": 453,
+    "runs": 104,
+    "vectors_created": 458,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

@@ -1,0 +1,209 @@
+{
+  "generated_at": "2026-10-24T11:00:00Z",
+  "lag_hours": 31,
+  "lag_days": 1,
+  "run_summary": {
+    "merged_prs": 7,
+    "merged_pr_range": "#3144-#3151",
+    "open_prs_touched": 10,
+    "issues_new_or_updated": 0,
+    "commits_on_dev": 27,
+    "non_routine_commits": 7,
+    "trigger_payload": "buffer-low: claimable=7/72 — refill planner (dispatcher-side, informational only)"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-lib-sanitize-css-ts",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-10-23T03:15:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/reality-web/src/lib/sanitize-css.ts"
+      ],
+      "evidence": [
+        "75 lines added/removed across merged PRs #3144 (gradient-color-unsanitized) and #3151 window; first-time hotspot (runs_seen=1 after this run)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-lib-tenant-config-ts",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-10-23T03:15:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "evidence": [
+        "71 lines changed on PR #3144 window; first-time hotspot"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-app-locale-agency-slug-page-tsx",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-10-23T03:15:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "18 lines changed across PRs #3144 + #3151; first-time hotspot. Also implicated in two screen-map-drift signals this run."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3144",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "PR #3144 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx without updating any docs/screens/reality/*.md — route change on reality product with no screen-doc touch. Heuristic: PR is a sanitization hardening (not a route/UX change), so this is likely a benign false positive — review candidate only."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3151-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3151",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "evidence": [
+        "PR #3151 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx and components/listings/sections/Resources.tsx without updating docs/screens/reality/*.md — route change on reality product with no screen-doc touch. Heuristic: XSS href scheme fix, not a route/UX change — review candidate only."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-24.md && head -1 ... | grep -q",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ...",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique.length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal-id dedup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap+decay",
+      "observed": "max_score=6 (within 8); 0 decay candidates (no open item >14d)",
+      "expected": "cap<=8 && decay applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → no-op",
+      "observed": "0 new plans",
+      "expected": "every new plan has adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "no new plans this run → vacuous",
+      "observed": "0 new plans",
+      "expected": "<=2 new plans, all gates"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "scan diff for secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases",
+      "expected": "failed phases listed if any"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans/ changes this run",
+      "observed": "0 plan file changes",
+      "expected": "no silent plan deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count only grows",
+      "observed": "staged == HEAD count",
+      "expected": "staged >= HEAD count"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length checks",
+      "observed": "0 actions this run",
+      "expected": "<=3 total, <=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "pm_cursor unchanged (next_index=1)",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "scan diff for Telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
