@@ -6,22 +6,17 @@
  * pass (and no IDOR surface) and no other residents' PII in the response.
  */
 
-import { getToken } from '../auth';
+import { bearerAuthHeader } from '../auth';
 import type { MyUnit } from './types';
 
 const API_BASE = '/api/v1/users/me/units';
-
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+      ...bearerAuthHeader(),
       ...options.headers,
     },
   });
