@@ -1,14 +1,15 @@
-# PPT Roadmap — upkeep 2026-10-19
+# PPT Roadmap — upkeep 2026-10-24
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 3-day lag since 2026-10-16 run._
+_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. ~29h since 2026-10-23 run — on schedule._
 
 ## State of the project
 
-- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on 10a-1 (PR #3121 evidence) and all 5 epic-84 stories (cursor re-check — negative).
-- Delta vs 2026-10-16 upkeep: **2 PRs merged** — both frontend code-review follow-ups (reality-web auth-ctx transient-logout cushion + ppt-web AML dashboard flags), both tests-included, both resolving prior backlog items.
-- **Buffer now doubly constrained:** #2966 (swagger-ui egress) gates backend builds; **#3124 cargo-deny** (new, RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) gates backend merges even on green builds; #2652 (KMP) continues to park mobile-native work.
+- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-8a stories (cursor idx 11 → 12, re-check negative).
+- Delta vs 2026-10-23 upkeep: **7 PRs merged** — all dispatcher-authored auto-fix PRs (none sprint-story work). Three resolve prior backlog items: #3151 (reality-web agency-href-scheme-xss), #3145 (push-fanout client-build-expect), #3148 (ammonia RUSTSEC guard). Four close follow-up issues: #3147/#3146/#3150 + the ammonia side of cargo-deny.
+- **Buffer-low fire this run** — `claimable=12/72, backlog+retry avail=0, coverage exhausted (49/49 done)`. Diagnosis is a **plan-supply** problem on the cloud-dispatcher side: the 2 `ready` plans are KMP-local-only (blocked by #2652) and the remaining open backlog rows have **no plan file yet**. 3 new pm-level `next_actions` added to action-list.json to seed the planner (lead: author cloud-ok plan for api-core workflow batch-abort bug).
+- **Merge gates compounded:** #2966 (swagger-ui egress) still gates backend builds; **#3124 (zip side)** still gates backend merges even on green builds (ammonia side closed by #3148 this run); #2652 (KMP) continues to park mobile-native work.
 - Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3 already queued elsewhere).
-- Open PRs: 1 draft (#3123 api-core TOTP RNG expect panic — no contract impact). The accounting stall trio (#2559, #2555) remains carried.
+- Open PRs: 11 in `review` with `verdict=approve` + `needs-human-review` (self-approval blocked). The accounting stall trio (#2559, #2555) remains carried.
 
 ## Epic status (short)
 
@@ -21,7 +22,8 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 - **Epic 81 — Reports:** 2/2 done.
 - **Epic 82 — iOS Reality Portal (SwiftUI):** 5/5 done.
 - **Epic 83 — Portal Integrations:** 3/3 done.
-- **Epic 84 — Documents & e-signature:** 5/5 done. **Re-checked this run (cursor idx 9).** No merged PR in the 2026-10-18..2026-10-19 window touched epic-84 surfaces; `last_checked = 2026-10-19` stamped on all 5 stories.
+- **Epic 84 — Documents & e-signature:** 5/5 done. `last_checked = 2026-10-19` carried from prior upkeep.
+- **Epic 8A — re-checked this run (cursor idx 11).** No merged PR in the 2026-10-23..2026-10-24 window touched epic-8a surfaces; `last_checked = 2026-10-24` stamped on all 3 stories.
 - **Epic 85 — Build/CI configuration:** 2/2 done.
 - **Epic 79 — API client integration:** 4/4 done.
 - **Epic 9 — 2FA/TOTP:** 1/1 done.
@@ -73,4 +75,4 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 - api-server routes/integrations/webhook.rs repeated-churn (3 hotspot windows)
 - logout() AUTHED_QUERY_KEY_ROOTS allow-list gap (session leak)
 
-Buffer: **26/36 open** (floor 36) · candidates remaining ranked but unqueued: ~10. Buffer below floor by 10 but above half; the twin merge-gate (#2966 + #3124) is still the top lever — unblocking either frees the IDOR tier back onto the runner.
+Buffer: **26/36 open** (floor 36) · candidates remaining ranked but unqueued: ~10. Dispatcher-side `backlog+retry avail=0` fire this run says the problem is **plan supply** on cloud-ok backlog units, not open-count. The twin merge-gate (#2966 + #3124 zip-side) is still the top lever — unblocking either frees the IDOR tier back onto the runner; in parallel, pm-backend should commission plans for the 7 open un-planned cloud-ok rows this week so the dispatcher stays fed while #2652 keeps KMP work parked.

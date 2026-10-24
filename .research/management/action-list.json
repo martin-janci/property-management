@@ -289,7 +289,7 @@
       "action": "push_fanout.rs builds 3 reqwest clients with .expect() in production constructors — a recoverable client-build error panics the push-fanout worker (hottest non-route churn file) instead of surfacing a configuration error",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -299,7 +299,8 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
+      },
+      "resolution": "PR #3145 merged 2026-10-24 — surface push-fanout HTTP client build errors instead of panicking"
     },
     {
       "id": "code-review-reality-web-agency-page-i18n-gap",
@@ -374,7 +375,7 @@
       "action": "cargo-deny failing on all open PRs: new RUSTSEC advisories (zip -0367/-0368/-0369, CSS-url -0373) need deny.toml handling (Closes #3143)",
       "owner_role": "pm-security",
       "priority": "high",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-issue-ingest 2026-10-22T16:44:20Z (#3143)",
       "deadline": null,
       "dependency": null,
@@ -389,7 +390,8 @@
           "dependencies",
           "follow-up"
         ]
-      }
+      },
+      "resolution": "PR #3148 merged 2026-10-24 — add ammonia RUSTSEC-2026-0373 patched-floor guard to deny.toml (Closes #3143)"
     },
     {
       "id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts-retry1",
@@ -438,7 +440,43 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-backend-plan-api-core-workflow-condition-err-aborts-batch",
+      "action": "Author cloud-ok plan for api-core workflow_executor process_event batch-abort bug (backlog score 2, confidence medium) — adding a plan gives the dispatcher a cloud-claimable backlog unit while the local-only KMP plans stay buffered on #2652",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-24",
+      "first_open_at": "2026-10-24T08:36:48Z"
+    },
+    {
+      "id": "pm-backend-decay-review-stale-backlog-rows",
+      "action": "Decay-review open backlog rows unchanged ≥14d (6 code-review-* rows age-21d+): verify evidence patterns still present and either close as done (code gone), re-score with fresh grep, or drop — buffer-low keeps surfacing because stale rows block fresh promotion-eligible candidates",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-24",
+      "first_open_at": "2026-10-24T08:36:48Z"
+    },
+    {
+      "id": "pm-scrum-master-buffer-low-planner-starved-coverage-exhausted",
+      "action": "Planner starved (buffer-low: claimable=12/72, backlog+retry avail=0): coverage.json exhausted at 49/49 done; only cloud-ok plan candidates are the 7 open api-core/reality-server/ppt-web-core items without plans — commission plans for them in next few runs OR run local /ppt-project-management scan to refresh coverage against epic catalog",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-24",
+      "first_open_at": "2026-10-24T08:36:48Z"
     }
   ],
-  "generated": "2026-10-19T04:00:00Z"
+  "generated": "2026-10-24T08:36:34Z"
 }

@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-23T03:15:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 3142,
-  "last_issue_seen": 3143,
-  "last_commit_sha": "18f1813",
+  "last_run_iso": "2026-10-24T08:40:31Z",
+  "last_run_ms": 600000,
+  "last_pr_seen": 3151,
+  "last_issue_seen": 3149,
+  "last_commit_sha": "78b0da94d1c1598d0e5104242a8d34e1a3fa6707",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -621,6 +621,11 @@
       "runs_seen": 1,
       "last_seen": "2026-10-22",
       "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-24",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -743,6 +748,7 @@
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/community.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/core.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
     "churn-hotspot-frontend/apps/reality-web/src/components/home/FeaturedListings.tsx",
@@ -834,6 +840,7 @@
     "code-review-mobile-native-kmp-ios-deeplink-info-plist",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
     "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+    "code-review-mobile-native-kmp-nav-create-listing-stub",
     "code-review-mobile-native-kmp-notif-prefs-update-silent-fail",
     "code-review-mobile-native-kmp-portfolio-analytics-caps-100",
     "code-review-mobile-native-kmp-portfolio-analytics-drops-view-zero-days",
@@ -850,6 +857,7 @@
     "code-review-mobile-rn-hardcoded-empty-error-i18n",
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-meter-reading-no-numeric-validation",
+    "code-review-mobile-rn-neighbors-search-hardcoded-en",
     "code-review-mobile-rn-news-personmonths-badge-untranslated",
     "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
     "code-review-mobile-rn-offline-sync-false-complete",
@@ -1098,10 +1106,12 @@
     "lag-warning-2026-10-08",
     "lag-warning-2026-10-15",
     "lag-warning-2026-10-22",
+    "lag-warning-2026-10-24",
     "lag-warning-supplement-2026-08-31",
     "merged-review-followup-issue-2366",
     "merged-review-followup-issue-2575",
     "merged-review-followup-issue-2612",
+    "planner-buffer-low-2026-10-24",
     "refire-buffer-low-2026-08-25-0850",
     "repeated-churn-backend-crates-integrations-src-booking-mod-rs",
     "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
@@ -1245,8 +1255,8 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 103,
-    "vectors_created": 453,
+    "runs": 104,
+    "vectors_created": 454,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1262,10 +1272,10 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
-      "pm-backend": "2026-07-30",
+      "pm-backend": "2026-10-24",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
@@ -1275,6 +1285,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 11
+    "next_index": 12
   }
 }

@@ -1,20 +1,35 @@
-# pm-backend — 2026-07-30
+# pm-backend — 2026-10-24
 
-**Summary:** Backend churn this window is dominated by layout (scheduler.rs, layout/tenant.rs, layout/admin.rs) plus dispute-KPI wiring — most correctness fixes landed cleanly, but two of the freshly-merged PRs shipped with same-org logic gaps that reviewers immediately flagged (#2573 DELETE-by-file-key, #2575 /disputes/kpis window ordering). Backend security posture is otherwise healthy: PR #2567 closed the scheduler global-read RLS GUC leak, and PR #2478 hardened layout authz + publish TOCTOU + webhook replay.
+_Role rotation slot (daily upkeep). Last ran 2026-07-30 — ~3mo stale, so the lens here is cross-cutting backend state rather than a single sprint-story focus._
+
+## Summary
+
+Backend sprint-level work is parked: sprint-status.yaml's `development_status` block shows all 43 stories `done` and coverage.json agrees 49/49. The current backend queue is dispatcher-sourced code-review / IDOR follow-up PRs — 11 are in `review` with `verdict=approve` awaiting human merge, 2 landed this run (#3145 push-fanout, #3148 ammonia RUSTSEC). The planner is starved on cloud-claimable units because the remaining open rows have no plan files and the 2 `ready` plans are KMP-local-only (blocked by #2652).
 
 ## Next actions
-1. **[high]** Fix #2573 — add same-org reference-count / active-attachment guard in DELETE /documents/by-file-key before the endpoint is wired from any client. DoD: reference-check integration test covering (a) same-org still-referenced → 409/reject, (b) same-org orphan → 204, (c) cross-tenant → 404.
-2. **[medium]** Fix #2575 — add window_start <= window_end validation on GET /disputes/kpis; un-quarantine the KPI test and re-enable it in the default suite. DoD: 400 on inverted window; test in default suite and green.
-3. **[medium]** Add regression test for PR #2547 scheduler retention prune (still flagged hotfix-no-test). DoD: api-server sqlx test asserts prune deletes older-than-N rows on schedule.
-4. **[medium]** Review + merge the accounting MVP-loop trio (#2555, #2558, #2559) or route reviewer feedback back to the implementer. Dependency: pm-tech-lead. DoD: each PR either merged or explicit review comments block further work.
-5. **[low]** Investigate repeated churn on backend/servers/api-server/src/services/scheduler.rs (top churn 2 windows running) — consider extraction of retention/prune jobs to a dedicated module. DoD: design note in .research or issue opened with proposed module split.
+
+| # | Action | Priority | Dependency | Definition of done |
+|---|---|---|---|---|
+| 1 | Author cloud-ok plan for `code-review-api-core-workflow-condition-err-aborts-batch` (score 2, confidence medium) — `?` on evaluate_conditions at `workflow_executor process_event:359` aborts the whole batch on one bad stored condition | high | none | `.research/plans/code-review-api-core-workflow-condition-err-aborts-batch.md` exists with all 15 required sections, `Mode: cloud-ok`, dispatcher-claimable; backlog row flips `open → ready` |
+| 2 | Decay-review 6 backlog rows aged ≥14d (`code-review-api-handlers-violations-number-count-race` 2026-10-11, `code-review-api-handlers-violations-record-payment-non-atomic` 2026-10-11, `code-review-api-handlers-violations-missing-role-authz` 2026-10-17, `code-review-reality-server-register-account-enumeration` 2026-10-17, 2× `code-review-reality-web-*` 2026-10-22/23) | medium | none | Each row either closed as done (code gone / PR merged) or re-scored with fresh grep evidence; dropped if evidence is gone |
+| 3 | Commission plans for the 5 other open score-≥2 backlog rows (`code-review-reality-server-add-to-compare-toctou-max-cap`, `code-review-api-core-workflow-condition-err-aborts-batch`, `code-review-ppt-web-core-iot-ws-reconnect-no-backoff`, 2× violations rows) — stem-collision check first (`code-review-api-handlers-violations-*` likely collide with the open PRs in `review` status) | medium | pm-tech-lead for stem/claim-check | 2+ new plans at `Mode: cloud-ok` land in `.research/plans/` this week |
+| 4 | Address #3124 (zip-side) — RUSTSEC-2026-0368/0369 against `zip 8.6.0` via `rust_xlsxwriter`; ammonia side closed by #3148/#3143 but zip side is still open and still gates backend merges | high | pm-security for policy call (version bump vs bounded exception) | `cargo deny check advisories` passes on dev; cargo-deny CI gate green |
 
 ## Risks
-- **[med prob / high impact]** DELETE-by-file-key (#2571 → #2573) is a data-loss surface: a same-org active reference could be deleted, orphaning a live document row against its S3 object. Mitigation: reference-count guard before delete; do not wire from any client until the guard is in and tested.
-- **[med prob / med impact]** Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it. Mitigation: un-quarantine the KPIs test; add window validation; consider adding a second test asserting the reporting-consumer contract.
+
+| # | Risk | Probability | Impact | Mitigation |
+|---|---|---|---|---|
+| 1 | Dispatcher stays starved for another 1-2 runs if no cloud-ok plans are commissioned — Telegram digest surfaces "quiet day" when the real state is "unable to work" | high | medium | New pm-backend `next_action` #1 (api-core workflow plan) targets this; promote in next routine run |
+| 2 | 11 open assignments all `verdict=approve` + `needs-human-review` label pile up without a human-merge actor; dispatcher cannot self-approve or auto-merge own PRs | high | medium | Already surfaced in `project-state.md`; needs the human operator to merge-reap, or a bot allowlist change (out of pm-backend scope) |
+| 3 | Decay rule has not run against `.research/backlog.json` in a few runs — some stale rows may already be auto-dropped-eligible but still showing `open` | medium | low | Phase 2 of the main routine runs the decay pass; this run will apply it after Phase 1.6 returns |
+| 4 | Mobile-native-kmp backlog grows every tier1d review (today added `code-review-mobile-native-kmp-nav-create-listing-stub`) but cannot land in cloud until #2652 unblocked | high | low | Not a backend fix; owner stays pm-devops; keep flagging the compounding cost |
 
 ## Open questions
-- Is the accounting MVP-loop backend surface (invoice PDF render, PAY-by-square QR, sent/cancelled lifecycle) hitting the same test-quarantine pattern as the dispute KPI endpoint?
+
+- Is the `backlog+retry avail=0` reading from the planner excluding `-retry1` suffixed rows that are *claimable*, or treating them as retry-exhausted? If the latter, the policy may need relaxing (manual review ok before re-promotion).
+- Should the dispatcher be allowed to merge its own PRs after N days of self-approval blocking when CI is green? (Policy question for pm-devops / pm-security.)
 
 ## Decisions needed
-- Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later) — owner: pm-tech-lead.
+
+- Policy: at what buffer level does the routine *proactively* fire a run of `/ppt-project-management scan` locally (needs an operator) vs. keep running upkeep-only in cloud? — owner: pm-scrum-master.
+- Dependency on #2652: is there an interim path (self-hosted mobile-native runner, cached Android SDK bundle, Nix shell with pinned SDK)? — owner: pm-devops.

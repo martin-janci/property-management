@@ -1,0 +1,189 @@
+{
+  "run": "2026-10-24",
+  "run_type": "incremental",
+  "fired_via": "scheduled-fire-payload=buffer-low",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-24",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-10-23T03:15:00Z; lag ~29h — within 36h threshold, logged for continuity"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+      "type": "churn-hotspot",
+      "source": "merged-PRs #3144, #3151",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx touched twice this run (sanitize gradient color + href scheme allowlist). First-time hotspot — no prior hotspot_history entry."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-neighbors-search-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-23 (dispatcher Tier-1d mobile-rn, carried over to today's main signals file)",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx:184/:187-188/:195 renders English literals (title, subtitle template, search placeholder) on a 4-language portal — no i18n wiring. Low severity refactor."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-24 (dispatcher Tier-1d mobile-native-kmp)",
+      "score_delta": 0,
+      "evidence": [
+        "Navigation.kt:493 CreateListing composable onSubmit still a NotImplementedError stub — same code location as existing ready plan `code-review-mobile-native-kmp-create-listing-not-wired` (score 3). Dedup — appended as confirmation evidence, score_delta=0."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "dedup_target": "code-review-mobile-native-kmp-create-listing-not-wired"
+    },
+    {
+      "id": "planner-buffer-low-2026-10-24",
+      "type": "operator-signal",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "evidence": [
+        "Payload: `buffer-low: claimable=12/72 — coverage exhausted (49/49 done), backlog+retry avail=0; refill planner please`.",
+        "Honest claimable (per backlog-refill.sh dry-run): 15; floor 36; target 72. Supply-side starvation confirmed.",
+        "Only 1 fresh backlog candidate at low priority (`code-review-mobile-rn-neighbors-search-hardcoded-en` added this run) — would be promoted on next dispatcher refill cycle.",
+        "Both ready plans (`code-review-mobile-native-kmp-create-listing-not-wired`, `code-review-mobile-native-kmp-inquiries-response-contract`) are `Mode: local-only` — cloud dispatcher cannot claim them (AGP egress blocked, issue #2652).",
+        "Coverage: 49/49 done. Needs on-demand local `/ppt-project-management scan` to replenish."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-24.md && head -1 == # 2026-10-24",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "all new signal ids absent from prev seen_signals or score_delta=0 for cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8; no decay candidates this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuously true",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans ≤ 2 cap",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions=[] (no eligible candidate)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor=2 in [0,7]; coverage_cursor=12 in [0,13) advanced vs HEAD=11",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token values",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
