@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-23T03:15:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 3142,
-  "last_issue_seen": 3143,
-  "last_commit_sha": "18f1813",
+  "last_run_iso": "2026-10-24T04:35:00Z",
+  "last_run_ms": 30000,
+  "last_pr_seen": 3150,
+  "last_issue_seen": 3149,
+  "last_commit_sha": "052956e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -850,6 +850,7 @@
     "code-review-mobile-rn-hardcoded-empty-error-i18n",
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-meter-reading-no-numeric-validation",
+    "code-review-mobile-rn-neighbors-search-hardcoded-en",
     "code-review-mobile-rn-news-personmonths-badge-untranslated",
     "code-review-mobile-rn-offline-permanent-4xx-silent-drop",
     "code-review-mobile-rn-offline-sync-false-complete",
@@ -1241,12 +1242,12 @@
     "ppt-web-ui": "2026-10-22",
     "ppt-web-core": "2026-10-22",
     "reality-web": "2026-10-23",
-    "mobile-rn": "2026-10-19",
+    "mobile-rn": "2026-10-24",
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 103,
-    "vectors_created": 453,
+    "runs": 104,
+    "vectors_created": 454,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

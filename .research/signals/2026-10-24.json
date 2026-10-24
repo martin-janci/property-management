@@ -1,0 +1,199 @@
+{
+  "generated": "2026-10-24T04:35:00Z",
+  "run_type": "incremental",
+  "trigger_payload": "buffer-low: claimable=13/72 — refill planner",
+  "trigger_payload_note": "Payload is dispatcher-side signal (claimable buffer at 13/72), surfaced to inform the routine. Not one of the special routine triggers (deep/reset/full/pm-full/pm:<role>); treated as a normal incremental run per routine-prompt.md.",
+  "cursors_at_start": {
+    "last_pr_seen": 3142,
+    "last_issue_seen": 3143,
+    "last_commit_sha": "18f1813",
+    "last_run_iso": "2026-10-23T03:15:00Z"
+  },
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-neighbors-search-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-23 mobile-rn (dispatcher Tier-1d, signals/2026-10-23-mobile-rn-tier1d.json)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "evidence": "frontend/apps/mobile/src/screens/{neighbors,messages,announcements}/*.tsx — 5 user-facing strings (NeighborsScreen title/subtitle/placeholder lines 184/187-188/195; MessagesScreen placeholder line 125; AnnouncementsScreen placeholder line 244) hardcoded in English despite react-i18next being wired and used elsewhere in the same files. Net-new vs. the 9 existing done i18n rows for mobile-rn (none cover these screens). Fix is one-line per string (wrap in t() + add locale keys). Folded from dispatcher Tier-1d fragment that landed after the 2026-10-23 research run.",
+      "files": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ]
+    }
+  ],
+  "activity_summary": {
+    "merged_prs_since_last_run": [
+      {
+        "number": 3144,
+        "title": "code-review-reality-web-agency-gradient-color-unsanitized: sanitize agency brand colors in cover gradient",
+        "merged_at": "2026-10-23T14:28:28Z",
+        "backlog_row_already_reconciled": true
+      },
+      {
+        "number": 3150,
+        "title": "gh-issue-3149: route AML/DSA client calls to /api/v1/aml-dsa",
+        "merged_at": "2026-10-24T00:33:12Z",
+        "backlog_row_already_reconciled": "n/a — dispatcher-issue, no backlog row"
+      }
+    ],
+    "open_prs_touched": 0,
+    "new_or_updated_issues": [
+      {
+        "number": 3149,
+        "state": "CLOSED",
+        "title": "Follow-up: AML/DSA frontend client calls /api/v1/compliance/* but handlers are mounted at /api/v1/aml-dsa/* (PR #3139)",
+        "closed_at": "2026-10-24T00:33:58Z",
+        "resolved_by_pr": 3150
+      }
+    ],
+    "dependabot_open_count": 9,
+    "dependabot_blocked_on_cargo_deny": true,
+    "dependabot_blocker_issue": 3143,
+    "known_deadlock_prs": {
+      "note": "Dispatcher-created draft PRs >7 days with no human reviewDecision — blocked by Issue #3131 (bots cannot self-approve). stalled-review signals suppressed per 2026-10-23 precedent to avoid flooding the backlog with duplicate process rows; the deadlock is single-issue and already tracked.",
+      "pr_numbers": [
+        3024,
+        3028,
+        3070,
+        3072,
+        3074,
+        3075,
+        3107,
+        3108,
+        3111,
+        3119,
+        3120
+      ]
+    },
+    "churn_hotspots": []
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — the single new mobile-rn code-review-finding signal is LOW (+1) and confidence=medium, below the confidence=high + score≥3 certainty bar. No screen-map-drift / fixme-in-merged-code / dep-update-noise-lockfile-drift signal fired this run; the dependabot stack blocker (cargo-deny) is tracked under #3143 (not lockfile-drift).",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-24.md && head -1 | grep ^# 2026-10-24",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev HEAD:state.json 'cursor OR seen_signals OR hotspot OR quiet_days changed'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s 'signals re-emit guard' signals/2026-10-24.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <=8 (true); decay cutoff 2026-10-10 — zero open items older than cutoff; no decay needed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans staged — gate is trivially a no-op",
+      "observed": "no new plans",
+      "expected": "no new plans or every one has adversarial-pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c .md",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^\\.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on staged diff (exempt baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases-that-failed matches cursor state",
+      "observed": "brief says none; cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug still in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files plans/_archive/ count >= HEAD count",
+      "observed": "22 >= 22",
+      "expected": "staged >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions cap/idempotency on signals/2026-10-24.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — gate is a no-op; pm_cursor.next_index unchanged (now=1 head=1)",
+      "observed": "skip",
+      "expected": "skip or valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token regex on staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
