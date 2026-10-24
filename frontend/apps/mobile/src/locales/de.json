@@ -177,6 +177,11 @@
       "building": "Gebäude",
       "district": "Viertel",
       "partner": "Partner"
+    },
+    "categories": {
+      "building": "Gebäude",
+      "district": "Viertel",
+      "partner": "Partner"
     }
   },
   "voting": {
@@ -540,7 +545,12 @@
     "invalidMessage": "Geben Sie eine ganze Zahl zwischen 0 und 20 ein.",
     "bulkEntry": "Sammeleingabe…",
     "personCount_one": "{{count}} Person",
-    "personCount_other": "{{count}} Personen"
+    "personCount_other": "{{count}} Personen",
+    "status": {
+      "draft": "Entwurf",
+      "submitted": "Eingereicht",
+      "confirmed": "Bestätigt"
+    }
   },
   "outages": {
     "backToList": "‹ Störungen",
