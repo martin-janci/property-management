@@ -203,7 +203,17 @@ impl UserHandler {
         // back to portal_users for the unmerged-collision case, so this
         // detects a legacy portal-only row too.
         match self.unified.find_by_email(email).await {
-            Ok(Some(_)) => return RegistrationResult::EmailExists,
+            Ok(Some(_)) => {
+                // Account-enumeration defense: the success path below spends
+                // most of its wall-clock time in the Argon2 password hash.
+                // Mirror that cost here so an attacker cannot distinguish
+                // "email already registered" from "account created" by response
+                // latency. The hash output is discarded; `black_box` stops the
+                // optimizer from eliding the work. The route maps EmailExists
+                // onto the same status + body as a real success.
+                let _ = std::hint::black_box(Self::hash_password(password));
+                return RegistrationResult::EmailExists;
+            }
             Err(UnifiedPortalError::Db(e)) => {
                 return RegistrationResult::DatabaseError(e.to_string())
             }
