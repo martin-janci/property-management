@@ -122,7 +122,41 @@ export type WebSocketEventType =
  * and emits a `connection:max-retries-exceeded` event so callers can
  * surface a UI-level "offline" state instead of silently retrying forever.
  */
-const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+export const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+
+/**
+ * Default minimum reconnection delay in milliseconds (the first-attempt base
+ * before jitter).
+ */
+export const DEFAULT_MIN_RECONNECT_DELAY_MS = 1000;
+
+/**
+ * Default maximum reconnection delay in milliseconds — the exponential backoff
+ * is capped here so a long outage settles into a steady (jittered) poll rather
+ * than growing unbounded.
+ */
+export const DEFAULT_MAX_RECONNECT_DELAY_MS = 30000;
+
+/**
+ * Compute the reconnect delay for a given zero-based `attempt` using
+ * exponential backoff capped at `maxDelay`, plus random jitter in `[0.5, 1.0)`
+ * to avoid a thundering-herd on shared outages.
+ *
+ * This is the single source of truth for the project's WS reconnect backoff
+ * curve: {@link WebSocketService} (the shared notification socket) and the
+ * IoT sensor hook (`features/iot/hooks/useIotWebSocket`) both call it so their
+ * retry behaviour stays identical. Each caller still owns its own attempt
+ * counter and give-up handling (they live on different transports), but the
+ * delay math — the part worth not duplicating — is shared here.
+ */
+export function computeReconnectDelay(
+  attempt: number,
+  minDelay: number = DEFAULT_MIN_RECONNECT_DELAY_MS,
+  maxDelay: number = DEFAULT_MAX_RECONNECT_DELAY_MS
+): number {
+  const baseDelay = Math.min(minDelay * 2 ** attempt, maxDelay);
+  return baseDelay * (0.5 + Math.random() * 0.5);
+}
 
 /**
  * Connection states for the WebSocket.
@@ -270,8 +304,8 @@ export class WebSocketService {
   constructor(config: WebSocketServiceConfig) {
     this.url = config.url ?? import.meta.env.VITE_WS_URL ?? defaultWebSocketUrl();
     this.getToken = config.getToken;
-    this.minReconnectDelay = config.minReconnectDelay ?? 1000;
-    this.maxReconnectDelay = config.maxReconnectDelay ?? 30000;
+    this.minReconnectDelay = config.minReconnectDelay ?? DEFAULT_MIN_RECONNECT_DELAY_MS;
+    this.maxReconnectDelay = config.maxReconnectDelay ?? DEFAULT_MAX_RECONNECT_DELAY_MS;
     this.maxReconnectAttempts = config.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS;
   }
 
@@ -619,13 +653,13 @@ export class WebSocketService {
       return;
     }
 
-    // Exponential backoff capped at maxReconnectDelay, plus random jitter
-    // in [0.5, 1.0) to avoid a thundering-herd on shared outages.
-    const baseDelay = Math.min(
-      this.minReconnectDelay * 2 ** this.reconnectAttempts,
+    // Exponential backoff capped at maxReconnectDelay, plus random jitter —
+    // shared with the IoT hook via computeReconnectDelay().
+    const delay = computeReconnectDelay(
+      this.reconnectAttempts,
+      this.minReconnectDelay,
       this.maxReconnectDelay
     );
-    const delay = baseDelay * (0.5 + Math.random() * 0.5);
 
     this.reconnectAttempts++;
 
