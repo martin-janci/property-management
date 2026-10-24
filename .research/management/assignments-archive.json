@@ -2415,6 +2415,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-frontend/packages/api-client/src/auth/apply-headers.ts-retry1",
+      "branch": "auto-impl/churn-hotspot-frontend-packages-api-clie-dd16d991",
+      "status": "merged",
+      "claimed_at": "2026-10-24T08:30:00Z",
+      "last_updated": "2026-10-24T16:24:32Z",
+      "status_changed_at": "2026-10-24T16:24:32Z",
+      "pr_number": 3156,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3156",
+      "merged_at": "2026-10-24T14:32:40Z",
+      "specialist": null,
+      "implementer_summary": " [sandbox-reclaim #1 2026-10-24T12:35:53Z: branch missing after >120m; re-spawned same specialist] [reconciled: PR #3156 merged on dev]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "churn-hotspot-frontend/packages/api-client/src/auth/index.ts",
       "branch": "auto-impl/churn-hotspot-frontend-packages-api-clie-9b1cc8fe",
       "status": "merged",
@@ -20593,5 +20617,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-24T06:41:51Z"
+  "archived_at": "2026-10-24T16:31:58Z"
 }
