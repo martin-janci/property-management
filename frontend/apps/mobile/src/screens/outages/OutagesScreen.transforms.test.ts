@@ -43,6 +43,16 @@ describe('narrow', () => {
   it('is case-sensitive — a differently-cased value is treated as unknown', () => {
     expect(narrow('B', allowed, 'a')).toBe('a');
   });
+
+  it('matches exactly — surrounding whitespace is treated as unknown', () => {
+    // `includes` is an exact-equality check, so a padded value is not a member.
+    expect(narrow(' a ', allowed, 'b')).toBe('b');
+  });
+
+  it('returns the matched member itself, not the fallback, when present', () => {
+    // Guards against an inverted branch that would always return the fallback.
+    expect(narrow('c', allowed, 'a')).toBe('c');
+  });
 });
 
 describe('toUiOutage', () => {
@@ -100,6 +110,28 @@ describe('toUiOutage', () => {
     expect(toUiOutage(rest).severity).toBe('low');
   });
 
+  it('narrows an empty-string commodity to the safe fallback (water)', () => {
+    // Empty string is a falsy, non-member value: the `value && …` guard in
+    // `narrow` must route it to the fallback rather than the renderers.
+    expect(toUiOutage({ ...full, commodity: '' }).commodity).toBe('water');
+  });
+
+  it('narrows an empty-string status to the safe fallback (scheduled)', () => {
+    expect(toUiOutage({ ...full, status: '' }).status).toBe('scheduled');
+  });
+
+  it('coerces an empty-string severity to the low fallback', () => {
+    expect(toUiOutage({ ...full, severity: '' }).severity).toBe('low');
+  });
+
+  it('preserves id and title verbatim even when the enum fields are narrowed away', () => {
+    // Narrowing must only touch the enum fields — identity/display fields pass
+    // through untouched regardless of bad enum values elsewhere in the payload.
+    const ui = toUiOutage({ ...full, id: 'o-42', title: 'Lift outage', commodity: 'plasma' });
+    expect(ui.id).toBe('o-42');
+    expect(ui.title).toBe('Lift outage');
+  });
+
   it('keeps every produced enum field within its respective allow-list', () => {
     // Guards the renderers: commodity/status/severity must always be renderable.
     const ui = toUiOutage({
@@ -121,12 +153,18 @@ describe('formatRange', () => {
     expect(out).toContain('·');
     expect(out).toContain('–');
     expect(typeof out).toBe('string');
+    // TZ is pinned to UTC and the default locale resolves to 'en', so the
+    // absolute date is stable across CI runners (file header). Time rendering
+    // (12h vs 24h, AM/PM) is left to the locale, so only the date is pinned.
+    expect(out).toMatch(/^Mar 15 · /);
   });
 
   it('renders a multi-day range as "date – date" (no middot, no times)', () => {
     const out = formatRange('2026-03-15T09:00:00Z', '2026-03-18T11:30:00Z');
     expect(out).not.toContain('·');
     expect(out).toContain('–');
+    // Dates-only branch is fully deterministic under UTC + 'en'.
+    expect(out).toBe('Mar 15 – Mar 18');
   });
 
   it('treats a sub-day range crossing no calendar boundary as same-day', () => {

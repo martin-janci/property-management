@@ -163,6 +163,7 @@
     "emptyText": "Všechny problémy byly vyřešeny"
   },
   "news": {
+    "backToList": "‹ Zpravy",
     "title": "Zpravy",
     "latest": "Nejnovejsi zpravy",
     "readMore": "Cist vice",
@@ -176,6 +177,11 @@
       "building": "Budova",
       "district": "Čtvrť",
       "partner": "Partneři"
+    },
+    "categories": {
+      "building": "Budova",
+      "district": "Čtvrť",
+      "partner": "Partner"
     }
   },
   "voting": {
@@ -581,9 +587,15 @@
     "personCount_one": "{{count}} osoba",
     "personCount_few": "{{count}} osoby",
     "personCount_many": "{{count}} osoby",
-    "personCount_other": "{{count}} osob"
+    "personCount_other": "{{count}} osob",
+    "status": {
+      "draft": "Koncept",
+      "submitted": "Odesláno",
+      "confirmed": "Potvrzeno"
+    }
   },
   "outages": {
+    "backToList": "‹ Výpadky",
     "loadError": "Nepodařilo se načíst výpadky",
     "emptyTitle": "Žádné výpadky",
     "emptyText": "Momentálně není nic naplánováno ani aktivní.",
@@ -593,6 +605,11 @@
       "all": "Všechny",
       "scheduled": "Naplánované",
       "active": "Aktivní",
+      "resolved": "Vyřešené"
+    },
+    "status": {
+      "scheduled": "Naplánované",
+      "in_progress": "Probíhá",
       "resolved": "Vyřešené"
     }
   },

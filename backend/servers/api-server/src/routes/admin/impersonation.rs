@@ -111,7 +111,12 @@ async fn list_active(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
+    // Derive the client IP via the shared helper (first X-Forwarded-For hop,
+    // truncated to the `audit_logs.ip_address` VARCHAR(45) width) — the same
+    // idiom `start` and the other audited admin handlers use. Writing the raw
+    // XFF chain here overflowed the column, so a long/spoofed chain silently
+    // failed the audit INSERT and dropped the row.
+    let ip = super::audit_ip_from_headers(&headers);
     let ua = headers
         .get(axum::http::header::USER_AGENT)
         .and_then(|h| h.to_str().ok());

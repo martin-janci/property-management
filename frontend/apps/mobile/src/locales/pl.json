@@ -163,6 +163,7 @@
     "emptyText": "Wszystkie problemy zostały rozwiązane"
   },
   "news": {
+    "backToList": "‹ Aktualnosci",
     "title": "Aktualnosci",
     "latest": "Najnowsze wiadomosci",
     "readMore": "Czytaj wiecej",
@@ -176,6 +177,11 @@
       "building": "Budynek",
       "district": "Dzielnica",
       "partner": "Partnerzy"
+    },
+    "categories": {
+      "building": "Budynek",
+      "district": "Dzielnica",
+      "partner": "Partner"
     }
   },
   "voting": {
@@ -541,9 +547,15 @@
     "personCount_one": "{{count}} osoba",
     "personCount_few": "{{count}} osoby",
     "personCount_many": "{{count}} osób",
-    "personCount_other": "{{count}} osób"
+    "personCount_other": "{{count}} osób",
+    "status": {
+      "draft": "Szkic",
+      "submitted": "Wysłane",
+      "confirmed": "Potwierdzone"
+    }
   },
   "outages": {
+    "backToList": "‹ Awarie",
     "loadError": "Nie można załadować awarii",
     "emptyTitle": "Brak awarii",
     "emptyText": "Obecnie nic nie jest zaplanowane ani aktywne.",
@@ -553,6 +565,11 @@
       "all": "Wszystkie",
       "scheduled": "Zaplanowane",
       "active": "Aktywne",
+      "resolved": "Rozwiązane"
+    },
+    "status": {
+      "scheduled": "Zaplanowane",
+      "in_progress": "W toku",
       "resolved": "Rozwiązane"
     }
   },

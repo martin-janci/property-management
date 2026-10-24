@@ -206,7 +206,7 @@ export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
               <View style={s.cardFooter}>
                 <Text style={s.cardMeta}>{formatRange(outage.startsAt, outage.endsAt)}</Text>
                 <View style={s.badge}>
-                  <Text style={s.badgeText}>{outage.status.replace('_', ' ')}</Text>
+                  <Text style={s.badgeText}>{t(`outages.status.${outage.status}`)}</Text>
                 </View>
               </View>
             </Pressable>

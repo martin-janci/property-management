@@ -163,6 +163,7 @@
     "emptyText": "All issues have been addressed"
   },
   "news": {
+    "backToList": "‹ News",
     "title": "News",
     "latest": "Latest News",
     "readMore": "Read More",
@@ -176,6 +177,11 @@
       "building": "Building",
       "district": "District",
       "partner": "Partners"
+    },
+    "categories": {
+      "building": "Building",
+      "district": "District",
+      "partner": "Partner"
     }
   },
   "voting": {
@@ -579,9 +585,15 @@
     "invalidMessage": "Enter a whole number between 0 and 20.",
     "bulkEntry": "Bulk entry…",
     "personCount_one": "{{count}} person",
-    "personCount_other": "{{count}} persons"
+    "personCount_other": "{{count}} persons",
+    "status": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "confirmed": "Confirmed"
+    }
   },
   "outages": {
+    "backToList": "‹ Outages",
     "loadError": "Couldn't load outages",
     "emptyTitle": "No outages",
     "emptyText": "Nothing scheduled or active right now.",
@@ -591,6 +603,11 @@
       "all": "All",
       "scheduled": "Scheduled",
       "active": "Active",
+      "resolved": "Resolved"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
       "resolved": "Resolved"
     }
   },

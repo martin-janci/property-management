@@ -100,3 +100,42 @@ describe('outages header/filter keys resolve to real, locale-distinct translatio
     }
   });
 });
+
+describe('OutagesScreen status badge i18n', () => {
+  const mk = (id: string, status: string) => ({
+    id,
+    commodity: 'water',
+    title: `Outage ${id}`,
+    description: '',
+    status,
+    severity: 'low',
+    starts_at: '2026-01-01T08:00:00Z',
+    ends_at: '2026-01-01T10:00:00Z',
+  });
+
+  it('renders each status badge via t(outages.status.*), not raw enum text', () => {
+    mockUseApiQuery.mockReturnValue({
+      data: {
+        outages: [mk('1', 'scheduled'), mk('2', 'in_progress'), mk('3', 'resolved')],
+      },
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+      isFetching: false,
+    });
+    render(<OutagesScreen />);
+    expect(screen.getByText('outages.status.scheduled')).toBeTruthy();
+    expect(screen.getByText('outages.status.in_progress')).toBeTruthy();
+    expect(screen.getByText('outages.status.resolved')).toBeTruthy();
+    expect(screen.queryByText('in progress')).toBeNull();
+  });
+
+  it('every locale defines translated status labels', () => {
+    for (const locale of [en, sk, cs, de, pl, hu]) {
+      for (const key of ['scheduled', 'in_progress', 'resolved'] as const) {
+        expect(locale.outages.status[key].length).toBeGreaterThan(0);
+      }
+    }
+    expect(sk.outages.status.in_progress).not.toBe(en.outages.status.in_progress);
+  });
+});

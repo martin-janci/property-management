@@ -70,6 +70,31 @@ describe('NewsScreen header + filter-chip i18n', () => {
       expect(screen.queryByText(literal)).toBeNull();
     }
   });
+
+  it('renders the category badge via an i18n key, not the raw enum value', () => {
+    mockUseApiQuery.mockReturnValue({
+      data: {
+        articles: [
+          {
+            id: 'a1',
+            title: 'Lift maintenance',
+            summary: 'The lift will be serviced.',
+            category: 'building',
+            created_at: '2026-01-10T00:00:00Z',
+            read: false,
+          },
+        ],
+      },
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+      isFetching: false,
+    });
+    render(<NewsScreen />);
+    expect(screen.getByText('news.categories.building')).toBeTruthy();
+    // The raw enum value must not leak through as the badge label.
+    expect(screen.queryByText('building')).toBeNull();
+  });
 });
 
 describe('news header/filter keys resolve to real, locale-distinct translations', () => {
@@ -89,6 +114,21 @@ describe('news header/filter keys resolve to real, locale-distinct translations'
       for (const key of ['all', 'building', 'district', 'partner'] as const) {
         expect(typeof locale.news.filters[key]).toBe('string');
         expect(locale.news.filters[key].length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('en carries the category badge labels', () => {
+    expect(en.news.categories.building).toBe('Building');
+    expect(en.news.categories.district).toBe('District');
+    expect(en.news.categories.partner).toBe('Partner');
+  });
+
+  it('every locale defines the category badge labels', () => {
+    for (const locale of [sk, cs, de, pl, hu]) {
+      for (const key of ['building', 'district', 'partner'] as const) {
+        expect(typeof locale.news.categories[key]).toBe('string');
+        expect(locale.news.categories[key].length).toBeGreaterThan(0);
       }
     }
   });

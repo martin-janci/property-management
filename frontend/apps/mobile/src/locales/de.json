@@ -163,6 +163,7 @@
     "emptyText": "Alle Probleme wurden behoben"
   },
   "news": {
+    "backToList": "‹ Nachrichten",
     "title": "Nachrichten",
     "latest": "Neueste Nachrichten",
     "readMore": "Mehr lesen",
@@ -173,6 +174,11 @@
     "subtitle": "Neuigkeiten aus Ihrem Gebäude und Ihrer Nachbarschaft.",
     "filters": {
       "all": "Alle",
+      "building": "Gebäude",
+      "district": "Viertel",
+      "partner": "Partner"
+    },
+    "categories": {
       "building": "Gebäude",
       "district": "Viertel",
       "partner": "Partner"
@@ -539,9 +545,15 @@
     "invalidMessage": "Geben Sie eine ganze Zahl zwischen 0 und 20 ein.",
     "bulkEntry": "Sammeleingabe…",
     "personCount_one": "{{count}} Person",
-    "personCount_other": "{{count}} Personen"
+    "personCount_other": "{{count}} Personen",
+    "status": {
+      "draft": "Entwurf",
+      "submitted": "Eingereicht",
+      "confirmed": "Bestätigt"
+    }
   },
   "outages": {
+    "backToList": "‹ Störungen",
     "loadError": "Störungen konnten nicht geladen werden",
     "emptyTitle": "Keine Störungen",
     "emptyText": "Derzeit ist nichts geplant oder aktiv.",
@@ -551,6 +563,11 @@
       "all": "Alle",
       "scheduled": "Geplant",
       "active": "Aktiv",
+      "resolved": "Behoben"
+    },
+    "status": {
+      "scheduled": "Geplant",
+      "in_progress": "In Bearbeitung",
       "resolved": "Behoben"
     }
   },

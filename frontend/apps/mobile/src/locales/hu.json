@@ -163,6 +163,7 @@
     "emptyText": "Minden probléma megoldva"
   },
   "news": {
+    "backToList": "‹ Hirek",
     "title": "Hirek",
     "latest": "Legfrissebb hirek",
     "readMore": "Bovebben",
@@ -176,6 +177,11 @@
       "building": "Épület",
       "district": "Kerület",
       "partner": "Partnerek"
+    },
+    "categories": {
+      "building": "Épület",
+      "district": "Kerület",
+      "partner": "Partner"
     }
   },
   "voting": {
@@ -539,9 +545,15 @@
     "invalidMessage": "Adjon meg egy egész számot 0 és 20 között.",
     "bulkEntry": "Tömeges bevitel…",
     "personCount_one": "{{count}} személy",
-    "personCount_other": "{{count}} személy"
+    "personCount_other": "{{count}} személy",
+    "status": {
+      "draft": "Piszkozat",
+      "submitted": "Beküldve",
+      "confirmed": "Megerősítve"
+    }
   },
   "outages": {
+    "backToList": "‹ Kimaradások",
     "loadError": "A kimaradások nem tölthetők be",
     "emptyTitle": "Nincsenek kimaradások",
     "emptyText": "Jelenleg semmi sincs ütemezve vagy aktív.",
@@ -551,6 +563,11 @@
       "all": "Összes",
       "scheduled": "Ütemezett",
       "active": "Aktív",
+      "resolved": "Megoldott"
+    },
+    "status": {
+      "scheduled": "Ütemezett",
+      "in_progress": "Folyamatban",
       "resolved": "Megoldott"
     }
   },

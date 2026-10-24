@@ -15,7 +15,11 @@
 // Mock react-i18next
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    // Returns the key by default (so key-asserting suites like
+    // NewsScreen.i18n.test.tsx stay green), but honours an explicit
+    // `defaultValue` so `t(key, { defaultValue })` resolves to the fallback
+    // string — matching real i18next for untranslated keys (issue #3115).
+    t: (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key,
     i18n: {
       language: 'en',
       changeLanguage: jest.fn(),
