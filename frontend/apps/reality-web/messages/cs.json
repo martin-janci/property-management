@@ -797,6 +797,19 @@
       "error": "Nepodařilo se načíst nabídky.",
       "empty": "Zatím jste nezveřejnili žádné nabídky.",
       "createFirst": "Vytvořte svou první nabídku"
+    },
+    "agencyProfile": {
+      "loading": "Načítám…",
+      "notFound": "Kancelář nebyla nalezena.",
+      "verified": "Ověřená",
+      "about": "O kanceláři",
+      "team": "Náš tým ({count})",
+      "activeListings": "Aktivní nabídky ({count})",
+      "noListings": "Žádné aktivní nabídky.",
+      "rentSuffix": "/měs",
+      "contact": "Kontakt",
+      "visitWebsite": "Navštívit web",
+      "license": "Licence: {number}"
     }
   },
   "search": {
