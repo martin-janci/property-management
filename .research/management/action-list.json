@@ -285,23 +285,6 @@
       }
     },
     {
-      "id": "code-review-api-core-push-fanout-client-build-expect",
-      "action": "push_fanout.rs builds 3 reqwest clients with .expect() in production constructors — a recoverable client-build error panics the push-fanout worker (hottest non-route churn file) instead of surfacing a configuration error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-21T22:25:48Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-reality-web-agency-page-i18n-gap",
       "action": "reality-web agency/[slug]/page.tsx renders user-facing copy as Slovak literals on a 4-language portal (no next-intl wiring)",
       "owner_role": "pm-backend",
@@ -367,28 +350,6 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "gh-issue-3143",
-      "action": "cargo-deny failing on all open PRs: new RUSTSEC advisories (zip -0367/-0368/-0369, CSS-url -0373) need deny.toml handling (Closes #3143)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-22T16:44:20Z (#3143)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-22T16:44:20Z",
-      "issue_ref": {
-        "number": 3143,
-        "url": "https://github.com/martin-janci/property-management/issues/3143",
-        "labels": [
-          "security",
-          "backend",
-          "dependencies",
-          "follow-up"
-        ]
       }
     },
     {
