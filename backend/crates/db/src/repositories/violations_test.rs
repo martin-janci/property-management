@@ -13,8 +13,8 @@
 #[cfg(test)]
 mod tests {
     use crate::models::violations::{
-        CreateEnforcementAction, CreateViolation, CreateViolationComment, CreateViolationEvidence,
-        EnforcementActionType, RecordFinePayment, ViolationCategory,
+        CreateEnforcementAction, CreateViolation, CreateViolationAppeal, CreateViolationComment,
+        CreateViolationEvidence, EnforcementActionType, RecordFinePayment, ViolationCategory,
     };
     use crate::repositories::violations::ViolationRepository;
     use chrono::Utc;
@@ -232,6 +232,102 @@ mod tests {
             cross.is_empty(),
             "cross-tenant read must return no payment rows, got {}",
             cross.len()
+        );
+    }
+
+    /// Concurrency regression (COUNT(*)+1 numbering race): firing many
+    /// `create_violation` calls for the same org at once must mint distinct
+    /// `violation_number`s and all succeed. Before the advisory-lock fix the
+    /// per-org `COUNT(*) + 1` was read on the autocommit pool, so concurrent
+    /// creates computed the same number and the loser(s) tripped the
+    /// `UNIQUE(organization_id, violation_number)` constraint — an opaque 500
+    /// on create.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn concurrent_create_violation_numbers_are_unique(pool: sqlx::PgPool) {
+        let repo = ViolationRepository::new(pool.clone());
+        let org = make_org(&pool, "vio-race-org").await;
+        let reporter = make_user(&pool, "vio-race-reporter@example.com").await;
+
+        const N: usize = 12;
+        let mut handles = Vec::with_capacity(N);
+        for _ in 0..N {
+            let repo = repo.clone();
+            handles.push(tokio::spawn(async move {
+                repo.create_violation(org, sample_violation(), reporter)
+                    .await
+            }));
+        }
+
+        let mut numbers = Vec::with_capacity(N);
+        for h in handles {
+            let violation = h
+                .await
+                .expect("task panicked")
+                .expect("concurrent create_violation must not collide on violation_number");
+            numbers.push(violation.violation_number);
+        }
+
+        numbers.sort();
+        numbers.dedup();
+        assert_eq!(
+            numbers.len(),
+            N,
+            "every concurrent create must mint a distinct violation_number, got {numbers:?}"
+        );
+    }
+
+    /// Same numbering race for appeals: concurrent `create_appeal` for one org
+    /// must mint distinct `appeal_number`s rather than colliding on
+    /// `UNIQUE(organization_id, appeal_number)`.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn concurrent_create_appeal_numbers_are_unique(pool: sqlx::PgPool) {
+        let repo = ViolationRepository::new(pool.clone());
+        let org = make_org(&pool, "app-race-org").await;
+        let reporter = make_user(&pool, "app-race-reporter@example.com").await;
+        let appellant = make_user(&pool, "app-race-appellant@example.com").await;
+
+        // One parent violation; many appeals reference it.
+        let violation = repo
+            .create_violation(org, sample_violation(), reporter)
+            .await
+            .unwrap();
+
+        const N: usize = 12;
+        let mut handles = Vec::with_capacity(N);
+        for i in 0..N {
+            let repo = repo.clone();
+            let vid = violation.id;
+            handles.push(tokio::spawn(async move {
+                repo.create_appeal(
+                    vid,
+                    org,
+                    CreateViolationAppeal {
+                        enforcement_action_id: None,
+                        reason: format!("appeal {i}"),
+                        requested_outcome: None,
+                        supporting_evidence: None,
+                    },
+                    appellant,
+                )
+                .await
+            }));
+        }
+
+        let mut numbers = Vec::with_capacity(N);
+        for h in handles {
+            let appeal = h
+                .await
+                .expect("task panicked")
+                .expect("concurrent create_appeal must not collide on appeal_number");
+            numbers.push(appeal.appeal_number);
+        }
+
+        numbers.sort();
+        numbers.dedup();
+        assert_eq!(
+            numbers.len(),
+            N,
+            "every concurrent create must mint a distinct appeal_number, got {numbers:?}"
         );
     }
 }
