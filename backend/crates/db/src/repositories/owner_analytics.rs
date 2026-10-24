@@ -495,7 +495,7 @@ impl OwnerAnalyticsRepository {
         let properties = sqlx::query(
             r#"
             SELECT u.id as unit_id,
-                   COALESCE(u.name, b.address || ' #' || u.unit_number) as address,
+                   COALESCE(b.name, b.street) || ' #' || u.designation as address,
                    COALESCE(
                        (SELECT estimated_value FROM property_valuations
                         WHERE unit_id = u.id ORDER BY valuation_date DESC LIMIT 1),
