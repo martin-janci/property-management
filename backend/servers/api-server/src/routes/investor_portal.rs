@@ -468,7 +468,7 @@ async fn update_portfolio_property(
 
     state
         .investor_portal_repo
-        .update_portfolio_property(property_id, &data)
+        .update_portfolio_property(portfolio_id, property_id, &data)
         .await
         .map_err(|e| {
             (
@@ -493,7 +493,7 @@ async fn remove_portfolio_property(
 
     let deleted = state
         .investor_portal_repo
-        .remove_portfolio_property(property_id)
+        .remove_portfolio_property(portfolio_id, property_id)
         .await
         .map_err(|e| {
             (

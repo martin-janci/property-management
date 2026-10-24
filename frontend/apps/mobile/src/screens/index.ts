@@ -34,11 +34,11 @@ export type { Meter, MeterCommodity } from './meters';
 export { MeterDetailScreen, MeterReadingScreen, MetersScreen } from './meters';
 export { NeighborsScreen } from './neighbors';
 export type { NewsArticle } from './news';
-export { NewsScreen } from './news';
+export { ArticleDetailScreen, NewsScreen } from './news';
 export type { AppNotification, NotificationCategory } from './notifications';
 export { NotificationsScreen } from './notifications';
 export type { Outage, OutageCommodity, OutageSeverity, OutageStatus } from './outages';
-export { OutagesScreen } from './outages';
+export { OutageDetailScreen, OutagesScreen } from './outages';
 export { PersonMonthsScreen } from './person-months';
 // Profile screens (UC-14.6)
 export { ProfileScreen } from './profile';

@@ -1,0 +1,48 @@
+{
+  "generated": "2026-10-15T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=3 << floor=36; deterministic refills backlog-refill + retry-remint found no fresh candidates). Static single-segment rotating code review via the ppt-dev-review skill, no compilation / no test execution (cloud runner has no RN/Expo toolchain). File reading + grep only. Produces fresh backlog vectors for the mobile-rn segment (frontend/apps/mobile/src). All 3 findings verified net-new against prior mobile-rn signal files (2026-10-13, 2026-10-14) and all backlog code-review-finding / test-gap items.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "churn-aligned (also co-oldest-unreviewed). review_cursor.mobile-rn = 2026-10-11 (tied-oldest with api-handlers / ppt-web-ui / reality-web). Recent git churn (since 2026-09-20, excluding .research/ dispatcher noise) touches frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx x2 and mobile locales — mobile-rn is the one segment that is BOTH churn-aligned and co-oldest, so it wins priority 1. Saturation check: 0 open code-review-finding items for mobile-rn in backlog.json (3 prior NFC findings all status=done), so not saturated.",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-outage-news-detail-dead-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx", "frontend/apps/mobile/src/screens/news/NewsScreen.tsx", "frontend/apps/mobile/src/App.tsx"],
+      "evidence": ["Dead card navigation silently bounces users to the Dashboard. OutagesScreen.tsx:196 — each outage card's onPress calls `onNavigate?.('OutageDetail', { outageId: outage.id })`; NewsScreen.tsx:137 — each article card calls `onNavigate?.('ArticleDetail', { articleId: article.id })`. But App.tsx renderScreen() is a string switch whose cases run Dashboard/Faults/.../Outages/News/Forms/Buildings/Leases/LeaseDetail/LeaseSignature/More and then `default: return <DashboardScreen onNavigate={handleNavigate} />;` (App.tsx:264-265). There is NO `case 'OutageDetail'` and NO `case 'ArticleDetail'` anywhere (grep for both strings across frontend/apps/mobile/src returns ONLY the two onNavigate call sites — no screen component, no registration). Full traced path: tap outage/news card -> handleNavigate('OutageDetail'|'ArticleDetail', params) sets currentScreen -> switch falls through to default -> renders DashboardScreen. Net user-visible effect: tapping ANY outage card or ANY news article card throws the user back to the Dashboard instead of opening a detail view; the passed outageId/articleId is discarded. Reachable in production (Outages/News are live registered screens; OutagesScreen is wired to the real GET /api/v1/outages API). Fix (cloud-landable, frontend-only): either add OutageDetailScreen / ArticleDetailScreen components + switch cases (preferred — the detail route is clearly intended), or, as an interim, remove the dead onPress + card Pressable so a non-navigating list doesn't masquerade as tappable. Add an App.tsx navigation test asserting every onNavigate target string used by a screen resolves to a non-default case."]
+    },
+    {
+      "id": "code-review-mobile-rn-outages-news-header-chip-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": ["frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx", "frontend/apps/mobile/src/screens/news/NewsScreen.tsx", "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"],
+      "evidence": ["New i18n gaps distinct from the already-logged empty/error/loading string item (code-review-mobile-rn-hardcoded-empty-error-i18n, done). These are header titles, filter-chip labels, and a validation Alert — all hardcoded English in an app that ships sk/cs/de/en/hu/pl locales (src/locales/*.json): OutagesScreen.tsx:150-151 header 'Outages' / 'Planned and active utility interruptions.' and :141-144 filter chip labels 'All' | 'Scheduled' | 'Active' | 'Resolved' (the loading/error/empty states right below at :178-189 correctly use t('common.loading') / t('outages.loadError') / t('outages.emptyTitle') — so the mix is clearly an omission, not a convention). NewsScreen.tsx:91-92 header 'News' / 'Updates from your building and neighbourhood.' and :82-85 filter labels 'All' | 'Building' | 'District' | 'Partners'. PersonMonthsScreen.tsx:78 a hardcoded user-facing validation Alert Alert.alert('Invalid value', 'Enter a whole number between 0 and 20.') plus :93-96 header 'Person-months' / its subtitle, and the inline 'Save' / 'Cancel' / 'Edit' / 'Bulk entry…' button labels (:142,145,155,165). Also OutagesScreen.tsx:209 renders the raw enum via outage.status.replace('_', ' ') ('in progress') with no translation. Fix (cloud-landable, frontend-only): wrap all of the above in t() and add the missing keys to the 6 locale files, mirroring how the state strings in the same components are already handled."]
+    },
+    {
+      "id": "code-review-mobile-rn-outages-transforms-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "expert": "tester",
+      "files": ["frontend/apps/mobile/src/screens/outages/OutagesScreen.tsx"],
+      "evidence": ["OutagesScreen is a real API-backed screen (useApiQuery '/api/v1/outages', :123) with non-trivial pure logic and ZERO test files (frontend/apps/mobile/src/screens/outages/ contains only OutagesScreen.tsx + index.ts; compare meters/ and messages/ which each ship 4-5 test files). Untested pure functions worth locking down: (1) narrow<T>() (:58-62) — the allow-list guard whose own comment (:55-57) documents a footgun it exists to prevent ('as Foo ?? default doesnt actually guard at runtime — an unknown value flows through and then blows up commodityIcon/severityColor'); a regression here silently mis-renders or crashes on an unexpected server enum. (2) toUiOutage() (:64-75) — maps snake_case ApiOutage -> camelCase Outage and applies narrow() to commodity/status/severity with fallbacks; no test asserts an out-of-range commodity falls back to 'water' etc. (3) formatRange() (:100-113) — same-day vs multi-day branch. These are trivially unit-testable with no RN render (pure string/object in/out) and so are cloud-landable under jest-expo without a device. Add OutagesScreen transform tests covering: each commodity/status/severity passthrough + each fallback, same-day vs cross-day range formatting, and null/empty description -> ''. Net-new: no existing outages test-gap item in backlog.json."]
+    }
+  ]
+}

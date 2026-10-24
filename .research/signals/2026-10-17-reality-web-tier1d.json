@@ -1,0 +1,49 @@
+{
+  "generated": "2026-10-17",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable below floor). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner, file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree under .research/** only; no git add/commit/push performed — the orchestrator folds the .research delta into its Phase 6 commit. No files outside .research/** were modified; assignments.json / action-list.json untouched.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven, claim buffer starved below floor). No Phase-1 CHURN_FILES handed to this demand-driven invocation, so priority-1 churn-alignment was empty. REVIEW_CURSOR oldest date = 2026-10-11, a tie between api-handlers and reality-web. api-handlers SKIPPED for saturation (3 open code-review-finding rows with status==open in backlog.json >= floor 3). Next in priority order = reality-web (0 open code-review-finding rows -> not saturated; frontend TS -> cloud-landable). Experts: frontend (primary; reality-web has no secondary in the skill's assignment table). Static-only: file reads + grep, no compile/test. Scope = frontend/apps/reality-web/src/ (app/ RSC + components/ + lib/). Note: segment is mature — SSR listing fetch, auth-token storage, <script> injection (serializeForScript), and the /env.js allowlist are all well-hardened with documented invariants; the two findings below are the genuine residuals, not forced high-severity false positives.",
+  "experts_used": ["frontend"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-auth-ctx-transient-logout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:142-152 — in checkSession(), the bearer-token path treats ANY non-ok /api/v1/users/me response as a definitive auth failure: `if (meResp.ok) {...return;} clearStoredSession();` runs on every non-200 (including a transient 5xx), wiping the stored session and falling through to the cookie probe, which then sets user=null on a server blip.",
+        "Inconsistent with refreshSession() in the SAME file (auth-context.tsx:225-237), which for the identical /users/me call only clears on a definitive auth failure — `if (meResp.status === 401 || meResp.status === 403) { clearStoredSession(); setUser(null); }` — and explicitly documents (lines 230-233) that 'Any other status (5xx, etc.) is treated as transient: leave optimistic state intact'. checkSession lacks that status guard.",
+        "Impact: a single 5xx / gateway hiccup on /users/me during the mount-time checkSession() spuriously logs a form-login user out (token discarded, header flips to 'Sign in'), where refreshSession would have preserved the session. Fix: gate checkSession's clearStoredSession() on `meResp.status === 401 || meResp.status === 403` to match refreshSession's documented transient-vs-definitive policy."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-formatprice-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/listings/sections/ListingHeader.tsx:6-16 and frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:373-378 each define a LOCAL formatPrice that hardcodes the locale to 'en-US' in `new Intl.NumberFormat('en-US', { style: 'currency', currency, ... })`, so the price number grouping/format ignores the active next-intl locale on a 4-language portal (sk, cs, de, en).",
+        "Diverges from the canonical helper frontend/apps/reality-web/src/lib/format.ts:48 `formatPrice(value, locale, options)`, which takes the locale precisely so output follows the user's language; ListingCard.tsx:106 uses it correctly (`formatPrice(listing.price, locale, { currency: listing.currency })`). The two local copies are both a locale/i18n gap and a duplication smell (three parallel formatPrice implementations).",
+        "Impact (low): on sk/cs/de locales the listing-detail header price and the agency-listings table price render with en-US number conventions instead of the active locale, inconsistent with the locale-aware price shown everywhere ListingCard is used. Fix: delete the two local formatPrice helpers and call lib/format.ts formatPrice with the component's active locale (useLocale()/useTranslations locale)."
+      ]
+    }
+  ]
+}

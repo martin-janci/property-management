@@ -2704,7 +2704,10 @@
     "groupJoined": "Pripojili ste sa do skupiny.",
     "joinFailed": "Nepodarilo sa pripojiť do skupiny",
     "groupLeft": "Opustili ste skupinu.",
-    "leaveFailed": "Nepodarilo sa opustiť skupinu"
+    "leaveFailed": "Nepodarilo sa opustiť skupinu",
+    "groupDeleted": "Skupina odstránená.",
+    "deleteFailed": "Nepodarilo sa odstrániť skupinu",
+    "deleteGroupConfirm": "Odstrániť túto skupinu? Túto akciu nie je možné vrátiť späť."
   },
   "meters": {
     "readingSubmitted": "Odpočet odoslaný",

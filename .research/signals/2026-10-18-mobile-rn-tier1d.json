@@ -1,0 +1,49 @@
+{
+  "generated": "2026-10-18T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable backlog starved: claimable=5 < floor=36). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner; file reads + grep only). DISPATCHER_OWNED_COMMIT=1: artifact written into the working tree only; no git add/commit/push performed — orchestrator folds .research deltas into its Phase 6 commit. SEGMENT SELECTION: no Phase-1 CHURN_FILES handed to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. review_cursor dates: api-handlers=2026-10-11 (OLDEST) but SKIPPED for saturation (3 open code-review-finding rows with status==open in backlog.json: violations-missing-role-authz, violations-number-count-race, violations-record-payment-non-atomic). Next oldest = mobile-native-kmp=2026-10-13, but it was ALREADY reviewed earlier this same 2026-10-18 cycle (2026-10-18-mobile-native-kmp-tier1d.json present; its sole finding code-review-mobile-native-kmp-create-listing-stub covers Navigation.kt:493, which this pass independently rediscovered and discarded as a duplicate rather than padding). To avoid redundant double-review within one cycle, selection advanced to the next oldest-unreviewed segment not yet covered today and not saturated: mobile-rn (cursor 2026-10-16, frontend/apps/mobile/src, 0 open code-review-finding rows = not saturated, backed by api-server = cloud-unit-testable via jest-expo so findings are landable). SCOPE: 211 non-test TS/TSX files. VERIFIED SOUND during this pass (not flagged): all `!!` in androidApp Compose screens are guarded by preceding null-branches (delegated-property smart-cast limitation, safe); DocumentUploadScreen manual multipart fetch checks response.ok before parsing and the `as unknown as Blob` cast is the documented RN FormData idiom; VotingScreen parseVoteSummaries validates shape and tolerates garbage (prior crash bug already hardened); AnnouncementDetailScreen.handleAcknowledge omits onError but the component DOES surface acknowledge.isError in render (line 258) so errors are visible; useOfflineSupport queue drop/retry logic is heavily reasoned with issue refs (#1767/#2637) and correct (terminal 4xx dropped + recorded, transient 5xx carried forward FIFO); all usePushNotifications console.log calls are guarded by `if (__DEV__)` so they are stripped from production (NOT a leftover-debug finding); raw push tokens are explicitly never logged; useDeepLinkRouting uses a ref to keep the init effect stable and swallows cold-start init rejection intentionally; usePushNotifications / useOfflineSupport / useDeepLinkRouting all have dedicated test files. Only usePushNotifications registration-state handling surfaced genuinely net-new, non-duplicate findings; de-duplicated against prior mobile-rn signal files and backlog ids before emitting.",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "oldest-unreviewed (api-handlers skipped for saturation = 3 open code-review-finding rows; mobile-native-kmp, the next oldest, already reviewed earlier in this same 2026-10-18 cycle and its create-listing-stub finding already emitted; mobile-rn is the next oldest-unreviewed segment not yet covered today and NOT saturated = 0 open code-review-finding rows)",
+  "experts_used": ["frontend", "tester"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-push-isregistered-premature",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:223 vs :227 (registerForPushNotifications) — the hook calls `setIsRegistered(true)` at line 223 BEFORE it awaits `sendTokenToBackend(nativeToken.data)` at line 227. sendTokenToBackend posts the device's FCM/APNs token to the api-server (`sendPushTokenToBackend` -> `apiRequest`), which can reject on any backend 4xx/5xx or network error. When it throws, the surrounding catch (line ~230) only does `setError(message); return null;` — it never rolls `isRegistered` back to false.",
+        "Consequence: on a backend-registration failure the hook reports `isRegistered === true` (exposed in the returned API at line 315) while the api-server never stored this device's push token. The device therefore silently receives NO pushes, there is NO retry, and any UI gated on `isRegistered` shows a successful/complete registration — a silent, permanent (for the session) delivery failure that masks itself. This defeats the entire purpose of the hook (direct FCM/APNs fan-out).",
+        "Reachability: register is the app's push-enrolment entry point; a transient backend outage, an expired/absent access token at enrolment time, or a 4xx from the push-tokens endpoint all trip it under normal operating conditions. Verified net-new against prior mobile-rn signal files and backlog ids.",
+        "Suggested fix (implementer): move `setIsRegistered(true)` to AFTER `await sendTokenToBackend(...)` succeeds, so the flag reflects backend acceptance rather than local token acquisition; in the catch, ensure `setIsRegistered(false)` (and optionally surface a retriable error state). Add a jest-expo unit test asserting that when `sendPushTokenToBackend` rejects, the hook ends with `isRegistered === false` and a non-null `error` (satisfies IG3 — fails on current main)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-push-isregistered-perm-only",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts:154-156 (checkRegistrationStatus) — sets `setIsRegistered(status === 'granted')` purely from `Notifications.getPermissionsAsync()`, i.e. from OS notification-permission state alone, with no knowledge of whether the api-server currently holds this device's push token.",
+        "This conflates two distinct facts under one boolean: (a) the user has granted OS notification permission, and (b) the backend can actually deliver pushes to this device (has a current, non-rotated token). On app launch with a previously-granted permission, `isRegistered` becomes true without the current session ever (re)sending the token, so a stale or rotated device token — or a device whose token was never successfully persisted (see sibling finding code-review-mobile-rn-push-isregistered-premature) — is reported as fully registered. Any UI/telemetry that treats `isRegistered` as 'backend will deliver pushes' is misled.",
+        "Severity low: this is a semantic-conflation / observability smell rather than a crash; it compounds the premature-flag bug above and makes silent delivery failures harder to detect. Suggested fix: split the concept into `permissionGranted` (OS state) and `backendRegistered` (token successfully persisted this session / confirmed by backend), or re-send the token on launch when permission is granted and only set `backendRegistered` on backend ack."
+      ]
+    }
+  ]
+}

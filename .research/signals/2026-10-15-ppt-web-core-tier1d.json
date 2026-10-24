@@ -1,0 +1,31 @@
+{
+  "generated": "2026-10-15T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: honest_claimable=4 << floor=36). Static single-segment rotating code review via the ppt-dev-review skill — file reads + grep only, no compilation / no test execution (DISPATCHER_OWNED_COMMIT=1; findings written to working tree, no git add/commit/push). Segment rotation per skill Step 1.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "churn-aligned. Recent git churn (since 2026-10-01, excluding .research/ dispatcher noise) in frontend/apps/ppt-web/src/ touches lib/queryKeys.ts (+ .test.ts) and contexts/AuthContext.test.tsx — both map to ppt-web-core (frontend/apps/ppt-web/src/ hooks/lib/contexts/routes, excl pages/ + components/). Three segments were churn-aligned this run: mobile-rn (already reviewed today — 2026-10-15-mobile-rn-tier1d.json exists), reality-server (reviewed 2026-10-12/-13/-14, heavily mined — 60+ prior signal files + a dedicated sso-introspect-cache file), and ppt-web-core. ppt-web-core wins as the churn-aligned segment NOT already covered today and with the most core-logic churn (queryKeys + AuthContext). Saturation check: backlog.json holds 0 OPEN code-review-finding rows for ppt-web-core (only api-handlers is saturated at 3 open), so the <3-open rule does not skip it. NOTE: ppt-web-core is de-facto heavily mined; this pass verified the two obvious candidates are already-filed duplicates and are already FIXED in current code — (a) 429 retry ignores server Retry-After (filed 2026-08-28 ignores-retry-after), (b) axios retry stacking with TanStack retry:1 (covered repeatedly 2026-07-15 / 2026-09-06 / 2026-10-05), (c) lib/api.ts onUnauthorized-unwired + non-idempotent-retry (both done/merged, PRs 2889/2782 — current code has the method-guard + full 401 refresh-and-replay). Also DISPROVED a hypothesized high-value finding: AUTHED_QUERY_KEY_ROOTS (logout cache-purge allowlist, lib/queryKeys.ts) vs the @ppt/api-client key-factory roots — the only api-client roots absent from the allowlist (visitors/ecosystem/government-portal/onboarding/oauth-consent/packages/migration/admin) are either unmounted in ppt-web (government-portal + onboarding are explicitly listed in features/unwired-features.ts; visitors/ecosystem/oauth-consent/packages/migration = 0 references) or not query-key roots (admin = a ProtectedRoute role name), so the allowlist is complete for currently-wired features — NO cross-tenant cache leak. The single finding below is the one genuinely net-new, still-present issue.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-errorhandler-raw-message-i18n-bypass",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-15 ppt-web-core lib/errorHandler)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts:221 — parseErrorResponse returns `message: data.message || errorInfo.message`, PREFERRING the raw server-supplied `data.message` string over the localized `errorInfo.message` (which errorCopy() resolves from the i18n bundle via i18n.t(`errors.catalogue.${code}.message`)). For the common case — any structured backend error whose body carries a `message` field — the client-side i18n catalogue is bypassed and the server's (untranslated, backend-default English) message is rendered to the user regardless of the active sk/cs/de locale.",
+        "Same pattern in the generic Error fallback at errorHandler.ts:190-196: the `if (error instanceof Error)` branch returns `message: error.message || copy.message`, surfacing a raw JS Error message (e.g. a technical TypeError string, or a library's English `message`) to the user-facing toast instead of the localized default copy.",
+        "This is the INCOMPLETE-FIX residue of the already-done finding code-review-ppt-web-core-errorhandler-i18n-gap (filed 2026-08-17, merged): that fix correctly i18n'd the catalogue itself (ERROR_MESSAGES/DEFAULT_ERROR -> errorCopy()/i18n.t, and the 429 branch), but it never touched these two `|| fallback` sites, so the localized copy it added is skipped whenever a server/JS message is present. Net-new vs backlog: the filed finding's evidence enumerated parseApiError/parseErrorResponse/parseHttpStatusError/429-branch as hardcoded-English but did NOT call out the message-preference ordering; no other ppt-web-core signal covers it.",
+        "Impact: LOW (locale-correctness / UX on user-facing error toasts; no functional break — data.message is still informative, just not localized). Nuance worth preserving in the fix: `data.message` sometimes carries dynamic specificity the generic catalogue copy lacks (e.g. 'Email already registered'), so the correct fix is NOT to blindly drop it — prefer the i18n catalogue copy whenever `data.error` resolves to a KNOWN catalogue code (errorCopy already distinguishes known vs unknown), falling back to `data.message` only for unknown codes; and for the `instanceof Error` branch, keep `error.message` only for dev/unknown and otherwise use the localized default. Cloud-landable (frontend TS only). IG3: errorHandler test asserting parseApiError on a structured error with a known code + a server `message` returns the i18n catalogue message, not the raw server string — fails today."
+      ]
+    }
+  ]
+}

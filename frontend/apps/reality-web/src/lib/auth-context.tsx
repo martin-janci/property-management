@@ -145,10 +145,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setIsLoading(false);
           return;
         }
-        // Token rejected — wipe localStorage; fall through to cookie path.
+        // Only a genuine auth failure (401 unauthenticated / 403 forbidden)
+        // means the stored token is no longer valid: wipe localStorage and
+        // fall through to the cookie path. Any other status — notably a
+        // transient 5xx from a struggling backend — must NOT log the user
+        // out: keep the optimistic session and bail so the next mount can
+        // retry (mirrors refreshSession's contract below).
+        if (meResp.status !== 401 && meResp.status !== 403) {
+          setIsLoading(false);
+          return;
+        }
         clearStoredSession();
       } catch {
-        // Network blip — keep optimistic user; cookie path may still work.
+        // Network blip — transient, NOT a logout. Keep the optimistic user
+        // and bail; falling through to the cookie probe here would hit the
+        // same unreachable backend and clobber the session to null.
+        setIsLoading(false);
+        return;
       }
     }
 

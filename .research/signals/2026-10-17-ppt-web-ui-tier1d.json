@@ -1,0 +1,66 @@
+{
+  "generated": "2026-10-17T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=10 < floor=36; deterministic refills backlog-refill/retry-remint exhausted). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner; file reading + grep only). DISPATCHER_OWNED_COMMIT=1: artifacts written into the working tree only; no git add/commit/push, no branch touched, .research/management/** untouched — the orchestrator folds .research deltas into its own Phase 6 commit.",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (claimable, non-saturated). REVIEW_CURSOR oldest dates: api-handlers 2026-10-11 (SKIPPED — saturated, 3 open code-review-finding rows status==open in backlog.json) and mobile-native-kmp 2026-10-13 (AVOIDED — AGP egress-blocked in cloud runner, findings structurally unclaimable). Next oldest claimable is ppt-web-ui 2026-10-15 (not reviewed by any sibling Tier-1d run today), selected over mobile-rn 2026-10-16 and the 2026-10-17 group. No CHURN_FILES supplied, so priority-1 churn-alignment did not apply.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-dead-buttons",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "completeness",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:190-201 — the page header renders two primary action buttons, `Export Report` (:190-195) and `Calculate Metrics` (:196-201), each declared `type=\"button\"` with NO `onClick` handler and no disabled attribute. They are fully interactive, visually prominent (the `Calculate Metrics` one is styled as the page's primary blue CTA) controls that do absolutely nothing when clicked. There is no handler prop threaded in either (the component's only prop is `portfolioId`, PortfolioDashboardPageProps at :25-27), so they cannot be wired from a parent — they are dead placeholders shipped on a user-facing Epic-144 analytics dashboard. A manager clicking `Export Report`/`Calculate Metrics` gets silent no-op with zero feedback.",
+        "Severity MEDIUM (+2): non-functional user-facing controls on a shipped dashboard (completeness/stub defect, no crash). Confidence MEDIUM: statically certain the buttons have no handler; not upgraded to high because whether these are intended-future vs. abandoned is a product call. Fix: wire to an export/metrics-recompute action, or remove/disable them until backed. NET-NEW vs backlog: distinct from the TODO-scan signal `unchecked-todo-portfolio-dashboard-stubs` (comment-level) and from `code-review-ppt-web-ui-content-mod-overdue-noop` (different page/feature); no existing row covers these two concrete dead buttons. Cloud-landable (ppt-web React SPA, frontend.yml CI + vitest verifiable)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-alert-mutations-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:226-227 — the per-alert actions are fired as `onMarkRead={() => markRead.mutate(alert.id)}` and `onResolve={() => resolve.mutate(alert.id)}` with NO `onError` callback, no second-arg options object, and no surfacing of `markRead.isError` / `resolve.isError` anywhere in the render tree (the hooks are `useMarkAlertRead`/`useResolveAlert` at :141-142). If the mutation rejects (network/5xx/permission), the failure is swallowed: the alert row stays in its old state, no toast/inline error is shown, and the user has no signal their mark-read/resolve did not persist. On a reload the alert reappears, making it look like the action silently reverted.",
+        "Severity MEDIUM (+2): unhandled error on a user-facing mutation path (stale UI + silent data-state divergence, no user feedback). Confidence MEDIUM: statically certain no error path is wired at the call site; not high because exact UX impact depends on the generated hook's retry/toast defaults (none are configured here). Fix: pass `{ onError }` to show a toast/inline error, or render `markRead.isError`/`resolve.isError`. NET-NEW vs backlog: same defect CLASS as `code-review-ppt-web-ui-accounting-invoice-silent-fail` and `code-review-ppt-web-ui-registry-rules-save-silent-fail`, but a different file/feature (portfolio-performance) not yet covered. Cloud-landable (ppt-web React SPA, frontend.yml CI + vitest verifiable)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dashboard-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx — the entire page hard-codes English user-facing strings and never imports `useTranslation`/`t()` (no react-i18next usage in the file at all). Examples: `Portfolio Dashboard` (:184), `Portfolio ID: ... | As of: ...` (:185-187), `Export Report` (:194), `Calculate Metrics` (:200), `Alerts` (:211), loading text `Loading portfolio dashboard…` (:148), `Loading cash-flow trend…` (:237), `Failed to load cash-flow trend.` (:241), error heading `Failed to load portfolio dashboard` (:156) and `Retry` (:167); the SummaryCards titles `Portfolio Value`/`Total Equity`/`YTD NOI`/`YTD Cash Flow`/`LTV Ratio` and labels `YTD return` are literal English (:96-124). The app is multilingual and sibling features route all copy through `t('...')`; this Epic-144 surface is untranslated end to end.",
+        "Severity LOW (+1): i18n gap, no crash/auth impact, but a shipped page unreadable in non-English locales. Confidence MEDIUM. Fix: wire `useTranslation` and move strings into the ppt-web message catalogs. NET-NEW vs backlog: the generic `code-review-ppt-web-ui-untranslated-strings` row does not enumerate this feature; portfolio-performance was not previously reviewed. Cloud-landable (ppt-web React SPA, frontend.yml CI verifiable)."
+      ]
+    }
+  ]
+}

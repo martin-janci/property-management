@@ -33,6 +33,42 @@ ignore = [
     "RUSTSEC-2026-0099",
     "RUSTSEC-2026-0104",
 
+    # RUSTSEC-2026-0382 (added 2026-10-21, GH #3134) — rustls-webpki "may accept
+    # certificate paths containing distrusted emSign intermediate public keys
+    # when the configured trust anchors allow such paths" (the private keys for
+    # those intermediates are now public). Patched floor: `>= 0.103.16` (or
+    # `>= 0.104.0-alpha.8`). The resolved graph carries TWO rustls-webpki lines;
+    # they are handled differently — exactly like the rustls -0346/-0349 split:
+    #
+    #   * rustls-webpki 0.103.x (the REACHABLE line, via `rustls 0.23.x` ->
+    #     `reqwest` / `quinn` / the 0.23 side of `aws-smithy-http-client`) is
+    #     PATCHED, not suppressed: `cargo update -p rustls-webpki@0.103.15
+    #     --precise 0.103.16` moved it to 0.103.16 in Cargo.lock, which clears
+    #     -0382 there. It is deliberately NOT swept up by this ignore: a future
+    #     in-range downgrade of that line below the 0.103.16 floor trips the
+    #     `[bans]` rustls-webpki guard below (same mechanism as the h2 0.4.16,
+    #     rustls 0.23.46 and zip 9.0.0 pins).
+    #
+    #   * rustls-webpki 0.101.7 is transitively pinned by the AWS SDK family
+    #     (`rustls 0.21.12` <- `aws-smithy-http-client 1.1.13` / `hyper-rustls
+    #     0.24.2`), identical to the -0098/-0099/-0104 ignores above. It cannot
+    #     reach the >= 0.103.16 fix without a major AWS SDK migration onto
+    #     rustls 0.23+, out of scope here. This ignore exists SOLELY to cover
+    #     that un-upgradable 0.101.7 line.
+    #     Reachability on 0.101.7: the advisory requires a certificate PATH that
+    #     chains through a distrusted emSign intermediate AND trust anchors that
+    #     permit the path — i.e. a misissuance scenario on a trusted-CA chain.
+    #     The AWS outbound client only talks to well-behaved AWS endpoints
+    #     (S3/STS/SSO) whose chains do not involve those emSign intermediates;
+    #     we run no server-side webpki verification on this line. The vulnerable
+    #     accept-path behaviour is not exercised. (Same reachability posture as
+    #     the -0098/-0099/-0104 rustls-webpki ignores above.)
+    # Follow-up (GH #3085/#3134): remove once the AWS SDK drops its rustls 0.21 /
+    # hyper 0.14 dependency (smithy on hyper 1.x + rustls 0.23+), which also
+    # clears the rustls-webpki -0098/-0099/-0104, rustls -0346/-0349 and h2 0.3
+    # ignores above.
+    "RUSTSEC-2026-0382",
+
     # RUSTSEC-2023-0071 — "Marvin Attack" timing side-channel in the `rsa` crate
     # (0.9.x, no fixed version published upstream). Pulled in transitively by
     # `jsonwebtoken` 10's `rust_crypto` backend, which bundles RSA algorithm
@@ -99,6 +135,89 @@ ignore = [
     # would in any case carry a different RUSTSEC id and is NOT covered by this
     # ignore.
     "RUSTSEC-2026-0258",
+
+    # RUSTSEC-2026-0346 / -0347 / -0348 / -0349 — four rustls advisories, all
+    # with a patched floor of `>= 0.23.46`. The resolved graph carries TWO
+    # rustls lines; they are handled differently:
+    #
+    #   * rustls 0.23.x (the workspace's own TLS stack, via `reqwest`, `quinn`,
+    #     and the 0.23 side of `aws-smithy-http-client`) is the REACHABLE line.
+    #     It is PATCHED, not suppressed: `cargo update -p rustls --precise
+    #     0.23.46` bumped it to 0.23.46 in Cargo.lock (the primary fix for
+    #     GH #3085), which clears all four advisories there — including
+    #     RUSTSEC-2026-0347 (pre-auth brotli cert-decompression 1 GiB DoS) and
+    #     RUSTSEC-2026-0348 (application data buffered to the outer server after
+    #     ECH rejection), both of which are 0.23.x-only (ECH / brotli-cert
+    #     features that never existed on the 0.21.x line). Those two are
+    #     deliberately NOT on this ignore list, so they stay enforced: a future
+    #     in-range downgrade of the 0.23.x line below the 0.23.46 floor trips
+    #     the `[bans]` guard on rustls below (same mechanism as the h2 0.4.16
+    #     and quick-xml pins).
+    #
+    #   * rustls 0.21.12 is transitively pinned by the AWS SDK family
+    #     (`aws-smithy-http-client 1.1.13` -> `aws-smithy-runtime` ->
+    #     `aws-config` / `aws-sdk-{s3,sso,ssooidc,sts}`, and `hyper-rustls
+    #     0.24.2` -> `tokio-rustls 0.24.1`). It cannot reach the >= 0.23.46 fix
+    #     without a major AWS SDK migration onto rustls 0.23+, exactly like the
+    #     rustls-webpki advisories -0098/-0099/-0104 ignored above
+    #     (GH #2445/#2141/#2009). Only -0346 and -0349 match this line (its
+    #     VersionReq floor sweeps up all pre-0.23.46 releases); -0347/-0348 do
+    #     not fire on it. These two ignores exist SOLELY to cover that
+    #     un-upgradable 0.21.12 line. Reachability on 0.21.12:
+    #       - RUSTSEC-2026-0349 (ServerHello PQ-downgrade): needs the client to
+    #         offer the X25519MLKEM768 hybrid group, which did not exist until
+    #         rustls 0.23.x. 0.21.12 never offers it, so there is no PQ key
+    #         exchange to downgrade — the behaviour is absent on this line.
+    #       - RUSTSEC-2026-0346 (derived `Debug` leaks the TLS 1.2 master secret
+    #         / 1.3 resumption PSK): only affects a CUSTOM `ClientSessionStore`
+    #         that Debug-formats session values; built-in session-cache Debug is
+    #         redacted. The AWS SDK client uses the built-in cache and we add no
+    #         custom session store on the AWS outbound path (S3/STS/SSO), so the
+    #         leaking path is not exercised.
+    # Follow-up (GH #3085): remove both once the AWS SDK drops its rustls 0.21 /
+    # hyper 0.14 dependency (smithy on hyper 1.x + rustls 0.23+), which also
+    # clears the rustls-webpki and h2 0.3 ignores above.
+    "RUSTSEC-2026-0346",
+    "RUSTSEC-2026-0349",
+
+    # RUSTSEC-2026-0367 / -0368 / -0369 — the `zip` crate's extraction advisories,
+    # all with a patched floor of `>= 9.0.0`:
+    #   -0367  insecure preservation of SUID/SGID/sticky bits during extraction
+    #   -0368  `ZipArchive::extract` follows symlink targets outside the dest dir
+    #   -0369  `ZipStreamReader::extract` applies Unix perms through symlinks
+    # (GH #3124.) The resolved graph carries TWO `zip` lines; they are handled
+    # differently:
+    #
+    #   * zip 8.x (the REACHABLE line, pulled by `rust_xlsxwriter` for the
+    #     api-server xlsx export) is PATCHED, not suppressed: `rust_xlsxwriter`
+    #     was bumped 0.97 -> 0.100 in backend/Cargo.toml, whose `zip ^9.0`
+    #     requirement moved this line to zip 9.0.5 in Cargo.lock, clearing all
+    #     three advisories there. It is deliberately NOT swept up by these
+    #     ignores: a future in-range downgrade of that line below the 9.0.0 floor
+    #     trips the `[bans]` zip guard below (same mechanism as the h2 0.4.16 and
+    #     rustls 0.23.46 pins).
+    #
+    #   * zip 3.0.0 is transitively pinned by `utoipa-swagger-ui 9.0.2` as a
+    #     BUILD dependency (`zip ^3.0`), used only by that crate's build script to
+    #     unpack the vendored Swagger-UI dist bundle. It cannot reach the
+    #     >= 9.0.0 fix without a major bump: utoipa-swagger-ui only moves off
+    #     `zip ^3.0` at 10.x, which in turn requires `utoipa ^6.0` — a breaking
+    #     migration off our pinned utoipa 5 OpenAPI stack, out of scope for
+    #     clearing this advisory. These ignores exist SOLELY to cover that
+    #     un-upgradable 3.0.0 line.
+    #     Reachability on 3.0.0: the vulnerable code is `ZipArchive::extract` /
+    #     `ZipStreamReader::extract` on attacker-controlled archives. utoipa's
+    #     build script extracts a FIXED, trusted zip vendored in the crate (not
+    #     untrusted input) at build time only; no runtime path touches it, and we
+    #     ingest no attacker-supplied zip through this line. rust_xlsxwriter (the
+    #     other consumer) only WRITES xlsx, never extracts.
+    # Follow-up (GH #3124): remove both the ignore and the `[bans]` guard once
+    # utoipa-swagger-ui ships a utoipa-5-compatible release on zip >= 9.0.0 (or
+    # the OpenAPI stack migrates to utoipa 6), so the zip 3.0.0 line leaves the
+    # tree entirely.
+    "RUSTSEC-2026-0367",
+    "RUSTSEC-2026-0368",
+    "RUSTSEC-2026-0369",
 ]
 
 [bans]
@@ -118,6 +237,53 @@ deny = [
     # h2 >= 0.4.16 (outside the range, allowed). Lift once the AWS SDK drops its
     # hyper 0.14 / h2 0.3 dependency and the ignore above can be removed.
     { name = "h2", version = ">=0.4.0, <0.4.16", reason = "RUSTSEC-2026-0258 patched-floor guard — h2 on the 0.4.x line must be >= 0.4.16; the advisory ignore is scoped to the un-upgradable 0.3.x line, so an unpatched 0.4.0–0.4.15 must trip cargo-deny rather than be swept up by it (GH #2804/#2798)" },
+
+    # rustls 0.23.x PATCHED-FLOOR GUARD for RUSTSEC-2026-0346/-0347/-0348/-0349
+    # (GH #3085). The workspace's reachable rustls line is bumped to 0.23.46 in
+    # Cargo.lock, which patches all four advisories there. -0346/-0349 stay on
+    # the `[advisories] ignore` list ONLY to cover the AWS-SDK-pinned rustls
+    # 0.21.12 (un-upgradable); -0347/-0348 are 0.23.x-only and are NOT ignored.
+    # Because an ID ignore is global, a future in-range downgrade of the 0.23.x
+    # line (0.23.0–0.23.45, e.g. a bad `cargo update` / Dependabot lockfile
+    # move) would otherwise be silently swept up by the -0346/-0349 ignore. This
+    # ban denies exactly that window, so such a regression trips
+    # `cargo deny check bans` instead. It intentionally does NOT touch
+    # rustls 0.21.x (< 0.23.0, allowed — that is the AWS-pinned line the ignore
+    # covers) or the patched rustls >= 0.23.46 (outside the range, allowed).
+    # Lift once the AWS SDK drops rustls 0.21 and the ignore above is removed.
+    { name = "rustls", version = ">=0.23.0, <0.23.46", reason = "RUSTSEC-2026-0346/-0347/-0348/-0349 patched-floor guard — the reachable rustls 0.23.x line must be >= 0.23.46; the -0346/-0349 advisory ignore is scoped to the un-upgradable AWS-pinned 0.21.x line, so an unpatched 0.23.0–0.23.45 must trip cargo-deny rather than be swept up by it (GH #3085)" },
+
+    # rustls-webpki 0.103.x PATCHED-FLOOR GUARD for RUSTSEC-2026-0382 (GH #3134).
+    # The distrusted-emSign-intermediate advisory is patched in rustls-webpki
+    # 0.103.16. The reachable rustls-webpki line (via rustls 0.23.x / reqwest /
+    # quinn) is bumped to 0.103.16 in Cargo.lock, which clears it there. The
+    # -0382 ignore on the `[advisories]` list exists ONLY to cover the
+    # un-upgradable AWS-SDK-pinned rustls-webpki 0.101.7 (via rustls 0.21.12).
+    # Because an ID ignore is global, a future in-range downgrade of the 0.103.x
+    # line below the 0.103.16 floor (a bad `cargo update` / Dependabot lockfile
+    # move) would otherwise be silently swept up by that ignore. This ban denies
+    # exactly the 0.103.0–0.103.15 window, so such a regression trips
+    # `cargo deny check bans` instead. It intentionally does NOT touch
+    # rustls-webpki 0.101.7 (< 0.103.0 — the AWS-pinned line the ignore covers)
+    # or the patched rustls-webpki >= 0.103.16 (outside the range). Lift together
+    # with the -0382 ignore once the AWS SDK drops rustls 0.21.
+    { name = "rustls-webpki", version = ">=0.103.0, <0.103.16", reason = "RUSTSEC-2026-0382 patched-floor guard — the reachable rustls-webpki 0.103.x line must be >= 0.103.16; the -0382 advisory ignore is scoped to the un-upgradable AWS-pinned 0.101.7 line, so an unpatched 0.103.0–0.103.15 must trip cargo-deny rather than be swept up by it (GH #3134)" },
+
+    # zip PATCHED-FLOOR GUARD for RUSTSEC-2026-0367/-0368/-0369 (GH #3124). The
+    # three zip extraction advisories are patched in zip 9.0.0. The reachable zip
+    # line (via `rust_xlsxwriter`, xlsx export) is bumped to 9.0.5 in Cargo.lock,
+    # which clears them there. The -0367/-0368/-0369 ignores on the `[advisories]`
+    # list exist ONLY to cover the un-upgradable zip 3.0.0 pulled by
+    # `utoipa-swagger-ui 9.0.2`'s build script (pinned `zip ^3.0`). Because an ID
+    # ignore is global, a future in-range downgrade of the rust_xlsxwriter zip
+    # line onto the vulnerable 8.x range (a bad `cargo update` / Dependabot
+    # lockfile move, or a rust_xlsxwriter revert) would otherwise be silently
+    # swept up by those ignores. This ban denies exactly the 4.x–8.x window, so
+    # such a regression trips `cargo deny check bans` instead. It intentionally
+    # does NOT touch zip 3.0.0 (< 4.0.0 — the utoipa-pinned line the ignore
+    # covers) or the patched zip >= 9.0.0 (outside the range). Lift together with
+    # the -0367/-0368/-0369 ignores once utoipa-swagger-ui moves to zip >= 9.0.0.
+    { name = "zip", version = ">=4.0.0, <9.0.0", reason = "RUSTSEC-2026-0367/-0368/-0369 patched-floor guard — the reachable zip line (rust_xlsxwriter) must be >= 9.0.0; the advisory ignore is scoped to the un-upgradable zip 3.0.0 utoipa-swagger-ui build-dep line, so an unpatched zip 4.0.0–8.x must trip cargo-deny rather than be swept up by it (GH #3124)" },
 
     # quick-xml XXE / billion-laughs SECURITY PIN (GH #2084, supersedes the
     # advisory pinned-dependency-guard.yml workflow). The inbound OTA parsers

@@ -126,7 +126,7 @@ pub async fn create_profile(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Json(data): Json<CreateRealtorProfile>,
-) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<ProfileResponse>), (axum::http::StatusCode, String)> {
     let profile = state
         .reality_portal_repo
         .upsert_realtor_profile(principal.user_id, data)
@@ -143,7 +143,10 @@ pub async fn create_profile(
             }
         })?;
 
-    Ok(Json(ProfileResponse { profile }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ProfileResponse { profile }),
+    ))
 }
 
 /// Update realtor profile.
@@ -276,7 +279,7 @@ pub async fn respond_to_inquiry(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<SendInquiryMessage>,
-) -> Result<Json<InquiryMessage>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<InquiryMessage>), (axum::http::StatusCode, String)> {
     let message = state
         .reality_portal_repo
         .respond_to_inquiry(id, principal.user_id, &data.message)
@@ -289,5 +292,5 @@ pub async fn respond_to_inquiry(
             )
         })?;
 
-    Ok(Json(message))
+    Ok((axum::http::StatusCode::CREATED, Json(message)))
 }

@@ -163,13 +163,26 @@
     "emptyText": "Všetky problémy boli vyriešené"
   },
   "news": {
+    "backToList": "‹ Spravy",
     "title": "Spravy",
     "latest": "Najnovsie spravy",
     "readMore": "Citat viac",
     "noNews": "Žiadne správy",
     "loadError": "Nepodarilo sa načítať novinky",
     "emptyTitle": "Nič nové",
-    "emptyText": "Novinky nájdete neskôr."
+    "emptyText": "Novinky nájdete neskôr.",
+    "subtitle": "Novinky z vašej budovy a okolia.",
+    "filters": {
+      "all": "Všetky",
+      "building": "Budova",
+      "district": "Štvrť",
+      "partner": "Partneri"
+    },
+    "categories": {
+      "building": "Budova",
+      "district": "Štvrť",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Hlasovanie",
@@ -433,6 +446,7 @@
     "enterReading": "Zadajte odpocet",
     "readingPlaceholder": "0,00",
     "readingRequired": "Prosim zadajte odpocet",
+    "readingInvalid": "Zadajte platne cislo",
     "photo": "Fotografia (volitelne)",
     "submit": "Odoslat odpocet",
     "submitSuccess": "Odpocet meraca bol uspesne odoslany",
@@ -564,10 +578,40 @@
     "noPayments": "Nie sú naplánované žiadne nadchádzajúce platby.",
     "notFound": "Nájomná zmluva sa nenašla."
   },
+  "personMonths": {
+    "title": "Osobomesiace",
+    "subtitle": "Nahláste, koľko osôb bývalo vo vašej jednotke každý mesiac na účely rozúčtovania nákladov.",
+    "invalidTitle": "Neplatná hodnota",
+    "invalidMessage": "Zadajte celé číslo od 0 do 20.",
+    "bulkEntry": "Hromadné zadanie…",
+    "personCount_one": "{{count}} osoba",
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osoby",
+    "personCount_other": "{{count}} osôb",
+    "status": {
+      "draft": "Koncept",
+      "submitted": "Odoslané",
+      "confirmed": "Potvrdené"
+    }
+  },
   "outages": {
+    "backToList": "‹ Výpadky",
     "loadError": "Nepodarilo sa načítať výpadky",
     "emptyTitle": "Žiadne výpadky",
-    "emptyText": "Momentálne nie je nič naplánované ani aktívne."
+    "emptyText": "Momentálne nie je nič naplánované ani aktívne.",
+    "title": "Výpadky",
+    "subtitle": "Plánované a aktívne prerušenia dodávok.",
+    "filters": {
+      "all": "Všetky",
+      "scheduled": "Plánované",
+      "active": "Aktívne",
+      "resolved": "Vyriešené"
+    },
+    "status": {
+      "scheduled": "Plánované",
+      "in_progress": "Prebieha",
+      "resolved": "Vyriešené"
+    }
   },
   "forms": {
     "loadError": "Nepodarilo sa načítať formuláre",

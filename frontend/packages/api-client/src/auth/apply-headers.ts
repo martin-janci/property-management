@@ -47,6 +47,24 @@ export function bearerAuthorization(): string | undefined {
 }
 
 /**
+ * The single source of truth for the Authorization-only header *object* form of
+ * the shared bearer credential: `{ Authorization: 'Bearer <token>' }`, or an
+ * empty object when no token is registered.
+ *
+ * This is the object-shaped sibling of `bearerAuthorization` for the
+ * spread-into-`HeadersInit` JSON path (`authenticatedFetchJson` in
+ * `../lib/fetch.ts`), which deliberately sends Authorization and NOT
+ * `X-Tenant-ID` (see #3006). It folds the last remaining copy of the
+ * `token ? { Authorization: ... } : {}` wrap into this module, so the
+ * object form is derived in exactly one place and cannot drift from the
+ * credential it wraps.
+ */
+export function bearerAuthHeader(): Record<string, string> {
+  const authorization = bearerAuthorization();
+  return authorization ? { Authorization: authorization } : {};
+}
+
+/**
  * Mutates `headers` in place, setting `Authorization` and `X-Tenant-ID` from the
  * registered providers unless already present.
  */

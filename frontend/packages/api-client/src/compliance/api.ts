@@ -23,7 +23,13 @@ import type {
   TakeModerationActionRequest,
 } from './types';
 
-const API_BASE = '/api/v1/compliance';
+// The AML, DSA, and content-moderation handlers all live on a single router
+// mounted at `/api/v1/aml-dsa` (`routes::aml_dsa::router()` in
+// `backend/servers/api-server/src/routes/aml_dsa/mod.rs`). The
+// `/api/v1/compliance` router (`routes::compliance::router()`) serves only
+// audit-logs / gdpr / security and has NO `/moderation/*` routes, so routing
+// moderation calls there 404'd — see #3149.
+const AML_DSA_BASE = '/api/v1/aml-dsa';
 
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
   // TODO(Phase-1): Add authentication headers to fetchApi
@@ -73,34 +79,34 @@ export async function listModerationCases(params?: {
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
   const queryString = searchParams.toString();
-  return fetchApi(`${API_BASE}/moderation/cases${queryString ? `?${queryString}` : ''}`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function getModerationCase(id: string): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${id}`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${id}`);
 }
 
 export async function getModerationStats(): Promise<ModerationStatsResponse> {
-  return fetchApi(`${API_BASE}/moderation/stats`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/stats`);
 }
 
 export async function getModerationTemplates(): Promise<ModerationTemplatesResponse> {
-  return fetchApi(`${API_BASE}/moderation/templates`);
+  return fetchApi(`${AML_DSA_BASE}/moderation/templates`);
 }
 
 export async function assignModerationCase(caseId: string): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/assign`, { method: 'POST' });
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/assign`, { method: 'POST' });
 }
 
 export async function unassignModerationCase(caseId: string): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/unassign`, { method: 'POST' });
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/unassign`, { method: 'POST' });
 }
 
 export async function takeModerationAction(
   caseId: string,
   request: TakeModerationActionRequest
 ): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/action`, {
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/action`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -110,7 +116,7 @@ export async function decideModerationAppeal(
   caseId: string,
   request: DecideAppealRequest
 ): Promise<{ case_: ModerationCase }> {
-  return fetchApi(`${API_BASE}/moderation/cases/${caseId}/appeal/decide`, {
+  return fetchApi(`${AML_DSA_BASE}/moderation/cases/${caseId}/appeal/decide`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -135,19 +141,19 @@ export async function listAmlAssessments(params?: {
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
   const queryString = searchParams.toString();
-  return fetchApi(`${API_BASE}/aml/assessments${queryString ? `?${queryString}` : ''}`);
+  return fetchApi(`${AML_DSA_BASE}/aml/assessments${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function getAmlThresholds(): Promise<AmlThresholdsResponse> {
-  return fetchApi(`${API_BASE}/aml/thresholds`);
+  return fetchApi(`${AML_DSA_BASE}/aml/thresholds`);
 }
 
 export async function getCountryRisks(): Promise<CountryRisksResponse> {
-  return fetchApi(`${API_BASE}/aml/country-risks`);
+  return fetchApi(`${AML_DSA_BASE}/aml/country-risks`);
 }
 
 export async function initiateEdd(request: InitiateEddRequest): Promise<{ message: string }> {
-  return fetchApi(`${API_BASE}/aml/assessments/${request.assessment_id}/edd`, {
+  return fetchApi(`${AML_DSA_BASE}/aml/assessments/${request.assessment_id}/edd`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -157,7 +163,7 @@ export async function reviewAmlAssessment(
   assessmentId: string,
   request: ReviewAmlAssessmentRequest
 ): Promise<{ message: string }> {
-  return fetchApi(`${API_BASE}/aml/assessments/${assessmentId}/review`, {
+  return fetchApi(`${AML_DSA_BASE}/aml/assessments/${assessmentId}/review`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -178,17 +184,17 @@ export async function listDsaReports(params?: {
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
   const queryString = searchParams.toString();
-  return fetchApi(`${API_BASE}/dsa/reports${queryString ? `?${queryString}` : ''}`);
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function getDsaMetrics(): Promise<DsaMetricsResponse> {
-  return fetchApi(`${API_BASE}/dsa/metrics`);
+  return fetchApi(`${AML_DSA_BASE}/dsa/metrics`);
 }
 
 export async function generateDsaReport(
   request: GenerateDsaReportRequest
 ): Promise<{ report: DsaTransparencyReport }> {
-  return fetchApi(`${API_BASE}/dsa/reports/generate`, {
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports/generate`, {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -197,11 +203,11 @@ export async function generateDsaReport(
 export async function publishDsaReport(
   reportId: string
 ): Promise<{ report: DsaTransparencyReport }> {
-  return fetchApi(`${API_BASE}/dsa/reports/${reportId}/publish`, { method: 'POST' });
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports/${reportId}/publish`, { method: 'POST' });
 }
 
 export async function downloadDsaReportPdf(
   reportId: string
 ): Promise<{ url: string; filename: string }> {
-  return fetchApi(`${API_BASE}/dsa/reports/${reportId}/download`);
+  return fetchApi(`${AML_DSA_BASE}/dsa/reports/${reportId}/download`);
 }

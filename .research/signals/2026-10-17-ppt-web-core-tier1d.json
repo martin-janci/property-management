@@ -1,0 +1,47 @@
+{
+  "generated": "2026-10-17T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: claimable=6 < floor=36; deterministic refills found nothing). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner, file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push performed, and .research/management/assignments.json was not touched — the orchestrator folds .research deltas into its own Phase 6 commit. Segment selection: no Phase-1 churn list handed to this demand-driven invocation, so priority-1 churn-alignment was empty; fell to priority-2 oldest-unreviewed. review_cursor oldest date 2026-10-11 is a tie between api-handlers and reality-web, but BOTH are ineligible this run: api-handlers is saturated (3 open code-review-finding rows status==open in backlog.json) and reality-web was already reviewed earlier TODAY by the sibling Tier-1d run (.research/signals/2026-10-17-reality-web-tier1d.json emitted 3 realtor/[id] findings — re-reviewing it would duplicate and it is now effectively saturated). api-core (cursor 2026-10-12) is also excluded: it has a 2026-10-17 tier1d file AND was the segment of the last two Tier-1d runs. Next oldest-unreviewed is the 2026-10-13 tie (reality-server, ppt-web-core, mobile-native-kmp). Applying the dispatcher directive the sibling run documented (prefer cloud-CI-verifiable frontend web stacks because backend/mobile-native/mobile-rn findings are currently cloud-CI-blocked and cannot be merged), reality-server (backend) and mobile-native-kmp (Kotlin) are deprioritized, leaving ppt-web-core (frontend, cloud-landable) as the selected segment.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (cloud-landable, non-saturated). 2026-10-11 cursor leaders api-handlers (saturated) and reality-web (already reviewed today by sibling run) both ineligible; api-core (cursor 2026-10-12) excluded as last-two-runs + already reviewed today. Among the 2026-10-13 tie, ppt-web-core selected over reality-server (backend, cloud-CI-blocked) and mobile-native-kmp (Kotlin, cloud-CI-blocked) per the dispatcher's cloud-landable-frontend preference. No Phase-1 churn list supplied, so priority-1 churn-alignment did not apply.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts",
+        "frontend/packages/api-client/src/compliance/types.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts:103 — the AML dashboard data transform calls `a.risk_factors.map((f) => ...)` with NO null/undefined guard, while the two sibling array transforms in the same function defensively guard their source with `?? []`: :96 `(assessmentsData?.assessments ?? []).map(...)` and :130 `(countryRisksData?.countries ?? []).map(...)`. The inconsistency means the author knows API collection fields can be absent at runtime, yet the nested per-assessment `risk_factors` array is dereferenced unguarded. The generated client type declares it non-optional (frontend/packages/api-client/src/compliance/types.ts:111 `risk_factors: AmlRiskFactor[];`), so TypeScript will NOT flag a missing-field case — but a real API/proxy response that omits the field or sends `risk_factors: null` for any single assessment throws `TypeError: Cannot read properties of null (reading 'map')`. This transform runs synchronously in the hook body (not inside the TanStack queryFn and not inside any try/catch), so the throw surfaces as a React render crash of the whole AmlDashboardPage, not as a recoverable query `error` state. Severity MEDIUM (+2): crash path on a user-facing compliance screen, triggered by a single malformed row. Confidence MEDIUM: statically certain the guard is missing; not upgraded to high because it depends on the backend actually emitting a null/absent `risk_factors`. Fix: `(a.risk_factors ?? []).map(...)`. NET-NEW vs backlog: existing aml rows (code-review-ppt-web-aml-review-decision-untrusted-cast, code-review-ppt-web-ui-aml-dashboard-prompt-alert-flow, both done) are in AmlDashboardPage.tsx / moderation code, a different file and defect class; nothing covers this hook transform. Cloud-landable (ppt-web React SPA, frontend.yml CI + vitest verifiable)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/hooks/useAmlDashboard.ts:112-117 — the per-assessment transform hard-codes five compliance-critical fields to falsy constants on EVERY assessment regardless of backend state: `id_verified: false`, `source_of_funds_documented: false`, `pep_check_completed: false`, `sanctions_check_completed: false`, `recommendations: []`. The AML risk dashboard therefore always renders every subject as PEP-check-not-completed, sanctions-check-not-completed and ID-not-verified. On a regulated AML/KYC surface this is a data-integrity/accuracy problem: a compliance officer reading the dashboard cannot distinguish 'check genuinely outstanding' from 'UI cannot yet show the result', which can drive wrong remediation decisions or mask completed screening. It is acknowledged as a phased gap by the inline `// TODO(Phase-2): Extend API to include these fields` / `// Phase 1: Default values for missing fields` at :110-111, so it is a known/tracked limitation rather than an accidental bug. Severity LOW (+1): no crash or auth impact, documented, but user-facing inaccurate compliance status. Confidence MEDIUM. Fix path: surface these fields from the AML assessment API (TypeSpec contract + generated client) and map real values, or render them as an explicit 'not available yet' state instead of a definitive `false`. Cloud-landable (ppt-web React SPA, frontend.yml CI verifiable); the API-extension portion is reality-independent on the frontend side but ultimately needs the backend field to carry real data."
+      ]
+    }
+  ]
+}

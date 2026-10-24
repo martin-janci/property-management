@@ -1,0 +1,67 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-14",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven, claimable=6 < floor=36). REVIEW_CURSOR 4-way tie at 2026-10-11 (api-handlers, ppt-web-ui, reality-web, mobile-rn); CHURN_FILES empty. Deterministic tiebreak = segment-map order -> api-handlers first, but SATURATION-SKIP applied (api-handlers has 3 open code-review-finding rows in backlog.json, >= floor 3). Next in map order is ppt-web-ui (0 open code-review-finding rows -> not saturated). Experts: frontend (primary) + completeness (secondary). Static-only: file reads + grep, no compile/test. Scope = frontend/apps/ppt-web/src/pages/ + components/ plus feature-slice pages/components (the operating ppt-web-ui convention used by prior Tier-1d passes). The top-level pages/+components/ (15 files) are exhaustively pre-mined (every candidate -- ConfirmationDialog default-label i18n, ConnectionStatus role=status, Announcer stale-msg, Toast overflow, LanguageSwitcher aria i18n, LoginPage/ErrorBoundary raw-error, AuthCallback decodeURI -- is already a filed finding), so this pass mined the UN-reviewed faults feature slice (UC-03, Epic 4). Each finding below verified net-new against backlog.json + all prior ppt-web-ui signal files (createfault-mock-ai, editfaultpage-no-i18n, aria-label-i18n, signature-modal-raw-err were the only prior faults-adjacent rows; none touch FaultList.tsx or FaultTimeline.tsx).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-faultlist-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui faults)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultList.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultList.tsx — the primary /faults manager listing screen is almost entirely hardcoded English; useTranslation/t() is imported but used ONLY in the error + retry branch (L166 'faults.failedToLoad', L174 'common.retry'). Everything else renders raw English literals regardless of the active sk/cs/de locale.",
+        "Hardcoded strings include: L100 <h1>Faults</h1>; L106 'Report Fault' button; L115 placeholder=\"Search faults...\"; the three filter <select> label maps statusOptions (L34-44: 'All Statuses','New','Triaged','In Progress','Waiting for Parts','Scheduled','Resolved','Closed','Reopened'), priorityOptions (L46-52: 'All Priorities','Urgent','High','Medium','Low'), categoryOptions (L54-66: 'All Categories','Plumbing','Electrical','Heating','Structural','Exterior','Elevator','Common Area','Security','Cleaning','Other'); L189 'No faults found.' empty state; L210-212 'Showing X to Y of Z faults' pagination; L221 'Previous' / L229 'Next'.",
+        "Impact: MEDIUM. The filter option labels are functional controls (status/priority/category) -- non-English managers cannot read the fault filters or primary actions on the main faults list, not just decorative copy. Net-new vs backlog: no prior faults-list finding exists (createfault-mock-ai and editfaultpage-no-i18n cover different files; aria-label-i18n is the aria surface only). Fix (cloud-landable, ppt-web frontend): route all literals through t('faults.*') and move the option maps to locale-keyed label lookups, mirroring the already-localized error branch."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-faulttimeline-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui faults)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx contains ZERO useTranslation()/t() calls (grep count 0) yet renders the fault audit-history timeline (UC-03.5/UC-03.7) with hardcoded English throughout: the actionLabels map L40-54 (13 entries: 'Reported fault','Triaged fault','Assigned fault','Changed status','Changed priority','Added work note','Added comment','Added attachment','Scheduled work','Resolved fault','Confirmed resolution','Reopened fault','Rated resolution'); L82 'No timeline entries.' empty state; L87 <h3>Timeline</h3>; L111 'Internal' visibility badge.",
+        "This is a MISSED file, not an accepted pattern: it is a distinct unlocalized sibling the earlier editfaultpage-no-i18n finding (2026-09-11) did NOT enumerate (that finding listed CreateFaultPage/FaultDetailPage/FaultReportsPage/FaultsPage/FaultForm as localized but never checked FaultTimeline). Non-English managers see the entire fault history action log in English.",
+        "Impact: LOW (i18n gap on a user-facing manager component). Fix: wrap the labels/heading/badge/empty-state in t('faults.timeline.*') keys and add to the sk/cs/de/en bundles."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-faulttimeline-rating-repeat-crash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-10-14 ppt-web-ui faults)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/faults/components/FaultTimeline.tsx:142 renders a star rating via `'⭐'.repeat(Number.parseInt(entry.newValue, 10))` with no bounds check on entry.newValue (a server-supplied string on the 'rated' timeline entry). String.prototype.repeat throws RangeError for any negative count, so a malformed/out-of-range rating value (e.g. '-1') crashes the render of the whole FaultTimeline (and the enclosing FaultDetailPage) with an uncaught RangeError rather than degrading gracefully.",
+        "Non-integer or NaN inputs are harmless (repeat floors / treats NaN as 0), so the crash is specifically the negative-count path; a value above ~2^28 would instead throw on string length. Reachability requires the backend (or a tampered response) to emit a rated entry with an out-of-range newValue, hence confidence MEDIUM / severity MEDIUM (not runtime-reproduced).",
+        "Fix: clamp before repeat, e.g. `'⭐'.repeat(Math.max(0, Math.min(5, Number.parseInt(entry.newValue, 10) || 0)))`, or render N discrete star nodes from a clamped count."
+      ]
+    }
+  ]
+}
