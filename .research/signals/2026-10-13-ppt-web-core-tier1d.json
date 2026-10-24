@@ -1,0 +1,24 @@
+{
+  "generated": "2026-10-13T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claim buffer starved: honest claimable=5 < floor=36; deterministic backlog-refill and retry-remint tiers exhausted with no fresh candidates). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no frontend toolchain). File reading + grep only, DISPATCHER_OWNED_COMMIT=1 (no git add/commit/push in this working tree; orchestrator folds .research deltas into its Phase 6 commit). Segment ppt-web-core selected as the oldest-unreviewed (review_cursor.ppt-web-core = 2026-10-08, strictly older than every other segment: api-handlers/ppt-web-ui/reality-web/mobile-rn = 2026-10-11, api-core = 2026-10-12, reality-server & mobile-native-kmp = 2026-10-13). No fresh Phase-1 churn list was handed to this demand-driven invocation, so priority-1 churn-alignment input was empty and selection fell to priority-2 oldest-unreviewed. Findings verified net-new against all 65 prior ppt-web-core signal files and every code-review-ppt-web-core-* id in backlog.json (133 existing ids enumerated, no collision). NOTE: this segment is heavily mined — the obvious core-infra and route-wrapper issues (AuthContext token/refresh, lib/websocket reconnect+token-rotation, api.ts retry, errorHandler, route auth guards, financial/rentals/person-months query silent-error + false-zeros, i18n toast gaps, perf/websocket console) are ALL already tracked, so only 1 genuinely net-new finding survived verification rather than the 3-finding cap. No duplicates were emitted to pad the count.",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "oldest-unreviewed (review_cursor.ppt-web-core = 2026-10-08, strictly oldest of all 8 segments; no churn files provided for this demand-driven run. NOT saturated by the skill's formal heuristic — 0 open code-review-finding items with segment==ppt-web-core && status==open in backlog.json — so the segment was not skipped; however 133 historical ppt-web-core finding ids already exist, so net-new yield is intentionally low)",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-meters-allmeters-false-empty",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/ppt-web/src/routes/groups/meters.tsx"],
+      "evidence": ["frontend/apps/ppt-web/src/routes/groups/meters.tsx:163-174 — useAllMeters() derives the building fan-out from useBuildings(): `const buildingIds = (buildingsData?.items ?? []).map(b => b.id)`, runs one useQueries entry per building, and returns `isLoading = buildingIds.length > 0 && results.some(r => r.isLoading)`. The `buildingIds.length > 0` guard is the defect. (1) LOADING FLASH: while the parent useBuildings() query is still in flight, buildingsData is undefined, buildingIds is [], useQueries([]) yields [], so isLoading evaluates to `false && ... = false` and meters is []. MetersPageRoute (:177-190) therefore passes meters=[] isLoading=false to <MetersPage>, which renders its 'no meters' empty state for the whole initial-buildings-load window, then flips to a spinner once buildings resolve and the per-building queries start — a reversed/false empty-state flash on every cold load of /meters. (2) MORE SERIOUS — ERROR SWALLOWED AS ZERO: useBuildings() exposes no isError/error here, and on a buildings-fetch failure buildingsData stays undefined forever, so buildingIds stays [], isLoading stays false, meters stays [] permanently. A failed buildings request is thus indistinguishable from a tenant who legitimately has zero meters: the user is shown a settled 'No meters' screen with no loading and no error affordance. Same misleading-empty class as the already-tracked financial-dash-false-zeros finding, but in a distinct file/hook (meters.tsx useAllMeters fan-out) not covered by any existing code-review-ppt-web-core-* id. Fix (frontend-only, cloud-landable): treat the parent-buildings phase as loading/error explicitly — e.g. `const { data: buildingsData, isLoading: isLoadingBuildings, isError: isBuildingsError } = useBuildings();` then `const isLoading = isLoadingBuildings || results.some(r => r.isLoading);` and surface isBuildingsError (plus results.some(r => r.isError)) so the page can show an error state instead of a false empty one; the `buildingIds.length > 0` short-circuit should be dropped. Add a hook test asserting isLoading===true while useBuildings is pending and that a buildings error does not resolve to an empty, done-loading meters list."]
+    }
+  ]
+}

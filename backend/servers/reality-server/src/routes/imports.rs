@@ -149,14 +149,17 @@ pub async fn create_import_job(
     State(state): State<AppState>,
     principal: PortalPrincipal,
     Json(data): Json<CreatePortalImportJob>,
-) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<ImportJobResponse>), (axum::http::StatusCode, String)> {
     let job = state
         .reality_portal_repo
         .create_import_job(principal.user_id, data)
         .await
         .map_err(|e| crate::util::errors::db_error("create import job", e))?;
 
-    Ok(Json(ImportJobResponse { job }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ImportJobResponse { job }),
+    ))
 }
 
 /// Get import job by ID.
@@ -340,7 +343,7 @@ pub async fn create_feed(
     State(state): State<AppState>,
     principal: PortalPrincipal,
     Json(data): Json<CreateFeedSubscription>,
-) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<FeedResponse>), (axum::http::StatusCode, String)> {
     let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
@@ -348,7 +351,7 @@ pub async fn create_feed(
         .await
         .map_err(|e| crate::util::errors::db_error("create feed subscription", e))?;
 
-    Ok(Json(FeedResponse { feed }))
+    Ok((axum::http::StatusCode::CREATED, Json(FeedResponse { feed })))
 }
 
 /// Get feed subscription by ID.

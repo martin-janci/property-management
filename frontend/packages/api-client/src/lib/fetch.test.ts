@@ -312,6 +312,19 @@ describe('authenticatedFetch (raw-Response primitive)', () => {
     expect(String(url)).toBe('https://api.example.test/api/v1/gdpr/privacy');
   });
 
+  // Pins the absolute-URL passthrough branch of `resolveApiUrl`: a caller that
+  // passes a fully-qualified `scheme://` URL must reach that exact origin,
+  // NOT be re-prefixed with the configured client base URL. Previously only
+  // the relative-path join branch was exercised, so a refactor that always
+  // prepended the base URL would have broken absolute-URL callers silently.
+  it('passes an absolute URL through unchanged (not re-prefixed with the base URL)', async () => {
+    client.setConfig({ baseUrl: 'https://api.example.test' });
+    vi.mocked(fetch).mockResolvedValueOnce(mockRawResponse(200));
+    await authenticatedFetch('https://other.example.test/webhook');
+    const [url] = vi.mocked(fetch).mock.calls[0];
+    expect(String(url)).toBe('https://other.example.test/webhook');
+  });
+
   it('retries once on 401 mfa_required when the handler resolves true', async () => {
     const handler = vi.fn().mockResolvedValue(true);
     setMfaChallengeHandler(handler);

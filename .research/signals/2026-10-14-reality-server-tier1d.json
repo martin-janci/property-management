@@ -1,0 +1,39 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-14",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed, saturation+same-day-exhaustion pivot (dispatcher Tier-1d demand-driven, honest_claimable=1 < floor=36). REVIEW_CURSOR 4-way tie at 2026-10-11 (api-handlers, ppt-web-ui, reality-web, mobile-rn); CHURN_FILES not supplied (state.hotspot_history is stale May/Sep). Deterministic tiebreak = segment-map order -> api-handlers first, but SATURATION-SKIP applied (api-handlers has 3 open code-review-finding rows in backlog.json, >= floor 3). Next tie members ppt-web-ui, reality-web, mobile-rn were ALL already reviewed earlier today (2026-10-14-ppt-web-ui-tier1d.json + -b, 2026-10-14-reality-web-tier1d.json, 2026-10-14-mobile-rn-tier1d.json); the ppt-web-ui -a pass explicitly states top-level pages/+components/ are exhaustively pre-mined (every candidate I independently re-derived -- ConfirmationDialog default-label i18n, Toast overflow, LoginPage/AuthCallback raw-error -- is already a filed finding). So pivoted to the next non-saturated, cloud-landable, NOT-reviewed-today segment in map order: reality-server (0 open code-review-finding rows; Rust; cloud-landable). Experts: rust (primary). Static-only: file reads + grep, no compile/test, no git. reality-server is heavily pre-mined (100+ prior finding ids); both findings below verified net-new vs backlog.json + all prior reality-server signal files. The obvious non-test unwrap/expect hits were triaged as SAFE (handlers/inquiries/mod.rs:274 guarded by is_empty() at :269; extractors/auth.rs:63 strip_prefix guaranteed by the find() predicate at :59; state.rs panics are intentional JWT_SECRET boot fail-fast). layout.rs, email.rs transport seam, and the public realtor profile endpoint are clean/intentional.",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-reality-server-realtors-err-string-status",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/realtors.rs:135-143 (create_profile) maps the repo error via `e.to_string().contains(\"already exists\")` -> HTTP 400, else generic 500; and :173-183 (update_profile) maps `error_str.contains(\"not found\")` -> HTTP 404, else 500. Classifying DB/repo failures by substring-matching the error's Display text is fragile: the matched text originates in the sqlx/Postgres driver or repository layer and is not a stable contract. A driver/dependency upgrade, a localized or reworded message, or a different error variant that happens to (or no longer) contains the magic substring silently reclassifies outcomes -- e.g. a genuine transient DB failure that stops containing \"not found\" would surface as a 500 instead of 404, or (worse direction) a real failure whose text incidentally contains the substring would be masked as a benign 400/404 to the client.",
+        "Same stringly-typed anti-pattern also appears in routes/agencies.rs:439 (`error_str.contains(\"permission\") || error_str.contains(\"unauthorized\")` -> FORBIDDEN). Net-new for the realtors/agencies handlers: the only prior error-string-status finding (code-review-reality-server-saved-search-error-string-status) is on a different saved-search handler.",
+        "Fix: map repository results via typed error variants (an enum or sqlx::Error discriminants / a NotFound/Conflict domain error) rather than substring scans of Display output."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-smtp-plaintext-no-warn",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/services/email.rs:179-184 -- SmtpPasswordResetMailer::new, when `settings.use_tls` is false, builds the transport via `AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&settings.host)` and then attaches `.credentials(creds)` (:184). `use_tls` is derived at :152-154 from `SMTP_TLS` (`v != \"false\" && v != \"0\"`, default true). If an operator sets SMTP_TLS=false (or mistypes it to any value parsing as false), the password-reset mailer performs SMTP AUTH over a plaintext connection -- username+password sent in cleartext -- with NO warning emitted (build_password_reset_mailer at :280-303 only logs the happy-path 'SMTP transport configured' info; there is no log distinguishing the TLS vs builder_dangerous branch).",
+        "Impact: LOW (requires explicit operator opt-in) but a real credential-exposure footgun: the cleartext-AUTH path is silent, so a misconfiguration leaks SMTP credentials on the wire with no operational signal. Unlike LogPasswordResetMailer (which deliberately warns in release and gates the token behind debug_assertions), the dangerous SMTP branch has no equivalent guard rail.",
+        "Fix: emit a `tracing::warn!` when the dangerous/non-TLS transport is selected (or refuse to attach credentials to a non-TLS transport in release builds), so plaintext SMTP AUTH can never be used silently."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

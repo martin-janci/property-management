@@ -87,7 +87,7 @@ pub async fn create_agency(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Json(data): Json<CreateRealityAgency>,
-) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<AgencyResponse>), (axum::http::StatusCode, String)> {
     let agency = state
         .reality_portal_repo
         .create_agency(principal.user_id, data)
@@ -104,7 +104,10 @@ pub async fn create_agency(
             }
         })?;
 
-    Ok(Json(AgencyResponse { agency }))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(AgencyResponse { agency }),
+    ))
 }
 
 /// List public (verified) agencies for the directory surface.
@@ -409,7 +412,8 @@ pub async fn create_invitation(
     principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<CreateAgencyInvitation>,
-) -> Result<Json<RealityAgencyInvitation>, (axum::http::StatusCode, String)> {
+) -> Result<(axum::http::StatusCode, Json<RealityAgencyInvitation>), (axum::http::StatusCode, String)>
+{
     // SECURITY (invite-authz): gate on active membership of the target agency
     // via the shared helper — single source of truth for "is this user allowed
     // to mutate this agency's data?". Returns 404 (unknown agency) / 403
@@ -442,7 +446,7 @@ pub async fn create_invitation(
             }
         })?;
 
-    Ok(Json(invitation))
+    Ok((axum::http::StatusCode::CREATED, Json(invitation)))
 }
 
 /// Accept invitation request.
