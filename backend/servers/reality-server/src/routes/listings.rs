@@ -703,6 +703,11 @@ async fn fetch_top_listings(
         RICH_LISTING_SELECT
     );
 
+    // SAFETY (sqlx::AssertSqlSafe): `sql` is built by `format!` from two static
+    // string literals only — the `RICH_LISTING_SELECT` const and the fixed
+    // WHERE/ORDER/LIMIT suffix. No request input is interpolated into the query
+    // text; `transaction_type` and `limit` are passed as bound parameters
+    // ($1/$2). Opting out of the SQL-injection guard here is sound.
     let rows = sqlx::query_as::<_, RichListingRow>(sqlx::AssertSqlSafe(sql))
         .bind(transaction_type)
         .bind(limit)

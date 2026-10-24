@@ -37,6 +37,7 @@ let groupResult: { data: CommunityGroup | undefined; isLoading: boolean; error: 
 let membersResult: { data: GroupMember[] } = { data: [] };
 const joinMutate = vi.fn();
 const leaveMutate = vi.fn();
+const deleteMutate = vi.fn();
 const showToastMock = vi.fn();
 
 vi.mock('@ppt/api-client', () => ({
@@ -44,6 +45,7 @@ vi.mock('@ppt/api-client', () => ({
   useGroupMembers: () => membersResult,
   useJoinGroup: () => ({ mutate: joinMutate, isPending: false }),
   useLeaveGroup: () => ({ mutate: leaveMutate, isPending: false }),
+  useDeleteGroup: () => ({ mutate: deleteMutate, isPending: false }),
 }));
 
 const navigateMock = vi.fn();
@@ -84,6 +86,7 @@ vi.mock('../lazyRoutes', () => ({
     isOwner?: boolean;
     onJoin: () => void;
     onLeave: () => void;
+    onDelete: () => void;
   }) => (
     <div>
       <h1>{props.group.name}</h1>
@@ -95,6 +98,9 @@ vi.mock('../lazyRoutes', () => ({
       </button>
       <button type="button" onClick={props.onLeave}>
         leave
+      </button>
+      <button type="button" onClick={props.onDelete}>
+        delete
       </button>
     </div>
   ),
@@ -143,8 +149,12 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
   beforeEach(() => {
     joinMutate.mockReset();
     leaveMutate.mockReset();
+    deleteMutate.mockReset();
     showToastMock.mockClear();
     navigateMock.mockClear();
+    // Default: the delete confirmation dialog is accepted. Individual tests
+    // override this to exercise the cancel path. jsdom has no real confirm().
+    window.confirm = vi.fn(() => true);
     groupResult = { data: undefined, isLoading: false, error: null };
     membersResult = { data: [] };
   });
@@ -303,5 +313,70 @@ describe('GroupDetailPageInner — route wiring (Story 42.1)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'common.back' }));
     expect(navigateMock).toHaveBeenCalledWith('/community/groups');
+  });
+
+  // Regression (code-review-ppt-web-core-group-delete-stub): the Delete action
+  // used to just `navigate('/community/groups')` WITHOUT ever calling the
+  // delete API — a data-coherence lie (the list looked unchanged / the group
+  // still existed). The container must now call useDeleteGroup().mutate with
+  // the route groupId, behind a confirm, and only navigate on success.
+  it('wires Delete to useDeleteGroup().mutate with the route groupId (after confirm)', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [makeMember({ role: 'owner' })] };
+    window.confirm = vi.fn(() => true);
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'delete' }));
+
+    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(deleteMutate).toHaveBeenCalledTimes(1);
+    expect(deleteMutate.mock.calls[0]?.[0]).toBe('grp-1');
+  });
+
+  it('does NOT call the delete API when the confirm dialog is cancelled', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [makeMember({ role: 'owner' })] };
+    window.confirm = vi.fn(() => false);
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'delete' }));
+
+    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(deleteMutate).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a success toast and navigates to the list when delete succeeds', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [makeMember({ role: 'owner' })] };
+    deleteMutate.mockImplementation((_id: string, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.()
+    );
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'delete' }));
+
+    expect(showToastMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+    expect(navigateMock).toHaveBeenCalledWith('/community/groups');
+  });
+
+  it('surfaces an error toast and stays on the page when delete fails (403/409/5xx)', async () => {
+    groupResult = { data: makeGroup(), isLoading: false, error: null };
+    membersResult = { data: [makeMember({ role: 'owner' })] };
+    deleteMutate.mockImplementation((_id: string, opts?: { onError?: (e: unknown) => void }) =>
+      opts?.onError?.(new Error('You are not allowed to delete this group'))
+    );
+    render(<GroupDetailPageInner groupId="grp-1" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'delete' }));
+
+    expect(showToastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        message: 'You are not allowed to delete this group',
+      })
+    );
+    // A failed delete must not fabricate success by navigating away.
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 });

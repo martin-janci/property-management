@@ -303,6 +303,26 @@ fn is_forbidden_ip(ip: IpAddr) -> Result<(), String> {
             if let Some(v4) = v6.to_ipv4_mapped() {
                 return check_ipv4(v4);
             }
+            // IPv4-compatible IPv6 (the deprecated `::a.b.c.d` ::/96 embedding,
+            // e.g. `::127.0.0.1` or `::169.254.169.254`). `to_ipv4()` covers both
+            // the mapped and compatible ranges; the mapped case already returned
+            // above, so a `Some` here is a compatible-range address. Skip `::`
+            // and `::1`, which keep their dedicated unspecified/loopback checks
+            // below so their rejection reasons stay accurate.
+            if let Some(v4) = v6.to_ipv4() {
+                if !v6.is_unspecified() && !v6.is_loopback() {
+                    return check_ipv4(v4);
+                }
+            }
+            // Other well-known IPv4-in-IPv6 embeddings `to_ipv4()` does NOT cover
+            // (they live outside `::/96`): the NAT64 well-known prefix and the
+            // SIIT/IPv4-translated prefix. Both carry the embedded IPv4 in the low
+            // 32 bits, so range-check that through the same `check_ipv4` path (#3084,
+            // RFC 6052). Keeping this as a single `embedded_ipv4` helper means the
+            // next embedding variant is a one-line addition, not a reopened hole.
+            if let Some(v4) = embedded_ipv4(&v6) {
+                return check_ipv4(v4);
+            }
             let segs = v6.segments();
             if (segs[0] & 0xfe00) == 0xfc00 {
                 return Err("fc00::/7 (IPv6 unique-local)".into());
@@ -321,6 +341,58 @@ fn is_forbidden_ip(ip: IpAddr) -> Result<(), String> {
             }
             Ok(())
         }
+    }
+}
+
+/// Extracts the IPv4 address embedded in the low 32 bits of an IPv6 address for
+/// the well-known IPv4-in-IPv6 embedding prefixes that `Ipv6Addr::to_ipv4` does
+/// NOT already canonicalise (everything outside `::/96`):
+///
+/// * **NAT64 well-known prefix `64:ff9b::/96`** (RFC 6052) — on an IPv6-only /
+///   NAT64 host `64:ff9b::169.254.169.254` translates to the cloud-metadata IP.
+/// * **NAT64 RFC 8215 local-use prefix `64:ff9b:1::/48`** — the `/96`-on-local-use
+///   form (`64:ff9b:1:0:0:0:a.b.c.d`) embeds the IPv4 in the low 32 bits exactly
+///   like the well-known prefix, so `64:ff9b:1::169.254.169.254` is the same
+///   cloud-metadata SSRF target on a host configured with the local-use prefix (#3099).
+/// * **SIIT / IPv4-translated `::ffff:0:0/96`** (RFC 6052 §2.2) — e.g.
+///   `::ffff:0:127.0.0.1` reaches loopback.
+///
+/// Returns `None` for anything else, leaving the `to_ipv4_mapped()` /
+/// `to_ipv4()` branches and the fc00/fe80/ff00 masks to handle their own ranges.
+/// Centralising the extraction here (rather than special-casing each prefix
+/// inline) keeps future embedding variants a one-line addition.
+fn embedded_ipv4(v6: &std::net::Ipv6Addr) -> Option<std::net::Ipv4Addr> {
+    let segs = v6.segments();
+    let is_nat64_well_known = segs[0] == 0x0064
+        && segs[1] == 0xff9b
+        && segs[2] == 0
+        && segs[3] == 0
+        && segs[4] == 0
+        && segs[5] == 0;
+    // RFC 8215 local-use NAT64 prefix `64:ff9b:1::/48`, `/96`-on-local-use form
+    // (`64:ff9b:1:0:0:0:a.b.c.d`): same low-32-bit embedding as the well-known
+    // prefix above, differing only in `segs[2] == 0x0001` (#3099).
+    let is_nat64_local_use = segs[0] == 0x0064
+        && segs[1] == 0xff9b
+        && segs[2] == 0x0001
+        && segs[3] == 0
+        && segs[4] == 0
+        && segs[5] == 0;
+    let is_siit_translated = segs[0] == 0
+        && segs[1] == 0
+        && segs[2] == 0
+        && segs[3] == 0
+        && segs[4] == 0xffff
+        && segs[5] == 0;
+    if is_nat64_well_known || is_nat64_local_use || is_siit_translated {
+        Some(std::net::Ipv4Addr::new(
+            (segs[6] >> 8) as u8,
+            segs[6] as u8,
+            (segs[7] >> 8) as u8,
+            segs[7] as u8,
+        ))
+    } else {
+        None
     }
 }
 
@@ -488,6 +560,87 @@ mod tests {
     fn rejects_ipv4_mapped_ipv6_private() {
         assert!(matches!(
             validate_external_url("https://[::ffff:10.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3079): IPv4-*compatible* IPv6 (the deprecated `::a.b.c.d`
+    /// `::/96` embedding, distinct from the `::ffff:a.b.c.d` *mapped* form) must
+    /// also be unmapped and range-checked. `::127.0.0.1` is the IPv6 literal
+    /// `::7f00:1` — `to_ipv4_mapped()` returns `None`, `segs[0]` is 0 so the
+    /// fc00/fe80/ff00 masks miss, and `is_loopback()`/`is_unspecified()` only
+    /// match `::1`/`::`, so before the fix it fell through to `Ok` and this
+    /// loopback address passed the static SSRF check.
+    #[test]
+    fn rejects_ipv4_compatible_ipv6_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[::127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3079): the cloud-metadata IP embedded as an IPv4-compatible
+    /// IPv6 address (`::169.254.169.254`) must be rejected for the same reason
+    /// as the loopback case above — it is the highest-value SSRF target.
+    #[test]
+    fn rejects_ipv4_compatible_ipv6_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[::169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3084): NAT64 well-known prefix `64:ff9b::/96` (RFC 6052).
+    /// `64:ff9b::169.254.169.254` (`64:ff9b::a9fe:a9fe`) embeds the cloud-metadata
+    /// IP in its low 32 bits. `to_ipv4_mapped()` / `to_ipv4()` both return `None`
+    /// (it is not in `::/96`), and `segs[0]` is `0x0064` so the fc00/fe80/ff00
+    /// masks miss — before the fix this highest-value SSRF target reached `Ok`
+    /// and translated to `169.254.169.254` on an IPv6-only / NAT64 host.
+    #[test]
+    fn rejects_nat64_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b::169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3099): NAT64 RFC 8215 local-use prefix `64:ff9b:1::/48`.
+    /// The `/96`-on-local-use form `64:ff9b:1:0:0:0:169.254.169.254`
+    /// (`64:ff9b:1::a9fe:a9fe`) embeds the cloud-metadata IP in its low 32 bits.
+    /// Like the well-known prefix it is neither IPv4-mapped nor IPv4-compatible
+    /// (`to_ipv4_mapped()` / `to_ipv4()` both return `None`) and `segs[0]` is
+    /// `0x0064` so the fc00/fe80/ff00 masks miss — before the fix this reached
+    /// `Ok` and translated to `169.254.169.254` on a host configured with the
+    /// RFC 8215 local-use NAT64 prefix.
+    #[test]
+    fn rejects_nat64_local_use_metadata() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b:1:0:0:0:169.254.169.254]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3099): loopback via the same RFC 8215 local-use prefix —
+    /// `64:ff9b:1:0:0:0:127.0.0.1` (`64:ff9b:1::7f00:1`) must be rejected for
+    /// the same reason as the metadata case above.
+    #[test]
+    fn rejects_nat64_local_use_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[64:ff9b:1:0:0:0:127.0.0.1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    /// Regression (#3084): SIIT / IPv4-translated `::ffff:0:a.b.c.d`
+    /// (`::ffff:0:0/96`, RFC 6052 §2.2). `::ffff:0:127.0.0.1` (`::ffff:0:7f00:1`)
+    /// places `0xffff` in `segs[4]` (not `segs[5]`), so it is neither IPv4-mapped
+    /// nor IPv4-compatible — `to_ipv4_mapped()` and `to_ipv4()` both return `None`
+    /// — and `segs[0]` is 0 so the masks miss. Before the fix this loopback form
+    /// fell through to `Ok`.
+    #[test]
+    fn rejects_siit_translated_loopback() {
+        assert!(matches!(
+            validate_external_url("https://[::ffff:0:127.0.0.1]/"),
             Err(UrlValidationError::PrivateOrReservedIp(_))
         ));
     }

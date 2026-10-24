@@ -163,13 +163,26 @@
     "emptyText": "Všechny problémy byly vyřešeny"
   },
   "news": {
+    "backToList": "‹ Zpravy",
     "title": "Zpravy",
     "latest": "Nejnovejsi zpravy",
     "readMore": "Cist vice",
     "noNews": "Žádné zprávy",
     "loadError": "Nepodařilo se načíst novinky",
     "emptyTitle": "Nic nového",
-    "emptyText": "Novinky najdete později."
+    "emptyText": "Novinky najdete později.",
+    "subtitle": "Novinky z vaší budovy a okolí.",
+    "filters": {
+      "all": "Všechny",
+      "building": "Budova",
+      "district": "Čtvrť",
+      "partner": "Partneři"
+    },
+    "categories": {
+      "building": "Budova",
+      "district": "Čtvrť",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Hlasovani",
@@ -433,6 +446,7 @@
     "enterReading": "Zadejte odecet",
     "readingPlaceholder": "0,00",
     "readingRequired": "Prosim zadejte odecet",
+    "readingInvalid": "Zadejte platne cislo",
     "photo": "Fotografie (volitelne)",
     "submit": "Odeslat odecet",
     "submitSuccess": "Odecet merice byl uspesne odeslan",
@@ -564,10 +578,40 @@
     "noPayments": "Nejsou naplánovány žádné nadcházející platby.",
     "notFound": "Nájemní smlouva nebyla nalezena."
   },
+  "personMonths": {
+    "title": "Osoboměsíce",
+    "subtitle": "Nahlaste, kolik osob bydlelo ve vaší jednotce každý měsíc pro účely rozúčtování nákladů.",
+    "invalidTitle": "Neplatná hodnota",
+    "invalidMessage": "Zadejte celé číslo od 0 do 20.",
+    "bulkEntry": "Hromadné zadání…",
+    "personCount_one": "{{count}} osoba",
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osoby",
+    "personCount_other": "{{count}} osob",
+    "status": {
+      "draft": "Koncept",
+      "submitted": "Odesláno",
+      "confirmed": "Potvrzeno"
+    }
+  },
   "outages": {
+    "backToList": "‹ Výpadky",
     "loadError": "Nepodařilo se načíst výpadky",
     "emptyTitle": "Žádné výpadky",
-    "emptyText": "Momentálně není nic naplánováno ani aktivní."
+    "emptyText": "Momentálně není nic naplánováno ani aktivní.",
+    "title": "Výpadky",
+    "subtitle": "Plánovaná a aktivní přerušení dodávek.",
+    "filters": {
+      "all": "Všechny",
+      "scheduled": "Naplánované",
+      "active": "Aktivní",
+      "resolved": "Vyřešené"
+    },
+    "status": {
+      "scheduled": "Naplánované",
+      "in_progress": "Probíhá",
+      "resolved": "Vyřešené"
+    }
   },
   "forms": {
     "loadError": "Nepodařilo se načíst formuláře",

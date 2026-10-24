@@ -1,36 +1,48 @@
 {
   "generated": "2026-10-12T00:00:00Z",
-  "source_run": "dispatcher Tier-1d buffer-starvation demand-driven vector generator (claimable=7 < floor=36). Static single-segment rotating code review via ppt-dev-review skill, no compilation / no test execution (cloud runner has no Rust toolchain: api-server/reality-server build blocked by utoipa-swagger-ui egress #2966). File reading + grep only. CHURN_FILES empty this run (no Phase 1 churn list; hotspot_history entries in state.json are stale May/Sep dates, not treated as churn).",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=5 < floor=36; deterministic refill tiers found no fresh candidates). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Produces fresh CLOUD-LANDABLE backend backlog vectors for the reality-server segment. Segment preferred over the co-oldest mobile-native-kmp because KMP work is structurally unlandable in the cloud runner. Findings verified net-new against prior reality-server signal files and backlog code-review-finding items.",
   "segment_reviewed": "reality-server",
-  "selection_reason": "oldest-unreviewed. After api-core was reviewed earlier today (cursor advanced 2026-10-03 -> 2026-10-12), reality-server and mobile-native-kmp remain tied at review_cursor 2026-10-03 (the oldest). Neither is saturated (0 open code-review-findings each; only api-handlers is saturated at 3 open). Tie broken by segment-map order -> reality-server (backend/servers/reality-server/src/), which precedes mobile-native-kmp in the skill's segment table.",
-  "experts_used": [
-    "rust"
-  ],
-  "findings_count": 1,
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-server = 2026-10-03, tied-oldest with mobile-native-kmp; reality-server chosen as the cloud-verifiable Rust segment per dispatcher preference. No churn files provided for this segment; no saturation — 0 open code-review-finding items in backlog.json for reality-server)",
+  "experts_used": ["rust"],
+  "findings_count": 3,
   "static_only": true,
-  "cloud_landable": false,
-  "cloud_landable_note": "reality-server fix requires cargo compile/test which the cloud runner cannot do (utoipa-swagger-ui egress block #2966). Static review itself needs no toolchain; landing a fix does.",
+  "cloud_landable": true,
   "signals": [
     {
-      "id": "code-review-reality-server-sso-raw-error-leak",
+      "id": "code-review-reality-server-branding-coalesce-no-clear",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "reality-server",
       "score_delta": 2,
-      "confidence": "high",
+      "confidence": "medium",
       "candidate_vector": "bug",
       "expert": "rust",
-      "files": [
-        "backend/servers/reality-server/src/routes/sso.rs",
-        "backend/servers/reality-server/src/util/errors.rs"
-      ],
-      "evidence": [
-        "SECURITY CONTRACT reality-server already codifies: backend/servers/reality-server/src/util/errors.rs:1-32 documents that reality-server is internet-facing and raw sqlx::Error / anyhow::Error strings 'can leak column names, constraint names, sometimes pool / TLS state -- none of which a portal client should ever see.' The db_error(ctx, e) helper logs the full error server-side and returns a FIXED generic (500, \"Internal server error\") to the caller; this is enforced by tests at util/errors.rs:42-91 (db_error_body_leaks_no_source_detail asserts constraint/column/host=/dbname=/sslmode tokens never reach the client body). Other route files honor the contract: favorites.rs:154 & :200 and inquiries.rs:173 funnel DB errors through db_error(); users.rs password-reset (users.rs:503-529 request, :577-583 confirm) deliberately returns generic, enumeration-safe messages and logs only email_log_hash.",
-        "VIOLATION: backend/servers/reality-server/src/routes/sso.rs bypasses that contract at ~16 client-facing sites by serializing the raw error into the JSON body via SsoError::new(code, &e.to_string()): lines 303, 313, 325, 337 (SSO OAuth callback/exchange), 460, 477, 489 (POST /api/v1/sso/mobile/token -> create_mobile_sso_token), 541, 553, 565 (POST /api/v1/sso/mobile/validate -> validate_mobile_sso_token), and 976, 994, 1029, 1042, 1150, 1185, 1202, 1213, 1229, 1240 (token exchange & session-sync). These are all public/unauthenticated POST handlers, so the leak is reachable by any caller.",
-        "The 'user_create_failed' arms (sso.rs:325, 553, 1029, 1202, 1229) wrap state.user_service.upsert_sso_user(&user_info) and the 'session_create_failed' arms (sso.rs:337, 565, 1042, 1213, 1240) wrap the DB-backed session_service.create_session(...). Both are the exact DB-backed calls whose sqlx errors (unique-constraint names like realtor/user keys, column names, and on a connection failure host=/dbname=/sslmode) util/errors.rs exists to scrub -- here they are returned verbatim to an unauthenticated SSO client instead of through db_error().",
-        "The 'invalid_token' / 'token_exchange_failed' arms (sso.rs:303, 460, 976, 1150) embed the upstream PM OAuth introspection failure string, which introspect_pm_token_inner builds at sso.rs:835-837 as format!(\"Token introspection failed ({status}): {error_text}\") where error_text = response.text() of the PM introspection endpoint (sso.rs:829). This discloses the internal PM introspection endpoint's HTTP status and raw response body to the external portal/mobile client.",
-        "FIX: route every SSO error branch through crate::util::errors (log full detail server-side, return a fixed generic client message), or give SsoError the same log-full / return-generic discipline, keeping only explicitly-authored safe strings (e.g. 'invalid or expired token') in the client body. Backend fix is not cloud-landable until the reality-server build block (#2966) is lifted."
-      ]
+      "files": ["backend/servers/reality-server/src/routes/agency_branding.rs"],
+      "evidence": ["backend/servers/reality-server/src/routes/agency_branding.rs:300-325 — update_branding (PUT /api/v1/agencies/{id}/branding) upserts every field with `COALESCE(EXCLUDED.<col>, agency_branding.<col>)` (logo_url, banner_url, primary_color, secondary_color, watermark_style, watermark_opacity, watermark_position, watermark_url). All request fields are `Option<_>` (UpdateBrandingRequest, :126-137), so a JSON `null` for a field binds SQL NULL and COALESCE keeps the PREVIOUS value — meaning there is NO way to CLEAR a previously-set branding element (e.g. remove an agency logo) through this endpoint by sending null. The only value that clears is an empty string `\"\"`, which binds a non-NULL '' that COALESCE writes verbatim — but empty strings are silently skipped by check_optional_url_field (:46 `if !s.is_empty() && ...`), so '' is never rejected yet also never documented as the clear sentinel. Net: clear semantics are inconsistent (null = no-op, '' = clear-to-empty-string) and a UI that sends null to remove a logo finds the old logo sticks. Fix (backend-only, cloud-landable): either (a) treat an explicitly-present null as a clear by binding the column unconditionally with a tri-state wrapper, or (b) document '' as the clear sentinel and normalize null->'' for clearable fields. Add a unit/integration test that sets then clears logo_url and asserts the row goes NULL/empty."]
+    },
+    {
+      "id": "code-review-reality-server-url-validator-triplicated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/agency_branding.rs", "backend/servers/reality-server/src/routes/reports.rs", "backend/servers/reality-server/src/routes/users.rs", "backend/servers/reality-server/src/util/url_validator.rs"],
+      "evidence": ["Three near-identical private copies of `fn validate_image_or_link_url` exist — agency_branding.rs:28, reports.rs:38, users.rs:28 — each with its own duplicated MAX_URL_LEN/MAX_PROFILE_URL_LEN = 2048 const and each carrying the SAME stale comment 'Inlined locally ... swap for a shared url_validator module once it lands on main.' That shared module HAS already landed: backend/servers/reality-server/src/util/url_validator.rs (exports validate_fetch_url + full SSRF/scheme policy) and is actively used by routes/agency_imports.rs:7,238,290. The three inline copies also DIVERGE from the shared validator: they accept `http://` in production (the shared url_validator rejects plain http outside RUST_ENV=development, PlainHttpNotAllowed) and perform no private/reserved-IP check. Because these three validators gate strings that are rendered in `<img src=>` / `<a href=>` on the frontend (stored-XSS guard), any future hardening of the scheme/length policy must be remembered in three places. Fix (backend-only, cloud-landable): extract one shared `validate_display_url` helper (scheme allowlist + max-len, no SSRF/IP policy needed for render-only URLs) into util/url_validator.rs, replace the three inline copies and the duplicated consts, and delete the now-stale TODO comments. No behavior change for callers beyond optionally aligning the prod-http policy."]
+    },
+    {
+      "id": "code-review-reality-server-branding-color-no-validation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": ["backend/servers/reality-server/src/routes/agency_branding.rs"],
+      "evidence": ["backend/servers/reality-server/src/routes/agency_branding.rs:252-254 + :322-325 — update_branding carefully validates the three URL fields (check_optional_url_field for logo_url/banner_url/watermark_url, H7 stored-XSS guard) but binds `primary_color` and `secondary_color` straight into the INSERT (:325 `.bind(&data.primary_color).bind(&data.secondary_color)`) with NO format or length validation. These values are served back via GET branding and consumed by reality-web, which applies them as CSS on `<html>` (app/[locale]/layout.tsx:168,187 brandingToStyleObject; also brandingToStyleString). The ONLY thing preventing CSS/attribute injection today is reality-web's client-side `sanitizeCssValue()` (frontend/apps/reality-web/src/lib/tenant-config.ts) — a single front-end guard. This is a defense-in-depth asymmetry: an agency member can persist arbitrary strings in these columns, and any OTHER consumer of agency_branding that does not replicate sanitizeCssValue (mobile-native Reality app, server-rendered PDF/email branding, a future export) would render attacker-controlled CSS. Fix (backend-only, cloud-landable): validate primary_color/secondary_color against a strict pattern (e.g. `#` + 3/6/8 hex, or a small named-color/`rgb()/hsl()` allowlist) with a max length, rejecting on mismatch with 400, mirroring the URL-field hardening already in the same handler. Low severity, defense-in-depth + consistency."]
     }
   ]
 }

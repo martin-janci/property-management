@@ -4,7 +4,13 @@
  * Owns the community route-wrapper components and the `<Route>` table fragment.
  * Extracted from App.tsx to isolate community work.
  */
-import { useGroup, useGroupMembers, useJoinGroup, useLeaveGroup } from '@ppt/api-client';
+import {
+  useDeleteGroup,
+  useGroup,
+  useGroupMembers,
+  useJoinGroup,
+  useLeaveGroup,
+} from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { Spinner, useToast } from '../../components';
@@ -99,6 +105,7 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
   const { data: members = [] } = useGroupMembers(groupId);
   const joinGroup = useJoinGroup();
   const leaveGroup = useLeaveGroup();
+  const deleteGroup = useDeleteGroup();
 
   if (isLoading) {
     return (
@@ -172,6 +179,40 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
     });
   };
 
+  // Deleting a group is destructive and cascades (members, posts). Confirm
+  // first, then call the real delete mutation. Only navigate away on success —
+  // on failure, surface the error and keep the user on the page (the previous
+  // handler navigated unconditionally without ever calling the API, which lied
+  // about the outcome).
+  const handleDelete = () => {
+    const confirmed = window.confirm(
+      t('community.deleteGroupConfirm', {
+        defaultValue: 'Delete this group? This action cannot be undone.',
+      })
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    deleteGroup.mutate(groupId, {
+      onSuccess: () => {
+        showToast({
+          type: 'success',
+          title: t('common.success'),
+          message: t('community.groupDeleted', { defaultValue: 'Group deleted.' }),
+        });
+        navigate('/community/groups');
+      },
+      onError: (err) => {
+        showToast({
+          type: 'error',
+          title: t('community.deleteFailed', { defaultValue: 'Could not delete the group' }),
+          message: getErrorMessage(err),
+        });
+      },
+    });
+  };
+
   return (
     <GroupDetailPage
       group={group}
@@ -186,7 +227,7 @@ export function GroupDetailPageInner({ groupId }: { groupId: string }) {
       onJoin={handleJoin}
       onLeave={handleLeave}
       onEdit={() => {}}
-      onDelete={() => navigate('/community/groups')}
+      onDelete={handleDelete}
       onNavigateToSettings={() => {}}
       onPromoteMember={() => {}}
       onRemoveMember={() => {}}

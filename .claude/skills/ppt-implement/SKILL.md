@@ -178,7 +178,10 @@ docs-only diffs. There is no judgment call and no skipping. Guardrails:
 [`.claude/skills/_verify-rules.md`](../_verify-rules.md) — notably: no
 `cargo build`/`--release` locally, no `cargo check` (clippy is the type
 gate), don't re-run an unchanged failing command, flock serializes cargo
-across agents on the host.
+across agents on the host. When the dispatcher spawns you, the worktree
+preamble exports `CARGO_TARGET_DIR=/tmp/ppt-cargo-target` so parallel Rust
+builds share one target instead of each filling a ~24 GB `target/` and
+running the host out of disk mid-verify (issue #3073) — leave it set.
 
 CI-parity ("Band C") extras apply ONLY when the task explicitly flags
 hot-path (security, billing, auth, data integrity): in that case, after
