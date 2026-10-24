@@ -690,7 +690,7 @@ async fn upload_import_file(
     let mut template_id: Option<Uuid> = None;
     let mut filename: Option<String> = None;
     let mut file_size: i64 = 0;
-    let mut _file_data: Vec<u8> = Vec::new();
+    let mut file_data: Vec<u8> = Vec::new();
 
     while let Some(field) = multipart
         .next_field()
@@ -717,7 +717,7 @@ async fn upload_import_file(
                     .await
                     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
                 file_size = data.len() as i64;
-                _file_data = data.to_vec();
+                file_data = data.to_vec();
             }
             _ => {}
         }
@@ -754,7 +754,37 @@ async fn upload_import_file(
         return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
     }
 
-    let file_path = format!("imports/{}/{}", org_id, Uuid::new_v4());
+    // Persist the uploaded bytes to object storage BEFORE creating the
+    // import_job row. A prior stub read the multipart body into a discarded
+    // buffer and fabricated a `file_path` that pointed at nothing, so every
+    // upload silently lost its data and the downstream validate/approve flow
+    // operated on a key that never existed. Fail closed: if storage is not
+    // configured, do not create a job row that would dangle (503).
+    let storage = state.storage_service.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Storage service is not configured; import upload is unavailable".to_string(),
+    ))?;
+
+    let storage_key = format!("imports/{}/{}", org_id, Uuid::new_v4());
+    let content_type = integrations::get_content_type(&filename);
+    let file_path = storage
+        .upload(&storage_key, file_data, content_type)
+        .await
+        .map_err(|e| {
+            let msg = e.to_string();
+            // An unsupported MIME type is a client error; anything else is a
+            // transient storage failure.
+            if msg.to_lowercase().contains("content type") {
+                (StatusCode::BAD_REQUEST, msg)
+            } else {
+                tracing::error!(error = %e, "Failed to upload import file to storage");
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Failed to store uploaded file. Please try again later.".to_string(),
+                )
+            }
+        })?;
+
     let default_options = serde_json::json!({
         "skip_errors": false,
         "update_existing": true,
@@ -1257,45 +1287,26 @@ async fn get_export_status(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .ok_or((StatusCode::NOT_FOUND, "Export not found".to_string()))?;
+    rls.release().await;
 
     if export.organization_id != org_id {
         return Err((StatusCode::FORBIDDEN, "Access denied".to_string()));
     }
 
-    let mut current_status = export.status;
-    let mut file_size_bytes = export.file_size_bytes;
-
-    // Auto-transition to Ready in mock setup
-    if current_status == MigrationExportStatus::Pending {
-        let path = format!("https://storage.example.com/exports/{}.zip", export_id);
-        let updated = state
-            .migration_repo
-            .update_migration_export(
-                &mut **rls.conn(),
-                export_id,
-                Some(MigrationExportStatus::Ready),
-                Some(path.clone()),
-                Some(15_234_567),
-                None,
-                Some(Uuid::new_v4()),
-                None,
-                None,
-                Some(chrono::Utc::now()),
-                None,
-                None,
-            )
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-        current_status = updated.status;
-        file_size_bytes = updated.file_size_bytes;
-    }
-    rls.release().await;
-
     let categories: Vec<String> = serde_json::from_value(export.categories)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let download_url = match current_status {
-        MigrationExportStatus::Ready | MigrationExportStatus::Downloaded => {
+    // A download URL is only meaningful once a real export archive exists in
+    // storage. Export archives are produced by the asynchronous export worker,
+    // which is not yet implemented; until that worker marks the export `Ready`
+    // with a persisted `file_path`, there is nothing to download. We therefore
+    // report the export's true persisted state rather than fabricating a ready
+    // artifact (previously a GET here silently flipped the record to `Ready`
+    // with a bogus `storage.example.com` URL and a hard-coded file size).
+    let download_url = match export.status {
+        MigrationExportStatus::Ready | MigrationExportStatus::Downloaded
+            if export.file_path.is_some() =>
+        {
             Some(format!("/api/v1/migration/export/{}/download", export_id))
         }
         _ => None,
@@ -1303,17 +1314,15 @@ async fn get_export_status(
 
     Ok(Json(MigrationExportStatusResponse {
         export_id,
-        status: current_status,
+        status: export.status,
         categories,
         download_url,
-        file_size_bytes,
+        file_size_bytes: export.file_size_bytes,
         expires_at: export.expires_at,
         error_message: export.error_message,
-        record_counts: Some(serde_json::json!({
-            "buildings": 45,
-            "units": 320,
-            "residents": 580
-        })),
+        // Per-category record counts are computed by the export worker when the
+        // archive is generated; we do not fabricate them before that happens.
+        record_counts: None,
     }))
 }
 
@@ -1387,12 +1396,19 @@ async fn download_export(
 
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
+    // Serve the real stored artifact location. A `Ready` export without a
+    // persisted `file_path` is an internal inconsistency (the export worker
+    // marks an export `Ready` only after writing the archive), so surface it
+    // as a server error instead of fabricating a `storage.example.com` URL.
+    let download_url = updated.file_path.ok_or((
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Export is marked ready but no archive is available".to_string(),
+    ))?;
+
     Ok(Json(ExportDownloadResponse {
         filename: format!("migration_export_{}.zip", export_id),
         content_type: "application/zip".to_string(),
-        download_url: updated
-            .file_path
-            .unwrap_or_else(|| format!("https://storage.example.com/exports/{}.zip", export_id)),
+        download_url,
         expires_at,
     }))
 }

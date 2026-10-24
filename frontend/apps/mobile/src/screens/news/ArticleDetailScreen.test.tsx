@@ -9,8 +9,10 @@
  * `enabled: !!articleId`).
  *
  * `useApiQuery` is mocked so the branches can be driven directly, and
- * react-i18next is mocked in `src/test/setup.ts` (`t(key) => key`), so the
- * assertions check for the i18n keys rather than translated copy.
+ * react-i18next is mocked in `src/test/setup.ts`
+ * (`t(key, opts) => opts?.defaultValue ?? key`), so the assertions check for
+ * the i18n keys, except where the screen passes a `defaultValue` (the category
+ * badge), which resolves to that fallback rather than translated copy.
  */
 
 import { render, screen } from '@testing-library/react-native';
@@ -100,7 +102,12 @@ describe('ArticleDetailScreen', () => {
       });
       render(<ArticleDetailScreen articleId="a-1" onBack={jest.fn()} />);
       expect(screen.getByText('Lift maintenance scheduled')).toBeTruthy();
+      // The badge renders `t('news.categories.building', { defaultValue: 'building' })`
+      // (PR #3110). The raw i18n key must NOT leak as the label: with a `t()` that
+      // honours `defaultValue`, the badge resolves to the category value. Mirrors
+      // NewsScreen.i18n.test.tsx, which asserts the key-only (no-defaultValue) path.
       expect(screen.getByText('building')).toBeTruthy();
+      expect(screen.queryByText('news.categories.building')).toBeNull();
       expect(screen.getByText('The lift will be out of service on Tuesday.')).toBeTruthy();
     });
 

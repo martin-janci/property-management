@@ -11677,22 +11677,24 @@
       "title": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
       "vector": "bug",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "rotating-expert-review reality-server 2026-10-03"
+        "rotating-expert-review reality-server 2026-10-03",
+        "signal:code-review-reality-server-compare-add-limit-toctou"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT(*) (line 166) → MAX_COMPARE_LISTINGS=4 guard → separate INSERT (line 221) with no row-level lock and no DB-side constraint. Two concurrent POSTs from the same user can both see count==3 and both insert, exceeding the documented cap.",
         "Existing exists-check at line 205 only catches exact duplicates, not count violations.",
         "Fix: wrap count+insert in a serializable transaction, or add a DB-side partial unique index / check constraint.",
-        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence"
+        "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence",
+        "2026-10-22 reality-server Tier-1D re-flag: same TOCTOU re-confirmed via static read of compare.rs:155-227 — count-cap race unchanged; duplicate-insert race surfaces 500 instead of mapped 400 (compare.rs:214-219 vs util::errors::db_error mapping)."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/compare.rs"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-17",
+      "updated_at": "2026-10-22",
       "plan": null
     },
     {
@@ -12208,7 +12210,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map)"
       ],
@@ -12222,7 +12224,12 @@
       ],
       "created_at": "2026-10-15",
       "updated_at": "2026-10-15",
-      "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md"
+      "plan": "plans/code-review-reality-server-price-map-cache-unbounded.md",
+      "reconciled": {
+        "at": "2026-10-19T10:36:16Z",
+        "assignment_status": "merged",
+        "pr_number": 3092
+      }
     },
     {
       "id": "code-review-reality-server-assertsqlsafe-format-sql",
@@ -12536,7 +12543,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 api-core)"
       ],
@@ -12552,7 +12559,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-21T18:26:15Z",
+        "assignment_status": "merged",
+        "pr_number": 3123
+      }
     },
     {
       "id": "code-review-ppt-web-core-aml-risk-factors-unguarded-map",
@@ -12560,7 +12572,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web)"
       ],
@@ -12573,7 +12585,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-18T06:26:09Z",
+        "assignment_status": "merged",
+        "pr_number": 3117
+      }
     },
     {
       "id": "code-review-ppt-web-core-aml-checks-hardcoded-false",
@@ -12581,7 +12598,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 ppt-web)"
       ],
@@ -12593,7 +12610,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-18T22:35:25Z",
+        "assignment_status": "merged",
+        "pr_number": 3122
+      }
     },
     {
       "id": "code-review-reality-server-register-account-enumeration",
@@ -12624,7 +12646,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)"
       ],
@@ -12638,7 +12660,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-18T22:35:25Z",
+        "assignment_status": "merged",
+        "pr_number": 3121
+      }
     },
     {
       "id": "code-review-reality-web-formatprice-hardcoded-locale",
@@ -12646,7 +12673,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-web)"
       ],
@@ -12661,6 +12688,308 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-22T16:42:56Z",
+        "assignment_status": "merged",
+        "pr_number": 3140
+      }
+    },
+    {
+      "id": "code-review-api-handlers-migration-upload-drops-file",
+      "title": "api-server /migration/import/upload: silent dead-store drops uploaded bytes (data loss on Epic 66 bulk-import)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-10-19 api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/migration.rs:678-798 upload_import_file (POST /api/v1/migration/import/upload, wired at routes/migration.rs:59 and lib.rs:320) is a silent stub that drops the uploaded file bytes. At line 693 it declares `let mut _file_data: Vec<u8> = Vec::new();` (the leading underscore is the Rust 'intentionally unused' marker that suppresses the dead-store warning). At line 715-720 it reads the full multipart body into memory with `field.bytes().await` and assigns it to `_file_data = data.to_vec();`. That buffer is never used again anywhere in the file (grep for `_file_data` returns only these two lines). At line 757 it fabricates a storage path `let file_path = format!(\"imports/{}/{}\", org_id, Uuid::new_v4());` with NO call to any S3/MinIO/filesystem writer, then at line 764-779 passes that non-existent path to `migration_repo.create_import_job(...)` and returns 200 with job_id + 'File uploaded successfully. Validation will begin shortly.' (line 796). Impact: (a) data loss — platform admins who upload a bulk-import file (buildings/units/residents/financial records, up to 100 MB per MAX_IMPORT_SIZE at line 734) receive a success response and a job_id but no file was ever persisted; (b) silent broken feature — downstream processing (`get_import_job_status`, `validate_import`, `approve_import`) references a `file_path` that resolves to nothing; (c) memory bloat — the handler still allocates up to 100 MB into a Vec<u8> per concurrent request before dropping it. Reachability: router nested at lib.rs:320 under `/api/v1/migration`, mod declared at routes/mod.rs:101 `pub mod migration;`. Confidence HIGH: the `_file_data` dead-store and the lack of any writer call are directly observable; the fabricated file_path pattern and the `Pending` status at line 770 confirm the stub intent. Severity HIGH (+3): data-loss class on a platform-admin migration endpoint whose entire purpose is to persist tenant data, not a mere I/O bug. Fix: route the uploaded bytes through `state.storage_service` (same pattern as other upload sites, e.g. documents) BEFORE creating the import job, use the actual storage key as `file_path`, and reject the request if `storage_service` is not configured (fail-closed) instead of returning success."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs"
+      ],
+      "created_at": "2026-10-19",
+      "updated_at": "2026-10-19",
+      "plan": "plans/code-review-api-handlers-migration-upload-drops-file.md",
+      "reconciled": {
+        "at": "2026-10-20T20:36:03Z",
+        "assignment_status": "merged",
+        "pr_number": 3127
+      }
+    },
+    {
+      "id": "code-review-api-handlers-migration-export-fake-url-stub",
+      "title": "api-server /migration/export: auto-ready with fake example.com URL + fabricated record counts (silent broken feature)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-10-19 api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/migration.rs:1241-1398 — the migration export flow (POST /api/v1/migration/export → GET /api/v1/migration/export/{id} → GET /api/v1/migration/export/{id}/download) is a stub that fabricates its outputs. In `get_export_status` the explicit comment at line 1268 says `// Auto-transition to Ready in mock setup`, and lines 1269-1291 unconditionally flip the record from Pending to Ready, writing a hardcoded placeholder file_path `let path = format!(\"https://storage.example.com/exports/{}.zip\", export_id);` (line 1270), a hardcoded fake file_size_bytes `Some(15_234_567)` (line 1278), and a fabricated completed_at `Some(chrono::Utc::now())` (line 1283). No real export job has run — `request_migration_export` (lines 1183-1239) only inserts a DB row, there is no backing worker or writer that materialises the archive. Then at lines 1312-1316 the response hands the admin a hardcoded fake record_counts payload `{ \"buildings\": 45, \"units\": 320, \"residents\": 580 }` regardless of the org's actual data. Finally `download_export` (line 1393-1395) returns `download_url: updated.file_path.unwrap_or_else(|| format!(\"https://storage.example.com/exports/{}.zip\", export_id))` — the admin UI gets a `storage.example.com` URL (an IANA reserved illustration domain, RFC 2606, that will never resolve to real content). Reachability: router nested at lib.rs:320, `pub mod migration;` at routes/mod.rs:101, routes wired at routes/migration.rs:66-69. Impact: silent broken feature — platform admins requesting a migration export see 'Ready' with a plausible file size and record counts, but every download URL is a dead `storage.example.com` link and no archive exists. This is distinct from the already-flagged `code-review-api-handlers-data-export-report-stub` / `code-review-api-handlers-report-dl-deadlink` findings (different modules: reports/mod.rs vs. migration.rs) and from `multi-currency-refresh-stub-success` (different domain). Confidence HIGH: the hardcoded example.com URL, the fabricated record counts, and the 'mock setup' author comment at line 1268 are direct quotes from the source. Severity MEDIUM (+2): platform-admin-only, no data loss, but a silently broken customer-visible feature on a flagship Epic 66.3 migration-export surface, with user-trust and compliance impact (admin thinks data was exported). Fix: either (a) hide the endpoints behind a feature flag until a real exporter lands, or (b) implement the backing export job and persist a real presigned URL from the storage service in the file_path column, and drop the hardcoded `storage.example.com` fallback at line 1395."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/migration.rs"
+      ],
+      "created_at": "2026-10-19",
+      "updated_at": "2026-10-19",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-22T16:42:56Z",
+        "assignment_status": "merged",
+        "pr_number": 3142
+      }
+    },
+    {
+      "id": "code-review-api-handlers-impersonation-active-raw-xff-audit",
+      "title": "admin /impersonation/active audit skips `audit_ip_from_headers` → raw XFF overflows VARCHAR(45), audit INSERT fails silently",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "rotating-expert-review 2026-10-19 api-handlers"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/impersonation.rs:114 `list_active` reads the raw X-Forwarded-For header verbatim for audit logging: `let ip = headers.get(\"x-forwarded-for\").and_then(|h| h.to_str().ok());`, then passes the full comma-separated chain to `audit.record(..., ip, ua)` at line 126. This bypasses the shared helper `audit_ip_from_headers` defined at routes/admin/mod.rs:60-75, which the sibling `start` handler in the SAME file uses correctly at line 195 (`let ip = super::audit_ip_from_headers(&headers);`). The helper's doc comment (admin/mod.rs:41-55) states it exists specifically to prevent silent audit-row drops: `audit_logs.ip_address` is VARCHAR(45) (admin/mod.rs:44 `AUDIT_IP_MAX_LEN: usize = 45`), and a typical multi-hop X-Forwarded-For chain (e.g. `203.0.113.7, 198.51.100.1, 10.0.0.1` = 36 chars; three IPv6 hops easily exceed 45) overflows the column. Impact: when the audit INSERT fails on an overlong IP string, the handler's error branch at line 130-132 only emits `tracing::warn!(error = %e, \"audit write for impersonation/active failed\")` and returns 200 OK with the full cross-tenant impersonation list — so the compliance-mandated audit trail of 'who viewed the active-impersonation dashboard' silently has gaps for any viewer behind >1 proxy. Divergence is clear within the file itself: `start` (line 195), `stop` (not applicable — no audit call), and every audit site in sibling admin/* files use `audit_ip_from_headers`. Reachability: `GET /api/v1/admin/impersonation/active` is wired via lib.rs:145 (`admin::router()`) → admin/mod.rs:94 (`impersonation::router()`) → impersonation.rs:28 (`.route(\"/active\", get(list_active)...)`). This is DISTINCT from the prior finding `code-review-api-handlers-share-log-proxy-ip` which is about `documents/shares.rs` share access logs, not admin impersonation. Confidence HIGH: the raw-XFF read, the helper's existence, and the sibling `start` call-site all read directly from the file. Severity MEDIUM (+2): compliance/audit-trail integrity on a platform-admin impersonation surface — an attacker-controlled or merely multi-proxy X-Forwarded-For value silently drops the 'who viewed active impersonations' audit row. No crash, no data loss, no auth bypass. Fix: replace line 114 with `let ip = super::audit_ip_from_headers(&headers);` to mirror the `start` handler's call site."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin/impersonation.rs",
+        "backend/servers/api-server/src/routes/admin/mod.rs"
+      ],
+      "created_at": "2026-10-19",
+      "updated_at": "2026-10-19",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-22T16:42:56Z",
+        "assignment_status": "merged",
+        "pr_number": 3141
+      }
+    },
+    {
+      "id": "code-review-api-core-push-fanout-client-build-expect",
+      "title": "push_fanout.rs builds 3 reqwest clients with .expect() in production constructors — a recoverable client-build error panics the push-fanout worker (hottest non-route churn file) instead of surfacing a configuration error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-core]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:433 — ServiceAccountTokenSource::new() does `reqwest::Client::builder().timeout(10s).build().expect(\"reqwest client build should not fail\")`. reqwest::ClientBuilder::build() is fallible (TLS backend init, proxy-from-env parse); on failure this panics instead of returning a Result the caller can log and fail-closed on.",
+        "Same pattern repeated at :626 (FCM push provider constructor) and :1042 (APNs provider, which additionally calls .http2_prior_knowledge() — an HTTP/2-only config that widens the build()-failure surface). All three expects live in this file's production (non-test) half; the test module starts at L1703.",
+        "Severity is LOW: these run once at service construction (bootstrap), so the practical effect is a fail-fast crash at startup rather than a per-request panic — close to the acceptable startup-validation pattern used in main.rs. Flagged because push_fanout.rs is the highest-churn non-route file (recent_churn ~2564) and the trio is the only production .expect()/unwrap() cluster in the whole api-core services layer; converting new() -> Result (or try_new) would let the composition root log a precise 'push transport misconfigured' error. No higher-severity findings exist in this segment (see note).",
+        "NOTE for triage: api-core was reviewed statically and is otherwise exceptionally clean — no unsafe, no reachable todo!()/unimplemented!(), all serde_json::from_value/from_str in prod are map_err-handled, Stripe webhook verify uses constant-time compare + replay-window + overflow-proof skew, the scheduler runs each task as its own Result with tracing::error and no silent drops, accounting uses Decimal (no float money) over RLS repo calls, CORS is an explicit origin/method/header allow-list with credentials, and client_ip prod code has zero unwraps. This +1 is the single defensible signal; do not inflate."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-10-21",
+      "updated_at": "2026-10-21",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-agency-href-scheme-xss",
+      "title": "reality-web: public agency profile + listing Resources render agency-authored URLs with no http(s) scheme check — stored-XSS vector via javascript: href",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "signal:code-review-reality-web-agency-href-scheme-xss",
+        "rotating-expert-review 2026-10-22 reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:297 renders `<a href={agency.website} target=\"_blank\">` with agency-authored URL — React does not sanitize javascript:/data: href values (renders attribute with dev-only warning).",
+        "Same raw-href pattern at frontend/apps/reality-web/src/components/listings/sections/Resources.tsx:17,:39 for listing.virtualTourUrl / listing.floorPlanUrl.",
+        "App has sanitizeCssValue (lib/tenant-config.ts:243-279) denylisting javascript:/data:/url(/expression( for css_vars — the same guard class is NOT applied to the three agency/listing anchor hrefs. No safeExternalHref helper exists in reality-web.",
+        "Severity MEDIUM (+2): stored-XSS requires authored payload + victim click. Remedy: route all three sites through an http(s)-only scheme guard."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/components/listings/sections/Resources.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-page-i18n-gap",
+      "title": "reality-web agency/[slug]/page.tsx renders user-facing copy as Slovak literals on a 4-language portal (no next-intl wiring)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "signal:code-review-reality-web-agency-page-i18n-gap",
+        "rotating-expert-review 2026-10-22 reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx renders hardcoded Slovak copy at :36 (Načítavam…), :46 (Kancelária sa nenašla.), :223 (Žiadne aktívne ponuky.), :279 (Kontakt), :302 (🌐 Navštíviť web). grep for useTranslations/getTranslations/`t(` returns zero hits in the file.",
+        "File header (:7-9) says it \"Mirrors the realtor/[id] public-profile pattern\" and references next-intl — intended but never wired. Sibling app/[locale]/realtor/[id]/page.tsx is the correct template to copy.",
+        "Severity LOW (+1): visible localization regression on an SEO-indexed public route. Czech/German/English visitors see Slovak chrome."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-agency-gradient-color-unsanitized",
+      "title": "reality-web agency page interpolates agency.primaryColor/secondaryColor into inline linear-gradient without sanitizeCssValue (consistency gap)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "signal:code-review-reality-web-agency-gradient-color-unsanitized",
+        "rotating-expert-review 2026-10-22 reality-web"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:64-66 interpolates agency-authored colors directly into inline style `background: `linear-gradient(135deg, ${agency.primaryColor}, ${agency.secondaryColor ?? #2563eb})``.",
+        "lib/tenant-config.ts:243-279 sanitizeCssValue (which denylists url(/expression(/javascript:/data: and enforces color-literal shapes) is applied to css_vars but NOT to inline agency gradient colors — consistency gap.",
+        "Severity LOW (+1): CSSOM setter drops malformed `background` values so direct injection is limited, but it is a defense-in-depth gap and the fix is one-line (route primaryColor/secondaryColor through sanitizeCssValue)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/lib/tenant-config.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-23T16:25:46Z",
+        "assignment_status": "merged",
+        "pr_number": 3144
+      }
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "title": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-10-01",
+        "rotating-expert-review 2026-10-22 api-core"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/workflow_executor.rs:348-403 — process_event loads every workflow subscribed to an event; the loop at 359 does `if !self.evaluate_conditions(&conditions, &context)? { ... continue; }`. The `?` propagates a WorkflowError out of the ENTIRE batch function, aborting processing of every remaining subscribed workflow.",
+        "evaluate_conditions returns Err on malformed/undeserializable stored condition JSON (author-supplied, persisted on the workflow row); the execute_workflow failure arm in the SAME loop (:395-402) correctly isolates failures via warn!() + continue — asymmetry confirms this is a bug, not intent.",
+        "Severity MEDIUM (+2): a single malformed condition silently disables every other automation on the same event type (email, notifications, outbound api_call) until manually corrected — reliability/availability gap on a side-effecting automation surface."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/workflow_executor.rs"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
+      "title": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-22 ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:84-96 — reconnectTimer re-arms every WS_RECONNECT_MS=5_000 (:26) on ws.onclose; ws.onerror funnels every error into onclose, so sustained failures hammer api-server with a new upgrade every 5s for every mounted IoT view.",
+        "Shared stack already does this correctly: lib/websocket.ts scheduleReconnect (:600-632) + contexts/WebSocketContext.tsx (:304-320) implement exponential backoff `minReconnectDelay * 2 ** reconnectAttempts`, a maxReconnectAttempts cap that flips shouldReconnect off, and `connection:max-retries-exceeded` for a UI affordance plus a network-status resume. useIotWebSocket reimplements connection management and omits all three mechanisms.",
+        "Severity MEDIUM (+2): user-facing realtime path; no crash/data-loss but amplifies an outage into a client-driven retry storm. Preferred fix: consume shared WebSocketService; minimal fix: add backoff + attempt cap + give-up to the local loop."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
+      "title": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-22 ppt-web-core"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts:83-95 — the subscribe effect reads handlerRef.current at run-time (`if (!eventType || !handlerRef.current) return;`) but its dep array is `[eventType, subscribe]`; the ref is updated on every render (:80) specifically so handler-identity changes do NOT re-run the effect.",
+        "Consequence: if a consumer mounts with handler===undefined on first render (handler produced conditionally, or after an async value resolves) and supplies a defined handler on a later render without changing eventType, the effect never re-runs — subscribe() is never called and the component silently receives no events.",
+        "Severity LOW (+1): no crash and the dominant usage (handler-at-mount) is unaffected; latent correctness smell. Fix: depend on `Boolean(handler)` or move the gate so a later-arriving handler triggers a one-time subscribe."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/hooks/useWebSocket.ts"
+      ],
+      "created_at": "2026-10-22",
+      "updated_at": "2026-10-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-crm-console-error-leak",
+      "title": "reality-web CrmConnection/FeedImport/RealtorManagement catch handlers `console.error(error)` after secrets payloads — latent credential leak surface at CrmConnection.tsx:408 (apiKey)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-23 reality-web",
+        "signal:code-review-reality-web-crm-console-error-leak"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx:408 — handleCreate's catch does `console.error('Failed to create CRM connection:', error)` and then `setCreateError(t('createError'))`. Create payload carries credentials: { apiKey, instanceUrl } (CrmConnection.tsx:389-392); if the error object embeds request context the apiKey can land in the browser console and any error-reporting sink. User-facing error state already set — console.error adds leak surface, no UX value.",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:518 and frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:578 — same committed-console.error-in-catch pattern (handleCreate / handleSubmit). No credentials in those payloads but still skill-flagged debug leftovers.",
+        "Scope note: these are the ONLY non-error-boundary console.error sites in the segment. The two error.tsx boundaries legitimately console.error the boundary error and are excluded. Severity LOW (+1); confidence medium (latent, not proven)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/CrmConnection.tsx",
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx",
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-10-23",
+      "updated_at": "2026-10-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-api-unvalidated-json-cast",
+      "title": "reality-web lib/realtor-api.ts request<T>() returns `(await response.json()) as T` with no shape validation — API-boundary unchecked cast; sibling listing SSR already uses parseListingDetail guard",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-23 reality-web",
+        "signal:code-review-reality-web-realtor-api-unvalidated-json-cast"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:48 — shared `request<T>()` helper returns a 200 body as `(await response.json()) as T` with no shape validation; empty/non-JSON body throws, well-formed-but-wrong-shape body is silently cast and dereferenced downstream (e.g. 649-line app/[locale]/realtor/[id]/page.tsx).",
+        "Asymmetry: sibling SSR path app/[locale]/listings/[slug]/page.tsx:79-89 runs the 200 body through parseListingDetail (listingSchema.ts) with the comment 'a 200 does not guarantee a well-formed body'. realtor-api.ts has no equivalent guard — strictly less defensive than the listing surface against the same upstream/proxy partial-response failure mode.",
+        "Severity LOW (+1): callers invoke request<T>() inside try/catch (RealtorApiError on network/!ok paths), so a malformed 200 surfaces as unhandled JSON parse / later undefined-deref rather than a hard crash. Confidence medium: missing validation statically confirmed; frequency data-dependent. Fix: mirror parseListingDetail approach."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts"
+      ],
+      "created_at": "2026-10-23",
+      "updated_at": "2026-10-23",
       "plan": null
     }
   ]
