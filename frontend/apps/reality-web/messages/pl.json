@@ -790,6 +790,19 @@
       "error": "Nie udało się załadować ofert.",
       "empty": "Nie opublikowałeś jeszcze żadnych ofert.",
       "createFirst": "Utwórz swoją pierwszą ofertę"
+    },
+    "agencyProfile": {
+      "loading": "Ładowanie…",
+      "notFound": "Nie znaleziono biura.",
+      "verified": "Zweryfikowane",
+      "about": "O biurze",
+      "team": "Nasz zespół ({count})",
+      "activeListings": "Aktywne oferty ({count})",
+      "noListings": "Brak aktywnych ofert.",
+      "rentSuffix": "/mies",
+      "contact": "Kontakt",
+      "visitWebsite": "Odwiedź stronę",
+      "license": "Licencja: {number}"
     }
   },
   "search": {
