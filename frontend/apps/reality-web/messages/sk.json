@@ -175,7 +175,7 @@
     "message": "Správa",
     "messageSent": "Správa odoslaná!",
     "name": "Vaše meno",
-    "optional": "(volitelné)",
+    "optional": "(voliteľné)",
     "phone": "Telefón",
     "placeholder": "Dobrý deň, mám záujem o túto nehnuteľnosť...",
     "preferredDate": "Preferovaný dátum",
@@ -853,9 +853,9 @@
   },
   "cookieBanner": {
     "title": "Používame cookies",
-    "body": "Nevyhnutné cookies udržujú stránku funkčnú. Volitelné analytické a marketingové cookies nám pomáhajú ju zlepšovať — nenastavíme ich, pokiaľ ich neprijmete.",
+    "body": "Nevyhnutné cookies udržujú stránku funkčnú. Voliteľné analytické a marketingové cookies nám pomáhajú ju zlepšovať — nenastavíme ich, pokiaľ ich neprijmete.",
     "accept": "Prijať všetky",
-    "reject": "Odmietnuť volitelné",
+    "reject": "Odmietnuť voliteľné",
     "manage": "Nastavenia cookies"
   },
   "priceAlerts": {
@@ -1032,7 +1032,7 @@
       "modalConfigure": "Konfigurácia pripojenia",
       "modalMapping": "Priradenie polí",
       "closeModal": "Zavrieť okno",
-      "connectionName": "Názov pripojenia (volitelné)",
+      "connectionName": "Názov pripojenia (voliteľné)",
       "connectionNamePlaceholder": "Moje {provider}",
       "apiKey": "API kľúč",
       "apiKeyPlaceholder": "Zadajte svoj API kľúč",
@@ -1079,7 +1079,7 @@
       "closeModal": "Zavrieť okno",
       "feedUrl": "URL feedu",
       "feedUrlHint": "Podporuje feedy XML, RSS, Atom a JSON",
-      "feedName": "Názov feedu (volitelné)",
+      "feedName": "Názov feedu (voliteľné)",
       "feedNamePlaceholder": "Môj feed nehnuteľností",
       "fetchError": "Nepodarilo sa načítať feed. Skontrolujte URL a skúste to znova.",
       "updateError": "Nepodarilo sa aktualizovať feed. Skúste to znova.",
