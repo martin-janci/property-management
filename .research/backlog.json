@@ -12991,6 +12991,55 @@
       "created_at": "2026-10-23",
       "updated_at": "2026-10-23",
       "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "title": "PR #3144 touched reality-web agency route (sanitize-css hardening) without updating docs/screens/reality/agency-profile.md Notes",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3144",
+        "screen-map-drift heuristic 2026-10-24"
+      ],
+      "evidence": [
+        "PR #3144 modified frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (route in reality-web trigger set) plus frontend/apps/reality-web/src/lib/sanitize-css.ts (new) and src/lib/tenant-config.ts — defense-in-depth: tenant-controlled agency.primaryColor/secondaryColor now routed through sanitizeCssValue before landing in inline linear-gradient.",
+        "docs/screens/reality/agency-profile.md was NOT touched by the PR; its 'Notes > Specific' / 'Agent Log' did not record the hardening — screen doc now out-of-date with the route's security posture.",
+        "Best-effort drift heuristic (routine-prompt § screen-map-drift). agency-profile.md exists; the fix is an agent-log entry (or a one-paragraph Notes update) noting the sanitizer gate, not a new screen doc."
+      ],
+      "files": [
+        "docs/screens/reality/agency-profile.md",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-contract-initiateedd-sub-path-shape-mismatch",
+      "title": "frontend compliance client initiateEdd targets /aml/assessments/{id}/edd with {assessment_id, …} body — server mounts POST /api/v1/aml-dsa/edd reading `aml_assessment_id` and returning EddRecordResponse (not {message})",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3150",
+        "pm-integration audit docs/api/audits/2026-10-22-integration-openapi-drift.md Finding 1"
+      ],
+      "evidence": [
+        "PR #3150 body (merged 2026-10-24) explicitly flags: 'Pre-existing deeper divergence in `initiateEdd` (out of scope, flag for a follow-up): its call site targets `POST .../aml/assessments/{id}/edd`, but the backend mounts `POST /api/v1/aml-dsa/edd` reading `aml_assessment_id` from the body (not `assessment_id`) and returns `EddRecordResponse` (not `{ message }`). This PR corrects only the base prefix; the sub-path + request/response shape belongs with Finding 2's type-reconciliation work. `initiateEdd` will still mismatch until that lands.'",
+        "After PR #3150 the base path is fixed (`/api/v1/aml-dsa/aml/assessments/{id}/edd`), but the backend router at backend/servers/api-server/src/routes/aml_dsa/mod.rs mounts `POST /edd` directly — not under `/aml/assessments/{id}/edd` — so the UI call still 404s on the sub-path alone, before field-naming/response-shape issues matter.",
+        "Fact-grade: PR author verified both sides (handler path + body/response shape). Fix shape: adjust frontend client to call the actual route and align request body (`aml_assessment_id`) + response type (`EddRecordResponse`) with the generated-or-handwritten types."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/compliance/api.ts",
+        "frontend/packages/api-client/src/compliance/types.ts",
+        "backend/servers/api-server/src/routes/aml_dsa/mod.rs"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "generated_at": "2026-10-24T03:14:00Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3144",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3144 modified reality-web route frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (sanitize-css hardening) plus new frontend/apps/reality-web/src/lib/sanitize-css.ts; docs/screens/reality/agency-profile.md was NOT touched. Best-effort drift heuristic — agency-profile.md exists; fix is an Agent-Log/Notes update noting the sanitizer gate, not a new screen doc."
+    },
+    {
+      "id": "code-review-api-contract-initiateedd-sub-path-shape-mismatch",
+      "type": "code-review-finding",
+      "source": "PR #3150",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "PR #3150 (merged 2026-10-24) body explicitly flags residual bug: client initiateEdd targets POST /aml/assessments/{id}/edd with {assessment_id,...}; backend mounts POST /api/v1/aml-dsa/edd reading aml_assessment_id from body and returns EddRecordResponse (not {message}). PR fixed base prefix only. Fact-grade (PR author verified both sides)."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == \"# <today>\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emit of non-cumulative signal ids with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 && no open item older than 14d (none exist)",
+      "observed": "cap=0 decay-candidates=0",
+      "expected": "cap=0 decay-correct"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "no new plans",
+      "expected": "no new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, each with 15 required sections + capability + mode + files-exist",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames in staged diff (excl. baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen(backlog.json)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed == none; cursors reflect it",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive count now >= HEAD count",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen(backlog.json where vector==triage)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions respects caps + idempotency + kill switch",
+      "observed": "0 actions",
+      "expected": "<=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — no-op",
+      "observed": "pm_cursor not advanced",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

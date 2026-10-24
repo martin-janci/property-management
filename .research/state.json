@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-23T03:15:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 3142,
-  "last_issue_seen": 3143,
-  "last_commit_sha": "18f1813",
+  "last_run_iso": "2026-10-24T03:14:19Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3150,
+  "last_issue_seen": 3149,
+  "last_commit_sha": "052956e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -771,6 +771,7 @@
     "closed-not-merged-pr-644",
     "closed-not-merged-pr-671",
     "closed-not-merged-pr-908",
+    "code-review-api-contract-initiateedd-sub-path-shape-mismatch",
     "code-review-api-core-admin-rs-swallowed-serialize",
     "code-review-api-core-apns-jwt-per-send-mint",
     "code-review-api-core-client-ip-cf-spoof",
@@ -1148,6 +1149,7 @@
     "screen-map-drift-pr-3033-reality",
     "screen-map-drift-pr-3034-ppt",
     "screen-map-drift-pr-3036-ppt",
+    "screen-map-drift-pr-3144-reality",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1245,8 +1247,8 @@
     "mobile-native-kmp": "2026-10-18"
   },
   "stats": {
-    "runs": 103,
-    "vectors_created": 453,
+    "runs": 104,
+    "vectors_created": 455,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
