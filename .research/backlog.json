@@ -12777,7 +12777,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-core]"
       ],
@@ -12798,7 +12798,12 @@
       "segment": "api-core",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-10-24T06:37:28Z",
+        "assignment_status": "merged",
+        "pr_number": 3145
+      }
     },
     {
       "id": "code-review-reality-web-agency-href-scheme-xss",
@@ -12806,7 +12811,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "signal:code-review-reality-web-agency-href-scheme-xss",
         "rotating-expert-review 2026-10-22 reality-web"
@@ -12823,7 +12828,12 @@
       ],
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-24T06:37:28Z",
+        "assignment_status": "merged",
+        "pr_number": 3151
+      }
     },
     {
       "id": "code-review-reality-web-agency-page-i18n-gap",

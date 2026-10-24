@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-24T02:28:11Z",
+  "archived_at": "2026-10-24T06:43:35Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8347,6 +8347,29 @@
         "commit": "932f50aef32b7e805d1e7ebe25dc5d5eb94c79a2",
         "subject": "code-review-reality-web-agency-gradient-color-unsanitized: sanitize agency brand colors in cover gradient (#3144)",
         "at": "2026-10-23T16:25:45Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-href-scheme-xss",
+      "action": "reality-web: public agency profile + listing Resources render agency-authored URLs with no http(s) scheme check — stored-XSS vector via javascript: href",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-22T06:26:52Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-24T06:37:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T06:26:52Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "3a1c7822b3bf5230fa1d9d646cdaf8d803d19c17",
+        "subject": "code-review-reality-web-agency-href-scheme-xss: enforce http(s) scheme allowlist on agency-authored hrefs (#3151)",
+        "at": "2026-10-24T06:37:28Z"
       }
     },
     {
@@ -19145,6 +19168,32 @@
       }
     },
     {
+      "id": "gh-issue-3132",
+      "action": "Follow-up: PRICE_MAP_CACHE size cap still allows cache-thrash/DB-load DoS and its eviction amplifies the flood (PR #3092) (Closes #3132)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-20T10:27:20Z (#3132) | dev-reconcile 2026-10-24T06:37:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-20T10:27:20Z",
+      "issue_ref": {
+        "number": 3132,
+        "url": "https://github.com/martin-janci/property-management/issues/3132",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "453dc7bbfe1b705e3c5226eefadfcc1243c8aaa1",
+        "subject": "gh-issue-3132: bound PRICE_MAP_CACHE eviction (insertion-order index, no clone/sort) (#3146)",
+        "at": "2026-10-24T06:37:28Z"
+      }
+    },
+    {
       "id": "gh-issue-3134",
       "action": "cargo-deny advisories FAILED on dev: zip (RUSTSEC-2026-0367/0368/0369) + ammonia (RUSTSEC-2026-0373) block every backend PR (Closes #3134)",
       "owner_role": "pm-security",
@@ -19170,6 +19219,32 @@
         "merged_pr": 3135,
         "merged_at": "2026-10-21T06:30:45Z",
         "at": "2026-10-21T06:36:25Z"
+      }
+    },
+    {
+      "id": "gh-issue-3136",
+      "action": "Follow-up: harden storage-error handling & add happy-path persistence test for migration import upload (PR #3127) (Closes #3136)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-21T12:29:13Z (#3136) | dev-reconcile 2026-10-24T06:37:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-21T12:29:13Z",
+      "issue_ref": {
+        "number": 3136,
+        "url": "https://github.com/martin-janci/property-management/issues/3136",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "fa3ecc80a0065b956b543136405c95080fe32297",
+        "subject": "gh-issue-3136: harden migration import upload storage-error handling + add happy-path persistence test (#3147)",
+        "at": "2026-10-24T06:37:28Z"
       }
     },
     {
