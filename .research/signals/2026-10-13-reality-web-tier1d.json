@@ -1,0 +1,28 @@
+{
+  "generated": "2026-10-13T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (claimable buffer below floor: claimable=4 < floor=36, run parity even). Static single-segment rotating code review, no compilation / no test execution (cloud runner has no toolchain). File reading + grep only. Segment reality-web picked as a cloud-landable Next.js segment NOT reviewed today. Heavily-mined segment (151 distinct prior code-review-reality-web-* finding ids across the signals corpus + backlog.json): two strong candidates I independently re-derived were already reported and were DISCARDED as duplicates — the checkSession non-401/403 (5xx) token-wipe (== existing code-review-reality-web-checksession-5xx-logout) and the shared-comparison unencoded listing id in the fetch path (== existing code-review-reality-web-comparison-share-id-unencoded). One finding survived net-new verification against all prior reality-web signal files and backlog.json (no probe-cache / PROBE_CACHE id exists anywhere in the corpus).",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (review_cursor.reality-web = 2026-10-11, co-oldest at 2026-10-11 with api-handlers, ppt-web-ui, mobile-rn). api-handlers SKIPPED (saturated: 3 open code-review-finding rows with segment==api-handlers && status==open in backlog.json, >= the skill's 3-item saturation floor). ppt-web-ui SKIPPED (already reviewed today 2026-10-13, fresh signal file present). mobile-native-kmp / reality-server / ppt-web-core all already reviewed today. reality-web is the next in segment-map priority order and is a cloud-landable frontend segment. No churn files supplied for this segment. NOT saturated: 0 open code-review-finding rows for reality-web in backlog.json.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "signals": [
+    {
+      "id": "code-review-reality-web-sso-probe-caches-transient-blip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": ["frontend/apps/reality-web/src/lib/auth-context.tsx"],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-context.tsx:78-106 — probeSsoSession() caches EVERY probe outcome for PROBE_CACHE_MS=2000ms, including the transient network-blip failure, directly contradicting that failure's own inline comment. The catch at :94-98 returns `{ ok: false }` and documents: 'Network blip — treat as transient, NOT as \"logged out\". Don\\'t cache so the next mount can retry'. But the surrounding code ignores that intent: the IIFE's `.finally()` (:100-103) unconditionally sets `_cachedProbeAt = Date.now()`, and the outer body (:105) unconditionally runs `_cachedProbeResult = result;` for ALL results — the catch's transient `{ ok: false }` is cached identically to a legitimate unauthenticated `{ ok: false }` (the response-not-ok return at :92). The two failure modes are indistinguishable at the cache layer because they share the same `{ ok: false }` shape.",
+        "Consequence: for up to 2s after a single transient /api/v1/sso/session blip, every probeSsoSession() caller is served the stale cached failure from :80-82 (`if (_cachedProbeResult && now - _cachedProbeAt < PROBE_CACHE_MS) return _cachedProbeResult;`) and the documented 'next mount can retry' recovery never fires within that window, even if the network recovered immediately. For a cookie/SSO-only visitor (no stored bearer token) this is user-visible: checkSession() (:132-167) hits the bearer early-return only when getSession() is truthy, so a cookie user falls straight to `probeSsoSession()` at :155 and the else-branch at :163-164 calls `setUser(null)` on the cached `{ ok: false }` — the header renders the 'Sign in' control and will not self-correct until the 2s cache lapses AND something re-triggers a probe (remount / refreshSession), rather than on the very next check as the comment promises.",
+        "Note: the 2026-09-05 reality-web review explicitly cleared this helper ('probeSsoSession dedups + never clobbers state on a network blip') — that assessment covered the in-flight dedup and the return value but overlooked the result-cache write, so this caching defect is genuinely net-new (no probe-cache / PROBE_CACHE finding id exists in any prior signal file or in backlog.json). Fix (frontend-only, cloud-landable): only populate `_cachedProbeResult`/`_cachedProbeAt` for a definitive outcome — i.e. cache on `{ ok: true }` and on the response-not-ok `{ ok: false }` (unauthenticated) path, but skip the cache write for the catch (transient) path, e.g. by threading a `cacheable` flag out of the IIFE (true for both return statements, false in the catch) and guarding the `.finally` timestamp + the `_cachedProbeResult` assignment on it. Add a unit test: a first probe that rejects (fetch throws) must NOT be served from cache to a second probe fired <2s later — the second call must re-issue the fetch."
+      ]
+    }
+  ]
+}

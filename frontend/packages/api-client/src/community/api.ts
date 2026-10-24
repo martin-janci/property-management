@@ -124,6 +124,12 @@ export async function updateGroup(id: string, data: UpdateGroupRequest): Promise
   });
 }
 
+export async function deleteGroup(id: string): Promise<void> {
+  return apiRequest<void>(`${API_BASE}/groups/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function joinGroup(groupId: string): Promise<void> {
   return apiRequest<void>(`${API_BASE}/groups/${groupId}/join`, {
     method: 'POST',

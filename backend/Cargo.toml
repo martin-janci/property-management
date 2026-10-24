@@ -149,7 +149,12 @@ redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 clap = { version = "4.4", features = ["derive", "env"] }
 dialoguer = "0.12"
 genpdf = "0.2.0"
-rust_xlsxwriter = "0.97"
+# rust_xlsxwriter 0.100+ moves its transitive `zip` dependency to the 9.x line
+# (zip >= 9.0.0), which clears RUSTSEC-2026-0367/-0368/-0369 (symlink / SUID-SGID
+# extraction, all patched in zip 9.0.0) on the api-server xlsx-export chain
+# (GH #3124). 0.97–0.99 still pin zip ^8.3 (-> 8.6.0, vulnerable); 0.100 is the
+# first release on zip ^9.0.
+rust_xlsxwriter = "0.100"
 
 # i18n (Epic 111)
 fluent = "0.16"

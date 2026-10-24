@@ -163,13 +163,26 @@
     "emptyText": "All issues have been addressed"
   },
   "news": {
+    "backToList": "‹ News",
     "title": "News",
     "latest": "Latest News",
     "readMore": "Read More",
     "noNews": "No news available",
     "loadError": "Couldn't load news",
     "emptyTitle": "Nothing new",
-    "emptyText": "Check back later for fresh updates."
+    "emptyText": "Check back later for fresh updates.",
+    "subtitle": "Updates from your building and neighbourhood.",
+    "filters": {
+      "all": "All",
+      "building": "Building",
+      "district": "District",
+      "partner": "Partners"
+    },
+    "categories": {
+      "building": "Building",
+      "district": "District",
+      "partner": "Partner"
+    }
   },
   "voting": {
     "title": "Voting",
@@ -433,6 +446,7 @@
     "enterReading": "Enter Reading",
     "readingPlaceholder": "0.00",
     "readingRequired": "Please enter a reading",
+    "readingInvalid": "Please enter a valid number",
     "photo": "Photo (optional)",
     "submit": "Submit Reading",
     "submitSuccess": "Meter reading submitted successfully",
@@ -564,10 +578,38 @@
     "noPayments": "No upcoming payments scheduled.",
     "notFound": "Lease not found."
   },
+  "personMonths": {
+    "title": "Person-months",
+    "subtitle": "Declare how many people lived in your unit each month for cost allocation.",
+    "invalidTitle": "Invalid value",
+    "invalidMessage": "Enter a whole number between 0 and 20.",
+    "bulkEntry": "Bulk entry…",
+    "personCount_one": "{{count}} person",
+    "personCount_other": "{{count}} persons",
+    "status": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "confirmed": "Confirmed"
+    }
+  },
   "outages": {
+    "backToList": "‹ Outages",
     "loadError": "Couldn't load outages",
     "emptyTitle": "No outages",
-    "emptyText": "Nothing scheduled or active right now."
+    "emptyText": "Nothing scheduled or active right now.",
+    "title": "Outages",
+    "subtitle": "Planned and active utility interruptions.",
+    "filters": {
+      "all": "All",
+      "scheduled": "Scheduled",
+      "active": "Active",
+      "resolved": "Resolved"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
+      "resolved": "Resolved"
+    }
   },
   "forms": {
     "loadError": "Couldn't load forms",

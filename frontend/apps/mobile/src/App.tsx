@@ -14,6 +14,7 @@ import './i18n'; // Initialize i18n
 import {
   AnnouncementDetailScreen,
   AnnouncementsScreen,
+  ArticleDetailScreen,
   AuthFlow,
   BuildingsScreen,
   DashboardScreen,
@@ -34,6 +35,7 @@ import {
   NeighborsScreen,
   NewsScreen,
   NotificationsScreen,
+  OutageDetailScreen,
   OutagesScreen,
   PersonMonthsScreen,
   ProfileScreen,
@@ -240,8 +242,22 @@ function MainApp() {
         return <PersonMonthsScreen onNavigate={handleNavigate} />;
       case 'Outages':
         return <OutagesScreen onNavigate={handleNavigate} />;
+      case 'OutageDetail':
+        return (
+          <OutageDetailScreen
+            outageId={screenParams?.outageId as string | undefined}
+            onBack={() => handleNavigate('Outages')}
+          />
+        );
       case 'News':
         return <NewsScreen onNavigate={handleNavigate} />;
+      case 'ArticleDetail':
+        return (
+          <ArticleDetailScreen
+            articleId={screenParams?.articleId as string | undefined}
+            onBack={() => handleNavigate('News')}
+          />
+        );
       case 'Forms':
         return <FormsScreen onNavigate={handleNavigate} />;
       case 'Buildings':
@@ -331,7 +347,9 @@ function MainApp() {
             currentScreen === 'Notifications' ||
             currentScreen === 'PersonMonths' ||
             currentScreen === 'Outages' ||
+            currentScreen === 'OutageDetail' ||
             currentScreen === 'News' ||
+            currentScreen === 'ArticleDetail' ||
             currentScreen === 'Forms' ||
             currentScreen === 'Buildings' ||
             currentScreen === 'Leases' ||

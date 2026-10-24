@@ -1,14 +1,25 @@
 # PPT Project State
 
-_Generated: 2026-10-01 — routine Phase 1.6 upkeep (pm-security rotation slot; pm-cursor idx 5 → 6) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 7 → 8 (epic-82 re-checked, no material change; advances to epic-83). 4-day lag since last routine run (2026-09-27)._
+_Generated: 2026-10-19 — routine Phase 1.6 upkeep (pm-integration rotation slot; pm-cursor idx 7 → 0, wrapping) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 9 → 10 (epic-84 Documents & e-signature re-checked, all 5 stories still done, no material change). 3-day lag since 2026-10-16 run — on schedule._
+
+## Delta since last routine run (2026-10-16)
+
+- **2 PRs merged** (#3121, #3122) — both dispatcher-authored code-review follow-ups on Tier-1d signals:
+  - **#3121** reality-web auth-context transient-logout cushion (+159/-2, tests included) — resolves backlog `code-review-reality-web-auth-ctx-transient-logout` (`status: done`).
+  - **#3122** ppt-web-core useAmlDashboard AML flags (+117/-6, tests included) — resolves backlog `code-review-ppt-web-core-aml-checks-hardcoded-false` / `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (`status: done`).
+  - Zero coverage status flips (both surfaces already shipped). Evidence appended on 10a-1 for #3121 (SSO consumer hardening); #3122 maps to no coverage story (compliance epic not in current coverage map).
+- **1 new blocker (critical): #3124** — `cargo-deny advisories FAILED on dev: RUSTSEC-2026-0368 / RUSTSEC-2026-0369 (zip 8.6.0 via rust_xlsxwriter)` — this gates **every backend PR merge** on top of the still-open #2966 (swagger-ui egress) that gates backend cloud builds. Pre-claimed by dispatcher as `gh-issue-3124` (commit 62aaaa5).
+- **1 open draft PR: #3123** — api-core TOTP RNG expect panic (dispatcher-authored, follow-up on backlog signal `code-review-api-core-totp-rng-expect-panic`); no contract impact.
+- **PM-integration rotation note:** pm-integration was last run 2026-07-24 — nearly 3 months stale. The rotation hits it on wrap-around today; a fresh integration lens on the merge/build gate stack is overdue and timely given #3124.
+
+<sub>Prior upkeep note (archived): 2026-10-16 — pm-data rotation; coverage_cursor 8 → 9 (epic-83 re-checked).</sub>
 
 ## Executive summary
 
-- **Delivery: 49/49 stories done across 13 epics in coverage.** Sprint-status.yaml still shows some epics as in-progress/partial (6, 7A, 10B, 80) — that's sprint-level drift against the deeper coverage.json truth and does not reflect new regressions; a deep scan would reconcile it.
-- **7 PRs merged** in the observation window since #2991: a defense-in-depth RBAC pass (role gates, protected routes), one SSO i18n fix, one bug boundary cast, one mobile feature wiring, one cross-cutting auth-client refactor. Zero coverage status flips (all touched surfaces already shipped).
-- **Buffer-low alarm (new): `claimable=9/72`** (floor 36). Root cause is **#2966 utoipa-swagger-ui egress 403** blocking every backend PR — including all three open cross-tenant IDOR retries. Compounded by #2652 (KMP cloud builds blocked) and 11 stalled open PRs (bulk dependabot plus the 64d accounting trio).
-- **No new blockers.** Standing infra blockers (#2966, #2951, #2946, #2652) carry forward.
-- **One new noteworthy issue: #3006** — post-merge review of PR #3004 surfaced triplicated auth-header + MFA-retry logic across @ppt/api-client fetch primitives. Medium-priority refactor with security overtones.
+- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on 10a-1 (PR #3121 evidence) and all 5 epic-84 stories (cursor re-check — negative, nothing touched those surfaces).
+- **2 PRs merged** in the observation window: both frontend code-review follow-ups, both tests-included, both resolving prior backlog items.
+- **Buffer still constrained, now doubly:** #2966 (swagger-ui egress) gates backend builds; **#3124 cargo-deny** (brand new) gates backend merges even on green builds; #2652 (KMP) continues to park mobile-native work. Expect a tier-1 refresh of the IDOR retries only once BOTH #2966 and #3124 are resolved.
+- **One new high-priority issue: #3124** — classic RUSTSEC advisory on a transitive dep (`rust_xlsxwriter → zip 8.6.0`); mitigation is either a version bump or a bounded cargo-deny exception. Pre-claimed by dispatcher; needs resolution within 24-48h to avoid merge-queue starvation.
 
 ## Sprint progress
 
@@ -17,82 +28,55 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 | Epic | Sprint status | Coverage status | Shipped PRs this window |
 |---|---|---|---|
 | 6 — Announcements & Communication | in-progress (3/6)† | 6/6 done | — |
-| 7A — Basic Document Management | in-progress (2/5)† | 5/5 done | #3001 (pattern reuse: presigned S3 for fault photos — adjacent vertical) |
+| 7A — Basic Document Management | in-progress (2/5)† | 5/5 done | — |
 | 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
-| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | #2993 (reality-web SSO locale) |
-| 10B — Platform Administration | in-progress (7/7)† | 7/7 done | #2994 (ppt-web dashboard ProtectedRoute), #3002 (manager-dashboard role gate), #2995 (Home CTA role gate) |
+| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | #3121 (reality-web auth-ctx transient-logout — SSO consumer hardening) |
+| 10B — Platform Administration | in-progress (7/7)† | 7/7 done | — |
 | 80 — Dispute Resolution | partial (1/3)† | 3/3 done | — |
-| 79 — API client integration | (extended) | 4/4 done | #3004 (gdprClient + paymentMatching → shared auth) |
-| 82 — iOS Reality Portal (SwiftUI) | (extended) | 5/5 done · **last_checked 2026-10-01 (cursor re-check)** | — |
-| Cross-cutting | — | — | #2996 (automation-rule boundary cast) |
+| 79 — API client integration | (extended) | 4/4 done | — |
+| 82 — iOS Reality Portal (SwiftUI) | (extended) | 5/5 done | — |
+| 83 — Portal Integrations | (extended) | 3/3 done | — |
+| 84 — Documents & e-signature | (extended) | 5/5 done · **last_checked 2026-10-19 (cursor re-check)** | — |
+| 85 — Build/CI configuration | (extended) | 2/2 done | — |
+| 9 — 2FA/TOTP | (extended) | 1/1 done | — |
+| Cross-cutting | — | — | #3122 (ppt-web AML dashboard flags — compliance epic not in coverage) |
 
 † sprint-status.yaml drift against coverage.json — no action required this run; deep scan will reconcile.
 
-## Shipped since last run (7 PRs merged since #2991)
+## Shipped since last run (2 PRs merged)
 
-- **#2993** — reality-web SSO locale: fix locale propagation through SSO consumer path (6 locales)
-- **#2994** — ppt-web dashboard ProtectedRoute: tighten route-level RBAC on admin/manager dashboard
-- **#2995** — Home CTA role gate: role-based visibility on Home dashboard CTAs
-- **#2996** — automation-rule boundary cast: fix integer-boundary cast in automation rule evaluator
-- **#3001** — mobile fault photos presigned: wire RN mobile fault reporting to presigned S3 upload (parity with 7a-1 upload pattern on a new vertical)
-- **#3002** — manager dashboard role gate: role gate on manager dashboard entry
-- **#3004** — gdprClient + paymentMatching via shared auth: migrate two @ppt/api-client fetch primitives onto shared authenticatedFetchJson (post-merge review surfaced #3006)
+- **#3121** — reality-web auth-context transient-logout cushion: don't logout on transient 401 from reality-server /auth/refresh (resolves backlog `code-review-reality-web-auth-ctx-transient-logout`; +159/-2 with tests)
+- **#3122** — ppt-web-core useAmlDashboard AML flags: AML risk flags no longer hardcoded false / risk factors map now guarded (resolves backlog `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map`; +117/-6 with tests)
 
-## Buffer-low alarm
+## Blockers (1 new, carried)
 
-- Dispatcher reports **claimable = 9 / 72 open** (floor 36). Buffer below half.
-- Root cause 1 — **#2966 utoipa-swagger-ui egress 403** in the cloud runner. Every backend-touching dispatcher task is `CLOUD-BUILD-BLOCKED`. The 3 IDOR retries (#2944/#2945/#2946), the integrations-webhook refactor, and the AUTHED_QUERY_KEY_ROOTS session-leak item are all parked here.
-- Root cause 2 — **#2652 mobile-native/KMP cloud build gate** still open; 6 KMP items are blocked downstream.
-- Root cause 3 — reviewer starvation on the accounting trio **#2559** (PAY by Square, 64d) + **#2555** (invoice lifecycle, 64d). Not infra, but holds reviewer slots.
+- **#3124 (NEW, high)** — cargo-deny advisories FAILED on dev: RUSTSEC-2026-0368 / RUSTSEC-2026-0369 on zip 8.6.0 via rust_xlsxwriter. Blocks every backend PR merge. Owner: pm-security. Pre-claimed by dispatcher.
+- **#2966** — api-server utoipa-swagger-ui egress 403 (carried, high). Blocks backend cloud builds. Owner: pm-devops.
+- **#2946 / #2944 / #2945** — cross-tenant IDOR retries, all parked behind #2966 (and now additionally #3124). Owner: pm-security.
+- **#2652** — mobile-native/KMP cloud builds blocked. Owner: pm-devops.
+- **#2951** — mobile RN jest-expo version rot. Owner: pm-devops.
 
-## Blockers (carried, none new)
+## What's next (top 5 from the roadmap)
 
-- **#2966** — api-server utoipa-swagger-ui egress 403 (NEW top blocker — surfaced as highest-leverage infra fix). Owner: pm-devops.
-- **#2951** — mobile RN jest-expo version rot. Blocks mobile-rn code-review items from landing. Owner: pm-devops.
-- **#2946** — portfolio_analytics cross-tenant IDOR (retry 2/2 draft open as `gh-issue-2946-retry2`; blocked by #2966). Owner: pm-security.
-- **#2652** — mobile-native/KMP builds unlandable in cloud runner. Owner: pm-devops.
+1. **Resolve #3124 cargo-deny advisories** (bump rust_xlsxwriter or bounded cargo-deny exception for RUSTSEC-2026-0368/0369) — owner: pm-security — **gates every backend merge today**.
+2. **Unblock #2966 swagger-ui egress** — owner: pm-devops — gates every backend cloud build; combined with #3124 is the two-key lock keeping the IDOR tier parked.
+3. **Land #2946 portfolio_analytics IDOR fix** (retry 2/2 draft open) — owner: pm-security — unblocks on resolution of #2966 + #3124.
+4. **#3006 unify triplicated auth-header + MFA-retry** in @ppt/api-client — owner: pm-tech-lead — security-overtones refactor, carried.
+5. **Document the reality-server SSO consumer transient-401 contract** (PR #3121 cushion) in docs/api/README.md so client/server treat transient vs permanent 401 symmetrically — owner: pm-integration (new).
 
-## Infra follow-ups needed per #2966
+## Role focus today: pm-integration (+ pm-scrum-master always-on)
 
-1. **Decide vendoring vs egress-allowlist vs base-image-cache** for `utoipa-swagger-ui` crates.io assets. Any of the three unblocks all backend security PRs. (pm-devops)
-2. **Pin + test** the chosen path in the cloud runner's base image. (pm-devops)
-3. **Backfill a dispatcher trigger** that re-mints `gh-issue-294[456]-retryN` the moment the egress fix lands, so the IDOR fixes get first slot on the newly-unblocked runner. (pm-scrum-master + pm-devops)
-4. **Add CI alert** on egress 403 from crates.io so the next instance of this class surfaces in minutes, not days. (pm-devops)
+- **pm-integration** (3-month stale rotation): The integration-contract surface is quiet (both merged PRs are client-side cushions, no OpenAPI change). The current merge-queue blocker (#3124) is itself an integration-level failure mode — the external advisory feed vetoes the merge path even when the internal change is clean. Three concrete follow-ups opened:
+  1. Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift (medium).
+  2. Surface the RUSTSEC-exception policy in the cargo-deny CI gate description (medium, blocked on #3124).
+  3. Document the reality-server SSO consumer transient-401 contract (low).
+- **pm-scrum-master**: Mild week — 2 PRs merged, 1 draft open, 1 critical new issue. The twin merge-gate (#2966 + #3124) is the only noteworthy change in delivery posture since the 2026-10-16 run.
 
-## Noteworthy new issue
+## Coverage (upkeep this run — 2026-10-19)
 
-- **#3006** — unify triplicated auth-header + MFA-retry in @ppt/api-client fetch primitives. Surfaced by post-merge review of PR #3004. Three copies of the same auth logic will drift (one will forget MFA-retry on a 403; one will send a stale token; one will log the token). Classic refactor-with-security-overtones target. Medium priority, owner pm-tech-lead.
-
-## Role analysis — pm-security (2026-10-01)
-
-**Open security-tagged items in backlog + issues (snapshot)**
-
-- **Tier-1 blocker: #2946 portfolio_analytics cross-tenant IDOR** — still open. Retry 2/2 draft branch `gh-issue-2946-retry2` is pushed but has no landed PR; last `failed-no-pr` cycle 2026-09-21. The underlying issue is that the handler computes `org_id` then discards it before the SQL query — a one-line fix in principle, but the implementer branch keeps failing to produce a PR because the cloud runner can't compile api-server (#2966). The security tier does not change until the fix lands.
-- **Tier-1 companions: #2944 + #2945** — same shape (cross-tenant IDOR), same parking lot behind #2966. Both at retry 1/2.
-- **Standing security risks** (carried, no change): #2485 layout webhook replay, #2486 mobile layout-cache cross-tenant, #2483 add_evidence dispute sub-resource IDOR (awaiting #2490), #2574 SSO CSRF state fix non-functional (owner pm-mobile).
-
-**Security-adjacent signals from the 7 merged PRs (all positive this window)**
-
-- **PR #2994** — ppt-web dashboard ProtectedRoute hardened: route-level RBAC gate added on the manager/admin dashboard entry. Reduces the surface where a client-side session with a stale role could reach an admin dashboard.
-- **PR #3002** — manager-dashboard role gate: companion to #2994 on the server-fetched side of the manager dashboard. Defense in depth.
-- **PR #2995** — Home CTA role gate: Home dashboard CTAs now hidden for roles that cannot act on them. Low security value but removes a social-engineering vector.
-- **PR #2993** — reality-web SSO locale: a correctness fix on the SSO consumer path. Not a security change per se, but touches the SSO exchange — no regression spotted; evidence appended on 10a-1 (OAuth authorization server) story.
-
-**Medium-priority refactor-with-security-overtones**
-
-- **#3006** — triplicated auth-header + MFA-retry. The security angle is that drift between the three copies is almost certain over time. One copy will omit MFA-retry on a 403 (user locked out). One will log the token on a transient error. One will send a stale token after refresh. Consolidate into a single `authenticatedFetchJson` primitive and add a biome rule forbidding new fetch primitives that do not import from the shared module.
-
-**Suggested next security actions (3)**
-
-1. **Unblock #2966 as a security dependency** — this is the single highest-leverage security move this cycle because it is the sole thing standing between the 3 open IDOR retries and a merged PR. Treat it as a security-tier work item routed to pm-devops with explicit security owner-sign-off.
-2. **Hand-land #2946 locally** if #2966 slips another week — fix is one-line (restore the org_id filter in the portfolio_analytics query); add a cross-tenant repro test that fails on main as the IG3 anchor; push a reviewed PR manually to break the retry loop. Document the manual-land path for IDOR tier-1 bugs that get stuck behind cloud-build gates.
-3. **Open #3006 as a tracked refactor** — fold the unify-auth-header work into the next frontend sprint; add the biome rule as part of the fix PR; audit the remaining @ppt/api-client fetch primitives for the same pattern (prediction: 1-2 more latent sites).
-
-## Coverage (upkeep this run — 2026-10-01)
-
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-01T04:30:00Z`, no re-scan.
-- **Epic re-check: epic-82 (cursor idx 7)** — all 5 stories (82-1..82-5) still `done`; no PR in the 2026-09-28..10-01 window touched iOS SwiftUI RealityPortalApp surfaces. `last_checked = 2026-10-01` stamped on all 5. Evidence line appended on 82-5-inquiries-account noting the negative check.
-- **Merged-PR evidence appended** on 10b-1-organization-management-dashboard (PR #2994 + #3002), 10a-1-oauth-authorization-server (PR #2993), 79-1-api-client-integration (PR #3004), 7a-1-document-upload-metadata (PR #3001, pattern reuse). No status flips.
-- **`coverage_cursor` advances 7 → 8** (epic-82 → epic-83 next run).
-- **`pm_cursor` advances 5 → 6** (pm-security → next role in rotation). role_last_run["pm-security"] = 2026-10-01.
-- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, already queued).
+- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-19T04:00:00Z`, no re-scan.
+- **Epic re-check: epic-84 Documents & e-signature (cursor idx 9)** — all 5 stories (84-1..84-5) still `done`; no PR in the 2026-10-18..2026-10-19 window touched S3 presigned / e-signature email / price-tracking / notification-trigger / pgvector RAG surfaces. `last_checked = 2026-10-19` stamped on all 5. Negative-check evidence appended on each.
+- **Merged-PR evidence appended** on 10a-1-oauth-authorization-server for PR #3121 (SSO consumer hardening). PR #3122 (AML dashboard flags) does not map to a coverage story — compliance epic is not in the current coverage map; backlog signal was the only tracking point and is now done.
+- **`coverage_cursor` advances 9 → 10** (epic-84 → epic-85 next run).
+- **`pm_cursor` advances 7 → 0** (pm-integration → pm-tech-lead next; rotation wraps). role_last_run["pm-integration"] = 2026-10-19.
+- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, already queued elsewhere).

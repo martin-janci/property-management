@@ -238,25 +238,120 @@ async fn setup(pool: PgPool, slug: &str) -> Fixture {
 // portfolio-analytics endpoints
 // ===========================================================================
 
-// pa_get_portfolio_summary_succeeds deleted (BIT-567): get_portfolio_summary repo query
-// references portfolio_aggregated_metrics columns total_revenue and estimated_portfolio_value
-// which do not exist in migration 00091.
+// Restored (issue #3083): the portfolio-summary and portfolio-aggregated-metrics
+// happy-path success cases, deleted earlier under the bogus "BIT-567" label, now
+// that migration 00237 reconciles the portfolio_aggregated_metrics schema drift
+// (ADDs total_buildings, occupied_units, portfolio_occupancy_rate, total_revenue,
+// total_expenses, currency, avg_rent_per_unit, estimated_portfolio_value,
+// revenue_growth_pct, ... and realigns the unique_org_period constraint to include
+// period_end so the ON CONFLICT upsert resolves instead of raising 42P10).
+// These 200-controls are the happy-path counterpart to the deny-path assertions in
+// portfolio_analytics_cross_org_idor_tests.rs (T1b/T2b pattern, PR #3081): they catch
+// a regression to "500 for everyone" (or a 42P10 on calculate) rather than passing
+// vacuously the way a deny-only suite would.
 //
-// pa_{list,create,get,update,delete}_benchmarks deleted (BIT-567): portfolio_benchmarks
-// table in migration 00091 is missing columns min_acceptable/max_acceptable/scope/
-// property_type/region/is_industry_standard/source_name that the repo queries reference.
-//
-// pa_{list,upsert,get}_property_metrics_succeeds deleted (BIT-567): property_performance_metrics
-// INSERT/SELECT references total_revenue, gross_rental_income, average_lease_term_months,
-// other_income columns not present in migration 00091.
-//
-// pa_{get,calculate}_portfolio_metrics_succeeds deleted (BIT-567): portfolio_aggregated_metrics
-// SELECT references total_buildings, occupied_units, portfolio_occupancy_rate, total_revenue,
-// total_expenses, avg_rent_per_unit, estimated_portfolio_value, revenue_growth_pct etc.
-// that are absent from migration 00091.
-//
-// All pa_* deletions are product-level schema gaps — the analytics feature was designed
-// but the column set in the migrations never matched the repository queries.
+// Still deleted (separate, unreconciled drift — NOT this issue):
+//   pa_{list,create,get,update,delete}_benchmarks — portfolio_benchmarks (migration
+//     00091) is missing min_acceptable/max_acceptable/scope/property_type/region/
+//     is_industry_standard/source_name that the repo queries reference. Restoring
+//     these needs its own portfolio_benchmarks reconciliation migration.
+//   pa_{list,upsert,get}_property_metrics_succeeds — the property_performance_metrics
+//     path (reconciled by 00236) is already exercised as a boundary by the IDOR
+//     suite's T1b/T2b 200-controls (PR #3081); dedicated success cases can follow.
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn pa_get_portfolio_summary_succeeds(pool: PgPool) {
+    let f = setup(pool, "pa-get-summary").await;
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .get("/api/v1/portfolio-analytics/summary")
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &f.org_id.to_string())
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa get portfolio summary: {}",
+        resp.text()
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn pa_calculate_portfolio_metrics_succeeds(pool: PgPool) {
+    let f = setup(pool, "pa-calc-metrics").await;
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .post("/api/v1/portfolio-analytics/metrics/calculate")
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &f.org_id.to_string())
+                .json(serde_json::json!({
+                    "period_type": "monthly",
+                    "period_start": "2024-01-01",
+                    "period_end": "2024-12-31"
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa calculate portfolio metrics: {}",
+        resp.text()
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn pa_get_portfolio_metrics_succeeds(pool: PgPool) {
+    let f = setup(pool, "pa-get-metrics").await;
+    // Calculate first so an aggregated row exists for the period; the GET then
+    // exercises the reconciled SELECT projection (200 rather than 404/500).
+    let calc = f
+        .app
+        .execute(
+            f.app
+                .post("/api/v1/portfolio-analytics/metrics/calculate")
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &f.org_id.to_string())
+                .json(serde_json::json!({
+                    "period_type": "monthly",
+                    "period_start": "2024-01-01",
+                    "period_end": "2024-12-31"
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        calc.status,
+        StatusCode::OK,
+        "pa calculate (precondition): {}",
+        calc.text()
+    );
+
+    let resp = f
+        .app
+        .execute(
+            f.app
+                .get(
+                    "/api/v1/portfolio-analytics/metrics?period_start=2024-01-01&period_end=2024-12-31",
+                )
+                .bearer(&f.token)
+                .header("X-Tenant-ID", &f.org_id.to_string())
+                .build(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "pa get portfolio metrics: {}",
+        resp.text()
+    );
+}
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "BIT-622: list_comparisons repo SELECTs a `name` column that does not exist in \

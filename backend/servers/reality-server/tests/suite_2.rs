@@ -21,6 +21,8 @@ mod portal_listings_my_list_analytics_tests;
 mod price_map_tests;
 #[path = "suites/raw_pool_audit_tests.rs"]
 mod raw_pool_audit_tests;
+#[path = "suites/realtors_happy_path_tests.rs"]
+mod realtors_happy_path_tests;
 #[path = "suites/reports_tests.rs"]
 mod reports_tests;
 #[path = "suites/saved_searches_authz_tests.rs"]
