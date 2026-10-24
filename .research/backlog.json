@@ -13001,6 +13001,110 @@
       "created_at": "2026-10-23",
       "updated_at": "2026-10-23",
       "plan": null
+    },
+    {
+      "id": "refactor-churn-backend-servers-reality-server-src-routes-price_map.rs",
+      "title": "Churn hotspot: backend/servers/reality-server/src/routes/price_map.rs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3146"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs — 285 lines this run via PR #3146"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-backend-servers-api-server-src-services-push_fanout.rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/push_fanout.rs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3145"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs — 135 lines this run via PR #3145",
+        "cumulative re-emit (score_delta zeroed per G4)",
+        "push_fanout.rs runs_seen 2→3 (last_seen=2026-09-20, now +135 lines via #3145 HTTP-client build no-panic refactor)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-frontend-apps-reality-web-src-app-[locale]-agency-[slug]-page.tsx",
+      "title": "Churn hotspot: frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3144 + PR #3151"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — 24 lines this run via PR #3144, PR #3151"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-3144-reality",
+      "title": "Screen-map drift: reality-web PR #3144 touched agency route without updating docs/screens/reality/agency-profile.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3144"
+      ],
+      "evidence": [
+        "PR #3144 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx but did not update docs/screens/reality/agency-profile.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-3151-reality",
+      "title": "Screen-map drift: reality-web PR #3151 touched agency route without updating docs/screens/reality/agency-profile.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3151"
+      ],
+      "evidence": [
+        "PR #3151 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx but did not update docs/screens/reality/agency-profile.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,219 @@
+{
+  "generated_at": "2026-10-24T22:50:00Z",
+  "lag_hours": 20,
+  "lag_days": 0,
+  "run_summary": {
+    "merged_prs": 8,
+    "merged_pr_range": "#3144-#3156",
+    "open_prs_touched": 13,
+    "issues_new_or_updated": 5,
+    "commits_on_dev": 33,
+    "non_routine_commits": 8,
+    "trigger_payload": "buffer-low: claimable=9/72 - refill planner (merge pipeline deadlocked on human review, see #3131)"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3146",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs — 285 lines this run via PR #3146"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3145",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs — 135 lines this run via PR #3145",
+        "cumulative re-emit (score_delta zeroed per G4)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3144 + PR #3151",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx — 24 lines this run via PR #3144, PR #3151"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "PR #3145",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "push_fanout.rs runs_seen 2→3 (last_seen=2026-09-20, now +135 lines via #3145 HTTP-client build no-panic refactor)"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3144",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3144 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx but did not update docs/screens/reality/agency-profile.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3151-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3151",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3151 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx but did not update docs/screens/reality/agency-profile.md"
+      ]
+    },
+    {
+      "id": "dx-merge-pipeline-dispatcher-self-approve-deadlock",
+      "type": "stalled-review",
+      "source": "Issue #3131 + buffer-low payload",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Trigger payload 2026-10-24: buffer-low claimable=9/72 — merge pipeline deadlocked on human review",
+        "Issue #3131 open since 2026-10-19: dispatcher bot cannot self-approve its own PRs; 13 open draft PRs this run all labelled needs-human-review",
+        "Operator action required (branch protection / second identity); process signal, score_delta=0"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-24.md && head -1 matches # 2026-10-24",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advances vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with non-zero score",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no backlog score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; adversarial-pass check vacuous",
+      "observed": "0 new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regenerated from backlog.json this run",
+      "observed": "regenerated",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed; cursors advance all",
+      "observed": "none failed",
+      "expected": "none failed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "no plan touched",
+      "expected": "no plan touched"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "22 >= 22",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regenerated this run",
+      "observed": "regenerated",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <= 3 (zero this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate - screen-map-drift signals are confidence=medium (heuristic); below the high-confidence bar for Phase 5"
+}
