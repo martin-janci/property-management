@@ -797,6 +797,19 @@
       "error": "Angebote konnten nicht geladen werden.",
       "empty": "Sie haben noch keine Angebote veröffentlicht.",
       "createFirst": "Erstellen Sie Ihr erstes Angebot"
+    },
+    "agencyProfile": {
+      "loading": "Wird geladen…",
+      "notFound": "Agentur nicht gefunden.",
+      "verified": "Verifiziert",
+      "about": "Über die Agentur",
+      "team": "Unser Team ({count})",
+      "activeListings": "Aktive Angebote ({count})",
+      "noListings": "Keine aktiven Angebote.",
+      "rentSuffix": "/Mon.",
+      "contact": "Kontakt",
+      "visitWebsite": "Website besuchen",
+      "license": "Lizenz: {number}"
     }
   },
   "search": {

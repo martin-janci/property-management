@@ -797,6 +797,19 @@
       "error": "Failed to load listings.",
       "empty": "You haven't published any listings yet.",
       "createFirst": "Create your first listing"
+    },
+    "agencyProfile": {
+      "loading": "Loading…",
+      "notFound": "Agency not found.",
+      "verified": "Verified",
+      "about": "About the agency",
+      "team": "Our team ({count})",
+      "activeListings": "Active listings ({count})",
+      "noListings": "No active listings.",
+      "rentSuffix": "/mo",
+      "contact": "Contact",
+      "visitWebsite": "Visit website",
+      "license": "License: {number}"
     }
   },
   "search": {
