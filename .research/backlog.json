@@ -12991,6 +12991,53 @@
       "created_at": "2026-10-23",
       "updated_at": "2026-10-23",
       "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "title": "docs/screens/reality drift: PR #3144 touched reality-web agency route without a screen-doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3144"
+      ],
+      "evidence": [
+        "PR #3144 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (reality-web app/** route) without updating any docs/screens/reality/*.md",
+        "Heuristic caveat: the change is color sanitization only (sanitizeCssValue through the agency linear-gradient) — not a route or flow change. Likely false positive; screen doc has no meaningful delta.",
+        "Nearest matching doc: docs/screens/reality/agency-profile.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-neighbors-search-hardcoded-en",
+      "title": "mobile-rn: hardcoded English headers/subtitles/search placeholders in Neighbors/Messages/Announcements",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-23 mobile-rn"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx:184/187/195 — header literal, subtitle template, search placeholder all hardcoded English though file otherwise uses t() for empty/retry/load strings.",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:125 and announcements/AnnouncementsScreen.tsx:244 — `Search messages…` / `Search announcements...` hardcoded English.",
+        "@ppt/mobile is react-i18next; net-new relative to the 9-done mobile-rn i18n-remediation track. Fix: wrap in t() with new keys and add to locale bundles."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "created_at": "2026-10-24",
+      "updated_at": "2026-10-24",
+      "plan": null
     }
   ]
 }

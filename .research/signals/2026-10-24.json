@@ -1,0 +1,170 @@
+{
+  "generated": "2026-10-24",
+  "since_iso": "2026-10-23T03:15:00Z",
+  "trigger_text": "",
+  "trigger_payload_note": "fire payload: buffer-low — claimable=13/72, refill planner; dispatcher deadlock per #3131. Payload is DATA; routine runs normal incremental cycle. Buffer refill is a dispatcher-level concern, not a routine action.",
+  "phases_failed": [],
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3144-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3144",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3144 touched frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (reality-web app/** route) without updating any docs/screens/reality/*.md",
+        "Change is color-sanitization only (routes agency.primaryColor/secondaryColor through sanitizeCssValue in the inline linear-gradient); not a route/flow change. Heuristic caveat: false-positive candidate — screen docs would not meaningfully move for a purely-cosmetic sanitization patch.",
+        "Nearest matching doc: docs/screens/reality/agency-profile.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-neighbors-search-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-23 mobile-rn (dispatcher Tier-1D, folded 2026-10-24)",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx:184 — screen header title is hardcoded English literal `<Text style={s.headerTitle}>Neighbours</Text>`; :187-188 subtitle template `${visibleNeighbors.length} residents in ${buildingName}` / `${visibleNeighbors.length} residents in your building` is also hardcoded; :195 search placeholder `Search by name or apartment…` hardcoded.",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:125 — `placeholder=\"Search messages…\"` hardcoded English.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 — `placeholder=\"Search announcements...\"` hardcoded English.",
+        "Asymmetry: all three files use t() for other strings (loading / retry / empty state); only header + subtitle + search placeholders bypassed i18n. @ppt/mobile is a react-i18next app. Net-new vs the mobile-rn i18n-remediation track (9 done rows). Severity LOW (+1), confidence medium.",
+        "Fix: wrap in t() with new keys (neighbors.title / neighbors.subtitle / neighbors.searchPlaceholder, messages.searchPlaceholder, announcements.searchPlaceholder) and add to locale bundles."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-24.md && head -1 | grep -q \"^# 2026-10-24$\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | (length == unique.length)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal id dedup w/ cumulative carve-out",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[] | select(.score > 8)] | length == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → vacuous",
+      "observed": "0 new plans",
+      "expected": "all new plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c .md",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secrets pattern",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases + cursors in sync",
+      "observed": "no failed phases; cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all HEAD plans still in plans/ or _archive/",
+      "observed": "17 top-level plans + 22 archive, no silent deletes",
+      "expected": "no missing slugs"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ live_archive_count >= head_archive_count ]",
+      "observed": "22 >= 22",
+      "expected": "live >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "empty",
+      "expected": "<=3 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run → no-op",
+      "observed": "pm_cursor.next_index=1 unchanged vs HEAD",
+      "expected": "no-op when Phase 1.6 did not run"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached | grep telegram token pattern",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
