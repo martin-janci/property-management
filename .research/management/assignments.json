@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-24T04:33:59Z",
+  "generated": "2026-10-24T04:40:49Z",
   "assignments": [
     {
       "task_id": "screen-map-drift-pr-2994-ppt",
@@ -356,18 +356,18 @@
     {
       "task_id": "code-review-reality-web-agency-href-scheme-xss",
       "branch": "auto-impl/code-review-reality-web-agency-href-sche-be253f44",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-24T04:30:56Z",
-      "last_updated": "2026-10-24T04:30:56Z",
-      "status_changed_at": "2026-10-24T04:30:56Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-10-24T04:40:49Z",
+      "status_changed_at": "2026-10-24T04:40:49Z",
+      "pr_number": 3151,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3151",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3151 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=added sanitizeHref http(s) allowlist helper; wired agency.website + listing virtualTour/floorPlan hrefs; IG3 two-commit split; verify green (biome+typecheck+332 tests)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
