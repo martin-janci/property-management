@@ -1,0 +1,65 @@
+{
+  "generated": "2026-10-25T00:00:00Z",
+  "source_run": "dispatcher Phase 2.6 Tier-1d demand-driven dev-review generator per .claude/skills/ppt-dev-review/SKILL.md - static single-segment rotating code review, no compilation / no test execution / no branch checkout (cloud runner: file reading + grep only). Claim buffer starved (claimable=6 < floor=36) and promotion sources exhausted; standing routine requested fresh review vectors. DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; NO git add/commit/push and NO branch/checkout performed - the orchestrator folds .research/** deltas into its Phase 6 commit. Only .research/signals/** is touched; .research/management/** (assignments.json, action-list.json, review_cursor advance) is owned by the dispatcher and left untouched. SEGMENT SELECTION: no Phase-1 churn list was supplied to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. state.json review_cursor raw dates: api-handlers=2026-10-19, mobile-rn=2026-10-19 (tied oldest), api-core=2026-10-22, ppt-web-ui=2026-10-22, ppt-web-core=2026-10-22, reality-web=2026-10-23 (ALREADY swept today - see 2026-10-25-reality-web-tier1d.json), reality-server=2026-10-25, mobile-native-kmp=2026-10-25 (ALREADY swept today - see 2026-10-25-mobile-native-kmp-tier1d.json). Tie between api-handlers and mobile-rn at 2026-10-19; api-handlers chosen per SKILL Step-1 fallback priority (most security-critical) and because it is listed first in the segment map. Saturation check: api-handlers had only 1 open code-review-finding row (status==open) in backlog.json (< 3), so NOT saturated (it was saturated on 2026-10-23 with 3 open rows; those have since been resolved). Expert: rust (primary) + security (secondary) per SKILL Step 2. Segment root in this repo is backend/servers/api-server/src/routes/ (the SKILL's 'backend/api-server/src/handlers/' path predates the servers/ + routes/ layout).",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["rust", "security"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Static-analysis review only; no code changes proposed. Both findings are mechanical, low-risk refactors (route raw sqlx::Error Display through an existing sanitizing helper instead of into the response body) that a follow-up implementer can land without schema or behavior changes.",
+  "review_notes": [
+    "NET-NEW FINDINGS: 2 (both the same info-disclosure class; emitted as 1 systemic + 1 concrete worst-instance to give the backlog a landable starting target). Cap is 3; the segment is otherwise clean on the standard rust/security patterns.",
+    "unwrap()/expect() sweep (SKILL rust pattern): 184 raw hits in routes/, but every non-test, non-const hit resolved to safe code. All unwrap/expect that touch parsed input or DB rows are inside #[cfg(test)] modules (auth/mod.rs:1512/1532, layout/webhook.rs:450/462, messaging.rs:2080, integrations/webhook/airbnb.rs:513, reports/helpers.rs:343, voice_webhooks.rs:2183/2326/2426/2427/2614). The only production unwraps are compile-safe consts: integrations/install.rs:2184/2211 NaiveDate::from_ymd_opt(2025,6,1).unwrap() (statically-valid date). No finding.",
+    "todo!()/unimplemented!()/unreachable!() sweep: zero hits in the segment. unsafe sweep: zero `unsafe` blocks.",
+    "JWT sweep (SKILL security pattern): voice_webhooks.rs verify_google_id_token (decode::<serde_json::Value> at line 1455) is correctly FAIL-CLOSED - Validation::new(RS256) with set_audience(exact project id), set_issuer(GOOGLE_ISSUERS), validate_exp=true, validate_nbf=true; signature verified against cached Google JWKS. No insecure_disable_signature_validation anywhere in routes/. No finding.",
+    "CORS sweep: no AllowAny / mirror_request in the segment. No finding.",
+    "secret-in-logs sweep: no tracing/log call emits a password/token/secret/api_key VALUE. auth/password_reset.rs logs user_id/status and common::email_log_hash(&req.email) (hashed), never the email or token; the mfa enroll/registration logs are error-context messages (error = %e + a static string), not secret values. No finding.",
+    "StatusCode::OK-on-error sweep: every Ok(StatusCode::OK) reviewed (automation.rs:365 toggle_rule, emergency/broadcasts.rs:151 deactivate, outages.rs:832, unit_residents.rs:838) is on a genuine success branch; error/not-found branches correctly return 500/404. health.rs:276 returns 200 for Degraded with an explicit comment (intentional). No finding.",
+    "IDOR / tenant-scoping sweep: inline sqlx in routes/ is either (a) platform-admin scoped (admin/*, cross-tenant by design), (b) per-user scoped by the caller's own user_id (admin/mfa/*, mfa.rs - correct for 2FA), or (c) run on an RLS-enforced connection (rls.conn()) with an ADDITIONAL explicit ownership guard - e.g. messaging.rs require_message_in_thread (line 1865) and require_owned_message_in_thread (line 1896) verify thread_id and sender_id after fetch. No missing-tenant-WHERE IDOR found.",
+    "FINDING SOURCE (the 2 emitted): compliance.rs:67 defines a db_error() helper whose doc-comment explicitly states 'Compliance handlers must never surface raw SQLx / DB errors to the caller: their Display output leaks table and column names, SQL fragments, and connection details' - it logs server-side via tracing::error! and returns an opaque 'Internal server error'. This is the repo's documented convention and is guarded by the regression test compliance.rs:907 db_error_does_not_leak_raw_detail_to_client. DESPITE that convention, grep found 135 sites in routes/ that build ErrorResponse::new(\"DB_ERROR\", e.to_string()) - i.e. serialize the raw sqlx::Error Display straight into the JSON response body - plus 562 INTERNAL_SERVER_ERROR responses echoing e.to_string(). Offending modules include budgets.rs, emergency/{protocols,statistics,broadcasts,contacts,drills,incidents}.rs, subscriptions.rs, feature_packages.rs, messaging.rs, and legal.rs. The legal.rs:105 db_error(msg,e) helper is the clearest instance: it is positioned as the module's error-mapper, logs the error server-side with tracing::error!, and THEN still returns e.to_string() to the client - a sanitizer that does not sanitize."
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "Convention: backend/servers/api-server/src/routes/compliance.rs:67 db_error() documents that raw sqlx::Error Display 'leaks table and column names, SQL fragments, and connection details' and returns an opaque 500; regression-tested at compliance.rs:907 (db_error_does_not_leak_raw_detail_to_client).",
+        "Violation: ~135 sites in backend/servers/api-server/src/routes/ build ErrorResponse::new(\"DB_ERROR\", e.to_string()) - serializing the raw sqlx::Error Display into the HTTP response body - and ~562 INTERNAL_SERVER_ERROR responses echo e.to_string() to the client.",
+        "Affected modules include budgets.rs, emergency/{protocols,statistics,broadcasts,contacts,drills,incidents}.rs, subscriptions.rs, feature_packages.rs, messaging.rs (e.g. require_message_in_thread error map ~line 1871).",
+        "Fix: route these through a sanitizing helper (log e server-side via tracing::error!, return an opaque 500 body) exactly as compliance.rs / my_units / unit_residents already do; no behavior or schema change."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs",
+        "backend/servers/api-server/src/routes/emergency/broadcasts.rs",
+        "backend/servers/api-server/src/routes/messaging.rs",
+        "backend/servers/api-server/src/routes/subscriptions.rs",
+        "backend/servers/api-server/src/routes/feature_packages.rs"
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-legal-rs-db-error-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/legal.rs:105 fn db_error(msg, e) logs the error server-side (tracing::error!) and then returns Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) - leaking the raw sqlx::Error Display (table/column names, SQL fragments) to the API client.",
+        "This directly contradicts the repo's documented sanitize-DB-errors convention in backend/servers/api-server/src/routes/compliance.rs:67 (regression-tested at compliance.rs:907). A helper named db_error that is the module's error-mapper is the natural single-point fix.",
+        "Fix: change the returned ErrorResponse message to a static opaque string (e.g. \"Internal server error\"); the server-side tracing::error! already preserves the detail for operators."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/legal.rs"
+      ],
+      "expert": "security"
+    }
+  ]
+}
