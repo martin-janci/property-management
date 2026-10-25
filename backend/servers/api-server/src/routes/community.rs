@@ -236,7 +236,7 @@ pub fn router() -> Router<AppState> {
         // Groups (Story 37.1)
         .route("/buildings/{building_id}/groups", get(list_groups))
         .route("/buildings/{building_id}/groups", post(create_group))
-        .route("/groups/{id}", get(get_group))
+        .route("/groups/{id}", get(get_group).delete(delete_group))
         .route("/groups/{id}/join", post(join_group))
         .route("/groups/{id}/leave", post(leave_group))
         // Posts (Story 37.2)
@@ -441,6 +441,91 @@ pub async fn get_group(
             Json(ErrorResponse::new("NOT_FOUND", "Group not found")),
         )),
     }
+}
+
+/// Delete a community group.
+///
+/// Destructive and cascading: removing the group also removes its members,
+/// posts, post reactions, comments and event RSVPs (via `ON DELETE CASCADE`).
+/// Authorization is enforced server-side — the caller must be the group owner
+/// (its `created_by` creator or an `owner`-role member) or a manager-tier
+/// member of the owning organization; the client-side `isOwner` flag is never
+/// trusted. A cross-tenant or absent id is rejected with **404** (same opaque
+/// body as the other group routes, so the id space is not an existence
+/// oracle); an authenticated non-owner gets **403**.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/community/groups/{id}",
+    params(GroupIdPath),
+    responses(
+        (status = 204, description = "Group deleted"),
+        (status = 403, description = "Caller may not delete this group"),
+        (status = 404, description = "Group not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Community"
+)]
+pub async fn delete_group(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(path): Path<GroupIdPath>,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    use db::models::PrincipalKind;
+    use db::repositories::MembershipRepository;
+
+    // Tenant scope first: a cross-tenant or absent id is a 404 (opaque body,
+    // no existence oracle) before any ownership is considered.
+    verify_group_access(&state, &principal, path.id).await?;
+    let org_id = require_org(&principal)?;
+
+    // Authorization: group owner (creator or `owner`-role member) or a
+    // manager-tier member of the owning org (platform principals bypass). The
+    // delete is destructive + cascading, so this is enforced here rather than
+    // trusting any client-supplied `isOwner`.
+    let is_owner = state
+        .community_repo
+        .user_owns_group(path.id, principal.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Group ownership lookup failed");
+            tenant_lookup_error()
+        })?;
+    let is_manager = matches!(principal.kind, PrincipalKind::Platform)
+        || MembershipRepository::new(state.db.clone())
+            .is_manager_in_org(principal.user_id, org_id)
+            .await
+            .unwrap_or(false);
+    if !is_owner && !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only the group owner or an organization manager may delete this group",
+            )),
+        ));
+    }
+
+    let deleted = state
+        .community_repo
+        .delete_group_for_org(path.id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to delete group");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to delete group",
+                )),
+            )
+        })?;
+    if deleted == 0 {
+        // Raced with a concurrent delete between the access check and here.
+        return Err(resource_not_found("Group not found"));
+    }
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// Join a community group.
