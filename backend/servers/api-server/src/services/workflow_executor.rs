@@ -356,12 +356,29 @@ impl WorkflowExecutor {
                     event.data.clone(),
                 );
 
-                if !self.evaluate_conditions(&conditions, &context)? {
-                    tracing::debug!(
-                        workflow_id = %workflow.id,
-                        "Workflow conditions not met, skipping"
-                    );
-                    continue;
+                match classify_condition_outcome(&conditions, &context) {
+                    ConditionOutcome::Run => {}
+                    ConditionOutcome::NotMet => {
+                        tracing::debug!(
+                            workflow_id = %workflow.id,
+                            "Workflow conditions not met, skipping"
+                        );
+                        continue;
+                    }
+                    ConditionOutcome::Error(e) => {
+                        // Batch isolation: a single corrupt/unparseable stored
+                        // condition fails closed for THIS workflow only (its
+                        // actions never run unguarded), but must NOT abort the
+                        // whole event — previously `evaluate_conditions(..)?`
+                        // propagated the error and silently disabled every other
+                        // automation on this event.
+                        tracing::error!(
+                            workflow_id = %workflow.id,
+                            error = %e,
+                            "Workflow condition evaluation failed; skipping this workflow (fail-closed) and continuing the batch"
+                        );
+                        continue;
+                    }
                 }
             }
 
@@ -477,6 +494,41 @@ impl WorkflowExecutor {
         context: &ActionContext,
     ) -> Result<bool, WorkflowError> {
         evaluate_conditions_list(conditions, context)
+    }
+}
+
+/// Outcome of evaluating one workflow's conditions within an event batch.
+///
+/// Used by [`WorkflowExecutor::handle_event`] to isolate per-workflow
+/// condition failures: a corrupt/unparseable stored condition fails closed for
+/// that workflow (it never runs unguarded) while leaving the rest of the
+/// event's automations to run. This is the seam that stops one bad stored
+/// condition from aborting the whole batch and silently disabling every other
+/// automation on the event.
+#[derive(Debug)]
+enum ConditionOutcome {
+    /// Conditions are satisfied — run the workflow.
+    Run,
+    /// Conditions evaluated cleanly but are not satisfied — skip this workflow.
+    NotMet,
+    /// Condition evaluation failed (corrupt/unparseable/uncomparable rule).
+    /// Fail closed for this workflow only; keep processing the batch.
+    Error(WorkflowError),
+}
+
+/// Classify a workflow's conditions for batch processing.
+///
+/// Converts the `Result` from [`evaluate_conditions_list`] into a
+/// [`ConditionOutcome`] so that a `ConditionError` becomes an isolatable
+/// `Error` variant instead of a `?`-propagated abort of the whole event batch.
+fn classify_condition_outcome(
+    conditions: &[serde_json::Value],
+    context: &ActionContext,
+) -> ConditionOutcome {
+    match evaluate_conditions_list(conditions, context) {
+        Ok(true) => ConditionOutcome::Run,
+        Ok(false) => ConditionOutcome::NotMet,
+        Err(e) => ConditionOutcome::Error(e),
     }
 }
 
@@ -1297,6 +1349,64 @@ mod tests {
             "field": "trigger.amount", "operator": "lt", "value": 10
         });
         assert!(!evaluate_conditions_list(&[unsatisfied], &ctx).unwrap());
+    }
+
+    // ------------------------------------------------------------------
+    // Batch isolation: a single workflow's corrupt/unparseable stored
+    // condition must fail closed for THAT workflow only (skip it) without
+    // aborting the whole event batch. Previously `handle_event` did
+    // `self.evaluate_conditions(..)?`, so one `ConditionError` propagated out
+    // of the loop and silently disabled every *other* automation on the event.
+    // `classify_condition_outcome` is the per-workflow decision seam that makes
+    // the error isolatable: it yields `Error` (skip, continue the batch)
+    // instead of a `?`-propagated abort.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_condition_error_is_isolated_not_propagated() {
+        let ctx = eval_ctx(serde_json::json!({ "amount": 50, "status": "open" }));
+
+        // Corrupt stored rule → classify as Error (fail-closed skip for this
+        // workflow), NOT a batch-aborting propagation.
+        let garbage = serde_json::json!({ "totally": "unknown", "shape": [1, 2, 3] });
+        assert!(
+            matches!(
+                classify_condition_outcome(&[garbage], &ctx),
+                ConditionOutcome::Error(_)
+            ),
+            "unparseable condition must be isolated as Error (skip this workflow), not abort the batch"
+        );
+
+        // A satisfied condition → Run.
+        let satisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        assert!(matches!(
+            classify_condition_outcome(&[satisfied], &ctx),
+            ConditionOutcome::Run
+        ));
+
+        // An unsatisfied condition → NotMet (clean skip, still not an Error).
+        let unsatisfied = serde_json::json!({
+            "field": "trigger.amount", "operator": "lt", "value": 10
+        });
+        assert!(matches!(
+            classify_condition_outcome(&[unsatisfied], &ctx),
+            ConditionOutcome::NotMet
+        ));
+
+        // A valid, satisfied condition followed by a corrupt one must still
+        // isolate as Error — fail-closed for this workflow (the corrupt rule
+        // cannot be skipped just because an earlier one passed), but the batch
+        // keeps going for the remaining workflows.
+        let valid = serde_json::json!({
+            "field": "trigger.amount", "operator": "gt", "value": 10
+        });
+        let garbage2 = serde_json::json!(["not", "an", "object"]);
+        assert!(matches!(
+            classify_condition_outcome(&[valid, garbage2], &ctx),
+            ConditionOutcome::Error(_)
+        ));
     }
 
     // ------------------------------------------------------------------
