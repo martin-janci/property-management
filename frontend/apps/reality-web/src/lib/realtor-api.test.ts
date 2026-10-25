@@ -170,4 +170,49 @@ describe('realtor-api request helper', () => {
       status: 502,
     });
   });
+
+  // Boundary shape validation: `request<T>` must not blindly cast a 200 body to
+  // `T`. Every endpoint in this module returns a JSON object, so a non-object or
+  // non-JSON 200 (an upstream/proxy partial body, an HTML error page served with
+  // a 200, a `null`/primitive/array body) is malformed and must be rejected at
+  // the edge with a typed RealtorApiError — mirroring the listing SSR path's
+  // `parseListingDetail` guard — instead of surfacing as an opaque property-deref
+  // crash deep in a consumer.
+  it('rejects a null 200 body as a malformed response', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => null });
+    await expect(getListing('x')).rejects.toMatchObject({
+      name: 'RealtorApiError',
+      status: 200,
+    });
+  });
+
+  it('rejects a primitive 200 body as a malformed response', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => 'oops' });
+    await expect(getListing('x')).rejects.toBeInstanceOf(RealtorApiError);
+  });
+
+  it('rejects an array 200 body as a malformed response', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => [] });
+    await expect(getListing('x')).rejects.toBeInstanceOf(RealtorApiError);
+  });
+
+  it('rejects a 200 body that is not valid JSON', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => {
+        throw new SyntaxError('not json');
+      },
+    });
+    await expect(getListing('x')).rejects.toBeInstanceOf(RealtorApiError);
+  });
+
+  it('returns a well-formed object 200 body unchanged', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: 'lst_1', title: 'Byt' }),
+    });
+    await expect(getListing('lst_1')).resolves.toEqual({ id: 'lst_1', title: 'Byt' });
+  });
 });
