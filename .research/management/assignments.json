@@ -117,6 +117,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-90f75cc2",
+      "status": "in-progress",
+      "claimed_at": "2026-10-25T20:28:52Z",
+      "last_updated": "2026-10-25T20:28:52Z",
+      "status_changed_at": "2026-10-25T20:28:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ],
   "generated": "2026-10-25T19:39:41Z"
