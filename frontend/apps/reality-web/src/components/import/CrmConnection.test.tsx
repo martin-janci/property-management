@@ -116,4 +116,46 @@ describe('AddConnectionModal — create error handling', () => {
     });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  // Credential-leak regression: an API-client rejection carries the request
+  // body (incl. the CRM apiKey) on `config.data`. The catch handler must not
+  // hand that carrier object to console.error, or the key ends up in logs.
+  it('does not log the secret-bearing payload on a create failure', async () => {
+    const SECRET = 'sk_live_SUPER_SECRET_API_KEY';
+    const leakyError = Object.assign(new Error('Request failed with status code 400'), {
+      config: { data: JSON.stringify({ credentials: { apiKey: SECRET } }) },
+      request: { body: SECRET },
+    });
+    mockUseCreateCrmConnection.mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(leakyError),
+      isPending: false,
+    } as unknown as ReturnType<typeof useCreateCrmConnection>);
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      renderModal();
+      await advanceToMappingStep();
+
+      fireEvent.click(screen.getByRole('button', { name: /createConnection/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      // Whatever got logged, the secret must never appear in any argument.
+      const loggedBlob = consoleErrorSpy.mock.calls
+        .flat()
+        .map((arg) => {
+          try {
+            return typeof arg === 'string' ? arg : JSON.stringify(arg);
+          } catch {
+            return String(arg);
+          }
+        })
+        .join(' ');
+      expect(loggedBlob).not.toContain(SECRET);
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
 });

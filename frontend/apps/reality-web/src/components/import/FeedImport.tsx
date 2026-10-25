@@ -25,6 +25,7 @@ import {
 } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toSafeLogMessage } from '@/lib/safe-error';
 
 const DEFAULT_FIELD_MAPPING: FeedFieldMapping = {
   title: 'title',
@@ -516,7 +517,7 @@ export function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose:
       });
       onClose();
     } catch (error) {
-      console.error('Failed to create feed source:', error);
+      console.error('Failed to create feed source:', toSafeLogMessage(error));
       setCreateError(t('createError'));
     }
   };
