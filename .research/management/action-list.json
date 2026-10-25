@@ -56,26 +56,6 @@
       }
     },
     {
-      "id": "gh-issue-3098",
-      "action": "Follow-up: reconcile portfolio_benchmarks schema drift + replace dangling BIT-622 test refs (PR #3087) (Closes #3098)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-16T02:33:29Z (#3098)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-16T02:33:29Z",
-      "issue_ref": {
-        "number": 3098,
-        "url": "https://github.com/martin-janci/property-management/issues/3098",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-3104",
       "action": "Portfolio/owner analytics: comparisons + dashboard summary + owner portfolio runtime drift (500s) (Closes #3104)",
       "owner_role": "pm-tech-lead",
@@ -173,23 +153,6 @@
       "backlog_ref": {
         "plan": "plans/code-review-mobile-native-kmp-inquiries-response-contract.md",
         "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
-      "action": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-22T10:33:22Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
         "vector": "bug"
       }
     },

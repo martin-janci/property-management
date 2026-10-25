@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-25T14:33:30Z",
+  "archived_at": "2026-10-25T16:36:27Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3572,6 +3572,30 @@
         "merged_pr": 2684,
         "merged_at": null,
         "at": "2026-08-15T14:24:01Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-workflow-condition-err-aborts-batch",
+      "action": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-25T16:26:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T10:33:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3154,
+        "merged_at": "2026-10-25T12:55:12Z",
+        "at": "2026-10-25T16:26:02Z"
       }
     },
     {
@@ -19262,6 +19286,33 @@
         "merged_pr": 3086,
         "merged_at": "2026-10-15T08:28:49Z",
         "at": "2026-10-15T10:25:29Z"
+      }
+    },
+    {
+      "id": "gh-issue-3098",
+      "action": "Follow-up: reconcile portfolio_benchmarks schema drift + replace dangling BIT-622 test refs (PR #3087) (Closes #3098)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-16T02:33:29Z (#3098) | gc1-reconcile 2026-10-25T16:26:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-16T02:33:29Z",
+      "issue_ref": {
+        "number": 3098,
+        "url": "https://github.com/martin-janci/property-management/issues/3098",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3107,
+        "merged_at": "2026-10-25T12:36:44Z",
+        "at": "2026-10-25T16:26:02Z"
       }
     },
     {
