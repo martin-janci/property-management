@@ -39,40 +39,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
-      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-03T04:25:31Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-violations-missing-role-authz",
-      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-11T10:27:29Z (score=3 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-11T10:27:29Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 3,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-handlers-violations-number-count-race",
       "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
       "owner_role": "pm-backend",
@@ -87,43 +53,6 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-violations-record-payment-non-atomic",
-      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-11T10:27:29Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-11T10:27:29Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "gh-issue-3069",
-      "action": "Follow-up: scope ViolationRepository::list_notifications by org (same IDOR class as #2944) (PR #2977) (Closes #3069)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-11T16:25:57Z (#3069)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-11T16:25:57Z",
-      "issue_ref": {
-        "number": 3069,
-        "url": "https://github.com/martin-janci/property-management/issues/3069",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
       }
     },
     {
@@ -166,26 +95,6 @@
       }
     },
     {
-      "id": "gh-issue-3109",
-      "action": "Follow-up: implement api-server `DELETE /community/groups/{id}` so wired frontend delete works end-to-end (PR #3101) (Closes #3109)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-17T04:25:46Z (#3109)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-17T04:25:46Z",
-      "issue_ref": {
-        "number": 3109,
-        "url": "https://github.com/martin-janci/property-management/issues/3109",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
       "id": "gh-issue-3116",
       "action": "Follow-up: NewsScreen category badge lacks the i18n defaultValue fallback that ArticleDetailScreen uses (PR #3110) (Closes #3116)",
       "owner_role": "pm-tech-lead",
@@ -203,23 +112,6 @@
           "follow-up",
           "from-merged-review"
         ]
-      }
-    },
-    {
-      "id": "code-review-reality-server-register-account-enumeration",
-      "action": "reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-17T16:26:28Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
       }
     },
     {
@@ -285,23 +177,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-agency-page-i18n-gap",
-      "action": "reality-web agency/[slug]/page.tsx renders user-facing copy as Slovak literals on a 4-language portal (no next-intl wiring)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-22T06:26:52Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-22T06:26:52Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-core-workflow-condition-err-aborts-batch",
       "action": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event",
       "owner_role": "pm-backend",
@@ -315,40 +190,6 @@
       "backlog_ref": {
         "plan": null,
         "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
-      "action": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-22T10:33:22Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
-      "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-22T10:33:22Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
         "vector": "bug"
       }
     },
@@ -399,26 +240,6 @@
       "first_open_at": "2026-10-24T12:30:11Z",
       "retry_of": "stalled-review-pr-3024",
       "retry_round": 1
-    },
-    {
-      "id": "gh-issue-3157",
-      "action": "Follow-up: moderation client calls still 404 after base-path fix — wrong sub-paths (PR #3150) (Closes #3157)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-24T20:26:03Z (#3157)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-24T20:26:03Z",
-      "issue_ref": {
-        "number": 3157,
-        "url": "https://github.com/martin-janci/property-management/issues/3157",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",

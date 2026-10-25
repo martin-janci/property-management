@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-24T18:33:44Z",
+  "archived_at": "2026-10-25T14:33:30Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4260,6 +4260,52 @@
       }
     },
     {
+      "id": "code-review-api-handlers-violations-missing-role-authz",
+      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-11T10:27:29Z (score=3 conf=medium vector=bug) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-11T10:27:29Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 3,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "e5f45a8962030e6adab38d6b9aa325a2889740df",
+        "subject": "code-review-api-handlers-violations-missing-role-authz: gate privileged violations mutations on manager role (#3072)",
+        "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-violations-record-payment-non-atomic",
+      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-11T10:27:29Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-11T10:27:29Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "6f4a5314c8eff0bcca808fe97fa73d0a797bec16",
+        "subject": "code-review-api-handlers-violations-record-payment-non-atomic: make record_payment atomic (#3074)",
+        "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
       "action": "voice fetch_alexa_cert_chain builds a fresh reqwest::Client per call with no connect/request timeout — slow S3 stalls the handler + burst of cold-cache spawns unbounded TLS clients",
       "owner_role": "pm-backend",
@@ -6285,6 +6331,29 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
+      "action": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T10:33:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "62af68cc857016a62ebc8e57ec714f82173e960e",
+        "subject": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff: exponential backoff + attempt cap for IoT sensor WS reconnect (#3153)",
+        "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-leases-hardcoded-eur-currency",
       "action": "ppt-web lease mappers hardcode EUR for all monetary values, so PLN/HUF markets mislabel amounts",
       "owner_role": "pm-backend",
@@ -6565,6 +6634,29 @@
         "merged_pr": 3036,
         "merged_at": "2026-10-08T00:33:31Z",
         "at": "2026-10-08T02:39:36Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
+      "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-22T10:33:22Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T10:33:22Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "c0ec52194818393a0020fd9016ce7a4192c55e47",
+        "subject": "code-review-ppt-web-core-usewebsocket-subscribe-gate: subscribe when useWebSocket handler arrives after mount (#3152)",
+        "at": "2026-10-25T14:25:47Z"
       }
     },
     {
@@ -7520,6 +7612,29 @@
       }
     },
     {
+      "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
+      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-03T04:25:31Z (score=1 conf=high vector=bug) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-03T04:25:31Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "ad1438de563d52f963e045638e86aa503ffa2fb3",
+        "subject": "code-review-reality-server-add-to-compare-toctou-max-cap: fix compare-list cap TOCTOU (#3028)",
+        "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-agency-members-unauth-idor",
       "action": "reality-server GET /api/v1/agencies/{id}/members has no auth or membership check — unauthenticated cross-agency member enumeration (IDOR)",
       "owner_role": "pm-backend",
@@ -8095,6 +8210,29 @@
       }
     },
     {
+      "id": "code-review-reality-server-register-account-enumeration",
+      "action": "reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-17T16:26:28Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T16:26:28Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "7b847694a09a54bab626e4de2775f81b31dd1553",
+        "subject": "code-review-reality-server-register-account-enumeration: reality-server POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle) (#3120)",
+        "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-report-contact-unvalidated",
       "action": "submit_report reporter_email/reporter_phone bound into INSERT with no length or format validation",
       "owner_role": "pm-backend",
@@ -8439,6 +8577,29 @@
         "merged_pr": 2636,
         "merged_at": "2026-08-03T10:15:45Z",
         "at": "2026-08-03T10:16:35Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-page-i18n-gap",
+      "action": "reality-web agency/[slug]/page.tsx renders user-facing copy as Slovak literals on a 4-language portal (no next-intl wiring)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-22T06:26:52Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-22T06:26:52Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "a87545209076ea9be641cae70cfa7fdb587d718d",
+        "subject": "code-review-reality-web-agency-page-i18n-gap: wire agency profile copy through next-intl (#3155)",
+        "at": "2026-10-25T14:25:47Z"
       }
     },
     {
@@ -18890,6 +19051,32 @@
       }
     },
     {
+      "id": "gh-issue-3069",
+      "action": "Follow-up: scope ViolationRepository::list_notifications by org (same IDOR class as #2944) (PR #2977) (Closes #3069)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-11T16:25:57Z (#3069) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-11T16:25:57Z",
+      "issue_ref": {
+        "number": 3069,
+        "url": "https://github.com/martin-janci/property-management/issues/3069",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "865329b790ed369cc8eeb2ffe7c7fd56c79d165f",
+        "subject": "gh-issue-3069: scope ViolationRepository::list_notifications by org (cross-tenant IDOR) (#3070)",
+        "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
       "id": "gh-issue-3073",
       "action": "infra: parallel Rust implementers exhaust the dispatcher runner's disk -> verify gate fails with ENOSPC (no PR opened) (Closes #3073)",
       "owner_role": "pm-tech-lead",
@@ -19101,6 +19288,32 @@
         "commit": "d391270c178a1a52c09844428875d39708c4b2bd",
         "subject": "gh-issue-3099: block NAT64 RFC 8215 local-use prefix in SSRF filter (#3103)",
         "at": "2026-10-16T10:31:52Z"
+      }
+    },
+    {
+      "id": "gh-issue-3109",
+      "action": "Follow-up: implement api-server `DELETE /community/groups/{id}` so wired frontend delete works end-to-end (PR #3101) (Closes #3109)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-17T04:25:46Z (#3109) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-17T04:25:46Z",
+      "issue_ref": {
+        "number": 3109,
+        "url": "https://github.com/martin-janci/property-management/issues/3109",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "22a276a3c052454cadaecc0801886a1a01a9d2aa",
+        "subject": "gh-issue-3109: implement api-server DELETE /community/groups/{id} (#3111)",
+        "at": "2026-10-25T14:25:47Z"
       }
     },
     {
@@ -19346,6 +19559,32 @@
         "merged_pr": 3150,
         "merged_at": "2026-10-24T00:33:12Z",
         "at": "2026-10-24T02:26:11Z"
+      }
+    },
+    {
+      "id": "gh-issue-3157",
+      "action": "Follow-up: moderation client calls still 404 after base-path fix — wrong sub-paths (PR #3150) (Closes #3157)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-24T20:26:03Z (#3157) | dev-reconcile 2026-10-25T14:25:47Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-24T20:26:03Z",
+      "issue_ref": {
+        "number": 3157,
+        "url": "https://github.com/martin-janci/property-management/issues/3157",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "b4d6332183055eef8aa5df39f802346293d25bac",
+        "subject": "gh-issue-3157: correct moderation client sub-paths (queue list + stats) (#3158)",
+        "at": "2026-10-25T14:25:47Z"
       }
     },
     {

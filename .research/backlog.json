@@ -11678,7 +11678,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 4,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review reality-server 2026-10-03",
         "signal:code-review-reality-server-compare-add-limit-toctou",
@@ -11697,7 +11697,12 @@
       ],
       "created_at": "2026-10-03",
       "updated_at": "2026-10-25",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3028
+      }
     },
     {
       "id": "code-review-ppt-web-core-community-group-detail-mock-data",
@@ -12046,7 +12051,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 3,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]",
         "PR #3072"
@@ -12069,7 +12074,12 @@
       "segment": "api-handlers",
       "score_delta": 3,
       "candidate_vector": "bug",
-      "expert": "security"
+      "expert": "security",
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3072
+      }
     },
     {
       "id": "code-review-api-handlers-violations-number-count-race",
@@ -12107,7 +12117,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers]"
       ],
@@ -12128,7 +12138,12 @@
       "segment": "api-handlers",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3074
+      }
     },
     {
       "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.ts",
@@ -12627,7 +12642,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review (dispatcher Tier-1d 2026-10-17 reality-server)"
       ],
@@ -12642,7 +12657,12 @@
       ],
       "created_at": "2026-10-17",
       "updated_at": "2026-10-17",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3120
+      }
     },
     {
       "id": "code-review-reality-web-auth-ctx-transient-logout",
@@ -12845,7 +12865,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "signal:code-review-reality-web-agency-page-i18n-gap",
         "rotating-expert-review 2026-10-22 reality-web"
@@ -12860,7 +12880,12 @@
       ],
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3155
+      }
     },
     {
       "id": "code-review-reality-web-agency-gradient-color-unsanitized",
@@ -12897,7 +12922,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review api-core 2026-10-01",
         "rotating-expert-review 2026-10-22 api-core"
@@ -12912,7 +12937,12 @@
       ],
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3154
+      }
     },
     {
       "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
@@ -12920,7 +12950,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-10-22 ppt-web-core"
       ],
@@ -12934,7 +12964,12 @@
       ],
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3153
+      }
     },
     {
       "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
@@ -12942,7 +12977,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-10-22 ppt-web-core"
       ],
@@ -12956,7 +12991,12 @@
       ],
       "created_at": "2026-10-22",
       "updated_at": "2026-10-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-25T14:25:47Z",
+        "assignment_status": "merged",
+        "pr_number": 3152
+      }
     },
     {
       "id": "code-review-reality-web-crm-console-error-leak",
