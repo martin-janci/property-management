@@ -18,6 +18,7 @@ import {
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toSafeLogMessage } from '@/lib/safe-error';
 import {
   AgencyLoadError,
   isNotFoundError,
@@ -575,7 +576,7 @@ export function InviteRealtorModal({
       });
       onClose();
     } catch (error) {
-      console.error('Failed to invite realtor:', error);
+      console.error('Failed to invite realtor:', toSafeLogMessage(error));
       setInviteError(t('inviteError'));
     }
   };

@@ -21,6 +21,7 @@ import {
 } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toSafeLogMessage } from '@/lib/safe-error';
 
 const CRM_PROVIDERS: { id: CrmProvider; name: string; logo: string }[] = [
   { id: 'salesforce', name: 'Salesforce', logo: '🔵' },
@@ -405,7 +406,7 @@ export function AddConnectionModal({
       });
       onClose();
     } catch (error) {
-      console.error('Failed to create CRM connection:', error);
+      console.error('Failed to create CRM connection:', toSafeLogMessage(error));
       setCreateError(t('createError'));
     }
   };
