@@ -202,21 +202,53 @@ struct FcmError {
     status: Option<String>,
     #[allow(dead_code)]
     message: Option<String>,
+    /// Structured error details. FCM HTTP v1 reports the actionable
+    /// `MessagingErrorCode` (e.g. `UNREGISTERED`) here, inside a detail whose
+    /// `@type` ends in `FcmError`, rather than in [`FcmError::status`].
+    #[serde(default)]
+    details: Vec<FcmErrorDetail>,
+}
+
+/// One entry of the FCM HTTP v1 `error.details[]` array.
+///
+/// We only care about `errorCode`; the `@type` discriminator and any other
+/// fields are ignored by serde (no `deny_unknown_fields`).
+#[derive(Debug, Deserialize)]
+struct FcmErrorDetail {
+    #[serde(rename = "errorCode")]
+    error_code: Option<String>,
 }
 
 impl FcmError {
-    /// The error code to surface in logs.
+    /// The FCM-specific error code (`error.details[].errorCode`) if present,
+    /// otherwise the canonical transport status — used for logging.
     fn log_code(&self) -> Option<&str> {
-        self.status.as_deref()
+        self.fcm_error_code().or(self.status.as_deref())
+    }
+
+    /// The first `errorCode` reported in `error.details[]`.
+    fn fcm_error_code(&self) -> Option<&str> {
+        self.details.iter().find_map(|d| d.error_code.as_deref())
     }
 
     /// Whether this error means the registration token is permanently invalid
     /// and should be evicted from the DB.
+    ///
+    /// Only `UNREGISTERED` (FCM v1) / legacy `NOT_REGISTERED` /
+    /// `INVALID_REGISTRATION` are treated as stale. `INVALID_ARGUMENT` is
+    /// deliberately NOT treated as stale: in FCM v1 it can signal a malformed
+    /// *message payload*, and evicting on it would wipe every token the moment
+    /// a payload bug ships. The FCM-specific `errorCode` in `error.details[]`
+    /// is the primary signal; `error.status` is kept as a fall-back so legacy
+    /// responses and test mocks that set the code there still evict.
     fn indicates_stale_token(&self) -> bool {
-        matches!(
-            self.status.as_deref(),
-            Some("NOT_REGISTERED" | "UNREGISTERED" | "INVALID_REGISTRATION")
-        )
+        let stale = |code: &str| {
+            matches!(
+                code,
+                "UNREGISTERED" | "NOT_REGISTERED" | "INVALID_REGISTRATION"
+            )
+        };
+        self.fcm_error_code().is_some_and(stale) || self.status.as_deref().is_some_and(stale)
     }
 }
 
@@ -1967,6 +1999,56 @@ mod tests {
             err.indicates_stale_token(),
             "FCM v1 UNREGISTERED (in error.details) must evict the stale token"
         );
+        assert_eq!(
+            err.log_code(),
+            Some("UNREGISTERED"),
+            "log_code must prefer the FCM-specific details code over the status"
+        );
+    }
+
+    #[test]
+    fn fcm_v1_invalid_argument_does_not_evict_token() {
+        // A malformed payload yields INVALID_ARGUMENT. Evicting on it would wipe
+        // every device token the moment a payload bug ships, so it must NOT be
+        // treated as a stale token.
+        let body = serde_json::json!({
+            "error": {
+                "code": 400,
+                "message": "Invalid value at 'message.data'.",
+                "status": "INVALID_ARGUMENT",
+                "details": [{
+                    "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                    "errorCode": "INVALID_ARGUMENT"
+                }]
+            }
+        })
+        .to_string();
+        let resp: FcmSendResponse = serde_json::from_str(&body).expect("parse FCM v1 error body");
+        let err = resp.error.expect("error block present");
+        assert!(
+            !err.indicates_stale_token(),
+            "INVALID_ARGUMENT must not evict the token (could be a payload bug)"
+        );
+    }
+
+    #[test]
+    fn fcm_v1_status_only_unregistered_still_evicts() {
+        // Fall-back path: a response that carries the stale code only in
+        // `status` (legacy / test mocks, no `details`) must still evict.
+        let body = serde_json::json!({ "error": { "status": "UNREGISTERED" } }).to_string();
+        let resp: FcmSendResponse = serde_json::from_str(&body).expect("parse FCM error body");
+        assert!(resp.error.expect("error block").indicates_stale_token());
+    }
+
+    #[test]
+    fn fcm_v1_success_response_has_no_error() {
+        // A 200 send response carries `name` and no `error` block.
+        let body = serde_json::json!({
+            "name": "projects/p/messages/0:1700000000000000%abcd"
+        })
+        .to_string();
+        let resp: FcmSendResponse = serde_json::from_str(&body).expect("parse FCM success body");
+        assert!(resp.error.is_none());
     }
 
     #[test]
