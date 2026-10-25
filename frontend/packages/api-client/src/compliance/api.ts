@@ -79,7 +79,10 @@ export async function listModerationCases(params?: {
   if (params?.offset) searchParams.set('offset', params.offset.toString());
 
   const queryString = searchParams.toString();
-  return fetchApi(`${AML_DSA_BASE}/moderation/cases${queryString ? `?${queryString}` : ''}`);
+  // The queue list is served at `/moderation/queue` (not `/moderation/cases`,
+  // which is the per-case detail prefix) — see
+  // `backend/servers/api-server/src/routes/aml_dsa/mod.rs` (#3157).
+  return fetchApi(`${AML_DSA_BASE}/moderation/queue${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function getModerationCase(id: string): Promise<{ case_: ModerationCase }> {
@@ -87,7 +90,8 @@ export async function getModerationCase(id: string): Promise<{ case_: Moderation
 }
 
 export async function getModerationStats(): Promise<ModerationStatsResponse> {
-  return fetchApi(`${AML_DSA_BASE}/moderation/stats`);
+  // Queue stats live under the queue path: `/moderation/queue/stats` (#3157).
+  return fetchApi(`${AML_DSA_BASE}/moderation/queue/stats`);
 }
 
 export async function getModerationTemplates(): Promise<ModerationTemplatesResponse> {

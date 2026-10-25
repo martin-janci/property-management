@@ -78,4 +78,25 @@ describe('compliance client base paths (#3149)', () => {
     // and must NOT land on the compliance router (no /moderation/* there)
     expect(calledUrl()).not.toContain(`${COMPLIANCE_BASE}/moderation`);
   });
+
+  // #3157: the base path landed in #3150 but the moderation sub-paths were
+  // still wrong, so list + stats kept 404'ing. The server mounts the queue
+  // list at `/moderation/queue` and its stats at `/moderation/queue/stats`
+  // (`routes::aml_dsa::router()` in
+  // `backend/servers/api-server/src/routes/aml_dsa/mod.rs`) — NOT
+  // `/moderation/cases` / `/moderation/stats`. Pin the exact sub-paths.
+  it('moderation list + stats use the real queue sub-paths (#3157)', async () => {
+    const api = await import('./api');
+
+    await api.listModerationCases();
+    expect(calledUrl()).toContain(`${AML_DSA_BASE}/moderation/queue`);
+    // the queue list is NOT served at /moderation/cases (that's the per-case
+    // detail prefix: /moderation/cases/{id})
+    expect(calledUrl()).not.toMatch(/\/moderation\/cases(\?|$)/);
+    fetchMock.mockClear();
+
+    await api.getModerationStats();
+    expect(calledUrl()).toContain(`${AML_DSA_BASE}/moderation/queue/stats`);
+    expect(calledUrl()).not.toMatch(/\/moderation\/stats(\?|$)/);
+  });
 });
