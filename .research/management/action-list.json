@@ -95,34 +95,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-stalled-accounting-pay-by-square-2559-retry1",
-      "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot — one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months [retry 1/2 of failed pm-scrum-master-stalled-accounting-pay-by-square-2559]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-10-21T08:26:12Z (retry_of=pm-scrum-master-stalled-accounting-pay-by-square-2559 reason=failed-no-pr cooldown_ok newest_failure=2026-10-14T06:42:05Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-21T08:26:12Z",
-      "retry_of": "pm-scrum-master-stalled-accounting-pay-by-square-2559",
-      "retry_round": 1
-    },
-    {
-      "id": "pm-scrum-master-stalled-invoice-lifecycle-2555-retry1",
-      "action": "Stalled 64d: PR #2555 (invoice lifecycle accounting slice) needs reviewer slot — companion to #2559; both are the aging accounting MVP trio tracked since 2026-07-30 [retry 1/2 of failed pm-scrum-master-stalled-invoice-lifecycle-2555]",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-10-21T08:26:12Z (retry_of=pm-scrum-master-stalled-invoice-lifecycle-2555 reason=failed-no-pr cooldown_ok newest_failure=2026-10-14T06:42:05Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-21T08:26:12Z",
-      "retry_of": "pm-scrum-master-stalled-invoice-lifecycle-2555",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
       "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "owner_role": "pm-backend",
@@ -189,20 +161,6 @@
         "score": 1,
         "vector": "bug"
       }
-    },
-    {
-      "id": "stalled-review-pr-3024-retry1",
-      "action": "Stalled review: PR #3024 docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3024]",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-10-24T12:30:11Z (retry_of=stalled-review-pr-3024 reason=failed-no-pr cooldown_ok newest_failure=2026-10-17T10:40:40Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-24T12:30:11Z",
-      "retry_of": "stalled-review-pr-3024",
-      "retry_round": 1
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",

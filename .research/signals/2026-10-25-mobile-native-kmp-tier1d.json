@@ -1,0 +1,42 @@
+{
+  "generated": "2026-10-25T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven dev-review generator per .claude/skills/ppt-dev-review/SKILL.md - static single-segment rotating code review, no compilation / no test execution / no branch checkout (cloud runner: file reading + grep only). Claim buffer starved (claimable=11 < floor=36); standing routine requested fresh backlog. DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; NO git add/commit/push and NO branch/checkout performed - the orchestrator folds .research/** deltas into its Phase 6 commit. SEGMENT SELECTION: no Phase-1 churn list was supplied to this demand-driven invocation, so priority-1 churn-alignment was empty and selection fell to priority-2 oldest-unreviewed. state.json review_cursor raw dates: mobile-native-kmp=2026-10-18 (oldest), api-handlers=2026-10-19, mobile-rn=2026-10-19, api-core=2026-10-22, ppt-web-ui=2026-10-22, ppt-web-core=2026-10-22, reality-web=2026-10-23, reality-server=2026-10-25. Oldest-unreviewed = mobile-native-kmp (2026-10-18). Saturation check: mobile-native-kmp has 2 open code-review-finding rows (status==open) in backlog.json < 3 floor, NOT saturated, so not skipped. Selected mobile-native-kmp. Expert: kotlin (primary), per SKILL Step 2; tester pass folded in (test coverage reviewed inline). Per task directive 'do the work directly - do not re-delegate', the kotlin/tester review was performed in-process via grep + sliced reads rather than spawning subagents, matching the SKILL static-only contract. review_cursor.mobile-native-kmp advanced to 2026-10-25 in the working tree (no commit) per SKILL Step 5.",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed",
+  "experts_used": ["kotlin"],
+  "findings_count": 1,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Static-analysis review only. One net-new finding emitted (SsoService error-body deserialization robustness gap). Fix is a small, self-contained in-file change mirroring the hardened pattern already used elsewhere in the same file; landable without schema/API changes.",
+  "review_notes": [
+    "NET-NEW FINDINGS: 1. Segment mobile-native-kmp (mobile-native/: shared KMP + androidApp Compose + iosApp). Prior sweeps (2026-10-23/24) mined the obvious surface; this pass traced the SSO/network error-handling layer and found one genuine inconsistency not previously backlogged.",
+    "NON-null (!!) sweep (SKILL kotlin pattern): all hits are guarded Compose smart-cast workarounds on mutableStateOf-backed `var`s inside an enclosing `!= null` / `when` branch - ListingDetailScreen.kt:121/125/132/149/160 (state.listing!!/errorMessage!! inside the matching when-arm), AccountScreen.kt:174 (notificationPrefs!! inside `if (... && notificationPrefs != null)`), InquiriesScreen.kt:169 / FavoritesScreen.kt:164 (errorMessage!! inside != null guard). Verified ListingDetailViewModel never resets `listing` back to null once loaded (retry()/onFailure keep the prior listing), so the deferred onCallClick lambda `state.listing!!` cannot NPE. All skipped as nits per SKILL.",
+    "GlobalScope/MainScope sweep: zero matches - all coroutines launch into an injected scope (ListingDetailViewModel/PriceTrackingViewModel take a CoroutineScope; Compose screens use rememberCoroutineScope()). No lifecycle-leaking fire-and-forget.",
+    "TODO()/NotImplementedError sweep: one hit - Navigation.kt:493 CreateListing onSubmit = Result.failure(NotImplementedError(\"Wire to listing API\")). This is a reachable production stub BUT is ALREADY backlogged as code-review-mobile-native-kmp-create-listing-not-wired (confirmed in seen_signals + prior 2026-10-23 note); NOT re-emitted to avoid duplicate.",
+    "expect/actual iOS no-op sweep: iosMain actuals are real implementations, not stubs - SsoStateStore.ios.kt generateSsoNonce() mints two NSUUIDs (documented: iOS owns its nonce in AuthManager, this exists only so the shared module compiles), PlatformConfig.kt reads Info.plist with sensible production-safe defaults. No empty/throwing actuals.",
+    "SSO CSRF deep-link contract (CLAUDE.md security section): validateAndLogin(ssoToken) takes only the token; the per-flow `state` nonce is validated upstream in MainActivity.handleDeepLink via SsoStateStore.consume before this call - matches the documented contract. The known gap is already tracked (code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state); not re-flagged.",
+    "restoreSession() is fail-closed: sets token, probes GET /sso/session, and on failure clears sessionToken + sets Unauthenticated. No fail-open on a bad/forged stored token.",
+    "Repository layer (ListingRepository, ApiClient, InquiryRepository, FavoritesRepository) is clean: consistent Result-based returns, status->message mapping without deserializing untrusted error bodies, path params escaped via asPathSegment(), explicit enum->query-param mapping avoiding fragile .name.lowercase(). No findings.",
+    "ProfileStatsLoader .getOrNull() fan-out (account/ProfileStats.kt:42-44) is INTENTIONAL and documented+unit-tested: null means 'count unknown' and the UI renders a dash, not a misleading 0; each of the 3 calls is independent. Not a silent-empty bug - skipped.",
+    "TESTER pass: commonTest coverage is strong (repositories, path-encoding, model contracts, view-models, SSO state store, deep-link router, navigation). Zero @Ignore/xit/.skip skipped-test markers. No untested-public-class gap worth a finding."
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-sso-validate-raw-err-body",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:77 - validateAndLogin() error branch does `val error: SsoError = response.body()` with no runCatching guard; if the server/gateway returns a non-JSON or empty error body (e.g. 502/503 proxy HTML, empty 401), the kotlinx deserialization throws, is swallowed by the outer `catch (e: Exception)` at :82, and `_authState.value = AuthState.Error(e.message)` surfaces a raw 'Expected start of the object' serialization message to the user on the security-critical SSO login path.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49 - createMobileToken() error branch has the same unguarded `response.body<SsoError>()`.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:104 - getSession() error branch: same pattern (logout() runs first on 401, but the subsequent bare body() can still throw and mask the real status).",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:129 - refreshSession() error branch: same pattern.",
+        "INCONSISTENCY / FIX REFERENCE: the newer methods in the SAME file already harden this exact path - register() (:200), confirmPasswordReset() (:257), updateProfile() (:299) use `runCatching { response.body<SsoError>() }.getOrElse { \"...(HTTP ${response.status.value})\" }`. The four SSO-core methods should adopt the same guard so a malformed error body degrades to a clean status-based message instead of a raw serialization exception."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}
