@@ -355,7 +355,7 @@ async fn oa_get_roi_dashboard_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-622: GET /owner-analytics/portfolio returns 500 for an org with no seeded \
+#[ignore = "#3104: GET /owner-analytics/portfolio returns 500 for an org with no seeded \
             portfolio/units (empty-aggregation path in owner_analytics repo). Needs a source \
             repro + fix; re-quarantined until the handler tolerates empty portfolios."]
 async fn oa_get_portfolio_summary_succeeds(pool: PgPool) {
