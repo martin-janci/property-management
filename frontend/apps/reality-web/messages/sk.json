@@ -797,6 +797,19 @@
       "error": "Nepodarilo sa načítať ponuky.",
       "empty": "Zatiaľ ste nezverejnili žiadne ponuky.",
       "createFirst": "Vytvorte svoju prvú ponuku"
+    },
+    "agencyProfile": {
+      "loading": "Načítavam…",
+      "notFound": "Kancelária sa nenašla.",
+      "verified": "Overená",
+      "about": "O kancelárii",
+      "team": "Náš tím ({count})",
+      "activeListings": "Aktívne ponuky ({count})",
+      "noListings": "Žiadne aktívne ponuky.",
+      "rentSuffix": "/mes",
+      "contact": "Kontakt",
+      "visitWebsite": "Navštíviť web",
+      "license": "Licencia: {number}"
     }
   },
   "search": {

@@ -5,12 +5,15 @@
  * Route: /[locale]/agency/[slug]
  *
  * Mirrors the realtor/[id] public-profile pattern: a 'use client' component
- * with inline styles + hardcoded Slovak copy (the sibling profile does not use
- * next-intl). Data is fetched client-side via @ppt/reality-api-client hooks.
+ * with inline styles. User-facing copy is wired through next-intl
+ * (`pages.agencyProfile.*`) so sk/cs/de/en/pl/hu all resolve — see
+ * src/i18n/agency-profile-messages.test.ts for the per-locale coverage guard.
+ * Data is fetched client-side via @ppt/reality-api-client hooks.
  */
 
 import { useAgencyBySlug, useAgencyListings, useRealtors } from '@ppt/reality-api-client';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Footer, Header } from '@/components/ui';
 import { Link } from '@/i18n/routing';
 import { sanitizeCssValue } from '@/lib/sanitize-css';
@@ -24,6 +27,7 @@ const PAGE_BG: React.CSSProperties = {
 };
 
 export default function AgencyProfilePage() {
+  const t = useTranslations('pages.agencyProfile');
   const params = useParams<{ slug: string }>();
   const slug = params?.slug ?? '';
 
@@ -35,7 +39,7 @@ export default function AgencyProfilePage() {
     return (
       <div style={PAGE_BG}>
         <Header />
-        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>Načítavam…</main>
+        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>{t('loading')}</main>
         <Footer />
       </div>
     );
@@ -45,7 +49,7 @@ export default function AgencyProfilePage() {
     return (
       <div style={PAGE_BG}>
         <Header />
-        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>Kancelária sa nenašla.</main>
+        <main style={{ flex: 1, padding: 48, textAlign: 'center' }}>{t('notFound')}</main>
         <Footer />
       </div>
     );
@@ -139,7 +143,7 @@ export default function AgencyProfilePage() {
                         fontWeight: 600,
                       }}
                     >
-                      ✓ Overená
+                      ✓ {t('verified')}
                     </span>
                   )}
                 </h1>
@@ -171,7 +175,7 @@ export default function AgencyProfilePage() {
             {agency.description && (
               <section style={{ marginBottom: 40 }}>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: 12 }}>
-                  O kancelárii
+                  {t('about')}
                 </h2>
                 <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>
                   {agency.description}
@@ -183,7 +187,7 @@ export default function AgencyProfilePage() {
             {team.length > 0 && (
               <section style={{ marginBottom: 40 }}>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: 16 }}>
-                  Náš tím ({team.length})
+                  {t('team', { count: team.length })}
                 </h2>
                 <div
                   style={{
@@ -234,10 +238,10 @@ export default function AgencyProfilePage() {
             {/* Active listings */}
             <section>
               <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: 16 }}>
-                Aktívne ponuky ({listings.length})
+                {t('activeListings', { count: listings.length })}
               </h2>
               {listings.length === 0 ? (
-                <p style={{ color: 'var(--ppt-fg-secondary)' }}>Žiadne aktívne ponuky.</p>
+                <p style={{ color: 'var(--ppt-fg-secondary)' }}>{t('noListings')}</p>
               ) : (
                 <div
                   style={{
@@ -271,7 +275,7 @@ export default function AgencyProfilePage() {
                         </div>
                         <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
                           {listing.price.toLocaleString('sk-SK')} {listing.currency}
-                          {listing.transactionType === 'rent' ? '/mes' : ''}
+                          {listing.transactionType === 'rent' ? t('rentSuffix') : ''}
                         </div>
                       </div>
                     </Link>
@@ -293,7 +297,9 @@ export default function AgencyProfilePage() {
                 top: 24,
               }}
             >
-              <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 16px' }}>Kontakt</h2>
+              <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 16px' }}>
+                {t('contact')}
+              </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {agency.phone && (
                   <a
@@ -316,7 +322,7 @@ export default function AgencyProfilePage() {
                     rel="noreferrer"
                     style={{ color: 'var(--ppt-color-primary, #2563eb)' }}
                   >
-                    🌐 Navštíviť web
+                    🌐 {t('visitWebsite')}
                   </a>
                 )}
               </div>
@@ -328,7 +334,7 @@ export default function AgencyProfilePage() {
                     color: 'var(--ppt-fg-muted, #9ca3af)',
                   }}
                 >
-                  Licencia: {agency.licenseNumber}
+                  {t('license', { number: agency.licenseNumber })}
                 </div>
               )}
             </div>

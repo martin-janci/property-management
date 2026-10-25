@@ -790,6 +790,19 @@
       "error": "Nem sikerült betölteni a hirdetéseket.",
       "empty": "Még nem tett közzé egyetlen hirdetést sem.",
       "createFirst": "Hozza létre első hirdetését"
+    },
+    "agencyProfile": {
+      "loading": "Betöltés…",
+      "notFound": "Az iroda nem található.",
+      "verified": "Ellenőrzött",
+      "about": "Az irodáról",
+      "team": "Csapatunk ({count})",
+      "activeListings": "Aktív hirdetések ({count})",
+      "noListings": "Nincsenek aktív hirdetések.",
+      "rentSuffix": "/hó",
+      "contact": "Kapcsolat",
+      "visitWebsite": "Weboldal megtekintése",
+      "license": "Engedély: {number}"
     }
   },
   "search": {
