@@ -1,0 +1,70 @@
+{
+  "generated": "2026-10-25T00:00:00Z",
+  "source_run": "dispatcher Tier-1d demand-driven vector generator (buffer starved: honest_claimable=8 < BUFFER_FLOOR=36). Static single-segment rotating code review per .claude/skills/ppt-dev-review/SKILL.md — no compilation, no test execution, no branch checkout (cloud runner: file reading + grep only). DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; no git add/commit/push and no branch/checkout performed, and no dispatcher state file (assignments.json) touched — the orchestrator folds .research deltas into its Phase 6 commit. Segment selection: priority-1 churn-alignment. git log --since=2026-10-11 (HEAD c5b1dd7, 2026-10-24) shows reality-web as the dominant non-.research/non-docs churn cluster: app/[locale]/agency/[slug]/page.tsx (3 commits), lib/tenant-config.ts, components/listings/sections/{Resources,ListingHeader,AdditionalInfo}.tsx, components/agency/AgencyListings.tsx (2 each). api-handlers is the next cluster (routes/migration.rs x3) but is SATURATED (3 open code-review-finding rows for segment==api-handlers in backlog.json) → skipped per Step-1 saturation rule. reality-web is NOT saturated (0 open code-review-finding rows; its 3 reality-web rows are status=done). Scope mapped to this repo's actual pnpm layout: the skill's reality-web root frontend/reality-web/src/ is stale — the app lives at frontend/apps/reality-web/src/ (233 ts/tsx files, so narrowed to churn-touched files + files surfaced by the toLocale grep per Step-5 >40-file rule). Primary expert Frontend only (segment has no secondary per Step 2). Dedup: the prior 2026-10-23 reality-web run already captured the console.error-in-catch sites (CrmConnection/FeedImport/RealtorManagement) and the realtor-api unvalidated-JSON cast — none re-flagged here. The SSR-critical churn files cleared with no findings: app/[locale]/agency/[slug]/page.tsx is hardened (sanitizeHref scheme allowlist on agency website, sanitizeCssValue on brand colors, real loading/error/empty states); lib/tenant-config.ts degrades every network/non-2xx/malformed-JSON path to PLATFORM_DEFAULT and never throws out of the SSR layer. The three findings below are a systemic locale-ignoring date/number formatting bug (anchored in the churn files) plus two lower-severity i18n gaps surfaced during the sweep.",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "churn-aligned (git --since=2026-10-11 churn is dominated by reality-web: agency/[slug]/page.tsx x3, AgencyListings.tsx, listings/sections/{Resources,ListingHeader,AdditionalInfo}.tsx, lib/tenant-config.ts x2). Next cluster api-handlers skipped as saturated (3 open code-review-finding rows). reality-web not saturated: 0 open rows for the segment in backlog.json.",
+  "experts_used": ["frontend"],
+  "findings_count": 3,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "All three findings are frontend-only edits confined to reality-web (no backend, no migration, no openapi/client regen). Finding 1 passes the active locale into toLocaleDateString()/toLocaleString() (or routes through the existing @/lib/format helpers that already take a locale); AdditionalInfo.tsx and AgencyListings.tsx already have useLocale() in scope, inquiries/page.tsx needs the useLocale import added. Findings 2 and 3 are string/i18n edits plus messages/{en,sk,cs,de}.json key additions. Verifiable via `pnpm --filter @ppt/reality-web typecheck` + `pnpm --filter @ppt/reality-web test`; no runtime stack required.",
+  "signals": [
+    {
+      "id": "code-review-reality-web-date-locale-ignored",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-25 reality-web",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "evidence": [
+        "Systemic locale bug on a 4-locale portal (sk/cs/de/en): date/time values are rendered with `new Date(...).toLocaleDateString()` / `.toLocaleString()` called with NO locale argument, so the output uses the runtime default locale instead of the active portal locale. During Next.js SSR this default is Node's locale (typically en-US), so sk/cs/de visitors are served en-US-formatted dates (MM/DD/YYYY) in the initial HTML — a visible, wrong-for-locale render, and a potential hydration mismatch when the client default differs from the server default.",
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx:40 — `new Date(listing.availableFrom).toLocaleDateString()` and :46 — `new Date(listing.createdAt).toLocaleDateString()`. This exact component already calls `useLocale()` (L17) and correctly passes `locale` to `formatPrice`/`formatNumber` for the price field (L7-12, L32) — so prices localize but dates in the same grid do not. The fix is one argument: `toLocaleDateString(locale)` (locale is already in scope). (AdditionalInfo.tsx is a Phase-1 churn hotspot.)",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:403 — `<td className=\"date-cell\">{new Date(listing.updatedAt).toLocaleDateString()}</td>` inside ListingRow, which already has `const locale = useLocale()` (L354) and uses it for `formatPrice` on L393. Same price-localized / date-not asymmetry. (AgencyListings.tsx is a Phase-1 churn hotspot, 570 lines.)",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67, :97, :109 — three `new Date(...).toLocaleDateString()` calls (createdAt, scheduledViewing.date, respondedAt) with no locale; this page is otherwise fully next-intl-translated, so the untranslated date format is the lone locale leak and this file has no useLocale import yet.",
+        "Scope note: the same no-locale pattern also appears in components/import/{SyncSchedule.tsx:232,526, FeedImport.tsx:207,263, CrmConnection.tsx:196,202} (toLocaleString for sync timestamps) — same fix class, lower user-visibility (agency-internal import UI). Severity MEDIUM (+2): user-facing wrong-locale render on public listing + agency + inquiry surfaces, with SSR/CSR hydration-mismatch risk; not a crash. Confidence medium: the missing locale argument is statically certain; exact SSR default-locale value is environment-dependent. Fix: pass the active `locale` to every toLocale* call, or route through the existing locale-aware @/lib/format helpers (formatDate-style), matching how price formatting is already handled in these same files."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-analytics-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-25 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx — the entire authenticated realtor analytics page (UC-51.10) imports NO useTranslations (grep count 0) and renders hardcoded English on a 4-locale portal. Every user-facing string is literal English: L68 `<h1 className=\"title\">Analytics</h1>`, L69 subtitle 'Performance of your listings over time.', the PERIODS selector labels L15-18 'Last 7 days'/'Last 30 days'/'Last 90 days'/'Last year', the five StatCard labels L85-91 'Total listings'/'Active listings'/'Total views'/'Inquiries'/'Conversion rate', the loading state L80 'Loading metrics…', and the error fallback L54 'Could not load analytics.'",
+        "This is the skill Frontend pattern 'Hardcoded user-facing string that should be in i18n (visible text not wrapped in t())', applied to a whole page rather than a stray string. It is distinct from the three done reality-web i18n findings (ComparisonView, RealtorManagement, AgencyErrorStates) — different file, not a dup. Sibling realtor pages in the same route tree do use next-intl, so the pattern here is an outlier regression, not a documented 'Slovak-only' exception (contrast app/[locale]/agency/[slug]/page.tsx, which carries an explicit comment that its hardcoded copy is intentional).",
+        "Severity LOW (+1): no crash and error/loading states exist; purely a localization gap. Confidence medium: statically certain the page has zero t() usage; the fix is to add useTranslations('realtorAnalytics') and move the ~12 strings into messages/{en,sk,cs,de}.json. Note the period labels and stat labels are a fixed closed set, so the keying is mechanical."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-raw-enum",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-10-25 reality-web",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67 — the inquiry type is rendered to users as `{inquiry.type.replace('_', ' ')}`, i.e. the raw API enum string with underscores swapped for spaces (then CSS `text-transform: capitalize` on `.inquiry-date`, L192). Two problems: (1) i18n gap — the enum value (e.g. `viewing_request`, `price_inquiry`) is shown verbatim in English on a 4-locale portal, while every other label in this same component is routed through next-intl `t('status.<status>')` (L72). (2) correctness — `String.prototype.replace` with a string argument replaces only the FIRST occurrence, so a three-part enum like `general_price_inquiry` renders as 'general price_inquiry' (second underscore survives); it needs a global replace or, better, an i18n lookup.",
+        "Severity LOW (+1): cosmetic/localization, no functional break. Confidence medium: the single-replace behavior is language-certain and the i18n inconsistency is statically clear against the adjacent t() usage; whether any current inquiry type has 2+ underscores depends on the reality-server enum set (not statically enumerated here). Fix: map the type through a next-intl namespace, e.g. `t('type.' + inquiry.type)`, with keys in messages/{en,sk,cs,de}.json — this both localizes and eliminates the fragile .replace()."
+      ]
+    }
+  ]
+}
