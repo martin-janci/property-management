@@ -195,6 +195,66 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "gh-issue-3162",
+      "action": "Follow-up: agency profile page still formats listing price with hardcoded sk-SK locale (PR #3155) (Closes #3162)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-25T22:26:31Z (#3162)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-25T22:26:31Z",
+      "issue_ref": {
+        "number": 3162,
+        "url": "https://github.com/martin-janci/property-management/issues/3162",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3163",
+      "action": "Follow-up: unassignModerationCase still 404s after #3157 was closed — missing backend route + contract-test gap (PR #3158) (Closes #3163)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-25T22:26:31Z (#3163)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-25T22:26:31Z",
+      "issue_ref": {
+        "number": 3163,
+        "url": "https://github.com/martin-janci/property-management/issues/3163",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
+    },
+    {
+      "id": "gh-issue-3164",
+      "action": "Follow-up: violations add_evidence left ungated while delete_evidence is manager-gated (PR #3072) (Closes #3164)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-25T22:26:31Z (#3164)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-25T22:26:31Z",
+      "issue_ref": {
+        "number": 3164,
+        "url": "https://github.com/martin-janci/property-management/issues/3164",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-10-19T04:00:00Z"

@@ -123,15 +123,15 @@
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-90f75cc2",
       "status": "review",
       "claimed_at": "2026-10-25T20:28:52Z",
-      "last_updated": "2026-10-25T20:57:52Z",
+      "last_updated": "2026-10-25T22:36:37Z",
       "status_changed_at": "2026-10-25T20:57:52Z",
       "pr_number": 3165,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3165",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3165 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=added 2 pre-persist-rejection regression tests (unknown+missing template_id -> 400, zero import_jobs rows); clippy/fmt/new tests green; sole verify fail is unrelated pre-existing env-only DNS-rebind SSRF test in api_call.rs (0 diff vs dev), draft PR opened for CI to gate",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=3963475d93d3f97f87e7d09c2bef8e35ae79fa76 note=test-only-coverage-addition-verified-assertions-match-handler-CI-core-gates-green",
+      "last_reviewed_oid": "3963475d93d3f97f87e7d09c2bef8e35ae79fa76",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -141,5 +141,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-10-25T20:57:52Z"
+  "generated": "2026-10-25T22:36:37Z"
 }
