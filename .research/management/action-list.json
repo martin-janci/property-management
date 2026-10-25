@@ -470,6 +470,40 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-http-client-no-timeout",
+      "action": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-25T08:29:08Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-25T08:29:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-native-kmp-my-listings-pagination-cap",
+      "action": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-25T08:29:08Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-25T08:29:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-19T04:00:00Z"
