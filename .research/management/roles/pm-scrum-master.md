@@ -1,47 +1,41 @@
-# pm-scrum-master — 2026-10-19
+# pm-scrum-master — 2026-10-25
 
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+_Phase 1.6 synthesis. 2-day window since 2026-10-23. Always-on role._
 
-## Summary
+## summary
 
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
+8 PRs merged + 4 issues closed in a fat 2-day window (security sanitize + XSS allowlist + ammonia RUSTSEC guard + PRICE_MAP_CACHE eviction + migration-import error-path + AML/DSA routing + shared bearerAuth refactor + push-fanout hotfix). But the dispatcher is in a merge-pipeline deadlock: **15 open PRs touched, ALL in `review` status, 16 WIP slots consumed → claimable=8/72, buffer-low** — tracked as the newly-open blocker **#3131** (self-approval block). No backend-review capacity means security tier-1 remains parked and new work can't be queued.
 
-## Shipped since last run (2 PRs)
+## next_actions
 
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
+1. **{high}** Unblock the merge-pipeline deadlock (#3131) — define a self-approval exception or rotate a human reviewer into the backlog. **Dependency:** pm-tech-lead. **DoD:** claimable count ≥ 24 within next run.
+2. **{high}** Clear review backlog for the 15 stuck PRs — triage by owner_role, bulk-assign reviewers. **Dependency:** pm-tech-lead. **DoD:** at least 5 PRs transition out of `review` within the next 2 runs.
+3. **{medium}** Follow-up on #3157 (moderation sub-paths) — PR #3158 is drafted; keep it on the fast lane since it unblocks a scrim of related CRS endpoints. **Dependency:** pm-backend. **DoD:** #3158 merges by 2026-10-27.
+4. **{medium}** Backfill regression test for PR #3145 (push-fanout surface errors — merged without test). Per 2026-07-30 pm-backend standard: hotfix-no-test needs an explicit follow-up at merge time. **Dependency:** pm-backend. **DoD:** test exercises both success + error-surfacing branches.
+5. **{low}** Reconcile 2 stale action-list.md rows (`code-review-reality-server-price-map-cache-unbounded`, `gh-issue-3124`) — JSON no longer carries them; MD regenerated from JSON this run. **Dependency:** none. **DoD:** MD table matches JSON.
 
-## Sprint progress
+## risks
 
-- **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
+- **{high/high}** Merge-pipeline deadlock (#3131) silently converts a fat merge window into zero-queue-progress; new work gets rejected at the gate. **Mitigation:** emergency reviewer rotation + self-approval policy exception doc.
+- **{medium/high}** Hotfix PR #3145 merged without a regression test — push-fanout error surfacing is business-critical path. **Mitigation:** backfill test within 48h; enforce the 2026-07-30 "hotfix needs follow-up issue at merge time" rule in the PR template.
+- **{medium/medium}** Review-queue aging: 15 PRs all in `review` means reviewer fatigue is real. **Mitigation:** per-role reviewer SLA + daily digest surfacing stalled reviews.
+- **{low/medium}** `agency/[slug]/page.tsx` touched twice this window (both XSS/sanitize fixes). Pattern-prone surface — missing a shared sanitize helper. **Mitigation:** extract `sanitizeAgencyHtml()` into shared package.
 
-## Next actions (top 3)
+## open_questions
 
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
+- Which exact subset of the 15 stuck PRs are backend vs frontend? (payload didn't partition)
+- Is #3124 cargo-deny advisory truly cleared by #3148 (ammonia RUSTSEC guard), or does the exception row still apply?
 
-## Risks
+## decisions_needed
 
-| Risk | P | I | Mitigation |
-|---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
+- Should the dispatcher enforce `verdict=changes` auto-respawn for review-aged (>48h) PRs that no human has touched? — owner: pm-tech-lead
+- Formalize a self-approval exception policy for the research-dispatcher-authored PRs (#3131 root cause) — owner: pm-tech-lead + pm-security
 
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
+## Scrum-Master-only fields
 
-## Blockers
-
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
-
-## Open questions
-
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
-
-## Decisions needed
-
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- **shipped_since_last_run:** #3144 (gradient-color sanitize) · #3145 (push-fanout surface errors — hotfix no test) · #3146 (PRICE_MAP_CACHE eviction) · #3147 (migration import storage error handling) · #3148 (ammonia RUSTSEC guard) · #3150 (AML/DSA routing fix) · #3151 (href scheme XSS allowlist) · #3156 (shared bearerAuthHeader refactor)
+- **sprint_progress:** sprint="Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth", epics_done=3, epics_total=5 (unchanged from sprint-status.yaml)
+- **blockers:**
+  - {item: "#3131 merge-pipeline deadlock (self-approval block)", reason: "16 of 16 WIP slots consumed by human-gated PRs; claimable=8/72 (buffer-low)", owner_role: "pm-tech-lead"}
+  - {item: "#2652 KMP cloud builds", reason: "5+ KMP backlog items structurally unclaimable", owner_role: "pm-devops"}
+  - {item: "#2966 utoipa-swagger-ui egress", reason: "api-server cloud build gate", owner_role: "pm-devops"}

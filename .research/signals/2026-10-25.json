@@ -1,0 +1,187 @@
+{
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-3145-push_fanout",
+      "type": "hotfix-no-test",
+      "source": "PR #3145",
+      "score_delta": 2,
+      "evidence": "PR #3145 (fix(api-server): surface push-fanout HTTP client build errors instead of panicking) merged 2026-10-24; single-file diff of backend/servers/api-server/src/services/push_fanout.rs; no `*test*` file in the changed set. Three reqwest `.expect()` constructors became error-propagating — behavioural change on error path, no regression coverage.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-app-locale-agency-slug-page-tsx",
+      "type": "churn-hotspot",
+      "source": "commits since 2026-10-23",
+      "score_delta": 1,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx touched twice (PR #3144 sanitize gradient-color; PR #3151 href scheme allowlist). Both resolved known code-review backlog items for the same file. Churn is trailing — file is now at design parity with sibling tenant-config.ts / sanitize-url.ts. No backlog row created (dep-update-noise precedent: log in brief, don't score).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ]
+    },
+    {
+      "id": "lag-warning-2026-10-25",
+      "type": "lag_warning",
+      "source": "routine clock",
+      "score_delta": 0,
+      "evidence": "Last run 2026-10-23T03:15:00Z — lag ~45h (threshold 36h). Not stale (<3d). Trigger payload referenced issue #3131 (merge-pipeline deadlock, 16 PRs blocked on human review) as root of buffer-low claimable=8/72.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "code-review-slice:mobile-native-kmp:2026-10-25",
+      "score_delta": 3,
+      "evidence": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — CreateListingScreen is wired to onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }; realtors reaching Screen.CreateListing from AgencyHub (navigation line 415) or MyListings (line 484) always see failure. No API call is made. Dedup-matched existing ready item `code-review-mobile-native-kmp-create-listing-not-wired`; evidence appended, score NOT re-added (same finding class).",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "dedup_match": "code-review-mobile-native-kmp-create-listing-not-wired"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-silent-onfailure",
+      "type": "code-review-finding",
+      "source": "code-review-slice:mobile-native-kmp:2026-10-25",
+      "score_delta": 2,
+      "evidence": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:380,450,476,541 — four composable LaunchedEffects collapse every repository failure (including non-401 network/5xx errors) into `= emptyList()`, with no error UI and no logging; users cannot distinguish 'truly empty' from 'backend broken'. No unit test asserts the error-vs-empty distinction.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-bang-in-lambda",
+      "type": "code-review-finding",
+      "source": "code-review-slice:mobile-native-kmp:2026-10-25",
+      "score_delta": 1,
+      "evidence": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt:132,149,160 — click lambdas capture outer `state` and dereference `state.listing!!` at invocation time. Smart-cast doesn't survive the `by` delegate + closure boundary, so if a refresh nulls `listing` between composition and tap the lambda NPEs. Safer: hoist `val listing = state.listing ?: return@Composable` or snapshot before the Box.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == '# <today>'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursors advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal dedup (non-cumulative, score_delta!=0)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 && decay applied to >14d-old open items",
+      "observed": "cap: true; decay: vacuous (no items older than 2026-10-11)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0 or all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count <= 2",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret patterns in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "equal",
+      "expected": "equal"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases listed",
+      "observed": "none",
+      "expected": "honest listing"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-HEAD plans still present (active or archived)",
+      "observed": "missing=0",
+      "expected": "missing=0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count >= HEAD count",
+      "observed": "cur=22 head=22",
+      "expected": "cur >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "equal",
+      "expected": "equal"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no candidate); kill switch not set",
+      "observed": "actions=0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list + risks parseable; project-state non-empty; pm_cursor in [0,7]; coverage_cursor in [0,13); coverage_cursor advanced",
+      "observed": "all true; CC 11->12, PM 1->2",
+      "expected": "all true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

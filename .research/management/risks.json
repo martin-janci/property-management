@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-19T04:00:00Z",
+  "generated": "2026-10-25T04:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -241,6 +241,50 @@
       "trigger": null,
       "status": "open",
       "source": "pm-integration 2026-10-19"
+    },
+    {
+      "id": "pm-scrum-master-merge-pipeline-deadlock-3131-2026-10-25",
+      "risk": "Merge-pipeline deadlock (#3131): 16 of 16 WIP slots stuck on human-gated PRs in `review` -> claimable=8/72, buffer-low. Zero queue progress across what would otherwise be a fat merge window.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Emergency reviewer rotation + formalize self-approval exception policy for research-dispatcher PRs. See #3131.",
+      "owner_role": "pm-tech-lead",
+      "trigger": "Any dispatcher run with claimable<=10 AND >=10 open PRs in `review` status",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-25"
+    },
+    {
+      "id": "pm-backend-hotfix-no-test-pr-3145-2026-10-25",
+      "risk": "PR #3145 push-fanout error-surface hotfix merged WITHOUT a regression test - repeats the 2026-07-30 pattern (PR #2547 scheduler, PR #2568 Android SSO CSRF). Business-critical path (silent failure = unseen push drops).",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Backfill failing-on-main test within 48h; enforce via PR template that any `fix(` / `hotfix` commit must modify or add a test file (ties to 2026-08-25 pm-qa dispatcher-fix-PR regression-test decision).",
+      "owner_role": "pm-backend",
+      "trigger": "Next push-fanout outage or next backlog item citing push drop",
+      "status": "open",
+      "source": "pm-backend 2026-10-25"
+    },
+    {
+      "id": "pm-backend-shared-sanitize-pattern-debt-2026-10-25",
+      "risk": "reality-web agency/[slug]/page.tsx touched twice in a 2-day window for XSS/sanitize fixes (PR #3144 gradient-color, PR #3151 href scheme). Reactive one-input-at-a-time patching rather than defense-in-depth shared helper.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Extract sanitizeAgencyHtml() shared helper in a frontend package; same pattern 2026-08-25 pm-qa flagged for backend CSV sanitizers (shared proptest fuzz-corpus).",
+      "owner_role": "pm-backend",
+      "trigger": "Any 3rd XSS/sanitize fix on the same file within 30d",
+      "status": "open",
+      "source": "pm-backend 2026-10-25"
+    },
+    {
+      "id": "pm-scrum-master-review-queue-aging-2026-10-25",
+      "risk": "Review-queue aging across 15 stuck PRs. The longer a backend PR sits in `review`, the worse the rebase cost (sqlx offline-data drift, Cargo.lock conflicts, dev-branch divergence).",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Daily `stale backend reviews` digest line + per-role reviewer SLA. Depends on #3131 unblock.",
+      "owner_role": "pm-tech-lead",
+      "trigger": "Any PR in `review` for >48h without a reviewer touch",
+      "status": "open",
+      "source": "pm-scrum-master 2026-10-25"
     }
   ]
 }

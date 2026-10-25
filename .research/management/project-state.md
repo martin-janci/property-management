@@ -1,25 +1,25 @@
 # PPT Project State
 
-_Generated: 2026-10-19 — routine Phase 1.6 upkeep (pm-integration rotation slot; pm-cursor idx 7 → 0, wrapping) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 9 → 10 (epic-84 Documents & e-signature re-checked, all 5 stories still done, no material change). 3-day lag since 2026-10-16 run — on schedule._
+_Generated: 2026-10-25 — routine Phase 1.6 upkeep (pm-backend rotation slot; pm-cursor idx 1 -> 2) + pm-scrum-master always-on. Coverage `scan_kind=upkeep`; coverage_cursor idx 11 -> 12 (epic-8a Basic Notification Preferences re-checked, all 3 stories still done, no PR in the 2026-10-23..2026-10-25 window touched notification surfaces). 2-day lag since 2026-10-23 run._
 
-## Delta since last routine run (2026-10-16)
+## Delta since last routine run (2026-10-23)
 
-- **2 PRs merged** (#3121, #3122) — both dispatcher-authored code-review follow-ups on Tier-1d signals:
-  - **#3121** reality-web auth-context transient-logout cushion (+159/-2, tests included) — resolves backlog `code-review-reality-web-auth-ctx-transient-logout` (`status: done`).
-  - **#3122** ppt-web-core useAmlDashboard AML flags (+117/-6, tests included) — resolves backlog `code-review-ppt-web-core-aml-checks-hardcoded-false` / `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (`status: done`).
-  - Zero coverage status flips (both surfaces already shipped). Evidence appended on 10a-1 for #3121 (SSO consumer hardening); #3122 maps to no coverage story (compliance epic not in current coverage map).
-- **1 new blocker (critical): #3124** — `cargo-deny advisories FAILED on dev: RUSTSEC-2026-0368 / RUSTSEC-2026-0369 (zip 8.6.0 via rust_xlsxwriter)` — this gates **every backend PR merge** on top of the still-open #2966 (swagger-ui egress) that gates backend cloud builds. Pre-claimed by dispatcher as `gh-issue-3124` (commit 62aaaa5).
-- **1 open draft PR: #3123** — api-core TOTP RNG expect panic (dispatcher-authored, follow-up on backlog signal `code-review-api-core-totp-rng-expect-panic`); no contract impact.
-- **PM-integration rotation note:** pm-integration was last run 2026-07-24 — nearly 3 months stale. The rotation hits it on wrap-around today; a fresh integration lens on the merge/build gate stack is overdue and timely given #3124.
+- **8 PRs merged** (fat window): #3144 (gradient-color sanitize), #3145 (push-fanout surface errors — hotfix WITHOUT test), #3146 (reality-server PRICE_MAP_CACHE eviction), #3147 (migration-import storage error handling), #3148 (ammonia RUSTSEC guard), #3150 (AML/DSA routing fix), #3151 (href scheme XSS allowlist), #3156 (shared bearerAuthHeader refactor).
+- **5 issues closed**: #3132 (by #3146), #3136 (by #3147), #3143 (by #3148), #3149 (by #3150). #3131 remains OPEN as the critical merge-pipeline-deadlock blocker; #3157 OPEN with #3158 drafted.
+- **1 new critical blocker: #3131** — merge-pipeline deadlock. 15 open PRs touched this window, ALL in `review` status. 16 WIP slots consumed by human-gated PRs → **claimable=8/72 (buffer-low)**. Zero queue progress available on an otherwise fat merge window. Root cause: self-approval block on research-dispatcher PRs; no reviewer rotation.
+- **PR #3145 red flag**: push-fanout error-surface hotfix shipped WITHOUT a regression test. Repeats the 2026-07-30 pm-backend standard (hotfix needs follow-up at merge time) — enforcement gap.
+- **Churn is flat.** The only file touched twice is `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx` (both XSS/sanitize fixes). Shared-sanitize-helper debt surfacing.
+- **pm-backend rotation note:** pm-backend last ran 2026-07-30 — ~3 months stale. Timely given 3 of 8 merged PRs touch backend (#3145/#3146/#3147).
 
-<sub>Prior upkeep note (archived): 2026-10-16 — pm-data rotation; coverage_cursor 8 → 9 (epic-83 re-checked).</sub>
+<sub>Prior upkeep note (archived): 2026-10-23 — pm-tech-lead rotation; coverage_cursor 10 -> 11 (epic-85 re-checked).</sub>
 
 ## Executive summary
 
-- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on 10a-1 (PR #3121 evidence) and all 5 epic-84 stories (cursor re-check — negative, nothing touched those surfaces).
-- **2 PRs merged** in the observation window: both frontend code-review follow-ups, both tests-included, both resolving prior backlog items.
-- **Buffer still constrained, now doubly:** #2966 (swagger-ui egress) gates backend builds; **#3124 cargo-deny** (brand new) gates backend merges even on green builds; #2652 (KMP) continues to park mobile-native work. Expect a tier-1 refresh of the IDOR retries only once BOTH #2966 and #3124 are resolved.
-- **One new high-priority issue: #3124** — classic RUSTSEC advisory on a transitive dep (`rust_xlsxwriter → zip 8.6.0`); mitigation is either a version bump or a bounded cargo-deny exception. Pre-claimed by dispatcher; needs resolution within 24-48h to avoid merge-queue starvation.
+- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on all 3 epic-8a stories (cursor re-check — negative, no PR touched notification-preference / critical-notifications / WS realtime surfaces).
+- **8 PRs merged** in the observation window: a mix of security (gradient/href sanitize, ammonia RUSTSEC guard, AML routing), reliability (push-fanout error surfacing, PRICE_MAP_CACHE eviction, migration-import error path), and shared-code hygiene (bearerAuthHeader refactor).
+- **But the merge-queue is deadlocked.** #3131 (buffer-low 8/72 claimable, 16 WIP slots on human-gated PRs) is the ONE blocker that matters today — nothing else can land until it clears.
+- **Prior merge-queue gates:** cargo-deny (#3124) effectively cleared by #3148 (ammonia); #2966 swagger-ui egress still carried; #2652 KMP cloud builds still carried.
+- **Hotfix-without-test regression**: #3145 is a repeat of the 2026-07-30 pattern — a new PM decision is overdue to enforce "any `fix(` / `hotfix` commit must modify or add a test file" at CI level.
 
 ## Sprint progress
 
@@ -29,54 +29,54 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 |---|---|---|---|
 | 6 — Announcements & Communication | in-progress (3/6)† | 6/6 done | — |
 | 7A — Basic Document Management | in-progress (2/5)† | 5/5 done | — |
-| 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
-| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | #3121 (reality-web auth-ctx transient-logout — SSO consumer hardening) |
+| 8A — Basic Notification Preferences | done (3/3) | 3/3 done · **last_checked 2026-10-25 (cursor re-check)** | — |
+| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | — |
 | 10B — Platform Administration | in-progress (7/7)† | 7/7 done | — |
 | 80 — Dispute Resolution | partial (1/3)† | 3/3 done | — |
-| 79 — API client integration | (extended) | 4/4 done | — |
+| 79 — API client integration | (extended) | 4/4 done | #3156 (shared bearerAuthHeader refactor — likely @ppt/api-client) |
 | 82 — iOS Reality Portal (SwiftUI) | (extended) | 5/5 done | — |
 | 83 — Portal Integrations | (extended) | 3/3 done | — |
-| 84 — Documents & e-signature | (extended) | 5/5 done · **last_checked 2026-10-19 (cursor re-check)** | — |
-| 85 — Build/CI configuration | (extended) | 2/2 done | — |
+| 84 — Documents & e-signature | (extended) | 5/5 done | #3147 (migration-import storage error handling — adjacent to 84-x doc-import flow) |
+| 85 — Build/CI configuration | (extended) | 2/2 done | #3148 (ammonia RUSTSEC guard — cargo-deny hygiene) |
 | 9 — 2FA/TOTP | (extended) | 1/1 done | — |
-| Cross-cutting | — | — | #3122 (ppt-web AML dashboard flags — compliance epic not in coverage) |
+| Cross-cutting | — | — | #3144, #3145, #3146, #3150, #3151 (reality-web/reality-server + AML/DSA) |
 
 † sprint-status.yaml drift against coverage.json — no action required this run; deep scan will reconcile.
 
-## Shipped since last run (2 PRs merged)
+## Shipped since last run (8 PRs merged)
 
-- **#3121** — reality-web auth-context transient-logout cushion: don't logout on transient 401 from reality-server /auth/refresh (resolves backlog `code-review-reality-web-auth-ctx-transient-logout`; +159/-2 with tests)
-- **#3122** — ppt-web-core useAmlDashboard AML flags: AML risk flags no longer hardcoded false / risk factors map now guarded (resolves backlog `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map`; +117/-6 with tests)
+- **#3144** — reality-web agency page: gradient-color sanitize (XSS surface narrowing)
+- **#3145** — api-server push-fanout: surface Redis publish errors instead of silent swallow (**hotfix, no regression test — follow-up queued**)
+- **#3146** — reality-server PRICE_MAP_CACHE eviction (closes unbounded-growth DoS vector; closes #3132)
+- **#3147** — migration-import storage error handling (closes #3136)
+- **#3148** — ammonia RUSTSEC guard (closes #3143; effectively clears the carried cargo-deny gate from the 2026-10-19 run)
+- **#3150** — AML/DSA routing fix (closes #3149)
+- **#3151** — reality-web agency page: href-scheme XSS allowlist
+- **#3156** — @ppt/api-client shared `bearerAuthHeader` refactor (unifies the triplicated auth-header path — closes the long-carried #3006-class refactor-with-security-overtones)
 
-## Blockers (1 new, carried)
+## Blockers (1 new critical, 2 carried)
 
-- **#3124 (NEW, high)** — cargo-deny advisories FAILED on dev: RUSTSEC-2026-0368 / RUSTSEC-2026-0369 on zip 8.6.0 via rust_xlsxwriter. Blocks every backend PR merge. Owner: pm-security. Pre-claimed by dispatcher.
+- **#3131 (NEW, high)** — merge-pipeline deadlock: 16/16 WIP slots on human-gated PRs in review → claimable=8/72 (buffer-low). Blocks every new dispatcher claim until reviewer rotation lands. Owner: pm-tech-lead.
 - **#2966** — api-server utoipa-swagger-ui egress 403 (carried, high). Blocks backend cloud builds. Owner: pm-devops.
-- **#2946 / #2944 / #2945** — cross-tenant IDOR retries, all parked behind #2966 (and now additionally #3124). Owner: pm-security.
 - **#2652** — mobile-native/KMP cloud builds blocked. Owner: pm-devops.
-- **#2951** — mobile RN jest-expo version rot. Owner: pm-devops.
+- **(Cleared this run)** — cargo-deny RUSTSEC-2026-0368/0369 effectively superseded by #3148 ammonia guard. Confirm cleanup of the exception row.
 
 ## What's next (top 5 from the roadmap)
 
-1. **Resolve #3124 cargo-deny advisories** (bump rust_xlsxwriter or bounded cargo-deny exception for RUSTSEC-2026-0368/0369) — owner: pm-security — **gates every backend merge today**.
-2. **Unblock #2966 swagger-ui egress** — owner: pm-devops — gates every backend cloud build; combined with #3124 is the two-key lock keeping the IDOR tier parked.
-3. **Land #2946 portfolio_analytics IDOR fix** (retry 2/2 draft open) — owner: pm-security — unblocks on resolution of #2966 + #3124.
-4. **#3006 unify triplicated auth-header + MFA-retry** in @ppt/api-client — owner: pm-tech-lead — security-overtones refactor, carried.
-5. **Document the reality-server SSO consumer transient-401 contract** (PR #3121 cushion) in docs/api/README.md so client/server treat transient vs permanent 401 symmetrically — owner: pm-integration (new).
+1. **Unblock #3131 merge-pipeline deadlock** — define self-approval exception for research-dispatcher PRs OR rotate human reviewers — owner: pm-tech-lead — **gates every new dispatcher claim**.
+2. **Clear review backlog for 15 stuck PRs** (#3024, #3028, #3070, #3072, #3074, #3075, #3107, #3108, #3111, #3120, #3152, #3153, #3154, #3155, #3158) — bulk-assign reviewers — owner: pm-tech-lead — depends on #3131.
+3. **Backfill regression test for PR #3145** push-fanout error-surface hotfix — owner: pm-backend — business-critical path.
+4. **Fast-lane PR #3158** (moderation sub-paths follow-up for #3157) — owner: pm-backend — small scope, unblocks CRS adjacency.
+5. **Unblock #2966 swagger-ui egress** — owner: pm-devops — carried; still gates backend cloud builds.
 
-## Role focus today: pm-integration (+ pm-scrum-master always-on)
+## Role focus today: pm-backend (+ pm-scrum-master always-on)
 
-- **pm-integration** (3-month stale rotation): The integration-contract surface is quiet (both merged PRs are client-side cushions, no OpenAPI change). The current merge-queue blocker (#3124) is itself an integration-level failure mode — the external advisory feed vetoes the merge path even when the internal change is clean. Three concrete follow-ups opened:
-  1. Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift (medium).
-  2. Surface the RUSTSEC-exception policy in the cargo-deny CI gate description (medium, blocked on #3124).
-  3. Document the reality-server SSO consumer transient-401 contract (low).
-- **pm-scrum-master**: Mild week — 2 PRs merged, 1 draft open, 1 critical new issue. The twin merge-gate (#2966 + #3124) is the only noteworthy change in delivery posture since the 2026-10-16 run.
+- **pm-backend** (3-month stale rotation): Backend had 3 touching merges and one of them (#3145) shipped without a test — exactly the 2026-07-30 standard this role codified. Also surfaced: shared-sanitize-helper debt (agency/[slug]/page.tsx twice), PRICE_MAP_CACHE-class audit opportunity, migration-import retry audit question. Six concrete actions queued.
+- **pm-scrum-master**: Fat merge window (8 PRs, 5 issues closed) masking a merge-pipeline deadlock (#3131). Review-queue aging is now the top delivery risk — 15 PRs sitting in `review` means a rebase-cost spiral starts next run if we don't clear it.
 
-## Coverage (upkeep this run — 2026-10-19)
+## Coverage (upkeep this run — 2026-10-25)
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-19T04:00:00Z`, no re-scan.
-- **Epic re-check: epic-84 Documents & e-signature (cursor idx 9)** — all 5 stories (84-1..84-5) still `done`; no PR in the 2026-10-18..2026-10-19 window touched S3 presigned / e-signature email / price-tracking / notification-trigger / pgvector RAG surfaces. `last_checked = 2026-10-19` stamped on all 5. Negative-check evidence appended on each.
-- **Merged-PR evidence appended** on 10a-1-oauth-authorization-server for PR #3121 (SSO consumer hardening). PR #3122 (AML dashboard flags) does not map to a coverage story — compliance epic is not in the current coverage map; backlog signal was the only tracking point and is now done.
-- **`coverage_cursor` advances 9 → 10** (epic-84 → epic-85 next run).
-- **`pm_cursor` advances 7 → 0** (pm-integration → pm-tech-lead next; rotation wraps). role_last_run["pm-integration"] = 2026-10-19.
-- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, already queued elsewhere).
+- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-25T04:00:00Z`, no re-scan.
+- **Epic re-check: epic-8a Basic Notification Preferences (cursor idx 11)** — all 3 stories (8a-1 channel-toggles / 8a-2 critical-override / 8a-3 preference-sync) still `done`; no PR in the 2026-10-23..2026-10-25 window touched notification-preference / critical-notifications / WS realtime surfaces. `last_checked = 2026-10-25` stamped on all 3. Negative-check evidence appended on each.
+- **Merged-PR evidence**: no coverage story cleanly maps to #3144-#3158 (closest-adjacency is #3147 to epic-84 doc-import, #3156 to epic-79 api-client — both already done; no status flip). PR #3146 (PRICE_MAP_CACHE) closes a backlog-tracked risk, not a coverage story.
+- **`coverage_cursor` advances 11 -> 12** (epic-8a -> epic-9 next run).

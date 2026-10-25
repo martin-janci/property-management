@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-22T03:19:36Z",
+  "generated": "2026-10-25T04:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -663,13 +663,14 @@
         "sprint-status: done",
         "GET/PATCH /api/v1/users/me/notification-preferences/{channel}",
         "RLS-aware NotificationPreferenceRepository",
-        "NotificationSettingsPage shipped; screen-map buildStatus=shipped"
+        "NotificationSettingsPage shipped; screen-map buildStatus=shipped",
+        "negative re-check 2026-10-25: no PR in #3144-#3158 touched notification-preference / critical-notifications / WS realtime surfaces"
       ],
       "gaps": [
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-25",
       "screen_refs": []
     },
     {
@@ -686,14 +687,15 @@
         "sprint-status: done",
         "POST/GET /api/v1/organizations/{org_id}/critical-notifications",
         "urgency bypass mechanism for preference override",
-        "manager-tier authorization; Urgent priority pipeline integration"
+        "manager-tier authorization; Urgent priority pipeline integration",
+        "negative re-check 2026-10-25: no PR in #3144-#3158 touched notification-preference / critical-notifications / WS realtime surfaces"
       ],
       "gaps": [
         "mobile UI for critical notifications not implemented (design out-of-scope for MVP)",
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-25",
       "screen_refs": []
     },
     {
@@ -710,7 +712,8 @@
         "sprint-status: done \u2014 WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25)",
         "handler publishes preference.updated to Redis notifications:{user_id}",
         "notification_preference_realtime_sync_tests.rs S1-S13 matrix",
-        "PreferenceEventRecorder for CI-executable publish contract (issue #1376)"
+        "PreferenceEventRecorder for CI-executable publish contract (issue #1376)",
+        "negative re-check 2026-10-25: no PR in #3144-#3158 touched notification-preference / critical-notifications / WS realtime surfaces"
       ],
       "gaps": [
         "mobile OS integration (FCM/APNs) deferred per sprint-status",
@@ -718,7 +721,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-8a",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-25",
       "screen_refs": []
     },
     {

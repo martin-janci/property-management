@@ -1,76 +1,95 @@
-# PPT Roadmap — upkeep 2026-10-19
+# PPT Roadmap — upkeep 2026-10-25
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 3-day lag since 2026-10-16 run._
+_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 2-day lag since 2026-10-23 run._
 
 ## State of the project
 
-- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on 10a-1 (PR #3121 evidence) and all 5 epic-84 stories (cursor re-check — negative).
-- Delta vs 2026-10-16 upkeep: **2 PRs merged** — both frontend code-review follow-ups (reality-web auth-ctx transient-logout cushion + ppt-web AML dashboard flags), both tests-included, both resolving prior backlog items.
-- **Buffer now doubly constrained:** #2966 (swagger-ui egress) gates backend builds; **#3124 cargo-deny** (new, RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) gates backend merges even on green builds; #2652 (KMP) continues to park mobile-native work.
+- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-8a stories (cursor idx 11; negative re-check — no PR touched notification surfaces).
+- Delta vs 2026-10-23 upkeep: **8 PRs merged** (fat window) + **4 issues closed** (#3132/#3136/#3143/#3149). But merge-pipeline deadlock #3131 (16 WIP slots on human-gated PRs in review → claimable=8/72, buffer-low) means zero queue progress is actually available until reviewer rotation lands.
+- Cargo-deny gate effectively cleared by #3148 (ammonia RUSTSEC guard). Carried: #2966 (swagger-ui egress), #2652 (KMP cloud builds).
+- Hotfix #3145 (push-fanout surface errors) shipped WITHOUT a regression test — repeat of the 2026-07-30 pattern.
 - Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3 already queued elsewhere).
-- Open PRs: 1 draft (#3123 api-core TOTP RNG expect panic — no contract impact). The accounting stall trio (#2559, #2555) remains carried.
+- 15 open PRs in `review` status with ZERO reviewer touches: #3024, #3028, #3070, #3072, #3074, #3075, #3107, #3108, #3111, #3120, #3152, #3153, #3154, #3155, #3158.
 
 ## Epic status (short)
 
-- **Epic 6 — Announcements & Communication:** 6/6 done in coverage; sprint-status.yaml drift (safe to re-reconcile next deep scan).
+- **Epic 6 — Announcements & Communication:** 6/6 done in coverage.
 - **Epic 7A — Basic Document Management:** 5/5 done.
-- **Epic 8A — Basic Notification Preferences:** 3/3 done.
-- **Epic 10A — OAuth Provider Foundation:** 3/3 done. PR #3121 adds SSO-consumer-side evidence on 10a-1 (reality-web auth-context transient-logout cushion).
+- **Epic 8A — Basic Notification Preferences:** 3/3 done. **Re-checked this run (cursor idx 11).** `last_checked = 2026-10-25` on all 3.
+- **Epic 10A — OAuth Provider Foundation:** 3/3 done.
 - **Epic 10B — Platform Administration:** 7/7 done.
 - **Epic 80 — Dispute Resolution:** 3/3 done in coverage (sprint-status still shows partial).
 - **Epic 81 — Reports:** 2/2 done.
 - **Epic 82 — iOS Reality Portal (SwiftUI):** 5/5 done.
 - **Epic 83 — Portal Integrations:** 3/3 done.
-- **Epic 84 — Documents & e-signature:** 5/5 done. **Re-checked this run (cursor idx 9).** No merged PR in the 2026-10-18..2026-10-19 window touched epic-84 surfaces; `last_checked = 2026-10-19` stamped on all 5 stories.
-- **Epic 85 — Build/CI configuration:** 2/2 done.
-- **Epic 79 — API client integration:** 4/4 done.
+- **Epic 84 — Documents & e-signature:** 5/5 done. (#3147 migration-import error-handling evidence adjacent.)
+- **Epic 85 — Build/CI configuration:** 2/2 done. (#3148 ammonia RUSTSEC guard evidence adjacent.)
+- **Epic 79 — API client integration:** 4/4 done. (#3156 shared bearerAuthHeader evidence adjacent — closes the long-carried #3006-class refactor.)
 - **Epic 9 — 2FA/TOTP:** 1/1 done.
 
 ## Ranked plan
 
 ### merge-queue unblock (highest leverage, score 10)
 
-- [high] **Resolve #3124 cargo-deny advisories** (RUSTSEC-2026-0368 / RUSTSEC-2026-0369 on zip 8.6.0 via rust_xlsxwriter) — bump the version or add a bounded cargo-deny exception with deadline — gates every backend merge — owner: **pm-security**
-- [high] **Unblock #2966 utoipa-swagger-ui egress** for api-server cloud builds — gates every backend build — owner: **pm-devops**
-- [high] Unblock mobile-native/KMP builds in cloud runner (**#2652**) — 5+ KMP items structurally unclaimable — owner: **pm-devops**
+- [high] **Resolve #3131 merge-pipeline deadlock** — self-approval exception for research-dispatcher PRs OR human reviewer rotation — gates every new dispatcher claim — owner: **pm-tech-lead**
+- [high] **Clear 15 review-stuck PRs** (#3024, #3028, #3070, #3072, #3074, #3075, #3107, #3108, #3111, #3120, #3152, #3153, #3154, #3155, #3158) — bulk-assign reviewers by owner_role — depends on #3131 — owner: **pm-tech-lead**
+- [high] **Unblock #2966 utoipa-swagger-ui egress** for api-server cloud builds — gates every backend build — owner: **pm-devops** (carried)
+- [high] Unblock mobile-native/KMP builds in cloud runner (**#2652**) — owner: **pm-devops** (carried)
 
-### security tier-1 (score 8-9, all blocked on the merge-queue above)
+### regression-test backfill (score 8, pm-backend)
 
-- [high] Land #2946 fix (portfolio_analytics IDOR) — retry 2/2 draft open as `gh-issue-2946-retry2` — blocked by #2966 **AND** #3124 — owner: **pm-security**
-- [high] Land #2944 fix (violation comments/evidence/payments IDOR + internal-notes leak) — retry 1/2 — blocked by #2966 + #3124 — owner: **pm-security**
-- [high] Land #2945 fix (portfolio_properties IDOR) — retry 1/2 — blocked by #2966 + #3124 — owner: **pm-security**
+- [high] **Backfill test for PR #3145 push-fanout error-surface hotfix** — exercise success + Redis-publish-failure branches — owner: **pm-backend**
 
-### refactor-with-security-overtones (score 6)
+### cross-cutting hygiene (score 6-7, pm-backend)
 
-- [medium] #3006 — unify triplicated auth-header + MFA-retry in @ppt/api-client fetch primitives — owner: **pm-tech-lead** (carried)
+- [medium] Fast-lane PR #3158 (moderation sub-paths follow-up for #3157) — owner: **pm-backend**
+- [medium] Audit PR #3147 migration-import retry/rollback correctness — owner: **pm-backend**
+- [medium] Extract shared `sanitizeAgencyHtml()` helper — agency/[slug]/page.tsx twice this window — owner: **pm-backend** (dep: pm-tech-lead shared-crate design)
+
+### security tier-1 (score 7, all blocked on #3131 and the carried gates)
+
+- [high] Land #2946 fix (portfolio_analytics IDOR) — retry 2/2 draft — blocked by #3131 + #2966 — owner: **pm-security**
+- [high] Land #2944 fix (violation comments/evidence/payments IDOR + internal-notes leak) — retry 1/2 — blocked by #3131 + #2966 — owner: **pm-security**
+- [high] Land #2945 fix (portfolio_properties IDOR) — retry 1/2 — blocked by #3131 + #2966 — owner: **pm-security**
 
 ### reviewer-starvation (score 5-6)
 
-- [medium] Reviewer slot for stalled accounting trio **#2559** (PAY by Square) and **#2555** (invoice lifecycle) — 67d idle — owner: **pm-tech-lead**
+- [medium] Reviewer slot for stalled accounting trio **#2559** (PAY by Square) and **#2555** (invoice lifecycle) — 85+ days idle — owner: **pm-tech-lead**
 
-### pm-integration follow-ups (new this run, score 4-5)
+### pm-integration follow-ups (carried, score 4-5)
 
-- [medium] Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift — owner: **pm-integration**
-- [medium] Surface the RUSTSEC-exception policy in the cargo-deny CI gate description so #3124-class blockers triage faster next time — owner: **pm-integration** (depends on #3124)
-- [low] Document the reality-server SSO consumer transient-401 contract vs reality-web auth-context cushion (PR #3121) in docs/api/README.md — owner: **pm-integration**
+- [medium] Audit integration-touching PRs since 2026-10-17 for OpenAPI/TypeSpec drift — owner: **pm-integration** (carried)
+- [low] Document the reality-server SSO consumer transient-401 contract (PR #3121) — owner: **pm-integration** (carried)
+
+### Follow-up issues (score 4-5)
+
+- [medium] gh-issue-3069 (ViolationRepository org-scoping IDOR follow-up) — owner: **pm-tech-lead**
+- [medium] gh-issue-3098 (portfolio_benchmarks schema drift + BIT-622 test refs) — owner: **pm-tech-lead**
+- [medium] gh-issue-3104 (portfolio/owner analytics 500s runtime drift) — owner: **pm-tech-lead**
+- [medium] gh-issue-3109 (api-server DELETE /community/groups/{id} end-to-end) — owner: **pm-tech-lead**
+- [medium] gh-issue-3116 (NewsScreen i18n defaultValue fallback) — owner: **pm-tech-lead**
+- [medium] gh-issue-3157 (moderation sub-paths — PR #3158 drafted) — owner: **pm-tech-lead**
 
 ### quality / RN lint (score 4-5, carried)
 
-- [medium] Resolve mobile RN jest-expo version rot (**#2951**) — owner: **pm-devops**
+- [low] Resolve mobile RN jest-expo version rot (**#2951**) — owner: **pm-devops**
+- [low] Confirm ammonia RUSTSEC exception cleanup after #3148 — owner: **pm-devops**
+- [low] Audit other reality-server anonymous-GET caches for the unbounded-key pattern #3146 fixed — owner: **pm-backend**
 
 ### KMP code-review backlog (score 2-3, all blocked on #2652)
 
-- InquiriesResponse page_size vs reality-server `limit` mismatch
-- Ktor HttpClient has no HttpTimeout
-- CancellationException swallowed in repos
-- getPortfolioAnalytics() 100-cap + unbounded fan-out
-- CreateListingScreen onSubmit stub
-- SsoService untested
+- code-review-mobile-native-kmp-create-listing-not-wired
+- code-review-mobile-native-kmp-inquiries-response-contract
 
-### carried refactors (score 2-3)
+### carried code-review backlog (score 2-3)
 
-- reality-server duplicated URL-validation helper — merge into shared crate
-- api-server routes/integrations/webhook.rs repeated-churn (3 hotspot windows)
-- logout() AUTHED_QUERY_KEY_ROOTS allow-list gap (session leak)
+- code-review-reality-server-add-to-compare-toctou-max-cap
+- code-review-reality-server-register-account-enumeration
+- code-review-api-handlers-violations-{missing-role-authz, number-count-race, record-payment-non-atomic}
+- code-review-api-core-workflow-condition-err-aborts-batch
+- code-review-ppt-web-core-{iot-ws-reconnect-no-backoff, usewebsocket-subscribe-gate}
+- code-review-reality-web-{agency-page-i18n-gap, crm-console-error-leak, realtor-api-unvalidated-json-cast}
+- screen-map-drift-pr-2994-ppt
+- stalled-review-pr-3024-retry1
 
-Buffer: **26/36 open** (floor 36) · candidates remaining ranked but unqueued: ~10. Buffer below floor by 10 but above half; the twin merge-gate (#2966 + #3124) is still the top lever — unblocking either frees the IDOR tier back onto the runner.
+Buffer: **32/36 open** (floor 36) · candidates remaining ranked but unqueued: ~0 — queue is fed; the real blocker is review-side (#3131), not planner-side. Buffer-low signal in Phase 1 payload refers to the dispatcher's `claimable()` predicate (8/72), which collapses to the merge-pipeline deadlock. Unblocking #3131 restores claim-flow without a scan refresh being needed.

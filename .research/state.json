@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-23T03:15:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 3142,
-  "last_issue_seen": 3143,
-  "last_commit_sha": "18f1813",
+  "last_run_iso": "2026-10-25T00:45:00Z",
+  "last_run_ms": 420000,
+  "last_pr_seen": 3156,
+  "last_issue_seen": 3157,
+  "last_commit_sha": "c5b1dd7172e3",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -621,6 +621,11 @@
       "runs_seen": 1,
       "last_seen": "2026-10-22",
       "recent_churn": 1
+    },
+    "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-25",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -1231,7 +1236,13 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "hotfix-no-test-pr-3145-push_fanout",
+    "churn-hotspot-frontend-apps-reality-web-src-app-locale-agency-slug-page-tsx",
+    "lag-warning-2026-10-25",
+    "code-review-mobile-native-kmp-create-listing-stub",
+    "code-review-mobile-native-kmp-silent-onfailure",
+    "code-review-mobile-native-kmp-listing-bang-in-lambda"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1242,11 +1253,11 @@
     "ppt-web-core": "2026-10-22",
     "reality-web": "2026-10-23",
     "mobile-rn": "2026-10-19",
-    "mobile-native-kmp": "2026-10-18"
+    "mobile-native-kmp": "2026-10-25"
   },
   "stats": {
-    "runs": 103,
-    "vectors_created": 453,
+    "runs": 104,
+    "vectors_created": 456,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1262,19 +1273,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
-      "pm-backend": "2026-07-30",
+      "pm-backend": "2026-10-25",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
-      "pm-integration": "2026-10-19"
+      "pm-integration": "2026-10-19",
+      "pm-scrum-master": "2026-10-25"
     }
   },
   "coverage_cursor": {
-    "next_index": 11
+    "next_index": 12
   }
 }

@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-reality-server-add-to-compare-toctou-max-cap",
-      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
+      "action": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS \u2014 two concurrent POSTs can exceed the 4-item cap",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -57,7 +57,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-missing-role-authz",
-      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal",
+      "action": "SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) \u2014 any org member can issue fines and approve their own appeal",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -74,7 +74,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-number-count-race",
-      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
+      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency \u2192 opaque 500 on create",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-record-payment-non-atomic",
-      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine",
+      "action": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction \u2192 partial failure records money without decrementing the fine",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -224,7 +224,7 @@
     },
     {
       "id": "pm-scrum-master-stalled-accounting-pay-by-square-2559-retry1",
-      "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot — one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months [retry 1/2 of failed pm-scrum-master-stalled-accounting-pay-by-square-2559]",
+      "action": "Stalled 64d: PR #2559 (PAY by Square accounting slice) needs reviewer slot \u2014 one of two non-dependabot >60d PRs; part of the accounting MVP trio that has been reviewer-starved for 2 months [retry 1/2 of failed pm-scrum-master-stalled-accounting-pay-by-square-2559]",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -238,7 +238,7 @@
     },
     {
       "id": "pm-scrum-master-stalled-invoice-lifecycle-2555-retry1",
-      "action": "Stalled 64d: PR #2555 (invoice lifecycle accounting slice) needs reviewer slot — companion to #2559; both are the aging accounting MVP trio tracked since 2026-07-30 [retry 1/2 of failed pm-scrum-master-stalled-invoice-lifecycle-2555]",
+      "action": "Stalled 64d: PR #2555 (invoice lifecycle accounting slice) needs reviewer slot \u2014 companion to #2559; both are the aging accounting MVP trio tracked since 2026-07-30 [retry 1/2 of failed pm-scrum-master-stalled-invoice-lifecycle-2555]",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -252,7 +252,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -269,7 +269,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -303,7 +303,7 @@
     },
     {
       "id": "code-review-api-core-workflow-condition-err-aborts-batch",
-      "action": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event",
+      "action": "api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch \u2014 one malformed stored condition silently disables every other automation on that event",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -320,7 +320,7 @@
     },
     {
       "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
-      "action": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly",
+      "action": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up \u2014 retry-storm risk vs. the shared WebSocket stack which already does this correctly",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -337,7 +337,7 @@
     },
     {
       "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
-      "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
+      "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array \u2014 a handler supplied after mount never triggers subscribe()",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -354,7 +354,7 @@
     },
     {
       "id": "code-review-reality-web-crm-console-error-leak",
-      "action": "reality-web CrmConnection/FeedImport/RealtorManagement catch handlers `console.error(error)` after secrets payloads — latent credential leak surface at CrmConnection.tsx:408 (apiKey)",
+      "action": "reality-web CrmConnection/FeedImport/RealtorManagement catch handlers `console.error(error)` after secrets payloads \u2014 latent credential leak surface at CrmConnection.tsx:408 (apiKey)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -371,7 +371,7 @@
     },
     {
       "id": "code-review-reality-web-realtor-api-unvalidated-json-cast",
-      "action": "reality-web lib/realtor-api.ts request<T>() returns `(await response.json()) as T` with no shape validation — API-boundary unchecked cast; sibling listing SSR already uses parseListingDetail guard",
+      "action": "reality-web lib/realtor-api.ts request<T>() returns `(await response.json()) as T` with no shape validation \u2014 API-boundary unchecked cast; sibling listing SSR already uses parseListingDetail guard",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -388,7 +388,7 @@
     },
     {
       "id": "stalled-review-pr-3024-retry1",
-      "action": "Stalled review: PR #3024 docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard — open 10d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3024]",
+      "action": "Stalled review: PR #3024 docs(ppt-web) reconcile dashboard screen-maps with PR #2994 auth-guard \u2014 open 10d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3024]",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -402,7 +402,7 @@
     },
     {
       "id": "gh-issue-3157",
-      "action": "Follow-up: moderation client calls still 404 after base-path fix — wrong sub-paths (PR #3150) (Closes #3157)",
+      "action": "Follow-up: moderation client calls still 404 after base-path fix \u2014 wrong sub-paths (PR #3150) (Closes #3157)",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
@@ -419,7 +419,99 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "gh-issue-3131",
+      "action": "Resolve merge-pipeline deadlock: 16 of 16 WIP slots consumed by human-gated PRs in review -> claimable=8/72 (buffer-low). Define a self-approval exception for research-dispatcher PRs OR rotate human reviewers into the backlog (Closes #3131)",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-scrum-master 2026-10-25"
+    },
+    {
+      "id": "pm-scrum-master-unblock-15-review-stuck-prs",
+      "action": "Triage 15 review-stuck PRs (#3024, #3028, #3070, #3072, #3074, #3075, #3107, #3108, #3111, #3120, #3152, #3153, #3154, #3155, #3158) - bulk-assign reviewers by owner_role; at least 5 must transition out of review by next run",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "gh-issue-3131",
+      "depends_on": [
+        "gh-issue-3131"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-scrum-master 2026-10-25"
+    },
+    {
+      "id": "pm-backend-regression-test-pr-3145-push-fanout",
+      "action": "Backfill failing-on-main regression test for PR #3145 (push-fanout error surfacing hotfix) - exercise both success and Redis-publish-failure branches",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-backend 2026-10-25"
+    },
+    {
+      "id": "pm-backend-audit-pr-3147-migration-import-retry-semantics",
+      "action": "Audit PR #3147 migration-import error-handling for retry/rollback correctness - does a failed S3 PUT mid-import leave partial rows? Document compensating-transaction behavior or file follow-up",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-backend 2026-10-25"
+    },
+    {
+      "id": "pm-backend-fast-lane-pr-3158-moderation-subpaths",
+      "action": "Fast-lane PR #3158 (moderation sub-paths follow-up for #3157) - unblocks adjacent CRS endpoints",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-backend 2026-10-25"
+    },
+    {
+      "id": "pm-backend-extract-shared-sanitize-agency-page",
+      "action": "Extract shared sanitize helper for reality-web agency/[slug]/page.tsx - touched twice this window (PR #3144 gradient-color + PR #3151 href scheme); replace per-call sanitize with sanitizeAgencyHtml()",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "pm-tech-lead shared-crate design decision",
+      "depends_on": [
+        "UNRESOLVED:pm-tech-lead shared-crate design decision"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-backend 2026-10-25"
+    },
+    {
+      "id": "pm-backend-confirm-cargo-deny-ammonia-cleared",
+      "action": "Confirm ammonia RUSTSEC advisory cleared by PR #3148 flips cargo-deny green on dev; remove the exception row if the pinned guard supersedes it",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-backend 2026-10-25"
+    },
+    {
+      "id": "pm-backend-audit-reality-server-anonymous-caches",
+      "action": "Audit other reality-server anonymous-GET caches for the same unbounded-key pattern #3146 fixed on PRICE_MAP_CACHE (listing search index, agency index)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-backend 2026-10-25"
     }
   ],
-  "generated": "2026-10-19T04:00:00Z"
+  "generated": "2026-10-25T04:00:00Z"
 }

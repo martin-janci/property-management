@@ -9888,7 +9888,8 @@
       "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "signal:code-review-mobile-native-kmp-create-listing-stub"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9896,7 +9897,8 @@
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
         "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
         "decayed 2026-09-20: no new signals in 14d (routine-lag: 19d) (score 4 → 3)",
-        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207"
+        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207",
+        "Re-confirmed 2026-10-25 rotating-expert-review (mobile-native-kmp): Navigation.kt:493 CreateListingScreen onSubmit is still `Result.failure(NotImplementedError(\"Wire to listing API\"))` — reachable from AgencyHub (:415) and MyListings (:484). Same finding as 2026-08-30/08-31 — not re-scored (duplicate id class)."
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9905,7 +9907,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-10-25",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -13000,6 +13002,74 @@
       ],
       "created_at": "2026-10-23",
       "updated_at": "2026-10-23",
+      "plan": null
+    },
+    {
+      "id": "hotfix-no-test-pr-3145-push_fanout",
+      "title": "api-server push_fanout.rs: PR #3145 (hotfix) replaced 3 reqwest .expect() panics with error propagation on a single-file diff — no regression test added for the new error path",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3145"
+      ],
+      "evidence": [
+        "PR #3145 title starts with `fix(api-server)`, merged 2026-10-24 with a single-file diff of `backend/servers/api-server/src/services/push_fanout.rs` and no *test* file in the changed set.",
+        "The patch converts three reqwest::Client::builder() constructors from `.expect(..)` to error propagation — a behavioural change on the error path (worker no longer panics, now surfaces a configuration error). Regression coverage absent; the previous churn-hotspot plan that mandated the refactor also had no test IG3 attached.",
+        "Low effort to add: a unit test that constructs the client with an invalid proxy string and asserts an Err back out of `PushFanoutService::new` would pin the new error-path semantics for free."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-silent-onfailure",
+      "title": "mobile-native-kmp realtor nav: 4 LaunchedEffects collapse every repository failure to emptyList() with no error UI or logging — 'empty' is indistinguishable from 'backend broken'",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-25 mobile-native-kmp",
+        "signal:code-review-mobile-native-kmp-silent-onfailure"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt — 4 composable LaunchedEffects (lines 380, 450, 476, 541) catch repository errors and silently assign `= emptyList()`: non-401 network/5xx errors look identical to a truly empty list to the realtor. No error toast, no retry button, no telemetry.",
+        "No unit test asserts the error-vs-empty distinction; adding one would gate the regression (IG3-eligible — KMP unit test on the ViewModel/composable wrapper).",
+        "Severity MEDIUM (+2): operational-silent-failure class; realtor cannot self-diagnose a backend outage. Confidence medium: statically confirmed via grep; UX impact depends on how often backend actually errors."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-listing-bang-in-lambda",
+      "title": "mobile-native-kmp ListingDetailScreen: 3 click lambdas capture outer `state` and dereference `state.listing!!` at invocation time — refresh-between-click NPE class",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-25 mobile-native-kmp",
+        "signal:code-review-mobile-native-kmp-listing-bang-in-lambda"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt lines 132, 149, 160 — three click lambdas capture outer `state` and dereference `state.listing!!` at invocation time. Smart-cast does not survive the `by` delegate + closure boundary, so if a refresh nulls `listing` between composition and tap, the lambda throws NullPointerException.",
+        "Safer idiom: hoist `val listing = state.listing ?: return@Composable` or snapshot before the Box. Low (+1): narrow race, UI only; one-screen scope.",
+        "Confidence medium: static-only, race not runtime-reproduced."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
       "plan": null
     }
   ]
