@@ -45,7 +45,37 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new RealtorApiError(message, response.status);
   }
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  return parseJsonBody<T>(response);
+}
+
+/**
+ * Validate + return the parsed 200 body.
+ *
+ * `request<T>` used to return `(await response.json()) as T` — an unchecked
+ * cast that trusts the wire shape blindly. A malformed or partial 200 (an
+ * upstream/proxy partial body, an HTML error page served with a 200, or a
+ * `null`/primitive/array JSON body) is then handed back typed as `T`, so the
+ * first property deref (`profile.name`, `res.listings.map`) throws deep in a
+ * component with no hint that the API boundary was the culprit.
+ *
+ * Every endpoint this module wraps returns a JSON *object*, so the baseline
+ * boundary invariant is "the body is a non-null, non-array object". Guarding it
+ * here — the single point all helpers funnel through — mirrors the listing SSR
+ * path's `parseListingDetail` guard: reject the bad shape at the edge with a
+ * typed `RealtorApiError` instead of letting it crash downstream
+ * (#2276 / #2281 / #2341 class).
+ */
+async function parseJsonBody<T>(response: Response): Promise<T> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new RealtorApiError('Malformed response from server.', response.status);
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new RealtorApiError('Malformed response from server.', response.status);
+  }
+  return body as T;
 }
 
 export interface RealtorProfile {
