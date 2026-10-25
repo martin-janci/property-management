@@ -13067,6 +13067,63 @@
       "created_at": "2026-10-25",
       "updated_at": "2026-10-25",
       "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-http-client-no-timeout",
+      "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-native-kmp]"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
+        "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
+        "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository)."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-my-listings-pagination-cap",
+      "title": "Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-native-kmp]"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:471-472 - MyListings loads portalListingsRepository.listMyListings(limit = 100) once with no offset paging UI; a realtor with >100 listings never sees rows beyond the first 100.",
+        "mobile-native/shared/.../realtor/PortalListingsRepository.kt:111-124 getPortfolioAnalytics() also fans out over listMyListings(limit = 100).listings only, so portfolio totals (views/inquiries/favorites/trends) silently undercount for realtors with >100 listings.",
+        "Fix: page listMyListings via offset until the server returns fewer than `limit` rows (or add explicit pagination), and aggregate analytics over the full set rather than the first page."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "kotlin"
     }
   ]
 }
