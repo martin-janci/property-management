@@ -11677,24 +11677,26 @@
       "title": "reality-server add_to_compare TOCTOU on MAX_COMPARE_LISTINGS — two concurrent POSTs can exceed the 4-item cap",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 4,
       "status": "open",
       "sources": [
         "rotating-expert-review reality-server 2026-10-03",
-        "signal:code-review-reality-server-compare-add-limit-toctou"
+        "signal:code-review-reality-server-compare-add-limit-toctou",
+        "rotating-expert-review reality-server 2026-10-25"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/compare.rs:155-234 add_to_compare runs non-atomic SELECT COUNT(*) (line 166) → MAX_COMPARE_LISTINGS=4 guard → separate INSERT (line 221) with no row-level lock and no DB-side constraint. Two concurrent POSTs from the same user can both see count==3 and both insert, exceeding the documented cap.",
         "Existing exists-check at line 205 only catches exact duplicates, not count violations.",
         "Fix: wrap count+insert in a serializable transaction, or add a DB-side partial unique index / check constraint.",
         "[2026-10-17] decay-skip: active assignment (PR in review in .research/management/assignments.json); treating open PR as fresh evidence",
-        "2026-10-22 reality-server Tier-1D re-flag: same TOCTOU re-confirmed via static read of compare.rs:155-227 — count-cap race unchanged; duplicate-insert race surfaces 500 instead of mapped 400 (compare.rs:214-219 vs util::errors::db_error mapping)."
+        "2026-10-22 reality-server Tier-1D re-flag: same TOCTOU re-confirmed via static read of compare.rs:155-227 — count-cap race unchanged; duplicate-insert race surfaces 500 instead of mapped 400 (compare.rs:214-219 vs util::errors::db_error mapping).",
+        "TOCTOU race on MAX_COMPARE_LISTINGS=4 in backend/servers/reality-server/src/routes/compare.rs:166-226. `add_to_compare` runs SELECT COUNT(*) and INSERT as separate statements with no transaction; UNIQUE(user_id, listing_id) in migration 00105:11 only prevents same-listing duplicates. Fix: INSERT ... SELECT ... WHERE count<4 or SERIALIZABLE tx. Already open PR #3028 covering the same bug — no new promotion."
       ],
       "files": [
         "backend/servers/reality-server/src/routes/compare.rs"
       ],
       "created_at": "2026-10-03",
-      "updated_at": "2026-10-22",
+      "updated_at": "2026-10-25",
       "plan": null
     },
     {
@@ -12074,7 +12076,7 @@
       "title": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [api-handlers]"
@@ -12082,14 +12084,15 @@
       "evidence": [
         "backend/crates/db/src/repositories/violations.rs:187-195 (create_violation) and 650-658 (create_appeal) compute the human-readable number as `SELECT COUNT(*) ... WHERE organization_id=$1 AND EXTRACT(YEAR ...)` then `format!(\"VIO-{}-{:04}\"/\"APP-{}-{:04}\", year, count.0 + 1)`. The COUNT and the INSERT run as separate `self.pool` calls with no transaction, advisory lock, or DB sequence.",
         "Migration 00098_create_violations.sql declares UNIQUE(organization_id, violation_number) (L162) and UNIQUE(organization_id, appeal_number) (L258). Two concurrent create_violation (or create_appeal) calls in the same org/year read the same COUNT, compute the same number, and the second INSERT violates the UNIQUE constraint. The sqlx error propagates to the handler which maps it to internal_error(...) → HTTP 500 INTERNAL_SERVER_ERROR (routes/violations.rs:204-219, 500-516), so legitimate concurrent creates fail with an opaque 500 instead of getting the next number.",
-        "Fix: allocate the number atomically — a per-org Postgres sequence, an INSERT ... SELECT with a locked max, or wrap COUNT+INSERT in a transaction with a retry on unique-violation. Same COUNT(*)+1 numbering race class as the known mediation-ref finding."
+        "Fix: allocate the number atomically — a per-org Postgres sequence, an INSERT ... SELECT with a locked max, or wrap COUNT+INSERT in a transaction with a retry on unique-violation. Same COUNT(*)+1 numbering race class as the known mediation-ref finding.",
+        "decayed −1 at 2026-10-25: no new signal in 14 days"
       ],
       "files": [
         "backend/crates/db/src/repositories/violations.rs",
         "backend/crates/db/migrations/00098_create_violations.sql"
       ],
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-10-25",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -12103,7 +12106,7 @@
       "title": "record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "rotating-expert-review [api-handlers]"
@@ -12111,13 +12114,14 @@
       "evidence": [
         "backend/crates/db/src/repositories/violations.rs:950-1011 (record_payment) performs three independent `self.pool` operations with no transaction: (1) EXISTS ownership check, (2) INSERT INTO fine_payments (... status 'completed' ...), (3) UPDATE enforcement_actions SET paid_amount = COALESCE(paid_amount,0)+$2, paid_at/status = CASE ... WHERE id=$1 AND organization_id=$3.",
         "If the process dies or the connection drops between step 2 and step 3 (or step 3 errors), the payment row is persisted as 'completed' but the enforcement action's paid_amount is never incremented and its status never flips to 'paid'. The fine balance is then permanently wrong (money recorded, balance not reduced), and because paid_amount is recomputed as an additive delta rather than SUM(fine_payments), there is no self-healing on the next payment.",
-        "Fix: wrap the INSERT and the enforcement_actions UPDATE (and ideally the ownership check) in a single `BEGIN ... COMMIT` transaction via `&mut *tx`, or derive paid_amount from SUM(fine_payments.amount) instead of an incremental UPDATE."
+        "Fix: wrap the INSERT and the enforcement_actions UPDATE (and ideally the ownership check) in a single `BEGIN ... COMMIT` transaction via `&mut *tx`, or derive paid_amount from SUM(fine_payments.amount) instead of an incremental UPDATE.",
+        "decayed −1 at 2026-10-25: no new signal in 14 days"
       ],
       "files": [
         "backend/crates/db/src/repositories/violations.rs"
       ],
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-10-25",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -13000,6 +13004,68 @@
       ],
       "created_at": "2026-10-23",
       "updated_at": "2026-10-23",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "title": "Churn hotspot: backend/servers/reality-server/src/routes/price_map.rs — merged PR touched this file heavily this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "merged PR #3146 (285 lines)"
+      ],
+      "evidence": [
+        "Top-1 churn this run (285 lines). PR #3146 rewrote PRICE_MAP_CACHE eviction (bounded insertion-order index)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",
+      "title": "Churn hotspot: backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs — merged PR touched this file heavily this run",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "merged PR #3147 (182 lines)"
+      ],
+      "evidence": [
+        "Top-2 churn this run (182 lines, new test file added by PR #3147 — not recurring churn)."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/services/push_fanout.rs — merged PR touched this file heavily this run",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen=2→3",
+        "merged PR #3145 (135 lines)"
+      ],
+      "evidence": [
+        "push_fanout.rs runs_seen=3 (last_seen 2026-09-20, now 2026-10-25). Second hot touch after Epic 92 refactor.",
+        "Top-3 churn this run (135 lines). PR #3145 removed .expect() panics from client builders. Cumulative re-emit (score_delta=0)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-10-25",
+      "updated_at": "2026-10-25",
       "plan": null
     }
   ]

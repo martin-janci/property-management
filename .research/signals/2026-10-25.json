@@ -1,0 +1,181 @@
+{
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-25.md && head -1 matches",
+      "observed": "present",
+      "expected": "present"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score ≤8 and decay applied",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 plans",
+      "expected": "≤2 plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no silently-deleted plans",
+      "observed": "none missing",
+      "expected": "none missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps respected",
+      "observed": "0 actions",
+      "expected": "≤3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped (no-op)",
+      "observed": "skipped",
+      "expected": "skipped-no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-25",
+      "type": "lag_warning",
+      "source": "routine run @ 2026-10-25T04:30:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-10-23T03:15Z — 47h ago (>36h threshold).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "type": "churn-hotspot",
+      "source": "merged PR #3146 (285 lines)",
+      "score_delta": 1,
+      "evidence": "Top-1 churn this run (285 lines). PR #3146 rewrote PRICE_MAP_CACHE eviction (bounded insertion-order index).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",
+      "type": "churn-hotspot",
+      "source": "merged PR #3147 (182 lines)",
+      "score_delta": 1,
+      "evidence": "Top-2 churn this run (182 lines, new test file added by PR #3147 — not recurring churn).",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "merged PR #3145 (135 lines)",
+      "score_delta": 0,
+      "evidence": "Top-3 churn this run (135 lines). PR #3145 removed .expect() panics from client builders. Cumulative re-emit (score_delta=0).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2→3",
+      "score_delta": 1,
+      "evidence": "push_fanout.rs runs_seen=3 (last_seen 2026-09-20, now 2026-10-25). Second hot touch after Epic 92 refactor.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-compare-limit-race",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review reality-server 2026-10-25",
+      "score_delta": 2,
+      "evidence": "TOCTOU race on MAX_COMPARE_LISTINGS=4 in backend/servers/reality-server/src/routes/compare.rs:166-226. `add_to_compare` runs SELECT COUNT(*) and INSERT as separate statements with no transaction; UNIQUE(user_id, listing_id) in migration 00105:11 only prevents same-listing duplicates. Fix: INSERT ... SELECT ... WHERE count<4 or SERIALIZABLE tx. Already open PR #3028 covering the same bug — no new promotion.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal matched the Phase 5 allowlist (lag_warning / churn-hotspot / repeated-churn / code-review-finding are all outside the allowlist)"
+}
