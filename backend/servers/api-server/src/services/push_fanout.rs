@@ -196,10 +196,28 @@ struct FcmSendResponse {
 /// FCM error object nested inside `FcmSendResponse`.
 #[derive(Debug, Deserialize)]
 struct FcmError {
-    /// Machine-readable status string (e.g. `NOT_REGISTERED`, `INVALID_ARGUMENT`).
+    /// Canonical `google.rpc.Code` status string (e.g. `NOT_FOUND`,
+    /// `INVALID_ARGUMENT`, `UNAVAILABLE`). This is the *transport-level* status
+    /// — the FCM-specific error code lives in [`FcmError::details`].
     status: Option<String>,
     #[allow(dead_code)]
     message: Option<String>,
+}
+
+impl FcmError {
+    /// The error code to surface in logs.
+    fn log_code(&self) -> Option<&str> {
+        self.status.as_deref()
+    }
+
+    /// Whether this error means the registration token is permanently invalid
+    /// and should be evicted from the DB.
+    fn indicates_stale_token(&self) -> bool {
+        matches!(
+            self.status.as_deref(),
+            Some("NOT_REGISTERED" | "UNREGISTERED" | "INVALID_REGISTRATION")
+        )
+    }
 }
 
 // ============================================================================
@@ -765,17 +783,11 @@ impl FcmHttpAdapter {
                 if status.is_success() && fcm_resp.error.is_none() {
                     (true, false)
                 } else {
-                    let err_status = fcm_resp
-                        .error
-                        .as_ref()
-                        .and_then(|e| e.status.as_deref())
-                        .unwrap_or("UNKNOWN");
-                    let expired = matches!(
-                        err_status,
-                        "NOT_REGISTERED" | "UNREGISTERED" | "INVALID_REGISTRATION"
-                    );
+                    let err = fcm_resp.error.as_ref();
+                    let err_code = err.and_then(|e| e.log_code()).unwrap_or("UNKNOWN");
+                    let expired = err.map(|e| e.indicates_stale_token()).unwrap_or(false);
                     tracing::warn!(
-                        fcm_status = %err_status,
+                        fcm_status = %err_code,
                         token_expired = expired,
                         "[8A-3] FCM rejected message"
                     );
@@ -1921,6 +1933,39 @@ mod tests {
         assert_eq!(
             targets[0].token_id, id,
             "token_id must survive selection for receipts/eviction"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // FCM HTTP v1 error parsing / stale-token eviction
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn fcm_v1_unregistered_error_marks_token_stale() {
+        // Realistic FCM HTTP v1 404 body for an app-uninstalled / unregistered
+        // token. The *actionable* error code (`UNREGISTERED`) is carried in
+        // `error.details[].errorCode`; `error.status` is only the generic
+        // google.rpc status (`NOT_FOUND`). Eviction must trigger on the
+        // details code — matching on `status` alone never fires for real v1
+        // responses, so stale Android tokens would accumulate and be retried
+        // forever.
+        let body = serde_json::json!({
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+                "details": [{
+                    "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                    "errorCode": "UNREGISTERED"
+                }]
+            }
+        })
+        .to_string();
+        let resp: FcmSendResponse = serde_json::from_str(&body).expect("parse FCM v1 error body");
+        let err = resp.error.expect("error block present");
+        assert!(
+            err.indicates_stale_token(),
+            "FCM v1 UNREGISTERED (in error.details) must evict the stale token"
         );
     }
 
