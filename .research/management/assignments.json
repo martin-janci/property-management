@@ -99,18 +99,18 @@
     {
       "task_id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
       "branch": "auto-impl/repeated-churn-backend-servers-api-serve-63590d23",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-25T18:32:57Z",
-      "last_updated": "2026-10-25T18:32:57Z",
-      "status_changed_at": "2026-10-25T18:32:57Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-10-25T19:39:41Z",
+      "status_changed_at": "2026-10-25T19:39:41Z",
+      "pr_number": 3161,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3161",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3161 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=fixed FCM v1 stale-token eviction (read error.details[].errorCode not error.status); +4 tests; 688/689 api-server pass (lone fail pre-existing SSRF test on origin/dev); IG3 two-commit proof; draft PR vs dev",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -119,5 +119,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-10-25T19:25:22Z"
+  "generated": "2026-10-25T19:39:41Z"
 }
