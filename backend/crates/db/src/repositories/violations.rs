@@ -177,21 +177,51 @@ impl ViolationRepository {
     // =========================================================================
 
     /// Create a new violation.
+    ///
+    /// The human-readable `violation_number` (`VIO-YYYY-NNNN`) is derived from a
+    /// per-org, per-year `COUNT(*) + 1`. Done naively on the pool (autocommit)
+    /// two concurrent creates for the same org read the same count, mint the
+    /// same number, and the second `INSERT` trips the `UNIQUE(organization_id,
+    /// violation_number)` constraint — surfacing as an opaque 500. To make
+    /// numbering race-free we run the count and the insert inside one
+    /// transaction guarded by a per-`(org, year)` advisory transaction lock
+    /// (`pg_advisory_xact_lock`), matching the house pattern in
+    /// `llm_document::upsert_active_voice_device`: concurrent creates for the
+    /// same org serialize on the lock, so the second only counts after the
+    /// first has committed its row. `SET LOCAL lock_timeout` bounds any wait so
+    /// a pathological block fails fast instead of hanging the request.
     pub async fn create_violation(
         &self,
         org_id: Uuid,
         req: CreateViolation,
         reporter_id: Uuid,
     ) -> Result<Violation, sqlx::Error> {
-        // Generate violation number
+        let year = Utc::now().format("%Y");
+
+        let mut tx = self.pool.begin().await?;
+
+        // Bound any lock wait so a pathological block errors fast.
+        sqlx::query("SET LOCAL lock_timeout = '15s'")
+            .execute(&mut *tx)
+            .await?;
+
+        // Serialize number generation for this org + year. Same key -> same
+        // lock -> at most one create mints a number at a time; different orgs
+        // (or years) never contend.
+        let lock_key = format!("violation_number:{org_id}:{year}");
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+            .bind(&lock_key)
+            .execute(&mut *tx)
+            .await?;
+
+        // Generate violation number (now safe under the advisory lock).
         let count: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM violations WHERE organization_id = $1 AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW())",
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
-        let year = Utc::now().format("%Y");
         let violation_number = format!("VIO-{}-{:04}", year, count.0 + 1);
 
         // Check for previous violations by same violator
@@ -201,14 +231,14 @@ impl ViolationRepository {
             )
             .bind(org_id)
             .bind(violator_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await?;
             (prev.0 + 1) as i32
         } else {
             1
         };
 
-        sqlx::query_as::<_, Violation>(
+        let violation = sqlx::query_as::<_, Violation>(
             r#"
             INSERT INTO violations (
                 organization_id, building_id, unit_id, violation_number, rule_id,
@@ -238,8 +268,11 @@ impl ViolationRepository {
         .bind(&req.evidence_description)
         .bind(req.witness_count.unwrap_or(0))
         .bind(offense_number)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_one(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(violation)
     }
 
     /// Get a violation by ID.
@@ -639,6 +672,13 @@ impl ViolationRepository {
     // =========================================================================
 
     /// Create an appeal.
+    ///
+    /// Like `create_violation`, the `appeal_number` (`APP-YYYY-NNNN`) comes from
+    /// a per-org, per-year `COUNT(*) + 1`, which races under concurrency against
+    /// `UNIQUE(organization_id, appeal_number)`. The count, the status cascades,
+    /// and the insert all run in one transaction guarded by a per-`(org, year)`
+    /// advisory transaction lock so concurrent appeal creates for the same org
+    /// serialize on numbering. `SET LOCAL lock_timeout` bounds any wait.
     pub async fn create_appeal(
         &self,
         violation_id: Uuid,
@@ -646,15 +686,30 @@ impl ViolationRepository {
         req: CreateViolationAppeal,
         appellant_id: Uuid,
     ) -> Result<ViolationAppeal, sqlx::Error> {
-        // Generate appeal number
+        let year = Utc::now().format("%Y");
+
+        let mut tx = self.pool.begin().await?;
+
+        // Bound any lock wait so a pathological block errors fast.
+        sqlx::query("SET LOCAL lock_timeout = '15s'")
+            .execute(&mut *tx)
+            .await?;
+
+        // Serialize appeal numbering for this org + year.
+        let lock_key = format!("appeal_number:{org_id}:{year}");
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+            .bind(&lock_key)
+            .execute(&mut *tx)
+            .await?;
+
+        // Generate appeal number (now safe under the advisory lock).
         let count: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM violation_appeals WHERE organization_id = $1 AND EXTRACT(YEAR FROM submitted_at) = EXTRACT(YEAR FROM NOW())",
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
-        let year = Utc::now().format("%Y");
         let appeal_number = format!("APP-{}-{:04}", year, count.0 + 1);
 
         // Update violation status to disputed — org-scoped. If the violation
@@ -665,7 +720,7 @@ impl ViolationRepository {
         )
         .bind(violation_id)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
         if vio_updated.rows_affected() == 0 {
             return Err(sqlx::Error::RowNotFound);
@@ -680,11 +735,11 @@ impl ViolationRepository {
             .bind(action_id)
             .bind(org_id)
             .bind(violation_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
         }
 
-        sqlx::query_as::<_, ViolationAppeal>(
+        let appeal = sqlx::query_as::<_, ViolationAppeal>(
             r#"
             INSERT INTO violation_appeals (
                 violation_id, enforcement_action_id, organization_id, appeal_number,
@@ -702,8 +757,11 @@ impl ViolationRepository {
         .bind(&req.requested_outcome)
         .bind(&req.supporting_evidence)
         .bind(appellant_id)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_one(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(appeal)
     }
 
     /// Get a single appeal scoped to an organization (tenant-safe read).
