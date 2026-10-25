@@ -16,14 +16,23 @@
  *
  * Falls back gracefully when the WS server is unreachable or Redis is not
  * configured (the backend returns heartbeat-only frames in that case).
+ *
+ * Reconnection mirrors the shared notification stack (`WebSocketService` in
+ * `lib/websocket.ts`): exponential backoff with jitter via the shared
+ * {@link computeReconnectDelay} helper, a bounded attempt budget
+ * ({@link DEFAULT_MAX_RECONNECT_ATTEMPTS}), and a terminal give-up so a dead
+ * endpoint can no longer drive a fixed-interval reconnect storm. The budget
+ * resets on every successful open, so a transient drop still gets a full set
+ * of attempts. The two sockets run on different transports/paths, so only the
+ * backoff math is shared — not the whole service.
  */
 
 import type { SensorReading } from '@ppt/api-client';
 import { getToken } from '@ppt/api-client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { computeReconnectDelay, DEFAULT_MAX_RECONNECT_ATTEMPTS } from '../../../lib/websocket';
 
 const WS_MAX_BUFFER = 200;
-const WS_RECONNECT_MS = 5_000;
 
 /** Event name emitted by the backend for a single newly-ingested reading. */
 const EVENT_READING_CREATED = 'sensor.reading.created';
@@ -42,15 +51,45 @@ export function useIotWebSocket(
 ): {
   liveReadings: SensorReading[];
   isConnected: boolean;
+  /**
+   * True once the reconnect budget is exhausted and the hook has stopped
+   * retrying. Mirrors the shared stack's `connection:max-retries-exceeded`
+   * signal so the UI can surface an "offline" state instead of assuming a
+   * silent-but-live socket.
+   */
+  hasGivenUp: boolean;
 } {
   const [allReadings, setAllReadings] = useState<SensorReading[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [hasGivenUp, setHasGivenUp] = useState(false);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttempts = useRef(0);
   const wsRef = useRef<WebSocket | null>(null);
   const cancelled = useRef(false);
 
   useEffect(() => {
     cancelled.current = false;
+    reconnectAttempts.current = 0;
+    setHasGivenUp(false);
+
+    // Schedule a reconnect with exponential backoff, or give up once the
+    // attempt budget is exhausted — same policy as WebSocketService. Only an
+    // onopen (success) resets the budget, so a continuous outage still reaches
+    // the cap instead of retrying forever.
+    function scheduleReconnect() {
+      if (cancelled.current) return;
+
+      if (reconnectAttempts.current >= DEFAULT_MAX_RECONNECT_ATTEMPTS) {
+        setHasGivenUp(true);
+        return;
+      }
+
+      const delay = computeReconnectDelay(reconnectAttempts.current);
+      reconnectAttempts.current += 1;
+      reconnectTimer.current = setTimeout(() => {
+        if (!cancelled.current) connect();
+      }, delay);
+    }
 
     function connect() {
       const token = getToken();
@@ -60,7 +99,11 @@ export function useIotWebSocket(
       wsRef.current = ws;
 
       ws.onopen = () => {
-        if (!cancelled.current) setIsConnected(true);
+        if (cancelled.current) return;
+        // Successful open — refill the reconnect budget.
+        reconnectAttempts.current = 0;
+        setHasGivenUp(false);
+        setIsConnected(true);
       };
 
       ws.onmessage = (event) => {
@@ -88,9 +131,7 @@ export function useIotWebSocket(
       ws.onclose = () => {
         if (!cancelled.current) {
           setIsConnected(false);
-          reconnectTimer.current = setTimeout(() => {
-            if (!cancelled.current) connect();
-          }, WS_RECONNECT_MS);
+          scheduleReconnect();
         }
       };
     }
@@ -110,5 +151,5 @@ export function useIotWebSocket(
     [allReadings, sensorId]
   );
 
-  return { liveReadings, isConnected };
+  return { liveReadings, isConnected, hasGivenUp };
 }
