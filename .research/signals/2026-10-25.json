@@ -3,42 +3,42 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-10-25.md && head -1 matches",
-      "observed": "present",
-      "expected": "present"
+      "command": "test -f briefs/2026-10-25.md && head -1 matches `# 2026-10-25`",
+      "observed": "present + first-line match",
+      "expected": "present + first-line match"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "state cursors advanced vs HEAD",
+      "command": "state cursors advanced vs HEAD (last_pr_seen 3158→3160; last_commit_sha 69d870c1→bb2e4d4; last_run_iso 04:30→18:35)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "backlog ids unique",
+      "command": "jq backlog.json ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no non-cumulative signal double-count",
+      "command": "no non-cumulative re-emit with score_delta != 0 (the code-review-finding re-emits with score_delta=0 on this convergent 18:35 pass; the 3 churn-hotspot + 1 repeated-churn re-emits are in the cumulative-type carve-out)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "score ≤8 and decay applied",
+      "command": "score ≤8 and decay applied (no open item >14d without decay this run; decay was applied in the 04:30 pass)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans this run",
+      "command": "no new plans this run (plans/ unchanged)",
       "observed": "0 plans",
       "expected": "≤2 plans"
     },
@@ -52,70 +52,70 @@
     {
       "goal": "G8",
       "passed": true,
-      "command": "only .research/ paths staged",
-      "observed": "0",
+      "command": "git diff --cached --name-only contains only .research/ paths",
+      "observed": "0 non-.research entries",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets in diff",
+      "command": "no secrets or private hostnames in staged diff (baseline doc files exempt)",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md regen byte-identical",
+      "command": "backlog.md regen byte-identical (no backlog.json mutation this pass; backlog.md stamp bumped to 2026-10-25 18:35 UTC to match re-run)",
       "observed": "identical",
       "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "no failed phases",
-      "observed": "none",
-      "expected": "none"
+      "command": "no failed phases (Phase 1.5/1.6 skipped on this convergent pass — not a failure; cursors held)",
+      "observed": "none failed",
+      "expected": "none failed"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "no silently-deleted plans",
+      "command": "no silently-deleted plans (17 plans in plans/ this run)",
       "observed": "none missing",
       "expected": "none missing"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive only grows",
+      "command": "archive only grows (plans/_archive count unchanged this run)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "command": "IDEAS_TRIAGE.md regen byte-identical (no backlog.json mutation; stamp bumped to 2026-10-25 18:35 UTC)",
       "observed": "identical",
       "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix caps respected",
+      "command": "auto-fix caps respected (0 PRs, 0 issues, 0 comments)",
       "observed": "0 actions",
       "expected": "≤3"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped (no-op)",
-      "observed": "skipped",
-      "expected": "skipped-no-op"
+      "command": "Phase 1.6 skipped on this convergent 18:35 pass (pm_cursor unchanged vs HEAD) — gate is a no-op",
+      "observed": "no-op",
+      "expected": "no-op when Phase 1.6 skipped"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token in diff",
+      "command": "no Telegram token value in staged diff",
       "observed": "0",
       "expected": "0"
     }
@@ -124,9 +124,9 @@
     {
       "id": "lag-warning-2026-10-25",
       "type": "lag_warning",
-      "source": "routine run @ 2026-10-25T04:30:00Z",
+      "source": "routine run @ 2026-10-25T04:30:00Z (recorded in the 04:30 pass; convergent 18:35 rerun is on-schedule)",
       "score_delta": 0,
-      "evidence": "Routine last ran 2026-10-23T03:15Z — 47h ago (>36h threshold).",
+      "evidence": "Earlier run (2026-10-25T04:30Z) was 47h after the prior 2026-10-23T03:15Z run — above the 36h warning. This 18:35 rerun is 14h after the 04:30 pass; no additional lag.",
       "confidence": "high",
       "candidate_vector": null
     },
@@ -135,7 +135,7 @@
       "type": "churn-hotspot",
       "source": "merged PR #3146 (285 lines)",
       "score_delta": 1,
-      "evidence": "Top-1 churn this run (285 lines). PR #3146 rewrote PRICE_MAP_CACHE eviction (bounded insertion-order index).",
+      "evidence": "Top-1 churn (285 lines). PR #3146 rewrote PRICE_MAP_CACHE eviction (bounded insertion-order index).",
       "confidence": "high",
       "candidate_vector": "refactor"
     },
@@ -144,7 +144,7 @@
       "type": "churn-hotspot",
       "source": "merged PR #3147 (182 lines)",
       "score_delta": 1,
-      "evidence": "Top-2 churn this run (182 lines, new test file added by PR #3147 — not recurring churn).",
+      "evidence": "Top-2 churn (182 lines, new test file added by PR #3147 — not recurring churn).",
       "confidence": "high",
       "candidate_vector": "test-gap"
     },
@@ -153,7 +153,7 @@
       "type": "churn-hotspot",
       "source": "merged PR #3145 (135 lines)",
       "score_delta": 0,
-      "evidence": "Top-3 churn this run (135 lines). PR #3145 removed .expect() panics from client builders. Cumulative re-emit (score_delta=0).",
+      "evidence": "Top-3 churn (135 lines). PR #3145 removed .expect() panics from client builders. Cumulative re-emit (score_delta=0 on re-emit).",
       "confidence": "high",
       "candidate_vector": "refactor"
     },
@@ -170,12 +170,18 @@
       "id": "code-review-reality-server-compare-limit-race",
       "type": "code-review-finding",
       "source": "rotating-expert-review reality-server 2026-10-25",
-      "score_delta": 2,
-      "evidence": "TOCTOU race on MAX_COMPARE_LISTINGS=4 in backend/servers/reality-server/src/routes/compare.rs:166-226. `add_to_compare` runs SELECT COUNT(*) and INSERT as separate statements with no transaction; UNIQUE(user_id, listing_id) in migration 00105:11 only prevents same-listing duplicates. Fix: INSERT ... SELECT ... WHERE count<4 or SERIALIZABLE tx. Already open PR #3028 covering the same bug — no new promotion.",
+      "score_delta": 0,
+      "evidence": "TOCTOU race on MAX_COMPARE_LISTINGS=4 at backend/servers/reality-server/src/routes/compare.rs:166-226. Already applied in the 04:30 pass (score_delta=2 at that time); re-emitted here with score_delta=0 on this convergent 18:35 rerun. PR #3028 landed the fix at 2026-10-25T12:35Z; backlog row is already status=done.",
       "confidence": "high",
       "candidate_vector": "bug"
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — no signal matched the Phase 5 allowlist (lag_warning / churn-hotspot / repeated-churn / code-review-finding are all outside the allowlist)"
+  "run_meta": {
+    "pass_kind": "convergent-rerun",
+    "earlier_pass_iso": "2026-10-25T04:30:00Z",
+    "this_pass_iso": "2026-10-25T18:35:00Z",
+    "trigger_payload": "buffer-low: claimable=11/72 coverage-missing — refill planner",
+    "trigger_handling": "treated as data; routed to Open questions in brief — no promotable rows (highest open score=2)"
+  }
 }
