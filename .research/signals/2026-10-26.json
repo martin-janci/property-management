@@ -1,0 +1,227 @@
+{
+  "generated": "2026-10-26T04:30:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-10-25..2026-10-26",
+      "score_delta": 1,
+      "evidence": [
+        "242 lines of churn (top-1 raw-churn file this run) from PR #3072 (code-review-api-handlers-violations-missing-role-authz) merged 2026-10-25T12:35:49Z — adds role_authz regression suite covering all 13 privileged violations.rs mutations.",
+        "runs_seen=1 (first time this file surfaces as a hotspot)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-10-25..2026-10-26",
+      "score_delta": 1,
+      "evidence": [
+        "162 lines of churn (top-2 raw-churn file this run) from PR #3153 (code-review-ppt-web-core-iot-ws-reconnect-no-backoff) merged 2026-10-25T12:55:36Z — adds exponential-backoff reconnect test coverage.",
+        "runs_seen=1."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log 2026-10-25..2026-10-26",
+      "score_delta": 1,
+      "evidence": [
+        "130 lines of churn (top-3 raw-churn file this run) from PR #3070 (gh-issue-3069: scope ViolationRepository::list_notifications by org / cross-tenant IDOR) merged 2026-10-25T12:37:33Z.",
+        "runs_seen=1."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3166-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3166",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3166 (gh-issue-3162: fix(reality-web): format agency profile price with active locale) merged 2026-10-26T02:35:35Z modified frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx and page.test.tsx but did not touch docs/screens/reality/agency-profile.md or any other docs/screens/reality/**.md.",
+        "Heuristic drift signal — screen doc may still be accurate; manual verification needed. docs/screens/reality/agency-profile.md exists on disk."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+        "docs/screens/reality/agency-profile.md"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-assign-violation-no-member-check",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:313-331 assign_violation(Path(violation_id), Json(AssignRequest{assigned_to})) calls repo with (violation_id, org_id, req.assigned_to) with NO check that assigned_to is a member of org_id.",
+        "backend/crates/db/src/repositories/violations.rs:383-405 UPDATE scopes by (id=$1, organization_id=$2) but binds $3 assigned_to with no FK/scoping to org — users(id) is global; a Manager in org A can set assigned_to to a user in org B or any guessed uuid.",
+        "Fix: add is_user_member_of_org(assigned_to, org_id) guard in the handler (or repo) returning 400/404 on cross-org assignee — mirror the recently-landed community cross-tenant IDOR fixes."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-violations-no-xtenant-idor-tests",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs (242 LOC, this run's top-churn file) covers role-authz 403s but NOT cross-tenant 404 on resource-id paths.",
+        "Sibling router community.rs has a companion community_cross_tenant_idor_tests.rs (130 LOC) establishing the IG3 pattern; no analogous violations_cross_tenant_idor_tests.rs exists.",
+        "Uncovered mutation surface (violations.rs path-id handlers): assign_violation (313), add_evidence (337), delete_evidence (375), create_action (403), update_action (460), mark_action_sent (485), record_payment (505), update_appeal (599), decide_appeal (626) — each should assert cross-tenant 404 + no write.",
+        "Fix: add violations_cross_tenant_idor_tests.rs modeled on community_cross_tenant_idor_tests.rs."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "expert": "rust",
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+        "backend/servers/api-server/src/routes/violations.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-26.md && head -1 … | grep -q \"^# 2026-10-26$\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev HEAD state … state.json advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative dup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap ≤8 + decay rule",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0 or annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each with 15 sections",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v .research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep over staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "n/a — no phase failures",
+      "observed": "no failures",
+      "expected": "no mismatches"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present or archived",
+      "observed": "all plans accounted for",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "staged archive count ≥ HEAD count",
+      "observed": "22 ≥ 22",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions this run (no candidate)",
+      "expected": "≤1 pr/issue/comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 coverage cursor",
+      "observed": "action-list.json/risks.json .items present; project-state.md non-empty; pm_cursor=2, coverage_cursor=12 (both advanced)",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

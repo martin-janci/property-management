@@ -1,0 +1,60 @@
+{
+  "generated": "2026-10-26T00:00:00Z",
+  "source_run": "research routine Phase 1.5 rotating expert code review per .claude/skills/ppt-dev-review/SKILL.md - static single-segment review, no compilation / no test execution. SEGMENT SELECTION: Phase-1 churn aligns 2/3 with api-handlers (backend/servers/api-server/tests/suites/violations_role_authz_tests.rs 242 lines, backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs 130 lines); api-handlers is also tied for oldest-unreviewed (2026-10-19 with mobile-rn). Priority-1 (churn-aligned) wins. Saturation check: only 1 open code-review-finding row for segment=api-handlers in backlog.json (code-review-api-handlers-violations-number-count-race), well below the 3-row cap. Experts: rust (primary) + security (secondary) per SKILL Step 2. Segment root in this repo is backend/servers/api-server/src/routes/ (the SKILL's 'backend/api-server/src/handlers/' path predates the servers/ + routes/ layout). Churn files were test suites written to lock in prior findings; the review therefore audited the HANDLERS those tests cover (violations.rs 777 LOC, community.rs 1025 LOC) for related issues the tests do NOT yet catch.",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "churn-aligned (also tied oldest-unreviewed)",
+  "experts_used": ["rust", "security"],
+  "findings_count": 2,
+  "static_only": true,
+  "cloud_landable": true,
+  "landability_note": "Both findings are tightly scoped: F1 is a one-line membership-check addition inside the assign_violation handler (or repo), F2 is a new test suite file analogous to the existing community_cross_tenant_idor_tests.rs. No schema or public-API changes.",
+  "review_notes": [
+    "unwrap()/expect()/todo!()/unsafe sweep on violations.rs + community.rs: zero hits. Error handling uses ApiResult<T> + explicit map_err throughout.",
+    "require_manager role-gate audit on violations.rs: all 13 privileged mutations call require_manager(&user) at the top (lines 127, 192, 211, 239, 294, 319, 380, 409, 466, 491, 511, 605, 632). create_appeal (546) and add_comment (657) are intentionally ungated per the docstring at line 50 - self-service actions residents legitimately perform. Fix from code-review-api-handlers-violations-missing-role-authz is correctly applied.",
+    "DB-error-leak sweep on violations.rs: ~17 internal_error(&format!(\"Failed to X: {}\", e)) sites that surface raw sqlx::Error Display into HTTP 500 bodies - SAME CLASS as yesterday's code-review-api-handlers-db-error-leak signal (2026-10-25). Not re-emitting; adding violations.rs to that finding's blast radius via review-note instead.",
+    "NEW FINDING 1 (assign_violation missing membership check): backend/servers/api-server/src/routes/violations.rs:313-331 assign_violation accepts req.assigned_to: Uuid and passes it straight to backend/crates/db/src/repositories/violations.rs:383 assign_violation(violation_id, org_id, assigned_to). The SQL UPDATE scopes by (id, organization_id) but has NO guard that assigned_to belongs to organization_id - FK is to users(id) global. A Manager in org A can assign a violation to a user in org B (or any user id they guess). Not catastrophic (write is confined to org A's own violation row) but it (a) lets a Manager plant an inconsistent `assigned_to` that other handlers will later surface, (b) can leak existence of arbitrary user ids via downstream rendering, and (c) matches the exact IDOR-adjacent class the recent community/violations hardening work has been eliminating.",
+    "NEW FINDING 2 (test-gap: no cross-tenant IDOR suite for violations.rs): the recent churn landed violations_role_authz_tests.rs (role-based 403 coverage) and community_cross_tenant_idor_tests.rs (cross-tenant 404 coverage for community.rs). There is no symmetric cross-tenant IDOR suite for violations.rs, even though 10+ privileged mutations take resource ids straight from the URL path (violation_id, action_id, evidence_id, appeal_id). The role-gate alone does not prove tenant isolation - a Manager in org A guessing an action_id from org B must still get 404 and perform no write. The repo scoping (via _for_org helpers / `AND organization_id = $2` WHERE clauses) looks correct on inspection, but there is no IG3 regression test guarding it; a future repo refactor could regress silently.",
+    "FINDINGS NOT EMITTED (would duplicate yesterday or are intentional-design): (a) raw sqlx::Error leak via internal_error(&format!(...)) on violations.rs - same class as code-review-api-handlers-db-error-leak 2026-10-25; (b) create_appeal / add_comment are ungated by role - intentional per the module docstring at violations.rs:50."
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-assign-violation-no-member-check",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:313-331 assign_violation(Path(violation_id), Json(AssignRequest{assigned_to})) calls repo with (violation_id, org_id, req.assigned_to) with NO check that assigned_to is a member of org_id.",
+        "backend/crates/db/src/repositories/violations.rs:383-405 UPDATE scopes by (id=$1, organization_id=$2) but binds $3 assigned_to with no FK/scoping to org - users(id) is global, so a Manager in org A can set assigned_to to a user in org B or any guessed uuid; FK will accept it.",
+        "Fix: add a `is_user_member_of_org(assigned_to, org_id)` guard in the handler (or inside repo) returning 400/404 on cross-org assignee - mirror the pattern used in the recently-landed community cross-tenant IDOR fixes."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-violations-no-xtenant-idor-tests",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs (242 LOC, this run's top churn file) covers role-authz 403s but NOT cross-tenant 404 on resource-id paths.",
+        "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs (130 LOC, same run's #3 churn file) establishes the IG3 pattern for sibling router community.rs - no analogous suite exists for violations.rs.",
+        "Uncovered mutation surface in backend/servers/api-server/src/routes/violations.rs taking path ids: assign_violation (313), add_evidence (337), delete_evidence (375), create_action (403), update_action (460), mark_action_sent (485), record_payment (505), update_appeal (599), decide_appeal (626). Each should assert cross-tenant 404 + no write and same-tenant 2xx + write happens.",
+        "Fix: add violations_cross_tenant_idor_tests.rs modeled on community_cross_tenant_idor_tests.rs - seed violation+action+appeal in org B, drive them as an authenticated org-A Manager, assert 404 and row-count unchanged."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "expert": "rust"
+    }
+  ]
+}

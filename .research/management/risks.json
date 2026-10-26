@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-19T04:00:00Z",
+  "generated": "2026-10-26T04:30:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -241,6 +241,28 @@
       "trigger": null,
       "status": "open",
       "source": "pm-integration 2026-10-19"
+    },
+    {
+      "id": "pm-backend-violations-add-evidence-authz-gap-2026-10-26",
+      "risk": "violations add_evidence sub-route is ungated (#3164) \u2014 allows any authenticated user (incl. cross-tenant) to attach evidence to any violation; same shape as the dispute add_evidence sub-route gap (#2483) a year ago, suggesting the add_evidence pattern is systemically under-tested",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add tenant-scoped authz guard to violations add_evidence; add cross-tenant integration test (follow community_cross_tenant_idor_tests.rs pattern); sweep for other add_evidence/add_* sub-routes with the same gap",
+      "owner_role": "pm-backend",
+      "trigger": "Any violations IDOR exploit reported, OR a 2nd add_evidence-shaped gap found in a different resource",
+      "status": "open",
+      "source": "pm-backend 2026-10-26 (#3164)"
+    },
+    {
+      "id": "pm-backend-rustsec-advisories-gating-backend-merges-2026-10-26",
+      "risk": "Issue #3168 \u2014 3 new RUSTSEC advisories on dev gate every backend PR merge; this is the second cargo-deny gate in a month (#3124 cleared 2026-10-19). Dependency hygiene is becoming a recurring merge-queue tax",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Resolve #3168 (bump offending crate(s) or bounded exception); schedule a quarterly cargo-tree review of transitive deps with known-flaky lineage (zip/xlsxwriter were last month's culprit \u2014 look for recurrence)",
+      "owner_role": "pm-security",
+      "trigger": "Any dispatcher run reporting cargo-deny FAILED or claimable<=10 while backend queue is non-empty",
+      "status": "open",
+      "source": "pm-backend 2026-10-26 (#3168)"
     }
   ]
 }

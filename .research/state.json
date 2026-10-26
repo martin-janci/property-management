@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-25T04:30:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3158,
-  "last_issue_seen": 3157,
-  "last_commit_sha": "69d870c1",
+  "last_run_iso": "2026-10-26T04:30:00Z",
+  "last_run_ms": 300000,
+  "last_pr_seen": 3167,
+  "last_issue_seen": 3168,
+  "last_commit_sha": "5fc13e7b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -631,6 +631,21 @@
       "runs_seen": 1,
       "last_seen": "2026-10-25",
       "recent_churn": 182
+    },
+    "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-26",
+      "recent_churn": 242
+    },
+    "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-26",
+      "recent_churn": 162
+    },
+    "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-26",
+      "recent_churn": 130
     }
   },
   "seen_signals": [
@@ -1246,11 +1261,17 @@
     "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
     "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",
     "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
-    "code-review-reality-server-compare-limit-race"
+    "code-review-reality-server-compare-limit-race",
+    "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
+    "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+    "screen-map-drift-pr-3166-reality",
+    "code-review-api-handlers-assign-violation-no-member-check",
+    "code-review-api-handlers-violations-no-xtenant-idor-tests"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-10-19",
+    "api-handlers": "2026-10-26",
     "api-core": "2026-10-22",
     "reality-server": "2026-10-25",
     "ppt-web-ui": "2026-10-22",
@@ -1260,8 +1281,8 @@
     "mobile-native-kmp": "2026-10-25"
   },
   "stats": {
-    "runs": 104,
-    "vectors_created": 456,
+    "runs": 105,
+    "vectors_created": 462,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1277,10 +1298,10 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
-      "pm-backend": "2026-07-30",
+      "pm-backend": "2026-10-26",
       "pm-frontend": "2026-08-06",
       "pm-qa": "2026-08-25",
       "pm-devops": "2026-08-31",
@@ -1290,6 +1311,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 11
+    "next_index": 12
   }
 }

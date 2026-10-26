@@ -1,20 +1,33 @@
-# pm-backend — 2026-07-30
+# pm-backend — 2026-10-26
 
-**Summary:** Backend churn this window is dominated by layout (scheduler.rs, layout/tenant.rs, layout/admin.rs) plus dispute-KPI wiring — most correctness fixes landed cleanly, but two of the freshly-merged PRs shipped with same-org logic gaps that reviewers immediately flagged (#2573 DELETE-by-file-key, #2575 /disputes/kpis window ordering). Backend security posture is otherwise healthy: PR #2567 closed the scheduler global-read RLS GUC leak, and PR #2478 hardened layout authz + publish TOCTOU + webhook replay.
+_Rotating backend lens; last ran 2026-07-30 (87 days stale — long overdue). Static read; no compile/run._
 
-## Next actions
-1. **[high]** Fix #2573 — add same-org reference-count / active-attachment guard in DELETE /documents/by-file-key before the endpoint is wired from any client. DoD: reference-check integration test covering (a) same-org still-referenced → 409/reject, (b) same-org orphan → 204, (c) cross-tenant → 404.
-2. **[medium]** Fix #2575 — add window_start <= window_end validation on GET /disputes/kpis; un-quarantine the KPI test and re-enable it in the default suite. DoD: 400 on inverted window; test in default suite and green.
-3. **[medium]** Add regression test for PR #2547 scheduler retention prune (still flagged hotfix-no-test). DoD: api-server sqlx test asserts prune deletes older-than-N rows on schedule.
-4. **[medium]** Review + merge the accounting MVP-loop trio (#2555, #2558, #2559) or route reviewer feedback back to the implementer. Dependency: pm-tech-lead. DoD: each PR either merged or explicit review comments block further work.
-5. **[low]** Investigate repeated churn on backend/servers/api-server/src/services/scheduler.rs (top churn 2 windows running) — consider extraction of retention/prune jobs to a dedicated module. DoD: design note in .research or issue opened with proposed module split.
+## Summary
 
-## Risks
-- **[med prob / high impact]** DELETE-by-file-key (#2571 → #2573) is a data-loss surface: a same-org active reference could be deleted, orphaning a live document row against its S3 object. Mitigation: reference-count guard before delete; do not wire from any client until the guard is in and tested.
-- **[med prob / med impact]** Dispute KPI endpoint (#2572 → #2575) is quarantined-test-only in main; a shape regression could ship undetected until reporting starts consuming it. Mitigation: un-quarantine the KPIs test; add window validation; consider adding a second test asserting the reporting-consumer contract.
+Backend queue has one brand-new critical blocker (**#3168 cargo-deny — 3 new RUSTSEC advisories gating every backend merge** — second cargo-deny gate in a month after #3124 cleared 2026-10-19) and one tier-1 authz hole surfaced via issue triage (**#3164 violations add_evidence ungated** — same shape as the historical dispute add_evidence gap #2483, suggesting the `add_evidence` sub-route pattern is systemically under-tested). Churn signals are healthy — the two cross-tenant IDOR test suites (`violations_role_authz_tests.rs`, `community_cross_tenant_idor_tests.rs`) are being hardened — but the actual IDOR fix for #3164 has not been drafted yet.
 
-## Open questions
-- Is the accounting MVP-loop backend surface (invoice PDF render, PAY-by-square QR, sent/cancelled lifecycle) hitting the same test-quarantine pattern as the dispute KPI endpoint?
+## next_actions
 
-## Decisions needed
-- Standard: a hotfix that ships without a regression test needs an explicit follow-up issue at merge time (not discovered a run later) — owner: pm-tech-lead.
+1. **[high]** Gate violations add_evidence sub-resource with a tenant-scoped authz check; add cross-tenant integration test on the `community_cross_tenant_idor_tests.rs` pattern (DoD: #3164 closed with a merged PR that includes a failing-on-main regression test). dependency: none.
+2. **[high]** Resolve #3168 cargo-deny advisories (bump the offending transitive crate(s) or add bounded cargo-deny exceptions with a 30-day deadline) — gates every backend merge today. DoD: cargo-deny CI green on dev. dependency: pm-security owns the triage; pm-backend owns the Cargo.toml bump.
+3. **[medium]** Diagnose #3131 merge-pipeline deadlock — long-stale; likely sqlx transaction scope or advisory-lock contention in the merge path (needs a traced repro, not more guessing). DoD: root cause documented + narrowing-test added. dependency: none.
+4. **[medium]** Sweep remaining `add_*` sub-routes (announcements/attachments, documents/signatures, mediation/evidence) for the same ungated pattern that bit #3164 — turn it into a one-shot audit before shipping the fix. DoD: audit report in `.research/management/` with pass/fail per sub-route. dependency: none.
+5. **[low]** Push_fanout FCM eviction (PR #3161 draft) — review-ready; carried `repeated-churn-push_fanout` item is addressed by this PR landing. DoD: PR #3161 merged. dependency: none.
+6. **[low]** Un-quarantine the dispute KPIs test (carried risk `pm-backend-disputes-kpis-window-validation-gap-2026-07-30`) — still open from the 2026-07-30 pm-backend run. DoD: test re-enabled with window_start<=window_end validation. dependency: none.
+
+## risks
+
+1. **[prob=high, impact=high]** violations add_evidence authz gap (#3164) — same shape as #2483; systemic add_evidence pattern blind spot. **Mitigation:** fix + audit (see next_actions #1 and #4).
+2. **[prob=high, impact=high]** RUSTSEC advisories gating backend merges (#3168) — second cargo-deny gate in a month. **Mitigation:** resolve #3168; schedule quarterly cargo-tree hygiene review.
+3. **[prob=medium, impact=high]** Merge pipeline deadlock (#3131) is now months old — any backend contributor hitting it loses hours. **Mitigation:** force a traced repro this sprint.
+
+## open_questions
+
+1. Is the merge-pipeline deadlock (#3131) correlated with specific migration patterns or arbitrary PRs? No one has posted a repro recipe in the issue.
+2. Does the `add_evidence` ungated gap affect only the public `violations` sub-route or also platform-admin paths?
+3. Which transitive dep introduced the #3168 RUSTSEC advisories — is it another `rust_xlsxwriter → zip` chain, or something new?
+
+## decisions_needed
+
+1. Policy: should newly-introduced sub-routes require a cross-tenant IDOR test by DoD? — owner: pm-tech-lead.
+2. Should #3168 trigger a bounded cargo-deny exception or a straight-up version bump — standing default? — owner: pm-security.
