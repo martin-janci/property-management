@@ -1,9 +1,37 @@
 {
-  "generated": "2026-10-25T20:31:08Z",
+  "generated": "2026-10-26T14:34:54Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-26T14:34:54Z",
+      "prs_scanned": 7,
+      "clean": [
+        3172,
+        3170,
+        3169,
+        3165,
+        3161
+      ],
+      "with_issues": [
+        {
+          "pr": 3167,
+          "issue": 3174,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "moderation /unassign route (gh-issue-3163, merged 10-26). PR correctly adds the missing backend route (closing the dead-client-path gap flagged in #3163), the ComplianceRepository::unassign_moderation_case mutation is org-scoped via organization_id=$2 (no IDOR), reverts under_review->pending only, and ships a role-gate 403 regression test + a happy-path test that asserts assignee cleared + status reverted against the DB. ModerationCaseResponse is Serialize-only snake_case (no rename_all), so the test's json[\"assigned_to_name\"]/json[\"id\"] snake_case accessors are correct \u2014 no camelCase JSON-key-case mismatch. BUT: (1) correctness/medium \u2014 repo uses fetch_one, so an unknown or cross-org case id yields SqlxError::RowNotFound which the handler maps to 500 for ALL errors; a routine not-found should be 404. PR explicitly perpetuates this from assign_moderation_case, so both handlers share the wart. (2) authz/low \u2014 any org moderator/manager can unassign a case assigned to a different moderator (only require_moderator_role + org scope, no ownership check); confirm intent. Filed #3174 proposing RowNotFound->404 mapping in both assign+unassign + a 404 test, and an authz intent check."
+        },
+        {
+          "pr": 3166,
+          "issue": 3175,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "reality-web agency profile price locale (gh-issue-3162, merged 10-26). PR correctly threads useLocale() through @/lib/format.formatPrice on /[locale]/agency/[slug] (the numeric half #3155/#3162 left behind) with a de-locale regression test asserting dot-grouping and absence of sk-SK space form \u2014 solid. BUT a grep of reality-web/src shows the SAME hardcoded toLocaleString('sk-SK') bug still live on sibling price displays: realtor/[id]/page.tsx:311 (public realtor profile listing price \u2014 direct analog of the just-fixed agency page), price-map/page.tsx:37 & :96, account/listings/[id]/edit/page.tsx:740, and sell/page.tsx:653. Reality Portal is a six-language portal so all render Slovak grouping to non-sk visitors. Filed #3175 (correctness/i18n, medium) proposing a formatPrice+useLocale sweep (realtor/[id] first), per-page regression tests mirroring agency/[slug]/page.test.tsx, and a lint/CI gate banning literal toLocaleString('sk-SK'). Also noted lower-severity bare toLocaleString() (no locale arg) in saved-searches/CategoryCards/realtor-analytics to fold into the sweep."
+        }
+      ],
+      "note": "Dispatcher Tier 1d demand-driven backlog run (DISPATCHER_OWNED_COMMIT=1). Scanned 7 merged-to-dev PRs in the 14d window not already labeled post-merge-reviewed (3172,3170,3169,3167,3166,3165,3161); the ~40 other in-window merges already carried post-merge-reviewed and were skipped. 5 clean, 2 follow-ups opened (#3174 backend 404-mapping, #3175 reality-web i18n sweep). All 7 PRs labeled post-merge-reviewed; breadcrumbs added on 3167/3166. No commit/push \u2014 artifacts left in working tree for the orchestrator's Phase 6."
+    },
     {
       "run_at": "2026-10-25T20:31:08Z",
       "prs_scanned": 14,
@@ -667,15 +695,6 @@
         3005,
         2744
       ]
-    },
-    {
-      "run_at": "2026-10-01T14:30:09Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review (Tier-1d demand-driven, buffer-starvation trigger: claimable=15 < floor=36). Window=14d (merged>=2026-09-17), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI UNAVAILABLE in env; direct git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did not touch assignments.json/action-list.json/archives; review-only). Enumeration via list_pull_requests(closed, base=dev, sort=updated desc, perPage=50); merged detected by non-null merged_at (MCP 'merged' bool unreliable). ZERO net-new PRs to review: every in-window merge already carries post-merge-reviewed. In-window merges (merged_at>=2026-09-17), all reviewed by prior runs: #3004,#3002,#3001 @09-30 (today's 02:34Z run \u2014 #3004=>issue #3006, #3002+#3001 clean); #2983,#2989,#2994,#2968,#2984,#2985,#2986,#2988,#2970,#2971,#2990,#2991,#2993,#2995,#2996 @09-27; #2980,#2979 @09-26. Newest merge into dev is #3001/#3004 @2026-09-30T12:36Z; no merges on 10-01. Top-of-list dependabot PRs (#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939,#2958,#2591,#2933,#2808,#2934) are closed-unmerged (no merged_at), not merges into dev. #463 @2026-05-24 and #2955/#2956 @09-08 predate the window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass (hard rule: never re-review a post-merge-reviewed PR).",
-      "focus_prs": []
     }
   ]
 }
