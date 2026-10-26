@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-26T08:36:56Z",
+  "archived_at": "2026-10-26T16:34:07Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -19789,6 +19789,34 @@
       }
     },
     {
+      "id": "gh-issue-3168",
+      "action": "Resolve 3 new RUSTSEC advisories blocking backend merge pipeline (cargo-deny advisories FAILED on dev) — bump offending transitive crate(s) or add bounded cargo-deny exceptions with deadline (Closes #3168)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "dispatcher-issue-ingest 2026-10-26T04:30:00Z (#3168) | gc1-reconcile 2026-10-26T16:26:07Z",
+      "first_open_at": "2026-10-26T04:30:00Z",
+      "issue_ref": {
+        "number": 3168,
+        "url": "https://github.com/martin-janci/property-management/issues/3168",
+        "labels": [
+          "blocker",
+          "merge-pipeline",
+          "security"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3172,
+        "merged_at": "2026-10-26T14:31:33Z",
+        "at": "2026-10-26T16:26:07Z"
+      }
+    },
+    {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
       "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
       "owner_role": "pm-integration",
@@ -19832,6 +19860,24 @@
       "source": "pm-analysis 2026-05-24",
       "resolved": "2026-05-25 — PR #450 merged (SSRF outbound URL validation)",
       "depends_on": []
+    },
+    {
+      "id": "pm-backend-merge-pipeline-deadlock-3131",
+      "action": "Diagnose + resolve merge-pipeline deadlock (gh #3131) — long-running issue; likely sqlx transaction scope or advisory-lock contention in the merge path",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-26 | gc1-reconcile 2026-10-26T16:26:07Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3170,
+        "merged_at": "2026-10-26T14:31:33Z",
+        "at": "2026-10-26T16:26:07Z"
+      }
     },
     {
       "id": "pm-backend-scheduler-rs-refactor-extract-jobs",
@@ -22377,6 +22423,30 @@
         "merged_pr": 3059,
         "merged_at": "2026-10-10T08:32:23Z",
         "at": "2026-10-10T10:26:34Z"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3166-reality",
+      "action": "Screen-map drift: PR #3166 touched reality-web agency page without updating docs/screens/reality/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-10-26T16:26:07Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-26T04:28:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3169,
+        "merged_at": "2026-10-26T14:31:33Z",
+        "at": "2026-10-26T16:26:07Z"
       }
     },
     {
