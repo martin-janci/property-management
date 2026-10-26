@@ -34,9 +34,7 @@ vi.mock('next/navigation', () => ({
 // Keep the i18n <Link> and chrome components inert so the test exercises only
 // the page's own rendering (no next-intl router / provider context needed).
 vi.mock('@/i18n/routing', () => ({
-  Link: ({ children, ...props }: { children: React.ReactNode }) => (
-    <a {...props}>{children}</a>
-  ),
+  Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
 }));
 vi.mock('@/components/ui', () => ({
   Header: () => null,

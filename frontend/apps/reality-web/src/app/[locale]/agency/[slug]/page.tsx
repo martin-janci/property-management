@@ -13,9 +13,10 @@
 
 import { useAgencyBySlug, useAgencyListings, useRealtors } from '@ppt/reality-api-client';
 import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Footer, Header } from '@/components/ui';
 import { Link } from '@/i18n/routing';
+import { formatPrice } from '@/lib/format';
 import { sanitizeCssValue } from '@/lib/sanitize-css';
 import { sanitizeHref } from '@/lib/sanitize-url';
 
@@ -28,6 +29,7 @@ const PAGE_BG: React.CSSProperties = {
 
 export default function AgencyProfilePage() {
   const t = useTranslations('pages.agencyProfile');
+  const locale = useLocale();
   const params = useParams<{ slug: string }>();
   const slug = params?.slug ?? '';
 
@@ -274,7 +276,7 @@ export default function AgencyProfilePage() {
                           {listing.title}
                         </div>
                         <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
-                          {listing.price.toLocaleString('sk-SK')} {listing.currency}
+                          {formatPrice(listing.price, locale, { currency: listing.currency })}
                           {listing.transactionType === 'rent' ? t('rentSuffix') : ''}
                         </div>
                       </div>
