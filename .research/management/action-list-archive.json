@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-25T20:29:08Z",
+  "archived_at": "2026-10-26T02:41:09Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -19708,6 +19708,33 @@
         "commit": "b4d6332183055eef8aa5df39f802346293d25bac",
         "subject": "gh-issue-3157: correct moderation client sub-paths (queue list + stats) (#3158)",
         "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
+      "id": "gh-issue-3162",
+      "action": "Follow-up: agency profile page still formats listing price with hardcoded sk-SK locale (PR #3155) (Closes #3162)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-25T22:26:31Z (#3162) | gc1-reconcile 2026-10-26T02:37:35Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-25T22:26:31Z",
+      "issue_ref": {
+        "number": 3162,
+        "url": "https://github.com/martin-janci/property-management/issues/3162",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3166,
+        "merged_at": "2026-10-26T02:35:35Z",
+        "at": "2026-10-26T02:37:35Z"
       }
     },
     {

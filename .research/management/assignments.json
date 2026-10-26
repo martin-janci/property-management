@@ -141,43 +141,19 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "gh-issue-3162",
-      "branch": "auto-impl/gh-issue-3162-b628fe6c",
-      "status": "in-progress",
-      "claimed_at": "2026-10-26T00:33:52Z",
-      "last_updated": "2026-10-26T00:33:52Z",
-      "status_changed_at": "2026-10-26T00:33:52Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantine_reason": null,
-      "quarantined_at": null
-    },
-    {
       "task_id": "gh-issue-3163",
       "branch": "auto-impl/gh-issue-3163-fa0d62b6",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-26T00:33:52Z",
-      "last_updated": "2026-10-26T00:33:52Z",
-      "status_changed_at": "2026-10-26T00:33:52Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-10-26T02:36:37Z",
+      "status_changed_at": "2026-10-26T02:36:37Z",
+      "pr_number": 3167,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3167",
       "merged_at": null,
-      "specialist": null,
+      "specialist": "rust-backend",
       "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=172f47bfab06d87277e9ac370379840188c3b971 note=approved; HELD not-merged: cargo-deny base-wide advisory red (not a required check); see #3168",
+      "last_reviewed_oid": "172f47bfab06d87277e9ac370379840188c3b971",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -189,5 +165,5 @@
       "quarantined_at": null
     }
   ],
-  "generated": "2026-10-26T00:34:53Z"
+  "generated": "2026-10-26T02:36:37Z"
 }
