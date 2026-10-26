@@ -36,6 +36,7 @@ use edd::{
 use moderation::{
     assign_moderation_case, decide_appeal, file_appeal, get_action_templates, get_moderation_case,
     get_moderation_queue, get_moderation_stats, report_content, take_moderation_action,
+    unassign_moderation_case,
 };
 
 /// Create the AML/DSA compliance router.
@@ -73,6 +74,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/moderation/cases/{id}/assign",
             post(assign_moderation_case),
+        )
+        .route(
+            "/moderation/cases/{id}/unassign",
+            post(unassign_moderation_case),
         )
         .route(
             "/moderation/cases/{id}/action",
