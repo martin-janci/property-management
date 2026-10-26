@@ -1,5 +1,14 @@
 {
-  "generated": "2026-10-26T04:30:00Z",
+  "generated": "2026-10-26T20:35:00Z",
+  "rerun_metadata": {
+    "same_day_rerun": true,
+    "trigger": "buffer-low: claimable=6/72 — refill planner",
+    "fired_at": "2026-10-26T20:30:00Z",
+    "previous_run_iso": "2026-10-26T04:30:00Z",
+    "new_phase_1_signals": 0,
+    "resolution_updates": 1,
+    "note": "Same-day rerun; morning signals preserved for the audit trail (dedup via seen_signals prevents re-scoring). Afternoon merges #3169 (docs), #3170 (.claude/skills docs), #3172 (Cargo.lock + deny.toml — in churn exclusions) produced no new scorable signals. Resolution check flipped `screen-map-drift-pr-3166-reality` to done (dispatcher already reconciled at 14:31Z). Phase 1.5 and 1.6 skipped on rerun to avoid cursor thrash."
+  },
   "signals": [
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
@@ -114,7 +123,7 @@
       "goal": "G2",
       "passed": true,
       "command": "jq --slurpfile prev HEAD state … state.json advanced",
-      "observed": "true",
+      "observed": "true (same-day rerun: last_pr_seen 3167→3182, last_issue_seen 3168→3175, last_commit_sha 5fc13e7b→b5eba9c6, last_run_iso advanced, stats.runs 105→106)",
       "expected": "true"
     },
     {
