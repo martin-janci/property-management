@@ -1749,6 +1749,28 @@
       "merge_attempted_at": "2026-09-01T10:34:14Z"
     },
     {
+      "task_id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-90f75cc2",
+      "status": "merged",
+      "claimed_at": "2026-10-25T20:28:52Z",
+      "last_updated": "2026-10-26T04:34:06Z",
+      "status_changed_at": "2026-10-26T04:34:06Z",
+      "pr_number": 3165,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3165",
+      "merged_at": "2026-10-26T04:33:26Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3165 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=added 2 pre-persist-rejection regression tests (unknown+missing template_id -> 400, zero import_jobs rows); clippy/fmt/new tests green; sole verify fail is unrelated pre-existing env-only DNS-rebind SSRF test in api_call.rs (0 diff vs dev), draft PR opened for CI to gate",
+      "reviewer_summary": "verdict=approve head_oid=3963475d93d3f97f87e7d09c2bef8e35ae79fa76 note=test-only-coverage-addition-verified-assertions-match-handler-CI-core-gates-green",
+      "last_reviewed_oid": "3963475d93d3f97f87e7d09c2bef8e35ae79fa76",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-reality-se-0b690793",
       "status": "failed",
@@ -17903,6 +17925,30 @@
       "quarantined_at": null
     },
     {
+      "task_id": "gh-issue-3163",
+      "branch": "auto-impl/gh-issue-3163-fa0d62b6",
+      "status": "merged",
+      "claimed_at": "2026-10-26T00:33:52Z",
+      "last_updated": "2026-10-26T04:34:06Z",
+      "status_changed_at": "2026-10-26T04:34:06Z",
+      "pr_number": 3167,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3167",
+      "merged_at": "2026-10-26T04:32:38Z",
+      "specialist": "rust-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=172f47bfab06d87277e9ac370379840188c3b971 note=approved; HELD not-merged: cargo-deny base-wide advisory red (not a required check); see #3168",
+      "last_reviewed_oid": "172f47bfab06d87277e9ac370379840188c3b971",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantine_reason": null,
+      "quarantined_at": null
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -19457,6 +19503,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "branch": "auto-impl/repeated-churn-backend-servers-api-serve-63590d23",
+      "status": "merged",
+      "claimed_at": "2026-10-25T18:32:57Z",
+      "last_updated": "2026-10-26T04:34:06Z",
+      "status_changed_at": "2026-10-26T04:34:06Z",
+      "pr_number": 3161,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3161",
+      "merged_at": "2026-10-26T04:33:03Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3161 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=fixed FCM v1 stale-token eviction (read error.details[].errorCode not error.status); +4 tests; 688/689 api-server pass (lone fail pre-existing SSRF test on origin/dev); IG3 two-commit proof; draft PR vs dev",
+      "reviewer_summary": "verdict=approve head_oid=7d983eb3ddcec2184f88ec3d508c42b85f090202 note=fcm-v1-eviction-fix-correct+well-scoped; advisory COMMENT posted (self-approval blocked, bot-authored PR); CI green except cargo-deny (pre-existing ammonia RUSTSEC on dev — single .rs file, no Cargo.toml/lock delta, categorically not this PR's → stood down, no respawn); draft awaiting human merge",
+      "last_reviewed_oid": "7d983eb3ddcec2184f88ec3d508c42b85f090202",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
       "branch": "auto-impl/repeated-churn-backend-servers-api-serve-6a3993ce",
       "status": "failed",
@@ -20993,5 +21061,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-26T02:37:31Z"
+  "archived_at": "2026-10-26T04:39:20Z"
 }
