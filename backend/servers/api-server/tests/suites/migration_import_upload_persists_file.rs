@@ -342,3 +342,133 @@ async fn upload_import_file_persists_bytes_to_storage(pool: PgPool) {
         "download(file_path) must return the exact uploaded bytes"
     );
 }
+
+/// Pre-persist rejection must not leave a dangling job row: an otherwise
+/// well-formed upload that references a `template_id` which does not exist must
+/// be rejected at the validation stage (`400 Template not found`) BEFORE the
+/// handler reaches the storage write or the `create_import_job` insert.
+///
+/// This pins the *ordering* invariant the persist-to-storage fix depends on —
+/// validation precedes both the storage upload and the row insert — on a
+/// different branch than the fail-closed test. The default `TestApp` carries
+/// no storage, so the storage guard (503) sits *after* this 400; if a future
+/// refactor moved the row insert ahead of template validation the request
+/// would 503/200 and persist a row instead of cleanly 400-ing, and this test
+/// would catch it. The zero-row assertion mirrors the fail-closed test's
+/// data-integrity contract.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn upload_import_file_rejects_unknown_template_without_creating_job(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_platform_admin(&app, &user, "migupunk").await;
+
+    // A random template id that was never seeded for this org.
+    let template_id = Uuid::new_v4();
+
+    let csv = "name,address\nTest Building,1 Main St\n";
+    let boundary = "bit420migrationuploadunknownboundary";
+    let body = format!(
+        "--{boundary}\r\n\
+         Content-Disposition: form-data; name=\"template_id\"\r\n\
+         \r\n\
+         {template_id}\r\n\
+         --{boundary}\r\n\
+         Content-Disposition: form-data; name=\"file\"; filename=\"buildings.csv\"\r\n\
+         Content-Type: text/csv\r\n\
+         \r\n\
+         {csv}\r\n\
+         --{boundary}--\r\n"
+    );
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/migration/import/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={boundary}"),
+        )
+        .body(Body::from(body))
+        .expect("build multipart upload request");
+
+    let resp = app.execute(req).await;
+
+    // Rejected at validation (400) before the storage guard (503) is reached.
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "an unknown template_id must be rejected with 400 before storage, got {}",
+        resp.status
+    );
+
+    // Data-integrity invariant: no dangling import_job row on early rejection.
+    let job_count: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM import_jobs WHERE organization_id = $1")
+            .bind(org_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        job_count.0, 0,
+        "no import_job row may be created when the template does not exist"
+    );
+}
+
+/// Required-field guard: an upload whose multipart payload omits the
+/// `template_id` field must be rejected with `400 template_id is required` and,
+/// like every other pre-persist rejection, must not create an `import_jobs`
+/// row. This covers the earliest rejection branch — it fires before the
+/// template lookup, the storage write and the row insert — completing the
+/// "reject before persist, leave no dangling row" coverage alongside the
+/// unknown-template and fail-closed tests.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn upload_import_file_rejects_missing_template_id_without_creating_job(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (token, org_id) = create_platform_admin(&app, &user, "migupmiss").await;
+
+    // Only the file part — the `template_id` field is deliberately absent.
+    let csv = "name,address\nTest Building,1 Main St\n";
+    let boundary = "bit420migrationuploadmissingboundary";
+    let body = format!(
+        "--{boundary}\r\n\
+         Content-Disposition: form-data; name=\"file\"; filename=\"buildings.csv\"\r\n\
+         Content-Type: text/csv\r\n\
+         \r\n\
+         {csv}\r\n\
+         --{boundary}--\r\n"
+    );
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/migration/import/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={boundary}"),
+        )
+        .body(Body::from(body))
+        .expect("build multipart upload request");
+
+    let resp = app.execute(req).await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_REQUEST,
+        "a missing template_id field must be rejected with 400, got {}",
+        resp.status
+    );
+
+    let job_count: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM import_jobs WHERE organization_id = $1")
+            .bind(org_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        job_count.0, 0,
+        "no import_job row may be created when template_id is missing"
+    );
+}
