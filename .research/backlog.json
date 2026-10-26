@@ -13087,7 +13087,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "merged PR #3147 (182 lines)"
       ],
@@ -13099,7 +13099,12 @@
       ],
       "created_at": "2026-10-25",
       "updated_at": "2026-10-25",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-26T14:31:46Z",
+        "assignment_status": "merged",
+        "pr_number": 3165
+      }
     },
     {
       "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
@@ -13107,7 +13112,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "hotspot_history runs_seen=2→3",
         "merged PR #3145 (135 lines)"
@@ -13121,7 +13126,12 @@
       ],
       "created_at": "2026-10-25",
       "updated_at": "2026-10-25",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-26T14:31:46Z",
+        "assignment_status": "merged",
+        "pr_number": 3161
+      }
     },
     {
       "id": "code-review-mobile-native-kmp-http-client-no-timeout",
@@ -13249,7 +13259,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3166"
       ],
@@ -13263,7 +13273,12 @@
       ],
       "created_at": "2026-10-26",
       "updated_at": "2026-10-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-26T14:31:46Z",
+        "assignment_status": "merged",
+        "pr_number": 3169
+      }
     },
     {
       "id": "code-review-api-handlers-assign-violation-no-member-check",
