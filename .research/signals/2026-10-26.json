@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-26T04:30:00Z",
+  "generated": "2026-10-26T04:37:42Z",
   "signals": [
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
@@ -223,5 +223,22 @@
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "trigger_payload": "buffer-low: claimable=16/72 — refill planner",
+  "segment_reviewed": {
+    "morning": "api-handlers",
+    "rerun": "api-core"
+  },
+  "rerun": {
+    "fired_at": "2026-10-26T04:37:42Z",
+    "reason": "buffer-low payload at 04:33Z",
+    "phase_1_delta": {
+      "new_merges_since_morning": [
+        "#3167 moderation /unassign — backend route, no screen-map impact"
+      ]
+    },
+    "phase_1_5_result": "api-core segment reviewed; 0 new high-confidence actionable findings (mature segment, prior reviews caught the hot items); advanced review_cursor.api-core 2026-10-22 → 2026-10-26.",
+    "phase_3_result": "no new promotions — top landable candidate `code-review-api-handlers-assign-violation-no-member-check` is score=2 vector=bug (below ≥3 standard gate; security fast-track requires vector=security). The two score-3 ready plans are mobile-native-kmp (local-only, do not refill the cloud buffer).",
+    "phase_5_result": "no auto-fix candidate (screen-map-drift signal is confidence=medium; code-review findings below score threshold)"
+  }
 }
