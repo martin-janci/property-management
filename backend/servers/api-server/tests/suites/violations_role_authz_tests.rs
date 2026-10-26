@@ -205,6 +205,37 @@ async fn resident_cannot_issue_violation_or_manage_rules(pool: PgPool) {
     );
 }
 
+/// Follow-up finding (gh #3164): `add_evidence` was left ungated while its
+/// sibling `delete_evidence` was manager-gated by PR #3072. Attaching evidence
+/// to a violation is a staff action (it writes onto the official enforcement
+/// record), so a Resident must NOT be able to do it. Before the gate this
+/// returned 2xx; after the gate it is 403.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn resident_cannot_add_evidence(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "authz-evidence").await;
+    let resident = seed_user(&pool, "resident-evidence@vio-authz.test").await;
+    let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-0001").await;
+
+    let token = token_with_role(resident, org, "resident");
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/violations/{violation_id}/evidence"))
+                .bearer(&token)
+                .json(json!({ "file_name": "forged.jpg", "file_type": "image/jpeg" }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a non-manager tenant member must NOT be able to attach evidence; got {} (body: {})",
+        resp.status,
+        resp.text()
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Positive control: a manager is NOT blocked by the gate.
 // ---------------------------------------------------------------------------
@@ -238,5 +269,38 @@ async fn manager_can_issue_fine(pool: PgPool) {
         resp.status,
         StatusCode::FORBIDDEN,
         "manager must never be blocked by the role gate"
+    );
+}
+
+/// Positive control for the evidence gate (gh #3164): a Manager passes the gate
+/// and successfully attaches evidence (2xx), proving the fix rejects only
+/// unprivileged roles rather than the mutation itself.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn manager_can_add_evidence(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "authz-evidence-mgr").await;
+    let manager = seed_user(&pool, "manager-evidence@vio-authz.test").await;
+    let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-EVID-MGR-0001").await;
+
+    let token = token_with_role(manager, org, "manager");
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/violations/{violation_id}/evidence"))
+                .bearer(&token)
+                .json(json!({ "file_name": "report.jpg", "file_type": "image/jpeg" }))
+                .build(),
+        )
+        .await;
+
+    assert!(
+        resp.status.is_success(),
+        "a manager must be able to attach evidence; got {} (body: {})",
+        resp.status,
+        resp.text()
+    );
+    assert_ne!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "manager must never be blocked by the evidence role gate"
     );
 }
