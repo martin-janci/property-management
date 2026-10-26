@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-26 04:30 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-26 16:55 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -224,7 +224,7 @@
 | 2 | bug | api-core workflow_executor process_event: `?` on evaluate_conditions at line 359 aborts the whole batch — one malformed stored condition silently disables every other automation on that event | `backend/servers/api-server/src/services/workflow_executor.rs` | rotating-expert-review api-core 2026-10-01 (+1) | 2026-10-22 | done | — |
 | 2 | bug | ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts` | rotating-expert-review 2026-10-22 ppt-web-core | 2026-10-22 | done | — |
 | 2 | bug | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | rotating-expert-review [mobile-native-kmp] | 2026-10-25 | open | — |
-| 2 | test-gap | Screen-map drift: PR #3166 touched reality-web agency page without updating docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | PR #3166 | 2026-10-26 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3166 touched reality-web agency page without updating docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | PR #3166 | 2026-10-26 | done | — |
 | 2 | bug | violations.rs assign_violation: Manager can set assigned_to to a user outside the org (no org-membership check on assignee) | `backend/servers/api-server/src/routes/violations.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-26 | 2026-10-26 | open | — |
 | 1 | triage | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | — | #836 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | — | #845 (+1) | 2026-05-31 | done | — |
@@ -468,8 +468,8 @@
 | 1 | bug | violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create | `backend/crates/db/src/repositories/violations.rs (+1)` | rotating-expert-review [api-handlers] | 2026-10-25 | open | — |
 | 1 | bug | record_payment INSERTs fine_payments then UPDATEs enforcement_actions.paid_amount on separate pool connections with no transaction → partial failure records money without decrementing the fine | `backend/crates/db/src/repositories/violations.rs` | rotating-expert-review [api-handlers] | 2026-10-25 | done | — |
 | 1 | refactor | Churn hotspot: backend/servers/reality-server/src/routes/price_map.rs — merged PR touched this file heavily this run | `backend/servers/reality-server/src/routes/price_map.rs` | merged PR #3146 (285 lines) | 2026-10-25 | dropped | — |
-| 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs — merged PR touched this file heavily this run | `backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs` | merged PR #3147 (182 lines) | 2026-10-25 | open | — |
-| 1 | refactor | Churn hotspot: backend/servers/api-server/src/services/push_fanout.rs — merged PR touched this file heavily this run | `backend/servers/api-server/src/services/push_fanout.rs` | hotspot_history runs_seen=2→3 (+1) | 2026-10-25 | open | — |
+| 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs — merged PR touched this file heavily this run | `backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs` | merged PR #3147 (182 lines) | 2026-10-25 | done | — |
+| 1 | refactor | Churn hotspot: backend/servers/api-server/src/services/push_fanout.rs — merged PR touched this file heavily this run | `backend/servers/api-server/src/services/push_fanout.rs` | hotspot_history runs_seen=2→3 (+1) | 2026-10-25 | done | — |
 | 1 | bug | Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination) | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt (+1)` | rotating-expert-review [mobile-native-kmp] | 2026-10-25 | open | — |
 | 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heavily this run | `backend/servers/api-server/tests/suites/violations_role_authz_tests.rs` | top-3 churn 2026-10-26 (PR #3072) | 2026-10-26 | open | — |
 | 1 | test-gap | Churn hotspot: frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx — merged PR touched this file heavily this run | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx` | top-3 churn 2026-10-26 (PR #3153) | 2026-10-26 | open | — |

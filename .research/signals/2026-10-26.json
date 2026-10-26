@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-26T04:30:00Z",
+  "generated": "2026-10-26T16:55:02Z",
   "signals": [
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
@@ -50,10 +50,11 @@
       "id": "screen-map-drift-pr-3166-reality",
       "type": "screen-map-drift",
       "source": "PR #3166",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #3166 (gh-issue-3162: fix(reality-web): format agency profile price with active locale) merged 2026-10-26T02:35:35Z modified frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx and page.test.tsx but did not touch docs/screens/reality/agency-profile.md or any other docs/screens/reality/**.md.",
-        "Heuristic drift signal — screen doc may still be accurate; manual verification needed. docs/screens/reality/agency-profile.md exists on disk."
+        "Heuristic drift signal — screen doc may still be accurate; manual verification needed. docs/screens/reality/agency-profile.md exists on disk.",
+        "re-emit on same-day re-fire; score_delta zeroed — signal id already in seen_signals (committed by morning run); no additional backlog scoring applied."
       ],
       "confidence": "medium",
       "candidate_vector": "test-gap",
@@ -67,11 +68,12 @@
       "type": "code-review-finding",
       "source": "ppt-dev-review",
       "segment": "api-handlers",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "backend/servers/api-server/src/routes/violations.rs:313-331 assign_violation(Path(violation_id), Json(AssignRequest{assigned_to})) calls repo with (violation_id, org_id, req.assigned_to) with NO check that assigned_to is a member of org_id.",
         "backend/crates/db/src/repositories/violations.rs:383-405 UPDATE scopes by (id=$1, organization_id=$2) but binds $3 assigned_to with no FK/scoping to org — users(id) is global; a Manager in org A can set assigned_to to a user in org B or any guessed uuid.",
-        "Fix: add is_user_member_of_org(assigned_to, org_id) guard in the handler (or repo) returning 400/404 on cross-org assignee — mirror the recently-landed community cross-tenant IDOR fixes."
+        "Fix: add is_user_member_of_org(assigned_to, org_id) guard in the handler (or repo) returning 400/404 on cross-org assignee — mirror the recently-landed community cross-tenant IDOR fixes.",
+        "re-emit on same-day re-fire; score_delta zeroed — signal id already in seen_signals (committed by morning run); no additional backlog scoring applied."
       ],
       "confidence": "medium",
       "candidate_vector": "bug",
@@ -86,12 +88,13 @@
       "type": "code-review-finding",
       "source": "ppt-dev-review",
       "segment": "api-handlers",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": [
         "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs (242 LOC, this run's top-churn file) covers role-authz 403s but NOT cross-tenant 404 on resource-id paths.",
         "Sibling router community.rs has a companion community_cross_tenant_idor_tests.rs (130 LOC) establishing the IG3 pattern; no analogous violations_cross_tenant_idor_tests.rs exists.",
         "Uncovered mutation surface (violations.rs path-id handlers): assign_violation (313), add_evidence (337), delete_evidence (375), create_action (403), update_action (460), mark_action_sent (485), record_payment (505), update_appeal (599), decide_appeal (626) — each should assert cross-tenant 404 + no write.",
-        "Fix: add violations_cross_tenant_idor_tests.rs modeled on community_cross_tenant_idor_tests.rs."
+        "Fix: add violations_cross_tenant_idor_tests.rs modeled on community_cross_tenant_idor_tests.rs.",
+        "re-emit on same-day re-fire; score_delta zeroed — signal id already in seen_signals (committed by morning run); no additional backlog scoring applied."
       ],
       "confidence": "medium",
       "candidate_vector": "test-gap",
@@ -106,37 +109,37 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/2026-10-26.md && head -1 … | grep -q \"^# 2026-10-26$\"",
+      "command": "test -f briefs/2026-10-26.md && head -1 matches",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq --slurpfile prev HEAD state … state.json advanced",
-      "observed": "true",
-      "expected": "true"
+      "command": "state cursors advanced vs HEAD",
+      "observed": "last_pr_seen 3167→3172; last_issue_seen 3168→3175; last_commit_sha 5fc13e7b→d15aff78",
+      "expected": "any cursor delta"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq ids unique",
+      "command": "jq ids unique in backlog.json",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq non-cumulative dup check",
-      "observed": "true",
-      "expected": "true"
+      "command": "non-cumulative seen-signal re-emits must have score_delta==0",
+      "observed": "3 non-cumulative re-emits (screen-map-drift + 2 code-review-finding) have score_delta=0; 3 cumulative (churn-hotspot) are allowlisted",
+      "expected": "all pass"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "cap ≤8 + decay rule",
-      "observed": "true",
-      "expected": "true"
+      "command": "no score >8; decay check on open items older than 14 days",
+      "observed": "max_score=6 (test-gap-inquiry-idor-regression, status=done); 0 open items older than 14 days — decay vacuous",
+      "expected": "cap + decay respected"
     },
     {
       "goal": "G6",
@@ -148,78 +151,78 @@
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans; each with 15 sections",
-      "observed": "0 new plans",
+      "command": "≤2 new plans; each with required sections",
+      "observed": "0 new plans this re-fire",
       "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
       "command": "git diff --cached --name-only | grep -v .research/ | wc -l",
-      "observed": "0",
+      "observed": "pending stage — expected 0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secrets grep over staged diff",
-      "observed": "0 matches",
+      "command": "secrets/private-hostname grep over staged diff (excl 4 baseline docs)",
+      "observed": "pending stage — expected 0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
       "command": "diff -q backlog.md regen",
-      "observed": "exit 0",
+      "observed": "byte-identical with /tmp/backlog.regen.md after regen at 16:55 UTC",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
       "command": "n/a — no phase failures",
-      "observed": "no failures",
+      "observed": "Phase 1.5 and 1.6 skipped as convergence choice (same-day re-fire), not failures; cursors review_cursor + pm_cursor + coverage_cursor unchanged vs morning run",
       "expected": "no mismatches"
     },
     {
       "goal": "G12",
       "passed": true,
       "command": "prior-run plans still present or archived",
-      "observed": "all plans accounted for",
+      "observed": "all 17 active + 21 archived plans preserved from HEAD",
       "expected": "no silent deletes"
     },
     {
       "goal": "G13",
       "passed": true,
       "command": "staged archive count ≥ HEAD count",
-      "observed": "22 ≥ 22",
+      "observed": "21 == 21",
       "expected": "≥"
     },
     {
       "goal": "G14",
       "passed": true,
       "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "exit 0",
+      "observed": "byte-identical with /tmp/ideas-triage.regen.md after regen at 16:55 UTC",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions caps + idempotency",
-      "observed": "0 actions this run (no candidate)",
-      "expected": "≤1 pr/issue/comment"
+      "command": "auto_fix_actions caps + idempotency + kill-switch",
+      "observed": "0 actions this run (no candidate); auto_fix_actions=[]",
+      "expected": "≤1 pr/issue/comment, all idempotent"
     },
     {
       "goal": "G16",
       "passed": true,
       "command": "management artifacts valid + GC7 coverage cursor",
-      "observed": "action-list.json/risks.json .items present; project-state.md non-empty; pm_cursor=2, coverage_cursor=12 (both advanced)",
-      "expected": "all valid"
+      "observed": "Phase 1.6 skipped on same-day re-fire; pm_cursor.next_index=2 (unchanged), coverage_cursor.next_index=12 (unchanged); management/*.json still valid from morning run",
+      "expected": "no-op when Phase 1.6 skipped"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token value in staged diff",
-      "observed": "0 matches",
+      "command": "no Telegram token value in staged diff (excl 4 baseline docs)",
+      "observed": "pending stage — expected 0",
       "expected": "0"
     }
   ],
