@@ -129,40 +129,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs — merged PR touched this file heavily this run",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-25T04:26:57Z (score=1 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-25T04:26:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
-      "action": "Churn hotspot: backend/servers/api-server/src/services/push_fanout.rs — merged PR touched this file heavily this run",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-25T04:26:57Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-25T04:26:57Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-mobile-native-kmp-http-client-no-timeout",
       "action": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "owner_role": "pm-backend",
@@ -194,26 +160,6 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
-      }
-    },
-    {
-      "id": "gh-issue-3163",
-      "action": "Follow-up: unassignModerationCase still 404s after #3157 was closed — missing backend route + contract-test gap (PR #3158) (Closes #3163)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-25T22:26:31Z (#3163)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-25T22:26:31Z",
-      "issue_ref": {
-        "number": 3163,
-        "url": "https://github.com/martin-janci/property-management/issues/3163",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
       }
     },
     {

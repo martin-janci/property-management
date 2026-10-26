@@ -218,6 +218,36 @@ ignore = [
     "RUSTSEC-2026-0367",
     "RUSTSEC-2026-0368",
     "RUSTSEC-2026-0369",
+
+    # RUSTSEC-2026-0387 (GH #3168) — multiple timing-variability issues in
+    # `crypto-bigint 0.5.5` operations intended to be constant-time. NO in-range
+    # fix: the advisory is patched only on the crypto-bigint 0.6.x line, but our
+    # single crypto-bigint line is pinned to `^0.5` by TWO transitive parents —
+    # `aws-sigv4 1.4.5` (-> `p256`, SigV4a ECDSA request signing) and
+    # `elliptic-curve 0.13.8` — neither of which has an in-range release on
+    # crypto-bigint 0.6. Reaching the 0.6.x fix means a major AWS SDK / RustCrypto
+    # elliptic-curve-stack migration, out of scope for clearing this deny job
+    # (same posture as the AWS-SDK-pinned rustls / rustls-webpki / h2 ignores
+    # above). `cargo update -p crypto-bigint --precise 0.5.6` confirms no higher
+    # 0.5.x exists, and `--precise 0.6.1` is rejected by the `^0.5` requirement.
+    #
+    # Reachability: crypto-bigint feeds elliptic-curve scalar/field arithmetic on
+    # the AWS SigV4a signing path (aws-sigv4 -> p256). We sign OUTBOUND requests
+    # to well-behaved AWS endpoints (S3/STS/SSO) with our own credentials; the
+    # timing side-channel requires an attacker to measure the timing of our local
+    # signing operations, which are not exposed to a remote adversary on this
+    # path. No server-side constant-time crypto on this line accepts
+    # attacker-controlled input. Transitive-only, no reachable exposure.
+    #
+    # Unlike tokio (RUSTSEC-2026-0386) and ctutils (RUSTSEC-2026-0385) in this
+    # same change — both of which had an in-range patched release and were BUMPED
+    # in Cargo.lock + guarded by the `[bans]` floors below rather than ignored —
+    # crypto-bigint has no reachable fix, so it is suppressed here with a bounded
+    # deadline instead.
+    # REMOVAL DEADLINE: 2027-01-31 — re-evaluate at/ before this date; drop once
+    # aws-sigv4 / elliptic-curve ship releases reaching crypto-bigint 0.6.x (the
+    # patched line), or sooner if a 0.5.x backport appears. Tracked by GH #3168.
+    "RUSTSEC-2026-0387",
 ]
 
 [bans]
@@ -324,6 +354,33 @@ deny = [
     # Follow-up: lift if ammonia ever leaves the api-server dependency tree.
     { name = "ammonia", version = ">=4.0.0, <4.1.8", reason = "RUSTSEC-2026-0373 patched-floor guard — ammonia (direct api-server HTML sanitizer, REACHABLE) must stay on a patched release (>= 4.1.8, < 4.2.0 OR >= 4.2.4); this half-range bans the vulnerable < 4.1.8 window so a lockfile downgrade trips cargo-deny rather than silently reopening the CSS url() sanitizer bypass (GH #3130/#3143)" },
     { name = "ammonia", version = ">=4.2.0, <4.2.4", reason = "RUSTSEC-2026-0373 patched-floor guard — ammonia (direct api-server HTML sanitizer, REACHABLE) must stay on a patched release; this half-range bans the vulnerable 4.2.0–4.2.3 window (the 4.2.x releases before the 4.2.4 fix) so a lockfile downgrade trips cargo-deny rather than silently reopening the CSS url() sanitizer bypass (GH #3130/#3143)" },
+
+    # tokio PATCHED-FLOOR GUARD for RUSTSEC-2026-0386 (GH #3168). The advisory
+    # ("`AsyncFd::new` and related constructors violate I/O safety", unsound) hit
+    # the locked tokio 1.53.1; it has an in-range fix on the 1.x line, so tokio
+    # was BUMPED 1.53.1 -> 1.54.1 in Cargo.lock (semver-compatible under the
+    # workspace `tokio = "1.35"` requirement), which clears -0386 there. tokio is
+    # NOT on the `[advisories] ignore` list — the bump is the fix. This guard
+    # mirrors the zip / rustls / rustls-webpki / h2 / ammonia patched lines: the
+    # workspace requirement is `^1.35`, so a bad `cargo update` / Dependabot
+    # lockfile move could drift tokio back onto a pre-1.54.1 release with only a
+    # Cargo.lock edit and silently reopen the unsoundness. This ban denies the
+    # whole pre-fix 1.x window so such a regression trips `cargo deny check bans`
+    # instead. It intentionally does NOT touch the patched tokio >= 1.54.1
+    # (outside the range, allowed).
+    { name = "tokio", version = ">=1.0.0, <1.54.1", reason = "RUSTSEC-2026-0386 patched-floor guard — tokio must stay >= 1.54.1 (AsyncFd I/O-safety unsoundness fix); the reachable line was bumped from 1.53.1, so a lockfile downgrade must trip cargo-deny rather than silently reopening the advisory (GH #3168)" },
+
+    # ctutils PATCHED-FLOOR GUARD for RUSTSEC-2026-0385 (GH #3168). The advisory
+    # ("non-constant-time mask generation and `u128` comparisons") hit the locked
+    # ctutils 0.4.2 — a transitive dependency of `digest 0.11.3`, `phc 0.6.1` and
+    # `universal-hash 0.6.1` (all pinned `^0.4`). It has an in-range fix, so
+    # ctutils was BUMPED 0.4.2 -> 0.4.6 in Cargo.lock, which clears -0385 there.
+    # ctutils is NOT on the `[advisories] ignore` list — the bump is the fix. As
+    # with the tokio guard above, the `^0.4` requirement means a lockfile
+    # downgrade could silently drift back onto the vulnerable 0.4.2–0.4.5 window;
+    # this ban denies it so the regression trips `cargo deny check bans` instead.
+    # It intentionally does NOT touch the patched ctutils >= 0.4.6.
+    { name = "ctutils", version = ">=0.4.0, <0.4.6", reason = "RUSTSEC-2026-0385 patched-floor guard — ctutils must stay >= 0.4.6 (constant-time mask / u128 compare fix); the reachable line was bumped from 0.4.2, so a lockfile downgrade must trip cargo-deny rather than silently reopening the advisory (GH #3168)" },
 
     # quick-xml XXE / billion-laughs SECURITY PIN (GH #2084, supersedes the
     # advisory pinned-dependency-guard.yml workflow). The inbound OTA parsers
