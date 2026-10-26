@@ -747,6 +747,41 @@ impl ComplianceRepository {
         Ok(case)
     }
 
+    /// Unassign a moderation case, scoped to caller's organization.
+    ///
+    /// The inverse of [`Self::assign_moderation_case`]: clears the assignee and,
+    /// when the case is still `under_review` (the state `assign` moves a
+    /// `pending` case into), returns it to `pending` so the freed case re-enters
+    /// the queue. Cases that already carry a decision keep their terminal status.
+    /// The `organization_id` predicate scopes the mutation to the caller's tenant
+    /// exactly as `assign_moderation_case` does.
+    pub async fn unassign_moderation_case(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<ModerationCase, SqlxError> {
+        let case = sqlx::query_as::<_, ModerationCase>(
+            r#"
+            UPDATE moderation_cases SET
+                assigned_to = NULL,
+                assigned_at = NULL,
+                status = CASE
+                    WHEN status = 'under_review' THEN 'pending'::moderation_status
+                    ELSE status
+                END,
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(case)
+    }
+
     /// Take moderation action, scoped to caller's organization.
     pub async fn take_moderation_action(
         &self,

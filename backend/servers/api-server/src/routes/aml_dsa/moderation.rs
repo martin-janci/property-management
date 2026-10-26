@@ -341,6 +341,45 @@ pub(super) async fn assign_moderation_case(
     )))
 }
 
+/// Unassign a moderation case (clear its current assignee).
+///
+/// The inverse of [`assign_moderation_case`]; takes no body. Scoped to the
+/// caller's organization so a case in another tenant is not mutated. Mirrors
+/// `assign_moderation_case`'s error mapping: an unknown/cross-org id surfaces
+/// as a repo error (500) rather than a 404, matching the existing assign path.
+pub(super) async fn unassign_moderation_case(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
+    require_moderator_role(&user)?;
+
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    let case = state
+        .compliance_repo
+        .unassign_moderation_case(id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to unassign moderation case: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to unassign case".to_string(),
+            )
+        })?;
+
+    Ok(Json(ModerationCaseResponse::from_case(
+        case,
+        Utc::now(),
+        "User",
+        0,
+        None,
+    )))
+}
+
 /// Take moderation action request.
 #[derive(Debug, Deserialize)]
 pub struct TakeModerationActionRequest {

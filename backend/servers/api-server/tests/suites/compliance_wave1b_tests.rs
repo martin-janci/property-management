@@ -27,11 +27,12 @@
 //!   POST /api/v1/aml-dsa/dsa/reports/{id}/publish
 //!   GET  /api/v1/aml-dsa/dsa/metrics
 //!
-//! **Moderation** (6):
+//! **Moderation** (7):
 //!   GET  /api/v1/aml-dsa/moderation/queue
 //!   GET  /api/v1/aml-dsa/moderation/queue/stats
 //!   GET  /api/v1/aml-dsa/moderation/cases/{id}
 //!   POST /api/v1/aml-dsa/moderation/cases/{id}/assign
+//!   POST /api/v1/aml-dsa/moderation/cases/{id}/unassign
 //!   POST /api/v1/aml-dsa/moderation/cases/{id}/appeal/decide
 //!   GET  /api/v1/aml-dsa/moderation/templates
 //!
@@ -992,6 +993,78 @@ async fn assign_moderation_case_requires_moderator_role(pool: PgPool) {
         .json(body)
         .build();
     assert_eq!(app.execute(resp).await.status, StatusCode::FORBIDDEN);
+}
+
+// ===========================================================================
+// Moderation: unassign case (regression for #3163)
+// ===========================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn unassign_moderation_case_requires_moderator_role(pool: PgPool) {
+    // Regression for #3163: the `/moderation/cases/{id}/unassign` route was
+    // missing from `routes::aml_dsa::router()`, so the client's
+    // `unassignModerationCase` call 404'd at runtime. A *missing* route yields
+    // 404; a *mounted-but-gated* route yields 403. Asserting 403 here pins the
+    // route's existence so it can't silently regress to a 404 again.
+    let app = TestApp::new(pool.clone()).await;
+    let user_id = seed_user(&pool, "unpriv-unassign").await;
+    let token = mint_token(user_id, None, None);
+    let unknown = Uuid::new_v4();
+    let resp = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{unknown}/unassign"
+        ))
+        .bearer(&token)
+        .build();
+    assert_eq!(app.execute(resp).await.status, StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn unassign_moderation_case_clears_assignee_and_reverts_status(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "unassign-ok").await;
+    let user_id = seed_user(&pool, "mgr-unassign").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, Some(org_id), Some("manager"));
+
+    let owner_id = seed_user(&pool, "case-owner-unassign").await;
+    let case_id = seed_moderation_case(&pool, org_id, owner_id).await;
+
+    // Assign to self first: status moves pending -> under_review, assignee set.
+    let assign = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{case_id}/assign"
+        ))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(json!({}))
+        .build();
+    assert_eq!(app.execute(assign).await.status, StatusCode::OK);
+
+    // Unassign: clears the assignee and reverts under_review -> pending.
+    let unassign = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{case_id}/unassign"
+        ))
+        .bearer(&token)
+        .tenant(org_id)
+        .build();
+    let r = app.execute(unassign).await;
+    assert_eq!(r.status, StatusCode::OK);
+    let body = r.json_value();
+    assert_eq!(body["id"].as_str().unwrap(), case_id.to_string());
+    assert!(body["assigned_to_name"].is_null());
+
+    // DB is the source of truth: assignee cleared, status back to pending
+    // (PG enum text is snake_case regardless of the JSON serialization).
+    let (assigned_to, status): (Option<Uuid>, String) =
+        sqlx::query_as("SELECT assigned_to, status::text FROM moderation_cases WHERE id = $1")
+            .bind(case_id)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch case");
+    assert!(assigned_to.is_none(), "assigned_to should be cleared");
+    assert_eq!(status, "pending", "status should revert to pending");
 }
 
 // ===========================================================================
