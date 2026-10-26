@@ -6,14 +6,17 @@
  * Screen-map: docs/screens/reality/agent-profile.md
  */
 
+import { useLocale } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
+import { formatPrice } from '@/lib/format';
 import { MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS } from './_mock';
 
 // TODO: replace listing cards with @ppt/ui-kit/ListingCard once available
 // TODO: replace status badges with @ppt/ui-kit/StatusPill once available
 
 export default function AgentProfilePage() {
+  const locale = useLocale();
   const [contactOpen, setContactOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [messageSent, setMessageSent] = useState(false);
@@ -307,8 +310,7 @@ export default function AgentProfilePage() {
                           fontSize: '0.9375rem',
                         }}
                       >
-                        {listing.currency}
-                        {listing.price.toLocaleString('sk-SK')}
+                        {formatPrice(listing.price, locale)}
                         {listing.type === 'rent' ? '/mes' : ''}
                       </div>
                     </div>

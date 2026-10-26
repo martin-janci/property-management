@@ -16,9 +16,10 @@ import {
   type PriceMapPropertyType,
   usePriceMap,
 } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Footer, Header } from '@/components/ui';
+import { formatNumber, formatPrice } from '@/lib/format';
 import { geometryFor, priceToColor } from './_geometry';
 
 // TODO: replace filter strip with @ppt/ui-kit/ChipGroup once available
@@ -33,11 +34,12 @@ const PROPERTY_OPTIONS: { value: PriceMapPropertyType; label: string }[] = [
   { value: 'land', label: 'Pozemky' },
 ];
 
-const formatPrice = (v: number | null | undefined) =>
-  v == null ? '—' : `${Math.round(v).toLocaleString('sk-SK')} €`;
+const fmtPrice = (v: number | null | undefined, locale: string) =>
+  v == null ? '—' : formatPrice(Math.round(v), locale);
 
 export default function PriceMapPage() {
   const t = useTranslations('pages.priceMap');
+  const locale = useLocale();
   const [transactionType, setTransactionType] = useState<TransactionType>('sale');
   const [propertyType, setPropertyType] = useState<PriceMapPropertyType>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -75,13 +77,13 @@ export default function PriceMapPage() {
     return [
       {
         label: 'Priemerná cena / m²',
-        value: formatPrice(avgPpm2),
+        value: fmtPrice(avgPpm2, locale),
         trend: `${priced.length} lokalít`,
       },
       {
         label: 'Najdrahšia lokalita',
         value: dearest?.district_name ?? '—',
-        trend: dearest ? `${formatPrice(dearest.avg_price_per_m2)} / m²` : '',
+        trend: dearest ? `${fmtPrice(dearest.avg_price_per_m2, locale)} / m²` : '',
       },
       {
         label: 'Najväčší rast',
@@ -93,11 +95,11 @@ export default function PriceMapPage() {
       },
       {
         label: 'Aktívne inzeráty',
-        value: totalListings.toLocaleString('sk-SK'),
+        value: formatNumber(totalListings, locale),
         trend: `${districts.length} lokalít`,
       },
     ];
-  }, [districts]);
+  }, [districts, locale]);
 
   const mappable = districts.filter((d) => geometryFor(d.district_id, d.district_name));
 
@@ -249,7 +251,7 @@ export default function PriceMapPage() {
                     {/* Single template-string child avoids the SSR/CSR
                         whitespace-handling mismatch that triggered Next.js's
                         "hydration error" overlay on first paint. */}
-                    <title>{`${district.district_name}: ${formatPrice(district.avg_price_per_m2)} / m²`}</title>
+                    <title>{`${district.district_name}: ${fmtPrice(district.avg_price_per_m2, locale)} / m²`}</title>
                   </path>
                 ))}
               </svg>
@@ -335,7 +337,7 @@ export default function PriceMapPage() {
                   {[
                     {
                       label: 'Priem. cena / m²',
-                      value: formatPrice(selected.avg_price_per_m2),
+                      value: fmtPrice(selected.avg_price_per_m2, locale),
                     },
                     {
                       label: 'Trend (medzikvartálne)',
@@ -472,7 +474,7 @@ export default function PriceMapPage() {
                             flexShrink: 0,
                           }}
                         >
-                          {formatPrice(d.avg_price_per_m2)}/m²
+                          {fmtPrice(d.avg_price_per_m2, locale)}/m²
                         </span>
                       </button>
                     ))}
