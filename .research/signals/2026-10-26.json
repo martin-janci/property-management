@@ -1,13 +1,21 @@
 {
-  "generated": "2026-10-26T20:35:00Z",
+  "generated": "2026-10-26T22:36:41Z",
   "rerun_metadata": {
     "same_day_rerun": true,
-    "trigger": "buffer-low: claimable=6/72 — refill planner",
-    "fired_at": "2026-10-26T20:30:00Z",
-    "previous_run_iso": "2026-10-26T04:30:00Z",
+    "fires_today": 3,
+    "latest_trigger": "buffer-low: claimable=6/72 — refill planner",
+    "latest_fired_at": "2026-10-26T22:30:00Z",
+    "previous_rerun_iso": "2026-10-26T20:35:00Z",
+    "morning_run_iso": "2026-10-26T04:30:00Z",
     "new_phase_1_signals": 0,
-    "resolution_updates": 1,
-    "note": "Same-day rerun; morning signals preserved for the audit trail (dedup via seen_signals prevents re-scoring). Afternoon merges #3169 (docs), #3170 (.claude/skills docs), #3172 (Cargo.lock + deny.toml — in churn exclusions) produced no new scorable signals. Resolution check flipped `screen-map-drift-pr-3166-reality` to done (dispatcher already reconciled at 14:31Z). Phase 1.5 and 1.6 skipped on rerun to avoid cursor thrash."
+    "resolution_updates": 0,
+    "github_activity_since_prev": {
+      "merged_prs": 0,
+      "updated_open_prs": 0,
+      "updated_issues": 0,
+      "dev_commits_excluding_routine": 0
+    },
+    "note": "Second buffer-low rerun on identical payload (claimable=6/72 unchanged — dispatcher refill lever lives on planning branch, not here). Zero new GitHub activity in the 2h since the 20:35Z rerun; backlog.md drift from the dispatcher 14:31Z commit (3 status rows: screen-map-drift-pr-3166-reality, migration_import_upload churn, push_fanout churn — all flipped to `done` in backlog.json but still rendered `open` in staged backlog.md after the 20:35Z timestamp-only bump) reconciled by this run via full regenerate-from-JSON. Phase 1.5 + 1.6 skipped on rerun (cursor-thrash avoidance). Phase 5 no candidate — no new signals cleared the certainty bar."
   },
   "signals": [
     {
@@ -59,10 +67,11 @@
       "id": "screen-map-drift-pr-3166-reality",
       "type": "screen-map-drift",
       "source": "PR #3166",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "PR #3166 (gh-issue-3162: fix(reality-web): format agency profile price with active locale) merged 2026-10-26T02:35:35Z modified frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx and page.test.tsx but did not touch docs/screens/reality/agency-profile.md or any other docs/screens/reality/**.md.",
-        "Heuristic drift signal — screen doc may still be accurate; manual verification needed. docs/screens/reality/agency-profile.md exists on disk."
+        "Heuristic drift signal — screen doc may still be accurate; manual verification needed. docs/screens/reality/agency-profile.md exists on disk.",
+        "[re-emit on same-day rerun — score_delta zeroed (already applied to backlog on first emit)]"
       ],
       "confidence": "medium",
       "candidate_vector": "test-gap",
@@ -76,11 +85,12 @@
       "type": "code-review-finding",
       "source": "ppt-dev-review",
       "segment": "api-handlers",
-      "score_delta": 2,
+      "score_delta": 0,
       "evidence": [
         "backend/servers/api-server/src/routes/violations.rs:313-331 assign_violation(Path(violation_id), Json(AssignRequest{assigned_to})) calls repo with (violation_id, org_id, req.assigned_to) with NO check that assigned_to is a member of org_id.",
         "backend/crates/db/src/repositories/violations.rs:383-405 UPDATE scopes by (id=$1, organization_id=$2) but binds $3 assigned_to with no FK/scoping to org — users(id) is global; a Manager in org A can set assigned_to to a user in org B or any guessed uuid.",
-        "Fix: add is_user_member_of_org(assigned_to, org_id) guard in the handler (or repo) returning 400/404 on cross-org assignee — mirror the recently-landed community cross-tenant IDOR fixes."
+        "Fix: add is_user_member_of_org(assigned_to, org_id) guard in the handler (or repo) returning 400/404 on cross-org assignee — mirror the recently-landed community cross-tenant IDOR fixes.",
+        "[re-emit on same-day rerun — score_delta zeroed (already applied to backlog on first emit)]"
       ],
       "confidence": "medium",
       "candidate_vector": "bug",
@@ -95,12 +105,13 @@
       "type": "code-review-finding",
       "source": "ppt-dev-review",
       "segment": "api-handlers",
-      "score_delta": 1,
+      "score_delta": 0,
       "evidence": [
         "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs (242 LOC, this run's top-churn file) covers role-authz 403s but NOT cross-tenant 404 on resource-id paths.",
         "Sibling router community.rs has a companion community_cross_tenant_idor_tests.rs (130 LOC) establishing the IG3 pattern; no analogous violations_cross_tenant_idor_tests.rs exists.",
         "Uncovered mutation surface (violations.rs path-id handlers): assign_violation (313), add_evidence (337), delete_evidence (375), create_action (403), update_action (460), mark_action_sent (485), record_payment (505), update_appeal (599), decide_appeal (626) — each should assert cross-tenant 404 + no write.",
-        "Fix: add violations_cross_tenant_idor_tests.rs modeled on community_cross_tenant_idor_tests.rs."
+        "Fix: add violations_cross_tenant_idor_tests.rs modeled on community_cross_tenant_idor_tests.rs.",
+        "[re-emit on same-day rerun — score_delta zeroed (already applied to backlog on first emit)]"
       ],
       "confidence": "medium",
       "candidate_vector": "test-gap",
@@ -123,7 +134,7 @@
       "goal": "G2",
       "passed": true,
       "command": "jq --slurpfile prev HEAD state … state.json advanced",
-      "observed": "true (same-day rerun: last_pr_seen 3167→3182, last_issue_seen 3168→3175, last_commit_sha 5fc13e7b→b5eba9c6, last_run_iso advanced, stats.runs 105→106)",
+      "observed": "true (2nd buffer-low rerun: last_run_iso 20:35Z→22:36Z, last_commit_sha b5eba9c6→448cc276, stats.runs 106→107, stats.quiet_days 8→9)",
       "expected": "true"
     },
     {
@@ -137,7 +148,7 @@
       "goal": "G4",
       "passed": true,
       "command": "jq non-cumulative dup check",
-      "observed": "true",
+      "observed": "true (3 non-cumulative signal IDs in HEAD seen_signals re-emitted with score_delta=0; 3 cumulative churn-hotspot IDs allowed to re-emit under carve-out)",
       "expected": "true"
     },
     {
@@ -179,7 +190,7 @@
       "goal": "G10",
       "passed": true,
       "command": "diff -q backlog.md regen",
-      "observed": "exit 0",
+      "observed": "exit 0 (backlog.md regen matches staged — reconciled 3 status rows the dispatcher 14:31Z flipped in backlog.json that the 20:35Z timestamp-only bump left stale)",
       "expected": "exit 0"
     },
     {
@@ -214,7 +225,7 @@
       "goal": "G15",
       "passed": true,
       "command": "auto_fix_actions caps + idempotency",
-      "observed": "0 actions this run (no candidate)",
+      "observed": "true (auto_fix_actions=[] — no candidate met certainty bar; auto_fix_skipped_reason recorded)",
       "expected": "≤1 pr/issue/comment"
     },
     {
@@ -232,5 +243,6 @@
       "expected": "0"
     }
   ],
-  "auto_fix_actions": []
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — same-day rerun observed 0 new activity"
 }
