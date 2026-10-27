@@ -322,6 +322,20 @@ async fn assign_violation(
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
 
+    // A violation may only be assigned to a user who belongs to the manager's
+    // own organization. Without this check a manager could set `assigned_to` to
+    // any user UUID, including users outside their org.
+    let assignee_is_member = state
+        .org_member_repo
+        .is_member(org_id, req.assigned_to)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to check assignee org membership: {}", e)))?;
+    if !assignee_is_member {
+        return Err(forbidden_error(
+            "Cannot assign a violation to a user outside your organization",
+        ));
+    }
+
     state
         .violation_repo
         .assign_violation(violation_id, org_id, req.assigned_to)
