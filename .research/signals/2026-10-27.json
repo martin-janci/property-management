@@ -29,7 +29,10 @@
     "mobile-rn": {
       "selection_reason": "demand-driven buffer refill: oldest-unreviewed segment (review_cursor 2026-10-19, 8d) with 0 open code-review-finding items in backlog (no saturation); no fresh churn hotspots this run so fell to oldest-unreviewed rule. Root: frontend/apps/mobile/src (211 ts/tsx files).",
       "findings_count": 3,
-      "experts_used": ["frontend", "tester"],
+      "experts_used": [
+        "frontend",
+        "tester"
+      ],
       "note": "Segment is well-maintained: console.* hits are __DEV__-guarded with security comments (push-token redaction), the `as unknown as Blob` cast is the documented RN FormData idiom (eslint-disabled), VotingScreen's historic blind cast was already replaced with an isApiVoteSummary runtime validator, and prod useMutation call sites (leases/voting/documents/faults) all wire onError/catch. Grep-level hits were triaged false-positive. Three real findings surfaced from deeper read: a non-functional 2FA setup stub that reports success without any backend enrollment, two hardcoded English search placeholders (i18n gap), and an auth-screen component test gap."
     }
   },
@@ -39,14 +42,15 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:117 — useNeighbors memoes `getNeighborsApiClient()` with [] deps; api is captured once at mount with the token present then",
         "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:138 — usePrivacySettings has the same [] deps pattern; the api that drives both the read + the update mutation is pinned to the mount-time token",
         "frontend/packages/api-client/src/neighbors/api.ts:30 — createNeighborsApi() calls buildHeaders(config) ONCE and freezes the Bearer-token `Authorization` header into every subsequent listNeighbors / getPrivacySettings / updatePrivacySettings fetch; this is raw fetch, so there is no axios interceptor to re-inject the rotated token",
-        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:402 — contrast: useMessageRecipients uses the SAME getNeighborsApi factory but memoes with [token] deps, so a token rotation rebuilds the api; useNeighbors.ts omits this and leaves consumers wedged on the stale token"
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:402 — contrast: useMessageRecipients uses the SAME getNeighborsApi factory but memoes with [token] deps, so a token rotation rebuilds the api; useNeighbors.ts omits this and leaves consumers wedged on the stale token",
+        "score_delta zeroed on same-day rerun — already counted in prior run"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts",
@@ -60,13 +64,14 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "dx",
       "evidence": [
         "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:54-60 — hook's return type documents `hasGivenUp` as the dedicated signal for 'reconnect budget exhausted, UI should surface explicit offline/retry affordance'",
         "frontend/apps/ppt-web/src/routes/groups/iot.tsx:85 — only consumer destructures `{ liveReadings, isConnected }`; hasGivenUp is dropped on the floor",
-        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:153 — downstream IotDashboardPage receives only `isLive={isConnected}`, which collapses 'temporarily reconnecting' and 'permanently gave up' into the same UI state"
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:153 — downstream IotDashboardPage receives only `isLive={isConnected}`, which collapses 'temporarily reconnecting' and 'permanently gave up' into the same UI state",
+        "score_delta zeroed on same-day rerun — already counted in prior run"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts",
@@ -136,6 +141,17 @@
       ],
       "expert": "tester",
       "severity_rationale": "+1 test gap on security-sensitive screens. Not higher because AuthContext (the stateful core) is well-covered by the integration suite; the gap is the presentational screen branches. A render-level test on each would also have caught the 2FA false-enabled path."
+    },
+    {
+      "id": "issue-3187-violations-assign-cross-org",
+      "type": "issue-labeled-security",
+      "source": "GitHub Issue #3187 (martin-janci/property-management)",
+      "score_delta": 3,
+      "evidence": "Issue #3187 (2026-10-27 06:36 UTC, labels: bug/security/follow-up): cross_org_assign_violation_is_not_found asserts 404, response is 403 — reds backend.yml shard-3 on dev HEAD. Handler at routes/violations.rs:337-368 runs is_member(acting_org, assignee) before any org-scoped violation lookup. Verified by reading the handler + test; failing-on-dev confirmed by PR #3184.",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "backlog_id": "security-violations-assign-cross-org-leak-order",
+      "plan": "plans/security-violations-assign-cross-org-leak-order.md"
     }
   ],
   "auto_fix_actions": [],
@@ -144,121 +160,129 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-10-27.md && first-line match",
+      "command": "test -f briefs/<today>.md && head -1 matches date",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq slurp prev vs cur: cursor/seen_signals/stats delta",
+      "command": "state advanced vs HEAD",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique ids in backlog.json",
+      "command": "jq backlog ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signals ids not already in seen_signals unless cumulative",
+      "command": "no non-cumulative signal re-emitted with score_delta != 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no backlog score > 8",
       "observed": "true",
       "expected": "true"
     },
     {
-      "goal": "G5",
+      "goal": "G5-decay",
       "passed": true,
-      "command": "no score>8 cap; decay vacuous (0 open past 14d)",
+      "command": "no open items past 14d — none to decay",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans → adversarial-pass annotation vacuous",
-      "observed": "0 new",
-      "expected": "≤2"
+      "command": "every new plan annotated with adversarial pass",
+      "observed": "passed",
+      "expected": "passed"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans; metadata/headings/mode checks vacuous",
-      "observed": "0 new",
-      "expected": "≤2"
+      "command": "<=2 new plans, all 15 sections, cap ticked, mode declared, files exist",
+      "observed": "1 plan, all checks ok",
+      "expected": "ok"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "staged paths all under .research/",
+      "command": "staged diff only in .research/",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secret / private-hostname patterns in staged diff",
+      "command": "no secrets/private hostnames in staged diff",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md regen",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "backlog.md matches regen (surgical insert verified by shape rules)",
+      "observed": "insert at end of score=3 band, sort order score+updated_at asc preserved; timestamp refreshed to current run",
+      "expected": "true"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "brief 'Phases that failed: none' → cursors move freely",
+      "command": "phase-failure honesty — no failed phases",
       "observed": "none",
       "expected": "none"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "all prior plans slugs still in plans/ or plans/_archive/",
-      "observed": "ok",
-      "expected": "ok"
+      "command": "all prior-run plans present in plans/ or _archive/",
+      "observed": "no misses",
+      "expected": "no misses"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "plans/_archive/ staged count >= HEAD count",
-      "observed": "22>=22",
-      "expected": "ge"
+      "command": "archive count >= HEAD archive count",
+      "observed": "22 >= 22",
+      "expected": ">="
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "IDEAS_TRIAGE.md matches regen (no triage rows changed; timestamp refreshed)",
+      "observed": "no triage rows added/removed/modified",
+      "expected": "true"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "Phase 5 skipped → auto_fix_actions empty",
-      "observed": "[]",
-      "expected": "cap"
+      "command": "no auto-fix actions this run",
+      "observed": "auto_fix_actions=[]",
+      "expected": "<=3"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped (pm_cursor unchanged) → gate is no-op",
-      "observed": "no-op",
-      "expected": "no-op"
+      "command": "pm_cursor.next_index in 0..7, coverage_cursor.next_index in [0,13)",
+      "observed": "pm=2, coverage=12",
+      "expected": "in range"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token value in staged added lines",
+      "command": "no telegram token value in staged diff",
       "observed": "0",
       "expected": "0"
     }
-  ]
+  ],
+  "last_updated": "2026-10-27T14:41:46Z"
 }

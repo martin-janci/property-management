@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-27 01:07 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-27 14:41 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -46,6 +46,7 @@
 | 3 | bug | SECURITY: reality-server PRICE_MAP_CACHE unbounded on anonymous GET /price-map — attacker-controlled city rotates distinct keys past the 1h TTL → OOM DoS | `backend/servers/reality-server/src/routes/price_map.rs` | rotating-expert-review (dispatcher Tier-1d 2026-10-15 reality-server price-map) | 2026-10-15 | done | plans/code-review-reality-server-price-map-cache-unbounded.md |
 | 3 | bug | SECURITY: violations router gates every privileged mutation on tenant membership only (no role check) — any org member can issue fines and approve their own appeal | `backend/servers/api-server/src/routes/violations.rs (+1)` | rotating-expert-review [api-handlers] (+1) | 2026-10-17 | done | — |
 | 3 | bug | api-server /migration/import/upload: silent dead-store drops uploaded bytes (data loss on Epic 66 bulk-import) | `backend/servers/api-server/src/routes/migration.rs` | rotating-expert-review 2026-10-19 api-handlers | 2026-10-19 | done | plans/code-review-api-handlers-migration-upload-drops-file.md |
+| 3 | security | SECURITY: violations assign_violation returns 403 instead of 404 for cross-org callers — reds backend CI on dev | `backend/servers/api-server/src/routes/violations.rs (+2)` | Issue #3187 (+1) | 2026-10-27 | ready | plans/security-violations-assign-cross-org-leak-order.md |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | refactor | documents.rs churn-hot — 10,659 lines over 14d | `backend/servers/api-server/src/routes/documents.rs` | git log origin/main since 2026-05-06 (+2) | 2026-05-25 | done | — |

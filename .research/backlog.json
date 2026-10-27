@@ -13417,6 +13417,32 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "security-violations-assign-cross-org-leak-order",
+      "title": "SECURITY: violations assign_violation returns 403 instead of 404 for cross-org callers — reds backend CI on dev",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #3187",
+        "PR #3183"
+      ],
+      "evidence": [
+        "Issue #3187 (2026-10-27, labels: bug/security/follow-up): cross_org_assign_violation_is_not_found asserts 404, response is 403 — pinpoints assign_violation handler",
+        "routes/violations.rs:337-368 runs require_manager + is_member(acting_org, assignee) before any org-scoped violation lookup — short-circuits to 403 on cross-org calls",
+        "tests/suites/violations_mutation_cross_org_idor_tests.rs:250 — test sends {assigned_to: Uuid::new_v4()} so the member check fires first",
+        "backend.yml shard-3 is red on dev HEAD (confirmed by issue #3187 reproduction on PR #3184)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs",
+        "backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": "plans/security-violations-assign-cross-org-leak-order.md"
     }
   ]
 }

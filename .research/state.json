@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-27T01:07:00Z",
-  "last_run_ms": 480000,
-  "last_pr_seen": 3182,
-  "last_issue_seen": 3175,
-  "last_commit_sha": "6479a39c",
+  "last_run_iso": "2026-10-27T14:41:46Z",
+  "last_run_ms": 180000,
+  "last_pr_seen": 3186,
+  "last_issue_seen": 3187,
+  "last_commit_sha": "251fd04b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -1269,7 +1269,8 @@
     "code-review-api-handlers-assign-violation-no-member-check",
     "code-review-api-handlers-violations-no-xtenant-idor-tests",
     "code-review-ppt-web-core-neighbors-stale-token-usememo",
-    "code-review-ppt-web-core-iot-ws-hasgivenup-dropped"
+    "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
+    "issue-3187-violations-assign-cross-org"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1283,9 +1284,9 @@
     "mobile-native-kmp": "2026-10-25"
   },
   "stats": {
-    "runs": 107,
-    "vectors_created": 464,
-    "plans_created": 35,
+    "runs": 108,
+    "vectors_created": 465,
+    "plans_created": 36,
     "quiet_days": 8,
     "auto_fix_count": 0
   },
