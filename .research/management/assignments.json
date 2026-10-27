@@ -195,18 +195,18 @@
     {
       "task_id": "gh-issue-3187",
       "branch": "auto-impl/gh-issue-3187-a2d6d61f",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-27T14:30:49Z",
-      "last_updated": "2026-10-27T14:30:49Z",
-      "status_changed_at": "2026-10-27T14:30:49Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-10-27T15:14:19Z",
+      "status_changed_at": "2026-10-27T15:14:19Z",
+      "pr_number": 3188,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3188",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3188 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=assign_violation now does org-scoped existence check before assignee gate (403->404); IDOR test red->green verified; lone failing test is unrelated SSRF/DNS-rebind test env-artifact under HTTPS_PROXY, green in CI",
+      "reviewer_summary": "verdict=approve head_oid=1cb85e9dee680c9de1bfad52dac9e30dbb2ff553 note=idor-fix-correct-mirrors-siblings; scope-drift justified; CI in-progress at review (backend test), merge gate to confirm green",
+      "last_reviewed_oid": "1cb85e9dee680c9de1bfad52dac9e30dbb2ff553",
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -215,5 +215,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-10-27T14:33:11Z"
+  "generated": "2026-10-27T15:14:19Z"
 }
