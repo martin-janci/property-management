@@ -25,6 +25,13 @@ export interface IotDashboardPageProps {
   alerts: SensorAlert[];
   pendingAlertId: string | null;
   isLive?: boolean;
+  /**
+   * True once the live telemetry socket has exhausted its reconnect budget and
+   * permanently stopped retrying (`useIotWebSocket.hasGivenUp`). Surfaces an
+   * explicit "offline" banner so the chart's stale snapshot is not mistaken for
+   * a live feed.
+   */
+  isOffline?: boolean;
   onSelectSensor: (id: string) => void;
   onAcknowledgeAlert: (alertId: string) => void;
   onResolveAlert: (alertId: string) => void;
@@ -42,6 +49,7 @@ export function IotDashboardPage({
   alerts,
   pendingAlertId,
   isLive = false,
+  isOffline = false,
   onSelectSensor,
   onAcknowledgeAlert,
   onResolveAlert,
@@ -61,13 +69,42 @@ export function IotDashboardPage({
             })}
           </p>
         </div>
-        {isLive && (
-          <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-            {t('iot.live', { defaultValue: 'Live' })}
+        {isOffline ? (
+          <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+            {t('iot.offline', { defaultValue: 'Offline' })}
           </span>
+        ) : (
+          isLive && (
+            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+              {t('iot.live', { defaultValue: 'Live' })}
+            </span>
+          )
         )}
       </header>
+
+      {isOffline && (
+        <div
+          role="status"
+          className="mb-6 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+        >
+          <span aria-hidden="true" className="mt-0.5 font-semibold">
+            !
+          </span>
+          <div>
+            <p className="font-medium">
+              {t('iot.offlineBannerTitle', { defaultValue: 'Live updates disconnected' })}
+            </p>
+            <p className="mt-0.5 text-amber-700">
+              {t('iot.offlineBannerMessage', {
+                defaultValue:
+                  'The real-time telemetry connection was lost and could not be re-established. Readings shown may be out of date — reload the page to reconnect.',
+              })}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* KPI rollup (FR75) */}
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">

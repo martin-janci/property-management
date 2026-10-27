@@ -82,7 +82,7 @@ function IotDashboardPageRoute() {
     { limit: 50 }
   );
 
-  const { liveReadings, isConnected } = useIotWebSocket(
+  const { liveReadings, isConnected, hasGivenUp } = useIotWebSocket(
     selectedSensorId,
     user?.organizationId ?? null
   );
@@ -151,6 +151,7 @@ function IotDashboardPageRoute() {
       alerts={dashboard?.recent_alerts ?? []}
       pendingAlertId={pendingAlertId}
       isLive={isConnected}
+      isOffline={hasGivenUp}
       onSelectSensor={setSelectedSensorId}
       onAcknowledgeAlert={handleAcknowledgeAlert}
       onResolveAlert={handleResolveAlert}
