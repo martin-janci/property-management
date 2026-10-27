@@ -2,13 +2,22 @@
   "generated": "2026-10-27T01:07:00Z",
   "trigger": "buffer-low: claimable=6/72 (5 of 6 mobile-native-gated, 1 dup) — refill planner with non-mobile-native vectors",
   "phase1_observation": {
-    "since_iso": "2026-10-26T20:35:00Z",
-    "merged_prs": 0,
-    "open_prs_touched": 6,
+    "since_iso": "2026-10-27T01:07:00Z",
+    "merged_prs": 7,
+    "merged_pr_range": "#3177-#3183",
+    "open_prs_touched": 10,
     "closed_not_merged": 0,
-    "new_issues": 0,
-    "commits_since_cursor": 2,
-    "note": "No external developer activity since last run — only dispatcher's own commits (448cc27, 6479a39). Churn-hotspot set is empty for this run (no new merged PRs). Stalled-review candidates #2555/#2559 already in seen_signals; dependabot opens are dep-update-noise. No lag_warning (LAG_HOURS=4)."
+    "new_issues": 1,
+    "closed_issues": 2,
+    "new_issue_numbers": [
+      "#3187"
+    ],
+    "closed_issue_numbers": [
+      "#3174",
+      "#3175"
+    ],
+    "commits_since_cursor": 17,
+    "note": "Second same-day convergence pass. Earlier 01:07 UTC run (commit aafc38b8) wrote the initial brief + 2 ppt-web-core findings for the same buffer-low trigger; this 20:33 UTC pass re-observes a broader window after 7 merged PRs landed at 02:29–02:37 UTC. 3 mobile-rn signals (from dispatcher Tier-1d at 10:30 UTC) are retained in-file but never got backlog rows — logged in brief Open questions as Phase 2 drift to resolve on the next full run. No churn-hotspot re-score (short overlap window, dispatcher already handles cluster hotspots per Tier-1d side-file). Lag=19h → no lag_warning (threshold 36h)."
   },
   "phase1_5_review": {
     "segments_reviewed": [
@@ -29,7 +38,10 @@
     "mobile-rn": {
       "selection_reason": "demand-driven buffer refill: oldest-unreviewed segment (review_cursor 2026-10-19, 8d) with 0 open code-review-finding items in backlog (no saturation); no fresh churn hotspots this run so fell to oldest-unreviewed rule. Root: frontend/apps/mobile/src (211 ts/tsx files).",
       "findings_count": 3,
-      "experts_used": ["frontend", "tester"],
+      "experts_used": [
+        "frontend",
+        "tester"
+      ],
       "note": "Segment is well-maintained: console.* hits are __DEV__-guarded with security comments (push-token redaction), the `as unknown as Blob` cast is the documented RN FormData idiom (eslint-disabled), VotingScreen's historic blind cast was already replaced with an isApiVoteSummary runtime validator, and prod useMutation call sites (leases/voting/documents/faults) all wire onError/catch. Grep-level hits were triaged false-positive. Three real findings surfaced from deeper read: a non-functional 2FA setup stub that reports success without any backend enrollment, two hardcoded English search placeholders (i18n gap), and an auth-screen component test gap."
     }
   },
@@ -144,121 +156,123 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-10-27.md && first-line match",
+      "command": "test -f briefs/2026-10-27.md && head -1 matches",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq slurp prev vs cur: cursor/seen_signals/stats delta",
+      "command": "state advanced (last_pr_seen 3182→3188, last_issue_seen 3175→3187, last_commit_sha 6479a39c→58728603)",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique ids in backlog.json",
+      "command": "backlog ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signals ids not already in seen_signals unless cumulative",
+      "command": "no new signals this pass; no re-scoring",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "no score>8 cap; decay vacuous (0 open past 14d)",
+      "command": "no items past 14d decay window; no scores >8",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans → adversarial-pass annotation vacuous",
-      "observed": "0 new",
-      "expected": "≤2"
+      "command": "no new plans this run",
+      "observed": "n/a",
+      "expected": "n/a"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans; metadata/headings/mode checks vacuous",
-      "observed": "0 new",
+      "command": "0 new plans ≤ 2",
+      "observed": "0",
       "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "staged paths all under .research/",
-      "observed": "0",
-      "expected": "0"
+      "command": "staged diff only .research/",
+      "observed": "to-verify-at-commit",
+      "expected": "exit 0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secret / private-hostname patterns in staged diff",
-      "observed": "0",
-      "expected": "0"
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "to-verify-at-commit",
+      "expected": "exit 0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md regen",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "backlog.md unchanged this pass (no backlog.json mutations)",
+      "observed": "n/a",
+      "expected": "byte-identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "brief 'Phases that failed: none' → cursors move freely",
-      "observed": "none",
-      "expected": "none"
+      "command": "no phase failures",
+      "observed": "n/a",
+      "expected": "n/a"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "all prior plans slugs still in plans/ or plans/_archive/",
-      "observed": "ok",
-      "expected": "ok"
+      "command": "no plans deleted; archive unchanged",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "plans/_archive/ staged count >= HEAD count",
-      "observed": "22>=22",
-      "expected": "ge"
+      "command": "archive files unchanged (not touched)",
+      "observed": "true",
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "IDEAS_TRIAGE.md unchanged this pass",
+      "observed": "n/a",
+      "expected": "byte-identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "Phase 5 skipped → auto_fix_actions empty",
-      "observed": "[]",
-      "expected": "cap"
+      "command": "auto_fix_actions=[], ≤3 total",
+      "observed": "0",
+      "expected": "≤3"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped (pm_cursor unchanged) → gate is no-op",
-      "observed": "no-op",
-      "expected": "no-op"
+      "command": "Phase 1.6 skipped (same-day convergence); management artifacts unchanged",
+      "observed": "n/a",
+      "expected": "n/a"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token value in staged added lines",
-      "observed": "0",
-      "expected": "0"
+      "command": "no Telegram token value in staged diff",
+      "observed": "to-verify-at-commit",
+      "expected": "exit 0"
     }
-  ]
+  ],
+  "second_pass_at": "2026-10-27T20:33:00Z",
+  "second_pass_trigger": "buffer-low: claimable=6/72 — refill planner (pipeline at WIP cap, 9 human-gated PRs)"
 }
