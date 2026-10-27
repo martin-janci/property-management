@@ -1067,6 +1067,53 @@ async fn unassign_moderation_case_clears_assignee_and_reverts_status(pool: PgPoo
     assert_eq!(status, "pending", "status should revert to pending");
 }
 
+// Regression for #3174: a moderator-role caller hitting an unknown (or
+// cross-org) case id must get 404, not 500. The repo's `UPDATE ... RETURNING`
+// yields `RowNotFound` when the `id` + `organization_id` predicate matches no
+// row; previously the handler mapped *every* repo error to 500. The
+// `*_requires_moderator_role` tests above only reach the role gate before the
+// lookup, so they don't pin this.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn assign_moderation_case_unknown_id_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "assign-404").await;
+    let user_id = seed_user(&pool, "mgr-assign-404").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, Some(org_id), Some("manager"));
+
+    let unknown = Uuid::new_v4();
+    // Empty body => assign to self, so the is_member check is skipped and the
+    // request reaches the repo lookup for the unknown id.
+    let resp = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{unknown}/assign"
+        ))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(json!({}))
+        .build();
+    assert_eq!(app.execute(resp).await.status, StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn unassign_moderation_case_unknown_id_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "unassign-404").await;
+    let user_id = seed_user(&pool, "mgr-unassign-404").await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_token(user_id, Some(org_id), Some("manager"));
+
+    let unknown = Uuid::new_v4();
+    let resp = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{unknown}/unassign"
+        ))
+        .bearer(&token)
+        .tenant(org_id)
+        .build();
+    assert_eq!(app.execute(resp).await.status, StatusCode::NOT_FOUND);
+}
+
 // ===========================================================================
 // Moderation: decide appeal
 // ===========================================================================
