@@ -13217,7 +13217,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "top-3 churn 2026-10-26 (PR #3153)"
       ],
@@ -13230,7 +13230,12 @@
       ],
       "created_at": "2026-10-26",
       "updated_at": "2026-10-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-27T02:40:24Z",
+        "assignment_status": "merged",
+        "pr_number": 3178
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
@@ -13238,7 +13243,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "top-3 churn 2026-10-26 (PR #3070)"
       ],
@@ -13251,7 +13256,12 @@
       ],
       "created_at": "2026-10-26",
       "updated_at": "2026-10-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-27T02:40:24Z",
+        "assignment_status": "merged",
+        "pr_number": 3180
+      }
     },
     {
       "id": "screen-map-drift-pr-3166-reality",
@@ -13286,7 +13296,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers] 2026-10-26"
       ],
@@ -13307,7 +13317,12 @@
       "segment": "api-handlers",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-10-27T02:40:24Z",
+        "assignment_status": "merged",
+        "pr_number": 3181
+      }
     },
     {
       "id": "code-review-api-handlers-violations-no-xtenant-idor-tests",
@@ -13315,7 +13330,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers] 2026-10-26"
       ],
@@ -13337,7 +13352,12 @@
       "segment": "api-handlers",
       "score_delta": 1,
       "candidate_vector": "test-gap",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-10-27T02:40:24Z",
+        "assignment_status": "merged",
+        "pr_number": 3183
+      }
     },
     {
       "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",

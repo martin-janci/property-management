@@ -205,23 +205,6 @@
       "source": "pm-analysis 2026-10-26"
     },
     {
-      "id": "code-review-api-handlers-assign-violation-no-member-check",
-      "action": "violations.rs assign_violation: Manager can set assigned_to to a user outside the org (no org-membership check on assignee)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
       "action": "Churn hotspot: backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs — merged PR touched this file heavily this run",
       "owner_role": "pm-qa",
@@ -273,60 +256,37 @@
       }
     },
     {
-      "id": "code-review-api-handlers-violations-no-xtenant-idor-tests",
-      "action": "test-gap: no cross-tenant IDOR regression suite for violations.rs mutation handlers (role-authz suite covers 403 but not xtenant 404)",
-      "owner_role": "pm-qa",
+      "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
+      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh",
+      "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=medium vector=test-gap)",
+      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
+      "first_open_at": "2026-10-27T02:41:56Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
+      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=1 conf=medium vector=dx)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-27T02:41:56Z",
       "backlog_ref": {
         "plan": null,
         "score": 1,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "gh-issue-3174",
-      "action": "Follow-up: moderation assign/unassign return 500 (not 404) for unknown/cross-org case id (PR #3167) (Closes #3174)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-26T16:26:44Z (#3174)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T16:26:44Z",
-      "issue_ref": {
-        "number": 3174,
-        "url": null,
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
-      }
-    },
-    {
-      "id": "gh-issue-3175",
-      "action": "Follow-up: remaining hardcoded toLocaleString('sk-SK') price displays in reality-web (PR #3166) (Closes #3175)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-26T16:26:44Z (#3175)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T16:26:44Z",
-      "issue_ref": {
-        "number": 3175,
-        "url": null,
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
+        "vector": "dx"
       }
     }
   ],
