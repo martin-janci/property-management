@@ -556,10 +556,7 @@ async fn create_item_cross_tenant_403(pool: PgPool) {
 
     let resp = ctx
         .post(
-            &format!(
-                "/api/v1/community/buildings/{}/marketplace",
-                ctx.building_b
-            ),
+            &format!("/api/v1/community/buildings/{}/marketplace", ctx.building_b),
             json!({
                 "title": "cross-tenant item",
                 "category": "furniture",
