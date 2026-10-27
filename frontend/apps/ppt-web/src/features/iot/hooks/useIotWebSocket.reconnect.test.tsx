@@ -159,4 +159,59 @@ describe('useIotWebSocket — reconnect policy', () => {
     }
     expect(FakeWebSocket.constructed).toBe(afterOpen + DEFAULT_MAX_RECONNECT_ATTEMPTS);
   });
+
+  it('exposes hasGivenUp once the reconnect budget is exhausted', () => {
+    const { result } = renderHook(() => useIotWebSocket('sensor-1', 'org-1'));
+
+    // The give-up is the UI-facing "offline" contract: the hook returns
+    // `hasGivenUp` so a view can stop assuming a silent-but-live socket.
+    // Counting constructed sockets (the other tests) can't prove the hook
+    // actually told the UI it stopped — a regression that bounds reconnects
+    // but forgets `setHasGivenUp(true)` would pass those and fail here.
+    expect(result.current.hasGivenUp).toBe(false);
+
+    for (let i = 0; i < DEFAULT_MAX_RECONNECT_ATTEMPTS + 2; i++) {
+      driveOneOutageCycle();
+    }
+
+    expect(result.current.hasGivenUp).toBe(true);
+  });
+
+  it('tracks isConnected across a successful open and a subsequent unclean drop', () => {
+    const { result } = renderHook(() => useIotWebSocket('sensor-1', 'org-1'));
+
+    // Constructed but not yet acknowledged by the server — still offline.
+    expect(result.current.isConnected).toBe(false);
+
+    act(() => {
+      FakeWebSocket.lastInstance?.simulateOpen();
+    });
+    expect(result.current.isConnected).toBe(true);
+
+    // An unclean drop must flip the flag back to false (before it schedules
+    // the backoff reconnect) so the chart can't keep rendering as "live".
+    act(() => {
+      FakeWebSocket.lastInstance?.simulateUncleanClose();
+    });
+    expect(result.current.isConnected).toBe(false);
+  });
+
+  it('cancels a pending reconnect when the hook unmounts (no closed-tab storm)', () => {
+    const { unmount } = renderHook(() => useIotWebSocket('sensor-1', 'org-1'));
+
+    // An unclean close schedules a backoff reconnect timer...
+    act(() => {
+      FakeWebSocket.lastInstance?.simulateUncleanClose();
+    });
+    const beforeUnmount = FakeWebSocket.constructed;
+
+    // ...but unmounting (tab closed / route left) must cancel it so the timer
+    // never reopens a socket. The pre-fix reconnect storm came precisely from
+    // reconnect timers that outlived the component that scheduled them.
+    unmount();
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(FakeWebSocket.constructed).toBe(beforeUnmount);
+  });
 });
