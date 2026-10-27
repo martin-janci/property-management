@@ -14,10 +14,11 @@
  * All user-facing strings come from `pages.sell.*` in `messages/<locale>.json`.
  */
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { Link } from '@/i18n/routing';
+import { formatPrice } from '@/lib/format';
 import { createListing, type ListingDraft, RealtorApiError } from '@/lib/realtor-api';
 import { INITIAL_FORM_DATA, PROPERTY_TYPES, SELL_STEPS, type SellFormData } from './_mock';
 
@@ -143,6 +144,7 @@ function validateStep(step: number, form: SellFormData, tKey: (k: string) => str
 
 export default function SellPage() {
   const t = useTranslations('pages.sell');
+  const locale = useLocale();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<SellFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<StepErrors>({});
@@ -650,7 +652,7 @@ export default function SellPage() {
                   </div>
                   <div>
                     <strong>{t('summary.price')}:</strong>{' '}
-                    {form.price ? `${Number(form.price).toLocaleString('sk-SK')} €` : '–'}{' '}
+                    {form.price ? formatPrice(Number(form.price), locale) : '–'}{' '}
                     {form.priceNegotiable ? t('summary.negotiable') : ''}
                   </div>
                   <div>

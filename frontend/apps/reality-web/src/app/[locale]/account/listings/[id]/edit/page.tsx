@@ -9,9 +9,11 @@
  */
 
 import { useParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { formatPrice } from '@/lib/format';
 import { getMyListing, type ListingDraft, RealtorApiError, updateListing } from '@/lib/realtor-api';
 import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPE_OPTIONS } from './_mock';
 
@@ -106,6 +108,7 @@ const EMPTY_FORM: ListingEditFormData = {
 };
 
 function EditWizardContent() {
+  const locale = useLocale();
   const params = useParams<{ id: string }>();
   const listingId = params?.id ?? '';
 
@@ -737,7 +740,7 @@ function EditWizardContent() {
                 </div>
                 <div>
                   <strong>Cena:</strong>{' '}
-                  {typeof form.price === 'number' ? form.price.toLocaleString('sk-SK') : '–'} €{' '}
+                  {typeof form.price === 'number' ? formatPrice(form.price, locale) : '–'}{' '}
                   {form.priceNegotiable ? '(dohodou)' : ''}
                 </div>
                 <div>
