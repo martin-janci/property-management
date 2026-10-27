@@ -13417,6 +13417,97 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-twofactor-stub-false-enabled",
+      "title": "mobile-rn TwoFactorScreen fakes enrollment: any 6-digit code flips step to 'enabled' with no backend call — false security",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-10-27"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:40 — handleVerify() only runs client-side regex /^\\d{6}$/ on the code, then setStep('enabled'); NO backend enrollment/TOTP-verification call anywhere in the component",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:99 — step==='enabled' renders 'Two-factor authentication is enabled.' purely from that local regex check, so ANY 6-digit number tells the user 2FA is active",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:76 — verify step tells the user to 'Scan the QR code in your authenticator app', but no QR / otpauth secret is ever rendered or fetched",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:4 — component docstring itself admits 'The backend endpoints for enrollment aren't exposed through our mobile auth layer yet, so this screen wires up local state'",
+        "Backend endpoints exist: POST /api/v1/auth/me/2fa/setup, /enable, /disable (AuthTwoFactorSetupResponse / AuthApiEnable2FaData are in @ppt/api-client); the mobile screen just does not call them",
+        "upgraded medium→high this run (2026-10-27): file read in-session confirmed every evidence line"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": "plans/code-review-mobile-rn-twofactor-stub-false-enabled.md",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 3,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-search-placeholder-i18n",
+      "title": "mobile-rn MessagesScreen + AnnouncementsScreen search placeholders are hardcoded English — breaks sk/cs/de locales",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-10-27"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:125 — placeholder=\"Search messages…\" is a hardcoded English literal, not wrapped in t(); app ships sk/cs/de/en so string will never localize",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 — same hardcoded-English i18n gap (placeholder=\"Search announcements...\")",
+        "contrast: MeterReadingScreen.tsx:234 and auth/LoginScreen.tsx:93 already use t('meters.readingPlaceholder') / t('auth.emailPlaceholder'); these two are regressions against the established pattern"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-auth-screens-untested",
+      "title": "mobile-rn auth screens (Login/Register/ForgotPassword/TwoFactor) ship with zero component-level tests — stub defect slipped through",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-10-27"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/auth/{LoginScreen,RegisterScreen,ForgotPasswordScreen,TwoFactorScreen,AuthFlow}.tsx — no sibling *.test.tsx; only auth coverage is frontend/apps/mobile/src/test/integration/auth.integration.test.tsx",
+        "frontend/apps/mobile/src/test/integration/auth.integration.test.tsx:127 — that suite exercises AuthContext logic but renders none of the screen components, so the screens' own branches (validation, error display, step transitions) are untested",
+        "concrete fallout: TwoFactorScreen idle→verify→enabled state machine and its validation path have zero test coverage, which is how code-review-mobile-rn-twofactor-stub-false-enabled shipped unnoticed"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/auth/LoginScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/RegisterScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/ForgotPasswordScreen.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "expert": "tester"
     }
   ]
 }

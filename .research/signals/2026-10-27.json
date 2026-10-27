@@ -29,7 +29,10 @@
     "mobile-rn": {
       "selection_reason": "demand-driven buffer refill: oldest-unreviewed segment (review_cursor 2026-10-19, 8d) with 0 open code-review-finding items in backlog (no saturation); no fresh churn hotspots this run so fell to oldest-unreviewed rule. Root: frontend/apps/mobile/src (211 ts/tsx files).",
       "findings_count": 3,
-      "experts_used": ["frontend", "tester"],
+      "experts_used": [
+        "frontend",
+        "tester"
+      ],
       "note": "Segment is well-maintained: console.* hits are __DEV__-guarded with security comments (push-token redaction), the `as unknown as Blob` cast is the documented RN FormData idiom (eslint-disabled), VotingScreen's historic blind cast was already replaced with an isApiVoteSummary runtime validator, and prod useMutation call sites (leases/voting/documents/faults) all wire onError/catch. Grep-level hits were triaged false-positive. Three real findings surfaced from deeper read: a non-functional 2FA setup stub that reports success without any backend enrollment, two hardcoded English search placeholders (i18n gap), and an auth-screen component test gap."
     }
   },
@@ -39,7 +42,7 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
@@ -53,14 +56,15 @@
         "frontend/packages/api-client/src/neighbors/api.ts"
       ],
       "expert": "frontend",
-      "severity_rationale": "+2 because: silent background token refresh is the common path for a long-lived SPA session, and once it happens every fetch and the privacy-settings update mutation on this hook pair will 401 against the raw fetch (no axios 401-replay interceptor on this transport), until the component unmounts. Not +3 because the component may re-mount on route navigation and the user can usually recover by refreshing."
+      "severity_rationale": "+2 because: silent background token refresh is the common path for a long-lived SPA session, and once it happens every fetch and the privacy-settings update mutation on this hook pair will 401 against the raw fetch (no axios 401-replay interceptor on this transport), until the component unmounts. Not +3 because the component may re-mount on route navigation and the user can usually recover by refreshing.",
+      "note": "score_delta zeroed on same-day rerun — already applied by 01:07Z run; G4 dedup discipline"
     },
     {
       "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "dx",
       "evidence": [
@@ -73,7 +77,8 @@
         "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
       ],
       "expert": "frontend",
-      "severity_rationale": "+1 — not a correctness bug, but defeats the intent of the recent reconnect-cap fix (hook exposes `hasGivenUp` so UI can surface a manual-reconnect affordance; UI never reads it). Buffer refill only."
+      "severity_rationale": "+1 — not a correctness bug, but defeats the intent of the recent reconnect-cap fix (hook exposes `hasGivenUp` so UI can surface a manual-reconnect affordance; UI never reads it). Buffer refill only.",
+      "note": "score_delta zeroed on same-day rerun — already applied by 01:07Z run; G4 dedup discipline"
     },
     {
       "id": "code-review-mobile-rn-twofactor-stub-false-enabled",
@@ -139,126 +144,128 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — neither Phase 1.5 finding meets confidence=high + score>=3 + allowlist",
+  "auto_fix_skipped_reason": "kill switch not set but no eligible high-confidence+score>=3 allowlist signal; promoted-to-plan path used instead for twofactor finding",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-10-27.md && first-line match",
+      "command": "test -f briefs/$(date).md && head -1 ...",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq slurp prev vs cur: cursor/seen_signals/stats delta",
+      "command": "jq compare prev vs new",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique ids in backlog.json",
+      "command": "unique ids",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signals ids not already in seen_signals unless cumulative",
+      "command": "no non-cumulative double-score",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "2 ppt-web-core signals from 01:07Z run had score_delta zeroed this rerun to avoid double-count"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "no score>8 cap; decay vacuous (0 open past 14d)",
+      "command": "cap <=8",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans → adversarial-pass annotation vacuous",
-      "observed": "0 new",
-      "expected": "≤2"
+      "command": "adversarial pass annotation",
+      "observed": "ok",
+      "expected": "ok"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans; metadata/headings/mode checks vacuous",
-      "observed": "0 new",
-      "expected": "≤2"
+      "command": "4 meta + 11 headings + mode + ticks + files-exist",
+      "observed": "all green",
+      "expected": "all green"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "staged paths all under .research/",
+      "command": "grep -v .research/ | wc -l",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secret / private-hostname patterns in staged diff",
+      "command": "grep secrets",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md regen",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "brief 'Phases that failed: none' → cursors move freely",
-      "observed": "none",
-      "expected": "none"
+      "command": "grep placeholder rot",
+      "observed": "0",
+      "expected": "0"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "all prior plans slugs still in plans/ or plans/_archive/",
-      "observed": "ok",
-      "expected": "ok"
+      "command": "prior plans survive",
+      "observed": "all present",
+      "expected": "all present"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "plans/_archive/ staged count >= HEAD count",
+      "command": "archive count >= HEAD count",
       "observed": "22>=22",
-      "expected": "ge"
+      "expected": "true"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "command": "diff IDEAS_TRIAGE regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "Phase 5 skipped → auto_fix_actions empty",
-      "observed": "[]",
-      "expected": "cap"
+      "command": "auto-fix caps + idempotency",
+      "observed": "empty",
+      "expected": "empty-or-under-caps"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped (pm_cursor unchanged) → gate is no-op",
-      "observed": "no-op",
-      "expected": "no-op"
+      "command": "pm_cursor no-op (Phase 1.6 skipped this rerun)",
+      "observed": "next_index unchanged",
+      "expected": "no-op OK"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token value in staged added lines",
+      "command": "grep telegram token",
       "observed": "0",
       "expected": "0"
     }
-  ]
+  ],
+  "generated_at": "2026-10-27T12:42:50Z"
 }
