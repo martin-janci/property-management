@@ -36,6 +36,30 @@ fn forbidden_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     (StatusCode::FORBIDDEN, Json(ErrorResponse::forbidden(msg)))
 }
 
+/// Map a repository error from an org-scoped mutation to an HTTP error.
+///
+/// Every mutation here keys its `UPDATE/DELETE ... WHERE id = $1 AND
+/// organization_id = $2` (or an equivalent ownership guard) on the caller's
+/// `org_id`, so a target belonging to another tenant — or one that genuinely
+/// does not exist — affects no rows, which sqlx surfaces as
+/// [`sqlx::Error::RowNotFound`]. That MUST become a `404`: a foreign-org id has
+/// to be indistinguishable from a missing one (so it cannot be probed) and the
+/// mutation must never leak as a `500`. Any other error is a real internal
+/// failure. (Cross-tenant IDOR finding
+/// `code-review-api-handlers-violations-no-xtenant-idor-tests`; mirrors the
+/// `RowNotFound => not_found` mapping already used by `add_evidence` /
+/// `add_comment`.)
+fn map_mutation_err(
+    not_found_msg: &str,
+    internal_ctx: &str,
+    e: sqlx::Error,
+) -> (StatusCode, Json<ErrorResponse>) {
+    match e {
+        sqlx::Error::RowNotFound => not_found_error(not_found_msg),
+        other => internal_error(&format!("{internal_ctx}: {other}")),
+    }
+}
+
 /// Manager-level authorization gate for privileged violation mutations.
 ///
 /// Issuing a violation, issuing a fine / enforcement action, recording a fine
@@ -200,7 +224,7 @@ async fn update_rule(
         .update_rule(rule_id, org_id, req)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update rule: {}", e)))
+        .map_err(|e| map_mutation_err("Rule not found", "Failed to update rule", e))
 }
 
 async fn delete_rule(
@@ -302,7 +326,7 @@ async fn update_violation(
         .update_violation(violation_id, org_id, req)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update violation: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to update violation", e))
 }
 
 #[derive(Debug, Deserialize)]
@@ -327,7 +351,7 @@ async fn assign_violation(
         .assign_violation(violation_id, org_id, req.assigned_to)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to assign violation: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to assign violation", e))
 }
 
 // =============================================================================
@@ -417,7 +441,7 @@ async fn create_action(
         .create_enforcement_action(violation_id, org_id, req, user.user_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to create action: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to create action", e))
 }
 
 async fn get_action(
@@ -474,7 +498,7 @@ async fn update_action(
         .update_enforcement_action(action_id, org_id, req)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update action: {}", e)))
+        .map_err(|e| map_mutation_err("Action not found", "Failed to update action", e))
 }
 
 #[derive(Debug, Deserialize)]
@@ -499,7 +523,7 @@ async fn mark_action_sent(
         .mark_action_sent(action_id, org_id, &req.method)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to mark action sent: {}", e)))
+        .map_err(|e| map_mutation_err("Action not found", "Failed to mark action sent", e))
 }
 
 async fn record_payment(
@@ -519,7 +543,7 @@ async fn record_payment(
         .record_payment(action_id, org_id, req, user.user_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to record payment: {}", e)))
+        .map_err(|e| map_mutation_err("Action not found", "Failed to record payment", e))
 }
 
 async fn list_payments(
@@ -558,7 +582,7 @@ async fn create_appeal(
         .create_appeal(violation_id, org_id, req, user.user_id)
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to create appeal: {}", e)))
+        .map_err(|e| map_mutation_err("Violation not found", "Failed to create appeal", e))
 }
 
 async fn get_appeal(
@@ -613,7 +637,7 @@ async fn update_appeal(
         .update_appeal(appeal_id, org_id, req, Some(user.user_id))
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to update appeal: {}", e)))
+        .map_err(|e| map_mutation_err("Appeal not found", "Failed to update appeal", e))
 }
 
 #[derive(Debug, Deserialize)]
@@ -647,7 +671,7 @@ async fn decide_appeal(
         )
         .await
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to decide appeal: {}", e)))
+        .map_err(|e| map_mutation_err("Appeal not found", "Failed to decide appeal", e))
 }
 
 // =============================================================================
