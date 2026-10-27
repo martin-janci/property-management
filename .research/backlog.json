@@ -13338,6 +13338,65 @@
       "score_delta": 1,
       "candidate_vector": "test-gap",
       "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
+      "title": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-core] 2026-10-27"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:117 — useNeighbors memoes `getNeighborsApiClient()` with [] deps; api is captured once at mount with the token present then",
+        "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:138 — usePrivacySettings has the same [] deps pattern; the api that drives both the read + the update mutation is pinned to the mount-time token",
+        "frontend/packages/api-client/src/neighbors/api.ts:30 — createNeighborsApi() calls buildHeaders(config) ONCE and freezes the Bearer-token `Authorization` header into every subsequent listNeighbors / getPrivacySettings / updatePrivacySettings fetch; this is raw fetch, so there is no axios interceptor to re-inject the rotated token",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:402 — contrast: useMessageRecipients uses the SAME getNeighborsApi factory but memoes with [token] deps, so a token rotation rebuilds the api; useNeighbors.ts omits this and leaves consumers wedged on the stale token"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts",
+        "frontend/packages/api-client/src/neighbors/api.ts"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
+      "title": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-core] 2026-10-27"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:54-60 — hook's return type documents `hasGivenUp` as the dedicated signal for 'reconnect budget exhausted, UI should surface explicit offline/retry affordance'",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:85 — only consumer destructures `{ liveReadings, isConnected }`; hasGivenUp is dropped on the floor",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:153 — downstream IotDashboardPage receives only `isLive={isConnected}`, which collapses 'temporarily reconnecting' and 'permanently gave up' into the same UI state"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "expert": "frontend"
     }
   ]
 }
