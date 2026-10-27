@@ -243,6 +243,27 @@
         "score": 1,
         "vector": "dx"
       }
+    },
+    {
+      "id": "gh-issue-3187",
+      "action": "Failing test on dev blocks backend CI: cross_org_assign_violation_is_not_found (assign returns 403, expects 404) (Closes #3187)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-27T08:26:25Z (#3187)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-27T08:26:25Z",
+      "issue_ref": {
+        "number": 3187,
+        "url": "https://github.com/martin-janci/property-management/issues/3187",
+        "labels": [
+          "bug",
+          "security",
+          "follow-up"
+        ]
+      }
     }
   ],
   "generated": "2026-10-26T04:30:00Z"

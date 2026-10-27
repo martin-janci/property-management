@@ -1,9 +1,33 @@
 {
-  "generated": "2026-10-26T14:34:54Z",
+  "generated": "2026-10-27T08:30:43Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-27T08:30:43Z",
+      "prs_scanned": 7,
+      "clean": [
+        3183,
+        3182,
+        3181,
+        3180,
+        3179,
+        3178,
+        3177
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Tier 1d demand-driven backlog generator run (claim buffer starved: claimable=7 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-13), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 7 net-new in-window merges lacking post-merge-reviewed/no-review-needed: #3183/#3180/#3178/#3179/#3182/#3181 (all merged 2026-10-27 ~02:29-02:36Z) + #3177 (2026-10-27 02:29Z). All other in-window merges already carried post-merge-reviewed from prior runs (the 10-26 run and earlier) and were skipped; dependabot #3133/#3089/#3091 are closed-unmerged (null merged_at), skipped. ALL 7 CLEAN, 0 follow-ups opened. These 7 are themselves tightly-scoped research-routine products and each is well-tested: #3183 (rust-backend) adds a 15-case cross-tenant mutation IDOR regression suite on routes/violations.rs + a real 404 fix \u2014 create_enforcement_action now gates the INSERT on the parent violation's organization_id via INSERT...SELECT...WHERE and fetch_optional->RowNotFound, and a shared map_mutation_err maps RowNotFound->404 across update/assign/create-action/mark-sent/record-payment/appeal handlers (mirrors add_evidence/add_comment); #3182 (rust-backend) maps moderation assign/unassign RowNotFound->404 (was blanket 500) with 2 unknown-id 404 tests \u2014 this directly resolves the prior-run finding #3174; #3181 (rust-backend) enforces assignee org-membership in assign_violation via org_member_repo.is_member (403 for outsiders) with negative+positive controls and a seed_membership fix to the happy-path suite; #3180 (rust-backend, test-only) adds create_group/create_event/create_item building-scoped cross-tenant 403 regressions to community_cross_tenant_idor_tests; #3179 (frontend) threads useLocale()->@/lib/format.formatPrice/formatNumber through the remaining hardcoded toLocaleString('sk-SK') price displays on reality-web realtor/[id]+price-map+sell+account/listings/[id]/edit with a de-locale regression test \u2014 the follow-up slice to #3166 resolving issue #3175; #3177 (pm, artifact-only) reconciles _bmad-output sprint-status.yaml epic rollups (epic-6/7a/10b/80) to the coverage.json source-of-truth. Reviewer notes considered but not filed: (a) #3179 drops the per-listing listing.currency field in favor of formatPrice's hardcoded currency:'EUR' (format.ts:55), but this is consistent with the portal-wide EUR-default already established by #3166/#3140 on mock-data pages \u2014 not a regression introduced here; (b) #3181's is_member-before-assign ordering lets an in-org manager distinguish member vs non-member assignee UUIDs within their OWN org (403 vs proceed) \u2014 intra-tenant, negligible. No actionable findings. All 7 PRs labeled post-merge-reviewed via issue_write update (none had prior labels, so label-set writes clobbered nothing). No breadcrumb comments (no issues opened). No Task fan-out tool available to this subagent, so all 7 diffs reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives.",
+      "focus_prs": [
+        3183,
+        3182,
+        3181,
+        3180,
+        3179,
+        3178,
+        3177
+      ]
+    },
     {
       "run_at": "2026-10-26T14:34:54Z",
       "prs_scanned": 7,
@@ -678,23 +702,6 @@
       "skipped_already_reviewed": [],
       "note": "Dispatcher Phase 2.5 post-merge review (Tier-1d demand-driven, buffer-starvation trigger: claimable=25 < floor=36). Window=14d (merged>=2026-09-20), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL HTTP-403, direct git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did not touch assignments.json/action-list.json/archives; review-only). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-20 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new. Cross-checked list_pull_requests(closed, base=dev, sort=updated desc, perPage=40); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false even for merged PRs). Every in-window merge already carries post-merge-reviewed from prior runs: #2744,#3005 @10-03; #3015,#3014,#3013 @10-02; #3010,#3011,#3009 @10-01; #3001,#3002,#3004 @09-30; #2983,#2989,#2994,#2968,#2984,#2985,#2986,#2988,#2970,#2971,#2990,#2991,#2993,#2995,#2996 @09-27; #2980,#2979 @09-26. Last run's cursor PRs (#3015,#3005,#2744) confirmed still labeled. Top-of-list dependabot PRs (#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939,#2958,#2591,#2933) are closed-unmerged (no merged_at), not merges into dev. #463 @2026-05-24 predates the window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass (hard rule: never re-review a post-merge-reviewed PR).",
       "focus_prs": []
-    },
-    {
-      "run_at": "2026-10-03T22:28:52Z",
-      "prs_scanned": 3,
-      "clean": [
-        3015,
-        3005,
-        2744
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-19), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL 403, direct git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; review-only). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-19 -label:post-merge-reviewed -label:no-review-needed' => 3 net-new (#3015,#3005,#2744); cross-checked list_pull_requests(closed,base=dev,sort=updated desc,perPage=50), merged detected by non-null merged_at. All 3 reviewed inline (<=5, no subagent fan-out). #3015 (reality-web, merged 10-02) CLEAN: FeaturedListings favorite-toggle now surfaces toggleFavorite.isError via role=alert/aria-live=assertive, mirroring the established favorites/page.tsx .action-error pattern; reuses error.description i18n, no optimistic state to revert; 2 new IG3 tests (fail-on-dev). #3005 (api-server, merged 10-03) CLEAN: pure behaviour-preserving split of 2799-line routes/integrations/webhook.rs into 6 per-receiver submodules + 77-line skeleton; verified skeleton on dev \u2014 all 6 mods declared, glob pub use <m>::* re-exports (would hard-error on name collision), router() byte-identical with 4 live receiver routes (booking/push, portal, airbnb, payment) wired via re-exports, subscriptions/esignature intentionally unmounted (PAP-122, documented); 40 receiver tests pass under offline swagger gate; canonical CI gate blocked by #2966 egress \u2014 already flagged via needs-human-review. #2744 (dispatcher-infra .research/ scripts, merged 10-03) CLEAN: restores #1162 archive-push routing (mcp-push-size-guard classifies oversize append-only archives -> exit 4 route-via-git vs exit 3 fail-closed for active-state #1014 class) + adds retry-remint already-landed intrinsic-row guard (#2460/#2743 cross-id ghost); well-tested (T9 + size-guard cases d/e); residual git-push-reachability gap in MCP-only runner already tracked as follow-up in PR body (#2743 option 3). No follow-up issues opened. All 3 PRs labeled post-merge-reviewed (existing needs-human-review preserved on #3005/#2744); no breadcrumb comments (no issues). Note considered-but-not-filed: retry-remint already-landed regex is unanchored free-text match (low-prob false-exclusion of a genuinely-failed task mentioning 'empty diff'/'already fixed' incidentally) \u2014 low severity, author consciously scoped + added benign-summary test; not worth issue noise.",
-      "focus_prs": [
-        3015,
-        3005,
-        2744
-      ]
     }
   ]
 }
