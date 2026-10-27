@@ -41,6 +41,8 @@ mod vendor_cross_org_idor_tests;
 mod vendor_portal_stub_removal_tests;
 #[path = "suites/violations_cross_org_idor_tests.rs"]
 mod violations_cross_org_idor_tests;
+#[path = "suites/violations_mutation_cross_org_idor_tests.rs"]
+mod violations_mutation_cross_org_idor_tests;
 #[path = "suites/violations_happy_path_tests.rs"]
 mod violations_happy_path_tests;
 #[path = "suites/violations_role_authz_tests.rs"]
