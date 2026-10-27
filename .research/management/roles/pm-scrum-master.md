@@ -1,47 +1,69 @@
-# pm-scrum-master — 2026-10-19
+# pm-scrum-master — 2026-10-27
 
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+**Summary.** Review-throttled day: 9 approved PRs sit in `assignments.json status=review verdict=approve` awaiting human merge (dispatcher payload: `claimable=6/72`). One narrow PR merged (#3183 — cross-tenant IDOR regression suite + 404 fix for violation mutations). pm-frontend rotation surfaces no new frontend-side blockers beyond the same reviewer-merge jam that is choking everything.
 
-## Summary
+## Shipped since last run
 
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
-
-## Shipped since last run (2 PRs)
-
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
+- **#3183** — code-review-api-handlers-violations-no-xtenant-idor-tests: cross-tenant IDOR regression suite + 404 fix for violation mutations. Does not map to a coverage story (archived code-review task_id).
 
 ## Sprint progress
 
-- **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
+Sprint: **Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth** · epics_done = 3/5 at sprint level · 49/49 stories done at coverage level.
 
-## Next actions (top 3)
+## Next actions (top 5)
 
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
+1. **[high · pm-tech-lead]** Clear the 9-PR approved-review jam (merge #3024, #3075, #3108, #3119, #3171, #3184, #3185, #3186, #3188 after a last-minute re-approval sanity check). DoD: all 9 PRs merged or triaged to needs-changes with a one-line reviewer note.
+2. **[high · pm-backend]** Sweep violations.rs for role-gate / identity-check gaps — Phase 1.5 surfaced 3 fresh findings this run (add_evidence role-gate asymmetry at :375, list_violations/list_appeals bulk leak at :295/:620, create_appeal missing violator-identity check at :584-600). DoD: one-shot audit of all violations.rs handlers; sweep plan proposed before per-site patching.
+3. **[medium · pm-tech-lead]** Decide the auto-merge policy for Claude-Approvals PRs after a 24-48h cool-down. DoD: decision logged in `decisions.md`; auto-merge policy enforced or explicitly deferred.
+4. **[medium · pm-backend]** Diagnose + resolve the merge-pipeline deadlock (#3131). DoD: traced repro or an upgraded sqlx advisory-lock usage note.
+5. **[low · pm-backend]** Un-quarantine the dispute KPIs test + add window_start<=window_end validation (carried item from 2026-07-30). DoD: test suite passes on dev again.
 
 ## Risks
 
-| Risk | P | I | Mitigation |
-|---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
-
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
+1. **[high prob × high impact · pm-tech-lead]** Review-throughput jam — 9 PRs approved by reviewer bot, blocked on human merge for >24h. Dispatcher cannot drain WIP; buffer stays effectively `claimable=6/72` regardless of refill. _Mitigation:_ define an auto-merge policy for green + Claude-Approved rows after a cool-down, OR carve a daily human-merge window with the operator.
+2. **[medium prob × high impact · pm-backend]** violations.rs continues to leak authz oversights — 3 new findings this run after #3164/#3171 just addressed one. Whole route needs a role-gate audit before further per-site patching. _Mitigation:_ one-shot sweep for the require_manager/role-gate + identity-check pattern.
 
 ## Blockers
 
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
+- 9 PRs stuck in approved-review state awaiting human merge — reviewer bot approves, no human merge window in >24h. Owner: **pm-tech-lead**.
+- **#2652** — mobile-native/KMP cloud builds blocked (carried). Owner: pm-devops.
+- **#2951** — mobile RN jest-expo version rot (carried). Owner: pm-devops.
+- **#3131** — merge-pipeline deadlock (carried, likely sqlx advisory-lock contention). Owner: pm-backend.
 
 ## Open questions
 
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
+_None this run._
 
 ## Decisions needed
 
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- **Auto-merge policy for Claude-Approvals PRs** — should the dispatcher auto-merge after a 24-48h cool-down, or does the human-merge step stay a hard gate? Owner: pm-tech-lead.
+
+## Return JSON (as consumed by the orchestrator)
+
+```json
+{
+  "role": "pm-scrum-master",
+  "summary": "Review-throttled day: 9 approved PRs sit in review awaiting human merge (dispatcher payload: claimable=6/72). One narrow PR merged (#3183 — xtenant-IDOR regression suite + 404 fix). pm-frontend rotation surfaces no new frontend-side blockers.",
+  "shipped_since_last_run": ["#3183 code-review-api-handlers-violations-no-xtenant-idor-tests"],
+  "sprint_progress": {"sprint": "Epic 6, 7A, 8A & 10A", "epics_done": 3, "epics_total": 5},
+  "next_actions": [
+    {"action": "Clear the 9-PR approved-review jam", "priority": "high", "dependency": "pm-tech-lead", "definition_of_done": "all 9 PRs merged or triaged to needs-changes"},
+    {"action": "Sweep violations.rs for role-gate / identity-check gaps", "priority": "high", "dependency": "none", "definition_of_done": "one-shot audit + sweep plan"},
+    {"action": "Decide auto-merge policy for Claude-Approvals PRs after cool-down", "priority": "medium", "dependency": "none", "definition_of_done": "decision logged"},
+    {"action": "Diagnose #3131 merge-pipeline deadlock", "priority": "medium", "dependency": "none", "definition_of_done": "traced repro"},
+    {"action": "Un-quarantine dispute KPIs test + window_start<=window_end validation", "priority": "low", "dependency": "none", "definition_of_done": "test suite passes on dev"}
+  ],
+  "risks": [
+    {"risk": "Review-throughput jam", "probability": "high", "impact": "high", "mitigation": "auto-merge after cool-down OR daily human-merge window"},
+    {"risk": "violations.rs authz oversights accumulating", "probability": "medium", "impact": "high", "mitigation": "one-shot sweep before per-site fixes"}
+  ],
+  "open_questions": [],
+  "decisions_needed": ["Should the dispatcher auto-merge Claude-Approvals PRs after a 24-48h cool-down? — owner: pm-tech-lead"],
+  "blockers": [
+    {"item": "9 PRs stuck in approved-review awaiting human merge", "reason": "No human merge window has drained them in >24h", "owner_role": "pm-tech-lead"},
+    {"item": "#2652 KMP cloud builds blocked", "reason": "Carried", "owner_role": "pm-devops"},
+    {"item": "#2951 RN jest-expo version rot", "reason": "Carried", "owner_role": "pm-devops"},
+    {"item": "#3131 merge-pipeline deadlock", "reason": "Carried — likely sqlx advisory-lock contention", "owner_role": "pm-backend"}
+  ]
+}
+```

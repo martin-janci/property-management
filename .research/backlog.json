@@ -13417,6 +13417,104 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "stalled-review-pr-3119",
+      "title": "Stalled review: PR #3119 — add i18n defaultValue fallback to NewsScreen (idle 9d, no reviewDecision)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3119"
+      ],
+      "evidence": [
+        "PR #3119 'gh-issue-3116: add i18n defaultValue fallback to NewsScreen category badge' — open 9 days, no reviewDecision, author martin-janci, non-draft, last update 2026-10-19T12:46:44Z. Part of the 9-PR approved-review jam Phase 1.6 Scrum Master flagged as today's primary blocker."
+      ],
+      "files": [],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 58 lines across 2 commits since last run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit log since 6479a39c"
+      ],
+      "evidence": [
+        "Top-1 churn file this run: 58 lines modified across 2 commits (68357cb5 map_mutation_err + org-scoped INSERT, bef62a87 assign_violation org-member gate) landing PR #3183. runs_seen_prev=0 → new hotspot. Three Phase 1.5 security findings on the same file (add_evidence ungated, list_violations/list_appeals leak, create_appeal violator-check missing) stack on this instability signal."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-violations-add-evidence-no-role-gate",
+      "title": "violations.rs add_evidence: no require_manager() guard and no violator-identity check — any org member can plant/spam evidence on another resident's fine",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-10-27"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:375 — add_evidence has no require_manager() guard and is NOT in the require_manager docstring's enumerated self-service exceptions (which lists only create_appeal and add_comment); any authenticated tenant member can POST evidence onto any violation in their org. Asymmetric with delete_evidence (line 418) which does gate on manager. Handler also makes no check that user.user_id is the violator or an otherwise authorized party, so a bystander resident can spam/plant evidence on another resident's fine. Either tighten (gate to manager OR to the violator identity) or update the require_manager docstring to document the intentional exception and add a violator-identity precondition."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-violations-list-no-role-gate",
+      "title": "violations.rs list_violations + list_appeals: no role/identity filter — any tenant member can enumerate all fines, violator_ids, appeal decisions",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-10-27"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:295 (list_violations) and :620 (list_appeals) — neither handler calls require_manager() nor filters by caller identity; any Resident/Tenant/Guest with tenant_id can enumerate every violation (fine amounts, violator_id, status) and every appeal (decision, fine_adjustment) in the org. The companion list_comments at :721 explicitly gates include_internal to managers, which proves the privacy model exists and is applied inconsistently. Add a role/identity filter (manager → all; non-manager → own-violator rows) or gate the whole list to manager roles."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-violations-create-appeal-no-violator-check",
+      "title": "violations.rs create_appeal: handler doesn't verify caller is the violator — any org member can file spam appeals against another resident's violation",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-10-27"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:584-600 — create_appeal is intentionally ungated (per require_manager docstring: 'self-service action a resident legitimately performs'), but the handler only threads org_id into the repo call and does not verify that user.user_id matches the target violation's violator_id (or an authorized representative). Any member of the org can file an appeal against any other resident's violation, enabling spam / malicious appeals that may auto-pause enforcement workflow. Add a check that the caller is the violator before invoking violation_repo.create_appeal."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
     }
   ]
 }

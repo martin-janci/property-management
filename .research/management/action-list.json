@@ -264,7 +264,115 @@
           "follow-up"
         ]
       }
+    },
+    {
+      "id": "pm-scrum-master-clear-review-jam-9-prs-2026-10-27",
+      "action": "Clear the 9-PR approved-review jam (merge #3024, #3075, #3108, #3119, #3171, #3184, #3185, #3186, #3188 after a last-minute re-approval sanity check) — dispatcher reports claimable=6/72 is almost entirely explained by this jam; nothing drains until these land",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-27",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "pm-scrum-master-sweep-violations-authz-2026-10-27",
+      "action": "Sweep violations.rs for role-gate / identity-check gaps (Phase 1.5 surfaced 3 fresh findings: add_evidence role-gate asymmetry at :375, list_violations/list_appeals bulk leak at :295/:620, create_appeal missing violator-identity check at :584-600) — one-shot audit of all handlers before per-site patching",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-27",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "pm-scrum-master-auto-merge-policy-2026-10-27",
+      "action": "Decide whether Claude-Approvals PRs auto-merge after a 24-48h cool-down or whether human-merge stays the hard gate — the 9-PR jam suggests the human step is the primary delivery bottleneck",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-27",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "pm-scrum-master-diagnose-3131-deadlock",
+      "action": "Diagnose + resolve the merge-pipeline deadlock (gh #3131) — long-stale carried; likely sqlx transaction scope or advisory-lock contention on the merge path",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-27",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "pm-scrum-master-un-quarantine-dispute-kpis",
+      "action": "Un-quarantine the dispute KPIs test + add window_start<=window_end validation (carried item from pm-backend 2026-07-30)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-27",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "pm-frontend-link-missing-ucs-33",
+      "action": "Link UC-33.1 / UC-33.2 / UC-33.3 to the correct screen-map entries (coverage.screen_gaps.missing_use_cases carries them) — update frontmatter use-cases arrays so missing_use_cases drops to 0",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-27",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "gap-screen-uc-33-1-link-to-screen-map",
+      "action": "Link UC-33.1 to its screen-map entry (currently missing from docs/screens/<product>/*.md use-cases arrays)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "gap-screen-uc-33-2-link-to-screen-map",
+      "action": "Link UC-33.2 to its screen-map entry (currently missing from docs/screens/<product>/*.md use-cases arrays)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan",
+      "first_open_at": "2026-10-27T16:40:00Z"
+    },
+    {
+      "id": "gap-screen-uc-33-3-link-to-screen-map",
+      "action": "Link UC-33.3 to its screen-map entry (currently missing from docs/screens/<product>/*.md use-cases arrays)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan",
+      "first_open_at": "2026-10-27T16:40:00Z"
     }
   ],
-  "generated": "2026-10-26T04:30:00Z"
+  "generated": "2026-10-27T16:40:00Z"
 }

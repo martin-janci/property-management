@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-27 01:07 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-27 16:57 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -225,8 +225,10 @@
 | 2 | bug | ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts` | rotating-expert-review 2026-10-22 ppt-web-core | 2026-10-22 | done | — |
 | 2 | bug | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | rotating-expert-review [mobile-native-kmp] | 2026-10-25 | open | — |
 | 2 | test-gap | Screen-map drift: PR #3166 touched reality-web agency page without updating docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | PR #3166 | 2026-10-26 | done | — |
-| 2 | bug | violations.rs assign_violation: Manager can set assigned_to to a user outside the org (no org-membership check on assignee) | `backend/servers/api-server/src/routes/violations.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-26 | 2026-10-26 | open | — |
+| 2 | bug | violations.rs assign_violation: Manager can set assigned_to to a user outside the org (no org-membership check on assignee) | `backend/servers/api-server/src/routes/violations.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-26 | 2026-10-26 | done | — |
 | 2 | bug | useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh | `frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts (+1)` | rotating-expert-review [ppt-web-core] 2026-10-27 | 2026-10-27 | open | — |
+| 2 | security | violations.rs add_evidence: no require_manager() guard and no violator-identity check — any org member can plant/spam evidence on another resident's fine | `backend/servers/api-server/src/routes/violations.rs` | rotating-expert-review [api-handlers] 2026-10-27 | 2026-10-27 | open | — |
+| 2 | security | violations.rs list_violations + list_appeals: no role/identity filter — any tenant member can enumerate all fines, violator_ids, appeal decisions | `backend/servers/api-server/src/routes/violations.rs` | rotating-expert-review [api-handlers] 2026-10-27 | 2026-10-27 | open | — |
 | 1 | triage | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | — | #836 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | — | #845 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | — | #849 (+1) | 2026-05-31 | done | — |
@@ -473,10 +475,13 @@
 | 1 | refactor | Churn hotspot: backend/servers/api-server/src/services/push_fanout.rs — merged PR touched this file heavily this run | `backend/servers/api-server/src/services/push_fanout.rs` | hotspot_history runs_seen=2→3 (+1) | 2026-10-25 | done | — |
 | 1 | bug | Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination) | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt (+1)` | rotating-expert-review [mobile-native-kmp] | 2026-10-25 | open | — |
 | 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heavily this run | `backend/servers/api-server/tests/suites/violations_role_authz_tests.rs` | top-3 churn 2026-10-26 (PR #3072) | 2026-10-26 | open | — |
-| 1 | test-gap | Churn hotspot: frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx — merged PR touched this file heavily this run | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx` | top-3 churn 2026-10-26 (PR #3153) | 2026-10-26 | open | — |
-| 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs — merged PR touched this file heavily this run | `backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs` | top-3 churn 2026-10-26 (PR #3070) | 2026-10-26 | open | — |
-| 1 | test-gap | test-gap: no cross-tenant IDOR regression suite for violations.rs mutation handlers (role-authz suite covers 403 but not xtenant 404) | `backend/servers/api-server/tests/suites/violations_role_authz_tests.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-26 | 2026-10-26 | open | — |
+| 1 | test-gap | Churn hotspot: frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx — merged PR touched this file heavily this run | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx` | top-3 churn 2026-10-26 (PR #3153) | 2026-10-26 | done | — |
+| 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs — merged PR touched this file heavily this run | `backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs` | top-3 churn 2026-10-26 (PR #3070) | 2026-10-26 | done | — |
+| 1 | test-gap | test-gap: no cross-tenant IDOR regression suite for violations.rs mutation handlers (role-authz suite covers 403 but not xtenant 404) | `backend/servers/api-server/tests/suites/violations_role_authz_tests.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-26 | 2026-10-26 | done | — |
 | 1 | dx | useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts (+1)` | rotating-expert-review [ppt-web-core] 2026-10-27 | 2026-10-27 | open | — |
+| 1 | triage | Stalled review: PR #3119 — add i18n defaultValue fallback to NewsScreen (idle 9d, no reviewDecision) | — | PR #3119 | 2026-10-27 | open | — |
+| 1 | refactor | Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 58 lines across 2 commits since last run | `backend/servers/api-server/src/routes/violations.rs` | commit log since 6479a39c | 2026-10-27 | open | — |
+| 1 | security | violations.rs create_appeal: handler doesn't verify caller is the violator — any org member can file spam appeals against another resident's violation | `backend/servers/api-server/src/routes/violations.rs` | rotating-expert-review [api-handlers] 2026-10-27 | 2026-10-27 | open | — |
 | 0 | dx | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | `frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx` | PR #328 (+1) | 2026-06-04 | dropped | — |
 | 0 | bug | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | `frontend/apps/ppt-web/src/components/Announcer.tsx` | code-review ppt-web-ui 2026-05-24 (+1) | 2026-06-07 | dropped | — |
 | 0 | triage | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | — | #779 | 2026-06-13 | dropped | — |

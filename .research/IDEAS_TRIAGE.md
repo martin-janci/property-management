@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-10-27 01:07 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-27 16:57 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -55,6 +55,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #769 (no labels, OPEN): Current dev review: Deploy server | #769 (+2) | 2026-06-07 | done |
 | 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | #789 (+2) | 2026-06-07 | done |
 | 1 | PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491 | PR #2489 | 2026-07-23 | dropped |
+| 1 | Stalled review: PR #3119 — add i18n defaultValue fallback to NewsScreen (idle 9d, no reviewDecision) | PR #3119 | 2026-10-27 | open |
 | 0 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | #779 | 2026-06-13 | dropped |
 | 0 | Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53 | #1151 | 2026-07-05 | dropped |
 | 0 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-07-05 | dropped |

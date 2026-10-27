@@ -1,27 +1,24 @@
 # PPT Project State
 
-_Generated: 2026-10-26 — routine Phase 1.6 incremental upkeep. Role focus: **pm-backend** (87-day stale rotation slot; pm-cursor idx 1 → 2). Coverage `scan_kind=upkeep`; coverage_cursor idx 11 → 12 (epic-8a Notification Preferences re-checked, all 3 stories still done, no material change). pm-scrum-master always-on._
+_Generated: 2026-10-27 — routine Phase 1.6 incremental upkeep. Role focus: **pm-frontend** (82-day stale rotation slot; pm-cursor idx 2 → 3). Coverage `scan_kind=upkeep`; coverage_cursor idx 12 → 0 (epic-9 2FA/TOTP re-checked, 1/1 story still done, no material change). pm-scrum-master always-on._
 
-## Delta since last routine run (2026-10-22)
+## Delta since last routine run (2026-10-27 01:07Z)
 
-- **3 PRs merged** (#3159, #3160, #3166) — all reality-web code-review follow-ups:
-  - **#3159** reality-web realtor-api shape validation (defensive parsing)
-  - **#3160** reality-web safe-error log redaction (PII hygiene)
-  - **#3166** reality-web agency i18n price fix (localisation defect)
-  - **Zero coverage status flips** — none of the three map to a coverage story (reality-web agency/realtor-api surfaces aren't tracked as stories; the only reality-web items in coverage are mobile-native epic-82 which is 5/5 done).
-- **1 new critical blocker: #3168** — `cargo-deny advisories FAILED on dev: 3 new RUSTSEC advisories blocking backend merge pipeline`. **Second cargo-deny gate in a month** after #3124 cleared on 2026-10-19 — dependency hygiene is becoming a recurring merge-queue tax. Queued as `gh-issue-3168` (high, owner pm-security).
-- **2 new follow-up issues: #3163 (unassign 404), #3164 (violations add_evidence ungated)** — both have open drafts (#3167 for unassign; nothing yet for add_evidence authz).
-- **3 open drafts** (#3161 push_fanout FCM eviction, #3165 migration_import test coverage, #3167 unassign moderation case) — all backend-touching, all awaiting review or CI (gated on #3168 if backend-merge path).
-- **5 follow-ups closed on PR merge:** #3069, #3098, #3109, #3157, #3162 (naturally resolved — no action-list items were tracking them).
+- **1 PR merged** (#3183) — code-review-api-handlers-violations-no-xtenant-idor-tests: cross-tenant IDOR regression suite + 404 fix for violation mutations. Does NOT map to a coverage story (addresses an archived code-review task_id; coverage composition unchanged).
+- **Dispatcher payload today:** `buffer-low: claimable=6/72 — refill planner (dispatcher 2026-10-27; WIP full, 9 PRs jammed in review needing human merge)`. The `6/72` is almost entirely explained by the review-jam: 9 open rows in `assignments.json` all carry `status=review verdict=approve` — the reviewer bot has signed off but no human merge has drained them in >24h. Refill is not actually the bottleneck today; **reviewer-merge throughput is**.
+- **3 fresh authz findings** on `backend/servers/api-server/src/routes/violations.rs` (Phase 1.5 code review on churn-aligned segment `api-handlers`): add_evidence role-gate asymmetry at :375 (medium), list_violations + list_appeals bulk leak at :295/:620 (medium), create_appeal missing violator-identity check at :584-600 (low). All candidate_vector `security`, confidence `medium`. These flow to `backlog.json` via the routine's Phase 2 and are tracked here as a sweep candidate rather than per-site rows.
+- **No new issues since 3175** that aren't already queued.
+- **1 churn hotspot NEW**: `backend/servers/api-server/src/routes/violations.rs` (58 lines across 2 commits; the hot commits are the #3187 fast-path + add_evidence authz fix). Confirms the "violations route is in flux" pattern.
 
-<sub>Prior upkeep note (archived): 2026-10-22 — pm-tech-lead rotation; coverage_cursor 10 → 11 (epic-85 re-checked).</sub>
+<sub>Prior upkeep notes (archived): 2026-10-26 — pm-backend rotation; coverage_cursor 11 → 12 (epic-8a re-checked). 2026-10-22 — pm-tech-lead rotation; coverage_cursor 10 → 11 (epic-85 re-checked).</sub>
 
 ## Executive summary
 
-- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on all 3 epic-8a stories (cursor re-check — negative, nothing in the window touched notification preferences surfaces).
-- **3 PRs merged** — all reality-web follow-ups, all tests-included, all narrow fixes.
-- **Buffer still constrained:** the long-carried #2652 (KMP cloud builds), #2951 (RN jest-expo), and the historical merge-queue blockers now stacked with **new #3168 (RUSTSEC advisories)**. The dispatcher backlog scan should refresh the action-list candidate pool externally.
-- **pm-backend rotation came up 87 days stale** — last run 2026-07-30; today's lens surfaces a tier-1 authz gap on violations `add_evidence` (#3164) with the same shape as the historical dispute `add_evidence` gap (#2483), hinting at a systemic blind spot in `add_evidence`-pattern sub-routes.
+- **Delivery: 49/49 stories done across 13 epics in coverage.** No status flips this run; `last_checked` refreshed on the single epic-9 story (`9-1-totp-2fa-setup`).
+- **1 PR merged** this window — narrow code-review follow-up; no coverage movement.
+- **Live blocker: 9-PR review-jam** — the dispatcher cannot drain WIP until a human merge window clears the approved-review backlog. Everything else (refill depth, buffer target, backlog promotion) is secondary while this holds.
+- **New risk: violations.rs route is leaking authz oversights at a steady rate** — 3 findings in a single churn-aligned review slice, on top of #3164 last week. One-shot pattern sweep now beats whack-a-mole per site.
+- **pm-frontend rotation came up 82-day stale** — last run 2026-08-06. Today's lens finds the frontend side is itself jammed on the same reviewer-merge gate (#3185, #3186 both approved + stuck).
 
 ## Sprint progress
 
@@ -31,7 +28,7 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 |---|---|---|---|
 | 6 — Announcements & Communication | in-progress (3/6)† | 6/6 done | — |
 | 7A — Basic Document Management | in-progress (2/5)† | 5/5 done | — |
-| 8A — Basic Notification Preferences | done (3/3) | 3/3 done · **last_checked 2026-10-26 (cursor re-check)** | — |
+| 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
 | 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | — |
 | 10B — Platform Administration | in-progress (7/7)† | 7/7 done | — |
 | 80 — Dispute Resolution | partial (1/3)† | 3/3 done | — |
@@ -40,44 +37,40 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 | 83 — Portal Integrations | (extended) | 3/3 done | — |
 | 84 — Documents & e-signature | (extended) | 5/5 done | — |
 | 85 — Build/CI configuration | (extended) | 2/2 done | — |
-| 9 — 2FA/TOTP | (extended) | 1/1 done | — |
-| Cross-cutting (reality-web) | — | — | #3159, #3160, #3166 (realtor-api validation / safe-error redaction / agency i18n — none map to coverage stories) |
+| 9 — 2FA/TOTP | (extended) | 1/1 done · **last_checked 2026-10-27 (cursor re-check)** | — |
+| Cross-cutting (code-review) | — | — | #3183 (xtenant-IDOR regression suite + 404 fix — doesn't map to a coverage story) |
 
-† sprint-status.yaml drift against coverage.json — queued as `pm-scrum-master-reconcile-sprint-status-vs-coverage` (low); a deep scan would resolve it authoritatively.
+† sprint-status.yaml drift against coverage.json — queued as low-priority `pm-scrum-master-reconcile-sprint-status-vs-coverage` (dropped from the live action-list; a deep scan would resolve authoritatively).
 
-## Shipped since last run (3 PRs merged)
+## Shipped since last run (1 PR merged)
 
-- **#3159** — reality-web: realtor-api shape validation (defensive parsing)
-- **#3160** — reality-web: safe-error log redaction (PII hygiene)
-- **#3166** — reality-web: agency i18n price fix (localisation defect)
+- **#3183** — code-review-api-handlers-violations-no-xtenant-idor-tests: cross-tenant IDOR regression suite + 404 fix for violation mutations (archived code-review task_id resolved).
 
-## Blockers (1 new critical, carried)
+## Blockers (1 live delivery, carried hardware)
 
-- **#3168 (NEW, critical)** — cargo-deny advisories FAILED on dev: 3 new RUSTSEC advisories gate every backend PR merge. Second cargo-deny gate in a month. Owner: pm-security.
-- **#3164 (NEW, high)** — violations add_evidence sub-route ungated (cross-tenant IDOR shape, same as historical #2483). Owner: pm-backend.
-- **#3163 (NEW, medium)** — unassign moderation case returns 404 (contract bug). Draft PR #3167 open. Owner: pm-backend.
-- **#3131** — merge pipeline deadlocked (carried, medium). Owner: pm-backend.
+- **9-PR review-jam (LIVE)** — all 9 open assignments carry `verdict=approve` + `status=review` with no merge progress in >24h. Specifically: #3024 (screen-map drift), #3075 (violation number race), #3108 (gh-issue-3104 analytics), #3119 (gh-issue-3116 i18n), #3171 (violations add_evidence authz), #3184 (violations_role_authz tests churn), #3185 (ppt-web-core neighbors stale token), #3186 (ppt-web-core useIotWebSocket), #3188 (gh-issue-3187 failing-on-dev test fix). Owner: **pm-tech-lead** (merge-gate owner).
 - **#2652** — mobile-native/KMP cloud builds blocked (carried, high). Owner: pm-devops.
 - **#2951** — mobile RN jest-expo version rot (carried, medium). Owner: pm-devops.
+- **#3131** — merge-pipeline deadlock (carried, medium). Owner: pm-backend.
 
 ## What's next (top 5 from the roadmap)
 
-1. **Resolve #3168 cargo-deny advisories** (bump offending crate(s) or bounded exceptions) — owner: pm-security — **gates every backend merge today**.
-2. **Gate violations add_evidence sub-resource (#3164)** with a tenant-scoped authz check + cross-tenant regression test — owner: pm-backend — tier-1 IDOR.
-3. **Diagnose #3131 merge-pipeline deadlock** — owner: pm-backend — carried, needs a traced repro, not more guessing.
-4. **Sweep `add_*` sub-routes for the same ungated pattern** (announcements/attachments, documents/signatures, mediation/evidence) — owner: pm-backend — one-shot audit before shipping the #3164 fix.
-5. **Reconcile sprint-status.yaml drift vs coverage.json** (6/7A/10B/80 all show in-progress/partial despite coverage=done) — owner: pm-scrum-master — low priority, deep scan would resolve.
+1. **Clear the 9-PR approved-review jam** — merge the 9 approved assignments after a last-minute sanity re-review — owner: **pm-tech-lead** — this is the entire delivery picture today.
+2. **Sweep violations.rs for role-gate / identity-check gaps** (Phase 1.5 surfaced 3 fresh findings on top of #3164 last week) — one-shot audit before per-site patching — owner: **pm-backend**.
+3. **Decide the auto-merge policy for Claude-Approvals PRs after cool-down** — the 9-PR jam suggests the human-merge step is the primary delivery bottleneck, not reviewer throughput — owner: **pm-tech-lead**.
+4. **Diagnose #3131 merge-pipeline deadlock** — carried, long-stale; likely sqlx advisory-lock contention — owner: **pm-backend**.
+5. **Link missing use-cases UC-33.1 / UC-33.2 / UC-33.3 to their screen-maps** (coverage.screen_gaps.missing_use_cases carries them) — owner: **pm-frontend**.
 
-## Role focus today: pm-backend (+ pm-scrum-master always-on)
+## Role focus today: pm-frontend (+ pm-scrum-master always-on)
 
-- **pm-backend** (87-day stale rotation): Two concrete tier-1 findings — #3168 (RUSTSEC merge gate) and #3164 (violations add_evidence authz gap, same shape as #2483). Six next_actions queued (two high, two medium, two low); one proposed audit (sweep `add_*` sub-routes) to turn #3164 into a one-shot pattern-fix instead of a per-site whack-a-mole. Carried risks `pm-backend-delete-by-file-key-samesorg-ref-gap-2026-07-30` and `pm-backend-disputes-kpis-window-validation-gap-2026-07-30` are both still open — un-quarantining the KPIs test is now a `low` action item.
-- **pm-scrum-master**: Mild window — 3 reality-web PRs merged, 3 drafts open, 1 critical new issue. The sprint-status.yaml drift vs coverage is now a chronic condition that only a deep scan can resolve authoritatively; queued as a low-priority action rather than a blocker.
+- **pm-frontend** (82-day stale rotation): The frontend side is itself jammed on the same reviewer-merge gate — #3185 (useNeighbors stale-token useMemo) and #3186 (useIotWebSocket.hasGivenUp drop) are both approved and stuck in `assignments.json status=review`. Lens also flags the screen-map drift carried from PR #2994 and the three missing UC links (33.1/33.2/33.3). KMP CreateListingScreen stub remains dep-blocked by #2652 cloud-build env — no change this run.
+- **pm-scrum-master**: Review-throttled day. 1 narrow PR merged (#3183). The real work today is unjamming the 9 approved PRs; everything else is secondary. Queued decision on auto-merge policy; queued one-shot sweep for violations.rs authz pattern.
 
-## Coverage (upkeep this run — 2026-10-26)
+## Coverage (upkeep this run — 2026-10-27)
 
-- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-26T04:30:00Z`, no re-scan.
-- **Epic re-check: epic-8a Basic Notification Preferences (cursor idx 11)** — all 3 stories (8a-1/8a-2/8a-3) still `done`; no merged PR in the 2026-10-23..2026-10-26 window touched notification-preference / critical-override / preference-sync surfaces. `last_checked = 2026-10-26` stamped on all 3.
-- **Merged-PR evidence check:** #3159, #3160, #3166 all reality-web; none map to a coverage story (no evidence appended).
-- **`coverage_cursor` advances 11 → 12** (epic-8a → epic-9 next run).
-- **`pm_cursor` advances 1 → 2** (pm-backend → pm-frontend next). role_last_run["pm-backend"] = 2026-10-26.
-- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, already queued elsewhere).
+- **`coverage.json` refreshed via mechanical upkeep** — `scan_kind=upkeep`, `generated=2026-10-27T16:40:00Z`, no re-scan.
+- **Epic re-check: epic-9 2FA/TOTP (cursor idx 12)** — single story `9-1-totp-2fa-setup` still `done`; no merged PR in the 2026-10-27 window touched 2FA / TOTP surfaces. `last_checked = 2026-10-27` stamped.
+- **Merged-PR evidence check:** #3183 is a code-review fix; does not map to a coverage story (no evidence appended).
+- **`coverage_cursor` advances 12 → 0** (epic-9 → first-sorted-epic next run; 13 distinct epics so (12+1) mod 13 = 0).
+- **`pm_cursor` advances 2 → 3** (pm-frontend → pm-qa next). role_last_run["pm-frontend"] = 2026-10-27.
+- **Composition unchanged: 49 done · 0 partial · 0 not-started** across 13 epics. Missing UC links: 3 (UC-33.1/33.2/33.3, now explicitly queued via `pm-frontend-link-missing-ucs-33` + three `gap-screen-uc-*` rows).

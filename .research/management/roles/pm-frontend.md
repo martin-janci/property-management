@@ -1,35 +1,44 @@
-# pm-frontend — 2026-05-25
+# pm-frontend — 2026-10-27
 
-_Frontend/mobile delivery lens. Daily PM rotation (rotation index 2). Static, read-only analysis._
+**Summary.** Frontend had minimal activity this run (0 frontend PRs merged). The 2 ppt-web-core code-review PRs (#3185 useNeighbors stale-token useMemo, #3186 useIotWebSocket.hasGivenUp drop) are both approved but stuck in the same review-jam blocking everything today. KMP continues structurally blocked by #2652 cloud-build env; the CreateListingScreen onSubmit stub and MyListings pagination cap remain carried.
 
-## Summary
+## Next actions (top 4)
 
-The biggest frontend delivery burst of the sprint landed this run — document sharing/permission UI (web+mobile), OAuth client-management + user-grants UI, MFA frontend+e2e, neighbor listing, and direct-messaging screens with WebSocket realtime sync all merged (PRs #441–#473). The active frontend front is now the Epic 6 announcement web UI, split across three unmerged draft PRs (#474/#475/#479) on a shared AnnouncementsPage — sequencing them is the near-term priority, alongside the #480–#487 follow-up test-gap batch.
-
-## Next actions
-
-| Priority | Action | Dependency | Definition of done |
-|---|---|---|---|
-| high | Sequence + land Epic 6 announcement web UI drafts in order #474 (viewing/ack) → #475 (comments) → #479 (pin) | none | 6-2/6-3/6-4 apiStatus → integrated; 3 PRs merged without AnnouncementsPage conflicts; stories promote from partial |
-| high | Verify Epic 81 schedule/execution UI e2e as PRs #488/#489 land | pm-backend (endpoints) | EditScheduleModal pause/resume + ExecutionHistory no longer 404; 81-1/81-2 promoted |
-| medium | Slot follow-up issues #480–#487 into one test-hardening batch | pm-scrum-master | Each issue closed or explicitly deferred before its parent story promotes to done |
-| medium | Build dedicated folder-tree UI page for document organization (7a-2) | none | Folder hierarchy CRUD UI wired to backend 5-level tree; mobile slice scoped |
-| medium | Wire AnnouncementsPage/FaultsPage to @ppt/api-client hooks (79-1) | none | Both pages off mocks, using real query hooks; loading/empty/error states present |
-| low | Mobile document download/preview slice (7a-4 mobile) + RN env config (85-1) | none | DocumentPreviewScreen calls get_preview_url; Expo app.config.ts + iOS Info.plist keys added |
+1. **[high · pm-tech-lead]** Push the 2 approved ppt-web-core PRs (#3185, #3186) through the human-merge gate so the frontend review-slot clears. DoD: #3185 and #3186 merged; the two matching action-list rows (`code-review-ppt-web-core-neighbors-stale-token-usememo`, `code-review-ppt-web-core-iot-ws-hasgivenup-dropped`) flip to done.
+2. **[low · pm-frontend]** Reconcile ppt-web screen-map drift from PR #2994 (route refactor without `docs/screens/ppt/` updates). PR #3024 is the queued resolution and is itself in the review-jam. DoD: `docs/screens/ppt/*` mirrors the current route tree; `/screens validate` passes.
+3. **[low · pm-frontend]** Link UC-33.1 / UC-33.2 / UC-33.3 to the correct screen-map entries — `coverage.screen_gaps.missing_use_cases` carries them. DoD: `docs/screens/<product>/*` frontmatter `use-cases` arrays updated; `missing_use_cases` drops to 0.
+4. **[medium · pm-frontend]** Fix KMP CreateListingScreen onSubmit NotImplementedError stub. Dep-blocked by #2652 (KMP cloud builds). DoD: `onSubmit` wires to shared SDK create endpoint; local KMP build succeeds.
 
 ## Risks
 
-| Risk | Prob | Impact | Mitigation |
-|---|---|---|---|
-| Epic 6 announcement web UI split across 3 unmerged drafts (#474/#475/#479) on shared AnnouncementsPage — review-queue stall + merge conflicts | medium | medium | Land in dependency order #474 → #475 → #479; promote out of draft once apiStatus verified against the now-live notification pipeline |
-| Follow-up test gaps (#480–#487) on merged messaging/share/OAuth/MFA features — done-count outruns regression coverage | high | medium | Schedule as a single hardening batch; gate done-promotion on the follow-up closing |
-| `ai.rs` cross-tenant IDOR cluster (update/delete equipment + update_maintenance discard principal) — not a frontend file but the equipment UI consumes these endpoints | high | high | Flagged for pm-backend (`pm-backend-fix-ai-equipment-idor`); frontend should not surface delete/update equipment actions until backend scopes by tenant |
+1. **[high prob × medium impact · pm-tech-lead]** Frontend review-jam compounds mobile stall — #3185 + #3186 both approved and stuck in the same human-merge gate that blocks every PR today. _Mitigation:_ same as pm-scrum-master's auto-merge-after-cool-down proposal.
+2. **[medium prob × low impact · pm-frontend]** Screen-map drift is accumulating silently — PR #2994 drifted without a CI gate catching it; next refactor will land the same way. _Mitigation:_ add a workflow step that fails the PR if frontend route files change without a matching `docs/screens/<product>/*` diff.
 
 ## Open questions
 
-- Does the messaging realtime sync (PR #472) cover optimistic UI / reconnection on the web client, or only server push? (relevant to 6-5 e2e coverage in #480–#487)
-- Are the OAuth user-grants and admin client-management UIs (#468/#469/#471) covered by any frontend tests, or are those part of the #480–#487 gap set?
+_None this run._
 
 ## Decisions needed
 
-- Epic 6 announcement web UI: single squashed PR vs. incremental #474 → #475 → #479 — owner: pm-frontend / pm-scrum-master.
+_None from the frontend lens; see pm-scrum-master's auto-merge policy decision — it covers the frontend side of the jam._
+
+## Return JSON (as consumed by the orchestrator)
+
+```json
+{
+  "role": "pm-frontend",
+  "summary": "Frontend had minimal activity this run (0 frontend PRs merged). The 2 ppt-web-core code-review PRs (#3185 neighbors stale token, #3186 iot-ws hasGivenUp) are both approved but stuck in the review-jam. KMP continues structurally blocked by #2652 cloud-build env.",
+  "next_actions": [
+    {"action": "Push #3185 and #3186 through the human-merge gate so the frontend review-slot clears", "priority": "high", "dependency": "pm-tech-lead", "definition_of_done": "both merged; matching action-list rows flip to done"},
+    {"action": "Reconcile ppt-web screen-map drift from PR #2994", "priority": "low", "dependency": "none", "definition_of_done": "docs/screens/ppt/* mirrors route tree; /screens validate passes"},
+    {"action": "Link UC-33.1 / UC-33.2 / UC-33.3 to their screen-map entries", "priority": "low", "dependency": "none", "definition_of_done": "missing_use_cases drops to 0"},
+    {"action": "Fix KMP CreateListingScreen onSubmit stub (dep-blocked by #2652)", "priority": "medium", "dependency": "pm-devops", "definition_of_done": "onSubmit wires to shared SDK; local KMP build succeeds"}
+  ],
+  "risks": [
+    {"risk": "Frontend review-jam compounds mobile stall", "probability": "high", "impact": "medium", "mitigation": "auto-merge after cool-down OR daily human-merge window (per pm-scrum-master)"},
+    {"risk": "Screen-map drift accumulating silently without CI gate", "probability": "medium", "impact": "low", "mitigation": "CI step: fail PR if frontend route files change without matching docs/screens/<product>/* diff"}
+  ],
+  "open_questions": [],
+  "decisions_needed": []
+}
+```
