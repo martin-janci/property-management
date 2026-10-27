@@ -183,17 +183,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-reconcile-sprint-status-vs-coverage",
-      "action": "Reconcile sprint-status.yaml drift against coverage.json (Epics 6/7A/10B/80 show in-progress/partial in sprint-status but 100% done in coverage) — flip sprint-status to reflect reality or schedule a deep scan to re-verify",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-26"
-    },
-    {
       "id": "pm-backend-violations-add-evidence-authz-gap-3164",
       "action": "Gate violations add_evidence sub-resource with authz check — currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
       "owner_role": "pm-backend",
@@ -205,42 +194,8 @@
       "source": "pm-analysis 2026-10-26"
     },
     {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs — merged PR touched this file heavily this run",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
       "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heavily this run",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
-      "action": "Churn hotspot: frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx — merged PR touched this file heavily this run",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
