@@ -13417,6 +13417,606 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-handlers-db-error-leak",
+      "title": "api-handlers db_error leaks raw sqlx::Error Display to clients",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=api-handlers)"
+      ],
+      "evidence": [
+        "Convention: backend/servers/api-server/src/routes/compliance.rs:67 db_error() documents that raw sqlx::Error Display 'leaks table and column names, SQL fragments, and connection details' and returns an opaque 500; regression-tested at compliance.rs:907 (db_error_does_not_leak_raw_detail_to_client).",
+        "Violation: ~135 sites in backend/servers/api-server/src/routes/ build ErrorResponse::new(\"DB_ERROR\", e.to_string()) - serializing the raw sqlx::Error Display into the HTTP response body - and ~562 INTERNAL_SERVER_ERROR responses echo e.to_string() to the client.",
+        "Affected modules include budgets.rs, emergency/{protocols,statistics,broadcasts,contacts,drills,incidents}.rs, subscriptions.rs, feature_packages.rs, messaging.rs (e.g. require_message_in_thread error map ~line 1871).",
+        "Fix: route these through a sanitizing helper (log e server-side via tracing::error!, return an opaque 500 body) exactly as compliance.rs / my_units / unit_residents already do; no behavior or schema change."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs",
+        "backend/servers/api-server/src/routes/emergency/broadcasts.rs",
+        "backend/servers/api-server/src/routes/messaging.rs",
+        "backend/servers/api-server/src/routes/subscriptions.rs",
+        "backend/servers/api-server/src/routes/feature_packages.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-legal-rs-db-error-leak",
+      "title": "legal.rs db_error leaks raw sqlx::Error Display to clients",
+      "vector": "security",
+      "confidence": "high",
+      "score": 2,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (segment=api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/legal.rs:105 fn db_error(msg, e) logs the error server-side (tracing::error!) and then returns Json(ErrorResponse::new(\"DB_ERROR\", e.to_string())) - leaking the raw sqlx::Error Display (table/column names, SQL fragments) to the API client.",
+        "This directly contradicts the repo's documented sanitize-DB-errors convention in backend/servers/api-server/src/routes/compliance.rs:67 (regression-tested at compliance.rs:907). A helper named db_error that is the module's error-mapper is the natural single-point fix.",
+        "Fix: change the returned ErrorResponse message to a static opaque string (e.g. \"Internal server error\"); the server-side tracing::error! already preserves the detail for operators."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/legal.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": "plans/code-review-legal-rs-db-error-leak.md"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-analytics-silent-empty-on-error",
+      "title": "KMP analytics returns silent empty on error (hides data load failures)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:541 — the realtor ListingAnalytics composable loads portfolio analytics via portalListingsRepository.getPortfolioAnalytics() (:513) and on failure does `.onFailure { metrics = emptyList() }` (:541). ListingAnalyticsScreen is then rendered with metrics=emptyList() and isLoading=false, so a network failure or a 401 (signed-out/expired session) produces an all-empty analytics dashboard that is indistinguishable from a realtor who genuinely has zero views/inquiries/favorites. There is no errorMessage state, no ErrorContent, and no retry affordance on this screen.",
+        "This is NOT the documented-intent sibling: the MyListings composable (Navigation.kt:466 `.onFailure { listings = emptyList() }`) carries an explicit comment (:457-460) stating the empty state is a deliberate fallback incl. the 401 case. The ListingAnalytics onFailure has no such comment and no empty-vs-error distinction, so a transient backend outage silently tells the realtor their marketing performance is zero. The module already has the right pattern elsewhere — InquiriesScreen.kt:168-180 renders ErrorContent(message=errorMessage!!, onRetry={…}) — so the fix is a local mirror.",
+        "Severity LOW (+1): no crash, no security impact, realtor-only screen; it is a UX/error-surfacing gap (misleading zero-state on load failure with no retry). Confidence medium: the silent failure->empty mapping is confirmed by static read of the LaunchedEffect; it was not runtime-verified and the exact user-visible copy on ListingAnalyticsScreen for an empty metrics list was not inspected this pass.",
+        "Not a duplicate: distinct from code-review-mobile-native-kmp-portfolio-analytics-caps-100 / -unbounded-fanout / -drops-view-zero-days (all about the repository aggregation math in PortalListingsRepository.getPortfolioAnalytics) — this finding is about the UI call site swallowing the Result.failure with no error surface. No existing backlog row covers the analytics-screen error state."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nav-create-listing-stub",
+      "title": "KMP Screen.CreateListing nav target is a stub — form data discarded",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires CreateListingScreen's onSubmit to a hardcoded stub: `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. Every submit of the realtor Create-Listing form therefore fails unconditionally. This is the skill's Kotlin pattern 'todo!()/unimplemented reachable from a production path' and 'no-op stub' — it is live in the committed navigation graph, not behind a flag.",
+        "Reachability traced end-to-end (confidence HIGH): Navigation.kt:461 Screen.MyListings composable renders MyListingsScreen with `onCreateClick = { navController.navigate(Screen.CreateListing.route) }` (Navigation.kt:484), which routes to the composable at 490-496. So any realtor who opens 'My Listings' and taps the create button reaches this stub. CreateListingScreen.kt:41 declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>` and at :109/:121 invokes it then handles `onSuccess = { onCreated() }`, with the failure path surfacing a generic `R.string.error_network` message (CreateListingScreen.kt:92). Net user-visible effect: a realtor fills out the entire validated form (title/city/price with inline validation at :198/:226/:245), taps submit, and always gets a misleading 'network error' — the feature is non-functional and the error message mis-attributes the cause.",
+        "Root-cause confirmation that this is an incomplete feature, not just an unwired call: PortalListingsRepository.kt exposes only `listMyListings` (:40), `getListingAnalytics` (:74), and `getPortfolioAnalytics` (:111) — there is NO create-listing method anywhere in shared/commonMain (grep for create-listing repository methods returns none; the only `fun create(` is ListingDetailViewModel.kt:243, an unrelated VM factory). So the stub cannot be fixed by swapping in an existing call; a repository method (and likely the reality-server endpoint + generated client surface) must be added.",
+        "Severity MEDIUM (+2): user-facing realtor feature is non-functional in production, but it fails gracefully via Result.failure (handled by the screen) rather than crashing, so no data loss / no hard crash — hence +2, not +3. Confidence HIGH: the unreachable-success path and the missing repository method are both statically confirmed and the navigation reachability is fully traced from an entry screen. Fix scope: add create-listing to PortalListingsRepository wired to the reality-server realtor API, then replace the Navigation.kt:493 lambda with a real suspend call (plus a matching test alongside the existing PortalListingsRepositoryTest.kt)."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-saved-search-click-noop",
+      "title": "KMP saved-search click is a no-op (favorites screen)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt:213 — the Saved Searches tab wires `onSearchClick = { /* Navigate to search with filters */ }`, an empty lambda with a TODO-style comment. SavedSearchesTabContent declares `onSearchClick: (SavedSearch) -> Unit` (:662) and binds it to each saved-search card's `onClick = { onSearchClick(search) }` (:677), so tapping a saved search is a visible, tappable row that does nothing — the primary 'run this saved search' action (the entire point of the feature) is unwired. The sibling actions on the same tab (onToggleAlert :214-227, onDeleteSearch :228-241) ARE wired to favoritesRepository calls, so the surrounding feature is live and the dead click stands out.",
+        "Reachable from production: Favorites screen -> Saved Searches tab (selectedTab==1, :209) is a standard navigation path for any authenticated portal user with at least one saved search; the empty lambda means a user can create/toggle/delete saved searches but can never re-run one from this list.",
+        "Severity LOW (+1): completeness/dead-end-action, no crash or data loss; the search itself and the saved-search CRUD work — only the navigate-to-results jump is missing. Confidence medium: the empty call-site lambda and its binding to the card onClick are confirmed by static read; this pass did not confirm whether a Search route capable of accepting seeded SavedSearch filters already exists (if it does, the wiring is a one-liner navController.navigate with the filter args).",
+        "Not a duplicate: no existing mobile-native-kmp backlog row concerns the saved-search list action; the create-listing-not-wired row (ready) is a different stubbed feature (realtor CreateListing onSubmit NotImplementedError)."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-validate-raw-err-body",
+      "title": "KMP SsoService.validateAndLogin surfaces raw error body to UI",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:77 - validateAndLogin() error branch does `val error: SsoError = response.body()` with no runCatching guard; if the server/gateway returns a non-JSON or empty error body (e.g. 502/503 proxy HTML, empty 401), the kotlinx deserialization throws, is swallowed by the outer `catch (e: Exception)` at :82, and `_authState.value = AuthState.Error(e.message)` surfaces a raw 'Expected start of the object' serialization message to the user on the security-critical SSO login path.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49 - createMobileToken() error branch has the same unguarded `response.body<SsoError>()`.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:104 - getSession() error branch: same pattern (logout() runs first on 401, but the subsequent bare body() can still throw and mask the real status).",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:129 - refreshSession() error branch: same pattern.",
+        "INCONSISTENCY / FIX REFERENCE: the newer methods in the SAME file already harden this exact path - register() (:200), confirmPasswordReset() (:257), updateProfile() (:299) use `runCatching { response.body<SsoError>() }.getOrElse { \"...(HTTP ${response.status.value})\" }`. The four SSO-core methods should adopt the same guard so a malformed error body degrades to a clean status-based message instead of a raw serialization exception."
+      ],
+      "files": [],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-neighbors-search-hardcoded-en",
+      "title": "mobile RN neighbors search placeholder hardcoded English",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx:184 - the screen header title is a hardcoded English literal `<Text style={s.headerTitle}>Neighbours</Text>`, and :187-188 the subtitle is a hardcoded English template `${visibleNeighbors.length} residents in ${buildingName}` / `${visibleNeighbors.length} residents in your building`, and :195 the search box is `placeholder=\"Search by name or apartment…\"` - all rendered in English for every locale.",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:125 - `placeholder=\"Search messages…\"` hardcoded English, same i18n bypass.",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 - `placeholder=\"Search announcements...\"` hardcoded English, same i18n bypass.",
+        "Asymmetry confirming this is an accidental gap, not a deliberate opt-out: all three files are otherwise fully internationalized. NeighborsScreen imports useTranslation (:13), binds `const {t}=useTranslation()` (:123) and uses t() for its loading (:164), load-error (:173), retry (:175) and empty-state (:214/:217) strings - only the header, subtitle and placeholder were missed. MessagesScreen uses {t( 7x and AnnouncementsScreen 6x elsewhere; only their search placeholders are hardcoded.",
+        "Severity LOW (+1), i18n gap: @ppt/mobile is a react-i18next app with src/locales per-language bundles; these user-facing header/subtitle/search-placeholder strings render in fixed English regardless of the active locale. Confidence medium - the hardcoded literals and the absence of t() are confirmed by static read; whether a non-English locale is actively selected at runtime is config-dependent. Net-new: the mobile-rn i18n-remediation track (9 done i18n rows) does not include the Neighbors screen or the Messages/Announcements search placeholders. Fix: wrap in t() with new keys (e.g. neighbors.title / neighbors.subtitle with count+building interpolation / neighbors.searchPlaceholder, messages.searchPlaceholder, announcements.searchPlaceholder) and add them to the locale bundles."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx",
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voting-i18n-missing-keys",
+      "title": "mobile RN Voting feature references i18n keys missing in ALL locales",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-rn)"
+      ],
+      "evidence": [
+        "The entire mobile Voting feature references i18n keys that do not exist in ANY locale file. The `voting` block in frontend/apps/mobile/src/locales/en.json (and sk/cs/de/hu/pl.json — all identical) contains only 8 keys: title, activePolls, completedPolls, vote, voted, results, deadline, noPolls. But VoteDetailScreen.tsx + VotingScreen.tsx call t() on at least 13 keys that are absent: voting.castError (VoteDetailScreen.tsx:245), voting.loadError (VotingScreen.tsx:253, VoteDetailScreen.tsx:301), voting.tapToVote (VotingScreen.tsx:315), voting.tapToView (VotingScreen.tsx:316), voting.openDetail (VotingScreen.tsx:268), voting.confirmVoteTitle/confirmVoteMessage (VoteDetailScreen.tsx:212/219), voting.answerRequired (:213), voting.voteSubmitted (:240), voting.confirmationNumber (:241), voting.missingId (:187), voting.noQuestions (:329), voting.youHaveVoted (:381), voting.notActive (:389), voting.votingAs (:413), voting.submit (:223/:354). Verified missing by parsing en.json: every one of these returns None.",
+        "The `t('voting.X') ?? 'English fallback'` guard the authors wrote at every one of these call sites is DEAD CODE and does not protect against the missing key. react-i18next's t() returns a `string` — for a missing lookup it returns the key itself ('voting.castError') when returnNull is false, which is the i18next default and is NOT overridden in frontend/apps/mobile/src/i18n/config.ts (no returnNull/returnEmptyString/parseMissingKeyHandler set). A non-empty string is truthy and non-nullish, so the `?? \"Couldn't submit ballot\"` branch never executes. Net user-visible effect: on the Voting flow a user sees raw dotted identifiers — e.g. the cast-vote confirmation dialog shows title 'voting.confirmVoteTitle' and body 'voting.confirmVoteMessage', the submit button reads 'voting.submit', and a failed/loaded-error alert title reads 'voting.castError' / 'voting.loadError' — instead of either a translation or the intended English fallback. Confirmed in all 6 locales (sk/cs/de/hu/pl mirror en and are equally missing the keys), so there is no locale where these render correctly.",
+        "Severity MEDIUM (+2): user-facing text is broken across an entire feature (confirm dialog, error alerts, action buttons, empty/eligibility banners), including the two error-path strings castError/loadError that appear precisely when something already went wrong — degraded but not a crash and no data loss, hence +2 not +3. The i18n-gap-only rubric would be +1, but this is a whole-feature gap compounded by a systematically broken fallback mechanism, so it is scored as a user-facing-breakage finding. Confidence HIGH: statically confirmed by (a) absence of every referenced key from en.json/sk/cs/de and (b) i18next's documented default of returning the key string (truthy) for a missing lookup with returnNull unset, which makes the `??` fallbacks provably unreachable. Fix: add the missing voting.* keys to all locales (the inline `?? '...'` English literals are the ready-made en source), optionally drop the now-redundant `??` fallbacks; also audit for the same t()??literal dead-fallback pattern elsewhere (e.g. documents.loadError at DocumentsScreen.tsx:344 and common.* which do exist, so only voting.* currently surfaces raw)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx",
+        "frontend/apps/mobile/src/locales/en.json"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-votes-dead-invalidation",
+      "title": "WebSocketContext votes query-key mismatch — dead invalidation on vote push",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:72 - categoryToQueryKeys maps the voting notification category to `votes: ['votes']`. The map KEY `votes` is correct (backend NotificationCategory::Votes serializes to the string \"votes\" - confirmed at backend/crates/common/src/notifications/mod.rs:83 and as_str() => \"votes\" at :116), but the VALUE `['votes']` is the query-cache root to invalidate, and no live voting query is cached under `votes`.",
+        "frontend/packages/api-client/src/voting/hooks.ts:24 - the voting query factory is `votingKeys = { all: ['voting'] as const, ... }`. The voting UI uses it: frontend/apps/ppt-web/src/features/voting/pages/VotingPage.tsx:8,42 imports and calls `useVotes` from @ppt/api-client, whose cache keys all descend from `['voting']`. So the live voting list/detail caches sit under the `voting` root, not `votes`.",
+        "frontend/apps/ppt-web/src/App.tsx:101-108 - handleEntityEvent (the onEntityEvent consumer wired into WebSocketProvider at :116) invalidates each resolved key verbatim: `for (const key of queryKeys) queryClient.invalidateQueries({ queryKey: [key] })`. Full traced path: server pushes `notification.created` with payload.category=\"votes\" -> WebSocketContext.tsx:354-359 resolves categoryToQueryKeys['votes']=['votes'] and calls onEntityEvent('notification.created', ['notifications','votes'], ...) -> App.tsx invalidates `['notifications']` (hits) and `['votes']` (prefix-matches NOTHING; the live root is `['voting']`). Net effect: a voting notification refreshes the notification bell but the voting list/detail stays stale until it happens to refetch for another reason. The map's own docstring (:60-67) explicitly names this failure mode ('A missing key silently degrades to the notifications-only fallback, so the corresponding entity feed goes stale on push').",
+        "Dedup/tracking status: NOT a duplicate of plan code-review-ppt-web-core-authed-roots-session-leak. That (open, high) finding is about the SAME `votes`-vs-`voting` naming drift but in a DIFFERENT file and code path - the logout() cache-purge allow-list AUTHED_QUERY_KEY_ROOTS in lib/queryKeys.ts:354 iterated by AuthContext.tsx:614. This finding is the realtime-push invalidation map in contexts/WebSocketContext.tsx:72, which that plan does not reference. Shared root cause, independent live defect: fixing the logout allow-list would not fix the realtime-sync gap, and vice-versa. No existing backlog row covers WebSocketContext.tsx.",
+        "Severity MEDIUM (+2): functional-correctness / data-freshness bug on a user-facing realtime feature (voting) - managers/owners viewing the voting list do not see a newly-created vote appear on push and can act on stale data until a manual refresh or unrelated refetch. No crash, no security impact, no data loss. Confidence HIGH (unusually, for a static-only pass): the full call path is traced end-to-end from the backend category string through the map to the verbatim invalidateQueries call, and the root mismatch (`votes` vs votingKeys.all=`voting`) is deterministic, so the stale-cache outcome is certain whenever a voting notification is delivered; the one unexercised variable is whether any voting query is ALSO registered under a legacy local `votes` root (lib/queryKeys.ts:210 defines one), which would only ADD a redundant hit and does not change the miss on the api-client `voting` root the UI actually uses."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx",
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/packages/api-client/src/voting/hooks.ts"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
+      "title": "useMoveDocumentWithToast toast strings mixed-locale / hardcoded",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts:26-37 - success/error toast title+message are hardcoded Slovak string literals ('Dokument presunuty', '„${doc.title}“ bol presunuty do priecinka.', 'Presun zlyhal', 'Dokument sa nepodarilo presunut.') with no useTranslation/t(); every move toast renders Slovak regardless of the active i18n locale.",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts:47-48 - download-failure toast is hardcoded Slovak ('Stiahnutie zlyhalo', 'Dokument sa nepodarilo stiahnut.'), same i18n bypass.",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx:275-385 - the SAME feature hardcodes toast strings in ENGLISH ('Copy failed', 'Could not copy to clipboard.', 'Revoke failed', 'Share created', 'Public link copied.', `Link: ${shareUrl}`). So the documents feature mixes two hardcoded languages across its toasts.",
+        "Asymmetry confirming this is an accidental gap, not a deliberate opt-out: the sibling file documents/components/MoveFolderDialog.tsx (same feature) DOES use useTranslation()/t() throughout (import at :20, const {t}=useTranslation() at :143 and :295). The toast hooks and DocumentSharePanel were simply not wired to i18n.",
+        "Severity LOW (+1), i18n gap: ppt-web is a react-i18next app; these user-facing move/download/share toasts render in a fixed language (Slovak in the hooks, English in the share panel) for every locale. Confidence medium - the hardcoded literals and the absence of t() are confirmed by static read; whether any non-matching locale is actively configured is runtime/config-dependent. Not covered by any existing backlog row (the tracked toast-i18n rows are workflow-automation and route-group action toasts, not the documents feature)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/hooks/useMoveDocumentWithToast.ts",
+        "frontend/apps/ppt-web/src/features/documents/hooks/useDocumentDownload.ts",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSharePanel.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-hardcoded-strings",
+      "title": "disputes EvidenceUploader labels hardcoded English, bypasses i18n",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 - user-facing validation error messages are hardcoded English string literals ('Unsupported file type: ${...}', 'File too large (max 50 MB): ${file.name}') and are rendered to the user at :267 (<p className=text-xs text-red-600>{item.error}</p>). A rejected upload therefore always shows English regardless of locale.",
+        "EvidenceUploader.tsx:214,217 - drop-zone copy is hardcoded English ('Drop files here or ... browse' and 'JPG, PNG, PDF, MP3, MP4 . max 50 MB per file . up to {MAX_FILES} files'), as is the description-input placeholder at :274 ('Short description (optional)').",
+        "Inconsistency confirming the gap is accidental: the component already imports and uses useTranslation()/t() (:53) for SOME aria-labels (t('aria.addEvidenceFiles') :167, t('aria.dropEvidenceFiles') :185, t('aria.evidenceFiles') :225, t('aria.uploading') :288, t('aria.uploaded') :297), yet the visible copy, the validation error strings, and two aria-labels (:278 `Description for ${item.file.name}`, :312 `Remove ${item.file.name}`) remain hardcoded English.",
+        "Severity LOW (+1), i18n gap on a legally-meaningful flow (Epic 80 Story 80.2 dispute filing). Not a duplicate: backlog row code-review-ppt-web-ui-file-dispute-page-partial-i18n covered the FileDisputePage h1/placeholders and refactor-evidenceuploader-test-tsx-churn covered the EvidenceUploader TEST file - neither covers the EvidenceUploader component's own hardcoded strings. Confidence medium: literals confirmed by static read; triggering requires a non-matching active locale (config-dependent)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-limit-unclamped",
+      "title": "reality-server imports jobs limit param unclamped — DoS enabler",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:115-134 - list_import_jobs (GET /api/v1/imports/jobs, authenticated PortalPrincipal) passes the user-supplied page size straight through as `query.limit.unwrap_or(20)` with NO `.clamp(...)`. The adjacent OFFSET on the very same call IS clamped (`crate::util::clamp_offset_i32(query.offset)` at :125), so the limit is the only unbounded pagination input on this endpoint.",
+        "backend/crates/db/src/repositories/reality_portal/imports.rs:36-69 - the repo binds that i32 limit directly into `... ORDER BY j.created_at DESC LIMIT $3 OFFSET $4` via `.bind(limit)` and `fetch_all`. Two concrete failure modes: (1) a NEGATIVE limit (e.g. `?limit=-1`) reaches Postgres, which raises `ERROR: LIMIT must not be negative`, surfaced only as a generic 500 via `crate::util::errors::db_error(\"list import jobs\", e)` - an unhandled-error-on-user-input path; (2) an OVERSIZED limit (e.g. `?limit=2000000000`) removes the page bound entirely, so the whole result set for that user is materialized into a Vec by fetch_all.",
+        "Asymmetry confirming this is an accidental omission, not intent: EVERY other paginated reality-server list route clamps the user limit - agencies.rs:127 `.unwrap_or(50).clamp(1,200)`, agent_reviews.rs:113 `.unwrap_or(20).clamp(1,100)`, realtors.rs:204 `.unwrap_or(20).clamp(1,100)`, portal_listings.rs:431 `.unwrap_or(20).clamp(1,100)`, articles.rs:155 `.unwrap_or(20).clamp(1,100)`, saved_searches.rs:324-327 `.clamp(1, ALERTS_MAX_LIMIT=200)`, listings.rs clamp_pagination `.clamp(1, MAX_LISTINGS_LIMIT=100)` - and the sibling endpoint in the SAME module, agency_imports.rs:175 list_import_history, uses a hardcoded `LIMIT 100`. list_import_jobs is the lone outlier.",
+        "Dedup/tracking status: NOT a duplicate of the done backlog row code-review-reality-server-pagination-offset-overflow (resolved by PR #2921, 2026-09-01). That sweep added MAX_LIST_OFFSET + clamp_offset/clamp_offset_i32 and applied them to all 9 OFFSET params - which is exactly why list_import_jobs:125 clamps its offset today while leaving the adjacent limit unbounded. The LIMIT clamp was missed by that offset-only sweep and is tracked by no existing backlog item (the only reality-server code-review rows are inquiry-detail-empty-messages and saved-search-watermark-discard, both unrelated). Fresh, still-live on 2026-10-21.",
+        "Severity MEDIUM (+2): authenticated and self-scoped (`WHERE j.user_id = $1`), so no cross-tenant leak and the oversized-limit result set is bounded by the caller's own import-job count - DoS amplification is limited. But the negative-limit -> 500 is a concrete, deterministic bug on a user-facing endpoint, and the missing bound is a clear regression gap from the PR #2911/#2921 clamp sweep. Confidence medium: the full route->repo->SQL bind path is confirmed by static read; the negative-limit 500 is deterministic from Postgres LIMIT semantics but not runtime-confirmed in this pass (no execution per static-only rule)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/crates/db/src/repositories/reality_portal/imports.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-price-map-mode-unvalidated",
+      "title": "reality-server price-map mode param unvalidated",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:230 — `let mode = query.mode.clone().unwrap_or_else(|| \"sale\".to_string());` accepts ANY string for the `mode` query param with no validation, then binds it directly as `transaction_type = $1` (line 343). The docstring on PriceMapQuery.mode (line ~182) says 'sale or rent', but nothing enforces it. An arbitrary `?mode=foo` silently produces an empty `districts` result with HTTP 200 and `mode: \"foo\"` echoed in the response body (PriceMapResponse.mode, line 374), and the empty result is cached under that key for the full 1h TTL.",
+        "backend/servers/reality-server/src/routes/price_map.rs:238-253 — this is INCONSISTENT with the sibling `time_window` param in the SAME handler, which IS strictly validated via a closed `match` that returns `StatusCode::BAD_REQUEST` ('Unsupported time_window {:?} — expected one of 1m, 3m, 12m, 5y') for any unrecognised value. The author's own comment at line 231-233 states the design intent: 'reject unsupported values up-front rather than silently falling back. Otherwise the response echoed back an invalid time_window even though the data was computed for a different interval.' That exact rationale applies verbatim to `mode` (and to `property_type`, bound at line 344 as `($2::text IS NULL OR property_type = $2)` with no enum check), yet neither gets the 400 treatment.",
+        "Severity LOW (+1): no injection (mode/property_type are bound parameters $1/$2, never interpolated into SQL text) and no OOM (the cache is bounded at MAX_PRICE_MAP_CACHE_ENTRIES=10_000). Impact is a correctness/consistency gap: an invalid `mode` returns a misleading empty-but-200 response echoing the garbage value instead of a 400, and burns a cache slot. Confidence medium: the missing validation and the divergence from the time_window handling are confirmed by static read of a single handler; whether clients send bad `mode` values is usage-dependent. NET-NEW: the prior price_map findings in the corpus are code-review-reality-server-price-map-cache-unbounded (cache memory bound, DONE) and code-review-reality-server-assertsqlsafe-format-sql (SQL-safety of the AssertSqlSafe opt-out, DONE) — neither covers query-param input validation, and price_map.rs was last touched by PR #3146 (2026-10-25) after the previous reality-server review pass (2026-10-22)."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-pw-reset-timing-oracle",
+      "title": "reality-server password-reset timing oracle leaks account existence",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-server)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:541-585 — `request_password_reset` is response-enumeration-safe (the route at routes/users.rs:520-560 maps BOTH Sent and UserNotFound to a generic HTTP 200), but it is NOT time-uniform. The UserNotFound branch early-returns at line 554 (`None => return Ok(PasswordResetRequestResult::UserNotFound)`) immediately after the single `find_user_by_email` lookup. The Sent branch then does strictly more work on an existing account: `reset_repo.invalidate_user_tokens(user.id)` (DB write, line 558-560), 32-byte CSPRNG fill + base64 encode + sha256_hex (lines 565-573), and `reset_repo.create(...)` (second DB write, line 574-580). Two extra DB round-trips plus hashing make the found-account path measurably slower than the unknown-email path — an observable timing side-channel (CWE-208) that lets an attacker enumerate which emails are registered despite the uniform 200 status.",
+        "backend/servers/reality-server/src/routes/users.rs:550-560 — the `Ok(PasswordResetRequestResult::UserNotFound)` arm only emits a `tracing::debug!` with an email_log_hash and returns the generic 200; it performs NO compensating/dummy work (no throwaway hash, no fixed delay), so there is nothing equalising the two code paths' latency. The response-body/status uniformity the handler was explicitly designed for is thus undermined by the timing differential.",
+        "Severity LOW (+1): no auth bypass, no data exposure in the response; exploitation requires statistical timing analysis over the network and yields only account-existence, the same class of information already tracked for the register path (code-review-reality-server-register-account-enumeration, response-based, DONE). This finding is the TIMING residual on the DISTINCT password-reset endpoint, which that prior finding does not cover. Confidence medium: the asymmetric work (early return vs 2 DB writes + hashing) is confirmed by static read; the real-world distinguishability depends on network/DB noise, so it is a latent side-channel rather than a runtime-measured one."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs",
+        "backend/servers/reality-server/src/routes/users.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-analytics-no-i18n",
+      "title": "reality-web realtor analytics page strings not i18n'd",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx — the entire authenticated realtor analytics page (UC-51.10) imports NO useTranslations (grep count 0) and renders hardcoded English on a 4-locale portal. Every user-facing string is literal English: L68 `<h1 className=\"title\">Analytics</h1>`, L69 subtitle 'Performance of your listings over time.', the PERIODS selector labels L15-18 'Last 7 days'/'Last 30 days'/'Last 90 days'/'Last year', the five StatCard labels L85-91 'Total listings'/'Active listings'/'Total views'/'Inquiries'/'Conversion rate', the loading state L80 'Loading metrics…', and the error fallback L54 'Could not load analytics.'",
+        "This is the skill Frontend pattern 'Hardcoded user-facing string that should be in i18n (visible text not wrapped in t())', applied to a whole page rather than a stray string. It is distinct from the three done reality-web i18n findings (ComparisonView, RealtorManagement, AgencyErrorStates) — different file, not a dup. Sibling realtor pages in the same route tree do use next-intl, so the pattern here is an outlier regression, not a documented 'Slovak-only' exception (contrast app/[locale]/agency/[slug]/page.tsx, which carries an explicit comment that its hardcoded copy is intentional).",
+        "Severity LOW (+1): no crash and error/loading states exist; purely a localization gap. Confidence medium: statically certain the page has zero t() usage; the fix is to add useTranslations('realtorAnalytics') and move the ~12 strings into messages/{en,sk,cs,de}.json. Note the period labels and stat labels are a fixed closed set, so the keying is mechanical."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-date-locale-ignored",
+      "title": "reality-web dates rendered via toLocaleDateString with no locale arg",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-web)"
+      ],
+      "evidence": [
+        "Systemic locale bug on a 4-locale portal (sk/cs/de/en): date/time values are rendered with `new Date(...).toLocaleDateString()` / `.toLocaleString()` called with NO locale argument, so the output uses the runtime default locale instead of the active portal locale. During Next.js SSR this default is Node's locale (typically en-US), so sk/cs/de visitors are served en-US-formatted dates (MM/DD/YYYY) in the initial HTML — a visible, wrong-for-locale render, and a potential hydration mismatch when the client default differs from the server default.",
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx:40 — `new Date(listing.availableFrom).toLocaleDateString()` and :46 — `new Date(listing.createdAt).toLocaleDateString()`. This exact component already calls `useLocale()` (L17) and correctly passes `locale` to `formatPrice`/`formatNumber` for the price field (L7-12, L32) — so prices localize but dates in the same grid do not. The fix is one argument: `toLocaleDateString(locale)` (locale is already in scope). (AdditionalInfo.tsx is a Phase-1 churn hotspot.)",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx:403 — `<td className=\"date-cell\">{new Date(listing.updatedAt).toLocaleDateString()}</td>` inside ListingRow, which already has `const locale = useLocale()` (L354) and uses it for `formatPrice` on L393. Same price-localized / date-not asymmetry. (AgencyListings.tsx is a Phase-1 churn hotspot, 570 lines.)",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67, :97, :109 — three `new Date(...).toLocaleDateString()` calls (createdAt, scheduledViewing.date, respondedAt) with no locale; this page is otherwise fully next-intl-translated, so the untranslated date format is the lone locale leak and this file has no useLocale import yet.",
+        "Scope note: the same no-locale pattern also appears in components/import/{SyncSchedule.tsx:232,526, FeedImport.tsx:207,263, CrmConnection.tsx:196,202} (toLocaleString for sync timestamps) — same fix class, lower user-visibility (agency-internal import UI). Severity MEDIUM (+2): user-facing wrong-locale render on public listing + agency + inquiry surfaces, with SSR/CSR hydration-mismatch risk; not a crash. Confidence medium: the missing locale argument is statically certain; exact SSR default-locale value is environment-dependent. Fix: pass the active `locale` to every toLocale* call, or route through the existing locale-aware @/lib/format helpers (formatDate-style), matching how price formatting is already handled in these same files."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/listings/sections/AdditionalInfo.tsx",
+        "frontend/apps/reality-web/src/components/agency/AgencyListings.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-raw-enum",
+      "title": "reality-web inquiries page renders raw enum names instead of labels",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67 — the inquiry type is rendered to users as `{inquiry.type.replace('_', ' ')}`, i.e. the raw API enum string with underscores swapped for spaces (then CSS `text-transform: capitalize` on `.inquiry-date`, L192). Two problems: (1) i18n gap — the enum value (e.g. `viewing_request`, `price_inquiry`) is shown verbatim in English on a 4-locale portal, while every other label in this same component is routed through next-intl `t('status.<status>')` (L72). (2) correctness — `String.prototype.replace` with a string argument replaces only the FIRST occurrence, so a three-part enum like `general_price_inquiry` renders as 'general price_inquiry' (second underscore survives); it needs a global replace or, better, an i18n lookup.",
+        "Severity LOW (+1): cosmetic/localization, no functional break. Confidence medium: the single-replace behavior is language-certain and the i18n inconsistency is statically clear against the adjacent t() usage; whether any current inquiry type has 2+ underscores depends on the reality-server enum set (not statically enumerated here). Fix: map the type through a next-intl namespace, e.g. `t('type.' + inquiry.type)`, with keys in messages/{en,sk,cs,de}.json — this both localizes and eliminates the fragile .replace()."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-json-guard-array-gap",
+      "title": "realtor-api parseJsonBody array-case guard gap — resumes mass-cast",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:68-79 — parseJsonBody<T> was added (ref #2276/#2281/#2341) to stop a malformed 200 from crashing 'deep in a component' (its own doc comment, L58-59, cites `res.listings.map`). But the guard only enforces 'non-null, non-array object' (L75); it does NOT validate that the expected array/scalar fields are present. A 200 whose body is a valid object missing the contract field (e.g. `{}`, or `{listings: null}`, or `{total: 0}` without `reviews`) passes the guard and is returned typed as T — so the exact crash the fix targets is still reachable.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:137 — `listMyListings().then((res) => setListings(res.listings))`: if `res.listings` is absent, `listings` state becomes `undefined`. Rendering then hits ListingsTab L445 `if (listings.length === 0)` → `undefined.length` throws (React error boundary / white panel). The `.catch` at L139 does NOT cover this: the deref `res.listings` returns undefined without throwing, so the failure moves to render time, exactly the 'throws deep in a component' symptom the boundary guard was meant to prevent.",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx:160-161 `setReviews(res)` from getRealtorReviews, then ReviewsTab L548 `if (!reviews || reviews.reviews.length === 0)` — the guard checks `reviews` truthiness but not `reviews.reviews`; a `{}` 200 body makes `reviews.reviews.length` throw. L191 `reviews.total` and L195 `reviews.avg_rating.toFixed(1)` have the same exposure.",
+        "Severity MEDIUM (+2): reachable render crash on an authenticated user-facing page (profile) whenever the server/proxy emits a partial-but-object 200 — the scenario the parseJsonBody fix explicitly set out to close, left half-open. Confidence medium: the throw is statically certain given a field-missing object body; the likelihood of such a 200 under the real reality-server contract is the uncertain part (static-only, no runtime confirmation). Fix: make parseJsonBody accept a lightweight shape predicate (or add per-endpoint `Array.isArray(body.listings)` / `Array.isArray(body.reviews)` checks) so array fields are validated at the boundary, and/or default to `res.listings ?? []` / `res.reviews ?? []` at the call sites in profile/page.tsx."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts",
+        "frontend/apps/reality-web/src/app/[locale]/profile/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-agency-i18n-gap",
+      "title": "reality-web realtor agency page i18n gap on key labels",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx:36,46,223 — the agency public profile page imports/uses useTranslations for some copy but hardcodes Slovak literals for its loading, not-found, and empty states: line 36 renders 'Načítavam…' (Loading…), line 46 'Kancelária sa nenašla.' (Office not found), line 223 'Žiadne aktívne ponuky.' (No active offers). These are the exact states a cs/de/en visitor hits most often (slow load, stale slug, agency with no listings), and all three render untranslated Slovak regardless of the active /[locale]/ prefix.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:597 — the realtor contact form's message <textarea> placeholder is the hardcoded Slovak literal 'Dobrý deň, mám záujem o Vaše služby...' instead of a t('...') lookup. A de/en/cs user composing a lead message sees a Slovak prompt. (Line 448's '✉️ {agent.email}' is a data value, not a hardcoded string — not flagged.)",
+        "Both files already import and call useTranslations (4 t(...)/hook references each), so the i18n infrastructure is present and these literals are simply un-externalized — not a 'translations don't exist yet' gap. reality-web's whole product premise is a multi-language (sk/cs/de/en) public portal (see frontend/apps/reality-web/messages/{en,sk,cs,de}.json and apps/CLAUDE.md), so untranslated strings on public realtor/agency pages degrade the core value prop and leak into SSR/SEO output.",
+        "Severity LOW (+1): i18n gap, no correctness/security impact. Confidence medium: the hardcoded literals are confirmed by static read and the files demonstrably use next-intl elsewhere, but which non-sk locales actually render in production is config/traffic-dependent (not runtime-confirmed). Fix: move each literal into messages/*.json under the page's namespace and replace with the already-available t(...)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-crud-en-errors",
+      "title": "reality-web realtor-api CRUD errors hardcoded English",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts:35,73,76,38 — RealtorApiError is thrown with hardcoded English messages ('Network error. Please try again.', 'Malformed response from server.', `Request failed (${status})`). These are not log-only: the realtor/account CRUD pages surface `err.message` verbatim to the user.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx:48,82 — `setLoadError(err instanceof RealtorApiError ? err.message : 'Could not load profile.')` and `setSaveError(... : 'Could not save profile.')`: BOTH branches are English on a 6-locale portal (sk/cs/de/en/pl/hu) — the RealtorApiError branch shows the untranslated lib string, the fallback branch a hardcoded English literal. Same pattern at realtor/listings/new/page.tsx:27 ('Could not create listing. Please try again.'), realtor/listings/[id]/edit/page.tsx:42,61 ('Could not load listing.' / 'Could not save listing.'), realtor/analytics/page.tsx:54 ('Could not load analytics.').",
+        "This is the skill Frontend pattern 'hardcoded user-facing string that should be in i18n', on error/empty paths across the realtor-portal CRUD surface. Distinct from the done/prior reality-web i18n rows (ComparisonView, RealtorManagement, AgencyErrorStates, the 2026-10-25 analytics-page body copy and inquiry-enum) — this cluster is specifically the thrown-error message strings in realtor-api.ts plus the error-state fallbacks in the realtor/* and account/* pages. Note account/listings/[id]/edit/page.tsx:166,213 use Slovak literals ('Načítanie inzerátu zlyhalo.' / 'Uloženie zlyhalo, skúste znova.'), i.e. hardcoded the OTHER direction — same i18n-bypass class, confirming the error strings route around next-intl entirely.",
+        "Severity LOW (+1): no crash; localization gap on error surfaces only. Confidence medium: the hardcoded strings are statically certain; impact depends on how often these error paths fire. Fix: route RealtorApiError messages through an error-code → next-intl key map (or carry a code on the error and translate at the call site), and replace the English/Slovak literal fallbacks with `t('...')` keys in messages/{en,sk,cs,de,pl,hu}.json."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/realtor-api.ts",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-report-page-i18n-gap",
+      "title": "reality-web report page i18n gap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:40 + an in-file comment at :26 — the report-listing page calls useTranslations('pages.report') but only routes the h1/subtitle through it (t('h1') at :260, t('subtitle') at :263); the comment at line 26 explicitly states 'only the title/subtitle go through next-intl today', confirming the rest of the form is intentionally un-externalized rather than an oversight.",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx:361 — the report-reason <textarea> placeholder is the hardcoded Slovak sentence 'Opíšte, prečo nahlasujete tento inzerát. Čím viac detailov uvediete, tým rýchlejšie to preveríme.' with no t(...) wrapper. This is the primary input of the abuse-reporting flow, so a cs/de/en reporter gets Slovak-only guidance.",
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx (attachments block ~line 384) — the attachments field <label> renders the hardcoded Slovak 'Prílohy (čoskoro)' (Attachments (coming soon)). The disabled control itself is intentional and tracked (TODO #3017), but its label is still untranslated user-facing text. (The grep across the app flagged 21 lines carrying Slovak diacritics in this file, confirming the form body is broadly un-i18n'd.)",
+        "Severity LOW (+1): i18n gap on a public, abuse-reporting form, no correctness/security impact. Confidence medium: literals confirmed by static read and the in-file comment documents the partial-i18n state, but production locale exposure is config/traffic-dependent. Fix: externalize the report form's labels/placeholders/option text into messages/*.json under pages.report and expand the existing t(...) usage; keep the #3017 upload control disabled, only translate its label."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-twofactor-stub-false-enabled",
+      "title": "mobile RN TwoFactorScreen falsely reports 2FA enabled (no backend call)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review (segment=mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:40 — handleVerify() only runs a client-side regex `/^\\d{6}$/` on the entered code, then on pass immediately setStep('enabled'); there is NO backend enrollment or TOTP-verification call anywhere in the component",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:99 — step==='enabled' renders the copy 'Two-factor authentication is enabled.' purely from that local regex check, so ANY 6-digit number tells the user 2FA is active when nothing was registered server-side (false sense of account security)",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:76 — the verify step's help text instructs the user to 'Scan the QR code in your authenticator app', but no QR code / otpauth secret is ever rendered or fetched — there is nothing to scan, so a user who follows the instructions enrolls an unrelated/garbage TOTP seed",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:4 — the component docstring itself admits 'The backend endpoints for enrollment aren't exposed through our mobile auth layer yet, so this screen wires up local state' — i.e. the whole flow is a UI scaffold shipped as if functional"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": "plans/code-review-mobile-rn-twofactor-stub-false-enabled.md"
+    },
+    {
+      "id": "code-review-mobile-rn-search-placeholder-i18n",
+      "title": "mobile RN search placeholders hardcoded English (messages/announcements)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx:125 — `placeholder=\"Search messages…\"` is a hardcoded English literal, not wrapped in t(); the app ships sk/cs/de/en and this string will never localize",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx:244 — `placeholder=\"Search announcements...\"` same hardcoded-English i18n gap",
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:234 + frontend/apps/mobile/src/screens/auth/LoginScreen.tsx:93 — contrast: peer screens correctly use t('meters.readingPlaceholder') / t('auth.emailPlaceholder'), so these two are regressions against the established pattern"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/messages/MessagesScreen.tsx",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-auth-screens-untested",
+      "title": "mobile RN auth screens have no unit/integration tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/auth/{LoginScreen,RegisterScreen,ForgotPasswordScreen,TwoFactorScreen,AuthFlow}.tsx — none of these auth-screen components have a sibling *.test.tsx; the only auth coverage is frontend/apps/mobile/src/test/integration/auth.integration.test.tsx",
+        "frontend/apps/mobile/src/test/integration/auth.integration.test.tsx:127 — that suite exercises AuthContext logic (login/logout/refresh/biometric/cross-user cache reset) but renders none of the screen components, so the screens' own branches (validation, error display, step transitions) are untested",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx:38 — concretely, the TwoFactorScreen idle→verify→enabled state machine and its 6-digit validation error path have zero test coverage, which is how the stub-success defect (see code-review-mobile-rn-twofactor-stub-false-enabled) shipped unnoticed"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/auth/LoginScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/RegisterScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/TwoFactorScreen.tsx",
+        "frontend/apps/mobile/src/screens/auth/ForgotPasswordScreen.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-compare-add-limit-toctou",
+      "title": "reality-server compare add-limit has TOCTOU vs tier cap",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (segment=reality-server)",
+        "(ghost — sync from seen_signals 2026-10-27)"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/compare.rs:155-227 — add_to_compare is a classic check-then-act (TOCTOU). It SELECT COUNT(*) FROM compare_lists WHERE user_id=$1 (line 166), rejects with 400 if count >= MAX_COMPARE_LISTINGS (==4, line 172), then — after two more SELECTs — INSERTs the row (line 221). The read and the write are separate statements on a pooled connection with NO transaction, NO SELECT ... FOR UPDATE, and NO row/advisory lock. Two concurrent add_to_compare requests from the same authenticated portal user, each adding a DIFFERENT listing while count==3, both read count=3, both pass the `< 4` gate, and both INSERT — leaving 5 (or more under higher concurrency) rows, silently exceeding the documented per-user cap.",
+        "backend/crates/db/migrations/00105_create_compare_lists.sql:1-12 — the migration comment states 'max 4 entries enforced in application layer' and the table has NO CHECK constraint, trigger, or any DB-level mechanism bounding rows-per-user. So the cap exists ONLY in the racy application check above; the database will happily persist >4 rows. This confirms the TOCTOU is unprotected for the count invariant (unlike the duplicate invariant, which IS backstopped — see next).",
+        "backend/crates/db/migrations/00105_create_compare_lists.sql:11 — CONSTRAINT uq_compare_user_listing UNIQUE (user_id, listing_id) DOES protect data integrity against the separate duplicate-insert race (compare.rs:205-219 checks `already_in` then inserts), so two concurrent adds of the SAME listing cannot create duplicate rows. BUT the losing request's INSERT (compare.rs:221) then fails with a unique violation that is mapped by crate::util::errors::db_error(\"add to compare list\", e) to a generic 500 Internal Server Error, instead of the intended 400 'Listing already in compare list' (compare.rs:214-219). A benign concurrent double-click thus surfaces a 500 — an error-mapping gap on the same handler.",
+        "Severity LOW (+1): no auth bypass and no data-integrity corruption (the unique constraint protects uniqueness). Blast radius is a soft UX cap — a user can end up with 5-6 compare entries instead of 4, and a concurrent double-add of one listing returns 500 rather than 400. Confidence medium: the check-then-act propagation is confirmed by static read and the absence of a count-bounding DB constraint is confirmed in the migration; whether the race is hit in practice is traffic/timing-dependent, so the defect is latent rather than runtime-confirmed. Previously-UNFLAGGED location: the only prior TOCTOU/limit findings in the reality-server corpus are code-review-reality-server-favorites-limit-toctou (2026-10-13, handlers/favorites/mod.rs) and favorites-add-error-mapping-500 (2026-10-01) — both on the favorites path; compare.rs has the same two bug classes and has never been flagged for them."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/compare.rs",
+        "backend/crates/db/migrations/00105_create_compare_lists.sql"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
     }
   ]
 }
