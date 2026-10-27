@@ -367,9 +367,7 @@ async fn resident_forbidden_on_every_privileged_mutation(pool: PgPool) {
             M::Put => app.put(&uri),
             M::Delete => app.delete(&uri),
         };
-        let resp = app
-            .execute(builder.bearer(&token).json(body).build())
-            .await;
+        let resp = app.execute(builder.bearer(&token).json(body).build()).await;
         assert_eq!(
             resp.status,
             StatusCode::FORBIDDEN,
@@ -501,7 +499,11 @@ async fn resident_cannot_see_internal_comments_via_include_flag(pool: PgPool) {
     );
 
     // Manager asking for the same sees the internal note.
-    let manager_token = token_with_role(seed_user(&pool, "mgr-internal@vio-authz.test").await, org, "manager");
+    let manager_token = token_with_role(
+        seed_user(&pool, "mgr-internal@vio-authz.test").await,
+        org,
+        "manager",
+    );
     let manager_resp = app
         .execute(
             app.get(&format!(
