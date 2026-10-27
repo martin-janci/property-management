@@ -13198,17 +13198,19 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "top-3 churn 2026-10-26 (PR #3072)"
+        "top-3 churn 2026-10-26 (PR #3072)",
+        "PR #3181"
       ],
       "evidence": [
         "242 lines of churn (top-1 raw-churn file this run) from PR #3072 (code-review-api-handlers-violations-missing-role-authz) merged 2026-10-25T12:35:49Z — adds role_authz regression suite covering all 13 privileged violations.rs mutations.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "cumulative churn: another 85 lines in PR #3181 (2026-10-27); file remains hot"
       ],
       "files": [
         "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs"
       ],
       "created_at": "2026-10-26",
-      "updated_at": "2026-10-26",
+      "updated_at": "2026-10-27",
       "plan": null
     },
     {
@@ -13245,17 +13247,19 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "top-3 churn 2026-10-26 (PR #3070)"
+        "top-3 churn 2026-10-26 (PR #3070)",
+        "PR #3180"
       ],
       "evidence": [
         "130 lines of churn (top-3 raw-churn file this run) from PR #3070 (gh-issue-3069: scope ViolationRepository::list_notifications by org / cross-tenant IDOR) merged 2026-10-25T12:37:33Z.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "cumulative churn: another 138 lines in PR #3180 (2026-10-27, building-scoped create IDOR)"
       ],
       "files": [
         "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs"
       ],
       "created_at": "2026-10-26",
-      "updated_at": "2026-10-26",
+      "updated_at": "2026-10-27",
       "plan": null,
       "reconciled": {
         "at": "2026-10-27T02:40:24Z",
@@ -13417,6 +13421,92 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs",
+      "title": "Churn hotspot: new violations_mutation_cross_org_idor_tests.rs — 498 lines added in PR #3183",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3183"
+      ],
+      "evidence": [
+        "new file created in PR #3183 (cross-tenant IDOR regression suite + 404 fix for violations mutations); 498 lines — top raw churn this run; test file born with substantial scope"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "title": "Repeated-churn: violations_role_authz_tests.rs — iterated across two consecutive runs (role-authz surface still expanding)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3181",
+        "PR #3159 (prior-run origin)"
+      ],
+      "evidence": [
+        "churned in two consecutive runs (2026-10-26 +242 via earlier PR, 2026-10-27 +85 via PR #3181 enforcing assignee org-membership); indicates the role-authz test surface is still being extended — watch for coverage gaps"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+      "title": "Repeated-churn: community_cross_tenant_idor_tests.rs — IDOR coverage expanded across two runs",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3180",
+        "earlier IDOR PR (prior run)"
+      ],
+      "evidence": [
+        "churned in two consecutive runs (2026-10-26 +130, 2026-10-27 +138 via PR #3180 for building-scoped create IDOR); the community-API IDOR surface is still growing — track for completeness"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3179-reality",
+      "title": "Screen-map drift: PR #3179 touched 4 reality-web routes without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3179"
+      ],
+      "evidence": [
+        "PR #3179 (gh-issue-3175, locale-aware price formatting) touched: account/listings/[id]/edit/page.tsx, price-map/page.tsx, realtor/[id]/page.tsx, sell/page.tsx — none of docs/screens/reality/{account-listing-edit,price-map,realtor,sell}.md were updated",
+        "best-effort heuristic caveat (Phase 1): formatting-only fix may not warrant screen-doc updates; treat as a review candidate not a promotable plan"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ],
+      "created_at": "2026-10-27",
+      "updated_at": "2026-10-27",
+      "plan": null
     }
   ]
 }

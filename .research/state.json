@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-27T01:07:00Z",
-  "last_run_ms": 480000,
-  "last_pr_seen": 3182,
+  "last_run_iso": "2026-10-27T03:17:08Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3183,
   "last_issue_seen": 3175,
-  "last_commit_sha": "6479a39c",
+  "last_commit_sha": "208a487b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -633,9 +633,9 @@
       "recent_churn": 182
     },
     "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-10-26",
-      "recent_churn": 242
+      "runs_seen": 2,
+      "last_seen": "2026-10-27",
+      "recent_churn": 85
     },
     "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx": {
       "runs_seen": 1,
@@ -643,9 +643,14 @@
       "recent_churn": 162
     },
     "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-10-27",
+      "recent_churn": 138
+    },
+    "backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-10-26",
-      "recent_churn": 130
+      "last_seen": "2026-10-27",
+      "recent_churn": 498
     }
   },
   "seen_signals": [
@@ -1269,7 +1274,11 @@
     "code-review-api-handlers-assign-violation-no-member-check",
     "code-review-api-handlers-violations-no-xtenant-idor-tests",
     "code-review-ppt-web-core-neighbors-stale-token-usememo",
-    "code-review-ppt-web-core-iot-ws-hasgivenup-dropped"
+    "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
+    "churn-hotspot-backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs",
+    "repeated-churn-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+    "repeated-churn-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+    "screen-map-drift-pr-3179-reality"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1283,8 +1292,8 @@
     "mobile-native-kmp": "2026-10-25"
   },
   "stats": {
-    "runs": 107,
-    "vectors_created": 464,
+    "runs": 108,
+    "vectors_created": 468,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

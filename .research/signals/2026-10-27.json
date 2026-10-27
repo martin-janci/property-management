@@ -1,14 +1,27 @@
 {
-  "generated": "2026-10-27T01:07:00Z",
-  "trigger": "buffer-low: claimable=6/72 (5 of 6 mobile-native-gated, 1 dup) — refill planner with non-mobile-native vectors",
+  "generated": "2026-10-27T03:12:34Z",
+  "trigger": "scheduled-run: incremental catch-up — 7 merged PRs (#3177-#3183) since prior same-day run at 01:07 UTC",
   "phase1_observation": {
-    "since_iso": "2026-10-26T20:35:00Z",
-    "merged_prs": 0,
-    "open_prs_touched": 6,
+    "since_iso": "2026-10-27T01:07:00Z",
+    "merged_prs": 7,
+    "merged_pr_numbers": [
+      3177,
+      3178,
+      3179,
+      3180,
+      3181,
+      3182,
+      3183
+    ],
+    "open_prs_touched": 0,
     "closed_not_merged": 0,
     "new_issues": 0,
-    "commits_since_cursor": 2,
-    "note": "No external developer activity since last run — only dispatcher's own commits (448cc27, 6479a39). Churn-hotspot set is empty for this run (no new merged PRs). Stalled-review candidates #2555/#2559 already in seen_signals; dependabot opens are dep-update-noise. No lag_warning (LAG_HOURS=4)."
+    "issues_updated": [
+      3174,
+      3175
+    ],
+    "commits_since_cursor": 9,
+    "note": "7 PRs merged in a tight window (#3177 pm-scrum-master coverage reconcile, #3178 iot-ws test hardening, #3179 reality-web price locale, #3180 community IDOR tests, #3181 assign_violation org-membership, #3182 moderation 404 fix, #3183 violations cross-tenant IDOR suite + 404 fix). Issues #3174/#3175 closed by resolving PRs (#3167/#3179). No lag_warning (LAG_HOURS=2)."
   },
   "phase1_5_review": {
     "segments_reviewed": [
@@ -32,14 +45,15 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 2,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
         "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:117 — useNeighbors memoes `getNeighborsApiClient()` with [] deps; api is captured once at mount with the token present then",
         "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts:138 — usePrivacySettings has the same [] deps pattern; the api that drives both the read + the update mutation is pinned to the mount-time token",
         "frontend/packages/api-client/src/neighbors/api.ts:30 — createNeighborsApi() calls buildHeaders(config) ONCE and freezes the Bearer-token `Authorization` header into every subsequent listNeighbors / getPrivacySettings / updatePrivacySettings fetch; this is raw fetch, so there is no axios interceptor to re-inject the rotated token",
-        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:402 — contrast: useMessageRecipients uses the SAME getNeighborsApi factory but memoes with [token] deps, so a token rotation rebuilds the api; useNeighbors.ts omits this and leaves consumers wedged on the stale token"
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts:402 — contrast: useMessageRecipients uses the SAME getNeighborsApi factory but memoes with [token] deps, so a token rotation rebuilds the api; useNeighbors.ts omits this and leaves consumers wedged on the stale token",
+        "[re-emit on same-day incremental run — score_delta=0 to satisfy G4; original score already applied]"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts",
@@ -53,13 +67,14 @@
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "ppt-web-core",
-      "score_delta": 1,
+      "score_delta": 0,
       "confidence": "medium",
       "candidate_vector": "dx",
       "evidence": [
         "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts:54-60 — hook's return type documents `hasGivenUp` as the dedicated signal for 'reconnect budget exhausted, UI should surface explicit offline/retry affordance'",
         "frontend/apps/ppt-web/src/routes/groups/iot.tsx:85 — only consumer destructures `{ liveReadings, isConnected }`; hasGivenUp is dropped on the floor",
-        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:153 — downstream IotDashboardPage receives only `isLive={isConnected}`, which collapses 'temporarily reconnecting' and 'permanently gave up' into the same UI state"
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx:153 — downstream IotDashboardPage receives only `isLive={isConnected}`, which collapses 'temporarily reconnecting' and 'permanently gave up' into the same UI state",
+        "[re-emit on same-day incremental run — score_delta=0 to satisfy G4; original score already applied]"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts",
@@ -67,10 +82,98 @@
       ],
       "expert": "frontend",
       "severity_rationale": "+1 — not a correctness bug, but defeats the intent of the recent reconnect-cap fix (hook exposes `hasGivenUp` so UI can surface a manual-reconnect affordance; UI never reads it). Buffer refill only."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR #3183",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "new file; 498 lines added in PR #3183 (cross-tenant IDOR regression suite for violations.rs mutations) — top raw churn this run"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR #3180",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "cumulative re-emit: 138 lines added in PR #3180 (building-scoped create IDOR); prior run (2026-10-26) +130; previously seen → score_delta=0 per G4 carve-out"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR #3181",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "cumulative re-emit: 85 lines in PR #3181 (role-authz on assign_violation org-membership); prior run +242; previously seen → score_delta=0 per G4 carve-out"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "type": "repeated-churn",
+      "source": "merged-PR #3181",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "violations_role_authz_tests.rs churned in two consecutive runs (2026-10-26 +242, 2026-10-27 +85) — role-authz surface still expanding"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+      "type": "repeated-churn",
+      "source": "merged-PR #3180",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "community_cross_tenant_idor_tests.rs churned in two consecutive runs (2026-10-26 +130, 2026-10-27 +138) — IDOR coverage still expanding"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3179-reality",
+      "type": "screen-map-drift",
+      "source": "merged-PR #3179",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3179 touched 5 reality-web app route files (account/listings/[id]/edit/page.tsx, price-map/page.tsx, realtor/[id]/page.tsx + .test.tsx, sell/page.tsx) without updating docs/screens/reality/*.md",
+        "best-effort heuristic caveat: the change is a locale-aware price-formatting fix (gh-issue-3175), which may not require screen-doc updates — flagging as a review candidate per Phase 1 best-effort clause"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx"
+      ]
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — neither Phase 1.5 finding meets confidence=high + score>=3 + allowlist",
+  "auto_fix_skipped_reason": "no candidate — screen-map-drift is confidence=medium (fails high bar); churn/repeated-churn are analytical (not in allowlist); Phase 1.5 code-review findings are confidence=medium",
   "goal_checks": [
     {
       "goal": "G1",
@@ -82,113 +185,113 @@
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq slurp prev vs cur: cursor/seen_signals/stats delta",
-      "observed": "true",
+      "command": "jq slurpfile against HEAD state.json",
+      "observed": "true (last_pr_seen 3182→3183, last_commit_sha advanced, seen_signals +4)",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique ids in backlog.json",
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "signals ids not already in seen_signals unless cumulative",
-      "observed": "true",
+      "command": "jq slurpfile prev vs current signals, cumulative carve-out",
+      "observed": "true (two prior Phase 1.5 signals re-emitted at score_delta=0; churn re-emits also score_delta=0; new signals not in prior seen)",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "no score>8 cap; decay vacuous (0 open past 14d)",
-      "observed": "true",
+      "command": "score cap + decay check",
+      "observed": "cap: 0 >8; decay: 0 open items past 14d window",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans → adversarial-pass annotation vacuous",
-      "observed": "0 new",
-      "expected": "≤2"
+      "command": "new plans with adversarial pass",
+      "observed": "no new plans this run (vacuously true)",
+      "expected": "exit 0"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "≤2 new plans; metadata/headings/mode checks vacuous",
-      "observed": "0 new",
+      "command": "new plan count ≤2 + metadata/heading/mode/files checks",
+      "observed": "0 new plans this run (≤2)",
       "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "staged paths all under .research/",
-      "observed": "0",
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "0 non-research files staged",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secret / private-hostname patterns in staged diff",
-      "observed": "0",
+      "command": "secrets grep on staged diff",
+      "observed": "0 matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md regen",
-      "observed": "exit 0",
+      "command": "diff backlog.md vs regenerated from backlog.json",
+      "observed": "byte-identical",
       "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "brief 'Phases that failed: none' → cursors move freely",
-      "observed": "none",
-      "expected": "none"
+      "command": "phase-failure honesty — no failed phases",
+      "observed": "all phases succeeded this incremental run",
+      "expected": "n/a"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "all prior plans slugs still in plans/ or plans/_archive/",
-      "observed": "ok",
-      "expected": "ok"
+      "command": "prior-run plans still present or archived",
+      "observed": "no plans mutated this run — convergence trivially holds",
+      "expected": "exit 0"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "plans/_archive/ staged count >= HEAD count",
-      "observed": "22>=22",
-      "expected": "ge"
+      "command": "archive-only-grows: ls-files vs ls-tree HEAD count",
+      "observed": "now=22 head=22 (unchanged, >=head)",
+      "expected": "exit 0"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "exit 0",
+      "command": "diff IDEAS_TRIAGE.md vs regenerated from backlog.json triage rows",
+      "observed": "byte-identical",
       "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "Phase 5 skipped → auto_fix_actions empty",
-      "observed": "[]",
-      "expected": "cap"
+      "command": "auto-fix discipline — length ≤3, pr≤1, issue≤1, comment≤1, idempotency vs auto_fix_history",
+      "observed": "auto_fix_actions is empty (no candidate); auto_fix_history untouched",
+      "expected": "true"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "Phase 1.6 skipped (pm_cursor unchanged) → gate is no-op",
-      "observed": "no-op",
-      "expected": "no-op"
+      "command": "management artifacts valid when Phase 1.6 ran",
+      "observed": "Phase 1.6 skipped this run; action-list.json/risks.json/project-state.md parse clean; pm_cursor.next_index=2 in [0,7]; coverage_cursor.next_index=12 valid (did not advance since Phase 1.6 did not run — GC7 vacuously holds)",
+      "expected": "exit 0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no Telegram token value in staged added lines",
-      "observed": "0",
+      "command": "no literal Telegram bot-token in staged diff",
+      "observed": "0 matches",
       "expected": "0"
     }
   ]
