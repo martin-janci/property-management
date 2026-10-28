@@ -309,18 +309,18 @@
     {
       "task_id": "code-review-ppt-web-ui-invoice-qty-price-nan",
       "branch": "auto-impl/code-review-ppt-web-ui-invoice-qty-price-1ca3fd9a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-28T20:30:23Z",
-      "last_updated": "2026-10-28T20:30:23Z",
-      "status_changed_at": "2026-10-28T20:30:23Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-10-28T20:48:03Z",
+      "status_changed_at": "2026-10-28T20:48:03Z",
+      "pr_number": 3191,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3191",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3191 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=NaN qty/unitPrice guarded (parseNumericInput normalize + submit reject); IG3 two-commit fails-before-fix; verify green; drift=pm-backend label artifact on ppt-web change",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -329,5 +329,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-10-28T20:40:05Z"
+  "generated": "2026-10-28T20:48:03Z"
 }
