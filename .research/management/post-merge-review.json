@@ -1,9 +1,16 @@
 {
-  "generated": "2026-10-27T08:30:43Z",
+  "generated": "2026-10-28T10:30:53Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-28T10:30:53Z",
+      "prs_scanned": 0,
+      "clean": [],
+      "with_issues": [],
+      "note": "demand-driven refill run; all merged PRs in 14d window against dev already labeled post-merge-reviewed (prior run marker 2026-10-28T04:37:57Z). 0 eligible PRs, 0 new findings \u2014 all-deduped."
+    },
     {
       "run_at": "2026-10-27T08:30:43Z",
       "prs_scanned": 7,
@@ -693,15 +700,6 @@
         3019,
         3018
       ]
-    },
-    {
-      "run_at": "2026-10-04T10:29:22Z",
-      "prs_scanned": 0,
-      "clean": [],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review (Tier-1d demand-driven, buffer-starvation trigger: claimable=25 < floor=36). Window=14d (merged>=2026-09-20), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL HTTP-403, direct git push proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred commit/push to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did not touch assignments.json/action-list.json/archives; review-only). Enumeration: search_pull_requests 'is:pr is:merged base:dev merged:>=2026-09-20 -label:post-merge-reviewed -label:no-review-needed' => total_count=0 net-new. Cross-checked list_pull_requests(closed, base=dev, sort=updated desc, perPage=40); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false even for merged PRs). Every in-window merge already carries post-merge-reviewed from prior runs: #2744,#3005 @10-03; #3015,#3014,#3013 @10-02; #3010,#3011,#3009 @10-01; #3001,#3002,#3004 @09-30; #2983,#2989,#2994,#2968,#2984,#2985,#2986,#2988,#2970,#2971,#2990,#2991,#2993,#2995,#2996 @09-27; #2980,#2979 @09-26. Last run's cursor PRs (#3015,#3005,#2744) confirmed still labeled. Top-of-list dependabot PRs (#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939,#2958,#2591,#2933) are closed-unmerged (no merged_at), not merges into dev. #463 @2026-05-24 predates the window. Nothing net-new to review; no reviewer subagents spawned; no follow-up issues opened; no labels applied; no breadcrumb comments. No-op pass (hard rule: never re-review a post-merge-reviewed PR).",
-      "focus_prs": []
     }
   ]
 }
