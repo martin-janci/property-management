@@ -191,7 +191,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-10-26"
+      "source": "pm-analysis 2026-10-26",
+      "first_open_at": "2026-10-28T00:34:57Z"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
