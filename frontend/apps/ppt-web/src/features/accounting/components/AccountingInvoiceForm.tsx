@@ -11,6 +11,17 @@ import type {
 } from '@ppt/api-client';
 import { type FormEvent, useMemo, useState } from 'react';
 
+/**
+ * Parse a numeric <input> value, normalizing the empty/invalid case to 0.
+ * `parseFloat('')` returns NaN, which would otherwise flow into item state and
+ * produce NaN line totals that bypass the submit guard. Non-finite results
+ * (NaN, ±Infinity) collapse to 0 so totals stay a real number.
+ */
+function parseNumericInput(value: string): number {
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 const VAT_RATE_OPTIONS: { label: string; value: AccountingVatRate }[] = [
   { label: 'Standard (21% CZ / 20% SK)', value: 'standard' },
   { label: 'Reduced (10%)', value: 'reduced' },
@@ -77,6 +88,19 @@ export function AccountingInvoiceForm({
       return;
     }
 
+    const submittedItems = items.filter((i) => i.description.trim() !== '');
+
+    // Defense in depth: never persist a line with a non-finite qty/unitPrice
+    // (e.g. a cleared field left NaN in state). parseNumericInput normalizes on
+    // entry, but guard the submit path too so NaN totals can never be sent.
+    const hasNonFinite = submittedItems.some(
+      (i) => !Number.isFinite(i.qty) || !Number.isFinite(i.unitPrice)
+    );
+    if (hasNonFinite) {
+      alert('Quantity and unit price must be valid numbers');
+      return;
+    }
+
     onSubmit({
       contactId,
       number,
@@ -84,7 +108,7 @@ export function AccountingInvoiceForm({
       dueDate,
       currency,
       variableSymbol: variableSymbol || undefined,
-      items: items.filter((i) => i.description.trim() !== ''),
+      items: submittedItems,
       country,
     });
   };
@@ -255,7 +279,7 @@ export function AccountingInvoiceForm({
                     <input
                       type="number"
                       value={item.qty}
-                      onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value))}
+                      onChange={(e) => updateItem(index, 'qty', parseNumericInput(e.target.value))}
                       className="block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
                     />
                   </td>
@@ -263,7 +287,9 @@ export function AccountingInvoiceForm({
                     <input
                       type="number"
                       value={item.unitPrice}
-                      onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value))}
+                      onChange={(e) =>
+                        updateItem(index, 'unitPrice', parseNumericInput(e.target.value))
+                      }
                       className="block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
                     />
                   </td>
@@ -291,7 +317,9 @@ export function AccountingInvoiceForm({
                       <input
                         type="number"
                         value={item.vatRate}
-                        onChange={(e) => updateItem(index, 'vatRate', parseFloat(e.target.value))}
+                        onChange={(e) =>
+                          updateItem(index, 'vatRate', parseNumericInput(e.target.value))
+                        }
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
                         placeholder="%"
                       />
