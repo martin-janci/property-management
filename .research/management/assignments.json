@@ -243,15 +243,15 @@
       "branch": "auto-impl/pm-frontend-ppt-web-authed-roots-session-d25a9869",
       "status": "review",
       "claimed_at": "2026-10-28T12:35:17Z",
-      "last_updated": "2026-10-28T12:55:42Z",
+      "last_updated": "2026-10-28T14:35:11Z",
       "status_changed_at": "2026-10-28T12:55:42Z",
       "pr_number": 3190,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3190",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=3190 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=AUTHED_QUERY_KEY_ROOTS allow-list already complete; real gap was enforcement test — personMonthKeys unpinned; added import-scan drift guard (red pre-fix) + listed personMonthKeys (green); VERIFY OK 5153 tests",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=ab1d94a321090a60355cce3d8b9d65e1a001f1f0 note=test-only-logout-purge-drift-guard; CI-green; self-approval-blocked posted-as-COMMENT + labeled needs-human-review (author==dispatcher account); awaiting human approval+merge",
+      "last_reviewed_oid": "ab1d94a321090a60355cce3d8b9d65e1a001f1f0",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -263,5 +263,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-10-28T12:55:51Z"
+  "generated": "2026-10-28T14:37:37Z"
 }
