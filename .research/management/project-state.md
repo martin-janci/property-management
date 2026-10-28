@@ -1,8 +1,45 @@
 # PPT Project State
 
-_Generated: 2026-10-26 — routine Phase 1.6 incremental upkeep. Role focus: **pm-backend** (87-day stale rotation slot; pm-cursor idx 1 → 2). Coverage `scan_kind=upkeep`; coverage_cursor idx 11 → 12 (epic-8a Notification Preferences re-checked, all 3 stories still done, no material change). pm-scrum-master always-on._
+_Generated: 2026-10-28 — routine Phase 1.6 incremental upkeep. Role focus: **pm-frontend** (83-day stale rotation slot; pm-cursor idx 2 → 3). Coverage `scan_kind=upkeep`; coverage_cursor idx 12 → 0 (wrap on 13 epics; epic re-check this run is a no-op in text — nothing moved, all 49/49 stories remain done). pm-scrum-master always-on._
 
-## Delta since last routine run (2026-10-22)
+## Delta since last routine run (2026-10-27 01:07 UTC)
+
+- **1 PR merged this window: #3183** (code-review-api-handlers-violations-no-xtenant-idor-tests) — cross-tenant IDOR regression suite + a two-commit `test:` + `fix:` split that also closed a cross-tenant *write* IDOR in `create_enforcement_action`. 498-line brand-new mutation-IDOR regression suite, 44-line fix across routes + repo. Not a coverage story.
+- **Regression surfaced immediately: #3187** — the new suite's `cross_org_assign_violation_is_not_found` case is red on `dev` because `assign_violation` returns 403 instead of 404 for a foreign-org id. Fix PR **#3188** is open + bot-approved + CI-green + mergeable, but labeled `needs-human-review` — the single required human merge unblocks the backend `test` check for every other PR.
+- **4 new review-pool PRs touched since last run** — #3184 (role_authz suite expansion), #3185 (ppt-web-core neighbors stale token), #3186 (ppt-web-core IoT WS give-up), #3188 (gh-issue-3187 cross-org IDOR). All approved + human-gated.
+- **Pipeline wedge persists:** WIP 9 ≥ cap 8; claimable 8/72 < floor 36; all 9 active PRs reviewer-approved + `needs-human-review`. The dispatcher cannot merge; the research routine cannot refill until a human lands the queue (merging just two or three would unwedge both knobs).
+- **Research Phase 1.5 (ppt-web-ui) net-new signals: 3** — one `security` (+2, high) promoted to `plans/code-review-ppt-web-ui-privacy-deletion-bypass.md` under the security fast-track, two `bug` (+1 each, low severity) left in backlog.
+- **Churn hotspots (3):** the new mutation-IDOR regression suite (+498, one-time big-diff), `community_cross_tenant_idor_tests` (+138, cumulative re-emit — row already done), `violations_role_authz_tests` (+85, repeated-churn — bumps the existing hotspot row score 1 → 2).
+
+### pm-frontend rotation lens — 2026-10-28
+
+(First run in 83 days; cursor idx 2 → 3.)
+
+**Risks and concerns on the frontend side**
+
+- **Four approved frontend PRs are waiting on a human and none are merging.** #3185 (stale neighbors token), #3186 (IoT WebSocket give-up), #3119 (NewsScreen i18n), #3024 (dashboard screen-maps docs, 22 days in review). #3185 / #3186 are runtime-correctness fixes in ppt-web-core; the only merge in this window was backend-only (#3183). Severity: medium.
+- **#3024 has been in review for 22 days** — screen-map reconciliation docs drift against new route changes, and any rebase conflict there surfaces late through `screen-map.yml`. Severity: low–medium.
+- **Mobile RN has no usable test signal** — #2951 (jest-expo infra block) means #3119 and any other mobile change this sprint rest on code review alone. Severity: medium.
+- **ppt-web has two parallel invoice stacks** — `features/financial/` (`InvoiceManagementPage`, `InvoiceList`, `InvoiceForm`, `InvoiceDetail`, `OverdueInvoicesList`, routes in `routes/groups/financial.tsx`) and `features/accounting/` (`AccountingInvoiceManagementPage`, routes in `routes/groups/accounting.tsx`); `features/subscription/` adds a third `InvoiceCard`. The accounting page has a page test, the financial stack has `InvoiceList.test.tsx` + a payments-onerror route test, but there is **no page-level test for `financial/pages/InvoiceManagementPage`, `InvoiceDetail`, `InvoiceForm`, or `FinancialDashboardPage`** — likely the source of the 3 Tier-1d accounting-invoice signals the dispatcher dropped earlier in the week. Severity: medium.
+- **Real-time error handling in ppt-web-core is a pattern** — the shape #3185 and #3186 fix (stale token in a mount-time memo; missing give-up state in the hook consumer) probably recurs in other WebSocket / token-bound hooks (notifications live view, fault live view). Severity: medium.
+
+**Next 3–5 actionable items**
+
+1. **Human-merge sweep.** Merge #3188 first (unblocks the required `test` check for every backend PR via #3187), then the frontend-approved batch #3185 → #3186 → #3119 → (#3024 after `/screens validate` rebase). Owner: human maintainer. Effort: ~30 min.
+2. **Audit the two invoice stacks and backfill component tests.** Compare `financial/` vs `accounting/` for duplicated types, API hooks, status enums; write loading/empty/error-state tests mirroring `AccountingInvoiceManagementPage.test.tsx` for `InvoiceManagementPage`, `InvoiceForm`, `InvoiceDetail`, `FinancialDashboardPage`. Owner: pm-frontend. Effort: ~0.5 day audit + ~1 day tests. Refills the claimable buffer with concrete vectors.
+3. **Sweep other WebSocket / token-bound hooks for the #3185 / #3186 pattern.** Check give-up / backoff cap, user-visible error / reconnect state, token refresh on reconnect. File issues for any gaps. Owner: pm-frontend. Effort: ~0.5 day.
+4. **Decide how to verify mobile RN in the cloud** (root cause behind #2951). Spike a CI-only jest job as the gate, or pin the failing infra dependency. Until then, label mobile PRs "review-only verified". Owner: DevOps + mobile dev. Effort: ~1 day spike.
+5. **After #3119 merges, extend the i18n fallback check** to the remaining RN screens (`t('key', { defaultValue: raw })` pattern); grep for hard-coded strings and for missing sk/cs/de/en keys. Owner: mobile dev. Effort: ~0.5 day.
+
+**Open questions for the human product owner**
+
+- Is `features/accounting/` meant to replace `features/financial/` for invoices, or are the two intentionally separate (manager vs. owner views)? Decides consolidate-vs-test-both.
+- Can we get a merge cadence / SLA for approved PRs? #3024 has waited 22 days; four PRs are queued behind the human gate.
+- Should mobile RN changes keep shipping while jest can't run in CI (#2951)?
+
+<sub>Prior upkeep note (archived): 2026-10-26 — pm-backend rotation; coverage_cursor 11 → 12 (epic-8a Notification Preferences re-checked). Delta section preserved below.</sub>
+
+### Delta since 2026-10-22 (archived — superseded by the 2026-10-28 section above)
 
 - **3 PRs merged** (#3159, #3160, #3166) — all reality-web code-review follow-ups:
   - **#3159** reality-web realtor-api shape validation (defensive parsing)

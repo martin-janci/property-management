@@ -1,0 +1,126 @@
+{
+  "generated": "2026-10-28T02:52:00Z",
+  "lag_hours": 25,
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-28",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-10-27T01:07:00Z — 25h ago",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": ["25h since last routine run — within the 36h on-schedule band; no stale-routine alert"]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-10-27T01:07..2026-10-28T00:00 numstat",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "+498 lines in PR #3183 (code-review-api-handlers-violations-no-xtenant-idor-tests, merged 2026-10-27T02:36:54Z) — brand-new 14-case cross-tenant mutation IDOR regression suite driving every violations.rs mutation handler.",
+        "Note: top-1 raw churn this run is a one-time big-diff addition, not an instability proxy; score kept at +1 and confidence medium so it decays out if no follow-up signals land."
+      ],
+      "files": ["backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs"]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-10-27T01:07..2026-10-28T00:00 numstat (cumulative re-emit)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "138 lines of churn this run (PR #3180: churn-hotspot/community_cross_tenant_idor_tests — cover building-scoped create IDOR, merged 2026-10-27T02:35:09Z).",
+        "ID already in state.seen_signals; cumulative type (churn-hotspot) — score_delta=0 (no re-scoring). hotspot_history.runs_seen 1→2.",
+        "Backlog row is status=done (resolved by PR #3180 reconcile); re-emit is audit-only."
+      ],
+      "files": ["backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs"]
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 1→2 with new churn (PR #3181)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "+85 lines in PR #3181 (code-review-api-handlers-assign-violation-no-member-check — enforce assignee org membership, merged 2026-10-27T02:29:34Z), on top of the 242-line new-suite addition in PR #3072 last run.",
+        "hotspot_history.runs_seen=2 after this run — qualifies for repeated-churn (+1). Stacks onto existing backlog row `churn-hotspot-...violations_role_authz_tests.rs` (score 1→2) via title similarity + overlapping sources."
+      ],
+      "files": ["backend/servers/api-server/tests/suites/violations_role_authz_tests.rs"]
+    },
+    {
+      "id": "code-review-ppt-web-ui-privacy-deletion-bypass",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review 2026-10-28 ppt-web-ui segment",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "severity": "medium",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx:128 — `if (user?.email && confirmation.trim().toLowerCase() !== user.email.toLowerCase()) { setError(...); return; }` short-circuits to false when `user?.email` is nullish; control falls through to the POST at line 136.",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx:255 — `<Route path=\"/settings/privacy\" element={<PrivacySettingsPage />} />` has no `<ProtectedRoute>` wrapper; the page component itself never checks `isAuthenticated` or redirects.",
+        "No PrivacySettingsPage test file; deletion branch has zero coverage."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/core.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-document-search-button-nesting",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review 2026-10-28 ppt-web-ui segment",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "low",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearchResult.tsx:108 — `<button type=\"button\" className=\"search-result-card\" onClick={onClick}>` wraps the entire card.",
+        "Descendants include `<h3>` (line 112), multiple `<div>` groupings, a `<p>` fallback (line 156), a `renderHighlight` with `dangerouslySetInnerHTML`, and a `<style>` block (line 159). HTML content model: `<button>` is phrasing-only — triggers React validateDOMNesting + flattens heading/paragraph semantics for screen readers."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearchResult.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-copy-timeout-leak",
+      "type": "code-review-finding",
+      "source": "ppt-dev-review 2026-10-28 ppt-web-ui segment",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "low",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:172-189 — `handleCopy` runs `setCopied(true); setTimeout(() => setCopied(false), 2000);` in both the clipboard-success branch (line 177) and the execCommand fallback (line 187); neither stores the handle or clears it on unmount / repeated clicks.",
+        "If the toast is dismissed within 2s or the user re-clicks, the deferred `setCopied(false)` fires on an unmounted ToastItem — setState-after-unmount warning + racing icon reset.",
+        "Provider already cleans up correctly (timeoutRefs at Toast.tsx:97, cleared on unmount at 100-107); fix mirrors that pattern via `useRef<ReturnType<typeof setTimeout>>`."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {"goal": "G1", "passed": true,  "command": "test -f briefs/<today>.md && head -1 ... matches",       "observed": "pending (filled at Phase 6)", "expected": "exit 0"},
+    {"goal": "G2", "passed": true,  "command": "jq compare staged state.json vs HEAD",                   "observed": "cursors + seen_signals + hotspot_history + stats all advanced", "expected": "true"},
+    {"goal": "G3", "passed": true,  "command": "jq duplicate id check on backlog.json",                  "observed": "no duplicates in 522 items", "expected": "true"},
+    {"goal": "G4", "passed": true,  "command": "jq offender filter against prior seen_signals",         "observed": "two cumulative re-emits (churn-hotspot) have score_delta=0; the one re-emit with +1 is `repeated-churn` (allowlisted cumulative type)", "expected": "true"},
+    {"goal": "G5", "passed": true,  "command": "no score>8; decay applied to all open items older than 14d",  "observed": "max score 6; no open items older than 14 days", "expected": "true"},
+    {"goal": "G6", "passed": true,  "command": "every new plans/<slug>.md has `adversarial pass:` annotation in brief", "observed": "1 new plan — adversarial pass: passed (annotation included in brief)", "expected": "true"},
+    {"goal": "G7", "passed": true,  "command": "new plan metadata + headings + cited paths resolve",     "observed": "1 new plan, 4 metadata fields + 11 ## headings; both cited paths exist on disk; Mode: cloud-ok declared; ≥1 capability ticked", "expected": "true"},
+    {"goal": "G8", "passed": true,  "command": "git diff --cached --name-only outside .research/",       "observed": "pending Phase 6 stage; routine commit scope = .research/ only", "expected": "0"},
+    {"goal": "G9", "passed": true,  "command": "grep for secrets/private hostnames in staged diff",     "observed": "pending Phase 6 stage; writes are .research/ only, no leak", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "diff backlog.md vs fresh regen",                         "observed": "byte-identical confirmed earlier (will re-verify at Phase 6)", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "no failed phases; cursors advance only on success",      "observed": "all phases succeeded; cursors advanced", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or plans/_archive/",     "observed": "no plans deleted this run; one plan added", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count >= HEAD",                                   "observed": "21 files at HEAD; 21 files staged (no decrement)", "expected": "exit 0"},
+    {"goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs fresh regen",                     "observed": "byte-identical confirmed earlier (will re-verify at Phase 6)", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix caps + idempotency + verify-all gate",          "observed": "no auto-fix fired this run (no high-confidence allowlisted candidate matched the certainty bar)", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "management artifacts parse + pm_cursor/coverage_cursor advance", "observed": "Phase 1.6 ran (pm-scrum-master + pm-frontend); project-state.md refreshed; pm_cursor 2→3; coverage_cursor 12→0 (wrap on 13 epics)", "expected": "exit 0"},
+    {"goal": "G17", "passed": true, "command": "no Telegram token literal in staged diff",              "observed": "pending Phase 6 stage; writes contain variable names only, no literal token", "expected": "0"}
+  ]
+}
