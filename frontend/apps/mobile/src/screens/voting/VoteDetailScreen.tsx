@@ -199,11 +199,30 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
 
   const isAnswerComplete = (q: ApiVoteQuestion): boolean => {
     if (!q.is_required) return true;
+    // Ranked questions always carry a full ordering: the declared option order
+    // is the default ballot until the voter reorders, so they're complete as
+    // long as there are options to rank.
+    if (q.question_type === 'ranked') return (q.options?.length ?? 0) > 0;
     const v = selections[q.id];
     if (Array.isArray(v)) return v.length > 0;
     return typeof v === 'string' && v.length > 0;
   };
   const allRequiredAnswered = questions.every(isAnswerComplete);
+
+  // Ranked answers are ordered option-id arrays whose position expresses
+  // preference (the backend weights rank 0 highest — see repositories/vote.rs).
+  // A ranked question the voter never touched still submits the declared option
+  // order rather than a missing answer, so the ballot always carries a complete
+  // ordering instead of a bare option set.
+  const buildAnswers = (): Record<string, string | string[]> => {
+    const answers: Record<string, string | string[]> = { ...selections };
+    for (const q of questions) {
+      if (q.question_type === 'ranked' && !Array.isArray(answers[q.id])) {
+        answers[q.id] = [...(q.options ?? [])].sort((a, b) => a.order - b.order).map((o) => o.id);
+      }
+    }
+    return answers;
+  };
 
   const submit = () => {
     if (!activeUnit) return;
@@ -227,7 +246,7 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
               {
                 unit_id: activeUnit.unit_id,
                 delegation_id: activeUnit.delegation_id,
-                answers: selections,
+                answers: buildAnswers(),
               },
               {
                 onSuccess: (receipt) => {
@@ -265,6 +284,12 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
         : [...existing, optionId];
       return { ...prev, [questionId]: next };
     });
+  };
+
+  // Ranked questions capture the full option ordering (position = preference).
+  // The card hands back the reordered list; we store it verbatim.
+  const setRank = (questionId: string, order: string[]) => {
+    setSelections((prev) => ({ ...prev, [questionId]: order }));
   };
 
   return (
@@ -338,6 +363,7 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
                   disabled={!canVote}
                   onSingle={(optionId) => toggleSingle(q.id, optionId)}
                   onMulti={(optionId) => toggleMulti(q.id, optionId)}
+                  onRank={(order) => setRank(q.id, order)}
                 />
               ))
             )}
@@ -439,6 +465,7 @@ interface QuestionCardProps {
   disabled: boolean;
   onSingle: (optionId: string) => void;
   onMulti: (optionId: string) => void;
+  onRank: (order: string[]) => void;
 }
 
 function QuestionCard({
@@ -448,10 +475,27 @@ function QuestionCard({
   disabled,
   onSingle,
   onMulti,
+  onRank,
 }: QuestionCardProps) {
-  const isMulti =
-    question.question_type === 'multiple_choice' || question.question_type === 'ranked';
+  // `ranked` is NOT a multi-select: it captures an ordered preference list, so
+  // it gets its own reorderable renderer. Only `multiple_choice` is a genuine
+  // unordered checkbox group.
+  const isMulti = question.question_type === 'multiple_choice';
+  const isRanked = question.question_type === 'ranked';
   const sortedOptions = [...(question.options ?? [])].sort((a, b) => a.order - b.order);
+
+  if (isRanked) {
+    return (
+      <RankedQuestionCard
+        index={index}
+        question={question}
+        sortedOptions={sortedOptions}
+        selection={selection}
+        disabled={disabled}
+        onRank={onRank}
+      />
+    );
+  }
 
   return (
     <View style={s.card}>
@@ -494,6 +538,94 @@ function QuestionCard({
             </Pressable>
           );
         })}
+      </View>
+    </View>
+  );
+}
+
+interface RankedQuestionCardProps {
+  index: number;
+  question: ApiVoteQuestion;
+  sortedOptions: ApiQuestionOption[];
+  selection: string | string[] | undefined;
+  disabled: boolean;
+  onRank: (order: string[]) => void;
+}
+
+/**
+ * Ranked-choice ballot input. The voter orders every option; the array
+ * position is the preference (rank 1 = top). Mirrors the ppt-web `Ranked`
+ * input: the declared option order is the default ballot until the voter
+ * moves a row, and the full ordering is what gets submitted so the backend
+ * can weight by rank position (repositories/vote.rs).
+ */
+function RankedQuestionCard({
+  index,
+  question,
+  sortedOptions,
+  selection,
+  disabled,
+  onRank,
+}: RankedQuestionCardProps) {
+  const { t } = useTranslation();
+  const order =
+    Array.isArray(selection) && selection.length > 0 ? selection : sortedOptions.map((o) => o.id);
+  const labelFor = (id: string) => sortedOptions.find((o) => o.id === id)?.text ?? id;
+
+  const move = (from: number, delta: number) => {
+    const to = from + delta;
+    if (to < 0 || to >= order.length) return;
+    const next = [...order];
+    [next[from], next[to]] = [next[to], next[from]];
+    onRank(next);
+  };
+
+  return (
+    <View style={s.card}>
+      <Text style={styles.questionLabel}>Q{index}</Text>
+      <Text style={s.cardTitle}>
+        {question.question_text}
+        {question.is_required ? ' *' : ''}
+      </Text>
+      <Text style={[s.cardBody, { marginBottom: 8 }]}>
+        {question.description ??
+          t('voting.rankHint') ??
+          'Order the options by preference (1 = most preferred).'}
+      </Text>
+
+      <View style={{ marginTop: 8 }}>
+        {order.map((id, i) => (
+          <View
+            key={id}
+            style={[styles.optionRow, styles.rankRow, disabled && styles.optionRowDisabled]}
+          >
+            <View style={styles.rankBadge}>
+              <Text style={styles.rankBadgeText}>{i + 1}</Text>
+            </View>
+            <Text style={[styles.optionLabel, { flex: 1 }]}>{labelFor(id)}</Text>
+            <Pressable
+              style={[styles.rankButton, (disabled || i === 0) && styles.rankButtonDisabled]}
+              disabled={disabled || i === 0}
+              onPress={() => move(i, -1)}
+              accessibilityRole="button"
+              accessibilityLabel={t('voting.moveUp') ?? 'Move up'}
+            >
+              <Text style={styles.rankButtonText}>↑</Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.rankButton,
+                (disabled || i === order.length - 1) && styles.rankButtonDisabled,
+              ]}
+              disabled={disabled || i === order.length - 1}
+              onPress={() => move(i, 1)}
+              accessibilityRole="button"
+              accessibilityLabel={t('voting.moveDown') ?? 'Move down'}
+            >
+              <Text style={styles.rankButtonText}>↓</Text>
+            </Pressable>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -545,6 +677,26 @@ const styles = StyleSheet.create({
   },
   optionRowSelected: { backgroundColor: '#eff6ff', borderColor: colors.accent },
   optionRowDisabled: { opacity: 0.7 },
+  rankRow: { gap: 8 },
+  rankBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankBadgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  rankButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankButtonDisabled: { opacity: 0.3 },
+  rankButtonText: { fontSize: 16, color: colors.text, fontWeight: '600' },
   optionLabel: { fontSize: 14, color: colors.text, flex: 1 },
   optionLabelSelected: { color: colors.accent, fontWeight: '500' },
   radio: {
