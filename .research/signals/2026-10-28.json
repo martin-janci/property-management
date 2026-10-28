@@ -1,0 +1,380 @@
+{
+  "run_date": "2026-10-28",
+  "run_iso": "2026-10-28T10:54:19Z",
+  "signals": [
+    {
+      "id": "stalled-review-pr-3108",
+      "type": "stalled-review",
+      "source": "PR #3108",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "Open draft PR #3108 (gh-issue-3104: fix owner-analytics portfolio summary 500) age=11d, no reviewDecision",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-3075",
+      "type": "stalled-review",
+      "source": "PR #3075",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "Open draft PR #3075 (code-review-api-handlers-violations-number-count-race) age=15d, no reviewDecision",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-3119",
+      "type": "stalled-review",
+      "source": "PR #3119",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "Open PR #3119 (gh-issue-3116: add i18n defaultValue fallback to NewsScreen category badge) age=10d, no reviewDecision",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "type": "churn-hotspot",
+      "source": "git log 14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/routes/violations.rs: 3 commits in 14d window (IDOR patches + role gating)",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log 14d",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs: 3 commits in 14d window (test suite being iteratively hardened)",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+      "type": "churn-hotspot",
+      "source": "git log 14d",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": "backend/servers/api-server/src/routes/aml_dsa/moderation.rs: 3 commits in 14d window — re-emit (cumulative, in seen_signals), no score re-apply",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-os-rng-expect-panics",
+      "type": "code-review-finding",
+      "source": "backend/servers/reality-server/src/handlers/users/mod.rs:566-568, backend/servers/reality-server/src/routes/sso.rs:706-708",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "Both production request paths generate secrets via `rand::rngs::SysRng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")` — a transient OS-RNG failure (seen in constrained containers / entropy exhaustion) would unwind the task and crash the request instead of returning a 500. Pattern is duplicated in password-reset token issuance (handlers/users/mod.rs:568) and PKCE code verifier generation on the SSO authorize path (routes/sso.rs:708). try_fill_bytes is the fallible API specifically to surface RNG failure — swallowing it with .expect reintroduces the panic path.",
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs",
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-portal-listing-price-unvalidated",
+      "type": "code-review-finding",
+      "source": "backend/servers/reality-server/src/routes/portal_listings.rs:207-260",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "`create_listing` / `update_listing` accept `price: Decimal` with zero validation — no positivity check, no upper bound, no NaN/negative guard. Migration 00049_create_listings.sql defines `price DECIMAL(15,2) NOT NULL` with NO CHECK constraint; the enum fields already have an in-handler allow-list but price lacks the equivalent `price > Decimal::ZERO` guard.",
+      "files": [
+        "backend/servers/reality-server/src/routes/portal_listings.rs",
+        "backend/crates/db/migrations/00049_create_listings.sql"
+      ]
+    },
+    {
+      "id": "code-review-reality-server-reports-status-filter-unvalidated",
+      "type": "code-review-finding",
+      "source": "backend/servers/reality-server/src/routes/reports.rs:352-383",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": "`list_my_reports` binds `query.status: Option<String>` directly into the SQL (`AND ($4::text IS NULL OR status = $4)`) without validating it against the four known enum values (received, in_review, resolved, rejected). Not SQL-injectable (sqlx binds), but any unknown value silently returns an empty page and the OpenAPI param doc at line 131 (`Filter by status: received, in_review, resolved, rejected`) is only honored client-side. Should reject with 400 for a value outside the enum, matching the pattern already used in `routes/portal_listings.rs::validate_enum`.",
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-moderation-report-flood",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:627-684 report_content (POST /moderation/report, wired in aml_dsa/mod.rs:88) is open to EVERY authenticated user (no require_moderator_role; the handler comment itself notes 'This endpoint is open to every authenticated user'). It validates only reason length (validate_optional_text_field, MAX_REPORT_REASON_LEN) and resolves the content owner, then calls create_moderation_case.",
+        "backend/crates/db/src/repositories/compliance.rs:431-470 create_moderation_case does a blind INSERT INTO moderation_cases (...) with NO dedup/idempotency check — no lookup for an existing open/pending case on the same (content_type, content_id) and no per-reporter guard. Combined with the open-to-all route there is no rate limit anywhere (grep for rate_limit/RateLimit/dedup/find_open_case across routes/aml_dsa/ returns nothing; aml_dsa/mod.rs router adds no limiting layer on /moderation/report).",
+        "Impact (medium, abuse/DoS + data-integrity): any authenticated tenant member can POST the same content_id repeatedly to create unbounded moderation_cases rows — flooding the moderator queue (get_moderation_queue), skewing get_moderation_stats, and bloating the table. Confidence medium: reachability fully traced (route -> handler -> repo INSERT); runtime throughput not measured. Suggested fix vector: add a unique/partial index or a repo-side 'return existing open case for (org, content_type, content_id)' dedup, plus a per-user report rate limit on the open endpoint."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-appeal-no-status-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480-551 file_appeal checks ONLY content ownership (existing.content_owner_id == user.user_id) and org scoping; it does NOT check the case's current status before appealing.",
+        "backend/crates/db/src/repositories/compliance.rs:836-861 file_appeal issues UPDATE moderation_cases SET appeal_filed=TRUE, appeal_reason=$2, appeal_filed_at=NOW(), status='appealed' ... WHERE id=$1 AND organization_id=$3 — the WHERE clause has NO status guard. So a case in ANY state (open/under_review, or one whose appeal was already decided via decide_appeal -> appeal_upheld/appeal_rejected) is unconditionally flipped back to status='appealed', overwriting appeal_reason/appeal_filed_at.",
+        "Impact (medium, state-machine / DSA appeal finality): a content owner can re-file an appeal repeatedly, including after a final decision, silently re-opening a closed case and resetting the appeal workflow — defeating appeal finality and enabling appeal-spam. Confidence medium: traced handler->repo; the exact allowed status set for an appeal is a product decision, but the absence of ANY status guard is a definite gap. Suggested fix vector: gate file_appeal on an appealable status set (e.g. WHERE status IN (...) AND appeal_filed = FALSE) and return 409 CONFLICT otherwise."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:170-189 — ToastItem.handleCopy sets copied=true then schedules `setTimeout(() => setCopied(false), 2000)` on BOTH the success path (line 177) and the execCommand fallback path (line 187). Neither timer id is stored or cleared, and there is no unmount-cleanup effect in ToastItem.",
+        "Toast.tsx:119-144 — a toast auto-dismisses after its duration (default per getDefaultDuration) and, independently, `visibleToasts = toasts.slice(-MAX_VISIBLE_TOASTS)` (line 144, MAX_VISIBLE_TOASTS=3) unmounts the oldest ToastItem as soon as a 4th toast appears. Either event can unmount a ToastItem inside the 2000 ms copy-confirmation window, so the pending setCopied(false) fires on an unmounted component (setState-after-unmount / dangling timer).",
+        "frontend/apps/ppt-web/src/components/Announcer.tsx:85-93 — the sibling component in the same directory guards exactly this case with an unmount cleanup effect that clearTimeout()s its deferred setState timers, confirming ToastItem's missing cleanup is an oversight rather than an intentional divergence. Low severity (React 18 no longer warns), but it is a real dangling-timer/stale-state smell on the shared toast primitive."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "improvement",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:104-113 — the root element is a <div> that, when disconnected, is made fully interactive: onClick (line 109) and onKeyDown handling Enter/Space (lines 86-96) both call reconnect(), and tabIndex flips to 0 (line 113). But its role is hardcoded role=\"status\" (line 111), a live region, not role=\"button\".",
+        "Assistive-tech users reach a focusable element announced as a status/live region rather than an actionable control, so the click-to-reconnect affordance (surfaced visually in the tooltip, lines 126-130) is not conveyed semantically; this is also the classic non-interactive-element-with-handlers a11y smell Biome's a11y rules target. Recommend rendering a real <button> (or role=\"button\") for the reconnect affordance while keeping a separate aria-live region for the status text.",
+        "Confidence medium: static-only review; the visual/mouse path works and keyboard activation is wired, so impact is a11y-semantics degradation on the WebSocket status widget rather than a functional break."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:49-70 — the displayed totals recompute the effective VAT rate from vatRateType AND the selected country (standard => CZ 21 / SK 20; first_reduced => CZ 15 / SK 10), so the user sees a country-correct total.",
+        "AccountingInvoiceForm.tsx:44-46,80-89 — but each item's stored numeric field `item.vatRate` is initialized to 21 and is NEVER updated when vatRateType or `country` changes (updateItem only writes the field the UI event targets). handleSubmit sends the raw `items` array (line 87) with the stale `vatRate: 21` plus `vatRateType`. Result: for country=SK + standard rate the UI shows 20% VAT in the totals panel while the persisted AccountingCreateInvoiceRequest carries vatRate=21 — the invoice is created with a VAT rate different from what the user reviewed. A financial-document correctness bug (which value the server trusts, vatRate vs vatRateType, determines the booked tax).",
+        "Confidence medium: the exact server resolution of the vatRate-vs-vatRateType ambiguity was not traced; either the UI total or the booked amount is wrong, and they disagree whenever country=SK or a reduced rate is picked."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:258,266,294 — the Qty, Unit Price and custom VAT % inputs call `parseFloat(e.target.value)` directly into state. Clearing the field (empty string) yields NaN; parseFloat of any non-numeric paste also yields NaN.",
+        "AccountingInvoiceForm.tsx:49-70,300-337 — NaN then propagates: the per-row total `(item.qty * item.unitPrice).toFixed(2)` and the base/VAT/Total summary all render the literal string 'NaN', and the useMemo totals become NaN.",
+        "AccountingInvoiceForm.tsx:72-90 — handleSubmit's only guard (line 75) checks presence of contactId/number/dueDate and items.length, NOT numeric validity, so an item with qty=NaN or unitPrice=NaN is submitted in the AccountingCreateInvoiceRequest body. Invoice creation proceeds with NaN line amounts (serialized as null/NaN) — data-integrity bug on a financial record with no client-side block."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "improvement",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — never imports useTranslation; every user-facing string is hardcoded English: field labels ('Contact *', 'Invoice Number *', 'Due Date *', line 121-202), table headers ('Description'/'Qty'/'Unit Price'/'VAT Rate', 253-238), buttons ('+ Add Item', 'Remove', 'Cancel', 'Saving...'/'Create Invoice'/'Update Invoice', 217/309/357), and the VAT_RATE_OPTIONS labels (14-19).",
+        "AccountingInvoiceForm.tsx:76 — validation uses the native `alert('Please fill all required fields')` (hardcoded English) instead of the app's toast/inline-error convention.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:74-84,90,108 — same feature-wide gap: headings 'Issued Invoices'/'Native accounting MVP', 'Create Invoice'/'New Invoice' buttons, toast titles 'Failed to create invoice'/'Failed to delete invoice' (lines 49,63), and a native `confirm('Are you sure you want to delete this invoice?')` (line 108) are all hardcoded English. ppt-web ships react-i18next with sk/cs/de/en locales (root CLAUDE.md), so the entire accounting-invoice feature is untranslatable."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-price-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:201 — handleSave sends `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price input (line 632) stores '' when cleared, so Number('') === 0 and `0 || 0` === 0: clearing or mistyping the price silently persists the listing at price 0 instead of rejecting the edit.",
+        "page.tsx:816-817 — the Save button is only guarded by `disabled={saving}`; there is no required/validation gate on price before handleSave runs, so the 0-coercion is reachable with a normal user edit. Area/rooms/floor use `|| undefined` (omitted, acceptable) but price falls back to a concrete 0 — a data-integrity bug on a public listing's headline figure.",
+        "Confidence medium: static trace of the submit path + button guard is clear, but server-side price validation was not traced; if the backend rejects price=0 the impact is a confusing save failure rather than a 0-priced listing."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-i18n-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:169,216,749-752,830 — multiple user-facing strings are hardcoded Slovak literals instead of next-intl `t()`: 'Načítanie inzerátu zlyhalo.' (load error), 'Uloženie zlyhalo, skúste znova.' (save error), status labels 'Aktívny'/'Neaktívny'/'Koncept', and button text 'Ukladám…'/'Uložiť zmeny'.",
+        "reality-web is explicitly multi-locale (sk, cs, de, en per frontend/apps/CLAUDE.md + next-intl). These literals render Slovak to cs/de/en users on the account listing-edit screen, an i18n coverage gap on an authenticated route."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-parse-shape",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — on mount `const parsed = JSON.parse(stored); setListings(parsed)` casts the localStorage value straight into `ListingSummary[]` with no Array.isArray/shape check. The surrounding try/catch only catches JSON syntax errors.",
+        "A syntactically-valid but wrong-shape stored value (e.g. a legacy or tampered 'ppt-comparison' entry holding `{}`, `true`, or a bare number) passes JSON.parse, sets non-array state, and then makes later `listings.some(...)` (line 66) and the render `.map` throw 'listings.some is not a function', breaking the comparison provider for that visitor until storage is cleared. Low severity (requires corrupt/tampered client storage) but a straightforward hardening gap vs the equivalent guarded parsing in lib/auth-token.ts."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals vs seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap+decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no plans added this run",
+      "observed": "0 new plans",
+      "expected": "0 or 2 with adv pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached plans/",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v '^.research/'",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached -- .research/ ... | grep secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief Phases that failed",
+      "observed": "none",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length checks",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + pm_cursor + GC7",
+      "observed": "all parse, cursors advanced",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached grep telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

@@ -13417,6 +13417,450 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "stalled-review-pr-3108",
+      "title": "stalled review: PR #3108 gh-issue-3104 fix owner-analytics portfolio summary 500 (schema drift) (11d open, draft)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #3108"
+      ],
+      "evidence": [
+        "PR #3108 opened 2026-10-16 (11d open), draft, no reviewDecision. Dispatcher-authored fix for issue 3104; still in iteration. Verify progress or escalate."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3075",
+      "title": "stalled review: PR #3075 code-review-api-handlers-violations-number-count-race serialize numbering (15d open, draft)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #3075"
+      ],
+      "evidence": [
+        "PR #3075 opened 2026-10-13 (15d open), draft, no reviewDecision. Dispatcher-authored fix for the COUNT(*)+1 numbering race in violations.rs — sitting in draft for 2 weeks."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3119",
+      "title": "stalled review: PR #3119 gh-issue-3116 i18n defaultValue fallback on NewsScreen (10d open, no review)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "needs-human-judgement",
+      "sources": [
+        "PR #3119"
+      ],
+      "evidence": [
+        "PR #3119 opened 2026-10-18 (10d open), not draft, no reviewDecision. Dispatcher-authored i18n fallback fix; waiting on reviewer."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-28 (14d window)"
+      ],
+      "evidence": [
+        "3 commits in 14-day window: PR #3171 (gate add_evidence on manager role), PR #3180 (community cross-tenant IDOR coverage), PR #3183 (xtenant IDOR regression + 404 fix). Serial authz hardening on the same mutations suggests the surface area still has coverage gaps.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "title": "Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — 3 touches in 14d (iterative compliance hardening)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-28 (14d window)"
+      ],
+      "evidence": [
+        "3 commits in 14-day window — the compliance Wave 1b test suite is being iteratively expanded. A test-file hotspot indicates the production code under test is still shifting; worth a review when the suite stabilises.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-server-os-rng-expect-panics",
+      "title": "reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server] 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs:566-568 and backend/servers/reality-server/src/routes/sso.rs:706-708 both generate secrets via `SysRng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")`. A transient OS-RNG failure (constrained containers / entropy exhaustion) would unwind the task instead of returning a 500.",
+        "The pattern is duplicated in password-reset token issuance and PKCE code-verifier generation on the SSO authorize path. try_fill_bytes is the fallible API specifically to surface RNG failure — swallowing it with `.expect` reintroduces the panic path. Should propagate as `(StatusCode::INTERNAL_SERVER_ERROR, …)` via the existing error-mapping style."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/handlers/users/mod.rs",
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-portal-listing-price-unvalidated",
+      "title": "reality-server create/update_listing accepts price without positivity / NaN guard (DECIMAL has no CHECK)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server] 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/portal_listings.rs:207-260 — create_listing / update_listing accept `price: Decimal` with zero validation. Migration 00049_create_listings.sql defines `price DECIMAL(15,2) NOT NULL` with NO CHECK constraint.",
+        "Enum fields have an in-handler allow-list (ALLOWED_PROPERTY_TYPES et al.); price lacks the equivalent `price > Decimal::ZERO` guard. Status is hard-coded to 'draft' on create so the row is not immediately public, but it enters the moderation queue and may leak a garbage value in owner UI, portal analytics, and any eventual price_map response."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/portal_listings.rs",
+        "backend/crates/db/migrations/00049_create_listings.sql"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-server-reports-status-filter-unvalidated",
+      "title": "reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-server] 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/reports.rs:352-383 — list_my_reports binds `query.status: Option<String>` directly into SQL (`AND ($4::text IS NULL OR status = $4)`) without validating against the four known enum values (received, in_review, resolved, rejected).",
+        "Not SQL-injectable (sqlx binds), but any unknown value silently returns an empty page while the OpenAPI param doc at line 131 says only four values are legal. Should reject with 400 for a value outside the enum, matching the pattern in `routes/portal_listings.rs::validate_enum`."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "candidate_vector": "dx",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-moderation-report-flood",
+      "title": "api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:627-684 report_content (POST /moderation/report, wired in aml_dsa/mod.rs:88) is open to EVERY authenticated user. Validates only reason length and resolves the content owner, then calls create_moderation_case.",
+        "backend/crates/db/src/repositories/compliance.rs:431-470 create_moderation_case does a blind INSERT with NO dedup/idempotency check and no per-reporter guard; no rate limiting layer on /moderation/report.",
+        "Any authenticated tenant member can POST the same content_id repeatedly to create unbounded moderation_cases rows — flooding the moderator queue, skewing stats, bloating the table. Suggested fix: add a unique/partial index or repo-side 'return existing open case for (org, content_type, content_id)' dedup, plus a per-user report rate limit."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-appeal-no-status-guard",
+      "title": "api-handlers file_appeal has no status guard → owner can re-file after a final appeal decision",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480-551 file_appeal checks ONLY content ownership and org scoping; it does NOT check the case's current status before appealing.",
+        "backend/crates/db/src/repositories/compliance.rs:836-861 file_appeal issues UPDATE moderation_cases SET status='appealed' ... WHERE id=$1 AND organization_id=$3 — the WHERE clause has NO status guard. A case in ANY state (including one whose appeal was already decided) is unconditionally flipped back to status='appealed', overwriting appeal_reason/appeal_filed_at.",
+        "A content owner can re-file an appeal repeatedly, including after a final decision, silently re-opening a closed case and resetting the appeal workflow. Suggested fix: gate on an appealable status set (WHERE status IN (...) AND appeal_filed = FALSE) and return 409 CONFLICT otherwise."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
+      "title": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:170-189 — ToastItem.handleCopy schedules `setTimeout(() => setCopied(false), 2000)` on both the success and execCommand fallback paths. Neither timer id is stored or cleared, and there is no unmount-cleanup effect in ToastItem.",
+        "Either an auto-dismiss or MAX_VISIBLE_TOASTS pruning (Toast.tsx:119-144) can unmount a ToastItem inside the 2 s window, so the pending setCopied(false) fires on an unmounted component.",
+        "Sibling Announcer.tsx:85-93 guards exactly this case with a clearTimeout cleanup effect, confirming ToastItem's missing cleanup is an oversight."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
+      "title": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button — a11y role mismatch",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:104-113 — the root is a <div> with onClick, onKeyDown (Enter/Space), tabIndex=0 — fully interactive — but role is hardcoded `role=\"status\"` (a live region) rather than `role=\"button\"`.",
+        "Assistive tech reaches a focusable live-region, not an actionable control, so the click-to-reconnect affordance surfaced visually in the tooltip is not conveyed semantically. Classic non-interactive-element-with-handlers a11y smell. Recommend a real <button> with a separate aria-live region for the status text."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+      "title": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:49-70 — totals recompute the effective VAT rate from vatRateType AND country (standard => CZ 21 / SK 20; first_reduced => CZ 15 / SK 10).",
+        "AccountingInvoiceForm.tsx:44-46,80-89 — each item's `item.vatRate` is initialized to 21 and NEVER updated when vatRateType or country change (updateItem only writes the targeted field). handleSubmit sends the raw items array with stale `vatRate: 21` plus `vatRateType`. UI vs persisted-payload disagree whenever country=SK or a reduced rate is picked — financial document correctness bug."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
+      "title": "ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:258,266,294 — Qty, Unit Price and custom VAT % inputs call `parseFloat(e.target.value)` directly into state. Clearing a field yields NaN; non-numeric paste also yields NaN.",
+        "AccountingInvoiceForm.tsx:49-70,300-337 — NaN propagates to per-row totals (.toFixed(2) renders 'NaN') and the base/VAT/Total summary via useMemo.",
+        "AccountingInvoiceForm.tsx:72-90 — handleSubmit's only guard checks presence of contactId/number/dueDate and items.length, NOT numeric validity, so NaN line amounts are submitted in the AccountingCreateInvoiceRequest body."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
+      "title": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — never imports useTranslation; every user-facing string is hardcoded English (field labels, table headers, buttons, VAT_RATE_OPTIONS labels).",
+        "AccountingInvoiceForm.tsx:76 uses native `alert('Please fill all required fields')` instead of the app's toast convention.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:74-108 — same feature-wide gap: headings, toast titles, and native `confirm(...)` are all hardcoded English. ppt-web ships react-i18next with sk/cs/de/en locales."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "candidate_vector": "refactor",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-price-zero",
+      "title": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:201 — handleSave sends `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price input (line 632) stores '' when cleared, so Number('') === 0 and `0 || 0` === 0: clearing or mistyping price silently persists the listing at price 0.",
+        "page.tsx:816-817 — the Save button is only guarded by `disabled={saving}`; no required/validation gate on price. Area/rooms/floor use `|| undefined` (omitted — acceptable) but price falls back to a concrete 0 — data-integrity bug on a public listing's headline figure."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-i18n-sk",
+      "title": "reality-web listing-edit page hardcodes Slovak user-facing strings — i18n gap on cs/de/en locales",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:169,216,749-752,830 — multiple user-facing strings are hardcoded Slovak literals instead of next-intl `t()`: 'Načítanie inzerátu zlyhalo.', 'Uloženie zlyhalo, skúste znova.', status labels 'Aktívny'/'Neaktívny'/'Koncept', and button text 'Ukladám…'/'Uložiť zmeny'.",
+        "reality-web is explicitly multi-locale (sk, cs, de, en per frontend/apps/CLAUDE.md + next-intl). These literals render Slovak to cs/de/en users on an authenticated route — i18n coverage gap."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-parse-shape",
+      "title": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — on mount `const parsed = JSON.parse(stored); setListings(parsed)` casts the localStorage value straight into `ListingSummary[]` with no Array.isArray/shape check; the try/catch only catches JSON syntax errors.",
+        "A syntactically-valid but wrong-shape value (e.g. tampered `{}`, `true`, or a bare number) passes JSON.parse, sets non-array state, then later `listings.some(...)` throws 'listings.some is not a function', breaking the provider until storage is cleared. Low severity (requires corrupt/tampered client storage) but a straightforward hardening gap vs the guarded parsing in lib/auth-token.ts."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "frontend"
     }
   ]
 }

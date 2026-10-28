@@ -299,7 +299,91 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-frontend-mobile-rn-report-fault-fake-submit-2026-10-28",
+      "action": "Wire ReportFaultScreen.tsx handleSubmit to real /api/v1/faults POST \u2014 currently fakes with setTimeout(1500), fault reports silently discarded",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "pm-frontend-reality-web-sell-wizard-no-persist-2026-10-28",
+      "action": "reality-web /sell wizard Publish button never POSTs to reality-server \u2014 every seller submission silently discarded; wire to /api/listings create endpoint",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "pm-frontend-ppt-web-authed-roots-session-leak-2026-10-28",
+      "action": "ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups \u2014 TanStack caches leak across users on a shared workstation; audit all feature-group root query keys",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) \u2014 closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "pm-frontend-reality-web-share-comparison-404-2026-10-28",
+      "action": "reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} \u2014 every shared comparison URL 404s; map to canonical GET endpoint or implement the missing route",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28",
+      "action": "reality-web listing detail SSR crashes on partial 200 body \u2014 JSON-LD build dereferences undefined fields; add defensive guards + unit test for missing-field body",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
     }
   ],
-  "generated": "2026-10-26T04:30:00Z"
+  "generated": "2026-10-28T11:00:00Z"
 }
