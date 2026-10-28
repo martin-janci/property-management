@@ -13417,6 +13417,163 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs",
+      "title": "churn-hotspot: new 498-LOC cross-tenant IDOR regression test file lands (violations_mutation_cross_org_idor_tests.rs) — monitor for sibling-router gaps",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3183",
+        "churn-hotspot 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs — 498 LOC added by PR #3183 (new file, top churn this run).",
+        "Pattern follows the earlier community_cross_tenant_idor_tests.rs scaffolding; next audit should extend to the other mutation routers (faults, documents, bookings) if they lack a parallel suite."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "churn-hotspot",
+      "score_delta": 1,
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "title": "churn-hotspot: routes/violations.rs — 44 lines in PR #3183 (xtenant-404 fix); first churn stamp, watch for repeated-churn next run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3183",
+        "churn-hotspot 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs — +34/-10 (44 lines) in PR #3183 wiring the 403→404 cross-tenant conversion into assign/add_evidence/create_action/update_action/record_payment/update_appeal/decide_appeal mutation paths.",
+        "Hotspot stamp only (score=1). Will stack via repeated-churn next run if same file keeps changing."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "churn-hotspot",
+      "score_delta": 1,
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/violations.rs",
+      "title": "churn-hotspot: repositories/violations.rs — 19 lines in PR #3183 (xtenant-404 helper); first churn stamp",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3183",
+        "churn-hotspot 2026-10-28"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/violations.rs — +15/-4 (19 lines) in PR #3183 adding `violation_exists_cross_org` + cross-tenant guards into the repo accessor layer.",
+        "First-time hotspot stamp (score=1)."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/violations.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "churn-hotspot",
+      "source": "churn-hotspot",
+      "score_delta": 1,
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-3119",
+      "title": "stalled-review PR #3119 — i18n defaultValue fallback NewsScreen (10d open, no reviewDecision, author=martin-janci)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3119",
+        "stalled-review 2026-10-28"
+      ],
+      "evidence": [
+        "PR #3119 opened 2026-10-18 by martin-janci; 10 days with no reviewDecision; needs-human-review label present.",
+        "Process signal only — no code vector attached. Mark `needs-human-judgement` if author is also sole reviewer by convention."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "stalled-review",
+      "source": "pr-review-process",
+      "score_delta": 1,
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2957",
+      "title": "stalled-review PR #2957 — dependabot tower-http 0.7.1 (48d open, no reviewDecision)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2957",
+        "stalled-review 2026-10-28"
+      ],
+      "evidence": [
+        "PR #2957 opened 2026-09-10 by dependabot[bot]; 48 days open with no reviewDecision despite recent (2026-10-26) rebase activity.",
+        "Dependabot-authored — a routine nudge comment is a no-op; this item is informational for the operator's weekly dependabot sweep."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "stalled-review",
+      "source": "pr-review-process",
+      "score_delta": 1,
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-reality-server-agent-reviews-public-user-id-leak",
+      "title": "reality-server agent_reviews list_reviews leaks reviewer_user_id in unauthenticated public response — portal-user UUID harvesting primitive",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review reality-server 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:108-158 — list_reviews has NO auth extractor; GET /api/v1/realtors/{id}/reviews is public.",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:140-153 — SELECT returns rr.reviewer_user_id → RealtorReview.reviewer_user_id (line 62); raw portal-user UUIDs are returned in response body.",
+        "backend/servers/reality-server/src/main.rs:498-502 — router nested at /api/v1/realtors/{id}/reviews with no auth middleware layer.",
+        "Impact: unauthenticated harvesting of portal-user UUIDs usable as join keys for probing other user-scoped endpoints (reports, favorites, inquiries, compare).",
+        "Fix: strip reviewer_user_id from the public DTO or replace with an opaque per-realtor anonymous id (HMAC(realtor_id, reviewer_user_id))."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs",
+        "backend/servers/reality-server/src/main.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "candidate_vector": "security",
+      "expert": "rust"
     }
   ]
 }

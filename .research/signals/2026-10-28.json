@@ -1,0 +1,199 @@
+{
+  "date": "2026-10-28",
+  "run_iso": "2026-10-28T08:40:56Z",
+  "trigger": "buffer-low: claimable=7/72 — refill planner (dispatcher 2026-10-28; 5 open gated mobile-native, WIP over cap)",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3183",
+      "score_delta": 1,
+      "evidence": "PR #3183 adds the file: +498/-0 LOC (top-1 churn this run, new regression suite covering assign/add_evidence/create_action/update_action/mark_action_sent/record_payment/update_appeal/decide_appeal).",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3183",
+      "score_delta": 1,
+      "evidence": "PR #3183 modifies routes/violations.rs: +34/-10 LOC — xtenant 403→404 conversion + assignee-org-membership guard. First-time hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/violations.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3183",
+      "score_delta": 1,
+      "evidence": "PR #3183 modifies repositories/violations.rs: +15/-4 LOC — adds violation_exists_cross_org + cross-tenant guards into repo accessor layer. First-time hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "stalled-review-pr-3119",
+      "type": "stalled-review",
+      "source": "PR #3119",
+      "score_delta": 1,
+      "evidence": "PR #3119 opened 2026-10-18 by martin-janci; 10 days with no reviewDecision; needs-human-review label present but no human reviewer other than author.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stalled-review-pr-2957",
+      "type": "stalled-review",
+      "source": "PR #2957",
+      "score_delta": 1,
+      "evidence": "PR #2957 opened 2026-09-10 by dependabot[bot]; 48 days with no reviewDecision; rebased 2026-10-26 but not reviewed.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-reality-server-agent-reviews-public-user-id-leak",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:108-158 — list_reviews has NO auth extractor; GET /api/v1/realtors/{id}/reviews is public.",
+        "backend/servers/reality-server/src/routes/agent_reviews.rs:140-153 — SELECT returns rr.reviewer_user_id → RealtorReview.reviewer_user_id (line 62); raw portal-user UUIDs returned in response body.",
+        "backend/servers/reality-server/src/main.rs:498-502 — router nested at /api/v1/realtors/{id}/reviews with no auth middleware layer.",
+        "Impact: unauthenticated harvesting of portal-user UUIDs usable as join keys for probing other user-scoped endpoints (reports, favorites, inquiries, compare).",
+        "Fix: strip reviewer_user_id from the public DTO or replace with an opaque per-realtor anonymous id (HMAC(realtor_id, reviewer_user_id))."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-10-28.md && head -1 .research/briefs/2026-10-28.md | grep -q '^# 2026-10-28$'",
+      "observed": "exit 0 (brief exists; first line matches)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:.research/state.json) '…' .research/state.json",
+      "observed": "true (last_pr_seen 3182→3183; last_issue_seen 3175→3187; last_commit_sha 6479a39c→a59b70de; seen_signals +6; hotspot_history +3; pm_cursor 2→3; coverage_cursor 12→0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev <(git show HEAD:.research/state.json) '…' .research/signals/2026-10-28.json",
+      "observed": "true (none of this run's 6 signal IDs are in the prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json",
+      "observed": "true (highest score=6 is terminal/done)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq '[.items[] | select(.status==\"open\" and .updated_at <= \"2026-10-14\")]' .research/backlog.json",
+      "observed": "0 open items older than 14d — nothing to decay",
+      "expected": "0 untouched decay-overdue items"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — zero new plans this run",
+      "observed": "0 new plans; no annotation needed",
+      "expected": "every new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v _archive | grep -c '\\.md$'",
+      "observed": "0 (no new plans this run)",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0 (only .research/ paths staged)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached (excluding baseline docs) scanned for the G9 secret/hostname regex set — see routine-prompt.md G9 for the full pattern list",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "no diff — regen matches staged byte-for-byte",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief Phases that failed",
+      "observed": "none",
+      "expected": "all failed phases listed; cursors held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "git ls-tree -r --name-only HEAD -- .research/plans/ … present in current tree",
+      "observed": "no plan removed this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ \"$(git ls-files -- .research/plans/_archive/ | wc -l)\" -ge \"$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)\" ]",
+      "observed": "equal — archive count unchanged",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "no diff — regen matches staged byte-for-byte",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq '.auto_fix_actions | length == 0' signals/2026-10-28.json (no candidate this run)",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "jq -e .items action-list.json … + coverage_cursor advanced vs HEAD",
+      "observed": "pm_cursor 2→3; coverage_cursor 12→0 (wrap, 13 epics); action-list.json / risks.json parse; project-state.md non-empty",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "scan staged diff for Telegram token patterns (excluding baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no eligible signal met confidence=high + score≥3 + allowlist (highest-score eligible signal is +2 security finding at confidence=medium, below the certainty bar)"
+}

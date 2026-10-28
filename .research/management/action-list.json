@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-number-count-race",
-      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency \u2192 opaque 500 on create",
+      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -96,7 +96,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -113,7 +113,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -184,7 +184,7 @@
     },
     {
       "id": "pm-backend-violations-add-evidence-authz-gap-3164",
-      "action": "Gate violations add_evidence sub-resource with authz check \u2014 currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
+      "action": "Gate violations add_evidence sub-resource with authz check — currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "none",
@@ -196,7 +196,7 @@
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs \u2014 merged PR touched this file heavily this run",
+      "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heavily this run",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
@@ -213,7 +213,7 @@
     },
     {
       "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
-      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) \u2014 stale Bearer after refresh",
+      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -230,7 +230,7 @@
     },
     {
       "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
-      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it \u2014 give-up state has no UI path",
+      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -268,7 +268,7 @@
     },
     {
       "id": "code-review-mobile-rn-vote-detail-ranked-no-order",
-      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) \u2014 no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
+      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) — no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -285,7 +285,7 @@
     },
     {
       "id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
-      "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) \u2014 i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
+      "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -299,7 +299,18 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-frontend-ppt-web-invoice-feature-contract-drift",
+      "action": "Address ppt-web invoice feature contract-drift cluster (VAT rate payload type-drift, qty/price NaN on blank input, no i18n keys) — all three surfaced by 2026-10-28 Tier-1d ppt-web-ui review; cluster root cause is Decimal/number mixing + unlabelled strings",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28"
     }
   ],
-  "generated": "2026-10-26T04:30:00Z"
+  "generated": "2026-10-28T08:38:35Z"
 }
