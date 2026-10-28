@@ -13417,6 +13417,175 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — top-1 non-lockfile churn, 2 touches this run",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn-hotspot 6479a39c..HEAD",
+        "PR #3181",
+        "PR #3183"
+      ],
+      "evidence": [
+        "Touched 2x in the 2026-10-27→28 window: #3181 (assign_violation org-membership guard) and #3183 (cross-tenant IDOR 404 fix).",
+        "First routine sighting (hotspot_history.runs_seen -> 1)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3075",
+      "title": "Stalled review: PR #3075 (violations/appeal number race) open 15d, draft, needs-human-review",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3075"
+      ],
+      "evidence": [
+        "code-review-api-handlers-violations-number-count-race — PR open since 2026-10-13, draft, needs-human-review (bot-approved, human-gated).",
+        "Process signal: dispatcher cannot self-merge; human review needed to unblock."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3108",
+      "title": "Stalled review: PR #3108 (owner-analytics portfolio summary 500) open 12d",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3108",
+        "Issue #3104"
+      ],
+      "evidence": [
+        "gh-issue-3104 fix — PR open since 2026-10-16, draft, needs-human-review; schema-drift repair."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3119",
+      "title": "Stalled review: PR #3119 (NewsScreen i18n defaultValue) open 10d, no reviewDecision",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3119",
+        "Issue #3116"
+      ],
+      "evidence": [
+        "gh-issue-3116 — PR open since 2026-10-18; carries dev merge-conflict (non-mechanical)."
+      ],
+      "files": [],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3179-reality",
+      "title": "Screen-map drift: PR #3179 changed 4 reality-web routes without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3179"
+      ],
+      "evidence": [
+        "PR #3179 modified: account/listings/[id]/edit/page.tsx, price-map/page.tsx, realtor/[id]/page.tsx (+ test), sell/page.tsx — all reality-web [locale]/* routes.",
+        "No docs/screens/reality/*.md file touched in the same PR (confirmed by review of PR #3179 file list).",
+        "Review-candidate (best-effort heuristic): screen-map slugs include account-listing-edit.md, price-map.md, agent-profile.md, sell-list-wizard.md — operator decides which, if any, need an Agent Log entry."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-analytics-i18n-gap",
+      "title": "Internationalize realtor/analytics page and route numbers through formatNumber(locale)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review Phase 1.5 reality-web 2026-10-28"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx:14-91 — whole page is hardcoded English on a [locale]/... route (PERIODS labels, StatCard labels, 'Analytics' title, 'Loading metrics…', 'Could not load analytics.' fallback) with no useTranslations.",
+        "Lines 85-88 call `.toLocaleString()` on totalListings/activeListings/totalViews/totalInquiries with no locale argument — same locale-regression class as the just-landed #3175 fix.",
+        "Same bug class fixed on sibling pages via PR #3166 (agency-profile) and PR #3179 (sell/realtor/price-map/edit)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": "plans/code-review-reality-web-analytics-i18n-gap.md"
+    },
+    {
+      "id": "code-review-reality-web-saved-searches-price-locale",
+      "title": "Route saved-search price-range chip through formatPrice(value, locale)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review Phase 1.5 reality-web 2026-10-28"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:53-55 — `search.filters.priceMin?.toLocaleString()` / `priceMax?.toLocaleString()` lack a locale arg and the chip hardcodes `€`.",
+        "Non-sk visitors see wrong grouping (same bug class as #3175)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-inquiries-date-type-i18n",
+      "title": "Localize inquiry dates with active locale and translate inquiry.type via t('types.<key>')",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review Phase 1.5 reality-web 2026-10-28"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67,97,109 — `new Date(...).toLocaleDateString()` on createdAt/scheduledViewing.date/respondedAt uses no locale (SSR defaults to en-US).",
+        "Line 67 shows raw backend enum `inquiry.type.replace('_', ' ')` ('property visit') with no i18n lookup."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
     }
   ]
 }

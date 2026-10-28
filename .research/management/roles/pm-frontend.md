@@ -1,35 +1,45 @@
-# pm-frontend — 2026-05-25
+# pm-frontend — 2026-10-28
 
-_Frontend/mobile delivery lens. Daily PM rotation (rotation index 2). Static, read-only analysis._
+_Frontend/mobile delivery lens. Daily PM rotation (rotation index 2 → 3). Static, read-only analysis. Last run: **2026-08-06** (83-day stale slot — a quiet frontend window, but the rotating-expert pass has been dripping steady UI defects into the backlog in the meantime)._
 
 ## Summary
 
-The biggest frontend delivery burst of the sprint landed this run — document sharing/permission UI (web+mobile), OAuth client-management + user-grants UI, MFA frontend+e2e, neighbor listing, and direct-messaging screens with WebSocket realtime sync all merged (PRs #441–#473). The active frontend front is now the Epic 6 announcement web UI, split across three unmerged draft PRs (#474/#475/#479) on a shared AnnouncementsPage — sequencing them is the near-term priority, alongside the #480–#487 follow-up test-gap batch.
+Reality-web locale/i18n fix (#3179) and the sprint-status rollups fix (#3177) merged this window — both low-risk, test-included. On the mobile RN side, the rotating-expert review surfaced two new VoteDetailScreen defects (ranked-question UI collapsed into unordered multi-select; the `t('key') ?? 'English'` fallback idiom is dead code because i18next never returns nullish). Neither moves a coverage story — all 49/49 remain `done` — but they confirm the frontend quality debt is accumulating faster in the code-review stream than in the coverage schema.
+
+## Delta since last pm-frontend run (2026-08-06)
+
+- **#3177** — ppt-web sprint-status epic rollups fix (small; display-layer).
+- **#3179** — reality-web price locale fix (closes a reality-web i18n defect; test included).
+- **Mobile RN:** two fresh findings from the 2026-10-27 rotating-expert pass:
+  - `code-review-mobile-rn-vote-detail-ranked-no-order` — ranked ballots can't express order (silent data-loss shape, bug).
+  - `code-review-mobile-rn-vote-detail-dead-i18n-fb` — `?? 'English'` fallbacks are dead code; raw key leaks on miss.
+- **Reality-web churn watch:** `frontend/apps/reality-web/src/app/[locale]/*` continues to show in the top-churn list this run (sell/report/home/components/import). After #3179 that cluster deserves a batched sweep + screen smokes.
 
 ## Next actions
 
 | Priority | Action | Dependency | Definition of done |
 |---|---|---|---|
-| high | Sequence + land Epic 6 announcement web UI drafts in order #474 (viewing/ack) → #475 (comments) → #479 (pin) | none | 6-2/6-3/6-4 apiStatus → integrated; 3 PRs merged without AnnouncementsPage conflicts; stories promote from partial |
-| high | Verify Epic 81 schedule/execution UI e2e as PRs #488/#489 land | pm-backend (endpoints) | EditScheduleModal pause/resume + ExecutionHistory no longer 404; 81-1/81-2 promoted |
-| medium | Slot follow-up issues #480–#487 into one test-hardening batch | pm-scrum-master | Each issue closed or explicitly deferred before its parent story promotes to done |
-| medium | Build dedicated folder-tree UI page for document organization (7a-2) | none | Folder hierarchy CRUD UI wired to backend 5-level tree; mobile slice scoped |
-| medium | Wire AnnouncementsPage/FaultsPage to @ppt/api-client hooks (79-1) | none | Both pages off mocks, using real query hooks; loading/empty/error states present |
-| low | Mobile document download/preview slice (7a-4 mobile) + RN env config (85-1) | none | DocumentPreviewScreen calls get_preview_url; Expo app.config.ts + iOS Info.plist keys added |
+| medium | Ship a VoteDetailScreen fix pass — rank-position UI for `ranked` questions + remove the dead `?? 'English'` i18n fallbacks (L180-354) | none | Both items `done` in action-list; e2e covers rank submission; `t()` call sites no longer gate on nullish |
+| medium | Adopt `eslint-plugin-react-hooks` + `i18next-hardcoded-strings` in `frontend/apps/mobile` and gate CI on it | none | CI lints block any new occurrence; both VoteDetailScreen findings would have been caught statically |
+| low | Reality-web `[locale]` sweep after #3179 — batched locale/pricing/currency audit + Playwright smokes for top 5 locale permutations | pm-qa (fixture capacity) | Smokes green on sk/cs/de/en + fallback; locale/price regressions caught before prod |
+| low | 7a-4 mobile DocumentPreview wire-up (carried from 2026-05-25 lens — still unverified) | none | DocumentPreviewScreen calls get_preview_url; app.config.ts + iOS Info.plist keys confirmed |
+| low | Screen-map update for ppt-web route refactor PR #2994 (carried) | pm-qa | docs/screens/ppt entries reflect the new route tree |
 
 ## Risks
 
 | Risk | Prob | Impact | Mitigation |
 |---|---|---|---|
-| Epic 6 announcement web UI split across 3 unmerged drafts (#474/#475/#479) on shared AnnouncementsPage — review-queue stall + merge conflicts | medium | medium | Land in dependency order #474 → #475 → #479; promote out of draft once apiStatus verified against the now-live notification pipeline |
-| Follow-up test gaps (#480–#487) on merged messaging/share/OAuth/MFA features — done-count outruns regression coverage | high | medium | Schedule as a single hardening batch; gate done-promotion on the follow-up closing |
-| `ai.rs` cross-tenant IDOR cluster (update/delete equipment + update_maintenance discard principal) — not a frontend file but the equipment UI consumes these endpoints | high | high | Flagged for pm-backend (`pm-backend-fix-ai-equipment-idor`); frontend should not surface delete/update equipment actions until backend scopes by tenant |
+| Mobile RN quality debt accumulating as code-review-only findings (ranked-UI gap + dead i18n fallback both caught post-merge on VoteDetailScreen) that coverage.json cannot see | high | medium | Land the two eslint plugins + one-shot sweep for `?? English` and non-multi survey rendering sites |
+| Reality-web `[locale]/*` is a persistent churn hotspot (sell/report/home/import) without screen-map coverage proofs — locale/currency regressions can slip past tests | medium | medium | Add Playwright screen smokes for top 5 locale permutations; batch the locale sweep |
+| pm-frontend rotation is cold (83-day gap). Frontend-owned backlog has grown to 5 open items while the slot was quiet | medium | low | Shorten the rotation gap once pm-qa/pm-devops hot items are resolved; or raise frontend action density per run |
 
 ## Open questions
 
-- Does the messaging realtime sync (PR #472) cover optimistic UI / reconnection on the web client, or only server push? (relevant to 6-5 e2e coverage in #480–#487)
-- Are the OAuth user-grants and admin client-management UIs (#468/#469/#471) covered by any frontend tests, or are those part of the #480–#487 gap set?
+- Is the mobile RN eslint config (`frontend/apps/mobile/.eslintrc*`) already shipping either plugin? If yes, the lint gap is config/rule-level, not plugin-level.
+- Do the `[locale]/sell` and `[locale]/report` churn PRs share a form-infra refactor, or are they independent? (Determines whether the sweep is one PR or several.)
+- Is there a Playwright-smoke harness already live in `frontend/apps/reality-web` we can wire into, or does it still need bootstrapping?
 
 ## Decisions needed
 
-- Epic 6 announcement web UI: single squashed PR vs. incremental #474 → #475 → #479 — owner: pm-frontend / pm-scrum-master.
+- Lint-gate scope: `frontend/apps/mobile` only, or extend hardcoded-strings rule to `ppt-web` / `reality-web` as well — owner: **pm-frontend** / **pm-tech-lead**.
+- Playwright screen-smoke ownership for reality-web locale sweep — owner: **pm-frontend** / **pm-qa**.

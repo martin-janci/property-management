@@ -112,3 +112,10 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-08-25, pm-qa):** Dispatcher-spawned fix PRs should require a failing-on-main regression test file in the same PR before entering the merge queue (enforced via CI diff-guard). The auto-review loop closed 7/7 in-window this run, but 5 of the 7 shipped without a regression test — the loop's compensating-transaction property masks a growing test-shadow debt. Owner: pm-tech-lead + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Adopt eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — 3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects a static lint would catch. Blocking-on-first-adoption vs warn-only-for-one-sprint is the open question. Owner: pm-frontend + pm-qa.
 - **NEW (2026-08-25, pm-qa):** Shared proptest fuzz-corpus discipline for sanitizers (CSV, XSS, HTML, JSON) — PR #2827 closed one CSV bypass but the sanitizer test suite is per-input, not corpus-driven; a shared corpus crate under `backend/crates/` would prevent the next class-of-bug from being fixed one-input-at-a-time. Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-10-28 (Phase 1.6 — pm-scrum-master + pm-frontend)
+
+- **NEW (2026-10-28, pm-frontend):** Scope of the mobile RN lint-adoption decision (carried from 2026-08-25) — gate `frontend/apps/mobile` only, or extend `i18next-hardcoded-strings` to `ppt-web` / `reality-web` as well? The 2 fresh VoteDetailScreen findings landed in mobile RN while reality-web locale regressions still slip past (#3179 was a merged fix, not a prevention). Owner: pm-frontend + pm-tech-lead.
+- **NEW (2026-10-28, pm-frontend):** Playwright screen-smoke ownership for the reality-web `[locale]/*` sweep after #3179 — pm-frontend writes the smokes, or pm-qa owns the harness and pm-frontend contributes locale fixtures? The route tree is a persistent churn hotspot (sell/report/home/components/import). Owner: pm-frontend + pm-qa.

@@ -1,0 +1,260 @@
+{
+  "generated": "2026-10-28T03:16:24Z",
+  "window": {
+    "since_iso": "2026-10-27T01:07:00Z",
+    "last_pr_seen_prev": 3182,
+    "last_issue_seen_prev": 3175,
+    "last_commit_sha_prev": "6479a39c"
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "type": "churn-hotspot",
+      "source": "git-log 6479a39c..HEAD",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "Touched 2x this window — #3181 (assign_violation org-membership guard) + #3183 (cross-tenant IDOR 404 fix). Top-1 non-lockfile churn file. First routine sighting (runs_seen -> 1).",
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-3075",
+      "type": "stalled-review",
+      "source": "PR #3075",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "code-review-api-handlers-violations-number-count-race PR open since 2026-10-13 (15d), draft, needs-human-review — serialize violation/appeal numbering race.",
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-3108",
+      "type": "stalled-review",
+      "source": "PR #3108",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "gh-issue-3104 owner-analytics portfolio summary 500 (schema drift) PR open since 2026-10-16 (12d), draft, needs-human-review.",
+      "files": []
+    },
+    {
+      "id": "stalled-review-pr-3119",
+      "type": "stalled-review",
+      "source": "PR #3119",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "gh-issue-3116 NewsScreen i18n defaultValue PR open since 2026-10-18 (10d), no reviewDecision; carries dev merge-conflict.",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-3179-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3179",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3179 touched reality-web routes: account/listings/[id]/edit/page.tsx, price-map/page.tsx, realtor/[id]/page.tsx (+ test), sell/page.tsx. No docs/screens/reality/*.md change in the same PR — screen-map drift for reality.",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/price-map/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/sell/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-analytics-i18n-gap",
+      "type": "code-review-finding",
+      "source": "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx:14",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "score_delta": 3,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx:14-91 — whole page is hardcoded English on a [locale]/... route (PERIODS labels, StatCard labels 'Total listings'/'Active listings'/'Total views'/'Inquiries', 'Analytics' title, 'Loading metrics…', 'Could not load analytics.' fallback) and lines 85-88 call `.toLocaleString()` with no locale argument — same locale-regression class as the just-landed #3175 fix.",
+      "severity": "high",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-saved-searches-price-locale",
+      "type": "code-review-finding",
+      "source": "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:53",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx:53-55 — `search.filters.priceMin?.toLocaleString()` / `priceMax?.toLocaleString()` lack a locale arg and the chip hardcodes `€`; non-sk visitors see wrong grouping (same bug class as #3175). Replace with `formatPrice(value, locale)`.",
+      "severity": "medium",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/saved-searches/page.tsx"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-inquiries-date-type-i18n",
+      "type": "code-review-finding",
+      "source": "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "score_delta": 2,
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67,97,109 — `new Date(...).toLocaleDateString()` on createdAt/scheduledViewing.date/respondedAt uses no locale (SSR defaults to en-US) and line 67 shows raw backend enum `inquiry.type.replace('_', ' ')` ('property visit') with no i18n lookup.",
+      "severity": "medium",
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "notes": {
+    "merged_prs": [
+      3177,
+      3178,
+      3179,
+      3180,
+      3181,
+      3182,
+      3183
+    ],
+    "dep_update_noise_closed_not_merged": [
+      3089,
+      3133
+    ],
+    "churn_window_files": [
+      "backend/servers/api-server/src/routes/violations.rs (2)",
+      "backend/servers/api-server/src/routes/aml_dsa/moderation.rs (1)",
+      "backend/crates/db/src/repositories/violations.rs (1)",
+      "backend/servers/api-server/tests/suite_8.rs (1)",
+      "backend/servers/api-server/tests/suites/violations_mutation_cross_org_idor_tests.rs (1)"
+    ],
+    "lag_hours": 26,
+    "pm_phase_1_6": {
+      "role_run": "pm-frontend",
+      "coverage_epic_rechecked": "epic-9"
+    },
+    "phase_1_5": {
+      "segment_reviewed": "reality-web",
+      "selection_reason": "churn-aligned"
+    }
+  },
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-28.md && head -1 | grep ^# 2026-10-28",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev HEAD vs staged",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit score_delta==0",
+      "observed": "n/a — no re-emits",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "items where score > 8 | length == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief grep plans/<slug>.md adversarial pass:",
+      "observed": "1 ok",
+      "expected": "all new plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count ≤ 2; 15 sections present; files resolve; mode declared; capability ticked",
+      "observed": "1 plan, all gates pass",
+      "expected": "≤2 new plans, metadata+headings+mode+files"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets|private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief has no Phases that failed line",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan still in plans/ or plans/_archive/",
+      "observed": "no silent deletes",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files .research/plans/_archive/ ≥ ls-tree HEAD",
+      "observed": "≥",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length == 0 (no PR/issue/comment this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor advanced + coverage_cursor advanced",
+      "observed": "pm 2→3, coverage 12→0 (13 epics wrap)",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
