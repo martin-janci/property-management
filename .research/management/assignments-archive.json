@@ -18241,6 +18241,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28",
+      "branch": "auto-impl/pm-frontend-reality-web-listing-page-ssr-fe5ee39c",
+      "status": "failed",
+      "claimed_at": "2026-10-28T20:30:23Z",
+      "last_updated": "2026-10-28T20:39:42Z",
+      "status_changed_at": "2026-10-28T20:39:42Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=blocked specialist=nextjs-web scope_drift=false code_reuse_warn=none note=already-fixed-on-dev: parseListingDetail/isRenderableListing normalizer + jsonLd/listingSchema tests cover partial-200 bodies (#2276/#2281/#2341); no-op [stale finding]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-frontend-reality-web-sell-wizard-no-persist-2026-10-28",
       "branch": "auto-impl/pm-frontend-reality-web-sell-wizard-no-p-44926e30",
       "status": "done",
@@ -18263,6 +18285,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "pm-frontend-reality-web-share-comparison-404-2026-10-28",
+      "branch": "auto-impl/pm-frontend-reality-web-share-comparison-ea3303a4",
+      "status": "failed",
+      "claimed_at": "2026-10-28T20:30:23Z",
+      "last_updated": "2026-10-28T20:39:33Z",
+      "status_changed_at": "2026-10-28T20:39:33Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=already-fixed-on-dev: ComparisonUrlHandler already fetches canonical /api/v1/listings/{id}; 0 diff vs origin/dev, no PR [stale finding]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-integration-audit-integration-prs-openapi-drift",
@@ -21329,5 +21373,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-28T12:55:51Z"
+  "archived_at": "2026-10-28T20:40:05Z"
 }

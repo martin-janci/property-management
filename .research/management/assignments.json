@@ -263,50 +263,6 @@
       "quarantine_reason": null
     },
     {
-      "task_id": "pm-frontend-reality-web-share-comparison-404-2026-10-28",
-      "branch": "auto-impl/pm-frontend-reality-web-share-comparison-ea3303a4",
-      "status": "in-progress",
-      "claimed_at": "2026-10-28T20:30:23Z",
-      "last_updated": "2026-10-28T20:30:23Z",
-      "status_changed_at": "2026-10-28T20:30:23Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28",
-      "branch": "auto-impl/pm-frontend-reality-web-listing-page-ssr-fe5ee39c",
-      "status": "in-progress",
-      "claimed_at": "2026-10-28T20:30:23Z",
-      "last_updated": "2026-10-28T20:30:23Z",
-      "status_changed_at": "2026-10-28T20:30:23Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "code-review-api-handlers-appeal-no-status-guard",
       "branch": "auto-impl/code-review-api-handlers-appeal-no-statu-f275a827",
       "status": "in-progress",
@@ -373,5 +329,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-10-28T20:31:29Z"
+  "generated": "2026-10-28T20:40:05Z"
 }
