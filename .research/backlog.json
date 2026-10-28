@@ -13417,6 +13417,119 @@
       "score_delta": 1,
       "candidate_vector": "dx",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-handlers-moderation-report-flood",
+      "title": "aml_dsa moderation.report_content open to every authed user + no dedup/rate-limit — unbounded moderation_cases flood",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:627-684 report_content (POST /moderation/report, wired in aml_dsa/mod.rs:88) is open to EVERY authenticated user (handler comment: 'This endpoint is open to every authenticated user'). It validates only reason length and resolves the content owner, then calls create_moderation_case.",
+        "backend/crates/db/src/repositories/compliance.rs:431-470 create_moderation_case does a blind INSERT INTO moderation_cases (...) with NO dedup/idempotency check — no lookup for an existing open/pending case on the same (content_type, content_id) and no per-reporter guard. aml_dsa/mod.rs router adds no limiting layer.",
+        "Impact (medium, abuse/DoS + data-integrity): any authenticated tenant member can POST the same content_id repeatedly to create unbounded moderation_cases rows — flooding the moderator queue, skewing stats, and bloating the table. Fix: add a unique/partial index or repo-side 'return existing open case for (org, content_type, content_id)' dedup + per-user report rate limit."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-appeal-no-status-guard",
+      "title": "aml_dsa file_appeal UPDATE has no status guard — any case (including finally-decided) can be re-flipped to 'appealed', overwriting prior appeal metadata",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-10-28"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480-551 file_appeal checks ONLY content ownership and org scoping; it does NOT check the case's current status before appealing.",
+        "backend/crates/db/src/repositories/compliance.rs:836-861 file_appeal issues UPDATE moderation_cases SET appeal_filed=TRUE, appeal_reason=$2, appeal_filed_at=NOW(), status='appealed' ... WHERE id=$1 AND organization_id=$3 — WHERE clause has NO status guard. A case in ANY state (open/under_review, or one whose appeal was already decided → appeal_upheld/appeal_rejected) is unconditionally flipped back.",
+        "Impact (medium, state-machine / DSA appeal finality): a content owner can re-file an appeal repeatedly, including after a final decision, silently re-opening a closed case and resetting the appeal workflow — defeating appeal finality and enabling appeal-spam. Fix: gate file_appeal on an appealable status set (WHERE status IN (...) AND appeal_filed = FALSE) and return 409 CONFLICT otherwise."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+      "title": "AccountingInvoiceForm: item.vatRate stays at init 21 when vatRateType/country change — booked VAT drifts from the total the user reviewed",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:49-70 — displayed totals recompute effective VAT rate from vatRateType AND country (standard => CZ 21 / SK 20; first_reduced => CZ 15 / SK 10), so the user sees a country-correct total.",
+        "AccountingInvoiceForm.tsx:44-46,80-89 — but each item's stored numeric field item.vatRate is initialized to 21 and is NEVER updated when vatRateType or country changes (updateItem only writes the field the UI event targets). handleSubmit sends the raw items array (line 87) with stale vatRate: 21 plus vatRateType. Result: for country=SK + standard rate the UI shows 20% VAT in totals while the persisted AccountingCreateInvoiceRequest carries vatRate=21.",
+        "A financial-document correctness bug (which value the server trusts, vatRate vs vatRateType, determines the booked tax). Confidence medium: exact server resolution of vatRate-vs-vatRateType ambiguity not traced; either the UI total or the booked amount is wrong, and they disagree for country=SK or any reduced rate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
+      "title": "AccountingInvoiceForm Qty/Unit-Price/VAT% parseFloat allows NaN into state — row/summary renders 'NaN' and NaN items are submitted",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:258,266,294 — Qty, Unit Price and custom VAT % inputs call parseFloat(e.target.value) directly into state. Clearing the field (empty string) yields NaN; parseFloat of any non-numeric paste also yields NaN.",
+        "AccountingInvoiceForm.tsx:49-70,300-337 — NaN propagates: the per-row total (item.qty * item.unitPrice).toFixed(2) and the base/VAT/Total summary render the literal 'NaN', and the useMemo totals become NaN.",
+        "AccountingInvoiceForm.tsx:72-90 — handleSubmit's only guard (line 75) checks presence of contactId/number/dueDate and items.length, NOT numeric validity, so an item with qty=NaN or unitPrice=NaN is submitted in AccountingCreateInvoiceRequest body (serialized as null/NaN) — data-integrity bug on a financial record with no client-side block."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
+      "title": "ppt-web accounting-invoice feature hardcodes English — AccountingInvoiceForm + AccountingInvoiceManagementPage never call useTranslation",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-10-28"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — never imports useTranslation; every user-facing string is hardcoded English: field labels ('Contact *','Invoice Number *','Due Date *' lines 121-202), table headers ('Description'/'Qty'/'Unit Price'/'VAT Rate' 253-238), buttons ('+ Add Item','Remove','Cancel','Saving...'/'Create Invoice'/'Update Invoice' 217/309/357), and VAT_RATE_OPTIONS labels (14-19).",
+        "AccountingInvoiceForm.tsx:76 — validation uses native alert('Please fill all required fields') (hardcoded English) instead of the app's toast/inline-error convention.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:74-84,90,108 — same gap: headings 'Issued Invoices'/'Native accounting MVP', 'Create Invoice'/'New Invoice' buttons, toast titles 'Failed to create invoice'/'Failed to delete invoice' (lines 49,63), and native confirm('Are you sure you want to delete this invoice?') (108) are all hardcoded English. ppt-web ships react-i18next with sk/cs/de/en locales (root CLAUDE.md), so the entire accounting-invoice feature is untranslatable."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ],
+      "created_at": "2026-10-28",
+      "updated_at": "2026-10-28",
+      "plan": null
     }
   ]
 }

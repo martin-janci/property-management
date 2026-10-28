@@ -1,0 +1,217 @@
+{
+  "run_iso": "2026-10-28T04:44:00Z",
+  "trigger": "buffer-low: claimable=8/72 — refill planner (backlog dominated by cloud-unlandable mobile-native work)",
+  "segments_reviewed": [
+    "ppt-web-ui",
+    "api-handlers"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-moderation-report-flood",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:627-684 report_content (POST /moderation/report, wired in aml_dsa/mod.rs:88) is open to EVERY authenticated user (the handler comment itself notes 'This endpoint is open to every authenticated user'). It validates only reason length (validate_optional_text_field, MAX_REPORT_REASON_LEN) and resolves the content owner, then calls create_moderation_case.",
+        "backend/crates/db/src/repositories/compliance.rs:431-470 create_moderation_case does a blind INSERT INTO moderation_cases (...) with NO dedup/idempotency check — no lookup for an existing open/pending case on the same (content_type, content_id) and no per-reporter guard. aml_dsa/mod.rs router adds no limiting layer on /moderation/report.",
+        "Impact (medium, abuse/DoS + data-integrity): any authenticated tenant member can POST the same content_id repeatedly to create unbounded moderation_cases rows — flooding the moderator queue (get_moderation_queue), skewing get_moderation_stats, and bloating the table. Fix: add a unique/partial index or repo-side dedup, plus a per-user report rate limit."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-appeal-no-status-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480-551 file_appeal checks ONLY content ownership (existing.content_owner_id == user.user_id) and org scoping; it does NOT check the case's current status before appealing.",
+        "backend/crates/db/src/repositories/compliance.rs:836-861 file_appeal issues UPDATE moderation_cases SET appeal_filed=TRUE, appeal_reason=$2, appeal_filed_at=NOW(), status='appealed' ... WHERE id=$1 AND organization_id=$3 — WHERE clause has NO status guard. So a case in ANY state (open/under_review, or one whose appeal was already decided via decide_appeal → appeal_upheld/appeal_rejected) is unconditionally flipped back to status='appealed'.",
+        "Impact (medium, state-machine / DSA appeal finality): a content owner can re-file an appeal repeatedly, including after a final decision, silently re-opening a closed case. Fix: gate file_appeal on an appealable status set (WHERE status IN (...) AND appeal_filed = FALSE) and return 409 CONFLICT otherwise."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:49-70 — displayed totals recompute effective VAT rate from vatRateType AND country (standard => CZ 21 / SK 20; first_reduced => CZ 15 / SK 10), so the user sees a country-correct total.",
+        "AccountingInvoiceForm.tsx:44-46,80-89 — but each item's stored numeric field item.vatRate is initialized to 21 and NEVER updated when vatRateType or country changes (updateItem only writes the field the UI event targets). handleSubmit sends the raw items array (line 87) with stale vatRate=21 plus vatRateType. UI shows 20% while payload carries 21%.",
+        "Financial-document correctness bug (which value the server trusts, vatRate vs vatRateType, determines the booked tax). Confidence medium: server resolution of vatRate-vs-vatRateType ambiguity not traced; either the UI total or the booked amount is wrong, and they disagree for country=SK or any reduced rate."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:258,266,294 — Qty, Unit Price and custom VAT % inputs call parseFloat(e.target.value) directly into state. Clearing the field yields NaN; any non-numeric paste also yields NaN.",
+        "AccountingInvoiceForm.tsx:49-70,300-337 — NaN propagates: the per-row total (item.qty * item.unitPrice).toFixed(2) and the base/VAT/Total summary render the literal 'NaN', and the useMemo totals become NaN.",
+        "AccountingInvoiceForm.tsx:72-90 — handleSubmit's only guard (line 75) checks presence of contactId/number/dueDate and items.length, NOT numeric validity. An item with qty=NaN or unitPrice=NaN is submitted in the AccountingCreateInvoiceRequest body — data-integrity bug on a financial record with no client-side block."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "dx",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — never imports useTranslation; every user-facing string is hardcoded English: field labels, table headers, buttons, and VAT_RATE_OPTIONS labels.",
+        "AccountingInvoiceForm.tsx:76 — validation uses native alert('Please fill all required fields') instead of the app's toast/inline-error convention.",
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx:74-84,90,108 — same feature-wide gap: headings 'Issued Invoices'/'Native accounting MVP', Create Invoice buttons, toast titles 'Failed to create invoice'/'Failed to delete invoice', and native confirm('Are you sure you want to delete this invoice?'). ppt-web ships react-i18next with sk/cs/de/en locales — the entire accounting-invoice feature is untranslatable."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-10-28.md && first-line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq … .last_pr_seen/last_issue_seen/last_commit_sha/seen_signals changed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq (re-emit non-cumulative seen = 0)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score > 8 count == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans — ≤2 cap holds",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/ == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname grep over staged diff == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed → no honesty check needed",
+      "observed": "no failures listed",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan slug still present in plans/ or plans/_archive/",
+      "observed": "all 17 present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "staged _archive count >= HEAD _archive count",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty — all G15 clauses hold trivially",
+      "observed": "0 actions",
+      "expected": "≤3 total"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped (pm_cursor unchanged vs HEAD) — no-op",
+      "observed": "pm_cursor.next_index=2 == HEAD",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "notes": [
+    "Phase 1 observations: 1 merged PR this window (#3183 — code-review-api-handlers-violations-no-xtenant-idor-tests, cross-tenant IDOR regression + 404 fix); 26 open PRs (mostly dependabot + dispatcher drafts marked needs-human-review); 3 issues (new #3187 is labeled, so not untriaged — 2 closed follow-ups).",
+    "No new unchecked-todo / revert / fixme-in-merged-code / hotfix-no-test / untriaged-issue signals this run.",
+    "No new churn hotspots: PR #3183 touched 4 files (3 backend tests + 2 route/repo), none of which are new top-3 hotspots over the 14d window.",
+    "Stalled-review signals for #2555/#2559/#3024/#2866/#2960 already in seen_signals (deduped).",
+    "lag_warning: 27h since last run, below 36h threshold — on schedule.",
+    "Phase 1.5 segment: ppt-web-ui chosen as the oldest unreviewed in state.review_cursor (2026-10-22 — 6d). The dispatcher's demand-driven Tier-1d process also pre-generated findings for api-handlers (churn-aligned) and ppt-web-ui earlier today; both segments' findings are incorporated and both cursors advanced to 2026-10-28.",
+    "Phase 1.6: pm_cursor.next_index=2 → pm-frontend due (role_last_run was 2026-08-06, ~82d stale). Lightweight synthesis run inline this cycle; see brief 'Phase 1.6' section. Coverage_cursor advanced from 12 → 0 (GC7).",
+    "Phase 5 auto-fix: no candidate — the 2 highest-scored new findings are at +2 with confidence=medium (below the +3 / confidence=high bar). None of the eligible allowlist signal types (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review) matched this run."
+  ]
+}
