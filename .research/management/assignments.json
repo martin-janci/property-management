@@ -265,18 +265,18 @@
     {
       "task_id": "code-review-api-handlers-appeal-no-status-guard",
       "branch": "auto-impl/code-review-api-handlers-appeal-no-statu-f275a827",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-10-28T20:30:23Z",
-      "last_updated": "2026-10-28T20:30:23Z",
-      "status_changed_at": "2026-10-28T20:30:23Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-10-28T20:55:10Z",
+      "status_changed_at": "2026-10-28T20:55:10Z",
+      "pr_number": 3192,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3192",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3192 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=file_appeal returns 409 on terminal appeal state (AppealApproved/Rejected); IG3 test:+fix: split; fmt+clippy -p api-server green; sqlx::test defers to backend.yml CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -329,5 +329,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-10-28T20:48:03Z"
+  "generated": "2026-10-28T20:55:10Z"
 }
