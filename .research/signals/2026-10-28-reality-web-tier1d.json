@@ -1,0 +1,55 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-28",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer starved, claimable=7 < floor=36; no CHURN_FILES supplied, churn hotspot_history is stale May dates. Per state.review_cursor the oldest segment is ppt-web-ui @ 2026-10-22, but it was ALREADY covered today by 2026-10-28-ppt-web-ui-tier1d.json (invoice feature) and api-handlers @ 2026-10-26 was also covered today. Next-oldest LANDABLE segment not yet covered today is reality-web @ 2026-10-23 (frontend, preferred over mobile-native-kmp which is unlandable in cloud). 0 open code-review-finding items for reality-web in backlog.json => not saturated.)",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-reality-web-listing-edit-price-zero",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:201 — handleSave sends `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price input (line 632) stores '' when cleared, so Number('') === 0 and `0 || 0` === 0: clearing or mistyping the price silently persists the listing at price 0 instead of rejecting the edit.",
+        "page.tsx:816-817 — the Save button is only guarded by `disabled={saving}`; there is no required/validation gate on price before handleSave runs, so the 0-coercion is reachable with a normal user edit. Area/rooms/floor use `|| undefined` (omitted, acceptable) but price falls back to a concrete 0 — a data-integrity bug on a public listing's headline figure.",
+        "Confidence medium: static trace of the submit path + button guard is clear, but server-side price validation was not traced; if the backend rejects price=0 the impact is a confusing save failure rather than a 0-priced listing."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-i18n-sk",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:169,216,749-752,830 — multiple user-facing strings are hardcoded Slovak literals instead of next-intl `t()`: 'Načítanie inzerátu zlyhalo.' (load error), 'Uloženie zlyhalo, skúste znova.' (save error), status labels 'Aktívny'/'Neaktívny'/'Koncept', and button text 'Ukladám…'/'Uložiť zmeny'.",
+        "reality-web is explicitly multi-locale (sk, cs, de, en per frontend/apps/CLAUDE.md + next-intl). These literals render Slovak to cs/de/en users on the account listing-edit screen, an i18n coverage gap on an authenticated route."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-parse-shape",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — on mount `const parsed = JSON.parse(stored); setListings(parsed)` casts the localStorage value straight into `ListingSummary[]` with no Array.isArray/shape check. The surrounding try/catch only catches JSON syntax errors.",
+        "A syntactically-valid but wrong-shape stored value (e.g. a legacy or tampered 'ppt-comparison' entry holding `{}`, `true`, or a bare number) passes JSON.parse, sets non-array state, and then makes later `listings.some(...)` (line 66) and the render `.map` throw 'listings.some is not a function', breaking the comparison provider for that visitor until storage is cleared. Low severity (requires corrupt/tampered client storage) but a straightforward hardening gap vs the equivalent guarded parsing in lib/auth-token.ts."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
