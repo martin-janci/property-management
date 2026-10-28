@@ -18217,6 +18217,54 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-frontend-mobile-rn-report-fault-fake-submit-2026-10-28",
+      "branch": "auto-impl/pm-frontend-mobile-rn-report-fault-fake-de0e3fcd",
+      "status": "done",
+      "claimed_at": "2026-10-28T12:35:17Z",
+      "last_updated": "2026-10-28T12:55:42Z",
+      "status_changed_at": "2026-10-28T12:55:42Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=none status=done specialist=react-native scope_drift=false code_reuse_warn=none note=already-fixed on dev; handleSubmit wired to real apiRequest POST /api/v1/faults (no setTimeout fake), 12/12 regression tests green — no change needed, no PR [dispatcher: stale pm-analysis finding; verified on dev, closed as done]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "pm-frontend-reality-web-sell-wizard-no-persist-2026-10-28",
+      "branch": "auto-impl/pm-frontend-reality-web-sell-wizard-no-p-44926e30",
+      "status": "done",
+      "claimed_at": "2026-10-28T12:35:17Z",
+      "last_updated": "2026-10-28T12:55:42Z",
+      "status_changed_at": "2026-10-28T12:55:42Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=already landed on dev; sell wizard Publish POSTs via createListing to /api/v1/my/listings with error/in-flight handling + regression test (page.publish.test.tsx); zero diff vs origin/dev — no PR [dispatcher: stale pm-analysis finding; verified on dev, closed as done]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "pm-integration-audit-integration-prs-openapi-drift",
       "branch": "auto-impl/pm-integration-audit-integration-prs-ope-2c5cb458",
       "status": "merged",
@@ -21281,5 +21329,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-27T02:46:35Z"
+  "archived_at": "2026-10-28T12:55:51Z"
 }

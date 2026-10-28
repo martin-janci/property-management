@@ -301,30 +301,6 @@
       }
     },
     {
-      "id": "pm-frontend-mobile-rn-report-fault-fake-submit-2026-10-28",
-      "action": "Wire ReportFaultScreen.tsx handleSubmit to real /api/v1/faults POST — currently fakes with setTimeout(1500), fault reports silently discarded",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
-      "id": "pm-frontend-reality-web-sell-wizard-no-persist-2026-10-28",
-      "action": "reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded; wire to /api/listings create endpoint",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
       "id": "pm-frontend-ppt-web-authed-roots-session-leak-2026-10-28",
       "action": "ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups — TanStack caches leak across users on a shared workstation; audit all feature-group root query keys",
       "owner_role": "pm-frontend",

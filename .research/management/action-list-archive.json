@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-27T06:36:57Z",
+  "archived_at": "2026-10-28T12:55:52Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -20181,6 +20181,20 @@
       }
     },
     {
+      "id": "pm-frontend-mobile-rn-report-fault-fake-submit-2026-10-28",
+      "action": "Wire ReportFaultScreen.tsx handleSubmit to real /api/v1/faults POST — currently fakes with setTimeout(1500), fault reports silently discarded",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "closed_at": "2026-10-28T12:55:42Z",
+      "dev_reconciled": "already-landed-on-dev; implementer verified zero-diff; no PR needed (stale pm-analysis finding, closed by dispatcher 2026-10-28)"
+    },
+    {
       "id": "pm-frontend-protectedroute-failopen",
       "action": "Harden ProtectedRoute.tsx:117 to deny on missing role instead of skipping the role check, and populate user.role in AuthContext — before role-gating goes live (fold into 79-2 PR #444)",
       "owner_role": "pm-frontend",
@@ -20191,6 +20205,20 @@
       "source": "pm-analysis 2026-05-24",
       "resolved": "2026-05-25 — PR #459 merged (ProtectedRoute fail-open fix)",
       "depends_on": []
+    },
+    {
+      "id": "pm-frontend-reality-web-sell-wizard-no-persist-2026-10-28",
+      "action": "reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded; wire to /api/listings create endpoint",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "closed_at": "2026-10-28T12:55:42Z",
+      "dev_reconciled": "already-landed-on-dev; implementer verified zero-diff; no PR needed (stale pm-analysis finding, closed by dispatcher 2026-10-28)"
     },
     {
       "id": "pm-frontend-schedule-followup-test-batch",
