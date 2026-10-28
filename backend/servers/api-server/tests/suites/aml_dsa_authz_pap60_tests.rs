@@ -362,7 +362,9 @@ async fn file_appeal_rejected_after_final_decision(pool: PgPool) {
     );
 
     let resp = app
-        .post(&format!("/api/v1/aml-dsa/moderation/cases/{case_id}/appeal"))
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{case_id}/appeal"
+        ))
         .bearer(&token)
         .json(serde_json::json!({ "reason": "let me try again" }))
         .send()
