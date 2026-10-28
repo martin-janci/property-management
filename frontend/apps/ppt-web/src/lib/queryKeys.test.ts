@@ -47,6 +47,7 @@ import {
   notificationTriggerKeys,
   oauthGrantKeys,
   outageKeys,
+  personMonthKeys,
   portfolioPerformanceKeys,
   registryKeys,
   reportKeys,
@@ -204,6 +205,7 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       meterKeys,
       messagingKeys,
       notificationTriggerKeys,
+      personMonthKeys,
       reportKeys,
       // Mounted-route-group / feature-page domains previously missing from the
       // allow-list (this fix). `votingKeys` (root `voting`) is the live voting
