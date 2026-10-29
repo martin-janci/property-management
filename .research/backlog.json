@@ -6601,10 +6601,12 @@
       "score": 1,
       "status": "dropped",
       "sources": [
-        "Tier1d review 2026-08-04 (mobile-native-kmp)"
+        "Tier1d review 2026-08-04 (mobile-native-kmp)",
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-29 mobile-native-kmp)"
       ],
       "evidence": [
-        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 launches up to 100 simultaneous getListingAnalytics async calls via listings.map { async { … } }.awaitAll(); per-listing failures are swallowed by getOrNull() (line 121). Bursts the shared HttpClient pool, hammers the mobile radio, and invites 429 rate-limiting."
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 launches up to 100 simultaneous getListingAnalytics async calls via listings.map { async { … } }.awaitAll(); per-listing failures are swallowed by getOrNull() (line 121). Bursts the shared HttpClient pool, hammers the mobile radio, and invites 429 rate-limiting.",
+        "Re-emitted by dispatcher Tier-1d 2026-10-29 (signal id: code-review-mn-kmp-portfolio-analytics-fanout). Item status=dropped; signal recorded without score bump."
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
@@ -9884,11 +9886,12 @@
       "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "vector": "bug",
       "confidence": "high",
-      "score": 3,
+      "score": 5,
       "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "rotating-expert-review (dispatcher Tier-1d 2026-10-29 mobile-native-kmp)"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9896,7 +9899,8 @@
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
         "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
         "decayed 2026-09-20: no new signals in 14d (routine-lag: 19d) (score 4 → 3)",
-        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207"
+        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207",
+        "Re-emitted by dispatcher Tier-1d 2026-10-29 — same NotImplementedError stub still present on dev (signal id: code-review-mn-kmp-create-listing-stub). Score 3→5."
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9905,7 +9909,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-10-29",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -13861,6 +13865,50 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-core-syndication-worker-missing",
+      "title": "api-core: SyndicationService::process_syndication_job never called — listings enqueue syndication jobs that no worker dequeues; worker itself is a mock",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-10-29 (api-core segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289 — process_syndication_job defined but ZERO call sites; SYNDICATION_QUEUE enqueued by listings.rs:540,655 but scheduler/mod.rs never dequeues it. background_jobs rows pile up with queue=syndication indefinitely.",
+        "services/syndication.rs:318 — PUBLISH branch generates a mock external id and flips status to SYNCED without any HTTP call to a portal. Epic 105 Story 105.1/105.2 non-functional end-to-end."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/syndication.rs",
+        "backend/servers/api-server/src/routes/listings.rs",
+        "backend/servers/api-server/src/scheduler/mod.rs"
+      ],
+      "created_at": "2026-10-29",
+      "updated_at": "2026-10-29",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-stripe-checkout-client-no-timeout",
+      "title": "api-core: Stripe create_checkout_session builds reqwest::Client::new() per request with no timeout — Stripe partial outage drains axum workers",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-10-29 (api-core segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/stripe.rs:148 — create_checkout_session uses reqwest::Client::new() per request with no connect_timeout/timeout; a hanging Stripe response holds the axum worker indefinitely (default reqwest timeouts are None).",
+        "Same class as 2026-10-28 Tier-1d finding code-review-api-core-api-call-client-build-panic for services/actions/api_call.rs. Fix: hoist a shared reqwest::Client with explicit timeouts into AppState."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/stripe.rs"
+      ],
+      "created_at": "2026-10-29",
+      "updated_at": "2026-10-29",
+      "plan": null
     }
   ]
 }

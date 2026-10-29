@@ -594,7 +594,93 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-qa-land-3187-fix-cross-tenant-assign-404",
+      "action": "Treat #3187 (cross_org_assign_violation_is_not_found) as the backend CI's single-point-of-failure: land PR #3188's fix OR flip the test's expected contract to 403-when-manager-role-wrong-tenant and document the deviation.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-29",
+      "first_open_at": "2026-10-29T03:13:23Z",
+      "backlog_ref": null
+    },
+    {
+      "id": "pm-qa-review-queue-aging-alarm",
+      "action": "Add a dispatcher-queue aging alarm — if any status:review row in assignments.json has been in review >14 days, surface it in the daily brief under 'Watch'.",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-devops",
+      "depends_on": [
+        "UNRESOLVED:pm-devops dispatcher-side aging alarm wiring"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-29",
+      "first_open_at": "2026-10-29T03:13:23Z",
+      "backlog_ref": null
+    },
+    {
+      "id": "pm-qa-add-evidence-authz-regression-test-3164",
+      "action": "Add a failing-on-main regression test for the add_evidence authz gap (#3164) — Resident/Tenant role expects 403, mirroring resident_cannot_delete_evidence.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-29",
+      "first_open_at": "2026-10-29T03:13:23Z",
+      "backlog_ref": null
+    },
+    {
+      "id": "pm-qa-audit-ig3-freshness-11-stacked-prs",
+      "action": "Audit the 11 in-review auto-impl PRs for IG3-contract drift — each PR must still fail-on-main after rebasing against current dev HEAD.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-tech-lead",
+      "depends_on": [
+        "UNRESOLVED:pm-tech-lead approval of audit scope"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-29",
+      "first_open_at": "2026-10-29T03:13:23Z",
+      "backlog_ref": null
+    },
+    {
+      "id": "pm-qa-promote-review-queue-aging-risk-dec002",
+      "action": "Promote the review-queue-aging pattern as a persistent risk — the merge pipeline has been structurally deadlocked for 24+ days per #3131; needs a DEC-002-style decision.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-tech-lead",
+      "depends_on": [
+        "UNRESOLVED:pm-tech-lead unblock-path decision for #3131"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-29",
+      "first_open_at": "2026-10-29T03:13:23Z",
+      "backlog_ref": null
+    },
+    {
+      "id": "pm-qa-test-shadow-debt-line-in-synthesis",
+      "action": "Add a 'test-shadow debt' line to the Scrum Master synthesis — count of auto-impl PRs that merged without IG3 regression test AND were later re-fixed by a sibling PR.",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "pm-scrum-master",
+      "depends_on": [
+        "UNRESOLVED:pm-scrum-master synthesis template update"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-29",
+      "first_open_at": "2026-10-29T03:13:23Z",
+      "backlog_ref": null
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-10-29T03:13:23Z"
 }

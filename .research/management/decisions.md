@@ -120,3 +120,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-10-28, pm-frontend):** eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — carried from 2026-08-25, now 64 days unresolved; the exact defects it predicts keep landing (VoteDetail dead i18n fallback, ranked ballot). Proposal: enable both, warn-only for one sprint, blocking from the next. Owner: pm-frontend + pm-qa.
 - **NEW (2026-10-28, pm-frontend):** Per-form MSW/Mirage e2e-smoke gate before merge — three "wire-the-button-but-not-the-POST" bugs (ReportFault, reality-web /sell, VoteDetail ranked) in 7 days. Scope question: every form Submit-handler, or only critical paths (fault reporting, selling, voting)? Owner: pm-qa + pm-tech-lead.
 - **NEW (2026-10-28, pm-scrum-master):** Staleness-bias in `pm_cursor` rotation — pm-frontend came up 83 days stale while 12 UI findings accumulated. Proposal: if any pm-* role is >60 days stale, prefer it over the current rotation index on the next run. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-10-29 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-10-29, pm-qa):** Pick merge-pipeline unblock path — second-identity reviewer for dispatcher, admin-merge lane for bot-authored PRs, or relax `required_approving_review_count` for `/auto-impl/*` branches. #3131 is now 24+ days unresolved and 11 approved PRs are stacked. Owner: pm-tech-lead + pm-devops.
+- **NEW (2026-10-29, pm-qa):** Decide #3187 fix routing — land as its own operator-merged PR (currently PR #3188) OR rely on one of the stacked auto-impl PRs that transitively carry it. The single-point-of-failure for backend CI needs an explicit owner. Owner: pm-security + pm-tech-lead.
+- **NEW (2026-10-29, pm-qa):** Lower GC3-buffer-bounds floor from 36 to 24 to match the current demand profile, OR keep aspirational floor and accept the chronic-red gate (training operators to ignore it). 3+ consecutive days of FAILED gate = signal rot. Owner: pm-tech-lead.
+- **NEW (2026-10-29, pm-scrum-master):** Dispatcher cadence trade-off — should we drop from 2h to 6h or 24h while #3131 holds? Current cadence generates ~12 commits/day of dispatcher activity with ~0 merge throughput, which is pure friction. Owner: pm-tech-lead + pm-devops.

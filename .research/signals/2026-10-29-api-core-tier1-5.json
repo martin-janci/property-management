@@ -1,0 +1,38 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "api-core",
+  "selection_reason": "oldest-unreviewed non-saturated: api-core/mobile-rn/ppt-web-core all @ 2026-10-27, api-core picked alphabetically; dispatcher Tier-1d already ran mobile-native-kmp today.",
+  "experts_used": ["rust"],
+  "signals": [
+    {
+      "id": "code-review-api-core-syndication-worker-missing",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289 — `SyndicationService::process_syndication_job` is defined but has ZERO call sites in the backend (`grep -rn 'process_syndication_job' backend` returns only the definition and the type-import). `SYNDICATION_QUEUE = \"syndication\"` is enqueued-to in `create_publish_jobs`/`create_status_change_jobs`/`create_update_job` (lines 117/185/245) but nothing dequeues from it — `scheduler/mod.rs` has zero `syndication` references.",
+        "backend/servers/api-server/src/routes/listings.rs:540,655 — the listing status-change and publish paths call `SyndicationService::new(...)` and enqueue syndication jobs via `create_status_change_jobs` / `create_publish_jobs`. Every status change on a syndicated listing therefore drops a row into `background_jobs` with `queue = 'syndication'` that will sit there indefinitely; the listing's `listing_syndication` row never advances to `SYNCED`, there is no retry, no DLQ, and no visibility to the operator.",
+        "backend/servers/api-server/src/services/syndication.rs:318 — even IF the worker were wired, `process_syndication_job` is itself a stub: the PUBLISH branch generates a mock external id (`format!(\"{}_{}\", payload.portal, uuid::Uuid::new_v4())`) and flips the syndication status to SYNCED without any HTTP call to a portal. So the full feature (Epic 105 Story 105.1/105.2) is non-functional end-to-end despite being called from a production route. Candidate for completeness/dead-code gating or a dispatcher plan to either wire the worker + implement a real HTTP backend per portal, or feature-gate the route calls behind a flag until the integration lands."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-stripe-checkout-client-no-timeout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/stripe.rs:148 — `create_checkout_session` builds a fresh `reqwest::Client::new()` per request and immediately `.post(...).send().await`s to the Stripe REST API with no `.timeout(..)` on either the client or the request. A hanging/slow Stripe response therefore holds the axum worker indefinitely (default reqwest connect/read timeouts are None); under a Stripe partial outage the invoice-pay flow becomes a connection-pool drain.",
+        "Same class as the Tier-1d finding `code-review-api-core-api-call-client-build-panic` filed 2026-10-28 for `services/actions/api_call.rs`, but on a lower-volume path (one-off invoice checkout, not per-workflow execution). Fix: hoist a shared `reqwest::Client` with explicit `connect_timeout`/`timeout` into `AppState` (same recipe the WorkflowEngine's hot path needs) and reuse it from `create_checkout_session`."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
