@@ -1,0 +1,41 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=19 < floor=36). Churn-aligned not applicable (no per-run CHURN_FILES). Oldest-unreviewed per review_cursor: ppt-web-ui @2026-10-22 skipped (5 open code-review-findings >= 3, saturated), reality-web @2026-10-23 skipped (3 open, saturated), next = mobile-native-kmp @2026-10-25 (only 2 open, not saturated).",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "signals": [
+    {
+      "id": "code-review-mn-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the CreateListing route wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`, so every submit permanently fails. The screen (mobile-native/androidApp/.../ui/realtor/CreateListingScreen.kt:95-130) is a fully built form with validation that calls `onSubmit(CreateListingInput(...))` and shows the user `realtor_create_validation_publish_failed` on failure — so the realtor 'Create Listing' feature is reachable (navigable from MyListingsScreen onCreateClick) but non-functional: the data is collected and silently discarded.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt — exposes only listMyListings / getListingAnalytics / getPortfolioAnalytics; there is NO createListing method, which is why Navigation has to stub it.",
+        "The backend endpoint already exists: reality-server routes/portal_listings.rs:207 `pub async fn create_listing` on `POST /api/v1/my/listings` (registered main.rs:205, router line 24). The same repo already calls `/api/v1/my/listings` for listMyListings, so the only missing piece is a `createListing` repo method + wiring it into Navigation.kt:493 in place of the NotImplementedError stub."
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mn-kmp-portfolio-analytics-fanout",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:119-124 (getPortfolioAnalytics) — after `listMyListings(limit = 100)` it does `listings.map { async { getListingAnalytics(it.id).getOrNull() } }.awaitAll()`, launching one unthrottled concurrent HTTP request per listing (up to 100 parallel calls from a mobile device over cellular). No concurrency cap / chunking — risks connection-pool exhaustion, client slowdown, and server rate-limiting.",
+        "Same block uses `.getOrNull()` then `.filterNotNull()`, so any per-listing analytics failure is silently dropped. Partial failures (e.g. 40 of 100 calls fail) are folded into the aggregate totals (totalViews/totalInquiries/totalFavorites, viewsTrend/inquiriesTrend) with no indication, so the realtor can be shown understated portfolio numbers that look authoritative. Consider bounding concurrency (chunked/semaphore) and surfacing a partial-data indicator instead of silently summing an incomplete set."
+      ],
+      "expert": "kotlin"
+    }
+  ]
+}

@@ -327,30 +327,6 @@
       "first_open_at": "2026-10-28T11:00:00Z"
     },
     {
-      "id": "pm-frontend-reality-web-share-comparison-404-2026-10-28",
-      "action": "reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s; map to canonical GET endpoint or implement the missing route",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
-      "id": "pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28",
-      "action": "reality-web listing detail SSR crashes on partial 200 body — JSON-LD build dereferences undefined fields; add defensive guards + unit test for missing-field body",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
       "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
