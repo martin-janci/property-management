@@ -212,61 +212,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
-      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T02:41:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
-      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=1 conf=medium vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T02:41:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
-      "id": "gh-issue-3187",
-      "action": "Failing test on dev blocks backend CI: cross_org_assign_violation_is_not_found (assign returns 403, expects 404) (Closes #3187)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-27T08:26:25Z (#3187)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T08:26:25Z",
-      "issue_ref": {
-        "number": 3187,
-        "url": "https://github.com/martin-janci/property-management/issues/3187",
-        "labels": [
-          "bug",
-          "security",
-          "follow-up"
-        ]
-      }
-    },
-    {
       "id": "code-review-mobile-rn-vote-detail-ranked-no-order",
       "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) — no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
       "owner_role": "pm-frontend",
@@ -299,18 +244,6 @@
         "score": 1,
         "vector": "bug"
       }
-    },
-    {
-      "id": "pm-frontend-ppt-web-authed-roots-session-leak-2026-10-28",
-      "action": "ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups — TanStack caches leak across users on a shared workstation; audit all feature-group root query keys",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
     },
     {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
@@ -360,23 +293,6 @@
     {
       "id": "code-review-api-handlers-moderation-report-flood",
       "action": "api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
-      "action": "ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",

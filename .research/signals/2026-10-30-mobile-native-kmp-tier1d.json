@@ -1,66 +1,40 @@
 {
-  "generated": "2026-10-30T00:00:00Z",
-  "source_run": "dispatcher Tier-1d demand-driven dev-review generator per .claude/skills/ppt-dev-review/SKILL.md - static single-segment rotating code review (no compilation, no test execution, no branch checkout; cloud runner = file reading + grep only). Claimable buffer starved (claimable=19 < floor=36) after scripted refills found nothing; standing routine requested fresh review vectors. DISPATCHER_OWNED_COMMIT=1: this artifact was written into the working tree only; NO git add/commit/push and NO branch/checkout performed - the orchestrator folds .research/** deltas into its Phase 6 commit. Only .research/signals/** is touched; .research/management/** (assignments.json, action-list.json, review_cursor advance) is left untouched for the dispatcher. SEGMENT SELECTION: no per-run CHURN_FILES supplied to this demand-driven invocation, so priority-1 churn-alignment is empty and selection falls to priority-2 oldest-unreviewed. state.json review_cursor dates ascending: ppt-web-ui=2026-10-22 (5 OPEN code-review-finding rows in backlog.json => saturated, SKIP per SKILL Step 1), reality-web=2026-10-23 (3 open => saturated, SKIP), mobile-native-kmp=2026-10-25 (2 open < 3 => eligible, SELECTED), then api-handlers=2026-10-26, api-core/ppt-web-core/mobile-rn=2026-10-27, reality-server=2026-10-28. Expert: kotlin (primary) + tester (secondary) per SKILL Step 2. Segment root: mobile-native/ (103 non-build .kt files).",
+  "generator": "dev-review",
+  "generated_at": "2026-10-30",
   "segment_reviewed": "mobile-native-kmp",
-  "selection_reason": "oldest-unreviewed",
-  "experts_used": ["kotlin", "tester"],
-  "findings_count": 2,
-  "static_only": true,
-  "cloud_landable": true,
-  "landability_note": "Static-analysis review only; no code changes proposed. Both findings are reachable UI completeness gaps (controls that render enabled but are wired to empty placeholder lambdas). A follow-up implementer can wire each affordance to its existing repository/navigation action without schema or API change; the 2FA backup-code path may need a small reality-server recovery endpoint if one does not yet exist (verify against the auth spec before landing).",
-  "review_notes": [
-    "DEDUPE: avoided re-filing issues already emitted by the 2026-10-28 / 2026-10-29 / 2026-10-29-b mobile-native-kmp slices (create-listing-stub @ Navigation.kt:493, cancel-swallowed @ ListingRepository, ssoservice-untested, sso-error-body-unguarded @ SsoService.kt, nearby-tab-placeholder @ ListingDetailTabs.kt:171-197) and the 2 existing OPEN backlog findings (http-client-no-timeout, my-listings-pagination-cap). The 2 findings below are net-new.",
-    "CONFIRMED CREATE-LISTING STUB still present (Navigation.kt:493 onSubmit -> Result.failure(NotImplementedError)) and PortalListingsRepository exposes only listMyListings/getListingAnalytics/getPortfolioAnalytics - NO create method exists, so the whole realtor CreateListingScreen form is dead. NOT re-filed: already captured as code-review-mobile-native-kmp-create-listing-stub on 2026-10-28/29.",
-    "`!!` sweep (SKILL kotlin pattern): 8 sites (ListingDetailScreen.kt:121/125/132/149/160, AccountScreen.kt:174, InquiriesScreen.kt:169, FavoritesScreen.kt:164). All are idiomatic Compose smart-cast workarounds on a remembered `var` / collected state, immediately dominated by a null-guard (`errorMessage != null ->`, `state.listing != null ->`, `if (notificationsExpanded && notificationPrefs != null)`). The one deferred case (ListingDetailScreen.kt:132 onCallClick re-reads state.listing!!) is not reachable because the button's `when` branch is removed from composition whenever listing flips back to null. => nits, not findings (consistent with prior slices).",
-    "GlobalScope / MainScope / runBlocking / NonCancellable / Dispatchers.Main sweep: ZERO hits. All coroutines use Compose rememberCoroutineScope() or ViewModel scope (lifecycle-bound). No finding.",
-    "expect/actual stub sweep: iosMain actuals (PlatformConfig.kt, SsoStateStore.ios.kt generateSsoNonce = real NSUUID) are proper implementations, not no-op stubs. SSO CSRF nonce contract intact. No finding.",
-    "network error-handling sweep: ApiClient.kt and the repositories wrap every suspend call in try/catch -> Result.failure; UI call sites fold onFailure into friendlyError()/Log.e. NearMeLocation.kt:88 catches SecurityException and degrades gracefully (documented). No swallow-in-UI finding beyond the already-filed cancel-swallowed.",
-    "i18n sweep: zero hardcoded user-facing Text(\"literal\") in the large screens - all route through stringResource(R.string.*). No i18n finding.",
-    "ProfileEditScreen.kt:249 onValueChange={} is on an intentionally disabled (enabled=false) email field with a 'locked' supporting text - correct, NOT a dead control.",
-    "FINDING SOURCE: grep for placeholder onClick/onX lambdas (`= { /* ... */ }`) surfaced a systemic cluster of ENABLED, visible controls wired to empty bodies across AccountScreen, FavoritesScreen, AgencyInquiriesScreen, ListingAnalyticsScreen, SearchScreen, and TwoFactorScreen. Default-parameter `= {}` on composable signatures (onSignInClick etc.) were excluded - those are overridden at call sites. The 2FA backup-code button is called out separately as the auth-recovery worst instance."
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer below floor; no CHURN_FILES passed so oldest-unreviewed per review_cursor: ppt-web-ui @ 2026-10-22 and reality-web @ 2026-10-23 both saturation-skipped (>=3 open code-review-findings each), next is mobile-native-kmp @ 2026-10-25 with 2 open)",
+  "experts_used": [
+    "kotlin",
+    "tester"
   ],
   "signals": [
     {
-      "id": "code-review-mn-kmp-dead-placeholder-buttons",
+      "id": "code-review-mobile-native-kmp-sso-service-no-tests",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "mobile-native-kmp",
       "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "bug",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
       "evidence": [
-        "Systemic: numerous ENABLED, visible Reality-Android controls are wired to empty placeholder lambdas (`onClick = { /* ... */ }`), so tapping them does nothing - a reachable completeness gap across shipped screens. These are call-site onClicks, not composable default params.",
-        "AccountScreen.kt: compare (line 449), privacy (465), about (474), avatar/preference picker rows (652,659,666,673), terms (737), privacy policy (743), help (749), feedback (755) - ~10 dead rows/buttons on the signed-in account screen.",
-        "FavoritesScreen.kt: saved-search row tap onSearchClick (line 213 `/* Navigate to search with filters */`), share (316), export (323), create-list (387) all no-op.",
-        "AgencyInquiriesScreen.kt: batch-reply (89) and search (120); ListingAnalyticsScreen.kt: share (58); SearchScreen.kt: save-search (373, `/* opens KmpSaveSearchModal (deferred) */`).",
-        "Fix: wire each affordance to its existing navigation route / repository action (several, e.g. onSearchClick, already have the data in scope), or hide the control until implemented so the UI does not advertise dead functionality. Distinct from the already-filed nearby-tab-placeholder (ListingDetailTabs.kt) and create-listing-stub (Navigation.kt)."
-      ],
-      "files": [
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/account/AccountScreen.kt",
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt",
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/agency/AgencyInquiriesScreen.kt",
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/ListingAnalyticsScreen.kt",
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
-      ],
-      "expert": "kotlin"
-    },
-    {
-      "id": "code-review-mn-kmp-2fa-backup-code-noop",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "mobile-native-kmp",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "evidence": [
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt:164 - the 'Use backup code' affordance (TextButton rendering stringResource(R.string.auth_2fa_backup_code)) is wired to `onClick = { /* backup code */ }`, an empty placeholder.",
-        "Impact: on the 2FA challenge screen a user who has lost access to their TOTP authenticator has NO working in-app recovery path - the backup-code button is visible and tappable but does nothing, which can lock a legitimate user out of their account.",
-        "Fix: wire the button to a backup-code entry flow (dialog/sub-screen) that posts the recovery code to the reality-server 2FA verify endpoint; confirm a backup/recovery-code verify endpoint exists in the auth spec before landing, and add a happy-path + invalid-code test. Worst instance of the dead-placeholder-button class, filed separately for its account-recovery severity."
-      ],
-      "files": [
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/auth/TwoFactorScreen.kt"
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:24 — SsoService is a 344-line security-critical auth state-machine (owns sessionToken lifecycle + the AuthState StateFlow) with 13 public methods (createMobileToken, validateAndLogin, getSession, refreshSession, logout, loginWithPassword, register, requestPasswordReset, confirmPasswordReset, updateProfile, isAuthenticated, getSessionToken, restoreSession) and has NO test file anywhere in the repo — no commonTest source references `SsoService` (sibling SsoInitiation/SsoStateStore ARE covered by SsoInitiationTest/SsoStateStoreTest). Untested auth-state transitions that silently break on regression: restoreSession() must roll sessionToken back to null + emit Unauthenticated on a failed getSession (lines 318-343); getSession()/refreshSession() must call logout() on a 401 (lines 101-103, 126-128); validateAndLogin() must drive Loading->Authenticated/Error and persist session.sessionToken (lines 62-85). Add a commonTest MockEngine-backed SsoServiceTest exercising these state transitions.",
+        "coverage check: python map of commonMain public types vs all commonTest sources shows SsoService unreferenced; only trivial *Exception subclasses are otherwise uncovered"
       ],
       "expert": "tester"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layout-repo-println",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48,57,68 — three raw println(...) debug-logging calls left in committed production commonMain code (the console.log equivalent). They log only HTTP status / echoed screen name / exception message (no tokens or PII, so not a security leak), but println in KMP shared code is swallowed on Android (no logcat tag/level) and clutters the iOS console; the codebase has no other println in commonMain. Route through a proper logging abstraction (expect/actual logger or Napier) or drop them.",
+        "grep -rni 'println' mobile-native/shared/src/commonMain --include='*.kt' returns only these three lines in the segment"
+      ],
+      "expert": "kotlin"
     }
   ]
 }
