@@ -24,7 +24,8 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import { VoteDetailScreen } from './VoteDetailScreen';
 
 jest.mock('../../hooks/useApi', () => ({
@@ -129,5 +130,164 @@ describe('VoteDetailScreen — branch render snapshots', () => {
     expect(mockUseApiQuery).toHaveBeenCalledTimes(3);
     expect(mockUseApiMutation).toHaveBeenCalledTimes(1);
     expect(toJSON()).toMatchSnapshot();
+  });
+});
+
+/**
+ * Ranked-choice ballot regression
+ * (code-review-mobile-rn-vote-detail-ranked-no-order).
+ *
+ * The screen used to group `ranked` questions with `multiple_choice` into one
+ * `isMulti` checkbox renderer (QuestionCard). That meant a ranked ballot showed
+ * no rank position and captured nothing until the voter tapped an option, so a
+ * ranked question submitted a bare, order-less option set (or nothing at all)
+ * and could not express preference order — even though the backend weights
+ * ranked answers by array position (repositories/vote.rs).
+ *
+ * The fix gives `ranked` its own reorderable renderer that:
+ *   - shows every option with its 1-based rank position,
+ *   - offers move-up / move-down controls to reorder,
+ *   - defaults to the declared option order, and
+ *   - always submits the full ordered option-id list.
+ *
+ * On the buggy (pre-fix) code every assertion below fails: there are no
+ * move controls, and casting submits an empty answer set for the untouched
+ * ranked question.
+ */
+describe('VoteDetailScreen — ranked ballot', () => {
+  const DETAIL = {
+    id: 'vote-1',
+    title: 'Budget priorities',
+    description: null,
+    status: 'active',
+    start_at: null,
+    end_at: '2026-12-31T00:00:00Z',
+    quorum_type: 'simple',
+    quorum_percentage: null,
+    participation_count: null,
+    eligible_count: null,
+    building_name: 'Maple Court',
+    created_by_name: 'Manager',
+    question_count: 1,
+  };
+
+  const RANKED_QUESTION = {
+    id: 'q-ranked',
+    vote_id: 'vote-1',
+    question_text: 'Rank these priorities',
+    description: null,
+    question_type: 'ranked',
+    options: [
+      { id: 'opt-a', text: 'Roof repair', order: 0 },
+      { id: 'opt-b', text: 'Garden', order: 1 },
+      { id: 'opt-c', text: 'Elevator', order: 2 },
+    ],
+    display_order: 0,
+    is_required: true,
+  };
+
+  const ELIGIBILITY = {
+    vote_id: 'vote-1',
+    user_id: 'user-1',
+    eligible_units: [
+      {
+        unit_id: 'unit-1',
+        unit_designation: '1A',
+        ownership_share: '1/3',
+        is_owner: true,
+        is_delegated: false,
+        delegation_id: null,
+        already_voted: false,
+      },
+    ],
+    can_vote: true,
+    reason: null,
+  };
+
+  const mutate = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseApiMutation.mockReturnValue({ mutate, isPending: false });
+    mockUseApiQuery.mockImplementation((_key: unknown, url: string) => {
+      if (url.endsWith('/questions')) {
+        return { data: [RANKED_QUESTION], isLoading: false, error: null };
+      }
+      if (url.endsWith('/eligibility')) {
+        return { data: ELIGIBILITY, isLoading: false, error: null };
+      }
+      return { data: DETAIL, isLoading: false, error: null };
+    });
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    (Alert.alert as jest.Mock).mockRestore?.();
+  });
+
+  // Fire the "default"-styled button of the most recent Alert.alert with
+  // buttons — that's the vote-confirmation action that triggers the cast.
+  function confirmSubmit() {
+    const calls = (Alert.alert as jest.Mock).mock.calls;
+    for (let i = calls.length - 1; i >= 0; i--) {
+      const buttons = calls[i][2];
+      if (Array.isArray(buttons)) {
+        const confirm = buttons.find((b: { style?: string }) => b.style === 'default');
+        confirm?.onPress?.();
+        return;
+      }
+    }
+    throw new Error('no Alert with buttons was shown — submit did not reach confirmation');
+  }
+
+  it('renders each ranked option with its position and reorder controls', () => {
+    renderScreen({ voteId: 'vote-1' });
+
+    expect(screen.getByText('Roof repair')).toBeTruthy();
+    expect(screen.getByText('Garden')).toBeTruthy();
+    expect(screen.getByText('Elevator')).toBeTruthy();
+
+    // Rank badges 1/2/3 — absent on the buggy checkbox renderer.
+    expect(screen.getByText('1')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
+    expect(screen.getByText('3')).toBeTruthy();
+
+    // One move-up and one move-down control per option — the buggy renderer
+    // had none, so these queries throw there.
+    expect(screen.getAllByLabelText('voting.moveUp')).toHaveLength(3);
+    expect(screen.getAllByLabelText('voting.moveDown')).toHaveLength(3);
+  });
+
+  it('submits the full declared option order when the voter does not reorder', () => {
+    renderScreen({ voteId: 'vote-1' });
+
+    fireEvent.press(screen.getByText('voting.submit'));
+    confirmSubmit();
+
+    expect(mutate).toHaveBeenCalledTimes(1);
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        unit_id: 'unit-1',
+        answers: { 'q-ranked': ['opt-a', 'opt-b', 'opt-c'] },
+      }),
+      expect.anything()
+    );
+  });
+
+  it('captures the reordered preference list in the cast answers', () => {
+    renderScreen({ voteId: 'vote-1' });
+
+    // Push the top option (Roof repair) down one position → B, A, C.
+    fireEvent.press(screen.getAllByLabelText('voting.moveDown')[0]);
+
+    fireEvent.press(screen.getByText('voting.submit'));
+    confirmSubmit();
+
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        answers: { 'q-ranked': ['opt-b', 'opt-a', 'opt-c'] },
+      }),
+      expect.anything()
+    );
   });
 });
