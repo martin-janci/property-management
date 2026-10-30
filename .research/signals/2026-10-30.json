@@ -1,0 +1,229 @@
+{
+  "generated": "2026-10-30T03:17:44Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-30",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-10-28T10:54:38Z — 40h ago (threshold 36h); routine missed one scheduled run",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3173",
+      "type": "dep-update-noise",
+      "source": "PR #3173",
+      "score_delta": 0,
+      "evidence": "dependabot: bump tokio-util 0.7.19→0.7.20 (tokio group)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3176",
+      "type": "dep-update-noise",
+      "source": "PR #3176",
+      "score_delta": 0,
+      "evidence": "dependabot: bump cargo-minor-patch group (19 updates)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3194",
+      "type": "dep-update-noise",
+      "source": "PR #3194",
+      "score_delta": 0,
+      "evidence": "dependabot: bump gradle-minor-patch group (7 updates)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3195",
+      "type": "dep-update-noise",
+      "source": "PR #3195",
+      "score_delta": 0,
+      "evidence": "dependabot: bump npm-minor-patch group (30 updates); supersedes #3137 closed-unmerged",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3196",
+      "type": "dep-update-noise",
+      "source": "PR #3196",
+      "score_delta": 0,
+      "evidence": "dependabot: bump kotlin group (5 updates); supersedes #2961 closed-unmerged",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-not-implemented",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-native-kmp]",
+      "score_delta": 3,
+      "evidence": "mobile-native/androidApp/.../navigation/Navigation.kt:493 — CreateListingScreen onSubmit = NotImplementedError stub; realtor create-listing feature non-functional in production Android build. Dedups to existing ready row `code-review-mobile-native-kmp-create-listing-not-wired` (plan already live); score bumped 3→6, source appended, no new evidence line.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-catch-exception-swallows-cancellation",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-native-kmp]",
+      "score_delta": 2,
+      "evidence": "57 `catch (e: Exception)` sites across 10 commonMain repositories (Favorites 11, Notifications 9, SsoService 9, Inquiry 8, ApiClient 6, Listing 6, Agency 4, Realtor 2, PortalListings 2) swallow CancellationException; LayoutRepository.kt:65-67 is the lone correct example that rethrows first.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-println-in-shared-logging",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [mobile-native-kmp]",
+      "score_delta": 1,
+      "evidence": "mobile-native/shared/src/commonMain/.../layout/LayoutRepository.kt:48,57,68 — raw println() for error reporting; Android stdout (no Logcat tag/level) + iOS NSLog (no subsystem); unfilterable in prod. Fix: expect fun log() or adopt Napier/Kermit.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq any-cursor-changed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id]|unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq --slurpfile prev seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.score>8]|length==0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq open & updated<=today-14",
+      "observed": "0 items eligible for decay",
+      "expected": "all decayed-or-dropped"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached | grep new plans",
+      "observed": "0 new plans",
+      "expected": "<=2 and each meets gates"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "exit 0 count=0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "parse brief Phases line",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still present",
+      "observed": "17 found, 0 missing",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ge HEAD count",
+      "observed": "22>=22",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions<=3 and each type<=1",
+      "observed": "0 actions this run",
+      "expected": "<=3 with caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + cursors advance",
+      "observed": "action-list/risks parse; pm_cursor 3->4; coverage_cursor 0->1",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token value scan",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "phase_1_6": {
+    "role_focus": [
+      "pm-scrum-master",
+      "pm-qa"
+    ],
+    "coverage_upkeep": {
+      "epic_rechecked": "epic-10a"
+    },
+    "artifacts_written": [
+      "project-state.md",
+      "action-list.json",
+      "action-list.md",
+      "risks.json",
+      "risks.md",
+      "roadmap.md",
+      "roles/pm-qa.md",
+      "decisions.md",
+      "coverage.json"
+    ],
+    "digest_quiet": false
+  }
+}

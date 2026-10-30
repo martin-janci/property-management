@@ -9884,11 +9884,12 @@
       "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "vector": "bug",
       "confidence": "high",
-      "score": 3,
+      "score": 6,
       "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "rotating-expert-review [mobile-native-kmp] 2026-10-30 (dup finding: not-implemented variant confirms same stub)"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9905,7 +9906,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-10-30",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -13861,6 +13862,54 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-catch-exception-swallows-cancellation",
+      "title": "KMP: 57 `catch (e: Exception)` sites across 10 commonMain repos swallow CancellationException — structured concurrency broken, ghost onFailure branches after navigation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-native-kmp] 2026-10-30"
+      ],
+      "evidence": [
+        "57 `catch (e: Exception)` sites across 10 commonMain repositories (Favorites 11, Notifications 9, SsoService 9, Inquiry 8, ApiClient 6, Listing 6, Agency 4, Realtor 2, PortalListings 2) swallow CancellationException. LayoutRepository.kt:65-67 is the only repo that explicitly rethrows CancellationException before the generic catch. A cancelled Ktor call completes as Result.failure(JobCancellationException) instead of propagating, breaking structured concurrency — the caller's coroutine scope cannot cleanly tear down (ghost onFailure branches fire after navigation away, parent supervisorScope cancellation is defeated)."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/favorites/FavoritesRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/notifications/NotificationRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/inquiry/InquiryRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/ApiClient.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/agency/AgencyRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/RealtorRepository.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-10-30",
+      "updated_at": "2026-10-30",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-println-in-shared-logging",
+      "title": "KMP shared: raw println() in LayoutRepository :48,:57,:68 for error reporting — Android stdout (no Logcat tag/level) + iOS NSLog (no subsystem); unfilterable in prod",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-native-kmp] 2026-10-30"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/.../layout/LayoutRepository.kt:48,57,68 — raw println(\"LayoutRepository: falling back ...\") for error reporting in KMP shared code. On Android these go to stdout (not Logcat with tag/level), on iOS to NSLog without a subsystem; errors are unfilterable in production and can't be scrubbed per build type. Introduce an expect fun log(tag, level, msg) or adopt Napier/Kermit so platforms can route (and strip in release) consistently."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "created_at": "2026-10-30",
+      "updated_at": "2026-10-30",
+      "plan": null
     }
   ]
 }

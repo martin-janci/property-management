@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-10-30T11:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -904,7 +904,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-10-19",
+      "last_checked": "2026-10-30",
       "screen_refs": []
     },
     {
@@ -930,7 +930,7 @@
         "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-10-30",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-oauth-clients",
@@ -963,7 +963,7 @@
         "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-10-30",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-oauth-grants",

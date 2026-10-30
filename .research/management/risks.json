@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-10-30T11:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -283,6 +283,61 @@
       "owner_role": "pm-scrum-master",
       "trigger": "Any pm-* role crosses 90 days stale",
       "status": "open"
+    },
+    {
+      "id": "pm-qa-test-shadow-compounding-dispatcher-fix-loop-2026-10-30",
+      "risk": "7 open code-review-* fix PRs touch user-visible defects (invoice NaN, appeal re-file, moderation flood, auth-token stale, iot ws state) but only #3184 ships with regression tests \u2014 the dispatcher's fix loop is now outpacing the test-coverage loop and future regressions will land undetected",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Enforce the DEC-001 decision (every dispatcher-spawned fix PR must contain a failing-on-main test file) via CI diff-guard, not just reviewer discretion; block the merge queue on it",
+      "owner_role": "pm-qa",
+      "trigger": "Any post-merge review surfaces a regression in a code-review-* fix landed without a same-PR test",
+      "status": "open",
+      "source": "pm-qa 2026-10-30"
+    },
+    {
+      "id": "pm-qa-add-evidence-pattern-chronic-subroute-authz-gap-2026-10-30",
+      "risk": "The chronic add_evidence pattern (dispute #2483 \u2192 violations #3164, a year apart in the same shape) is a leading indicator of a sub-route authz test-matrix gap, not an isolated bug. Without a one-shot cross-tenant sweep across every /<resource>/<id>/<subresource> POST, a third occurrence is a matter of time",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Build a parametric cross-tenant integration test that enumerates sub-routes from the OpenAPI spec and asserts 404 for every POST under Org B token on Org A seed; add to the backend CI gate",
+      "owner_role": "pm-qa",
+      "trigger": "A third add_evidence-shape IDOR surfaces in a different resource",
+      "status": "open",
+      "source": "pm-qa 2026-10-30"
+    },
+    {
+      "id": "pm-qa-stale-pr-reviewer-starvation-chronic-2026-10-30",
+      "risk": "7 of 31 open PRs are 60+ days old (accounting trio + 5 Dependabot) \u2014 the reviewer-starvation pattern pm-scrum-master flagged 2026-07-30 has worsened; stale accounting PRs are not getting rebased against the live schema, so merge-conflict risk compounds every week they sit",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Explicit reviewer-slot rotation for stale PRs; auto-rebase bot or close+respawn on PRs crossing 90 days; separate Dependabot batching so dep-bumps do not drown feature PRs in the queue",
+      "owner_role": "pm-scrum-master",
+      "trigger": "Any PR crosses 120 days open",
+      "status": "open",
+      "source": "pm-qa 2026-10-30"
+    },
+    {
+      "id": "pm-qa-no-multi-replica-harness-2026-10-30",
+      "risk": "No end-to-end integration test harness exists for spinning up >1 api-server replica against shared Postgres+Redis \u2014 the atomic-claim test called out 2026-08-25 is still unwritten, and the next quiet-hours drain concurrency regression (plus any future distributed-work-coordination bug) has nowhere to land",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Spike a two-replica docker-compose test harness (reuse the Testcontainers Postgres fixture); land it with the quiet-hours concurrency test as the first consumer",
+      "owner_role": "pm-qa",
+      "trigger": "A concurrency bug lands and takes >14 days to repro due to missing harness",
+      "status": "open",
+      "source": "pm-qa 2026-10-30"
+    },
+    {
+      "id": "pm-qa-kmp-tests-unrunnable-cloud-2026-10-30",
+      "risk": "Mobile-native (KMP) tests remain structurally un-runnable in the cloud sandbox (#2652) \u2014 4 KMP code-review items (CreateListingScreen stub, InquiriesResponse page_size, HttpClient no-timeout, pagination cap) have no regression-test attachment path from the dispatcher. QA for KMP is manual-only until #2652 clears",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Prioritize #2652 unblock jointly with pm-devops; interim: pin a human-reviewer slot for KMP PRs and track the KMP test gap as its own backlog metric",
+      "owner_role": "pm-qa",
+      "trigger": "A KMP regression ships to users undetected",
+      "status": "open",
+      "source": "pm-qa 2026-10-30"
     }
   ]
 }

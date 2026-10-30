@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-number-count-race",
-      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
+      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency \u2192 opaque 500 on create",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -96,7 +96,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -113,7 +113,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -184,7 +184,7 @@
     },
     {
       "id": "pm-backend-violations-add-evidence-authz-gap-3164",
-      "action": "Gate violations add_evidence sub-resource with authz check — currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
+      "action": "Gate violations add_evidence sub-resource with authz check \u2014 currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "none",
@@ -196,7 +196,7 @@
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heavily this run",
+      "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs \u2014 merged PR touched this file heavily this run",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
@@ -213,7 +213,7 @@
     },
     {
       "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
-      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh",
+      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) \u2014 stale Bearer after refresh",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -230,7 +230,7 @@
     },
     {
       "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
-      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path",
+      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it \u2014 give-up state has no UI path",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -268,7 +268,7 @@
     },
     {
       "id": "code-review-mobile-rn-vote-detail-ranked-no-order",
-      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) — no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
+      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) \u2014 no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -285,7 +285,7 @@
     },
     {
       "id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
-      "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
+      "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) \u2014 i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -302,7 +302,7 @@
     },
     {
       "id": "pm-frontend-ppt-web-authed-roots-session-leak-2026-10-28",
-      "action": "ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups — TanStack caches leak across users on a shared workstation; audit all feature-group root query keys",
+      "action": "ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups \u2014 TanStack caches leak across users on a shared workstation; audit all feature-group root query keys",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
@@ -314,7 +314,7 @@
     },
     {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
-      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) \u2014 closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "pm-qa",
@@ -328,7 +328,7 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
@@ -342,7 +342,7 @@
     },
     {
       "id": "code-review-api-handlers-appeal-no-status-guard",
-      "action": "api-handlers file_appeal has no status guard → owner can re-file after a final appeal decision",
+      "action": "api-handlers file_appeal has no status guard \u2192 owner can re-file after a final appeal decision",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -359,7 +359,7 @@
     },
     {
       "id": "code-review-api-handlers-moderation-report-flood",
-      "action": "api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content",
+      "action": "api-handlers /moderation/report open-to-all + no dedup/rate-limit \u2192 unbounded case rows per content",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -376,7 +376,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
-      "action": "ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted",
+      "action": "ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard \u2192 NaN totals persisted",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -393,7 +393,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
-      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift",
+      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate \u2014 financial drift",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -427,7 +427,7 @@
     },
     {
       "id": "code-review-reality-web-listing-edit-price-zero",
-      "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
+      "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` \u2014 silent price=0 persist",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -444,7 +444,7 @@
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs \u2014 3 touches in 14d (role/role-authz/IDOR patches)",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
@@ -461,7 +461,7 @@
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — 3 touches in 14d (iterative compliance hardening)",
+      "action": "Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs \u2014 3 touches in 14d (iterative compliance hardening)",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
@@ -478,7 +478,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
-      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button — a11y role mismatch",
+      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button \u2014 a11y role mismatch",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -495,7 +495,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
-      "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
+      "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English \u2014 no i18n hook, uses native alert/confirm",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -512,7 +512,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
-      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state",
+      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup \u2014 dangling timer / stale state",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -546,7 +546,7 @@
     },
     {
       "id": "code-review-reality-server-reports-status-filter-unvalidated",
-      "action": "reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum",
+      "action": "reality-server list_my_reports binds unvalidated status filter \u2014 silent empty page vs documented enum",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -563,7 +563,7 @@
     },
     {
       "id": "code-review-reality-web-comparison-parse-shape",
-      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
+      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check \u2014 tampered value crashes .some(...)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -580,7 +580,7 @@
     },
     {
       "id": "code-review-reality-web-listing-edit-i18n-sk",
-      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings — i18n gap on cs/de/en locales",
+      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings \u2014 i18n gap on cs/de/en locales",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -594,7 +594,91 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-qa-attach-failing-test-to-pr3188-xtenant-assign-2026-10-30",
+      "action": "Attach failing-on-main cross-tenant assign-404 regression test to draft PR #3188 (gh-issue-3187) \u2014 reuse violations_mutation_cross_org_idor_tests scaffolding from PR #3183; the fix must not merge without the test file it fixes",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-30",
+      "first_open_at": "2026-10-30T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-announcement-fanout-rls-sqlx-test-2026-10-30",
+      "action": "Replace pure-Rust re-model test for announcement cross-tenant fanout (#2484) with a sqlx integration test exercising the real RLS predicate \u2014 unblocks carried risk risk-announcement-fanout-test-fidelity-2026-07-23 (99 days aged)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-30",
+      "first_open_at": "2026-10-30T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-e2e-form-submit-smoke-gate-example-2026-10-30",
+      "action": "Co-own e2e form-submit smoke gate with pm-frontend \u2014 land one worked example (ReportFaultScreen) with MSW asserting the POST payload; set DoD so the pattern is copy-paste for the remaining ~12 forms",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-30",
+      "first_open_at": "2026-10-30T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-add-evidence-xtenant-sweep-2026-10-30",
+      "action": "Expand add_evidence-pattern sub-route cross-tenant regression coverage before PR #3171 merges (#3164) \u2014 mirror community_cross_tenant_idor_tests.rs across announcements/attachments, documents/signatures, mediation/evidence",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-30",
+      "first_open_at": "2026-10-30T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-attach-tests-to-pr3192-3193-2026-10-30",
+      "action": "Attach failing-on-main test files to draft PRs #3192 (file_appeal status guard) and #3193 (moderation report flood dedup) before they enter the merge queue \u2014 currently both are code-only fixes with no test file",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-30",
+      "first_open_at": "2026-10-30T11:00:00Z"
+    },
+    {
+      "id": "pm-qa-shared-proptest-corpus-crate-2026-10-30",
+      "action": "Draft a shared proptest corpus crate under backend/crates/test-corpus/ for sanitizers (CSV, XSS, HTML, JSON) \u2014 carries over the 66-day-old fuzz-corpus decision from the 2026-08-25 run",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-30",
+      "first_open_at": "2026-10-30T11:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-stale-pr-reviewer-slot-2026-10-30",
+      "action": "Allocate explicit reviewer slot this week for the 7 PRs 60+ days old (accounting trio #2555/#2559 at ~70d, Dependabot cluster #2584/#2588/#2589/#2590/#2866 at 60\u2013103d) \u2014 quiet merge window makes reviewer-capacity-not-implementer-capacity the obvious bottleneck",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-30",
+      "first_open_at": "2026-10-30T11:00:00Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-10-30T11:00:00Z"
 }
