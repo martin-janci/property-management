@@ -212,23 +212,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-vote-detail-ranked-no-order",
-      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) — no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "rotating-expert-review 2026-10-27 (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T22:30:00Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
       "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
       "owner_role": "pm-frontend",

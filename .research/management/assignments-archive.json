@@ -5787,6 +5787,30 @@
       "merge_attempted_at": "2026-08-23T08:36:36Z"
     },
     {
+      "task_id": "code-review-mobile-rn-vote-detail-ranked-no-order",
+      "branch": "auto-impl/code-review-mobile-rn-vote-detail-ranked-03a001c9",
+      "status": "merged",
+      "claimed_at": "2026-10-28T04:30:41Z",
+      "last_updated": "2026-10-30T20:51:26Z",
+      "status_changed_at": "2026-10-30T20:51:26Z",
+      "pr_number": 3189,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3189",
+      "merged_at": "2026-10-30T20:50:53Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=b973d633b241a3d437b783cec1ee2a816f11b3d2 note=ranked-ballot-fix-correct-ci-green; approve posted as COMMENT (GitHub blocks self-approval, PR author==reviewer account) [dispatcher cannot auto-merge — self-approval structurally blocked like siblings; labeled needs-human-review awaiting human merge]",
+      "last_reviewed_oid": "b973d633b241a3d437b783cec1ee2a816f11b3d2",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-10-30T20:41:51Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-mobile-rn-votedetail-conditional-hooks",
       "branch": "auto-impl/code-review-mobile-rn-votedetail-conditi-7ae4b449",
       "status": "merged",
@@ -21489,5 +21513,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-30T20:45:53Z"
+  "archived_at": "2026-10-30T20:51:26Z"
 }

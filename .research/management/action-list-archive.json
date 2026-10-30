@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-30T20:46:18Z",
+  "archived_at": "2026-10-30T20:51:26Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5882,6 +5882,30 @@
         "merged_pr": 2837,
         "merged_at": "2026-08-23T08:37:46Z",
         "at": "2026-08-23T08:39:06Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-vote-detail-ranked-no-order",
+      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) — no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "rotating-expert-review 2026-10-27 (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-30T20:51:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-27T22:30:00Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3189,
+        "merged_at": "2026-10-30T20:50:53Z",
+        "at": "2026-10-30T20:51:26Z"
       }
     },
     {
