@@ -16,6 +16,7 @@ import { Footer, Header } from '@/components/ui';
 import { formatPrice } from '@/lib/format';
 import { getMyListing, type ListingDraft, RealtorApiError, updateListing } from '@/lib/realtor-api';
 import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPE_OPTIONS } from './_mock';
+import { resolveListingPrice } from './_price';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
 // TODO: replace file upload with @ppt/ui-kit/FileUpload once available
@@ -174,8 +175,16 @@ function EditWizardContent() {
   const update = (patch: Partial<ListingEditFormData>) => setForm((f) => ({ ...f, ...patch }));
 
   const handleSave = async () => {
-    setSaving(true);
     setSaveError(null);
+    // Reject an empty/invalid price instead of silently persisting €0. The old
+    // `Number(form.price) || 0` coercion turned a blank field into a free
+    // listing without any warning (#code-review-price-zero).
+    const price = resolveListingPrice(form.price);
+    if (price === null) {
+      setSaveError('Zadajte platnú cenu väčšiu ako 0 € (krok 4).');
+      return;
+    }
+    setSaving(true);
     try {
       const floor = typeof form.floor === 'number' ? form.floor : Number(form.floor) || undefined;
       // Only emit `status` when the owner deliberately changed the 3-state
@@ -198,7 +207,7 @@ function EditWizardContent() {
         description: form.description,
         propertyType: form.propertyType,
         transactionType: form.transactionType,
-        price: typeof form.price === 'number' ? form.price : Number(form.price) || 0,
+        price,
         currency: form.currency,
         street: form.address,
         city: form.city,
