@@ -13365,7 +13365,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-core] 2026-10-27"
       ],
@@ -13387,7 +13387,12 @@
       "segment": "ppt-web-core",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-10-30T22:26:13Z",
+        "assignment_status": "merged",
+        "pr_number": 3185
+      }
     },
     {
       "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
@@ -13395,7 +13400,7 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-core] 2026-10-27"
       ],
@@ -13416,7 +13421,12 @@
       "segment": "ppt-web-core",
       "score_delta": 1,
       "candidate_vector": "dx",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-10-30T22:26:13Z",
+        "assignment_status": "merged",
+        "pr_number": 3186
+      }
     },
     {
       "id": "stalled-review-pr-3108",
@@ -13735,7 +13745,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13754,7 +13764,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "completeness"
+      "expert": "completeness",
+      "reconciled": {
+        "at": "2026-10-30T22:26:13Z",
+        "assignment_status": "merged",
+        "pr_number": 3191
+      }
     },
     {
       "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
