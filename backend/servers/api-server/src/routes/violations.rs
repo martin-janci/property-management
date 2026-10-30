@@ -393,6 +393,8 @@ async fn add_evidence(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationEvidence>,
 ) -> ApiResult<Json<db::models::violations::ViolationEvidence>> {
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
