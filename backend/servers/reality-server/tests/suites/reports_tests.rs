@@ -245,6 +245,113 @@ async fn list_my_reports_total_reflects_full_count_not_page_len(pool: PgPool) {
     );
 }
 
+/// Seed a reporter user + one `received` report and return `(user_id, token)`.
+/// Used by the status-filter validation regression below.
+async fn seed_reporter_with_one_report(pool: &PgPool, tag: &str) -> (Uuid, String) {
+    let org_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO organizations (name, slug, contact_email, status) \
+         VALUES ($1, $2, $3, 'active') RETURNING id",
+    )
+    .bind(format!("Rep Org {tag}"))
+    .bind(format!("rep-org-{tag}"))
+    .bind(format!("{tag}@rep-org.test"))
+    .fetch_one(pool)
+    .await
+    .expect("seed org");
+
+    let user_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO users (id, email, password_hash, name, principal_kind, status) \
+         VALUES ($1, $2, 'x', 'Rep User', 'platform', 'active')",
+    )
+    .bind(user_id)
+    .bind(format!("reports-status-{user_id}@test.internal"))
+    .execute(pool)
+    .await
+    .expect("seed user");
+
+    let listing_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO listings \
+            (organization_id, created_by, status, transaction_type, title, \
+             property_type, price, currency, street, city, postal_code, country) \
+         VALUES ($1, $2, 'active', 'sale', 'Rep Listing', 'apartment', 100000.00, \
+                 'EUR', 'Test Street 1', 'Bratislava', '81101', 'SK') RETURNING id",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed listing");
+
+    sqlx::query(
+        "INSERT INTO listing_reports \
+            (listing_id, reporter_user_id, problem_type, description, status) \
+         VALUES ($1, $2, 'other', 'status filter report', 'received')",
+    )
+    .bind(listing_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed report");
+
+    (user_id, common::mint_token(user_id))
+}
+
+/// GET /api/v1/reports/me with a raw `status` query value, returning the
+/// response status. Keeps the query value un-encoded intentionally — the
+/// values exercised are already URL-safe.
+async fn get_my_reports_with_status(router: &Router, token: &str, status: &str) -> StatusCode {
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(format!("/api/v1/reports/me?status={status}"))
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .body(Body::empty())
+        .unwrap();
+    router.clone().oneshot(req).await.unwrap().status()
+}
+
+/// Regression: the `status` filter on GET /api/v1/reports/me must be validated
+/// against the documented enum (`received | in_review | resolved | rejected`).
+/// Before the fix an unrecognised value (typo, wrong case, non-existent status)
+/// was bound straight into `status = $4`, so it silently matched zero rows and
+/// returned a 200 empty page — indistinguishable from "you have no reports with
+/// this status". A bad filter must now be a clear 400, while a documented value
+/// (and an absent / blank filter) still yields 200.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_my_reports_rejects_unknown_status_filter(pool: PgPool) {
+    let (_user_id, token) = seed_reporter_with_one_report(&pool, "status-filter").await;
+    let router = reports_router(pool);
+
+    // Unknown value → 400, not a silent empty 200.
+    assert_eq!(
+        get_my_reports_with_status(&router, &token, "bogus").await,
+        StatusCode::BAD_REQUEST,
+        "unrecognised status filter must be rejected with 400"
+    );
+    // Wrong case is still invalid (status values are canonical lowercase).
+    assert_eq!(
+        get_my_reports_with_status(&router, &token, "RECEIVED").await,
+        StatusCode::BAD_REQUEST,
+        "wrong-case status filter must be rejected with 400"
+    );
+
+    // Every documented value is accepted.
+    for valid in ["received", "in_review", "resolved", "rejected"] {
+        assert_eq!(
+            get_my_reports_with_status(&router, &token, valid).await,
+            StatusCode::OK,
+            "documented status {valid:?} must be accepted"
+        );
+    }
+
+    // A blank filter means "no filter" → 200.
+    assert_eq!(
+        get_my_reports_with_status(&router, &token, "").await,
+        StatusCode::OK,
+        "blank status filter must be treated as no filter"
+    );
+}
+
 /// POST /api/v1/reports for `listing_id` with optional reporter contact
 /// fields, returning the response status. Used by the contact-validation
 /// regression below.
