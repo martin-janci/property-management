@@ -435,6 +435,37 @@ impl ComplianceRepository {
         content_owner_id: Uuid,
         organization_id: Option<Uuid>,
     ) -> Result<ModerationCase, SqlxError> {
+        // Dedup guard (anti-flood): `/moderation/report` is open to every
+        // authenticated user, so without this a single actor could post the
+        // same report thousands of times and spawn an unbounded number of
+        // moderation cases for one piece of content. Collapse repeat reports
+        // from the *same* reporter against the *same* content to a single open
+        // case: if the reporter already has a still-open ('pending' /
+        // 'under_review') case for this content in this org, return it
+        // idempotently instead of inserting a duplicate. A fresh report is
+        // allowed again only once the prior case is closed (resolved /
+        // dismissed). Automated cases use a separate code path and are not
+        // affected (this method always writes `report_source = 'user'`).
+        //
+        // NOTE: this is a check-then-insert guard, not a hard DB constraint, so
+        // a burst of truly concurrent identical requests could still slip a few
+        // duplicates past the SELECT. That bounds, but does not perfectly
+        // eliminate, the flood; the belt-and-suspenders fix is a partial unique
+        // index on (reported_by, content_type, content_id, organization_id)
+        // WHERE status IN ('pending','under_review'), which needs a migration
+        // (deferred — see PR body).
+        if let Some(existing) = self
+            .find_open_user_report(
+                reported_by,
+                data.content_type,
+                data.content_id,
+                organization_id,
+            )
+            .await?
+        {
+            return Ok(existing);
+        }
+
         // Calculate priority based on violation type
         let priority = match data.violation_type {
             Some(ViolationType::IllegalContent) | Some(ViolationType::Violence) => 1,
@@ -462,6 +493,46 @@ impl ComplianceRepository {
         .bind(&data.report_reason)
         .bind(priority)
         .fetch_one(&self.pool)
+        .await?;
+
+        Ok(case)
+    }
+
+    /// Find an existing *open* user-filed moderation case from `reported_by`
+    /// against the same content in the same org.
+    ///
+    /// "Open" means still actionable — `pending` or `under_review`. A report
+    /// whose case was already resolved or dismissed does not block a fresh
+    /// report. Used by `create_moderation_case` to dedup repeat reports and
+    /// cap case growth per (reporter, content). `organization_id` is matched
+    /// with `IS NOT DISTINCT FROM` so a `NULL` org (no tenant context) dedups
+    /// against other `NULL`-org reports from the same reporter rather than
+    /// never matching.
+    pub async fn find_open_user_report(
+        &self,
+        reported_by: Uuid,
+        content_type: ModeratedContentType,
+        content_id: Uuid,
+        organization_id: Option<Uuid>,
+    ) -> Result<Option<ModerationCase>, SqlxError> {
+        let case = sqlx::query_as::<_, ModerationCase>(
+            r#"
+            SELECT * FROM moderation_cases
+            WHERE reported_by = $1
+              AND content_type = $2
+              AND content_id = $3
+              AND organization_id IS NOT DISTINCT FROM $4
+              AND report_source = 'user'
+              AND status IN ('pending', 'under_review')
+            ORDER BY created_at ASC
+            LIMIT 1
+            "#,
+        )
+        .bind(reported_by)
+        .bind(content_type)
+        .bind(content_id)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(case)

@@ -37,7 +37,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::common::{create_authenticated_user, TestApp, TestUser};
-use db::models::compliance::ModeratedContentType;
+use db::models::compliance::{CreateModerationCase, ModeratedContentType, ViolationType};
 use db::repositories::ComplianceRepository;
 
 // ---------------------------------------------------------------------------
@@ -123,6 +123,100 @@ async fn resolve_content_owner_returns_real_listing_owner(pool: PgPool) {
         resolved,
         Some(owner),
         "report_content must persist the listing's real owner, not a placeholder"
+    );
+}
+
+// ===========================================================================
+// (4) report_content anti-flood dedup: `/moderation/report` is open to every
+//     authenticated user with no rate limit, so repeat reports from one actor
+//     against one piece of content used to spawn an unbounded number of
+//     moderation cases. `create_moderation_case` now collapses repeat reports
+//     from the same reporter onto the single open case for that content.
+// ===========================================================================
+
+/// Regression (IG3): a single reporter hammering `report_content` for the same
+/// content must yield exactly ONE open moderation case, not one per request.
+/// Fails before the dedup guard (each call inserts a fresh row).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn report_content_dedups_repeat_reports_from_same_reporter(pool: PgPool) {
+    let repo = ComplianceRepository::new(pool.clone());
+    let org = seed_org(&pool, "flood").await;
+    let owner = seed_user(&pool, "owner").await;
+    let reporter = seed_user(&pool, "reporter").await;
+    let listing = seed_listing(&pool, org, owner).await;
+
+    let make = || CreateModerationCase {
+        content_type: ModeratedContentType::Listing,
+        content_id: listing,
+        violation_type: Some(ViolationType::Spam),
+        report_reason: Some("spam".to_string()),
+    };
+
+    let first = repo
+        .create_moderation_case(make(), reporter, owner, Some(org))
+        .await
+        .expect("first report");
+
+    // Hammer the endpoint: every repeat report must collapse onto the first
+    // open case rather than creating a new one.
+    for _ in 0..5 {
+        let dup = repo
+            .create_moderation_case(make(), reporter, owner, Some(org))
+            .await
+            .expect("repeat report");
+        assert_eq!(
+            dup.id, first.id,
+            "a repeat report from the same reporter must return the existing open case"
+        );
+    }
+
+    let count: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM moderation_cases
+           WHERE reported_by = $1 AND content_id = $2"#,
+    )
+    .bind(reporter)
+    .bind(listing)
+    .fetch_one(&pool)
+    .await
+    .expect("count cases");
+
+    assert_eq!(
+        count, 1,
+        "six reports of the same content by one reporter must yield exactly one case"
+    );
+}
+
+/// Dedup must be scoped to the reporter: two *different* reporters flagging the
+/// same content each get their own case (the guard must not collapse distinct
+/// reporters together).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn report_content_does_not_dedup_across_distinct_reporters(pool: PgPool) {
+    let repo = ComplianceRepository::new(pool.clone());
+    let org = seed_org(&pool, "distinct").await;
+    let owner = seed_user(&pool, "owner").await;
+    let reporter_a = seed_user(&pool, "reporter-a").await;
+    let reporter_b = seed_user(&pool, "reporter-b").await;
+    let listing = seed_listing(&pool, org, owner).await;
+
+    let make = || CreateModerationCase {
+        content_type: ModeratedContentType::Listing,
+        content_id: listing,
+        violation_type: Some(ViolationType::Spam),
+        report_reason: None,
+    };
+
+    let case_a = repo
+        .create_moderation_case(make(), reporter_a, owner, Some(org))
+        .await
+        .expect("report a");
+    let case_b = repo
+        .create_moderation_case(make(), reporter_b, owner, Some(org))
+        .await
+        .expect("report b");
+
+    assert_ne!(
+        case_a.id, case_b.id,
+        "distinct reporters flagging the same content must get distinct cases"
     );
 }
 
