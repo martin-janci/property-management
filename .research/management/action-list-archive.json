@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-31T06:34:35Z",
+  "archived_at": "2026-10-31T18:33:49Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7226,6 +7226,29 @@
       "dev_reconciled": "merged via PR #2940 on dev 2026-09-06 (commit 144a02f)"
     },
     {
+      "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
+      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button — a11y role mismatch",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=refactor) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "a1bea8e1142a53488100137580a2673e3bb40d4e",
+        "subject": "code-review-ppt-web-ui-connstatus-div-as-button-role: make ConnectionStatus reconnect a real button (#3201)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
       "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing ",
       "owner_role": "pm-backend",
@@ -7527,6 +7550,29 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "894239a54dfc9060934e86b3cc6c5c73c3304c9e",
+        "subject": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift: normalize submitted invoice item.vatRate to UI-derived rate (#3202)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-meters-dates-no-locale",
       "action": "ppt-web-ui meters feature: toLocaleDateString()/toLocaleString() called with NO locale argument across 8 sites — dates follow browser locale, not the user's in-app language",
       "owner_role": "pm-backend",
@@ -7799,6 +7845,29 @@
         "merged_pr": 2818,
         "merged_at": "2026-08-21T16:50:20Z",
         "at": "2026-08-21T16:52:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
+      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "5f6feafe2b2f4d1d22b9eda05417ad2e94738191",
+        "subject": "code-review-ppt-web-ui-toast-setstate-after-unmount: clear Toast copy timer on unmount (#3200)",
+        "at": "2026-10-31T18:30:02Z"
       }
     },
     {
@@ -8543,6 +8612,29 @@
       }
     },
     {
+      "id": "code-review-reality-server-reports-status-filter-unvalidated",
+      "action": "reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=dx) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "c447f5890879000b816fb715e0bc1570cca43572",
+        "subject": "code-review-reality-server-reports-status-filter-unvalidated: validate list_my_reports status filter (#3205)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-saved-search-error-string-status",
       "action": "reality-server saved-search: error strings compared to derive UI status — string-typed status codes are fragile to backend copy changes",
       "owner_role": "pm-backend",
@@ -8936,6 +9028,29 @@
       }
     },
     {
+      "id": "code-review-reality-web-comparison-parse-shape",
+      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "36ef91ffa6269d5da4d186f4a0d70cc69c4ce262",
+        "subject": "code-review-reality-web-comparison-parse-shape: guard comparison localStorage against malformed shape (#3199)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-comparison-share-all-or-nothing",
       "action": "reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared comparison URL",
       "owner_role": "pm-backend",
@@ -9122,6 +9237,29 @@
         "merged_pr": 2895,
         "merged_at": "2026-08-30T22:32:15Z",
         "at": "2026-08-30T22:34:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-i18n-sk",
+      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings — i18n gap on cs/de/en locales",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "70736b16ec3e8fd25bb44beb25e4aa94e5511440",
+        "subject": "code-review-reality-web-listing-edit-i18n-sk: localize listing-edit wizard across all locales (#3203)",
+        "at": "2026-10-31T18:30:02Z"
       }
     },
     {

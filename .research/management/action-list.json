@@ -291,23 +291,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
-      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
       "owner_role": "pm-qa",
@@ -342,23 +325,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
-      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button — a11y role mismatch",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
       "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
       "owner_role": "pm-tech-lead",
@@ -373,23 +339,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
-      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
       }
     },
     {
@@ -410,54 +359,23 @@
       }
     },
     {
-      "id": "code-review-reality-server-reports-status-filter-unvalidated",
-      "action": "reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum",
-      "owner_role": "pm-devops",
-      "priority": "low",
+      "id": "gh-issue-3206",
+      "action": "Follow-up: ranked-ballot a11y labels/hint render raw i18n keys — missing voting.* keys + no-op `t() ?? literal` fallback (PR #3189) (Closes #3206)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=dx)",
+      "source": "dispatcher-issue-ingest 2026-10-31T18:30:41Z (#3206)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
-      "id": "code-review-reality-web-comparison-parse-shape",
-      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listing-edit-i18n-sk",
-      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings — i18n gap on cs/de/en locales",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
+      "first_open_at": "2026-10-31T18:30:41Z",
+      "issue_ref": {
+        "number": 3206,
+        "url": "https://github.com/martin-janci/property-management/issues/3206",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],
