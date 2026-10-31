@@ -498,7 +498,15 @@ impl ViolationRepository {
     // ENFORCEMENT ACTIONS
     // =========================================================================
 
-    /// Create an enforcement action.
+    /// Create an enforcement action (tenant-scoped via parent violation).
+    ///
+    /// The INSERT is gated on the parent `violations` row matching `org_id` (an
+    /// `INSERT ... SELECT ... WHERE v.organization_id = $2`), so an Org B caller
+    /// cannot issue a fine / enforcement action against an Org A violation —
+    /// which would otherwise write a row whose `organization_id` disagrees with
+    /// its parent violation's. If no parent row matches, no row is inserted and
+    /// `RowNotFound` is returned (surfaced as 404 by the route, same class as
+    /// `add_evidence` / `add_comment`; cross-tenant IDOR fix).
     pub async fn create_enforcement_action(
         &self,
         violation_id: Uuid,
@@ -513,7 +521,9 @@ impl ViolationRepository {
                 fine_amount, due_date, description, notes,
                 suspended_privileges, suspension_start, suspension_end, issued_by
             )
-            VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11)
+            SELECT $1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11
+            FROM violations v
+            WHERE v.id = $1 AND v.organization_id = $2
             RETURNING *
             "#,
         )
@@ -528,8 +538,9 @@ impl ViolationRepository {
         .bind(req.suspension_start)
         .bind(req.suspension_end)
         .bind(issued_by)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)
     }
 
     /// Get an enforcement action by ID.

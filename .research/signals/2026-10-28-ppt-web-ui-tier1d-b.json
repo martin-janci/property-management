@@ -1,0 +1,43 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-28",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer starved, claimable=7 < floor=36; no CHURN_FILES supplied so defaulted to oldest-unreviewed per state.review_cursor: ppt-web-ui @ 2026-10-22 is the oldest. 0 open code-review-finding items for ppt-web-ui in backlog.json => not saturated. A sibling 2026-10-28-ppt-web-ui-tier1d.json run already covered features/accounting (invoice) and 2026-10-27 covered the registry feature; this run targets the distinct, uncovered literal segment roots src/pages/ + src/components/ — foundational auth pages and shared UI components — which neither sibling touched.)",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:170-189 — ToastItem.handleCopy sets copied=true then schedules `setTimeout(() => setCopied(false), 2000)` on BOTH the success path (line 177) and the execCommand fallback path (line 187). Neither timer id is stored or cleared, and there is no unmount-cleanup effect in ToastItem.",
+        "Toast.tsx:119-144 — a toast auto-dismisses after its duration (default per getDefaultDuration) and, independently, `visibleToasts = toasts.slice(-MAX_VISIBLE_TOASTS)` (line 144, MAX_VISIBLE_TOASTS=3) unmounts the oldest ToastItem as soon as a 4th toast appears. Either event can unmount a ToastItem inside the 2000 ms copy-confirmation window, so the pending setCopied(false) fires on an unmounted component (setState-after-unmount / dangling timer).",
+        "frontend/apps/ppt-web/src/components/Announcer.tsx:85-93 — the sibling component in the same directory guards exactly this case with an unmount cleanup effect that clearTimeout()s its deferred setState timers, confirming ToastItem's missing cleanup is an oversight rather than an intentional divergence. Low severity (React 18 no longer warns), but it is a real dangling-timer/stale-state smell on the shared toast primitive."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "improvement",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:104-113 — the root element is a <div> that, when disconnected, is made fully interactive: onClick (line 109) and onKeyDown handling Enter/Space (lines 86-96) both call reconnect(), and tabIndex flips to 0 (line 113). But its role is hardcoded role=\"status\" (line 111), a live region, not role=\"button\".",
+        "Assistive-tech users reach a focusable element announced as a status/live region rather than an actionable control, so the click-to-reconnect affordance (surfaced visually in the tooltip, lines 126-130) is not conveyed semantically; this is also the classic non-interactive-element-with-handlers a11y smell Biome's a11y rules target. Recommend rendering a real <button> (or role=\"button\") for the reconnect affordance while keeping a separate aria-live region for the status text.",
+        "Confidence medium: static-only review; the visual/mouse path works and keyboard activation is wired, so impact is a11y-semantics degradation on the WebSocket status widget rather than a functional break."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

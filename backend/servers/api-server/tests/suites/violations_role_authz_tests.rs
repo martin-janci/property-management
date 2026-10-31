@@ -28,7 +28,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{seed_org, TestApp, TestConfig};
+use crate::common::{seed_membership, seed_org, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -202,6 +202,89 @@ async fn resident_cannot_issue_violation_or_manage_rules(pool: PgPool) {
         StatusCode::FORBIDDEN,
         "resident must not create a community rule; got {}",
         create_rule.status
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Assignee org-membership guard on assign_violation
+// (code-review finding
+// `code-review-api-handlers-assign-violation-no-member-check`).
+//
+// A manager passes `require_manager`, but `assign_violation` previously fed the
+// request's `assigned_to` straight to the repo with no check that the assignee
+// belongs to the manager's own org — so a manager could assign a violation to
+// any user UUID, including users outside their organization. The fix adds an
+// `org_member_repo.is_member` gate on the assignee.
+// ---------------------------------------------------------------------------
+
+/// The core finding: a manager must NOT be able to assign a violation to a user
+/// who is not an active member of the manager's organization. Before the fix
+/// this returned 2xx; after the fix it is 403.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn manager_cannot_assign_violation_to_non_member(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "assign-outsider").await;
+    let manager = seed_user(&pool, "manager-assign@vio-authz.test").await;
+    let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-ASSIGN-0001").await;
+
+    // An outsider user that exists but is NOT a member of `org`.
+    let outsider = seed_user(&pool, "outsider@vio-authz.test").await;
+
+    let token = token_with_role(manager, org, "manager");
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/violations/{violation_id}/assign"))
+                .bearer(&token)
+                .json(json!({ "assigned_to": outsider }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "a manager must NOT be able to assign a violation to a user outside \
+         their org; got {} (body: {})",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// Positive control: assigning to a user who IS an active member of the org
+/// succeeds (2xx), proving the guard rejects only outsiders rather than the
+/// assign mutation itself.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn manager_can_assign_violation_to_member(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "assign-member").await;
+    let manager = seed_user(&pool, "manager-assign-ok@vio-authz.test").await;
+    let violation_id = seed_violation(&pool, org, "VIO-AUTHZ-ASSIGN-0002").await;
+
+    // An in-org member is a valid assignee.
+    let member = seed_user(&pool, "member@vio-authz.test").await;
+    seed_membership(&pool, org, member, "resident").await;
+
+    let token = token_with_role(manager, org, "manager");
+    let resp = app
+        .execute(
+            app.post(&format!("/api/v1/violations/{violation_id}/assign"))
+                .bearer(&token)
+                .json(json!({ "assigned_to": member }))
+                .build(),
+        )
+        .await;
+
+    assert!(
+        resp.status.is_success(),
+        "a manager must be able to assign a violation to an in-org member; \
+         got {} (body: {})",
+        resp.status,
+        resp.text()
+    );
+    assert_ne!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "an in-org assignee must never be blocked by the membership guard"
     );
 }
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-26T04:30:00Z",
+  "generated": "2026-10-28T11:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -263,6 +263,26 @@
       "trigger": "Any dispatcher run reporting cargo-deny FAILED or claimable<=10 while backend queue is non-empty",
       "status": "open",
       "source": "pm-backend 2026-10-26 (#3168)"
+    },
+    {
+      "id": "pm-frontend-mobile-rn-fake-submit-pattern-cluster-2026-10-28",
+      "risk": "Three independent frontend code-review findings in 7 days reveal mobile-rn / reality-web have 'wire-the-button-but-not-the-POST' bugs (ReportFault setTimeout, reality-web /sell no-persist, VoteDetail ranked ballot) \u2014 chronic class suggests the mobile/web UI slices ship without an end-to-end integration smoke",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add a per-screen e2e-smoke gate: for every form with a Submit button, a MSW/Mirage mock asserts the POST is sent with the collected payload; block merge if the submit emits no network call",
+      "owner_role": "pm-frontend",
+      "trigger": "A third user-facing form-submit regression lands without this gate",
+      "status": "open"
+    },
+    {
+      "id": "pm-frontend-rotation-stale-83-days-2026-10-28",
+      "risk": "pm-frontend rotation has been stale 83 days (last run 2026-08-06) while the backlog accumulated 12 frontend/mobile code-review items \u2014 the daily rotation cadence is skewing toward backend-heavy weeks because sprint velocity is backend-driven, leaving UI-surface findings uncoordinated",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the current index. Alternately, run full-rotation sweeps on 10-day cadence instead of relying on daily rotation only",
+      "owner_role": "pm-scrum-master",
+      "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open"
     }
   ]
 }

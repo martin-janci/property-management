@@ -324,12 +324,22 @@ pub(super) async fn assign_moderation_case(
         .compliance_repo
         .assign_moderation_case(id, org_id, assignee)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to assign moderation case: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to assign case".to_string(),
-            )
+        .map_err(|e| match e {
+            // The UPDATE ... RETURNING matches no row for an unknown id OR a
+            // case owned by another tenant (the `organization_id` predicate
+            // scopes it) — a routine not-found, not a server fault, so surface
+            // 404 rather than 500 and skip the error-level log/alert noise.
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to assign moderation case: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to assign case".to_string(),
+                )
+            }
         })?;
 
     Ok(Json(ModerationCaseResponse::from_case(
@@ -345,8 +355,8 @@ pub(super) async fn assign_moderation_case(
 ///
 /// The inverse of [`assign_moderation_case`]; takes no body. Scoped to the
 /// caller's organization so a case in another tenant is not mutated. Mirrors
-/// `assign_moderation_case`'s error mapping: an unknown/cross-org id surfaces
-/// as a repo error (500) rather than a 404, matching the existing assign path.
+/// `assign_moderation_case`'s error mapping: an unknown/cross-org id (the repo's
+/// `RowNotFound`) surfaces as a `404 Not Found`, other repo errors as 500.
 pub(super) async fn unassign_moderation_case(
     State(state): State<AppState>,
     user: AuthUser,
@@ -363,12 +373,20 @@ pub(super) async fn unassign_moderation_case(
         .compliance_repo
         .unassign_moderation_case(id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to unassign moderation case: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to unassign case".to_string(),
-            )
+        .map_err(|e| match e {
+            // See `assign_moderation_case`: an unknown id or a cross-org case is
+            // a routine not-found (404), not a server fault (500).
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "Moderation case not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to unassign moderation case: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to unassign case".to_string(),
+                )
+            }
         })?;
 
     Ok(Json(ModerationCaseResponse::from_case(

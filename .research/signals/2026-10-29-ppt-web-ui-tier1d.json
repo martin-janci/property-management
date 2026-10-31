@@ -1,0 +1,41 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer 19 < floor 36; no Phase 1 churn; stats.runs=108 even -> dev-review). Picked oldest-unreviewed per review_cursor (ppt-web-ui@2026-10-22, 7d stale). NOTE: ppt-web-ui was flagged saturated (>=3 open findings) by an earlier run today; the skill's saturation guard should have skipped it to the next non-saturated/not-done-today segment (reality-server@2026-10-28). Selection did not apply that guard this run. The slice still surfaced 2 distinct new medium findings, so they are persisted rather than discarded; next tier1d run should prefer reality-server.",
+  "experts_used": [
+    "frontend"
+  ],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-vote-create-non-atomic-orphan",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteCreatePage.tsx:147 — handleSubmit() runs a non-transactional multi-step sequence under one try/catch: createVote.mutateAsync() (line 148) -> per-question loop of addQuestion(vote.id, ...) (line 168) -> optional publishVote(vote.id) (line 172).",
+        "If any addQuestion or publishVote call fails mid-sequence (network/validation), the already-created vote persists server-side with only a partial set of questions; the client shows a generic 'Failed to create vote' toast (lines 182-186) and resets submitting. The user retries and creates a second (duplicate) vote, leaving the first as an orphaned/partial draft.",
+        "Fix direction: create the vote with its questions in a single batched API call; OR roll back by deleting the created vote.id on failure of a later step; OR make the handler resumable (detect an already-created vote.id on retry and continue adding questions instead of re-creating)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-full-page-reload",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:91 — all six in-app navigation handlers assign to window.location.href for SPA routes: handlePetView (91), handlePetEdit (95), handlePetCreate (129), handleVehicleView (148), handleVehicleEdit (152), and the vehicle create handler.",
+        "This is a react-router-dom SPA (useNavigate is used in 31 other files). window.location.href triggers a full document reload on every view/edit/create click, discarding in-memory React/TanStack Query state and forcing a full app re-bootstrap + re-auth/re-fetch — a noticeable UX regression on an authenticated dashboard. Reachable on any row action (handlers wired directly to buttons).",
+        "Fix direction: replace the window.location.href assignments with useNavigate()/navigate(path) as the rest of the app does. (compliance/ContentModerationPage.tsx:207 has the same pattern but carries an explicit TODO(Phase-2) acknowledgement; RegistryPage does not.)"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

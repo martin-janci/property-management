@@ -1,0 +1,25 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-28",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer starved, claimable=24 < floor=36, deterministic refill exhausted). Phase-1 churn aligns to no code segment, so selection falls to REVIEW_CURSOR oldest-unreviewed. BUT five segments already have a committed 2026-10-28 tier1d batch (api-core, api-handlers, mobile-native-kmp, ppt-web-ui, reality-web) — the raw oldest-unreviewed winner (mobile-native-kmp @ 2026-10-25) is already reviewed & committed today (commit 6015180, identical create-listing-stub finding), so re-emitting it would be a zero-delta no-op. Excluding segments already reviewed today, the remaining eligible candidates are ppt-web-core (cursor 2026-10-27, 2 open) and mobile-rn (cursor 2026-10-27, 0 open); reality-server (cursor 2026-10-28) is both reviewed-today and saturated (3 open) => skip. Tie at 2026-10-27 broken by SKILL Step 1 segment-map table order (ppt-web-core precedes mobile-rn) => ppt-web-core SELECTED. Static scan (no compile, no tests) of hooks/, lib/, contexts/, routes/, App.tsx: all console.* calls are DEV-gated (usePerformanceMetrics.logPerformanceMetrics behind import.meta.env.DEV; websocket.ts wsWarn/wsError behind import.meta.env.DEV; api.ts retry log behind DEV); zero `as any`/`as unknown as` across-boundary casts; websocket.ts handleMessage wraps JSON.parse + every handler in try/catch; the `!` assertions at websocket.ts:485,505 are guarded by isConnected()/has() checks; useOrganization throws a clear provider-context error (intended); AuthContext token-refresh is single-flight and its handleUnauthorized catches internally; App.tsx wraps AppRoutes in <Suspense> + <RouteErrorBoundary> so lazy-chunk failures surface. Avoided duplicating the 2 existing open ppt-web-core findings (neighbors stale-token useMemo; iot ws hasGivenUp). The single finding below is the one genuine latent correctness gap.",
+  "experts_used": ["frontend"],
+  "findings_count": 1,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-api-401-handler-no-trycatch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/api.ts:256 — the 401 response-interceptor does `const rotatedToken = await onUnauthorizedCallback();` with NO try/catch, yet the UnauthorizedHandler contract it implements explicitly documents throwing as a supported outcome (api.ts:49-56 'Returning `null`/`undefined` (or throwing) means the session could not be recovered — the interceptor then rejects the original request'). A handler that throws therefore bypasses the intended fall-through to `Promise.reject(transformError(error))`: the original request rejects with the RAW thrown error instead of the transformed ApiError, so `isApiError()` returns false and consumers branching on `.status`/`.code`/`.isRetryable` (e.g. errorHandler.ts, TanStack Query error UIs) silently misbehave; the `__authRetried` guard and retry loop are also skipped.",
+        "Reachability caveat (why medium, not high): the only handler currently registered via configureApiClient is AuthContext.handleUnauthorized (AuthContext.tsx:657-669), which catches refreshToken()'s throw internally and returns null — so the throw path is dead in the shipped app today. The gap is a documented-contract-vs-implementation mismatch that becomes a live correctness bug for any other/future consumer that calls configureApiClient with a handler that rejects (the public API and its own doc comment both invite such handlers).",
+        "Fix vector: wrap the await in try/catch inside the 401 branch — on throw, treat it like a null return (fall through to reject with transformError(error)), matching the documented contract. Add a regression test alongside AuthContext.api-client-unauthorized.test.tsx covering a throwing onUnauthorized handler asserting the rejection is an ApiError."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

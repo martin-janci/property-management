@@ -183,17 +183,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-reconcile-sprint-status-vs-coverage",
-      "action": "Reconcile sprint-status.yaml drift against coverage.json (Epics 6/7A/10B/80 show in-progress/partial in sprint-status but 100% done in coverage) — flip sprint-status to reflect reality or schedule a deep scan to re-verify",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-26"
-    },
-    {
       "id": "pm-backend-violations-add-evidence-authz-gap-3164",
       "action": "Gate violations add_evidence sub-resource with authz check — currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
       "owner_role": "pm-backend",
@@ -202,41 +191,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-10-26"
-    },
-    {
-      "id": "code-review-api-handlers-assign-violation-no-member-check",
-      "action": "violations.rs assign_violation: Manager can set assigned_to to a user outside the org (no org-membership check on assignee)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs — merged PR touched this file heavily this run",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
-      }
+      "source": "pm-analysis 2026-10-26",
+      "first_open_at": "2026-10-28T00:34:57Z"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
@@ -256,16 +212,95 @@
       }
     },
     {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
-      "action": "Churn hotspot: frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx — merged PR touched this file heavily this run",
-      "owner_role": "pm-qa",
+      "id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
+      "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
+      "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=high vector=test-gap)",
+      "source": "rotating-expert-review 2026-10-27 (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
+      "first_open_at": "2026-10-27T22:30:00Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [
+        "UNRESOLVED:pm-security"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z"
+    },
+    {
+      "id": "code-review-api-handlers-appeal-no-status-guard",
+      "action": "api-handlers file_appeal has no status guard → owner can re-file after a final appeal decision",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-moderation-report-flood",
+      "action": "api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
       "backlog_ref": {
         "plan": null,
         "score": 1,
@@ -273,16 +308,16 @@
       }
     },
     {
-      "id": "code-review-api-handlers-violations-no-xtenant-idor-tests",
-      "action": "test-gap: no cross-tenant IDOR regression suite for violations.rs mutation handlers (role-authz suite covers 403 but not xtenant 404)",
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "action": "Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — 3 touches in 14d (iterative compliance hardening)",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=medium vector=test-gap)",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=high vector=test-gap)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
+      "first_open_at": "2026-10-28T12:32:16Z",
       "backlog_ref": {
         "plan": null,
         "score": 1,
@@ -290,39 +325,53 @@
       }
     },
     {
-      "id": "gh-issue-3174",
-      "action": "Follow-up: moderation assign/unassign return 500 (not 404) for unknown/cross-org case id (PR #3167) (Closes #3174)",
+      "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
+      "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
       "owner_role": "pm-tech-lead",
-      "priority": "medium",
+      "priority": "low",
       "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-26T16:26:44Z (#3174)",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=refactor)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-26T16:26:44Z",
-      "issue_ref": {
-        "number": 3174,
-        "url": null,
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
       }
     },
     {
-      "id": "gh-issue-3175",
-      "action": "Follow-up: remaining hardcoded toLocaleString('sk-SK') price displays in reality-web (PR #3166) (Closes #3175)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
+      "id": "code-review-reality-server-portal-listing-price-unvalidated",
+      "action": "reality-server create/update_listing accepts price without positivity / NaN guard (DECIMAL has no CHECK)",
+      "owner_role": "pm-backend",
+      "priority": "low",
       "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-26T16:26:44Z (#3175)",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-26T16:26:44Z",
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "gh-issue-3206",
+      "action": "Follow-up: ranked-ballot a11y labels/hint render raw i18n keys — missing voting.* keys + no-op `t() ?? literal` fallback (PR #3189) (Closes #3206)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-10-31T18:30:41Z (#3206)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-31T18:30:41Z",
       "issue_ref": {
-        "number": 3175,
-        "url": null,
+        "number": 3206,
+        "url": "https://github.com/martin-janci/property-management/issues/3206",
         "labels": [
           "follow-up",
           "from-merged-review"
@@ -330,5 +379,5 @@
       }
     }
   ],
-  "generated": "2026-10-26T04:30:00Z"
+  "generated": "2026-10-28T11:00:00Z"
 }

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-26T16:34:07Z",
+  "archived_at": "2026-10-31T18:33:49Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1628,6 +1628,30 @@
       }
     },
     {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs",
+      "action": "Churn hotspot: backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs — merged PR touched this file heavily this run",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=high vector=test-gap) | gc1-reconcile 2026-10-27T06:26:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-26T04:28:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3180,
+        "merged_at": "2026-10-27T02:34:23Z",
+        "at": "2026-10-27T06:26:30Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs",
       "action": "Churn hotspot: backend/servers/api-server/tests/suites/migration_import_upload_persists_file.rs — merged PR touched this file heavily this run",
       "owner_role": "pm-qa",
@@ -2163,6 +2187,30 @@
         "merged_pr": 2868,
         "merged_at": "2026-08-28T08:28:40Z",
         "at": "2026-08-28T08:31:03Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
+      "action": "Churn hotspot: frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx — merged PR touched this file heavily this run",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=high vector=test-gap) | gc1-reconcile 2026-10-27T06:26:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-26T04:28:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3178,
+        "merged_at": "2026-10-27T02:29:51Z",
+        "at": "2026-10-27T06:26:30Z"
       }
     },
     {
@@ -3719,6 +3767,29 @@
       }
     },
     {
+      "id": "code-review-api-handlers-assign-violation-no-member-check",
+      "action": "violations.rs assign_violation: Manager can set assigned_to to a user outside the org (no org-membership check on assignee)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-27T02:40:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-26T04:28:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "bef62a87ce1b6b4adfb8ab219b1a0039e92ff856",
+        "subject": "code-review-api-handlers-assign-violation-no-member-check: enforce assignee org membership in assign_violation (#3181)",
+        "at": "2026-10-27T02:40:23Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-booking-connect-non-manager-hijack",
       "action": "SECURITY: connect_booking lets any org member overwrite the org's Booking.com credentials — missing manager gate on install.rs credential writes",
       "owner_role": "pm-security",
@@ -4352,6 +4423,29 @@
         "commit": "e5f45a8962030e6adab38d6b9aa325a2889740df",
         "subject": "code-review-api-handlers-violations-missing-role-authz: gate privileged violations mutations on manager role (#3072)",
         "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-violations-no-xtenant-idor-tests",
+      "action": "test-gap: no cross-tenant IDOR regression suite for violations.rs mutation handlers (role-authz suite covers 403 but not xtenant 404)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=medium vector=test-gap) | dev-reconcile 2026-10-27T02:40:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-26T04:28:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "68357cb5a53f0e8aa8baf227fbec40e06374a063",
+        "subject": "code-review-api-handlers-violations-no-xtenant-idor-tests: cross-tenant IDOR regression suite + 404 fix for violation mutations (#3183)",
+        "at": "2026-10-27T02:40:23Z"
       }
     },
     {
@@ -5791,6 +5885,30 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-vote-detail-ranked-no-order",
+      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) — no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "rotating-expert-review 2026-10-27 (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-30T20:51:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-27T22:30:00Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3189,
+        "merged_at": "2026-10-30T20:50:53Z",
+        "at": "2026-10-30T20:51:26Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-votedetail-conditional-hooks",
       "action": "VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash)",
       "owner_role": "pm-backend",
@@ -6403,6 +6521,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
+      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=1 conf=medium vector=dx) | gc1-reconcile 2026-10-30T20:46:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-27T02:41:56Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3186,
+        "merged_at": "2026-10-30T20:36:27Z",
+        "at": "2026-10-30T20:46:08Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-iot-ws-reconnect-no-backoff",
       "action": "ppt-web-core useIotWebSocket reconnects on close at a FIXED 5s interval with no backoff, no attempt cap, no give-up — retry-storm risk vs. the shared WebSocket stack which already does this correctly",
       "owner_role": "pm-backend",
@@ -6539,6 +6681,30 @@
         "commit": "f2ee8ee41887c30b10f581b9271617a3aaf47d26",
         "subject": "code-review-ppt-web-core-mutation-no-onerror: surface rentals/financial mutation failures via error toast (#2649)",
         "at": "2026-08-04T02:18:22Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
+      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-30T20:46:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-27T02:41:56Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3185,
+        "merged_at": "2026-10-30T20:36:20Z",
+        "at": "2026-10-30T20:46:08Z"
       }
     },
     {
@@ -7060,6 +7226,29 @@
       "dev_reconciled": "merged via PR #2940 on dev 2026-09-06 (commit 144a02f)"
     },
     {
+      "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
+      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button — a11y role mismatch",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=refactor) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "a1bea8e1142a53488100137580a2673e3bb40d4e",
+        "subject": "code-review-ppt-web-ui-connstatus-div-as-button-role: make ConnectionStatus reconnect a real button (#3201)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-content-mod-overdue-noop",
       "action": "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:198-202 — user-facing ",
       "owner_role": "pm-backend",
@@ -7337,6 +7526,53 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
+      "action": "ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-30T20:46:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3191,
+        "merged_at": "2026-10-30T20:36:41Z",
+        "at": "2026-10-30T20:46:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
+      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "894239a54dfc9060934e86b3cc6c5c73c3304c9e",
+        "subject": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift: normalize submitted invoice item.vatRate to UI-derived rate (#3202)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-meters-dates-no-locale",
       "action": "ppt-web-ui meters feature: toLocaleDateString()/toLocaleString() called with NO locale argument across 8 sites — dates follow browser locale, not the user's in-app language",
       "owner_role": "pm-backend",
@@ -7609,6 +7845,29 @@
         "merged_pr": 2818,
         "merged_at": "2026-08-21T16:50:20Z",
         "at": "2026-08-21T16:52:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
+      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "5f6feafe2b2f4d1d22b9eda05417ad2e94738191",
+        "subject": "code-review-ppt-web-ui-toast-setstate-after-unmount: clear Toast copy timer on unmount (#3200)",
+        "at": "2026-10-31T18:30:02Z"
       }
     },
     {
@@ -8191,6 +8450,30 @@
       }
     },
     {
+      "id": "code-review-reality-server-os-rng-expect-panics",
+      "action": "reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-31T06:24:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3198,
+        "merged_at": "2026-10-31T04:28:31Z",
+        "at": "2026-10-31T06:24:39Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-pagination-offset-overflow",
       "action": "reality-server list endpoints: offset accepts arbitrary large integers — postgres integer offset overflow / no cap",
       "owner_role": "pm-backend",
@@ -8326,6 +8609,29 @@
         "merged_pr": 2898,
         "merged_at": "2026-08-30T18:32:40Z",
         "at": "2026-08-30T18:54:59Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-reports-status-filter-unvalidated",
+      "action": "reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=dx) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "c447f5890879000b816fb715e0bc1570cca43572",
+        "subject": "code-review-reality-server-reports-status-filter-unvalidated: validate list_my_reports status filter (#3205)",
+        "at": "2026-10-31T18:30:02Z"
       }
     },
     {
@@ -8722,6 +9028,29 @@
       }
     },
     {
+      "id": "code-review-reality-web-comparison-parse-shape",
+      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "36ef91ffa6269d5da4d186f4a0d70cc69c4ce262",
+        "subject": "code-review-reality-web-comparison-parse-shape: guard comparison localStorage against malformed shape (#3199)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-comparison-share-all-or-nothing",
       "action": "reality-web ComparisonUrlHandler uses Promise.all — one bad listing id blanks the whole shared comparison URL",
       "owner_role": "pm-backend",
@@ -8908,6 +9237,53 @@
         "merged_pr": 2895,
         "merged_at": "2026-08-30T22:32:15Z",
         "at": "2026-08-30T22:34:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-i18n-sk",
+      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings — i18n gap on cs/de/en locales",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug) | dev-reconcile 2026-10-31T18:30:02Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "70736b16ec3e8fd25bb44beb25e4aa94e5511440",
+        "subject": "code-review-reality-web-listing-edit-i18n-sk: localize listing-edit wizard across all locales (#3203)",
+        "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-price-zero",
+      "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-31T06:24:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3197,
+        "merged_at": "2026-10-31T04:28:27Z",
+        "at": "2026-10-31T06:24:39Z"
       }
     },
     {
@@ -19817,6 +20193,86 @@
       }
     },
     {
+      "id": "gh-issue-3174",
+      "action": "Follow-up: moderation assign/unassign return 500 (not 404) for unknown/cross-org case id (PR #3167) (Closes #3174)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-26T16:26:44Z (#3174) | dev-reconcile 2026-10-27T02:40:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-26T16:26:44Z",
+      "issue_ref": {
+        "number": 3174,
+        "url": null,
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "d7535e662c6a9a88d71fb5e8cb93adb3d9ff3ef1",
+        "subject": "gh-issue-3174: moderation assign/unassign return 404 (not 500) for unknown/cross-org case id (#3182)",
+        "at": "2026-10-27T02:40:23Z"
+      }
+    },
+    {
+      "id": "gh-issue-3175",
+      "action": "Follow-up: remaining hardcoded toLocaleString('sk-SK') price displays in reality-web (PR #3166) (Closes #3175)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-26T16:26:44Z (#3175) | dev-reconcile 2026-10-27T02:40:23Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-26T16:26:44Z",
+      "issue_ref": {
+        "number": 3175,
+        "url": null,
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "2ae92bc968d7bf38af3b0f1e56b1b250a2ef057b",
+        "subject": "gh-issue-3175: fix(reality-web): format remaining hardcoded sk-SK price displays with active locale (#3179)",
+        "at": "2026-10-27T02:40:23Z"
+      }
+    },
+    {
+      "id": "gh-issue-3187",
+      "action": "Failing test on dev blocks backend CI: cross_org_assign_violation_is_not_found (assign returns 403, expects 404) (Closes #3187)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-10-27T08:26:25Z (#3187) | gc1-reconcile 2026-10-30T20:46:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-27T08:26:25Z",
+      "issue_ref": {
+        "number": 3187,
+        "url": "https://github.com/martin-janci/property-management/issues/3187",
+        "labels": [
+          "bug",
+          "security",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3188,
+        "merged_at": "2026-10-30T20:35:32Z",
+        "at": "2026-10-30T20:46:08Z"
+      }
+    },
+    {
       "id": "integrations-webhook-hardening-audit-2026-07-23",
       "action": "Audit all webhook handlers (booking, airbnb, esignature, layout) for timestamp/replay/idempotency parity — #2485 shows layout webhook lacks it; treat as cross-cutting review",
       "owner_role": "pm-integration",
@@ -20035,6 +20491,39 @@
       }
     },
     {
+      "id": "pm-frontend-mobile-rn-report-fault-fake-submit-2026-10-28",
+      "action": "Wire ReportFaultScreen.tsx handleSubmit to real /api/v1/faults POST — currently fakes with setTimeout(1500), fault reports silently discarded",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "closed_at": "2026-10-28T12:55:42Z",
+      "dev_reconciled": "already-landed-on-dev; implementer verified zero-diff; no PR needed (stale pm-analysis finding, closed by dispatcher 2026-10-28)"
+    },
+    {
+      "id": "pm-frontend-ppt-web-authed-roots-session-leak-2026-10-28",
+      "action": "ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups — TanStack caches leak across users on a shared workstation; audit all feature-group root query keys",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28 | gc1-reconcile 2026-10-30T20:46:08Z",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3190,
+        "merged_at": "2026-10-30T20:36:35Z",
+        "at": "2026-10-30T20:46:08Z"
+      }
+    },
+    {
       "id": "pm-frontend-protectedroute-failopen",
       "action": "Harden ProtectedRoute.tsx:117 to deny on missing role instead of skipping the role check, and populate user.role in AuthContext — before role-gating goes live (fold into 79-2 PR #444)",
       "owner_role": "pm-frontend",
@@ -20045,6 +20534,58 @@
       "source": "pm-analysis 2026-05-24",
       "resolved": "2026-05-25 — PR #459 merged (ProtectedRoute fail-open fix)",
       "depends_on": []
+    },
+    {
+      "id": "pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28",
+      "action": "reality-web listing detail SSR crashes on partial 200 body — JSON-LD build dereferences undefined fields; add defensive guards + unit test for missing-field body",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28 | gc1-reconcile 2026-10-29T00:24:30Z",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-10-29T00:24:30Z"
+      }
+    },
+    {
+      "id": "pm-frontend-reality-web-sell-wizard-no-persist-2026-10-28",
+      "action": "reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded; wire to /api/listings create endpoint",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "closed_at": "2026-10-28T12:55:42Z",
+      "dev_reconciled": "already-landed-on-dev; implementer verified zero-diff; no PR needed (stale pm-analysis finding, closed by dispatcher 2026-10-28)"
+    },
+    {
+      "id": "pm-frontend-reality-web-share-comparison-404-2026-10-28",
+      "action": "reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s; map to canonical GET endpoint or implement the missing route",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28 | gc1-reconcile 2026-10-29T00:24:30Z",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-10-29T00:24:30Z"
+      }
     },
     {
       "id": "pm-frontend-schedule-followup-test-batch",
@@ -20564,6 +21105,24 @@
         "merged_pr": 2842,
         "merged_at": "2026-08-25T06:38:41Z",
         "at": "2026-08-25T08:23:13Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-reconcile-sprint-status-vs-coverage",
+      "action": "Reconcile sprint-status.yaml drift against coverage.json (Epics 6/7A/10B/80 show in-progress/partial in sprint-status but 100% done in coverage) — flip sprint-status to reflect reality or schedule a deep scan to re-verify",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-26 | gc1-reconcile 2026-10-27T06:26:30Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3177,
+        "merged_at": "2026-10-27T02:29:30Z",
+        "at": "2026-10-27T06:26:30Z"
       }
     },
     {

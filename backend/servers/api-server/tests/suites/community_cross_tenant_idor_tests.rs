@@ -141,6 +141,7 @@ struct Ctx {
     post_a: Uuid,
     token: String,
     // org-B victim resources
+    building_b: Uuid,
     group_b: Uuid,
     post_b: Uuid,
     event_b: Uuid,
@@ -181,6 +182,7 @@ async fn setup(pool: PgPool) -> Ctx {
         group_a,
         post_a,
         token,
+        building_b,
         group_b,
         post_b,
         event_b,
@@ -225,6 +227,22 @@ fn assert_404(resp: &TestResponse, what: &str) {
         resp.status,
         axum::http::StatusCode::NOT_FOUND,
         "{what} cross-tenant must be 404, got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+/// The building-scoped create handlers (`create_group`, `create_event`,
+/// `create_item`) guard on [`verify_building_access`], which loads the building
+/// and rejects a caller with no active membership in the building's owning org
+/// with **403** (the building provably exists, so there is no id-enumeration
+/// oracle to protect — a different contract from the opaque 404 the resource-id
+/// handlers return). This asserts that cross-tenant contract.
+fn assert_403(resp: &TestResponse, what: &str) {
+    assert_eq!(
+        resp.status,
+        axum::http::StatusCode::FORBIDDEN,
+        "{what} cross-tenant must be 403, got {}: {}",
         resp.status,
         resp.text()
     );
@@ -438,6 +456,126 @@ async fn delete_group_cross_tenant_404(pool: PgPool) {
         .await;
     assert_eq!(before, after, "org B's group row must survive");
     assert_eq!(after, 1, "org B's group must still exist");
+}
+
+// ----------------------------------------------------------------------------
+// Building-scoped create handlers (403 via verify_building_access)
+//
+// `create_group`, `create_event` and `create_item` take a *building* id from
+// the URL path (`/buildings/{building_id}/...`) rather than a resource id, and
+// guard on `verify_building_access` — a distinct code path from the
+// `verify_*_access` resource helpers exercised above. Without that guard an
+// authenticated org-A caller could POST a group/event/item straight into org
+// B's building by guessing its id. These regressions pin the cross-tenant
+// contract (403 + no row written) so the create hot path stays protected.
+// ----------------------------------------------------------------------------
+
+/// An org-A caller creating a group under org B's building must get 403 and
+/// write NO group row (the building exists but the caller is not a member of
+/// its owning org).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_group_cross_tenant_403(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let before = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/buildings/{}/groups", ctx.building_b),
+            json!({ "name": "cross-tenant group" }),
+        )
+        .await;
+    assert_403(&resp, "create_group");
+
+    let after = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_groups WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+    assert_eq!(
+        before, after,
+        "no group row may be written into org B's building"
+    );
+}
+
+/// An org-A caller creating an event under org B's building must get 403 and
+/// write NO event row.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_event_cross_tenant_403(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let before = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_events WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/buildings/{}/events", ctx.building_b),
+            json!({
+                "title": "cross-tenant event",
+                "start_time": "2026-12-01T10:00:00Z",
+                "end_time": "2026-12-01T12:00:00Z"
+            }),
+        )
+        .await;
+    assert_403(&resp, "create_event");
+
+    let after = ctx
+        .count(
+            "SELECT COUNT(*) FROM community_events WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+    assert_eq!(
+        before, after,
+        "no event row may be written into org B's building"
+    );
+}
+
+/// An org-A caller creating a marketplace item under org B's building must get
+/// 403 and write NO item row.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_item_cross_tenant_403(pool: PgPool) {
+    let ctx = setup(pool).await;
+
+    let before = ctx
+        .count(
+            "SELECT COUNT(*) FROM marketplace_items WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+
+    let resp = ctx
+        .post(
+            &format!("/api/v1/community/buildings/{}/marketplace", ctx.building_b),
+            json!({
+                "title": "cross-tenant item",
+                "category": "furniture",
+                "condition": "used"
+            }),
+        )
+        .await;
+    assert_403(&resp, "create_item");
+
+    let after = ctx
+        .count(
+            "SELECT COUNT(*) FROM marketplace_items WHERE building_id = $1",
+            ctx.building_b,
+        )
+        .await;
+    assert_eq!(
+        before, after,
+        "no item row may be written into org B's building"
+    );
 }
 
 // ============================================================================

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-26T04:30:00Z",
+  "generated": "2026-10-28T11:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -740,7 +740,7 @@
       ],
       "gaps": [],
       "epic": "epic-9",
-      "last_checked": "2026-07-15",
+      "last_checked": "2026-10-28",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-two-factor",
@@ -1352,5 +1352,6 @@
       "last_checked": "2026-10-19",
       "screen_refs": []
     }
-  ]
+  ],
+  "last_upkeep_note": "2026-10-28: cursor idx 12 \u2192 epic-9 re-check (9-1 TOTP still done, no PRs in window touched 2FA); PR #3183 (violations xtenant IDOR regression + 404 fix) lands against 10b/moderation surface \u2014 all 10b stories remain done, no flip. cursor advances 12 \u2192 0 (epic-10a next run)."
 }

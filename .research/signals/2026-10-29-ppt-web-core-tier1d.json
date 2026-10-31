@@ -1,0 +1,27 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer 19 < floor 36; no Phase 1 churn). Oldest-unreviewed per review_cursor, skipping saturated and already-reviewed-today segments: ppt-web-ui@2026-10-22 (5 open findings, saturated), reality-web@2026-10-23 (3 open, saturated), mobile-native-kmp@2026-10-25 (already emitted a 2026-10-29 tier1d signals file this run cycle), api-handlers@2026-10-26 (3 open, saturated), api-core@2026-10-27 (already done today), mobile-rn@2026-10-27 (already done today) — next viable = ppt-web-core@2026-10-27 (2 open, not saturated, not yet done today).",
+  "experts_used": [
+    "frontend"
+  ],
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-financial-routes-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37-68 — route groups are composed as flat siblings inside a single <Routes> with NO top-level <ProtectedRoute> wrapper, so each group file is solely responsible for its own auth gating.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:466-473 — financialRoutes() renders /financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports with the page-route components directly and NO <ProtectedRoute> wrapper (the file imports ProtectedRoute 0 times). The wrappers (e.g. FinancialDashboardPageRoute, financial.tsx:66-68) only do `const orgId = user?.organizationId ?? ''` + `enabled: !!orgId`; there is no `<Navigate to=\"/login\">` redirect. So an unauthenticated user who deep-links to a financial route gets the sensitive page shell rendered (empty data) instead of being redirected to login, and ProtectedRoute's setReturnUrl() return-to-page-after-login capture is skipped.",
+        "By contrast every other sensitive group wraps each route in <ProtectedRoute> (which redirects unauthenticated users to /login and restores the return URL): buildings.tsx (19 uses), leases.tsx (21), documents.tsx (16), meters.tsx (13), person-months.tsx (9), voting.tsx (7), reports.tsx (5), core.tsx (38). The following groups render with ZERO ProtectedRoute, matching the financial pattern: accounting.tsx (incl. /accounting/invoices, /accounting/payment-matching), ai-dashboards.tsx, disputes.tsx, iot.tsx, messaging.tsx, neighbors.tsx, outages.tsx, announcements.tsx, community.tsx, faults.tsx.",
+        "Not a server-side data leak (the API still 401s and queries are gated on orgId), but a confirmed client-side auth-gating inconsistency / defense-in-depth gap on sensitive routes (financial + accounting most notably). Fix: wrap these groups' routes in <ProtectedRoute> for parity with the rest of the app — or hoist a single <ProtectedRoute> layout route in AppRoutes.tsx so gating can't be forgotten per-group."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

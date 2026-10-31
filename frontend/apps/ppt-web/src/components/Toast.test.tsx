@@ -9,7 +9,7 @@
  */
 
 /// <reference types="vitest/globals" />
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastProvider, useToast } from './Toast';
 
@@ -150,6 +150,65 @@ describe('Toast Component', () => {
 
       expect(screen.queryByText('Auto-dismiss me')).not.toBeInTheDocument();
     } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears the "copied" timer when the toast unmounts (no setState after unmount)', async () => {
+    // Regression: ToastItem scheduled setTimeout(() => setCopied(false), 2000)
+    // on copy but never cleared it. Dismissing the toast within that 2s window
+    // left a dangling timer that fired setState on an unmounted component.
+    // After the fix, unmounting must leave no pending copy timer behind.
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    try {
+      let trigger: ReturnType<typeof useToast>['showToast'] | null = null;
+
+      render(
+        <ToastProvider>
+          <ToastEmitter
+            onReady={(showToast) => {
+              trigger = showToast;
+            }}
+          />
+        </ToastProvider>
+      );
+
+      // Error toast => duration 0 => no provider auto-dismiss timer interferes.
+      await act(async () => {
+        trigger?.({ type: 'error', title: 'Copy me' });
+      });
+
+      const before = vi.getTimerCount();
+
+      // Click copy; flush the async clipboard write + setCopied(true).
+      await act(async () => {
+        fireEvent.click(screen.getByLabelText('Copy error message'));
+      });
+      expect(writeText).toHaveBeenCalled();
+
+      // The copy handler scheduled exactly one additional 2s timer.
+      expect(vi.getTimerCount()).toBe(before + 1);
+
+      // Dismiss the toast *before* the 2s timer elapses -> ToastItem unmounts.
+      await act(async () => {
+        fireEvent.click(screen.getByLabelText('Dismiss notification'));
+      });
+      expect(screen.queryByText('Copy me')).not.toBeInTheDocument();
+
+      // Unmount must clear the copy timer. Without the fix the count stays at
+      // `before + 1` and that timer later fires setCopied on an unmounted node.
+      expect(vi.getTimerCount()).toBe(before);
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        configurable: true,
+      });
       vi.useRealTimers();
     }
   });

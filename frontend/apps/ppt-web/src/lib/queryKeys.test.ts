@@ -47,6 +47,7 @@ import {
   notificationTriggerKeys,
   oauthGrantKeys,
   outageKeys,
+  personMonthKeys,
   portfolioPerformanceKeys,
   registryKeys,
   reportKeys,
@@ -119,6 +120,43 @@ for (const mod of Object.values(featureModules)) {
   }
 }
 
+/**
+ * Raw source of every ppt-web module, so the drift guard below can see which
+ * `@ppt/api-client` key factories ppt-web imports *by name* in production code.
+ * `import.meta.glob` is resolved statically by Vite/Vitest.
+ */
+const ppptWebSources = import.meta.glob<string>('../**/*.{ts,tsx}', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+const API_CLIENT_IMPORT_RE = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+['"]@ppt\/api-client['"]/g;
+
+/**
+ * Every `*Keys` factory ppt-web imports directly from `@ppt/api-client` in a
+ * production (non-test) module. A route group that pulls a key factory in this
+ * way owns its cache explicitly, so that factory must be enumerated in the
+ * logout-purge coverage list — otherwise its tenant-/user-scoped cache escapes
+ * the purge and leaks into the next session on a shared workstation (this is
+ * exactly what happened with `personMonthKeys`, consumed by the person-months
+ * route group but absent from the allow-list enforcement).
+ */
+const directlyImportedApiClientKeyFactories = new Set<string>();
+for (const [path, source] of Object.entries(ppptWebSources)) {
+  if (/\.(test|spec)\.tsx?$/.test(path)) continue; // production modules only
+  for (const match of source.matchAll(API_CLIENT_IMPORT_RE)) {
+    for (const raw of match[1].split(',')) {
+      const name = raw
+        .trim()
+        .replace(/^type\s+/, '')
+        .split(/\s+as\s+/)[0]
+        .trim();
+      if (/Keys$/.test(name)) directlyImportedApiClientKeyFactories.add(name);
+    }
+  }
+}
+
 describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
   // The central factory is the primary future-addition vector: adding a new
   // resource block to `queryKeys` must not silently escape the purge.
@@ -167,6 +205,7 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       meterKeys,
       messagingKeys,
       notificationTriggerKeys,
+      personMonthKeys,
       reportKeys,
       // Mounted-route-group / feature-page domains previously missing from the
       // allow-list (this fix). `votingKeys` (root `voting`) is the live voting
@@ -196,6 +235,26 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
     )('covers %s (root "%s")', (name, _displayed, f) => {
       const root = rootOf(name as string, f as KeyFactory);
       expect(allowlist).toContain(root);
+    });
+
+    // Additive lower bound: any api-client `*Keys` factory ppt-web imports
+    // *directly* in production must be enumerated above so its root is
+    // provably purged on logout. The explicit map may legitimately contain
+    // more (factories reached only transitively via generated hooks), but it
+    // must never contain fewer than the set ppt-web imports by name — that gap
+    // is how `personMonthKeys` slipped through uncovered.
+    it('enumerates every api-client *Keys factory imported directly by ppt-web production code', () => {
+      // Non-empty guard so a broken/renamed glob can't vacuously pass.
+      expect(directlyImportedApiClientKeyFactories.size).toBeGreaterThan(0);
+      const listed = new Set(Object.keys(consumedApiClientFactories));
+      const unlisted = [...directlyImportedApiClientKeyFactories]
+        .filter((name) => !listed.has(name))
+        .sort();
+      expect(
+        unlisted,
+        `api-client key factories imported by ppt-web production code but missing from ` +
+          `consumedApiClientFactories (logout-purge coverage unenforced): ${unlisted.join(', ')}`
+      ).toEqual([]);
     });
   });
 
