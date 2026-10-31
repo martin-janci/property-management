@@ -13530,20 +13530,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-server] 2026-10-28"
+        "rotating-expert-review [reality-server] 2026-10-28",
+        "PR #3198"
       ],
       "evidence": [
         "backend/servers/reality-server/src/handlers/users/mod.rs:566-568 and backend/servers/reality-server/src/routes/sso.rs:706-708 both generate secrets via `SysRng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")`. A transient OS-RNG failure (constrained containers / entropy exhaustion) would unwind the task instead of returning a 500.",
-        "The pattern is duplicated in password-reset token issuance and PKCE code-verifier generation on the SSO authorize path. try_fill_bytes is the fallible API specifically to surface RNG failure — swallowing it with `.expect` reintroduces the panic path. Should propagate as `(StatusCode::INTERNAL_SERVER_ERROR, …)` via the existing error-mapping style."
+        "The pattern is duplicated in password-reset token issuance and PKCE code-verifier generation on the SSO authorize path. try_fill_bytes is the fallible API specifically to surface RNG failure — swallowing it with `.expect` reintroduces the panic path. Should propagate as `(StatusCode::INTERNAL_SERVER_ERROR, …)` via the existing error-mapping style.",
+        "resolved: PR #3198 merged 2026-10-31 — don't panic on OS RNG failure in SSO + password-reset"
       ],
       "files": [
         "backend/servers/reality-server/src/handlers/users/mod.rs",
         "backend/servers/reality-server/src/routes/sso.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "reality-server",
@@ -13805,19 +13807,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
+        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)",
+        "PR #3197"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:201 — handleSave sends `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price input (line 632) stores '' when cleared, so Number('') === 0 and `0 || 0` === 0: clearing or mistyping price silently persists the listing at price 0.",
-        "page.tsx:816-817 — the Save button is only guarded by `disabled={saving}`; no required/validation gate on price. Area/rooms/floor use `|| undefined` (omitted — acceptable) but price falls back to a concrete 0 — data-integrity bug on a public listing's headline figure."
+        "page.tsx:816-817 — the Save button is only guarded by `disabled={saving}`; no required/validation gate on price. Area/rooms/floor use `|| undefined` (omitted — acceptable) but price falls back to a concrete 0 — data-integrity bug on a public listing's headline figure.",
+        "resolved: PR #3197 merged 2026-10-31 — reject empty/invalid listing price instead of silently persisting 0"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "reality-web",

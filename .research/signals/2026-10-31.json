@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-10-31T04:43:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-31",
+      "type": "lag_warning",
+      "source": "routine self-signal",
+      "score_delta": 0,
+      "evidence": "routine last_run_iso=2026-10-28T10:54:38Z; lag=65h (2d 17h) > 36h threshold",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — only lag_warning fired this run (not on allowlist)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/<today>.md && head -1 matches", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state.json cursors advanced vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score > 8", "observed": "true", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "no non-.research/ paths staged", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md matches regen", "observed": "diff empty", "expected": "diff empty" },
+    { "goal": "G13", "passed": true, "command": "archive only grows", "observed": "22>=22", "expected": "ge" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md matches regen", "observed": "diff empty", "expected": "diff empty" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token", "observed": "0", "expected": "0" }
+  ]
+}
