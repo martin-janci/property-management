@@ -13886,6 +13886,139 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-meter-reading-no-online-sync",
+      "title": "MeterReadingScreen never POSTs online — reading sits in offline queue until a NetInfo transition",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-10-31"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:128 — addToQueue is called unconditionally; success alert fires without any apiRequest",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts:676-699 — addToQueue just appends; processQueue only runs on NetInfo transition (line 601) or external syncData/manual retry",
+        "Contrast: frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:378-406 — correct pattern (apiRequest when online, queue only on isOffline)"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx",
+        "frontend/apps/mobile/src/hooks/useOfflineSupport.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": "plans/code-review-mobile-rn-meter-reading-no-online-sync.md"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-missing-tenant-header",
+      "title": "NFCCredentialManager apiRequest omits X-Tenant-ID — latent cross-tenant NFC credential leak",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-10-31"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:490-514 — apiRequest sets Content-Type + Authorization only; omits X-Tenant-ID required by RlsConnection-extracted api-server routes (useApi.ts:63-72)",
+        "Latent until NFC backend endpoints ship: /api/v1/access/credentials, /invitations, /log, /revoke-all",
+        "Multi-org manager scenario: login tenant A, enroll NFC, logout, login tenant B — fetchCredentials() lacks X-Tenant-ID; RLS extractor behaviour determines severity (403 vs cross-tenant data leak via JWT fallback)"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts",
+        "frontend/apps/mobile/src/hooks/useApi.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-unmount-setstate",
+      "title": "WidgetSettingsScreen setState after unmount — missing cancelled flag in useEffect",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-10-31"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:37-48 — useEffect awaits bridge.isWidgetSupported()+getAllConfigs() then setIsSupported/setConfigs/setIsLoading with no cleanup",
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:75-80 — handleRefreshAll same shape (setIsLoading after awaited bridge.updateAllWidgets())",
+        "Contrast: frontend/apps/mobile/src/features/layout/useDashboardLayout.ts:19-65 — correct pattern (cancelled flag + cleanup)"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx — 158-line fix in PR #3189 (ranked ballot)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3189"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx +155 -3 (code-review-mobile-rn-vote-detail-ranked-no-order)",
+        "First time this file appears in hotspot_history; runs_seen=1 after this run"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx — 45-line fix in PR #3186 (IoT WS give-up UI)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx +41 -4 (code-review-ppt-web-core-iot-ws-hasgivenup-dropped)",
+        "First time this file appears in hotspot_history; runs_seen=1 after this run"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/reality-server/src/routes/sso.rs",
+      "title": "Repeated churn: backend/servers/reality-server/src/routes/sso.rs — 3rd hotspot window (OS-RNG panic + 2 prior)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3198",
+        "hotspot_history.runs_seen=3 after this run"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/sso.rs +69 -5 this run (PR #3198 — OS-RNG expect panic fix)",
+        "Prior hotspot windows: hotspot_history runs_seen=2 as of 2026-08-31 (recent_churn=151)",
+        "Known-good fix this run; tracking continues because repeated-churn signals instability — may decay cleanly if no new signals in 14d"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
     }
   ]
 }

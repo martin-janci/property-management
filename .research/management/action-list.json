@@ -459,7 +459,46 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-qa-cross-tenant-ci-pre-merge-gate-2026-10-31",
+      "action": "Verify #3188/#3191/#3197 tests fail on pre-fix code; add a two-org IDOR integration test for violations + sibling assign endpoints that runs pre-merge, not just on dev",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-qa 2026-10-31 (rotating role deep-dive)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-31T14:36:43Z",
+      "backlog_ref": null
+    },
+    {
+      "id": "pm-qa-draft-pr-rot-triage-2026-10-31",
+      "action": "Triage draft PRs #3192-3201 and the aging dependabot PRs #3090 (serde) + #2972 (ktor); either rebase+ready-for-review or close",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-qa 2026-10-31 (rotating role deep-dive)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-31T14:36:43Z",
+      "backlog_ref": null
+    },
+    {
+      "id": "pm-qa-shared-numeric-input-helper-2026-10-31",
+      "action": "Add a shared numeric-input helper with boundary tests (NaN, 0, negative, empty) for ppt-web + reality-web; audit remaining price/qty/rent/fee/deposit forms using the pattern surfaced by #3191/#3197",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-qa 2026-10-31 (rotating role deep-dive)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-31T14:36:43Z",
+      "backlog_ref": null
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-10-31T14:36:43Z"
 }

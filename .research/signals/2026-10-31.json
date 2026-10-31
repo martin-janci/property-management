@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "generated": "2026-10-31T14:36:43Z",
+  "run_summary": {
+    "merged_prs_since_cursor": 8,
+    "pr_range": "#3185–#3198",
+    "open_prs_touched": 17,
+    "closed_unmerged": 1,
+    "issues_touched": 1,
+    "commits_on_dev": 51,
+    "lag_hours": 75,
+    "plans_promoted": 1
+  },
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-meter-reading-no-online-sync",
+      "type": "code-review-finding",
+      "source": "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:128",
+      "score_delta": 3,
+      "evidence": "MeterReadingScreen.handleSubmit always calls addToQueue() instead of a direct apiRequest, and alerts the user with t('meters.submitSuccess') when isConnected is true (line 144-147). useOfflineSupport.processQueue is only triggered on NetInfo reconnect transitions (hooks/useOfflineSupport.ts:593-619) or via SyncProgressToast manual retry — never when adding to the queue — so a reading submitted while online sits in AsyncStorage indefinitely.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "high",
+      "file_line": "frontend/apps/mobile/src/screens/meters/MeterReadingScreen.tsx:128",
+      "failure_scenario": "User opens app with working connectivity, taps a water meter reading, enters a value, taps Submit. Alert pops up 'Reading submitted successfully' and the pending card shows status='syncing'. The device never disconnects, so NetInfo never fires a true→true transition. POST /api/v1/meter-readings never happens. The utility billing cycle closes without the reading; user is billed on an estimate while believing they filed it."
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-missing-tenant-header",
+      "type": "code-review-finding",
+      "source": "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:490-514",
+      "score_delta": 2,
+      "evidence": "NFCCredentialManager.apiRequest sets only `Content-Type` and `Authorization` headers; it omits `X-Tenant-ID` that useApi.ts:63-72 explicitly documents is required by RlsConnection-extracted api-server routes. All NFC endpoints (/api/v1/access/credentials, /invitations, /log, /revoke-all) are called through this method.",
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "severity": "medium",
+      "file_line": "frontend/apps/mobile/src/nfc/NFCCredentialManager.ts:495",
+      "failure_scenario": "A multi-org manager logs into tenant A, enrolls NFC credentials, logs out, logs back in to tenant B. On tenant B, fetchCredentials() POSTs /api/v1/access/credentials with no X-Tenant-ID: the RLS extractor either 403s (NFC door access broken) or — worse, if the backend falls back to the JWT tenant_id elsewhere while the local cache still holds the previous tenant's manifest — serves/stores cross-tenant credentials."
+    },
+    {
+      "id": "code-review-mobile-rn-widget-settings-unmount-setstate",
+      "type": "code-review-finding",
+      "source": "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:37-80",
+      "score_delta": 1,
+      "evidence": "useEffect at line 37-48 awaits bridge.isWidgetSupported() then bridge.getAllConfigs() and calls setIsSupported/setConfigs/setIsLoading unconditionally — no cancelled flag, no cleanup. handleRefreshAll (line 75-80) has the same shape with setIsLoading after an awaited bridge.updateAllWidgets().",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "low",
+      "file_line": "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:40",
+      "failure_scenario": "On a slow device (iOS 14 initial WidgetKit cold load, several hundred ms), user taps Dashboard→Widget Settings and immediately taps back. checkSupport() resolves after unmount and calls setIsSupported(true) + setConfigs(savedConfigs) + setIsLoading(false) on an unmounted component — fires 'Can't perform a React state update on an unmounted component' warning in dev and leaks the bridge closure until GC."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "churn-hotspot",
+      "source": "PR #3198",
+      "score_delta": 0,
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs +69 -5 (OS-RNG expect panic fix). Cumulative signal: already in state.seen_signals; re-emitting with new churn evidence, no score_delta applied per Phase-1 cumulative dedup rule.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "cumulative": true
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3189",
+      "score_delta": 1,
+      "evidence": "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx +155 -3 (ranked-ballot UI rewrite). First time this file appears in hotspot_history; runs_seen=1 after this run.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3186",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx +41 -4 (IoT WS give-up UI). First time this file appears in hotspot_history; runs_seen=1 after this run.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "repeated-churn-backend/servers/reality-server/src/routes/sso.rs",
+      "type": "repeated-churn",
+      "source": "PR #3198",
+      "score_delta": 1,
+      "evidence": "backend/servers/reality-server/src/routes/sso.rs — hotspot_history runs_seen advanced to 3 this run (prior values: runs_seen=2 as of 2026-08-31, recent_churn=151). The current churn is explained by PR #3198 (OS-RNG expect panic fix, well-tested), so this is a stability-tracking signal rather than a new defect — may decay cleanly if no further signals in 14d.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "lag-warning-2026-10-31",
+      "type": "lag_warning",
+      "source": "state.last_run_iso = 2026-10-28T10:54:38Z",
+      "score_delta": 0,
+      "evidence": "Lag 75h / 3d since last routine run — approaches stale_routine_alert threshold (3d). Cloud routine cadence slipped this cycle; may indicate scheduler contention.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-3194",
+      "type": "dep-update-noise",
+      "source": "PR #3194",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump the gradle-minor-patch group across 1 directory with 7 updates — dependabot cluster; logged for brief, not scored.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3195",
+      "type": "dep-update-noise",
+      "source": "PR #3195",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump the npm-minor-patch group across 1 directory with 30 updates — dependabot cluster.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3196",
+      "type": "dep-update-noise",
+      "source": "PR #3196",
+      "score_delta": 0,
+      "evidence": "chore(deps): bump the kotlin group across 1 directory with 5 updates — dependabot cluster.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-10-31.md && head -1 ... grep '^# 2026-10-31$'", "observed": "match", "expected": "match" },
+    { "goal": "G2", "passed": true, "command": "jq comparison of staged vs HEAD state", "observed": "last_pr_seen advanced 3183→3201, last_commit_sha changed, seen_signals grew by 10, hotspot_history grew by 2, pm_cursor advanced 3→4, coverage_cursor advanced 0→1", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog ids unique", "observed": "all 542 ids distinct", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "non-cumulative re-emits with score_delta=0", "observed": "the one cumulative re-emit (churn-hotspot-sso.rs) has score_delta=0; all other signal ids are new to seen_signals", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq backlog score cap + decay", "observed": "max score=8 (unchanged); no open item >14d old to decay this run (oldest open at 2026-10-25, 6d)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "grep brief for 'adversarial pass:' line per new plan", "observed": "plans/code-review-mobile-rn-meter-reading-no-online-sync.md listed with 'adversarial pass: passed'", "expected": "match" },
+    { "goal": "G7", "passed": true, "command": "new plan structural checks (metadata/headings/mode/capability/files-exist)", "observed": "1 new plan, 4 metadata, 11 headings, Mode=cloud-ok, 2 ticks (C1+C6), 5/5 Files bullets resolve on disk", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "staged diff secret/hostname scan (excl. 4 baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md regenerated-from-backlog.json", "observed": "byte-identical (regenerator verified against both HEAD and current)", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' line vs cursor advancement", "observed": "'Phases that failed: none' + all cursors advanced per expected", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs appear in plans/ or plans/_archive/", "observed": "no deletions; 1 new addition (meter-reading); all 17 prior-run plans still present", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "ls-files plans/_archive count this run vs HEAD", "observed": "21 == 21 (no archive changes this run)", "expected": "≥ HEAD count" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md regenerated-from-backlog.json(vector=triage)", "observed": "byte-identical (regenerator verified)", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency + kill-switch check", "observed": "auto_fix_actions=[] (no eligible candidate); no auto-fix branch pushed; verify-all not invoked", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "mgmt artifacts valid + GC7 coverage/pm cursor advancement", "observed": "action-list.json.items[] + risks.json.items[] parse; project-state.md non-empty (105 lines); pm_cursor.next_index=4 (in 0..7); coverage_cursor.next_index=1 (in [0,13)); both pm_cursor and coverage_cursor advanced vs HEAD", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "staged diff Telegram-token scan", "observed": "0", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no_candidate"
+}
