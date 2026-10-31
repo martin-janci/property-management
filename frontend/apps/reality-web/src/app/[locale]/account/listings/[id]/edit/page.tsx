@@ -6,16 +6,20 @@
  * Screen-map: docs/screens/reality/listing-edit.md
  *
  * 5 steps: Type+location → Details → Photos → Price → Summary
+ *
+ * All user-facing copy lives in `pages.listingEdit.*` in `messages/<locale>.json`
+ * and is read via `useTranslations` so the wizard renders in every supported
+ * locale (sk/cs/de/en/pl/hu) instead of hardcoded Slovak.
  */
 
 import { useParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { formatPrice } from '@/lib/format';
 import { getMyListing, type ListingDraft, RealtorApiError, updateListing } from '@/lib/realtor-api';
-import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPE_OPTIONS } from './_mock';
+import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPES } from './_mock';
 import { resolveListingPrice } from './_price';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
@@ -110,6 +114,7 @@ const EMPTY_FORM: ListingEditFormData = {
 
 function EditWizardContent() {
   const locale = useLocale();
+  const t = useTranslations('pages.listingEdit');
   const params = useParams<{ id: string }>();
   const listingId = params?.id ?? '';
 
@@ -167,10 +172,10 @@ function EditWizardContent() {
         });
       })
       .catch((err) => {
-        setLoadError(err instanceof RealtorApiError ? err.message : 'Načítanie inzerátu zlyhalo.');
+        setLoadError(err instanceof RealtorApiError ? err.message : t('loadFailed'));
       })
       .finally(() => setLoading(false));
-  }, [listingId]);
+  }, [listingId, t]);
 
   const update = (patch: Partial<ListingEditFormData>) => setForm((f) => ({ ...f, ...patch }));
 
@@ -181,7 +186,7 @@ function EditWizardContent() {
     // listing without any warning (#code-review-price-zero).
     const price = resolveListingPrice(form.price);
     if (price === null) {
-      setSaveError('Zadajte platnú cenu väčšiu ako 0 € (krok 4).');
+      setSaveError(t('priceInvalid'));
       return;
     }
     setSaving(true);
@@ -221,9 +226,7 @@ function EditWizardContent() {
       });
       setSaved(true);
     } catch (err) {
-      setSaveError(
-        err instanceof RealtorApiError ? err.message : 'Uloženie zlyhalo, skúste znova.'
-      );
+      setSaveError(err instanceof RealtorApiError ? err.message : t('saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -232,7 +235,7 @@ function EditWizardContent() {
   if (loading) {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
-        <p style={{ color: 'var(--ppt-fg-secondary)' }}>Načítavam inzerát…</p>
+        <p style={{ color: 'var(--ppt-fg-secondary)' }}>{t('loading')}</p>
       </div>
     );
   }
@@ -242,7 +245,7 @@ function EditWizardContent() {
       <div style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
         <p style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>{loadError}</p>
         <a href="/account" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
-          ← Späť na účet
+          {t('backToAccount')}
         </a>
       </div>
     );
@@ -260,10 +263,10 @@ function EditWizardContent() {
             marginBottom: 12,
           }}
         >
-          Inzerát bol uložený!
+          {t('success')}
         </h2>
         <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 24 }}>
-          Zmeny v inzeráte #{listingId} boli úspešne uložené.
+          {t('successBody', { id: listingId })}
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
@@ -277,7 +280,7 @@ function EditWizardContent() {
               textDecoration: 'none',
             }}
           >
-            Zobraziť inzerát
+            {t('viewListing')}
           </a>
           <button
             type="button"
@@ -294,12 +297,14 @@ function EditWizardContent() {
               cursor: 'pointer',
             }}
           >
-            Ďalšie úpravy
+            {t('moreEdits')}
           </button>
         </div>
       </div>
     );
   }
+
+  const currentStepKey = EDIT_STEPS[step - 1]?.key;
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px' }}>
@@ -322,17 +327,17 @@ function EditWizardContent() {
               textDecoration: 'none',
             }}
           >
-            ← Môj účet
+            {t('breadcrumbAccount')}
           </a>
           <span style={{ color: 'var(--ppt-fg-muted, #9ca3af)', fontSize: '0.875rem' }}>/</span>
           <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
-            Upraviť inzerát #{listingId}
+            {t('breadcrumb', { id: listingId })}
           </span>
         </div>
         <h1
           style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', margin: 0 }}
         >
-          Upraviť inzerát
+          {t('title')}
         </h1>
       </div>
 
@@ -349,7 +354,11 @@ function EditWizardContent() {
           }}
         >
           <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 20, fontSize: '0.9375rem' }}>
-            Krok {step} z {EDIT_STEPS.length}: {EDIT_STEPS[step - 1]?.title}
+            {t('stepLabel', {
+              step,
+              total: EDIT_STEPS.length,
+              stepTitle: currentStepKey ? t(`steps.${currentStepKey}.title`) : '',
+            })}
           </p>
           {/* TODO: replace with @ppt/ui-kit/Stepper once available */}
           <StepIndicator current={step} />
@@ -367,33 +376,33 @@ function EditWizardContent() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Typ transakcie
+                  {t('fields.transactionType')}
                 </label>
                 {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
                 <div style={{ display: 'flex', gap: 10 }}>
-                  {(['sale', 'rent'] as const).map((t) => (
+                  {(['sale', 'rent'] as const).map((tx) => (
                     <button
-                      key={t}
+                      key={tx}
                       type="button"
-                      onClick={() => update({ transactionType: t })}
+                      onClick={() => update({ transactionType: tx })}
                       style={{
                         flex: 1,
                         padding: '11px',
                         borderRadius: 8,
-                        border: `2px solid ${form.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                        border: `2px solid ${form.transactionType === tx ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
                         background:
-                          form.transactionType === t
+                          form.transactionType === tx
                             ? 'var(--ppt-color-primary-light, #dbeafe)'
                             : 'var(--ppt-bg-surface)',
                         color:
-                          form.transactionType === t
+                          form.transactionType === tx
                             ? 'var(--ppt-color-primary, #2563eb)'
                             : 'var(--ppt-fg-secondary)',
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}
                     >
-                      {t === 'sale' ? 'Predaj' : 'Prenájom'}
+                      {t(`transactionOptions.${tx}`)}
                     </button>
                   ))}
                 </div>
@@ -408,45 +417,37 @@ function EditWizardContent() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Typ nehnuteľnosti
+                  {t('fields.propertyType')}
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-                  {PROPERTY_TYPE_OPTIONS.map((opt) => (
+                  {PROPERTY_TYPES.map((value) => (
                     <button
-                      key={opt.value}
+                      key={value}
                       type="button"
-                      onClick={() => update({ propertyType: opt.value })}
+                      onClick={() => update({ propertyType: value })}
                       style={{
                         padding: '11px',
                         borderRadius: 8,
-                        border: `2px solid ${form.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                        border: `2px solid ${form.propertyType === value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
                         background:
-                          form.propertyType === opt.value
+                          form.propertyType === value
                             ? 'var(--ppt-color-primary-light, #dbeafe)'
                             : 'var(--ppt-bg-surface)',
                         color:
-                          form.propertyType === opt.value
+                          form.propertyType === value
                             ? 'var(--ppt-color-primary, #2563eb)'
                             : 'var(--ppt-fg-secondary)',
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}
                     >
-                      {opt.label}
+                      {t(`propertyOptions.${value}`)}
                     </button>
                   ))}
                 </div>
               </div>
-              {[
-                { key: 'address', label: 'Adresa', type: 'text', placeholder: 'Ulica a číslo' },
-                {
-                  key: 'city',
-                  label: 'Mesto / Obec',
-                  type: 'text',
-                  placeholder: 'Napr. Bratislava',
-                },
-              ].map((field) => (
-                <div key={field.key}>
+              {(['address', 'city'] as const).map((key) => (
+                <div key={key}>
                   <label
                     style={{
                       display: 'block',
@@ -456,13 +457,13 @@ function EditWizardContent() {
                       fontSize: '0.9375rem',
                     }}
                   >
-                    {field.label}
+                    {t(`fields.${key}`)}
                   </label>
                   <input
-                    type={field.type}
-                    placeholder={field.placeholder}
-                    value={form[field.key as keyof ListingEditFormData] as string}
-                    onChange={(e) => update({ [field.key]: e.target.value })}
+                    type="text"
+                    placeholder={t(`fields.${key}Placeholder`)}
+                    value={form[key]}
+                    onChange={(e) => update({ [key]: e.target.value })}
                     style={inputStyle}
                   />
                 </div>
@@ -473,14 +474,8 @@ function EditWizardContent() {
           {/* Step 2 */}
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[
-                { key: 'area', label: 'Plocha (m²)', placeholder: '72' },
-                { key: 'rooms', label: 'Počet izieb', placeholder: '3' },
-                { key: 'floor', label: 'Poschodie', placeholder: '4' },
-                { key: 'totalFloors', label: 'Celkový počet poschodí', placeholder: '8' },
-                { key: 'yearBuilt', label: 'Rok výstavby', placeholder: '2005' },
-              ].map((field) => (
-                <div key={field.key}>
+              {(['area', 'rooms', 'floor', 'totalFloors', 'yearBuilt'] as const).map((key) => (
+                <div key={key}>
                   <label
                     style={{
                       display: 'block',
@@ -490,14 +485,14 @@ function EditWizardContent() {
                       fontSize: '0.9375rem',
                     }}
                   >
-                    {field.label}
+                    {t(`fields.${key}`)}
                   </label>
                   <input
                     type="number"
-                    placeholder={field.placeholder}
-                    value={form[field.key as keyof ListingEditFormData] as string | number}
+                    placeholder={t(`fields.${key}Placeholder`)}
+                    value={form[key]}
                     onChange={(e) =>
-                      update({ [field.key]: e.target.value === '' ? '' : Number(e.target.value) })
+                      update({ [key]: e.target.value === '' ? '' : Number(e.target.value) })
                     }
                     style={inputStyle}
                   />
@@ -513,7 +508,7 @@ function EditWizardContent() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Popis
+                  {t('fields.description')}
                 </label>
                 <textarea
                   rows={5}
@@ -529,7 +524,7 @@ function EditWizardContent() {
           {step === 3 && (
             <div>
               <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 16 }}>
-                Existujúce fotografie
+                {t('photos.existing')}
               </p>
               {/* TODO: replace with @ppt/ui-kit/FileUpload once available */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
@@ -540,7 +535,7 @@ function EditWizardContent() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={url}
-                        alt="Foto"
+                        alt={t('photos.alt')}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -551,7 +546,7 @@ function EditWizardContent() {
                       <button
                         type="button"
                         onClick={() => setRemovedPhotos((s) => new Set([...s, url]))}
-                        aria-label="Odstrániť fotografiu"
+                        aria-label={t('photos.remove')}
                         style={{
                           position: 'absolute',
                           top: 4,
@@ -591,9 +586,7 @@ function EditWizardContent() {
                 }}
               >
                 <span style={{ fontSize: '2rem' }}>📷</span>
-                <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>
-                  Pridať nové fotografie
-                </span>
+                <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{t('photos.addNew')}</span>
                 <input
                   type="file"
                   multiple
@@ -613,7 +606,7 @@ function EditWizardContent() {
                     fontSize: '0.875rem',
                   }}
                 >
-                  + {form.newPhotos.length} nových fotografií
+                  {t('photos.addedCount', { count: form.newPhotos.length })}
                 </p>
               )}
             </div>
@@ -632,7 +625,7 @@ function EditWizardContent() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Cena (€)
+                  {t('fields.price')}
                 </label>
                 <input
                   type="number"
@@ -655,7 +648,7 @@ function EditWizardContent() {
                   }}
                 />
                 <span style={{ fontWeight: 500, color: 'var(--ppt-fg-primary)' }}>
-                  Cena je dohodou
+                  {t('fields.priceNegotiable')}
                 </span>
               </label>
               <div>
@@ -668,31 +661,25 @@ function EditWizardContent() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Stav inzerátu
+                  {t('fields.status')}
                 </label>
                 {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  {(
-                    [
-                      { value: 'active', label: 'Aktívny' },
-                      { value: 'inactive', label: 'Neaktívny' },
-                      { value: 'draft', label: 'Koncept' },
-                    ] as const
-                  ).map((opt) => (
+                  {(['active', 'inactive', 'draft'] as const).map((value) => (
                     <button
-                      key={opt.value}
+                      key={value}
                       type="button"
-                      onClick={() => update({ status: opt.value })}
+                      onClick={() => update({ status: value })}
                       style={{
                         padding: '9px 18px',
                         borderRadius: 8,
-                        border: `2px solid ${form.status === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                        border: `2px solid ${form.status === value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
                         background:
-                          form.status === opt.value
+                          form.status === value
                             ? 'var(--ppt-color-primary-light, #dbeafe)'
                             : 'var(--ppt-bg-surface)',
                         color:
-                          form.status === opt.value
+                          form.status === value
                             ? 'var(--ppt-color-primary, #2563eb)'
                             : 'var(--ppt-fg-secondary)',
                         fontWeight: 600,
@@ -700,7 +687,7 @@ function EditWizardContent() {
                         fontSize: '0.875rem',
                       }}
                     >
-                      {opt.label}
+                      {t(`statusOptions.${value}`)}
                     </button>
                   ))}
                 </div>
@@ -719,7 +706,7 @@ function EditWizardContent() {
                   marginBottom: 14,
                 }}
               >
-                Súhrn zmien
+                {t('summary.title')}
               </h3>
               <div
                 style={{
@@ -734,35 +721,35 @@ function EditWizardContent() {
                 }}
               >
                 <div>
-                  <strong>Typ:</strong> {form.transactionType === 'sale' ? 'Predaj' : 'Prenájom'} ·{' '}
-                  {PROPERTY_TYPE_OPTIONS.find((o) => o.value === form.propertyType)?.label}
+                  <strong>{t('summary.type')}:</strong>{' '}
+                  {t(`transactionOptions.${form.transactionType}`)} ·{' '}
+                  {t(`propertyOptions.${form.propertyType}`)}
                 </div>
                 <div>
-                  <strong>Poloha:</strong> {form.address}, {form.city}
+                  <strong>{t('summary.location')}:</strong> {form.address}, {form.city}
                 </div>
                 <div>
-                  <strong>Plocha:</strong> {form.area} m² · <strong>Izby:</strong> {form.rooms}
+                  <strong>{t('summary.area')}:</strong> {form.area} m² ·{' '}
+                  <strong>{t('summary.rooms')}:</strong> {form.rooms}
                 </div>
                 <div>
-                  <strong>Poschodie:</strong> {form.floor}/{form.totalFloors} ·{' '}
-                  <strong>Rok:</strong> {form.yearBuilt}
+                  <strong>{t('summary.floor')}:</strong> {form.floor}/{form.totalFloors} ·{' '}
+                  <strong>{t('summary.year')}:</strong> {form.yearBuilt}
                 </div>
                 <div>
-                  <strong>Cena:</strong>{' '}
+                  <strong>{t('summary.price')}:</strong>{' '}
                   {typeof form.price === 'number' ? formatPrice(form.price, locale) : '–'}{' '}
-                  {form.priceNegotiable ? '(dohodou)' : ''}
+                  {form.priceNegotiable ? t('summary.negotiable') : ''}
                 </div>
                 <div>
-                  <strong>Stav:</strong>{' '}
-                  {form.status === 'active'
-                    ? 'Aktívny'
-                    : form.status === 'inactive'
-                      ? 'Neaktívny'
-                      : 'Koncept'}
+                  <strong>{t('summary.status')}:</strong> {t(`statusOptions.${form.status}`)}
                 </div>
                 <div>
-                  <strong>Fotografie:</strong> {form.existingPhotoUrls.length - removedPhotos.size}{' '}
-                  existujúcich + {form.newPhotos.length} nových
+                  <strong>{t('summary.photos')}:</strong>{' '}
+                  {t('summary.photosValue', {
+                    existing: form.existingPhotoUrls.length - removedPhotos.size,
+                    added: form.newPhotos.length,
+                  })}
                 </div>
               </div>
             </div>
@@ -784,7 +771,7 @@ function EditWizardContent() {
                   color: 'var(--ppt-fg-primary)',
                 }}
               >
-                ← Späť
+                {t('back')}
               </button>
             ) : (
               <div />
@@ -803,7 +790,7 @@ function EditWizardContent() {
                   cursor: 'pointer',
                 }}
               >
-                Ďalej →
+                {t('next')}
               </button>
             ) : (
               <div
@@ -836,7 +823,7 @@ function EditWizardContent() {
                     cursor: saving ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {saving ? 'Ukladám…' : 'Uložiť zmeny'}
+                  {saving ? t('saving') : t('save')}
                 </button>
               </div>
             )}
@@ -862,7 +849,7 @@ function EditWizardContent() {
               margin: '0 0 14px',
             }}
           >
-            Kroky
+            {t('asideTitle')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {EDIT_STEPS.map((s) => (
@@ -905,10 +892,10 @@ function EditWizardContent() {
                       fontSize: '0.8125rem',
                     }}
                   >
-                    {s.title}
+                    {t(`steps.${s.key}.title`)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
-                    {s.description}
+                    {t(`steps.${s.key}.description`)}
                   </div>
                 </div>
               </div>
