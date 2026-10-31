@@ -459,7 +459,40 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-qa-reality-web-authed-i18n-regression-sweep-2026-10-31",
+      "action": "QA regression sweep: reality-web authed account/profile/password + realtor profile ship entirely English on 5/6 non-default locales — same bug class as PR #3203 (listing-edit)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-compliance-wave1b-churn-audit-2026-10-31",
+      "action": "Audit compliance_wave1b_tests.rs (3rd churn touch in 14d, +171 lines in PR #3204) — determine if the new cases shadow a flaky invariant or genuinely new scenarios",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-buffer-low-triage-2026-10-31",
+      "action": "Investigate buffer-low payload (dispatcher claimable=10/72) — purge UNRESOLVED-sentinel items from action-list and run gap-scan refill if the queue is genuinely depleted",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-10-31T19:00:00Z"
 }

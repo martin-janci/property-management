@@ -1,0 +1,158 @@
+{
+  "date": "2026-10-31",
+  "generated": "2026-10-31T19:00:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-31",
+      "type": "lag_warning",
+      "source": "routine self-signal",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "72h since 2026-10-28T10:54:38Z — threshold is 36h",
+        "no stale_routine_alert (<3d)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-10-31 (14d window)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "216 lines across 2 commits in 14d (adds=106 dels=110) — PR #3203 + #3197"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "type": "churn-hotspot",
+      "source": "churn 2026-10-31 (14d window; cumulative re-emit — in seen_signals)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "171 lines in PR #3204 (adds=171 dels=0) — compliance wave-1b regression hardening",
+        "cumulative-type re-emit: no score_delta per G4 carve-out"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-10-31 (14d window)",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "162 lines in PR #3189 (adds=161 dels=1) — mobile ranked-ballot ordered-renderer test suite",
+        "follow-up issue #3206 raised against #3189 — mobile voting surface still stabilising"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3203-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3203",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3203 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,page.i18n.test.tsx,_mock.ts}",
+        "no docs/screens/reality/*.md edits in same PR",
+        "best-effort heuristic — review before promoting"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3197",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3197 touched same reality-web listing-edit route (page.tsx + _price.{ts,test.ts})",
+        "no docs/screens/reality/*.md edits",
+        "best-effort heuristic"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3186",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3186 touched frontend/apps/ppt-web/src/{routes/groups/iot.tsx, features/iot/pages/IotDashboardPage.tsx}",
+        "no docs/screens/ppt/iot-*.md edits",
+        "best-effort heuristic"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-account-pages-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web] 2026-10-31",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx — zero useTranslations/t()",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx — zero i18n",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx — zero i18n",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx — zero i18n",
+        "sibling listing-edit page fixed in PR #3203 (same bug class)"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-raw-next-link-locale-loss",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review [reality-web] 2026-10-31",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "evidence": [
+        "15 pages under frontend/apps/reality-web/src/app/[locale]/ import Link from next/link instead of @/i18n/routing",
+        "11 pages import correctly from @/i18n/routing (auth/login, favorites, listings)",
+        "src/i18n/routing.ts: localePrefix='as-needed' + createNavigation(routing); raw next/link href='/account/profile' re-resolves to default locale (sk)"
+      ]
+    },
+    {
+      "id": "dep-update-noise-batch-2026-10-29",
+      "type": "dep-update-noise",
+      "source": "open dependabot PRs + 3 closed-unmerged dependabot (#3137, #3007, #2961)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "14 open dependabot PRs (gradle/npm-minor/cargo-minor/kotlin/ktor/compose/serde/tokio groups)",
+        "3 dependabot PRs closed-unmerged 2026-10-29 (superseded by newer bundles)",
+        "no score — informational only"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-10-31.md && head -1 == '# 2026-10-31'", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "state.json advanced vs HEAD", "observed": "last_pr_seen 3183→3205 + last_issue_seen 3187→3206 + 8 new seen_signals", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq backlog unique ids", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no non-cumulative signal re-emits with non-zero score_delta", "observed": "compliance_wave1b churn-hotspot re-emits with score_delta=0 (cumulative-type allowlist)", "expected": "true"},
+    {"goal": "G5-cap", "passed": true, "command": "jq max score <= 8", "observed": "true", "expected": "true"},
+    {"goal": "G5-decay", "passed": true, "command": "all open items updated_at > 2026-10-17", "observed": "true (no 14d decay candidates this run)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "every new plan has adversarial-pass annotation", "observed": "0 new plans — vacuously true", "expected": "true"},
+    {"goal": "G7", "passed": true, "command": "<=2 new plans, metadata+headings valid, files resolve", "observed": "0 new plans this run", "expected": "<=2"},
+    {"goal": "G8", "passed": "pending Phase 6", "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "pending", "expected": "0"},
+    {"goal": "G9", "passed": "pending Phase 6", "command": "grep secrets in staged diff (excluding baseline docs)", "observed": "pending", "expected": "0 matches"},
+    {"goal": "G10", "passed": "pending Phase 6", "command": "diff backlog.md regen", "observed": "pending", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "phases that failed → cursor not advanced", "observed": "0 failed phases", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "prior-run plan slugs still in plans/ or _archive/", "observed": "no new plans; prior plans untouched", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count ≥ HEAD count", "observed": "no archive changes this run", "expected": "true"},
+    {"goal": "G14", "passed": "pending Phase 6", "command": "diff IDEAS_TRIAGE.md regen", "observed": "pending", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto-fix discipline: cap + idempotency + confidence bar", "observed": "0 auto_fix_actions this run — no candidate met confidence=high + score>=3 + allowlist match; kill switch unset", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "management artifacts valid + pm_cursor + coverage_cursor advanced", "observed": "pm_cursor.next_index 3→4; coverage_cursor.next_index 0→1; action-list.json/risks.json jq-parse; project-state.md non-empty", "expected": "exit 0"},
+    {"goal": "G17", "passed": "pending Phase 6", "command": "no Telegram token in staged diff (excl baseline docs)", "observed": "pending", "expected": "0 matches"}
+  ],
+  "auto_fix_actions": []
+}

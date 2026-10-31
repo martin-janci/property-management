@@ -13511,17 +13511,19 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "churn 2026-10-28 (14d window)"
+        "churn 2026-10-28 (14d window)",
+        "PR #3204"
       ],
       "evidence": [
         "3 commits in 14-day window — the compliance Wave 1b test suite is being iteratively expanded. A test-file hotspot indicates the production code under test is still shifting; worth a review when the suite stabilises.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "re-churn 2026-10-31: +171 lines in PR #3204 (14d window; no score_delta per cumulative-type rule)"
       ],
       "files": [
         "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null
     },
     {
@@ -13589,19 +13591,21 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-server] 2026-10-28"
+        "rotating-expert-review [reality-server] 2026-10-28",
+        "PR #3205"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/reports.rs:352-383 — list_my_reports binds `query.status: Option<String>` directly into SQL (`AND ($4::text IS NULL OR status = $4)`) without validating against the four known enum values (received, in_review, resolved, rejected).",
-        "Not SQL-injectable (sqlx binds), but any unknown value silently returns an empty page while the OpenAPI param doc at line 131 says only four values are legal. Should reject with 400 for a value outside the enum, matching the pattern in `routes/portal_listings.rs::validate_enum`."
+        "Not SQL-injectable (sqlx binds), but any unknown value silently returns an empty page while the OpenAPI param doc at line 131 says only four values are legal. Should reject with 400 for a value outside the enum, matching the pattern in `routes/portal_listings.rs::validate_enum`.",
+        "resolved: PR #3205 merged 2026-10-30 — validate list_my_reports status filter"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/reports.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "reality-server",
@@ -13671,20 +13675,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)",
+        "PR #3200"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/components/Toast.tsx:170-189 — ToastItem.handleCopy schedules `setTimeout(() => setCopied(false), 2000)` on both the success and execCommand fallback paths. Neither timer id is stored or cleared, and there is no unmount-cleanup effect in ToastItem.",
         "Either an auto-dismiss or MAX_VISIBLE_TOASTS pruning (Toast.tsx:119-144) can unmount a ToastItem inside the 2 s window, so the pending setCopied(false) fires on an unmounted component.",
-        "Sibling Announcer.tsx:85-93 guards exactly this case with a clearTimeout cleanup effect, confirming ToastItem's missing cleanup is an oversight."
+        "Sibling Announcer.tsx:85-93 guards exactly this case with a clearTimeout cleanup effect, confirming ToastItem's missing cleanup is an oversight.",
+        "resolved: PR #3200 merged 2026-10-30 — clear Toast copy timer on unmount"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/Toast.tsx"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "ppt-web-ui",
@@ -13698,19 +13704,21 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)",
+        "PR #3201"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:104-113 — the root is a <div> with onClick, onKeyDown (Enter/Space), tabIndex=0 — fully interactive — but role is hardcoded `role=\"status\"` (a live region) rather than `role=\"button\"`.",
-        "Assistive tech reaches a focusable live-region, not an actionable control, so the click-to-reconnect affordance surfaced visually in the tooltip is not conveyed semantically. Classic non-interactive-element-with-handlers a11y smell. Recommend a real <button> with a separate aria-live region for the status text."
+        "Assistive tech reaches a focusable live-region, not an actionable control, so the click-to-reconnect affordance surfaced visually in the tooltip is not conveyed semantically. Classic non-interactive-element-with-handlers a11y smell. Recommend a real <button> with a separate aria-live region for the status text.",
+        "resolved: PR #3201 merged 2026-10-30 — make ConnectionStatus reconnect a real button"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "ppt-web-ui",
@@ -13724,19 +13732,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)",
+        "PR #3202"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx:49-70 — totals recompute the effective VAT rate from vatRateType AND country (standard => CZ 21 / SK 20; first_reduced => CZ 15 / SK 10).",
-        "AccountingInvoiceForm.tsx:44-46,80-89 — each item's `item.vatRate` is initialized to 21 and NEVER updated when vatRateType or country change (updateItem only writes the targeted field). handleSubmit sends the raw items array with stale `vatRate: 21` plus `vatRateType`. UI vs persisted-payload disagree whenever country=SK or a reduced rate is picked — financial document correctness bug."
+        "AccountingInvoiceForm.tsx:44-46,80-89 — each item's `item.vatRate` is initialized to 21 and NEVER updated when vatRateType or country change (updateItem only writes the targeted field). handleSubmit sends the raw items array with stale `vatRate: 21` plus `vatRateType`. UI vs persisted-payload disagree whenever country=SK or a reduced rate is picked — financial document correctness bug.",
+        "resolved: PR #3202 merged 2026-10-30 — normalize submitted invoice item.vatRate to UI-derived rate"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "ppt-web-ui",
@@ -13841,19 +13851,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
+        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)",
+        "PR #3203"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:169,216,749-752,830 — multiple user-facing strings are hardcoded Slovak literals instead of next-intl `t()`: 'Načítanie inzerátu zlyhalo.', 'Uloženie zlyhalo, skúste znova.', status labels 'Aktívny'/'Neaktívny'/'Koncept', and button text 'Ukladám…'/'Uložiť zmeny'.",
-        "reality-web is explicitly multi-locale (sk, cs, de, en per frontend/apps/CLAUDE.md + next-intl). These literals render Slovak to cs/de/en users on an authenticated route — i18n coverage gap."
+        "reality-web is explicitly multi-locale (sk, cs, de, en per frontend/apps/CLAUDE.md + next-intl). These literals render Slovak to cs/de/en users on an authenticated route — i18n coverage gap.",
+        "resolved: PR #3203 merged 2026-10-30 — localize listing-edit wizard across all locales"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "reality-web",
@@ -13867,25 +13879,196 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
+        "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)",
+        "PR #3199"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/lib/comparison-context.tsx:40-41 — on mount `const parsed = JSON.parse(stored); setListings(parsed)` casts the localStorage value straight into `ListingSummary[]` with no Array.isArray/shape check; the try/catch only catches JSON syntax errors.",
-        "A syntactically-valid but wrong-shape value (e.g. tampered `{}`, `true`, or a bare number) passes JSON.parse, sets non-array state, then later `listings.some(...)` throws 'listings.some is not a function', breaking the provider until storage is cleared. Low severity (requires corrupt/tampered client storage) but a straightforward hardening gap vs the guarded parsing in lib/auth-token.ts."
+        "A syntactically-valid but wrong-shape value (e.g. tampered `{}`, `true`, or a bare number) passes JSON.parse, sets non-array state, then later `listings.some(...)` throws 'listings.some is not a function', breaking the provider until storage is cleared. Low severity (requires corrupt/tampered client storage) but a straightforward hardening gap vs the guarded parsing in lib/auth-token.ts.",
+        "resolved: PR #3199 merged 2026-10-30 — guard comparison localStorage against malformed shape"
       ],
       "files": [
         "frontend/apps/reality-web/src/lib/comparison-context.tsx"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "reality-web",
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "title": "Churn hotspot: reality-web account/listings/[id]/edit/page.tsx — top-churn this run (216 lines, 2 PRs)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3203",
+        "PR #3197",
+        "churn 2026-10-31 (14d window)"
+      ],
+      "evidence": [
+        "216 lines (adds=106 dels=110) across 2 commits in 14d — PR #3203 (i18n sweep) + #3197 (price-zero fix)",
+        "first-time top-3 churn hotspot; both PRs were code-review fixes"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "title": "Churn hotspot: mobile VoteDetailScreen.test.tsx — top-churn this run (162 lines, 1 PR)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3189",
+        "churn 2026-10-31 (14d window)"
+      ],
+      "evidence": [
+        "162 lines (adds=161 dels=1) in PR #3189 — mobile ranked-ballot ordered-renderer test suite",
+        "follow-up issue #3206 raised against PR #3189 (a11y labels render raw i18n keys) — signals mobile voting surface is still stabilising"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3203-reality",
+      "title": "Screen-map drift: PR #3203 touched reality-web account/listings route without updating docs/screens/reality",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3203"
+      ],
+      "evidence": [
+        "PR #3203 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,page.i18n.test.tsx,_mock.ts}",
+        "no corresponding docs/screens/reality/*.md edits in the same PR",
+        "best-effort heuristic — may be stale screen-map docs rather than a real gap; review before promoting"
+      ],
+      "files": [
+        "docs/screens/reality/listing-edit.md",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "title": "Screen-map drift: PR #3197 touched reality-web listing-edit route (price-zero fix) without updating screen docs",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3197"
+      ],
+      "evidence": [
+        "PR #3197 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_price.ts,_price.test.ts}",
+        "same route as #3203 — likely one combined screen-map update sweeps both drifts",
+        "best-effort heuristic"
+      ],
+      "files": [
+        "docs/screens/reality/listing-edit.md",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "title": "Screen-map drift: PR #3186 touched ppt-web routes/groups/iot.tsx (IoT dashboard) without updating docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "PR #3186 touched frontend/apps/ppt-web/src/{routes/groups/iot.tsx, features/iot/pages/IotDashboardPage.tsx}",
+        "no corresponding docs/screens/ppt/iot-*.md edits",
+        "best-effort heuristic"
+      ],
+      "files": [
+        "docs/screens/ppt/iot-dashboard.md",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-account-pages-no-i18n",
+      "title": "reality-web authed account+realtor profile pages (4 files) ship entirely English — same bug class as PR #3203",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-10-31"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx — zero useTranslations/t()",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx — zero i18n",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx — zero i18n",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx — zero i18n",
+        "sibling listing-edit page fixed in PR #3203; these were not swept"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-raw-next-link-locale-loss",
+      "title": "reality-web 15 pages import Link from next/link bypassing @/i18n/routing — nav resets locale to default",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-10-31"
+      ],
+      "evidence": [
+        "15 pages under frontend/apps/reality-web/src/app/[locale]/ import Link from next/link instead of @/i18n/routing",
+        "11 pages import correctly from @/i18n/routing (auth/login, favorites, listings)",
+        "src/i18n/routing.ts: localePrefix='as-needed' + createNavigation(routing) exports Link; raw next/link href='/account/profile' re-resolves to default locale (sk) on every nav from cs/de/en/hu/pl",
+        "offenders include account/{page,profile,password}, auth/{forgot,register,reset}-password, realtor/{page,listings/page}, inquiries, agency/{import,inquiries}, forbidden, saved-searches, security"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx",
+        "frontend/apps/reality-web/src/i18n/routing.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
     }
   ]
 }

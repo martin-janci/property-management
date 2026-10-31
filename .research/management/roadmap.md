@@ -1,15 +1,15 @@
-# PPT Roadmap — upkeep 2026-10-26
+# PPT Roadmap — upkeep 2026-10-31
 
-_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 4-day lag since 2026-10-22 run._
+_Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `action-list.json` + sprint-status.yaml. 3-day lag since 2026-10-28 run._
 
 ## State of the project
 
-- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-8a stories (cursor re-check — negative).
-- Delta vs 2026-10-22 upkeep: **3 PRs merged** — all reality-web (realtor-api shape validation, safe-error log redaction, agency i18n price fix). None map to coverage stories.
-- **New blocker: #3168 cargo-deny** — 3 new RUSTSEC advisories on dev gate every backend merge. Second cargo-deny gate in a month after #3124 (resolved 2026-10-19) — dependency hygiene is becoming a recurring merge-queue tax.
-- **New tier-1 security gap: #3164** — violations `add_evidence` sub-route ungated; same shape as historical dispute `add_evidence` gap (#2483). Suggests `add_evidence`-pattern sub-routes are systemically under-tested.
-- Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3 already queued elsewhere).
-- Open PRs this window: 3 drafts (#3161 push_fanout FCM eviction, #3165 migration_import test coverage, #3167 unassign moderation case).
+- **Stories: 49/49 done** across 13 epics. No status flips this run; `last_checked` refreshed on all 3 epic-10a stories (coverage_cursor 0 → 1 — negative).
+- Delta vs 2026-10-28 upkeep: **15 PRs merged** (#3185–#3205) — dispatcher-driven code-review sweep across ppt-web (6), reality-web (3), reality-server (2), mobile-rn (1), api-server (1 fix + 2 tests). None map to new coverage story deliveries.
+- **Dispatcher buffer-low signal:** this run was fired with `buffer-low: claimable=10/72 — refill planner`. The action-list has 30 open rows; the gap between claimable and open is likely UNRESOLVED-sentinel items blocking claim. Scrum-master follow-up queued.
+- **New reality-web i18n cluster:** rotating-review found 4 authed pages (account/profile/password + realtor/profile) with zero i18n coverage, plus 15 raw `next/link` imports bypassing the next-intl Link wrapper (locale-loss on nav). Same bug class as the just-shipped PR #3203.
+- Screen coverage: 0 orphan screens · 0 validation errors · 3 known missing UC links (UC-33.1/33.2/33.3). 3 new screen-map-drift signals this run (PR #3186 ppt, #3197/#3203 reality — routes touched without screen-doc updates).
+- Open PRs this window: 20 (14 dependabot, 1 follow-up #3171 add_evidence manager gate, 1 docs #3024, 1 i18n #3119, 2 old feat #2555/#2559).
 
 ## Epic status (short)
 
@@ -71,6 +71,11 @@ _Rebuilt from `coverage.json` (49/49 stories done across 13 epics) + current `ac
 
 ### Screen-map drift
 
-_Nothing new this run — carried: 3 missing UC links (UC-33.1/33.2/33.3), 1 ppt-web route refactor without screen-map update (PR #2994)._
+_3 new drift signals this run: PR #3203 (reality-web listing-edit touched route, no screen doc), PR #3197 (same route, price-zero fix), PR #3186 (ppt-web routes/groups/iot.tsx IoT dashboard, no ppt screen doc). Plus carried: 3 missing UC links (UC-33.1/33.2/33.3), 1 ppt-web route refactor without screen-map update (PR #2994)._
 
-Buffer: **17/36 open** · candidates ranked but unqueued: ~0 (coverage is all `done` — refill depends on the dispatcher's external backlog scan, not this upkeep run). Buffer below floor by 19 and below half (18) by 1 — a dispatcher backlog scan is overdue to replenish, but a `scan` on this skill is explicitly out of scope for an incremental run.
+### Reality-web authed i18n cluster (new, score 4)
+
+- [medium] **Sweep reality-web authed pages** — account/profile/page.tsx + account/password/page.tsx + account/page.tsx + realtor/profile/page.tsx all ship entirely English on 5/6 locales. Same bug class as the just-shipped PR #3203 (listing-edit).
+- [medium] **Migrate 15 raw `next/link` imports to `@/i18n/routing` Link** — nav from these pages re-resolves to default locale (sk), kicking cs/de/en/hu/pl users out of their locale.
+
+Buffer: **30/36 open** · candidates ranked but unqueued: ~0 (coverage is all `done` — refill depends on dispatcher backlog scan, not this upkeep run). Buffer at 30/36 is above the half-empty floor (18) — adequate for the next 24h of dispatcher runs.
