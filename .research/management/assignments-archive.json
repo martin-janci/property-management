@@ -8402,6 +8402,28 @@
       "merge_attempted_at": "2026-08-09T08:12:08Z"
     },
     {
+      "task_id": "code-review-reality-server-portal-listing-price-unvalidated",
+      "branch": "auto-impl/code-review-reality-server-portal-listin-88ce3328",
+      "status": "merged",
+      "claimed_at": "2026-10-31T14:33:41Z",
+      "last_updated": "2026-10-31T20:45:57Z",
+      "status_changed_at": "2026-10-31T20:45:57Z",
+      "pr_number": 3207,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3207",
+      "merged_at": "2026-10-31T20:45:57Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3207 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=validate_price reject<=0 (400) in create/update_listing +3 tests via test:/fix: split; fmt+clippy+lib-tests green",
+      "reviewer_summary": "verdict=approve head_oid=52277e86b3c7a372f3233afcdf5ae8c41e9575b7 note=clean-price-guard-ci-green-posted-as-comment-cannot-self-approve",
+      "last_reviewed_oid": "52277e86b3c7a372f3233afcdf5ae8c41e9575b7",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-price-map-cache-unbounded",
       "branch": "auto-impl/code-review-reality-server-price-map-cac-0faac5bd",
       "status": "merged",
@@ -21711,5 +21733,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-31T18:33:40Z"
+  "archived_at": "2026-10-31T20:46:12Z"
 }

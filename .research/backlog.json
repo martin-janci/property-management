@@ -13509,7 +13509,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn 2026-10-28 (14d window)"
       ],
@@ -13522,7 +13522,12 @@
       ],
       "created_at": "2026-10-28",
       "updated_at": "2026-10-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-10-31T20:29:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3204
+      }
     },
     {
       "id": "code-review-reality-server-os-rng-expect-panics",
@@ -13589,7 +13594,7 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-server] 2026-10-28"
       ],
@@ -13607,7 +13612,12 @@
       "segment": "reality-server",
       "score_delta": 1,
       "candidate_vector": "dx",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-10-31T20:29:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3205
+      }
     },
     {
       "id": "code-review-api-handlers-moderation-report-flood",
@@ -13671,7 +13681,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13690,7 +13700,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-10-31T20:29:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3200
+      }
     },
     {
       "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
@@ -13698,7 +13713,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13716,7 +13731,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 1,
       "candidate_vector": "refactor",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-10-31T20:29:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3201
+      }
     },
     {
       "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
@@ -13724,7 +13744,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13742,7 +13762,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-10-31T20:29:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3202
+      }
     },
     {
       "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
@@ -13841,7 +13866,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13859,7 +13884,12 @@
       "segment": "reality-web",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-10-31T20:29:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3203
+      }
     },
     {
       "id": "code-review-reality-web-comparison-parse-shape",
@@ -13867,7 +13897,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13885,7 +13915,12 @@
       "segment": "reality-web",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-10-31T20:29:22Z",
+        "assignment_status": "merged",
+        "pr_number": 3199
+      }
     }
   ]
 }

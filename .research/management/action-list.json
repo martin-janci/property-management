@@ -308,23 +308,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — 3 touches in 14d (iterative compliance hardening)",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
       "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
       "owner_role": "pm-tech-lead",
