@@ -2,30 +2,12 @@
   "generator": "dev-review",
   "generated_at": "2026-10-31",
   "segment_reviewed": "mobile-native-kmp",
-  "selection_reason": "dispatcher-tier1d-demand-driven (buffer starved, claimable=17 < floor=36; deterministic refills dry). No CHURN_FILES supplied and hotspot_history dates are stale (May/Jul/Sep), so churn-alignment does not apply. Per state.review_cursor the oldest segments are ppt-web-ui @ 2026-10-22 and reality-web @ 2026-10-23, but both are SATURATED in backlog.json (ppt-web-ui=4 open, reality-web=3 open code-review-finding items, both >=3) => saturation-skip. Next-oldest non-saturated segment is mobile-native-kmp @ 2026-10-25 (2 open < 3). Reason=oldest-unreviewed with saturation-skip.",
-  "experts_used": [
-    "kotlin",
-    "tester"
-  ],
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable backlog below floor, 17 < 36). CHURN_FILES empty, so SKILL Step 1 priority 2 applies. review_cursor (from .research/state.json — note: not at .research/management/state.json) sorted ascending: ppt-web-ui 2026-10-22, reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core/ppt-web-core/mobile-rn 2026-10-27, reality-server 2026-10-28. Saturation check (open code-review-finding in backlog.json): ppt-web-ui=4 (>=3 => saturation-skip), reality-web=3 (>=3 => saturation-skip), mobile-native-kmp=2 (<3 => NOT saturated) => selected. Kotlin expert primary + Tester secondary per Step 2; Tester found no low-hanging gaps (commonTest coverage is extensive: ViewModels + every repository have dedicated tests), so no test-gap finding emitted. Existing open mobile-native-kmp findings (http-client-no-timeout, my-listings-pagination-cap) and the already-promoted plan code-review-mobile-native-kmp-create-listing-not-wired (Navigation.kt:493 NotImplementedError) were explicitly NOT re-flagged. The 3 findings below are genuine, traced handler->repo/serializer gaps.",
+  "experts_used": ["kotlin"],
   "findings_count": 3,
   "signals": [
     {
-      "id": "code-review-mnk-create-listing-stub",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "mobile-native-kmp",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "evidence": [
-        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Create Listing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`, so every realtor submission from CreateListingScreen is hardwired to fail. The screen itself is fully built (title/price/city/currency/transactionType fields + validation, CreateListingScreen.kt:39) and is reachable via two live nav entries (Navigation.kt:415 agency dashboard and :484 MyListings 'Create' button).",
-        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt — the repository exposes only listMyListings (line 40), getListingAnalytics (74) and getPortfolioAnalytics (111); there is NO create method at all, so there is no backend wiring behind the UI. The Create Listing feature is UI-complete but non-functional in production: the realtor fills the form, submits, and always gets an error.",
-        "Confidence high: the full path from the two nav buttons to the hardcoded NotImplementedError callback and the absence of any repository create method were traced statically; no runtime needed to confirm the feature cannot succeed."
-      ],
-      "expert": "kotlin"
-    },
-    {
-      "id": "code-review-mnk-portfolio-analytics-silent-drop",
+      "id": "code-review-mobile-native-kmp-sso-error-body-parse",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "mobile-native-kmp",
@@ -33,26 +15,44 @@
       "confidence": "medium",
       "candidate_vector": "bug",
       "evidence": [
-        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:118-124 — getPortfolioAnalytics fans out one getListingAnalytics(listing.id) call per listing via `async { ... .getOrNull() }.awaitAll().filterNotNull()`. A per-listing analytics call that fails (timeout, 5xx, auth lapse) returns null and is silently dropped, so the folded portfolio totals (totalViews/totalInquiries/totalFavorites, lines 130-139) silently UNDERCOUNT and the realtor is shown wrong figures with no error and no partial-data indicator — the outer Result stays success.",
-        "Same block fans out up to 100 concurrent requests unbounded (listMyListings(limit = 100) at :113 feeds the map), with no concurrency cap/semaphore — a realtor with a large portfolio issues up to 100 simultaneous HTTP requests on one analytics screen open, risking connection-pool exhaustion / server rate-limit rejections that then feed back into the silent-undercount above.",
-        "Confidence medium: static trace of the fan-out and filterNotNull is unambiguous, but the real-world failure rate / whether the server caps the client was not runtime-verified."
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 — createMobileToken / validateAndLogin / getSession / refreshSession each parse the HTTP error branch with a non-defensive `val error: SsoError = response.body()`. If the error response body is not a valid SsoError JSON object (a proxy/load-balancer HTML 502/504, an empty body, a plain-text rate-limit message, or any non-matching error shape), `response.body<SsoError>()` throws a kotlinx JsonConvert/deserialization exception.",
+        "The throw is caught by each method's outer `catch (e: Exception)`, so it is not a crash — but the surfaced result is wrong. In validateAndLogin (SsoService.kt:83-86 catch) the deep-link SSO login path sets `_authState.value = AuthState.Error(e.message ?: \"Unknown error\")`, so the user sees a raw serialization-exception string instead of a meaningful auth failure; getSession/refreshSession return `Result.failure(e)` where `e` is the parse error, masking the real HTTP cause (e.g. a 503).",
+        "This is an internal inconsistency, not a theoretical nit: the same class already uses the defensive pattern `runCatching { response.body<SsoError>() }.map { it.errorDescription ?: it.error }.getOrElse { \"... (HTTP ${response.status.value})\" }` in loginWithPassword (SsoService.kt:174), register (:202) and updateProfile (:297). The four older SSO methods were simply never updated to match. Fix vector: wrap the error-body decode in the same runCatching fallback so a non-JSON error body yields a stable 'HTTP <code>' message rather than a leaked parser exception. Confidence medium: reachability traced; depends on the server/proxy emitting a non-SsoError error body.",
+        "expert: kotlin"
       ],
       "expert": "kotlin"
     },
     {
-      "id": "code-review-mnk-portfolio-analytics-partial-untested",
+      "id": "code-review-mobile-native-kmp-decimal-serializer-throws",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 `DecimalAsLongSerializer.deserialize` does `raw.substringBefore('.').toLong()` and :62 `DecimalAsDoubleSerializer.deserialize` does `raw.toDouble()` directly on the raw JSON primitive content, with no guard. An empty string (`\"\"`), a non-numeric string, a value with a thousands separator, or a `+`-prefixed literal makes `toLong()/toDouble()` throw NumberFormatException during deserialization.",
+        "These serializers were introduced specifically (per the file's own docstring, issue #2331) because a single bad monetary field decode `silently killed the whole price-tracking payload decode`. They fixed the fractional-string case but still throw on empty/malformed input, so the same blast radius remains: one unexpected monetary field value fails `response.body()` for the entire GET /api/v1/favorites or GET /api/v1/favorites/alerts response — the repo catch (FavoritesRepository) turns it into Result.failure and PriceTrackingViewModel.load (favorites/PriceTrackingViewModel.kt) renders the full-screen errorMessage state, blanking all favorites, not just the one field.",
+        "Fix vector: make the serializers truly wire-tolerant as their docstring claims — e.g. `raw.substringBefore('.').toLongOrNull() ?: 0L` (and `toDoubleOrNull() ?: 0.0`), or throw a typed field-scoped error, so a single malformed value degrades to a 0/zeroed field instead of failing the entire list decode. Confidence medium: static trace of serializer->repo->VM is certain; triggering requires the server to emit an out-of-contract decimal string (the annotated fields are non-nullable).",
+        "expert: kotlin"
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-favorites-hardcoded-m2",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
       "segment": "mobile-native-kmp",
       "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "test",
+      "candidate_vector": "chore",
       "evidence": [
-        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt — getPortfolioAnalytics has coverage only for happy-path folding: getPortfolioAnalytics_folds_per_listing_series_by_date (line 155) and getPortfolioAnalytics_keeps_days_with_inquiries_but_zero_views (205). There is NO test exercising the partial-failure path where one or more getListingAnalytics calls fail and are dropped by filterNotNull (PortalListingsRepository.kt:118-124).",
-        "Because the silent-undercount behaviour of finding code-review-mnk-portfolio-analytics-silent-drop is untested, a future change (e.g. deciding to fail the whole call, or to surface a partial flag) has no regression guard, and the current questionable behaviour is effectively frozen by omission.",
-        "Confidence medium: test-file enumeration is exact; the judgement that the partial-failure branch is important is a reviewer call."
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt:651 `listingMeta` builds a user-facing label with a hardcoded unit string: `listing.areaSqm?.toInt()?.let { add(\"$it m²\") }` (and `listing.rooms?.let { add(\"$it+1\") }`). This is committed Android (not commonMain) UI code where the i18n resource system is available.",
+        "The same area label is already localized elsewhere in the same app: mobile-native/androidApp/.../ui/home/HomeScreen.kt:490 uses `stringResource(R.string.area_m2, it)`. So the FavoritesScreen card renders an unlocalized unit while the Home card renders the localized one — an i18n inconsistency, not just a missing string. (The identical `\"$it m²\"` at shared/.../listing/SearchState.kt:253 is expected — commonMain cannot reach stringResource — so only the androidApp FavoritesScreen site is the gap.)",
+        "Fix vector: replace the hardcoded `\"$it m²\"` (and the `\"$it+1\"` room format) in FavoritesScreen.listingMeta with the existing `R.string.area_m2` / an equivalent rooms string resource, matching HomeScreen. Low severity, i18n gap. Confidence medium: confirmed by direct comparison of the two call sites.",
+        "expert: kotlin"
       ],
-      "expert": "tester"
+      "expert": "kotlin"
     }
   ]
 }

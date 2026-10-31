@@ -187,51 +187,7 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-reality-server-os-rng-expect-panics",
-      "branch": "auto-impl/code-review-reality-server-os-rng-expect-853a49fa",
-      "status": "review",
-      "claimed_at": "2026-10-30T20:32:06Z",
-      "last_updated": "2026-10-31T02:30:36Z",
-      "status_changed_at": "2026-10-30T21:07:09Z",
-      "pr_number": 3198,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3198",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=3198 status=done-via-dispatcher-pr-open specialist=rust-backend note=OsRng panic->error/503; fmt+clippy+2 unit tests green; local VERIFY red only on env sqlx DB tests (no local Postgres, untouched file); CI gates",
-      "reviewer_summary": "verdict=approve head_oid=d4f3d0d1b143e217ea8ef73936bc3014fd0cb2b9 note=os-rng-expect-removal-sso+pwreset-fails-closed-503-tested-ci-green",
-      "last_reviewed_oid": "d4f3d0d1b143e217ea8ef73936bc3014fd0cb2b9",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-10-31T02:32:41Z"
-    },
-    {
-      "task_id": "code-review-reality-web-listing-edit-price-zero",
-      "branch": "auto-impl/code-review-reality-web-listing-edit-pri-7d18e31a",
-      "status": "review",
-      "claimed_at": "2026-10-30T20:32:06Z",
-      "last_updated": "2026-10-31T02:30:36Z",
-      "status_changed_at": "2026-10-30T21:07:09Z",
-      "pr_number": 3197,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3197",
-      "merged_at": null,
-      "specialist": "nextjs-web",
-      "implementer_summary": "pr=3197 status=done specialist=nextjs-web scope_drift=true(owner-mislabel-only) note=resolveListingPrice helper; TDD split; VERIFY OK biome+typecheck+353 tests",
-      "reviewer_summary": "verdict=approve head_oid=864758ef18842552ceeb1b168825ff639206250c note=clean-price-fix;scope-drift owner-mislabel-only(pm-backend->reality-web);regression-proven;CI-green",
-      "last_reviewed_oid": "864758ef18842552ceeb1b168825ff639206250c",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-10-31T02:32:41Z"
     }
   ],
-  "generated": "2026-10-31T02:30:36Z"
+  "generated": "2026-10-31T04:29:04Z"
 }
