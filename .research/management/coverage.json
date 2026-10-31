@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-10-31T12:00:00Z",
   "scan_kind": "upkeep",
   "screen_gaps": {
     "orphan_epics": [],
@@ -904,7 +904,7 @@
         "no screen-map match (epic-id frontmatter drift \u2014 see screen_gaps)"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-10-19",
+      "last_checked": "2026-10-31",
       "screen_refs": []
     },
     {
@@ -930,7 +930,7 @@
         "Sprint-status still lists 10a-2 as ready-for-dev despite gate #482 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-10-31",
       "screen_refs": [
         {
           "screen_id": "ppt/admin-oauth-clients",
@@ -963,7 +963,7 @@
         "Sprint-status still lists 10a-3 as ready-for-dev despite gate #481 closed \u2014 reconcile gate note"
       ],
       "epic": "epic-10a",
-      "last_checked": "2026-07-23",
+      "last_checked": "2026-10-31",
       "screen_refs": [
         {
           "screen_id": "ppt/settings-oauth-grants",
@@ -1353,5 +1353,5 @@
       "screen_refs": []
     }
   ],
-  "last_upkeep_note": "2026-10-28: cursor idx 12 \u2192 epic-9 re-check (9-1 TOTP still done, no PRs in window touched 2FA); PR #3183 (violations xtenant IDOR regression + 404 fix) lands against 10b/moderation surface \u2014 all 10b stories remain done, no flip. cursor advances 12 \u2192 0 (epic-10a next run)."
+  "last_upkeep_note": "2026-10-31: epic-10a OAuth Provider Foundation re-checked (cursor idx 0 \u2192 1 next run); stories 10a-1/10a-2/10a-3 remain `done`, no merged PR in the 2026-10-29..2026-10-31 window touched OAuth provider surfaces. 8 code-review PRs merged this window (#3185-#3198) \u2014 all target shipped surfaces (bug-class fixes), no coverage-status flips. BUFFER-LOW: dispatcher claimable=17/72, backlog-refill avail=0, retry-remint avail=0 \u2014 coverage is EXHAUSTED (0 non-done stories); planner needs new coverage authored."
 }

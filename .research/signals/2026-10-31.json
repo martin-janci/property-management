@@ -1,0 +1,236 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-31",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "last_run_iso 2026-10-28T10:54:38Z; LAG_HOURS=~69 (>36h threshold). Routine missed scheduled runs 10-29 and 10-30."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3189",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "Top-1 raw churn file this run; 162 lines added/removed in PR #3189 — code-review-mobile-rn-vote-detail-ranked-no-order (ordered ballot rendering)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3189",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "Top-2 raw churn file this run; 158 lines added/removed in PR #3189 — ordered ballot rendering for ranked vote questions."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.token.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3185",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "Top-3 raw churn file this run; 122 lines added in PR #3185 — code-review-ppt-web-core-neighbors-stale-token-usememo regression suite."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3186",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3186 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx and features/iot/pages/IotDashboardPage.tsx but updated no docs/screens/ppt/*.md.",
+        "Heuristic — review candidate; not a promotable plan automatically."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3197",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3197 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx but updated no docs/screens/reality/*.md.",
+        "Heuristic — review candidate; not a promotable plan automatically."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-vote-detail-dead-i18n-fallbacks",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx — 19 occurrences of the `t('key') ?? 'Fallback'` pattern (e.g. lines 180, 183, 187, 230-242, 258-264, 300, 304, 326, 354, 380, 592, 611, 623)",
+        "frontend/apps/mobile/src/i18n/index.ts:70-80 — i18n.init() does NOT set `returnNull: true`; react-i18next v16 default is `returnNull: false`, so t() always returns a string (the raw key for missing translations), making every `?? 'Fallback'` branch dead code",
+        "VoteDetailScreen.test.tsx:79,115 asserts getByText('voting.missingId') — proof that the raw key is what reaches the DOM, not the English fallback the author intended"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-vote-detail-raw-err-in-alert",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx:263-265 — cast-mutation onError passes raw Error.message as the Alert body, un-i18n'd and server-detail-bearing"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-vote-detail-test-gaps",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "VoteDetailScreen.test.tsx covers hook-ordering + ranked ballot but lacks tests for allRequiredAnswered guard, already-voted branch, multi-unit picker, mutation onError"
+      ],
+      "expert": "tester"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs now",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative/non-cumulative dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap/decay",
+      "observed": "cap OK; no items due for decay (oldest open is 2026-10-25)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation on new plans",
+      "observed": "0 new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan readiness gates",
+      "observed": "0 new plans this run",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence (no silent delete)",
+      "observed": "all prior plans still in plans/ or _archive/",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows",
+      "observed": "prev=22 now=23",
+      "expected": "now>=prev"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "no auto-fix candidate (all drift signals confidence=medium)",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + coverage_cursor liveness",
+      "observed": "epics=13 cc=1 pm=4",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram secret",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null
+}

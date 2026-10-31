@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-10-31T12:00:00Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -282,6 +282,46 @@
       "mitigation": "Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the current index. Alternately, run full-rotation sweeps on 10-day cadence instead of relying on daily rotation only",
       "owner_role": "pm-scrum-master",
       "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-coverage-exhaustion-means-the-dispatcher-2026-10-31",
+      "risk": "Coverage exhaustion means the dispatcher starts consuming the retry-remint and churn/hotspot vectors as its only candidate source \u2014 quality of candidates will degrade as hotspots are repeatedly re-minted without new strategic work entering the pipeline",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "author new coverage from epics catalog within the week; set a buffer-low alert at <36 claimable",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-coverage-exhaustion-masks-regression-deb-2026-10-31",
+      "risk": "Coverage exhaustion masks regression debt: with no new stories entering the pipeline, QA metrics look green (0 open stories, all done) while the actual defect-density on merged code-review PRs is still high (8 defect fixes in 3 days). Release gate decision will be made on misleading signal unless regression coverage is audited.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "mandatory IG3 (failing-on-main test) evidence check on every merged code-review PR before marking the window green",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-the-8-merged-prs-are-mostly-single-site--2026-10-31",
+      "risk": "The 8 merged PRs are mostly single-site bug fixes; the underlying defect-pattern classes (unchecked numeric parse, cross-tenant mutation 403-vs-404, WS state management, authed-cache leak) likely repeat across the codebase \u2014 risk of chasing symptoms per PR instead of lintable/typed guards",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "one pattern-sweep per class; convert each into a clippy lint, biome rule, or test-harness contract where possible",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-pm-qa-rotation-ran-only-once-in-the-last-2026-10-31",
+      "risk": "pm-qa rotation ran only once in the last 67 days; QA perspective is systemically underweighted versus pm-backend/pm-frontend. The jest-expo #2951 blocker is 90+ days unresolved and silently disables mobile RN test runs on every PR.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "pin pm-qa to run every 7 days until #2951 is cleared and the regression-test audit lands",
+      "owner_role": "pm-qa",
+      "trigger": null,
       "status": "open"
     }
   ]

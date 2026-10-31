@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-api-handlers-violations-number-count-race",
-      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency → opaque 500 on create",
+      "action": "violation_number / appeal_number generated via COUNT(*)+1 on the pool (no tx/sequence) collides with UNIQUE(org, number) under concurrency \u2192 opaque 500 on create",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -96,7 +96,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -113,7 +113,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -184,7 +184,7 @@
     },
     {
       "id": "pm-backend-violations-add-evidence-authz-gap-3164",
-      "action": "Gate violations add_evidence sub-resource with authz check — currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
+      "action": "Gate violations add_evidence sub-resource with authz check \u2014 currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "none",
@@ -196,7 +196,7 @@
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heavily this run",
+      "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs \u2014 merged PR touched this file heavily this run",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
@@ -213,7 +213,7 @@
     },
     {
       "id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
-      "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
+      "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) \u2014 i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -230,7 +230,7 @@
     },
     {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
-      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) \u2014 closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "pm-qa",
@@ -244,7 +244,7 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
@@ -258,7 +258,7 @@
     },
     {
       "id": "code-review-api-handlers-appeal-no-status-guard",
-      "action": "api-handlers file_appeal has no status guard → owner can re-file after a final appeal decision",
+      "action": "api-handlers file_appeal has no status guard \u2192 owner can re-file after a final appeal decision",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -275,7 +275,7 @@
     },
     {
       "id": "code-review-api-handlers-moderation-report-flood",
-      "action": "api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content",
+      "action": "api-handlers /moderation/report open-to-all + no dedup/rate-limit \u2192 unbounded case rows per content",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -292,7 +292,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
-      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift",
+      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate \u2014 financial drift",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -309,7 +309,7 @@
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
+      "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs \u2014 3 touches in 14d (role/role-authz/IDOR patches)",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
@@ -326,7 +326,7 @@
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — 3 touches in 14d (iterative compliance hardening)",
+      "action": "Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs \u2014 3 touches in 14d (iterative compliance hardening)",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",
@@ -343,7 +343,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
-      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button — a11y role mismatch",
+      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button \u2014 a11y role mismatch",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -360,7 +360,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
-      "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
+      "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English \u2014 no i18n hook, uses native alert/confirm",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -377,7 +377,7 @@
     },
     {
       "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
-      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state",
+      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup \u2014 dangling timer / stale state",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -411,7 +411,7 @@
     },
     {
       "id": "code-review-reality-server-reports-status-filter-unvalidated",
-      "action": "reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum",
+      "action": "reality-server list_my_reports binds unvalidated status filter \u2014 silent empty page vs documented enum",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -428,7 +428,7 @@
     },
     {
       "id": "code-review-reality-web-comparison-parse-shape",
-      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
+      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check \u2014 tampered value crashes .some(...)",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -445,7 +445,7 @@
     },
     {
       "id": "code-review-reality-web-listing-edit-i18n-sk",
-      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings — i18n gap on cs/de/en locales",
+      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings \u2014 i18n gap on cs/de/en locales",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -459,7 +459,106 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-scrum-master-author-new-coverage-enumerate-phase-2-3--2026-10-31",
+      "action": "Author new coverage: enumerate phase-2/3 epics beyond the 13 currently in coverage.json (49/49 done) \u2014 the planner is out of claimable backlog (dispatcher payload: coverage exhausted, backlog-refill avail=0)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-promote-4-non-dependabot-draft-prs-3171--2026-10-31",
+      "action": "Promote 4 non-dependabot draft PRs (#3171 / #3075 / #3108 / #3192 / #3193) \u2014 pick next-steps for each: close, revive, or convert to a plan",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-clear-remaining-violations-xtenant-404-s-2026-10-31",
+      "action": "Clear remaining violations xtenant-404 sweep across moderation.rs / aml_dsa.rs (parent action still open after #3188 fixed assign_violation only)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-regression-test-audit-on-the-8-merged-pr-2026-10-31",
+      "action": "Regression-test audit on the 8 merged PRs this window: #3185 (useMemo stale-token), #3186 (WS hasGivenUp), #3188 (cross-tenant IDOR assign), #3189 (ranked ballot order), #3190 (authed-roots cache leak), #3191 (invoice NaN), #3197 (listing price-zero), #3198 (OS RNG panics) \u2014 confirm each has a failing-on-main test checked in (IG3 gate)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-cross-tenant-idor-regression-test-suite--2026-10-31",
+      "action": "Cross-tenant IDOR regression-test suite \u2014 extend the pattern established by PR #3183 (violations_mutation_cross_org_idor_tests) to moderation.rs, aml_dsa.rs, add_evidence sub-routes, and announcement/document attachment mutations",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-flaky-skip-audit-enumerate-ignore-skip-x-2026-10-31",
+      "action": "Flaky-skip audit: enumerate `#[ignore]` + `.skip`/`xit` + `test.todo` across backend tests, frontend vitest, and jest-expo \u2014 produce a dashboard of silently-disabled tests; coordinate with pm-devops on the jest-expo #2951 blocker",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-define-release-readiness-checklist-for-t-2026-10-31",
+      "action": "Define release-readiness checklist for the 'all-stories-done' state \u2014 because coverage is exhausted, the next release candidate decision needs an explicit QA gate (regression suite green, no open P0 bugs, dependabot batch applied, cargo-deny #3168 cleared)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-resolve-churn-hotspot-qa-findings-now-3--2026-10-31",
+      "action": "Resolve churn-hotspot QA findings now 3+ runs stale: violations_role_authz_tests.rs, violations.rs, compliance_wave1b_tests.rs \u2014 convert each into a positive test-coverage expansion rather than reactive hotfixes",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-screen-map-drift-pr-2994-ppt-web-route-r-2026-10-31",
+      "action": "Screen-map drift PR #2994 (ppt-web route refactor) \u2014 carried from previous rotation; the frontmatter still needs reconciling against the current routes",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-10-31T12:00:00Z"
 }
