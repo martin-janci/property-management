@@ -168,13 +168,35 @@ interface ToastItemProps {
 function ToastItem({ toast, onDismiss }: ToastItemProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  // Track the "copied" reset timer so it can be cleared on unmount; otherwise
+  // a toast dismissed within the 2s window fires setState after unmount.
+  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending "copied" reset timer when the toast unmounts.
+  useEffect(() => {
+    return () => {
+      if (copiedTimeoutRef.current !== null) {
+        clearTimeout(copiedTimeoutRef.current);
+        copiedTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const handleCopy = useCallback(async () => {
     const textToCopy = toast.message ? `${toast.title}: ${toast.message}` : toast.title;
+    const scheduleReset = () => {
+      if (copiedTimeoutRef.current !== null) {
+        clearTimeout(copiedTimeoutRef.current);
+      }
+      copiedTimeoutRef.current = setTimeout(() => {
+        copiedTimeoutRef.current = null;
+        setCopied(false);
+      }, 2000);
+    };
     try {
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      scheduleReset();
     } catch {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
@@ -184,7 +206,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       document.execCommand('copy');
       document.body.removeChild(textArea);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      scheduleReset();
     }
   }, [toast.title, toast.message]);
 
