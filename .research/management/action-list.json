@@ -308,40 +308,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-os-rng-expect-panics",
-      "action": "reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listing-edit-price-zero",
-      "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
       "owner_role": "pm-qa",

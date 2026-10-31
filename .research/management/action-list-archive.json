@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-10-30T20:51:26Z",
+  "archived_at": "2026-10-31T06:34:35Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8381,6 +8381,30 @@
       }
     },
     {
+      "id": "code-review-reality-server-os-rng-expect-panics",
+      "action": "reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-31T06:24:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3198,
+        "merged_at": "2026-10-31T04:28:31Z",
+        "at": "2026-10-31T06:24:39Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-pagination-offset-overflow",
       "action": "reality-server list endpoints: offset accepts arbitrary large integers — postgres integer offset overflow / no cap",
       "owner_role": "pm-backend",
@@ -9098,6 +9122,30 @@
         "merged_pr": 2895,
         "merged_at": "2026-08-30T22:32:15Z",
         "at": "2026-08-30T22:34:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-price-zero",
+      "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-10-31T06:24:39Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-10-28T12:32:16Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3197,
+        "merged_at": "2026-10-31T04:28:27Z",
+        "at": "2026-10-31T06:24:39Z"
       }
     },
     {
