@@ -120,3 +120,14 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-10-28, pm-frontend):** eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — carried from 2026-08-25, now 64 days unresolved; the exact defects it predicts keep landing (VoteDetail dead i18n fallback, ranked ballot). Proposal: enable both, warn-only for one sprint, blocking from the next. Owner: pm-frontend + pm-qa.
 - **NEW (2026-10-28, pm-frontend):** Per-form MSW/Mirage e2e-smoke gate before merge — three "wire-the-button-but-not-the-POST" bugs (ReportFault, reality-web /sell, VoteDetail ranked) in 7 days. Scope question: every form Submit-handler, or only critical paths (fault reporting, selling, voting)? Owner: pm-qa + pm-tech-lead.
 - **NEW (2026-10-28, pm-scrum-master):** Staleness-bias in `pm_cursor` rotation — pm-frontend came up 83 days stale while 12 UI findings accumulated. Proposal: if any pm-* role is >60 days stale, prefer it over the current rotation index on the next run. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-10-31 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-10-31, pm-scrum-master):** Close the current sprint "Epic 6/7A/8A/10A" (6/6 epics done, 49/49 stories done) and define the next sprint goal. The improvement/review-fix track is now the de-facto workstream; a formal sprint boundary would make `sprint-status.yaml` meaningful again. Owner: human maintainer / product.
+- **NEW (2026-10-31, pm-scrum-master):** Policy on stalled dependabot PRs (#2957, #2962, #2972 are 37–50 days old) — auto-close after N days or escalate to pm-devops. Owner: pm-devops + human maintainer.
+- **NEW (2026-10-31, pm-scrum-master):** Loosen the human-gate on low-risk WIP so the dispatcher can refill. The pool is currently 8/8 human-gated → every dispatcher cycle starves. Owner: human maintainer.
+- **NEW (2026-10-31, pm-qa):** Bug-fix PRs must name a regression test red-before/green-after; merges blocked while the pre-existing test is red on dev. Investigate how `cross_org_assign_violation_is_not_found` reached dev as RED despite backend.yml. Owner: eng lead + QA.
+- **NEW (2026-10-31, pm-qa):** Mandatory authz test matrix (401 / 403-wrong-role / cross-org-404) for every new mutation route; make it a code-review checklist item. Owner: rust-backend lead.
+- **NEW (2026-10-31, pm-qa):** Who owns `sprint-status.yaml` reconciliation and how often (per sprint / per merged PR)? The file is currently stale with a duplicate key and 2025-12-21 metadata. Owner: pm-scrum.

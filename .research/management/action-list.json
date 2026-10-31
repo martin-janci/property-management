@@ -312,7 +312,7 @@
       "action": "reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes)",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -322,14 +322,16 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "resolved_at": "2026-10-31T05:00:00Z",
+      "resolution": "merged in PR #3198"
     },
     {
       "id": "code-review-reality-web-listing-edit-price-zero",
       "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -339,7 +341,9 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "resolved_at": "2026-10-31T05:00:00Z",
+      "resolution": "merged in PR #3197"
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
@@ -493,7 +497,55 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-qa-8a3-notification-prefs-gates-480-484",
+      "action": "Reopen or formally defer 8a-3-notification-preference-sync; triage issues #480 (WS token in query-param logged, no re-validation after JWT expiry) and #484 (serial dispatch, FCM stub swallows failures)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31",
+      "first_open_at": "2026-10-31T05:00:00Z"
+    },
+    {
+      "id": "pm-qa-expand-3184-authz-matrix-violations",
+      "action": "Expand draft #3184 beyond resident-deny: cross-org (tenant-B manager → 404), unauthenticated (401) and wrong-role (403) matrix cases for every {violation_id} route (get/update/assign/resolve/appeals/decide/fines)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31",
+      "first_open_at": "2026-10-31T05:00:00Z"
+    },
+    {
+      "id": "pm-qa-ci-gate-root-cause-red-test-on-dev",
+      "action": "Root-cause why cross_org_assign_violation_is_not_found reached dev as RED despite backend.yml CI gate; audit suite registration (mod/main.rs) and gate policy",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31",
+      "first_open_at": "2026-10-31T05:00:00Z"
+    },
+    {
+      "id": "pm-qa-sprint-status-reconciliation-dup-key",
+      "action": "Reconcile _bmad-output/implementation-artifacts/sprint-status.yaml: duplicate '80-2-dispute-filing-flow' key, stale sprint metadata from 2025-12-21, record #483 (voice device IDOR fix has no tests) as open",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31",
+      "first_open_at": "2026-10-31T05:00:00Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-10-31T05:00:00Z"
 }

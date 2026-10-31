@@ -1,47 +1,75 @@
-# pm-scrum-master — 2026-10-19
+# pm-scrum-master — 2026-10-31
 
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+**Mode:** always-on synthesis + role rotation picked `pm-qa` this run.
 
 ## Summary
 
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
+Sprint "Epic 6, 7A, 8A & 10A" is finished on paper: 6/6 epics done, 49/49
+stories done in `coverage.json`. The track is now review-fix, with 8 fix PRs
+merged in 3 days. The headline risk is **dispatcher starvation**:
+`claimable=17/72` (floor 36 — below half), WIP pool **8/8 human-gated**, 2
+items dependency-blocked.
 
-## Shipped since last run (2 PRs)
+## Shipped since last run
 
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
+- #3185 ppt-web neighbors stale-token useMemo
+- #3186 ppt-web IoT WS hasGivenUp dropped
+- #3188 cross-org IDOR fix in `assign_violation` (403 → 404), closes #3187
+- #3189 mobile-RN vote-detail ranked ordering
+- #3190 ppt-web authed-roots session-leak
+- #3191 ppt-web invoice qty/unitPrice NaN guard
+- #3197 reality-web listing-edit price-zero
+- #3198 reality-server OS-RNG expect() panics removed
 
 ## Sprint progress
 
-- **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
+- Epics done: **6 / 6**
+- Stories done: **49 / 49** (coverage.json upkeep from 2026-10-28)
 
-## Next actions (top 3)
+## Next actions (top 5)
 
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
+1. **(high)** Triage the 8/8 human-gated WIP pool — human maintainer.
+2. **(high)** Refill planner — promote ready plans / backlog into
+   claimable work. Owner: pm-tech-lead, pm-security.
+3. **(medium)** Close or rebase stalled drafts #3075, #3108. Owner: human
+   owner (martin-janci).
+4. **(medium)** Clear stale dependabot PRs #2957, #2962, #2972, #3090
+   (16–50 days old). Owner: pm-devops.
+5. **(medium)** Audit sibling org-scoped handlers in `routes/violations.rs`
+   after the IDOR fix in #3188; add cross-tenant tests. Owner: pm-security.
 
 ## Risks
 
-| Risk | P | I | Mitigation |
-|---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
-
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
-
-## Blockers
-
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
-
-## Open questions
-
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
+- **(high/high)** Dispatcher starvation — claimable=17/72 below floor,
+  WIP 8/8 human-gated. Mitigation: human triage then refill planner.
+- **(medium/high)** Cross-org IDOR class — #3188 was found only after
+  breaking CI; sibling handlers may share the flaw. Mitigation: audit
+  org-scoping and add cross-tenant tests.
+- **(medium/medium)** Backend `deny.toml` churned → dependency / license
+  policy may have shifted; stale dependabot PRs could carry unpatched
+  advisories. Mitigation: confirm cargo-deny on dev; close/merge the
+  dependabot PRs.
+- **(medium/medium)** Sprint-status.yaml stale — #480 open while 8a-3 is
+  "done" (test_hardening_batch). Partial file read only — rest
+  unconfirmed. Mitigation: reconcile against live GitHub issue state.
+- **(low/low)** Routine lagged 3 days — some context missing; churn in
+  reality-web agency/[slug] page not explained by any listed PR.
 
 ## Decisions needed
 
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- Close current sprint and define next sprint goal (6/6, 49/49). Owner:
+  human maintainer / product.
+- Policy on stalled drafts and dependabot PRs (close vs rebase vs
+  auto-merge). Owner: human maintainer / pm-devops.
+- Whether to loosen the human-gate on low-risk WIP so the dispatcher
+  can refill. Owner: human maintainer.
+
+## Open questions
+
+- Is issue #480 still open? sprint-status marks it open; story 8a-3 is done.
+- Which 8 items make up the human-gated WIP pool, and what approval does
+  each need?
+- Which 2 items are dependency-blocked, and on what?
+- What changed in `backend/deny.toml` this run (intentional policy change
+  or advisory ignore)?
+- Formally close the current sprint and define the next goal?

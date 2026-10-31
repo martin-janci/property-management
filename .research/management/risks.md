@@ -1,8 +1,8 @@
 # PPT Risks
 
-_Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
+_Generated: 2026-10-31T05:00:00Z (routine Phase 1.6)_
 
-**Open: 26** · Total: 26
+**Open: 29** · Total: 29
 
 | ID | Owner | Prob | Impact | Risk | Mitigation |
 |---|---|---|---|---|---|
@@ -32,3 +32,6 @@ _Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
 | `pm-backend-rustsec-advisories-gating-backend-merges-2026-10-26` | pm-security | high | high | Issue #3168 — 3 new RUSTSEC advisories on dev gate every backend PR merge; this is the second cargo-deny gate in a month | Resolve #3168 (bump offending crate(s) or bounded exception); schedule a quarterly cargo-tree review |
 | `pm-frontend-mobile-rn-fake-submit-pattern-cluster-2026-10-28` | pm-frontend | high | high | Three independent frontend code-review findings in 7 days reveal mobile-rn / reality-web have 'wire-the-button-but-not-t | Add a per-screen e2e-smoke gate: for every form with a Submit button, a MSW/Mirage mock asserts the  |
 | `pm-frontend-rotation-stale-83-days-2026-10-28` | pm-scrum-master | medium | medium | pm-frontend rotation has been stale 83 days (last run 2026-08-06) while the backlog accumulated 12 frontend/mobile code- | Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the curr |
+| `pm-qa-authz-regression-violations-surface-2026-10-31` | pm-qa | high | high | Authz/IDOR bugs recur on the violations surface (4 touches in 14d). Role-authz test file has no cross-org or unauthentic | Prioritise draft #3184 as a route-by-route matrix (401/403/cross-org-404 for every mutation route);  |
+| `pm-qa-ci-gate-not-holding-red-test-on-dev-2026-10-31` | pm-qa | medium | high | A pre-existing failing test (cross_org_assign_violation_is_not_found) reached dev as RED → implies backend.yml either di | Require every bug-fix PR to name the test that is red-before/green-after; investigate how the test r |
+| `pm-qa-release-readiness-overstated-sprint-status-stale-2026-10-31` | pm-qa | high | medium | sprint-status.yaml marks 8a-3-notification-preference-sync done while gates #480 (JWT token in WS query-param logs) and  | Treat #480 as release-blocking until fixed or formally accepted; revert 8a-3 to review; make sprint- |

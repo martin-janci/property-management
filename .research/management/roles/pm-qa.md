@@ -1,50 +1,85 @@
-# pm-qa — QA / Test lens (2026-08-25)
+# pm-qa — 2026-10-31
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues. Previous run: 2026-06-15 (71 days stale)._
+**Last run:** 2026-10-31 (previous 2026-08-25 — overdue, picked by rotating cursor).
 
-## Role JSON
+## Summary
 
-```json
-{
-  "role": "pm-qa",
-  "summary": "13 PRs merged in this window fixed real defects but 7 of them lack the test that would guard against re-regression — the auto-fix loop is now producing enough follow-up-issue-and-close activity that a QA test-shadow discipline is the next lever. The atomic-claim concurrency test (#2834 / #2831 closure) and the booking-connect authz test (#2821) are the two high-priority gaps this run.",
-  "next_actions": [
-    {"action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / closed #2831) — assert at-most-once delivery under 2 racing api-server replicas contending on the same held-notification batch", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Integration test spins up 2 api-server replicas against shared Postgres + Redis, both drain the same held-notification set, assertion: exactly-one send per (user, channel, notification_id)."},
-    {"action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable before this window)", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Test attempts direct-connect credential write as (tenant, staff, admin-of-other-org) roles; asserts 403; asserts manager succeeds."},
-    {"action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Jest-expo test renders VoteDetailScreen in the loading-then-loaded transition; asserts no React warning; snapshot stable."},
-    {"action": "Add fuzz/property test for CSV export sanitizer (#2827 / closed #2822) — CR × LF × CRLF × formula-injection prefixes × every export column type", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "proptest crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × column-type; asserts no raw newline, no formula prefix escape, header preserved."},
-    {"action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test encrypts token → writes DB row → reads back → decrypts → equality; additional assertion: DB byte-inspection does not contain plaintext token substring."},
-    {"action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / closed #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Vitest render test opens dialog with assessment A, types reason/notes, cancels, opens with assessment B; asserts inputs empty."}
-  ],
-  "risks": [
-    {"risk": "3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them", "probability": "high", "impact": "medium", "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it."},
-    {"risk": "PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race — the exact scenario the fix was written for is unverified", "probability": "medium", "impact": "high", "mitigation": "Add integration test with 2 racing api-server replicas contending on the same held-notification batch; assert at-most-once delivery."},
-    {"risk": "PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest — a future field-rename or key-derivation change could silently store plaintext", "probability": "medium", "impact": "high", "mitigation": "Add unit + integration test covering encrypt(token) → DB row → decrypt(row) → token equality across Alexa/Google/fallback; assert stored bytes are not the plaintext token."},
-    {"risk": "PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs — formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class and remain unfuzzed", "probability": "medium", "impact": "medium", "mitigation": "Add a property/fuzz test crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × every export column type."},
-    {"risk": "Auto-fix loop closed 7/7 in-window follow-ups but the same-window close creates the illusion the fixes are proven — 5 of the 7 shipped without a regression test. The loop's compensating-transaction property masks a growing test-shadow debt.", "probability": "high", "impact": "medium", "mitigation": "Adopt a policy: any dispatcher-spawned fix PR requires a failing-on-main test file in the same PR before it can enter the merge queue; enforce via CI diff-guard."}
-  ],
-  "open_questions": [
-    "Should the mobile-rn ESLint gate (react-hooks + no-hardcoded-strings) be blocking on first adoption or warn-only for one sprint to let the existing violations be fixed batch-wise?",
-    "Is there an existing PPT test harness for spinning up 2 api-server replicas against shared Postgres+Redis, or does the atomic-claim concurrency test need new fixture infra?",
-    "Do we have canonical fuzz-corpus discipline for sanitizers (CSV, XSS, HTML), or is each sanitizer testing its own inputs today?",
-    "The 'test-shadow' pattern (fix PR without regression test) — is the pm-qa Definition-of-Done gate advisory or blocking? DEC-001-style formalization needed?"
-  ],
-  "decisions_needed": [
-    "Should any dispatcher-spawned fix PR require a failing-on-main test file in the same PR before it can enter the merge queue (enforced via CI diff-guard)? — owner: pm-tech-lead + pm-qa",
-    "Frontend mobile lint gate rollout — blocking on first adoption vs warn-only for one sprint? — owner: pm-frontend + pm-qa",
-    "Fuzz-corpus discipline for shared sanitizers (CSV, XSS, HTML, JSON) — do we ship a shared proptest corpus crate under backend/crates/? — owner: pm-tech-lead"
-  ]
-}
-```
+The sprint-status file is stale and breaks its own gating rule: 8a-3 is marked
+done while gates #480 and #484 are still open. Violations authz coverage (#3184)
+is thin: 6 tests in the role-authz file cover only resident-deny and
+manager-assign paths. The cross-org IDOR regression sits in a different file.
 
-## Notes
+Static review only; three files read.
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-09-25 (assuming ~30-day-per-role cadence).
-- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-qa 2026-08-25"`; four risks and one carried risk-flavor appended to `risks.json`.
-- Coverage epic-80 (rotation idx 5) re-checked — all 3 stories still `done`; last_checked stamped 2026-08-25. No PR in this window touched dispute routes.
-- Merged-PR observations that shaped this run:
-  - #2835 fixed a React `rules-of-hooks` violation in mobile-rn VoteDetailScreen — a `eslint-plugin-react-hooks` lint gate on frontend/apps/mobile would have caught this before code review.
-  - #2836 / #2837 shipped hardcoded English strings in mobile-rn — same lint story, different rule (`i18next/no-literal-string`).
-  - #2834 atomic-claim fix for quiet-hours drain — closes #2831 but is the exact scenario a >1-replica concurrency test should own.
-  - #2838 centralized voice OAuth token encryption — should ship with a round-trip test as a matter of hygiene.
-- Auto-review loop closed 7/7 in-window; net test-shadow debt grew by ~5 fixes-without-tests (raised as pm-qa risk this run).
+## Next actions
+
+1. **(high)** Reopen or formally defer 8a-3-notification-preference-sync; triage
+   issues #480 (WS token in query-param logged, no re-validation after JWT
+   expiry) and #484 (serial dispatch, FCM stub swallows failures). *Owner:
+   pm-scrum / rust-backend. DoD: sprint-status gates and story status agree;
+   batch `thb-2026-05-25` closed or has explicit deferrals with owners.*
+2. **(high)** Expand #3184 beyond resident-deny — cross-org (tenant-B manager
+   gets 404) for every `{violation_id}` route (get/update/assign/resolve,
+   appeals/decide, fines); add 401 + wrong-role 403 matrix; add non-member case
+   for `create_violation`. *Owner: rust-backend. DoD: every route in
+   `routes/violations.rs` has at least one 401, one wrong-role 403, one
+   cross-org 404 test and backend.yml is green.*
+3. **(high)** Verify `cross_org_assign_violation_is_not_found` is actually in
+   the CI suite; investigate how it reached dev as RED despite backend.yml.
+   *Owner: rust-backend / devops. DoD: test listed in cargo-test output and a
+   recorded root cause.*
+4. **(medium)** Add negative-path tests to the recently merged frontend/price
+   work (#3185, #3186, #3189, #3190, #3191, #3197): error states, empty data,
+   locale variants, boundary prices (zero / negative / NaN / currency
+   rounding) for `_price.test.ts`. *Owner: react-web.*
+5. **(medium)** Clean up `_bmad-output/implementation-artifacts/sprint-status.yaml` —
+   duplicate `80-2-dispute-filing-flow` key, 2025-12-21 sprint metadata, record
+   #483 open. *Owner: pm-scrum. DoD: YAML parses with unique keys; sprint
+   reflects current work (violations hardening, code-review fixes); blockers
+   list accurate.*
+6. **(medium)** Write issue #483 IDOR tests for voice devices (cross-org
+   device access; `list-commands` returning 403 vs empty-list leak) — use as
+   IDOR test template for other routes. *Owner: rust-backend. DoD:
+   `#[sqlx::test]` cases exist and #483 closed.*
+
+## Risks
+
+- **(high/high)** Authz/IDOR regression on the violations surface (4 touches
+  in 14d). Role-authz test file has no cross-org or unauthenticated matrix.
+  **Mitigation:** prioritise #3184 route-by-route matrix; add
+  code-review checklist for cross-org + wrong-role tests on every new handler.
+- **(medium/high)** CI gate not holding — red test on dev means backend.yml
+  either didn't run or was bypassed. **Mitigation:** require every bug-fix
+  PR to name red-before/green-after test; audit how red reached dev
+  (suite registration, --no-verify, stale CI).
+- **(high/medium)** Release-readiness overstated — 8a-3 done while #480
+  (JWT in logs) and #484 (false 'sent' counts) open. **Mitigation:** treat
+  #480 as release-blocking; revert 8a-3 to review; reconcile sprint-status
+  at every release.
+- **(high/medium)** Sprint-status data unreliable (stale metadata, duplicate
+  key, no active work). **Mitigation:** named owner updates file per sprint.
+- **(medium/medium)** Test bandwidth concentrated on single draft #3184;
+  mobile RN+KMP + 6 locales have no visible new coverage this cycle.
+  **Mitigation:** smoke-test floor in `mobile-native.yml` + RN jest.
+
+## Decisions needed
+
+- Does #480 (JWT in WS query-param logs) block next release, or is it
+  accepted with mitigation? *Owner: security/tech-lead.*
+- Policy: bug-fix PRs require named regression test red-before/green-after;
+  merges blocked when pre-existing test is red. *Owner: eng lead / QA.*
+- Mandatory authz test matrix (401 / 403 / cross-org-404) for every new
+  mutation route. *Owner: rust-backend lead.*
+- Who owns sprint-status.yaml reconciliation and how often? *Owner:
+  pm-scrum.*
+
+## Open questions
+
+- Where does `cross_org_assign_violation_is_not_found` live, and was it ever
+  excluded from or failing in CI? Which commit introduced it RED?
+- Is the current sprint still Epic 6/7A/8A/10A, or has active work moved to
+  violations and review-fix hardening? What's actually in-progress/review?
+- Have #480, #483, #484 been triaged since 2026-05-25? Is 8a-3 →done a
+  deliberate deferral?
+- Does #3184 have a defined target matrix of routes by roles, or is it ad hoc?
+- Any coverage / mutation thresholds in CI for backend and frontend?

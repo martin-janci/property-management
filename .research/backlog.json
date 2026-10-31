@@ -13487,20 +13487,22 @@
       "title": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
         "churn 2026-10-28 (14d window)"
       ],
       "evidence": [
         "3 commits in 14-day window: PR #3171 (gate add_evidence on manager role), PR #3180 (community cross-tenant IDOR coverage), PR #3183 (xtenant IDOR regression + 404 fix). Serial authz hardening on the same mutations suggests the surface area still has coverage gaps.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "cumulative re-emit 2026-10-31: 4 touches in 14d (previously 3)",
+        "repeated-churn: runs_seen bumped from 1 → 2 (+1)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null
     },
     {
@@ -13530,20 +13532,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3198",
         "rotating-expert-review [reality-server] 2026-10-28"
       ],
       "evidence": [
         "backend/servers/reality-server/src/handlers/users/mod.rs:566-568 and backend/servers/reality-server/src/routes/sso.rs:706-708 both generate secrets via `SysRng.try_fill_bytes(&mut bytes).expect(\"OS rng failed\")`. A transient OS-RNG failure (constrained containers / entropy exhaustion) would unwind the task instead of returning a 500.",
-        "The pattern is duplicated in password-reset token issuance and PKCE code-verifier generation on the SSO authorize path. try_fill_bytes is the fallible API specifically to surface RNG failure — swallowing it with `.expect` reintroduces the panic path. Should propagate as `(StatusCode::INTERNAL_SERVER_ERROR, …)` via the existing error-mapping style."
+        "The pattern is duplicated in password-reset token issuance and PKCE code-verifier generation on the SSO authorize path. try_fill_bytes is the fallible API specifically to surface RNG failure — swallowing it with `.expect` reintroduces the panic path. Should propagate as `(StatusCode::INTERNAL_SERVER_ERROR, …)` via the existing error-mapping style.",
+        "resolved: PR #3198 merged 2026-10-31 — code-review-reality-server-os-rng-expect-panics"
       ],
       "files": [
         "backend/servers/reality-server/src/handlers/users/mod.rs",
         "backend/servers/reality-server/src/routes/sso.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "reality-server",
@@ -13805,19 +13809,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #3197",
         "rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d)"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx:201 — handleSave sends `price: typeof form.price === 'number' ? form.price : Number(form.price) || 0`. The price input (line 632) stores '' when cleared, so Number('') === 0 and `0 || 0` === 0: clearing or mistyping price silently persists the listing at price 0.",
-        "page.tsx:816-817 — the Save button is only guarded by `disabled={saving}`; no required/validation gate on price. Area/rooms/floor use `|| undefined` (omitted — acceptable) but price falls back to a concrete 0 — data-integrity bug on a public listing's headline figure."
+        "page.tsx:816-817 — the Save button is only guarded by `disabled={saving}`; no required/validation gate on price. Area/rooms/floor use `|| undefined` (omitted — acceptable) but price falls back to a concrete 0 — data-integrity bug on a public listing's headline figure.",
+        "resolved: PR #3197 merged 2026-10-31 — code-review-reality-web-listing-edit-price-zero"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null,
       "type": "code-review-finding",
       "segment": "reality-web",
@@ -13876,6 +13882,236 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-backend/deny.toml",
+      "title": "Churn hotspot: backend/deny.toml — 4 touches in 14d, repeated-churn (runs_seen=2)",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-31 (14d window)"
+      ],
+      "evidence": [
+        "4 touches in 14-day window on cargo-deny advisory config. Pattern: iterative advisory ignores / policy adjustments. runs_seen=2 — surfacing for human review.",
+        "repeated-churn: runs_seen bumped from 1 → 2"
+      ],
+      "files": [
+        "backend/deny.toml"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+      "title": "Churn hotspot: reality-web agency/[slug]/page.tsx — 4 touches in 14d",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-31 (14d window)"
+      ],
+      "evidence": [
+        "4 touches in 14-day window on reality-web agency slug page. runs_seen=1 — new hotspot."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "title": "ppt-web routes/groups/iot.tsx (PR #3186) landed without touching docs/screens/ppt",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "PR #3186 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without a matching docs/screens/ppt/*.md update",
+        "Heuristic: slug/route basename match — may yield false positives; review before promoting"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "title": "reality-web listings/edit/page.tsx (PR #3197) landed without touching docs/screens/reality",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3197"
+      ],
+      "evidence": [
+        "PR #3197 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without a matching docs/screens/reality/*.md update",
+        "Heuristic: slug/route basename match — may yield false positives; review before promoting"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-fine-payment-negative-amount",
+      "title": "record_payment accepts negative/zero amounts — silently rewrites enforcement_actions.paid_amount",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-10-31 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:558 — record_payment passes req.amount: Decimal straight to repo with no sign/zero check",
+        "backend/crates/db/src/models/violations.rs:388 — RecordFinePayment { amount: Decimal } has no serde/validator guard",
+        "backend/crates/db/src/repositories/violations.rs:1022 — paid_amount = COALESCE(paid_amount, 0) + $2 applies raw amount; negative decreases paid_amount; status/paid_at arms only move forward so negative payments silently rewrite the balance while audit history keeps old paid state"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs",
+        "backend/crates/db/src/models/violations.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": "plans/code-review-api-core-fine-payment-negative-amount.md"
+    },
+    {
+      "id": "code-review-api-core-decide-appeal-adjustment-sign",
+      "title": "decide_appeal: negative fine_adjustment inverts semantics and raises the fine",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-31 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:676 — DecideAppealRequest.fine_adjustment: Option<Decimal> accepted unchecked",
+        "backend/crates/db/src/repositories/violations.rs:854 — repo computes fine_amount = GREATEST(0, fine_amount - $2); a negative fine_adjustment INCREASES the fine (opposite of what the field name/API contract implies)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-nested-parent-id-ignored",
+      "title": "Nested violation routes drop parent violation_id — audit / URL-integrity gap on actions and evidence",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-10-31 (api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:431 — delete_evidence destructures (_violation_id, evidence_id) and passes evidence_id,org_id only; /{violation_X}/evidence/{evidence_Y} deletes evidence_Y even when it belongs to a different violation in the same org",
+        "backend/servers/api-server/src/routes/violations.rs:479,516,541,561,581 — get_action/update_action/mark_action_sent/record_payment/list_payments all discard _violation_id and look up by action_id + org_id (confused-deputy / audit-integrity gap)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2957",
+      "title": "stalled: dependabot PR #2957 (tower-http 0.7.0→0.7.1) open 51 days with no reviewDecision",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2957"
+      ],
+      "evidence": [
+        "dependabot bump, open 51 days, no review"
+      ],
+      "files": [
+        "backend/Cargo.toml"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2962",
+      "title": "stalled: dependabot PR #2962 (compose-bom 2026.06.01→2026.09.00) open 44 days",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2962"
+      ],
+      "evidence": [
+        "dependabot bump, open 44 days, no review"
+      ],
+      "files": [
+        "mobile-native/gradle/libs.versions.toml"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-2972",
+      "title": "stalled: dependabot PR #2972 (ktor group 7 updates) open 37 days",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #2972"
+      ],
+      "evidence": [
+        "dependabot bump, open 37 days, no review"
+      ],
+      "files": [
+        "mobile-native/gradle/libs.versions.toml"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "stalled-review-pr-3090",
+      "title": "stalled: dependabot PR #3090 (serde_json 1.0.151→1.0.154) open 16 days",
+      "vector": "dep-update",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3090"
+      ],
+      "evidence": [
+        "dependabot bump, open 16 days, no review"
+      ],
+      "files": [
+        "backend/Cargo.toml"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
     }
   ]
 }

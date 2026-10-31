@@ -1,0 +1,322 @@
+{
+  "date": "2026-10-31",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-31",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-10-28T10:54:38Z → 2026-10-31 05:00Z = 66h (2d 18h) since last run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+      "type": "churn-hotspot",
+      "source": "14d-pr-churn",
+      "score_delta": 1,
+      "evidence": [
+        "4 touches in last 14d — reality-web agency slug page"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "file": "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "type": "churn-hotspot",
+      "source": "14d-pr-churn",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit — 4 touches in 14d (previously 3); runs_seen → 2"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "file": "backend/servers/api-server/src/routes/violations.rs"
+    },
+    {
+      "id": "churn-hotspot-backend/deny.toml",
+      "type": "churn-hotspot",
+      "source": "14d-pr-churn",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit — 4 touches in 14d (previously 2); runs_seen → 2"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "file": "backend/deny.toml"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/violations.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": [
+        "runs_seen bumped from 1 → 2 — violations.rs continues to churn"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "file": "backend/servers/api-server/src/routes/violations.rs"
+    },
+    {
+      "id": "repeated-churn-backend/deny.toml",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": [
+        "runs_seen bumped from 1 → 2 — cargo-deny advisory config churning"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "file": "backend/deny.toml"
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-3186",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3186 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating docs/screens/ppt/*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "type": "screen-map-drift",
+      "source": "pr-3197",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3197 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating docs/screens/reality/*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "stalled-review-pr-2957",
+      "type": "stalled-review",
+      "source": "pr-2957",
+      "score_delta": 1,
+      "evidence": [
+        "dependabot PR #2957 (tower-http 0.7.0→0.7.1) open 51 days, no reviewDecision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "stalled-review-pr-2962",
+      "type": "stalled-review",
+      "source": "pr-2962",
+      "score_delta": 1,
+      "evidence": [
+        "dependabot PR #2962 (compose-bom 2026.06.01→2026.09.00) open 44 days, no reviewDecision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "stalled-review-pr-2972",
+      "type": "stalled-review",
+      "source": "pr-2972",
+      "score_delta": 1,
+      "evidence": [
+        "dependabot PR #2972 (ktor group 7 updates) open 37 days, no reviewDecision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "stalled-review-pr-3090",
+      "type": "stalled-review",
+      "source": "pr-3090",
+      "score_delta": 1,
+      "evidence": [
+        "dependabot PR #3090 (serde_json 1.0.151→1.0.154) open 16 days, no reviewDecision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-core-fine-payment-negative-amount",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:558 — record_payment passes req.amount: Decimal straight to repo with no sign/zero check",
+        "backend/crates/db/src/models/violations.rs:388 — RecordFinePayment { amount: Decimal } has no serde/validator guard",
+        "backend/crates/db/src/repositories/violations.rs:1022 — paid_amount = COALESCE(paid_amount, 0) + $2 applies raw amount; negative decreases paid_amount; status/paid_at CASE arms only flip forward so negative payments silently rewrite the balance while audit history keeps old 'paid' state"
+      ],
+      "expert": "rust",
+      "title": "record_payment accepts negative/zero amounts and silently rewrites enforcement_actions.paid_amount",
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs",
+        "backend/crates/db/src/models/violations.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-decide-appeal-adjustment-sign",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:676 — DecideAppealRequest.fine_adjustment: Option<Decimal> accepted unchecked",
+        "backend/crates/db/src/repositories/violations.rs:854 — repo computes fine_amount = GREATEST(0, fine_amount - $2), so a negative fine_adjustment INCREASES the fine on an approved appeal (opposite of what the field name/API contract implies)"
+      ],
+      "expert": "rust",
+      "title": "decide_appeal: negative fine_adjustment inverts semantics and raises the fine instead of reducing it",
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs",
+        "backend/crates/db/src/repositories/violations.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-core-nested-parent-id-ignored",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/violations.rs:431 — delete_evidence destructures (_violation_id, evidence_id) and passes evidence_id,org_id only; /{violation_X}/evidence/{evidence_Y} deletes evidence_Y even when it belongs to a different violation in the same org",
+        "backend/servers/api-server/src/routes/violations.rs:479,516,541,561,581 — get_action/update_action/mark_action_sent/record_payment/list_payments all discard _violation_id and look up by action_id + org_id (confused-deputy / audit-integrity gap)"
+      ],
+      "expert": "rust",
+      "title": "Nested routes drop parent violation_id — audit/URL-integrity gap on actions and evidence",
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique(ids)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap/decay",
+      "observed": "max 6; 0 open items older than 14d",
+      "expected": "0"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief adversarial pass annotation for new plan",
+      "observed": "passed",
+      "expected": "present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "plan sections + files-exist + mode",
+      "observed": "1 new plan, 4 metadata + 11 headings, 3 caps ticked, Mode: cloud-ok, 3 files exist",
+      "expected": "all required"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan on staged diff (ex-baseline docs)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed this run",
+      "observed": "N/A",
+      "expected": "N/A"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present in plans/ or _archive/",
+      "observed": "all accounted for",
+      "expected": "no silent delete"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now vs HEAD",
+      "observed": "22 vs 22",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix cap+idempotency",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor in [0,7] + coverage_cursor advanced",
+      "observed": "action-list OK; risks OK; project-state non-empty; pm_cursor=4; coverage_cursor 0→1 (epics=13)",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
