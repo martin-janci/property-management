@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-28T10:54:38Z",
-  "last_run_ms": 300000,
-  "last_pr_seen": 3183,
-  "last_issue_seen": 3187,
-  "last_commit_sha": "6666e23a",
+  "last_run_iso": "2026-10-31T02:35:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3198,
+  "last_issue_seen": 3198,
+  "last_commit_sha": "6a029f7",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -648,14 +648,29 @@
       "recent_churn": 130
     },
     "backend/servers/api-server/src/routes/violations.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-10-28",
-      "recent_churn": 3
+      "runs_seen": 2,
+      "last_seen": "2026-10-31",
+      "recent_churn": 2
     },
     "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs": {
       "runs_seen": 1,
       "last_seen": "2026-10-28",
       "recent_churn": 3
+    },
+    "frontend/apps/ppt-web/src/routes/groups/iot.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-31",
+      "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-31",
+      "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-10-31",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -1297,7 +1312,18 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-10-31",
+    "repeated-churn-backend/servers/api-server/src/routes/violations.rs",
+    "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx",
+    "dep-update-noise-pr-3194",
+    "dep-update-noise-pr-3195",
+    "dep-update-noise-pr-3196",
+    "closed-not-merged-pr-3137",
+    "closed-not-merged-pr-3007",
+    "closed-not-merged-pr-2961"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1311,8 +1337,8 @@
     "mobile-native-kmp": "2026-10-25"
   },
   "stats": {
-    "runs": 108,
-    "vectors_created": 482,
+    "runs": 109,
+    "vectors_created": 485,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0

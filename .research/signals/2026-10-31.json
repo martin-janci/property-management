@@ -1,0 +1,161 @@
+{
+  "generated": "2026-10-31T02:35:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-31",
+      "type": "lag_warning",
+      "source": "routine schedule",
+      "score_delta": 0,
+      "evidence": [
+        "Last routine run was 2026-10-28T10:54:38Z — 63h / 2d 15h ago (threshold: 36h). Caller-supplied fire payload: 'buffer-low: claimable=17/72 — refill planner'."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/violations.rs",
+      "type": "repeated-churn",
+      "source": "churn 2026-10-31 (14d window)",
+      "score_delta": 1,
+      "evidence": [
+        "4th touch in 14d via PR #3188 (assign_violation org-scoped 404 before assignee gate). hotspot_history.runs_seen=1 last run → 2 this run. Serial authz hardening on the same mutations — surface still a coverage pattern."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "type": "churn-hotspot",
+      "source": "churn 2026-10-31 (14d window)",
+      "score_delta": 0,
+      "evidence": [
+        "Cumulative re-emit — score_delta suppressed (already in state.seen_signals). New churn evidence appended to backlog item."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-10-31 (14d window)",
+      "score_delta": 1,
+      "evidence": [
+        "2 commits in 14d via PR #3186 (iot WS give-up wiring). Note: patch + test split within same PR — thin churn.",
+        "First fire."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts",
+      "type": "churn-hotspot",
+      "source": "churn 2026-10-31 (14d window)",
+      "score_delta": 1,
+      "evidence": [
+        "2 commits in 14d via PR #3185 (neighbors stale-token useMemo fix). Note: patch + test split within same PR — thin churn.",
+        "First fire."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-10-31 (14d window)",
+      "score_delta": 1,
+      "evidence": [
+        "2 commits in 14d via PR #3186 (iot WS give-up wiring). Note: patch + test split within same PR — thin churn.",
+        "First fire."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-pr-3194",
+      "type": "dep-update-noise",
+      "source": "PR #3194",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: chore(deps): bump the gradle-minor-patch group across 1 directory with 7 updates — open since 2026-10-30."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3195",
+      "type": "dep-update-noise",
+      "source": "PR #3195",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: chore(deps): bump the npm-minor-patch group across 1 directory with 30 updates — open since 2026-10-30."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-3196",
+      "type": "dep-update-noise",
+      "source": "PR #3196",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot: chore(deps): bump the kotlin group across 1 directory with 5 updates — open since 2026-10-30."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-3137",
+      "type": "dep-update-noise",
+      "source": "PR #3137",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bundle PR superseded by #3195 — closed-not-merged on 2026-10-29. No signal action (bundle rotation)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-3007",
+      "type": "dep-update-noise",
+      "source": "PR #3007",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bundle PR superseded by #3194 — closed-not-merged on 2026-10-29. No signal action (bundle rotation)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2961",
+      "type": "dep-update-noise",
+      "source": "PR #2961",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bundle PR superseded by #3196 — closed-not-merged on 2026-10-29. No signal action (bundle rotation)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-10-31.md && head -1 matches date", "observed": "match", "expected": "match" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged vs HEAD state.json", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog.json unique ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "signals vs seen_signals + cumulative carve-out", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq select(.score>8) length==0; decay check (no items older than 14d)", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run — N/A", "observed": "no new plans", "expected": "every new plan has adversarial-pass annotation" },
+    { "goal": "G7", "passed": true, "command": "git diff --cached --name-only --diff-filter=A -- plans/ | wc -l <= 2", "observed": "0", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/private hostnames in staged diff (excl baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md regen", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed: none' + cursor advanced", "observed": "none", "expected": "match" },
+    { "goal": "G12", "passed": true, "command": "all prior-run plans still in plans/ or plans/_archive/", "observed": "no missing", "expected": "no missing" },
+    { "goal": "G13", "passed": true, "command": "ls-files _archive/ >= ls-tree HEAD _archive/", "observed": "22>=22", "expected": "ge" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions length==0 (no candidate)", "observed": "0", "expected": "<=3" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — no-op", "observed": "skipped", "expected": "no-op when skipped" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token in added lines (excl baseline docs)", "observed": "0", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — this run surfaced no high-confidence allowlisted signal with score >= 3 (no screen-map-drift, no screen-map-orphan, no fixme-in-merged-code, no lockfile-drift, no stalled-review PRs with unseen IDs). Phase 5 ran a no-op decision — all open backlog items at score 2 are already in-flight on draft PRs #3192, #3193, #3197, #3198."
+}

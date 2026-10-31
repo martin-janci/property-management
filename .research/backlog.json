@@ -13487,20 +13487,22 @@
       "title": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "churn 2026-10-28 (14d window)"
+        "churn 2026-10-28 (14d window)",
+        "churn 2026-10-31 (14d window)"
       ],
       "evidence": [
         "3 commits in 14-day window: PR #3171 (gate add_evidence on manager role), PR #3180 (community cross-tenant IDOR coverage), PR #3183 (xtenant IDOR regression + 404 fix). Serial authz hardening on the same mutations suggests the surface area still has coverage gaps.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "repeated-churn 2026-10-31: PR #3188 (assign_violation org-scoped 404 before assignee gate) — 4th touch in 14d. hotspot_history.runs_seen=2."
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null
     },
     {
@@ -13876,6 +13878,69 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/routes/groups/iot.tsx — 2 touches in 14d (IoT give-up state wiring)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-31 (14d window)"
+      ],
+      "evidence": [
+        "2 commits in 14-day window via PR #3186 (code-review-ppt-web-core-iot-ws-hasgivenup-dropped: wire IoT WS give-up state into dashboard UI). Note: both commits are the same PR's patch + test split, so churn is thin.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts — 2 touches in 14d (stale-token useMemo fix)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-31 (14d window)"
+      ],
+      "evidence": [
+        "2 commits in 14-day window via PR #3185 (code-review-ppt-web-core-neighbors-stale-token-usememo). Note: both commits are the same PR's patch + test split, so churn is thin.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx — 2 touches in 14d (IoT give-up UI)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-31 (14d window)"
+      ],
+      "evidence": [
+        "2 commits in 14-day window via PR #3186 (code-review-ppt-web-core-iot-ws-hasgivenup-dropped). Note: both commits are the same PR's patch + test split, so churn is thin.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/iot/pages/IotDashboardPage.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
     }
   ]
 }
