@@ -41,7 +41,7 @@
       "quarantined_at": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "reviewer_summary": "verdict=approve note=code-correct-advisory-lock-matches-house-pattern; NO scope-drift in real merge diff (only violations.rs+test); cargo-deny red pre-existing (ammonia RUSTSEC, unrelated); DB tests deferred to CI/human (#2966) [2026-10-24: head drifted to c28ada13 via operator dev-merge (martin-janci merged 'dev'); PR is needs-human-review so dispatcher stands down — not re-reviewed, prior verdict=approve holds pending operator merge]",
+      "reviewer_summary": "verdict=approve note=code-correct-advisory-lock-matches-house-pattern; NO scope-drift in real merge diff (only violations.rs+test); cargo-deny red pre-existing (ammonia RUSTSEC, unrelated); DB tests deferred to CI/human (#2966) [2026-10-24: head drifted to c28ada13 via operator dev-merge (martin-janci merged 'dev'); PR is needs-human-review so dispatcher stands down \u2014 not re-reviewed, prior verdict=approve holds pending operator merge]",
       "scope_drift": null,
       "specialist": null,
       "status": "review",
@@ -65,7 +65,7 @@
       "quarantined_at": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "reviewer_summary": "verdict=approve head_oid=7564d88b2dc5bb27417658f4750f0f0a1d98190c note=schema-drift-fix-verified-against-migrations;scope-drift-benign-both-files-core-db;ci-green-except-preexisting-cargo-deny-ammonia;posted-as-COMMENT(self-approval-blocked) [2026-10-24: head drifted to daeee559 via operator dev-merge (martin-janci merged 'dev'); PR is needs-human-review so dispatcher stands down — not re-reviewed, prior verdict=approve holds pending operator merge]",
+      "reviewer_summary": "verdict=approve head_oid=7564d88b2dc5bb27417658f4750f0f0a1d98190c note=schema-drift-fix-verified-against-migrations;scope-drift-benign-both-files-core-db;ci-green-except-preexisting-cargo-deny-ammonia;posted-as-COMMENT(self-approval-blocked) [2026-10-24: head drifted to daeee559 via operator dev-merge (martin-janci merged 'dev'); PR is needs-human-review so dispatcher stands down \u2014 not re-reviewed, prior verdict=approve holds pending operator merge]",
       "scope_drift": true,
       "specialist": "rust-backend",
       "status": "review",
@@ -78,7 +78,7 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "fix_rounds": 0,
-      "implementer_summary": " [pr=3119 in-progress->review; approved but now dirty after sibling #3118 merge] [2026-10-18: labeled needs-human-review — non-mechanical test-file conflict (ArticleDetailScreen.test.tsx) vs dev; mechanical rebaser cannot resolve]",
+      "implementer_summary": " [pr=3119 in-progress->review; approved but now dirty after sibling #3118 merge] [2026-10-18: labeled needs-human-review \u2014 non-mechanical test-file conflict (ArticleDetailScreen.test.tsx) vs dev; mechanical rebaser cannot resolve]",
       "last_reviewed_oid": "5a9561434dee7fa86560781cacfdd8b267fc08db",
       "last_updated": "2026-10-30T16:32:39Z",
       "merge_attempted_at": "2026-10-18T04:45:50Z",
@@ -89,7 +89,7 @@
       "quarantined_at": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "reviewer_summary": "verdict=approve head_oid=5a9561434dee7fa86560781cacfdd8b267fc08db note=i18n defaultValue parity; CONFLICT vs dev in ArticleDetailScreen.test.tsx after #3118 merge — needs rebase+manual test resolve",
+      "reviewer_summary": "verdict=approve head_oid=5a9561434dee7fa86560781cacfdd8b267fc08db note=i18n defaultValue parity; CONFLICT vs dev in ArticleDetailScreen.test.tsx after #3118 merge \u2014 needs rebase+manual test resolve",
       "scope_drift": false,
       "specialist": "frontend",
       "status": "review",
@@ -108,7 +108,7 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": " [base updated onto dev carrying #3172 cargo-deny fix; CI re-running]",
-      "reviewer_summary": "verdict=approve head_oid=f0a8bc71f477e2175565f70e300225cd05b3518b note=authz-gate-correct-mirrors-siblings-posted-as-comment-self-approval-blocked; CI green except pre-existing cargo-deny (RUSTSEC, base-branch red tracked by #3168/PR#3172); draft+self-approval-blocked so dispatcher cannot auto-merge — awaiting human approval+merge",
+      "reviewer_summary": "verdict=approve head_oid=f0a8bc71f477e2175565f70e300225cd05b3518b note=authz-gate-correct-mirrors-siblings-posted-as-comment-self-approval-blocked; CI green except pre-existing cargo-deny (RUSTSEC, base-branch red tracked by #3168/PR#3172); draft+self-approval-blocked so dispatcher cannot auto-merge \u2014 awaiting human approval+merge",
       "last_reviewed_oid": "f0a8bc71f477e2175565f70e300225cd05b3518b",
       "scope_drift": null,
       "code_reuse_warn": null,
@@ -193,7 +193,7 @@
       "branch": "auto-impl/code-review-reality-server-os-rng-expect-853a49fa",
       "status": "review",
       "claimed_at": "2026-10-30T20:32:06Z",
-      "last_updated": "2026-10-30T22:31:41Z",
+      "last_updated": "2026-10-31T00:28:42Z",
       "status_changed_at": "2026-10-30T21:07:09Z",
       "pr_number": 3198,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3198",
@@ -208,14 +208,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-10-31T00:28:42Z"
     },
     {
       "task_id": "code-review-reality-web-listing-edit-price-zero",
       "branch": "auto-impl/code-review-reality-web-listing-edit-pri-7d18e31a",
       "status": "review",
       "claimed_at": "2026-10-30T20:32:06Z",
-      "last_updated": "2026-10-30T22:31:41Z",
+      "last_updated": "2026-10-31T00:28:42Z",
       "status_changed_at": "2026-10-30T21:07:09Z",
       "pr_number": 3197,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3197",
@@ -230,8 +230,8 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-10-31T00:28:42Z"
     }
   ],
-  "generated": "2026-10-30T22:38:23Z"
+  "generated": "2026-10-31T00:32:35Z"
 }
