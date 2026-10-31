@@ -92,8 +92,21 @@ pub async fn sso_login(
         }
     }
 
-    // Generate PKCE code verifier and challenge
-    let code_verifier = generate_code_verifier();
+    // Generate PKCE code verifier and challenge. A failure of the OS entropy
+    // source must not panic the worker — degrade to 503 so the client can retry.
+    let code_verifier = match generate_code_verifier() {
+        Ok(v) => v,
+        Err(err) => {
+            tracing::error!(error = %err, "Failed to generate PKCE code verifier");
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(SsoError::new(
+                    "rng_unavailable",
+                    "Login is temporarily unavailable. Please try again.",
+                )),
+            ));
+        }
+    };
     let code_challenge = generate_code_challenge(&code_verifier);
 
     // Store code verifier in session (to be retrieved in callback)
@@ -700,13 +713,19 @@ pub struct TokenIntrospectionResponse {
 /// Uses OS CSPRNG directly — the verifier is the proof-of-possession secret
 /// that makes PKCE effective against authorization-code interception attacks,
 /// so it must be unpredictable even under adversarial timing.
-fn generate_code_verifier() -> String {
+///
+/// Returns `Err` if the OS entropy source is unavailable rather than panicking
+/// the worker — the caller surfaces this as a `503 Service Unavailable`.
+fn generate_code_verifier() -> Result<String, String> {
     use rand::TryRng;
     let mut bytes = [0u8; 32];
     rand::rngs::SysRng
         .try_fill_bytes(&mut bytes)
-        .expect("OS rng failed");
-    base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes)
+        .map_err(|e| format!("OS RNG unavailable: {e}"))?;
+    Ok(base64::Engine::encode(
+        &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+        bytes,
+    ))
 }
 
 /// Generate PKCE code challenge from verifier.
@@ -2193,5 +2212,50 @@ mod sso_consumer_security_tests {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod pkce_verifier_tests {
+    use super::{generate_code_challenge, generate_code_verifier};
+
+    /// `generate_code_verifier` returns `Ok` with a URL-safe, base64url (no-pad)
+    /// verifier under a healthy OS RNG. The function now surfaces entropy-source
+    /// failures as `Err` instead of panicking the worker (OS-RNG `.expect`
+    /// removal regression); this locks in the fallible contract so the happy
+    /// path keeps producing a usable PKCE verifier + challenge pair.
+    #[test]
+    fn verifier_is_url_safe_and_derives_a_challenge() {
+        let verifier = generate_code_verifier().expect("healthy OS RNG yields a verifier");
+        // 32 random bytes → base64url-no-pad → 43 chars.
+        assert_eq!(verifier.len(), 43, "expected a 43-char base64url verifier");
+        assert!(
+            verifier
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "verifier must be URL-safe base64 (no padding): {verifier}"
+        );
+        // The challenge derivation must accept the verifier and stay URL-safe.
+        let challenge = generate_code_challenge(&verifier);
+        assert_eq!(
+            challenge.len(),
+            43,
+            "SHA-256 → base64url-no-pad is 43 chars"
+        );
+        assert!(
+            challenge
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "challenge must be URL-safe base64 (no padding): {challenge}"
+        );
+    }
+
+    /// Two successive calls must not collide — the verifier is the PKCE
+    /// proof-of-possession secret and must be freshly random each login.
+    #[test]
+    fn successive_verifiers_differ() {
+        let a = generate_code_verifier().expect("rng ok");
+        let b = generate_code_verifier().expect("rng ok");
+        assert_ne!(a, b, "PKCE verifiers must be unique per login");
     }
 }

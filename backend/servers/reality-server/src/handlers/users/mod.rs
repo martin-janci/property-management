@@ -561,11 +561,13 @@ impl UserHandler {
             .map_err(|e| e.to_string())?;
 
         // 32 cryptographically-random bytes → URL-safe base64 → ~43 char
-        // token that we surface to the user via email.
+        // token that we surface to the user via email. A failure of the OS
+        // entropy source propagates as an error (the route logs it and keeps
+        // the response enumeration-safe) rather than panicking the worker.
         let mut bytes = [0u8; 32];
         rand::rngs::SysRng
             .try_fill_bytes(&mut bytes)
-            .expect("OS rng failed");
+            .map_err(|e| format!("OS RNG unavailable: {e}"))?;
         let plaintext_token =
             base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
         let token_hash = sha256_hex(&plaintext_token);
