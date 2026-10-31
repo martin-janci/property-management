@@ -29,6 +29,29 @@ const VAT_RATE_OPTIONS: { label: string; value: AccountingVatRate }[] = [
   { label: 'Zero (0%)', value: 'zero' },
 ];
 
+/**
+ * Resolve the effective VAT rate (%) for a line item. A named `vatRateType`
+ * derives the rate from the invoice country; absent a named type the custom
+ * `vatRate` the user typed is used verbatim. This is the single source of truth
+ * for the rate shown in the UI AND persisted in the payload — keeping them in
+ * sync so a stored invoice can never drift from what the user saw (e.g. a SK
+ * standard line showing 20% must not persist the stale default 21%).
+ */
+function resolveVatRate(item: AccountingCreateInvoiceItem, country: 'CZ' | 'SK'): number {
+  switch (item.vatRateType) {
+    case 'standard':
+      return country === 'CZ' ? 21 : 20;
+    case 'reduced':
+      return 10;
+    case 'first_reduced':
+      return country === 'CZ' ? 15 : 10;
+    case 'zero':
+      return 0;
+    default:
+      return item.vatRate;
+  }
+}
+
 interface AccountingInvoiceFormProps {
   contacts: AccountingContact[];
   initialData?: Partial<AccountingInvoice>;
@@ -63,15 +86,7 @@ export function AccountingInvoiceForm({
 
     for (const item of items) {
       const b = item.qty * item.unitPrice;
-      let rate = item.vatRate;
-
-      if (item.vatRateType) {
-        if (item.vatRateType === 'standard') rate = country === 'CZ' ? 21 : 20;
-        else if (item.vatRateType === 'reduced') rate = 10;
-        else if (item.vatRateType === 'first_reduced') rate = country === 'CZ' ? 15 : 10;
-        else if (item.vatRateType === 'zero') rate = 0;
-      }
-
+      const rate = resolveVatRate(item, country);
       const v = b * (rate / 100);
       base += b;
       vat += v;
@@ -88,7 +103,11 @@ export function AccountingInvoiceForm({
       return;
     }
 
-    const submittedItems = items.filter((i) => i.description.trim() !== '');
+    // Normalize each item's vatRate to the rate the UI derived and displayed, so
+    // the persisted payload matches the totals the user saw (no stale vatRate).
+    const submittedItems = items
+      .filter((i) => i.description.trim() !== '')
+      .map((i) => ({ ...i, vatRate: resolveVatRate(i, country) }));
 
     // Defense in depth: never persist a line with a non-finite qty/unitPrice
     // (e.g. a cleared field left NaN in state). parseNumericInput normalizes on
