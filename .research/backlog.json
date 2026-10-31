@@ -7433,14 +7433,16 @@
       "score": 0,
       "status": "dropped",
       "sources": [
-        "Tier1d review 2026-08-11 (mobile-native-kmp)"
+        "Tier1d review 2026-08-11 (mobile-native-kmp)",
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
       ],
       "evidence": [
         "SsoService.kt (348 lines) has no test file — no commonTest source references SsoService (grep over shared/src/commonTest returns 0 hits).",
         "It is the security-critical core of the auth surface: validateAndLogin() (deep-link SSO token exchange), loginWithPassword(), register(), requestPasswordReset()/confirmPasswordReset(), refreshSession(), restoreSession(), and 401->logout handling — all untested for success/error/status-mapping branches.",
         "Contrast: sibling auth pieces SsoStateStore, SsoInitiation and AuthGuard each have dedicated commonTest suites, so the service that actually drives the token/session mutations is the one gap.",
         "decay-2026-08-25: score 1→0 — no new signals in 14d",
-        "decayed: no new signals in 14 days"
+        "decayed: no new signals in 14 days",
+        "[code-review-mobile-native-kmp-ssoservice-untested] re-emitted — status remains dropped (resurrect-blocked)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
@@ -9888,7 +9890,8 @@
       "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9896,7 +9899,8 @@
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
         "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
         "decayed 2026-09-20: no new signals in 14d (routine-lag: 19d) (score 4 → 3)",
-        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207"
+        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207",
+        "[code-review-mobile-native-kmp-createlisting-stub] mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`, "
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9905,7 +9909,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-10-31",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -13487,20 +13491,23 @@
       "title": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "churn 2026-10-28 (14d window)"
+        "churn 2026-10-28 (14d window)",
+        "PR #3188"
       ],
       "evidence": [
         "3 commits in 14-day window: PR #3171 (gate add_evidence on manager role), PR #3180 (community cross-tenant IDOR coverage), PR #3183 (xtenant IDOR regression + 404 fix). Serial authz hardening on the same mutations suggests the surface area still has coverage gaps.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "[repeated-churn-backend/servers/api-server/src/routes/violations.rs] backend/servers/api-server/src/routes/violations.rs touched again this run by PR #3188 (fix(UC-violations): assign_violation org-scoped 404 before assignee gate — cross-tenant IDOR fix). runs_seen 1→2 across runs.",
+        "[repeated-churn-backend/servers/api-server/src/routes/violations.rs] Last touched 2026-10-28 (role/role-authz/IDOR patches), now re-patched for the exact same IDOR class the previous PRs tried to close."
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null
     },
     {
@@ -13886,6 +13893,798 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "title": "Screen-map drift: PR #3186 touched ppt route(s) without updating docs/screens/ppt/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "PR #3186 (merged 2026-10-30 20:36 UTC) touched frontend/apps/ppt-web/src/routes/groups/iot.tsx — a trigger-set route file — without touching any docs/screens/ppt/*.md.",
+        "The route change wires useIotWebSocket.hasGivenUp into IotDashboardPage.isOffline; the ppt IoT dashboard screen doc should be updated to reflect the new disconnected/offline UI state.",
+        "heuristic caveat: route-basename vs screen-slug matcher is best-effort — treat as review candidate, not auto-promote-worthy."
+      ],
+      "files": [],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "title": "Screen-map drift: PR #3197 touched reality route(s) without updating docs/screens/reality/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3197"
+      ],
+      "evidence": [
+        "PR #3197 (merged 2026-10-31 04:28 UTC) touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — a trigger-set app/** route — without touching any docs/screens/reality/*.md.",
+        "The listing-edit page now rejects empty/invalid prices (resolveListingPrice); the reality listing-edit screen doc should document the validation + saveError surface.",
+        "heuristic caveat: route-basename vs screen-slug matcher is best-effort — treat as review candidate, not auto-promote-worthy."
+      ],
+      "files": [],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-currency-blind-match",
+      "title": "backend/servers/api-server/src/services/accounting.rs:197-203 — payment matcher amount corroboration compares line.amount == (invoice.total_amount - invoice.paid_amount) with NO currency comparison; l",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:197-203 — payment matcher amount corroboration compares line.amount == (invoice.total_amount - invoice.paid_amount) with NO currency comparison; line.currency (accounting.rs:89) is stored but never checked ",
+        "backend/servers/api-server/src/services/accounting.rs:335 — confirm_match applies line.amount to invoice paid_amount via update_invoice_payment_status_rls regardless of currency; a CZK statement line can be suggested against and confirmed onto an EUR invoice, "
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-stmt-upload-no-tx",
+      "title": "backend/servers/api-server/src/services/accounting.rs:49-107 — process_statement_upload creates the BankStatement row then inserts each CSV line in a loop on a bare &mut PgConnection (not a transactio",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:49-107 — process_statement_upload creates the BankStatement row then inserts each CSV line in a loop on a bare &mut PgConnection (not a transaction); a mid-file CSV/date parse error (accounting.rs:75,79 ret",
+        "backend/servers/api-server/src/routes/accounting/statements.rs:51 — caller passes `&mut rls` directly (no rls.begin()), unlike sibling handlers (e.g. routes/accounting/invoices.rs:241 uses rls.begin()); user gets 400 but an orphan/partial bank statement persis"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs",
+        "backend/servers/api-server/src/routes/accounting/statements.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-scheduler-no-panic-isolation",
+      "title": "backend/servers/api-server/src/services/scheduler/mod.rs:262-288 — BackgroundScheduler::start() runs a single tokio::spawn'd `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` with no p",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:262-288 — BackgroundScheduler::start() runs a single tokio::spawn'd `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` with no per-tick panic isolation (no catch_unwind, no supervisor/rest",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:291-416 — run_scheduled_tasks dispatches ~16 maintenance tasks (publish_scheduled_announcements, dispatch_announcement_notifications, activate/close votes + vote notifications, cleanup_sessions, prune_su"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-scheduler-burst-ticks",
+      "title": "backend/servers/api-server/src/services/scheduler/mod.rs:276 — `interval(Duration::from_secs(self.config.interval_secs))` (default 60s, mod.rs:81) uses tokio's default MissedTickBehavior::Burst and is",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:276 — `interval(Duration::from_secs(self.config.interval_secs))` (default 60s, mod.rs:81) uses tokio's default MissedTickBehavior::Burst and is never reconfigured (grep for MissedTickBehavior across serv"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-syndication-worker-missing",
+      "title": "backend/servers/api-server/src/services/syndication.rs:289 — `SyndicationService::process_syndication_job` is the only code that would actually push a listing to an external portal and flip syndicatio",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289 — `SyndicationService::process_syndication_job` is the only code that would actually push a listing to an external portal and flip syndication status, but it has ZERO production callers (grep for `proc",
+        "backend/servers/api-server/src/services/syndication.rs:287-333 — even if a worker were wired up, `process_syndication_job` is an explicit placeholder: the PUBLISH branch logs `\"Simulate publishing to portal\"`, fabricates a fake external id (`format!(\"{}_{}\", p"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/syndication.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-email-noop-success",
+      "title": "backend/servers/api-server/src/services/actions/email.rs:86-112 — the workflow-automation `SEND_EMAIL` action executor (`EmailExecutor::execute`) never sends an email. It substitutes the template, val",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-112 — the workflow-automation `SEND_EMAIL` action executor (`EmailExecutor::execute`) never sends an email. It substitutes the template, validates the `to` address, then just `tracing::info!(\"Workflow"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/email.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-notify-noop-success",
+      "title": "backend/servers/api-server/src/services/actions/notification.rs:161-198 — the workflow-automation `NOTIFICATION` action executor (`NotificationExecutor::execute`) is the same shipped-stub pattern as t",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:161-198 — the workflow-automation `NOTIFICATION` action executor (`NotificationExecutor::execute`) is the same shipped-stub pattern as the email action: role targets (line 117-118 'Would send to u"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/notification.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-cancel-swallowed",
+      "title": "shared/src/commonMain/.../listing/ListingRepository.kt:39-41 (and :59,74,93,112,139) — suspend network methods use `catch (e: Exception) { Result.failure(e) }`. In Kotlin coroutines CancellationExcept",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "shared/src/commonMain/.../listing/ListingRepository.kt:39-41 (and :59,74,93,112,139) — suspend network methods use `catch (e: Exception) { Result.failure(e) }`. In Kotlin coroutines CancellationException IS an Exception, so this swallows coroutine cancellation"
+      ],
+      "files": [
+        "shared/src/commonMain/.../listing/ListingRepository.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mn-kmp-sso-error-body-unguarded",
+      "title": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49,77,104,129 — the error branches of createMobileToken / validateAndLogin / getSession / refreshSession call `r",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49,77,104,129 — the error branches of createMobileToken / validateAndLogin / getSession / refreshSession call `response.body<SsoError>()` directly (no runCatching). If a no",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:174,202,297 — the newer methods (loginWithPassword/register/updateProfile) correctly guard the same parse with `runCatching { response.body<SsoError>() }.getOrElse { ... HT"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mn-kmp-nearby-tab-placeholder",
+      "title": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailTabs.kt:171-197 — the listing-detail 'Nearby' tab renders only NearbyPreviewCard, a static card showing a Map i",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailTabs.kt:171-197 — the listing-detail 'Nearby' tab renders only NearbyPreviewCard, a static card showing a Map icon + R.string.map_placeholder with no actual map/nearby dat",
+        "No corresponding map/nearby data fetch exists in the KMP shared module (grep for nearby/map data in shared/ found none) — confirms the tab is a pure UI placeholder."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailTabs.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-docdetail-alert-i18n",
+      "title": "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 — the open-document failure path raises `Alert.alert('Could not open document', 'The file viewer is unavailable on this device.'",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 — the open-document failure path raises `Alert.alert('Could not open document', 'The file viewer is unavailable on this device.')` with hardcoded English strings. The rest of the screen is",
+        "This is the only user-facing string in DocumentDetailScreen.tsx not wrapped in `t()` — the screen already imports `useTranslation` and uses `t` throughout, so this is an isolated i18n regression on the error branch."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widgetsettings-i18n",
+      "title": "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66 — `Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)` and line 79 `Alert.alert('Widgets Updat",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66 — `Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)` and line 79 `Alert.alert('Widgets Updated', 'All widgets have been refreshed.')` use hardcoded Engl",
+        "Both call sites are in the widget add / refresh success handlers, i.e. reachable on normal user interaction, not a dev-only path."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-diag-i18n",
+      "title": "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — `Alert.alert('Diagnostic Report', diagnosticReport)` uses a hardcoded English title. This screen is otherwise heavily internationalised (",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — `Alert.alert('Diagnostic Report', diagnosticReport)` uses a hardcoded English title. This screen is otherwise heavily internationalised (26 `t('...')` call sites, including its other Alerts at line"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-routes-unguarded",
+      "title": "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37-68 — route groups are composed as flat siblings inside a single <Routes> with NO top-level <ProtectedRoute> wrapper, so each group file is solely resp",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37-68 — route groups are composed as flat siblings inside a single <Routes> with NO top-level <ProtectedRoute> wrapper, so each group file is solely responsible for its own auth gating.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:466-473 — financialRoutes() renders /financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports with the page-route components directly and NO <ProtectedRoute> wrapper (the "
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-vote-create-non-atomic-orphan",
+      "title": "frontend/apps/ppt-web/src/features/voting/pages/VoteCreatePage.tsx:147 — handleSubmit() runs a non-transactional multi-step sequence under one try/catch: createVote.mutateAsync() (line 148) -> per-que",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteCreatePage.tsx:147 — handleSubmit() runs a non-transactional multi-step sequence under one try/catch: createVote.mutateAsync() (line 148) -> per-question loop of addQuestion(vote.id, ...) (line 168) -> option",
+        "If any addQuestion or publishVote call fails mid-sequence (network/validation), the already-created vote persists server-side with only a partial set of questions; the client shows a generic 'Failed to create vote' toast (lines 182-186) and resets submitting. "
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteCreatePage.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-full-page-reload",
+      "title": "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:91 — all six in-app navigation handlers assign to window.location.href for SPA routes: handlePetView (91), handlePetEdit (95), handle",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, ppt-web-ui)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:91 — all six in-app navigation handlers assign to window.location.href for SPA routes: handlePetView (91), handlePetEdit (95), handlePetCreate (129), handleVehicleView (148), handleVehicleEdit ",
+        "This is a react-router-dom SPA (useNavigate is used in 31 other files). window.location.href triggers a full document reload on every view/edit/create click, discarding in-memory React/TanStack Query state and forcing a full app re-bootstrap + re-auth/re-fetch"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-bg-workers-unsupervised",
+      "title": "backend/servers/api-server/src/main.rs:692,704,715,727 — all four long-lived background workers are started with their JoinHandle bound to a discard variable (`let _scheduler_handle = scheduler.start(",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/main.rs:692,704,715,727 — all four long-lived background workers are started with their JoinHandle bound to a discard variable (`let _scheduler_handle = scheduler.start();`, `let _push_fanout_handle = ...`, `let _quiet_hours_drai",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:277-280 — the spawned task body is `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` (push_fanout.rs:1697-1700 is the same shape). A panic anywhere inside a tick (not an Err — those are c"
+      ],
+      "files": [
+        "backend/servers/api-server/src/main.rs",
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-device-err-swallowed",
+      "title": "backend/servers/api-server/src/services/voice_commands.rs:233-237 — `let _ = self.llm_document_repo.update_voice_device_last_used(&mut *conn, device_id).await;` discards the Result with no tracing on ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:233-237 — `let _ = self.llm_document_repo.update_voice_device_last_used(&mut *conn, device_id).await;` discards the Result with no tracing on the Err branch. Every other DB call on this path uses `?` or"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-pkce-nonconst-cmp",
+      "title": "backend/servers/api-server/src/services/oauth.rs:945-946 — verify_pkce (fn at oauth.rs:939) computes `let computed = URL_SAFE_NO_PAD.encode(sha256(verifier))` then returns `computed == challenge`, a n",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:945-946 — verify_pkce (fn at oauth.rs:939) computes `let computed = URL_SAFE_NO_PAD.encode(sha256(verifier))` then returns `computed == challenge`, a non-constant-time String equality on a security-sensitive com"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-service-no-tests",
+      "title": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:24 — SsoService is a 344-line security-critical auth state-machine (owns sessionToken lifecycle + the AuthState ",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:24 — SsoService is a 344-line security-critical auth state-machine (owns sessionToken lifecycle + the AuthState StateFlow) with 13 public methods (createMobileToken, valida",
+        "coverage check: python map of commonMain public types vs all commonTest sources shows SsoService unreferenced; only trivial *Exception subclasses are otherwise uncovered"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layout-repo-println",
+      "title": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48,57,68 — three raw println(...) debug-logging calls left in committed production commonMain code (the ",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48,57,68 — three raw println(...) debug-logging calls left in committed production commonMain code (the console.log equivalent). They log only HTTP status / echoed ",
+        "grep -rni 'println' mobile-native/shared/src/commonMain --include='*.kt' returns only these three lines in the segment"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mn-kmp-portfolio-analytics-fanout",
+      "title": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-125 - getPortfolioAnalytics() calls listMyListings(limit = 100) then fans out one getListin",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:111-125 - getPortfolioAnalytics() calls listMyListings(limit = 100) then fans out one getListingAnalytics(listing.id) async per listing inside coroutineSco",
+        "Impact: on the realtor ListingAnalytics portfolio screen this is a self-inflicted request storm - it can exhaust the Ktor client connection pool, trip server-side rate limits, and (because the shared client has no HttpTimeout plugin - see the already-filed cod"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-qrscan-no-consumer-no-camera",
+      "title": "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts exports parseQRCode (line 29), getQRCodeAction (line 247) and provideScanFeedback (line 333); QRCodeGenerator.ts exports the generator — all tagged 'Ep",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts exports parseQRCode (line 29), getQRCodeAction (line 247) and provideScanFeedback (line 333); QRCodeGenerator.ts exports the generator — all tagged 'Epic 49 - Story 49.3: QR Code Scanning'. An app-wide grep (exc",
+        "There is NO camera/scanner capability wired in: a grep for expo-camera / expo-barcode-scanner / BarCodeScanner / CameraView / useCameraPermissions across src returns nothing, and frontend/apps/mobile/package.json declares no camera|barcode|scanner|vision depen"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-unwired",
+      "title": "frontend/apps/mobile/src/voice/ ships VoiceAssistant.ts and VoiceCommands.ts (plus types.ts, index.ts, VoiceCommands.i18n.test.ts). An app-wide grep for VoiceAssistant / VoiceCommands (excluding the v",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/voice/ ships VoiceAssistant.ts and VoiceCommands.ts (plus types.ts, index.ts, VoiceCommands.i18n.test.ts). An app-wide grep for VoiceAssistant / VoiceCommands (excluding the voice/ dir and *.test.*) finds ZERO consumers across frontend",
+        "This is a cross-stack completeness gap, not merely dead FE code: the backend implements the counterpart service at backend/servers/api-server/src/services/voice_commands.rs (VoiceCommandProcessor: parse_command, process_command, action_report_fault/check_balan"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/voice/"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-api-call-client-build-expect",
+      "title": "backend/servers/api-server/src/services/actions/api_call.rs:308 — ApiCallExecutor::with_ip_resolver() does `reqwest::Client::builder().timeout(60s).user_agent(..).redirect(..).dns_resolver(SsrfGuardRe",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, api-core)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:308 — ApiCallExecutor::with_ip_resolver() does `reqwest::Client::builder().timeout(60s).user_agent(..).redirect(..).dns_resolver(SsrfGuardResolver).build().expect(\"Failed to create HTTP client\")`. req",
+        "This is the exact same pattern the team already accepted and fixed in this segment: done finding code-review-api-core-push-fanout-client-build-expect ('push_fanout.rs builds 3 reqwest clients with .expect() in production constructors'). push_fanout.rs:433/626/"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-parse",
+      "title": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 — createMobileToken / validateAndLogin / getSession / refreshSession each parse the HTTP err",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 — createMobileToken / validateAndLogin / getSession / refreshSession each parse the HTTP error branch with a non-defensive `val error: SsoError = respon",
+        "The throw is caught by each method's outer `catch (e: Exception)`, so it is not a crash — but the surfaced result is wrong. In validateAndLogin (SsoService.kt:83-86 catch) the deep-link SSO login path sets `_authState.value = AuthState.Error(e.message ?: \"Unkn"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-throws",
+      "title": "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 `DecimalAsLongSerializer.deserialize` does `raw.substringBefore('.').toLong()` and :62 `DecimalA",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 `DecimalAsLongSerializer.deserialize` does `raw.substringBefore('.').toLong()` and :62 `DecimalAsDoubleSerializer.deserialize` does `raw.toDouble()` directl",
+        "These serializers were introduced specifically (per the file's own docstring, issue #2331) because a single bad monetary field decode `silently killed the whole price-tracking payload decode`. They fixed the fractional-string case but still throw on empty/malf"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-favorites-hardcoded-m2",
+      "title": "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt:651 `listingMeta` builds a user-facing label with a hardcoded unit string: `listing.areaSqm?.toInt()?.l",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt:651 `listingMeta` builds a user-facing label with a hardcoded unit string: `listing.areaSqm?.toInt()?.let { add(\"$it m²\") }` (and `listing.rooms?.let { add(\"$it+1\"",
+        "The same area label is already localized elsewhere in the same app: mobile-native/androidApp/.../ui/home/HomeScreen.kt:490 uses `stringResource(R.string.area_m2, it)`. So the FavoritesScreen card renders an unlocalized unit while the Home card renders the loca"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-provider-json-parse",
+      "title": "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:94 — getAllWidgetConfigs() does `return stored ? JSON.parse(stored) : []` with no try/catch; a corrupted/truncated AsyncStorage value at WIDGET_C",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:94 — getAllWidgetConfigs() does `return stored ? JSON.parse(stored) : []` with no try/catch; a corrupted/truncated AsyncStorage value at WIDGET_CONFIG_KEY throws an uncaught SyntaxError.",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 — getAllCachedData() has the same unguarded JSON.parse(stored) on WIDGET_DATA_KEY."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts",
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-unchecked-cast",
+      "title": "frontend/apps/mobile/src/hooks/useApi.ts:98 — apiRequest returns (await response.json()) as T with no runtime shape validation; a 2xx body that drifts from the generated type propagates undefined fiel",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:98 — apiRequest returns (await response.json()) as T with no runtime shape validation; a 2xx body that drifts from the generated type propagates undefined fields into screen rendering instead of failing cleanly.",
+        "Repo precedent: reality-web hardened this class in realtor-api.ts (parseJsonBody) and listings/[slug]/page.tsx (parseListingDetail); mobile's central helper has not adopted the guard."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useApi.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widgets-no-tests",
+      "title": "frontend/apps/mobile/src/widgets/ — WidgetDataProvider and WidgetBridge are public classes driving native widget registration/refresh, with zero test coverage; the crash path in code-review-mobile-rn-",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, mobile-rn)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/ — WidgetDataProvider and WidgetBridge are public classes driving native widget registration/refresh, with zero test coverage; the crash path in code-review-mobile-rn-widget-provider-json-parse is completely unverified."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-query-no-error",
+      "title": "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-84 — the financial DASHBOARD route component fires three useQuery calls (L70 ar-aging getARAgingReport, L75 overdue-invoices getOverdueInvoices",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-84 — the financial DASHBOARD route component fires three useQuery calls (L70 ar-aging getARAgingReport, L75 overdue-invoices getOverdueInvoices, L80 invoices listInvoices) and destructures ONLY { data, i",
+        "This is a silent-failure UX/data-integrity bug on a financial surface: misleading zeros are arguably worse than a visible error because a manager may read 'nothing overdue' and act on it. The same file already demonstrates the correct pattern in its reports se"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-units-swallow",
+      "title": "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:84-96 — useBuildingUnits fires a useQuery for the building's units (L85, queryFn GETs /units via getApiClient, L88-93) but destructures ONLY {",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:84-96 — useBuildingUnits fires a useQuery for the building's units (L85, queryFn GETs /units via getApiClient, L88-93) but destructures ONLY { data, isLoading } and returns `{ units: data ?? [], isLoadi",
+        "Notably the hook's own docstring (L78-82) records that an EARLIER silent-empty-dropdown bug was already fixed here (a raw fetch() 'bypassed the JWT interceptor and 401'd for real signed-in users, silently leaving the units dropdown empty' — fixed by routing th"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-tokens-localstorage-xss",
+      "title": "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:116-191 — tokenStorage persists BOTH the access JWT and the long-lived refresh JWT in localStorage (ACCESS_TOKEN_KEY 'ppt_access_token' L98, REFRESH_",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:116-191 — tokenStorage persists BOTH the access JWT and the long-lived refresh JWT in localStorage (ACCESS_TOKEN_KEY 'ppt_access_token' L98, REFRESH_TOKEN_KEY; getItem/setItem at L122/L130 for access, L138/L14",
+        "This is a documented/accepted MVP tradeoff, not a novel defect: L116 comment reads 'Token Storage (localStorage for MVP, httpOnly cookies later)'. Flagging it as a LOW-severity tracked-debt vector so the pending migration to httpOnly, Secure, SameSite cookies "
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-mock-data",
+      "title": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx is a DYNAMIC public route (/[locale]/realtor/[id], agent/realtor public profile) but renders 100% static mock data: L13 imports MOCK_AG",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx is a DYNAMIC public route (/[locale]/realtor/[id], agent/realtor public profile) but renders 100% static mock data: L13 imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS from ./_mock an",
+        "The contact form is also non-functional: L25-31 handleSendMessage only does setMessageSent(true)/setContactOpen(false) after an e.preventDefault() — it never POSTs the visitor's message/lead to the backend, so every 'contact this agent' submission on the publi"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "title": "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx imports NO useTranslations (grep count 0) yet is a fully user-facing page on a 4-locale portal (sk/cs/de/en). All copy is hardcoded Slo",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher tier-1d flush, reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx imports NO useTranslations (grep count 0) yet is a fully user-facing page on a 4-locale portal (sk/cs/de/en). All copy is hardcoded Slovak literals, e.g. L164 `{ label: 'Aktivne inzeraty', value:",
+        "This is the same i18n-gap class already caught and fixed repeatedly in this exact segment: done findings code-review-reality-web-comparison-view-i18n (ComparisonView.tsx), code-review-reality-web-realtor-mgmt-i18n (components/agency/RealtorManagement.tsx) and "
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
     }
   ]
 }
