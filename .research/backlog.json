@@ -13494,13 +13494,14 @@
       ],
       "evidence": [
         "3 commits in 14-day window: PR #3171 (gate add_evidence on manager role), PR #3180 (community cross-tenant IDOR coverage), PR #3183 (xtenant IDOR regression + 404 fix). Serial authz hardening on the same mutations suggests the surface area still has coverage gaps.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "cumulative re-emit 2026-10-31: now 5 touches in 14d window (was 3 at 2026-10-28); still a top-3 hotspot — no new score (cumulative-type)"
       ],
       "files": [
         "backend/servers/api-server/src/routes/violations.rs"
       ],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-10-31",
       "plan": null
     },
     {
@@ -13876,6 +13877,540 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-core-scheduler-no-panic-isolation",
+      "title": "BackgroundScheduler::start() runs a single tokio::spawn'd `loop { ticker.tick().await; self.run_scheduled_tasks().await;",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:262-288 — BackgroundScheduler::start() runs a single tokio::spawn'd `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` with no per-tick panic isolation (no catch_unwind, no supervisor/restart). A panic inside any task reached from run_scheduled_tasks propagates out of the spawned future and aborts the entire JoinHandle, permanently stopping ALL background maintenance for the process lifetime.",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:291-416 — run_scheduled_tasks dispatches ~16 maintenance tasks (publish_scheduled_announcements, dispatch_announcement_notifications, activate/close votes + vote notifications, cleanup_sessions, prune_support_tooling/layout_change/oauth_token_events, expire/send signature reminders, send_meter/payment_reminders, transition_overdue_invoices, fire_due_report_schedules). Each task's Result error is logged with `if let Err(e)` and the loop continues (good), but a panic (unexpected unwrap/slice-index/overflow in any transitively-called fn) is NOT caught — blast radius is silent total loss of announcements, vote lifecycle, session GC, invoice overdue transitions, retention pruning, and all reminders. Recommend wrapping each tick (or each task) so one panic cannot kill the whole worker. Reachability of a panic is unproven statically (tasks currently return Result), hence confidence=medium."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-scheduler-burst-ticks",
+      "title": "`interval(Duration::from_secs(self.config.interval_secs))` (default 60s, mod.rs:81) uses tokio's default MissedTickBehav",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs:276 — `interval(Duration::from_secs(self.config.interval_secs))` (default 60s, mod.rs:81) uses tokio's default MissedTickBehavior::Burst and is never reconfigured (grep for MissedTickBehavior across services/ returns zero hits). If a single run_scheduled_tasks() exceeds the 60s interval under load (it awaits ~16 sequential DB-backed tasks, several fanning out notifications), Burst makes the ticker immediately fire the backlog of missed ticks back-to-back, producing a burst of overlapping-cadence maintenance runs instead of a steady 60s cadence. Recommend ticker.set_missed_tick_behavior(MissedTickBehavior::Skip) (or Delay) so a slow tick cannot stampede."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-syndication-worker-missing",
+      "title": "`SyndicationService::process_syndication_job` is the only code that would actually push a listing to an external portal ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289 — `SyndicationService::process_syndication_job` is the only code that would actually push a listing to an external portal and flip syndication status, but it has ZERO production callers (grep for `process_syndication_job` across backend yields only its own definition). The enqueue side IS production-reachable: routes/listings.rs:546 calls `create_status_change_jobs` and routes/listings.rs:661 calls `create_publish_jobs` when a manager publishes a listing to SReality/Bezrealitky/Nehnutelnosti/Reality-Portal. Those insert rows into the `syndication` background-job queue (SYNDICATION_QUEUE, syndication.rs:15), but no scheduler task or background worker drains that queue (grep for `syndication` under services/scheduler/ is empty; the BackgroundScheduler has no syndication job). Net effect: listings are never actually syndicated and the background_jobs table accumulates unclaimed syndication rows indefinitely, silently — the manager sees the publish succeed with no error.",
+        "backend/servers/api-server/src/services/syndication.rs:287-333 — even if a worker were wired up, `process_syndication_job` is an explicit placeholder: the PUBLISH branch logs `\"Simulate publishing to portal\"`, fabricates a fake external id (`format!(\"{}_{}\", payload.portal, uuid::Uuid::new_v4())`, line 318), and calls `update_syndication_status(..., SYNCED, Some(&external_id), ...)`. STATUS_CHANGE/UPDATE/REMOVE branches (lines 334-403) likewise flip the row to SYNCED/REMOVED with no real portal API call. So wiring it as-is would record fabricated SYNCED state (and bogus external ids) for portals the listing was never actually sent to. Fix: implement the real portal API calls (or keep the queue unprocessed but surface a 'syndication not yet available' state to the manager instead of silently enqueuing dead jobs)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/syndication.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-email-noop-success",
+      "title": "the workflow-automation `SEND_EMAIL` action executor (`EmailExecutor::execute`) never sends an email. It substitutes the",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-112 — the workflow-automation `SEND_EMAIL` action executor (`EmailExecutor::execute`) never sends an email. It substitutes the template, validates the `to` address, then just `tracing::info!(\"Workflow sending email\")` and returns `ActionResult::success(json!({\"sent_to\": to, \"subject\": subject, \"sent_at\": chrono::Utc::now().to_rfc3339(), ...}))`. The comment at line 96 states 'Simulate email sending (in production, integrate with EmailService)'. This executor IS registered in the production default registry (services/actions/mod.rs:204 `registry.register(Box::new(EmailExecutor::new()))`), so any automation rule a manager builds with a send-email action reports success and records a fabricated `sent_at` while no email is ever dispatched. An actual `EmailService` exists and is used elsewhere (services/email.rs) but is not injected here. Fix: inject EmailService into EmailExecutor and send, or make the action return a not-implemented ActionError instead of fabricated success so rule authors aren't misled."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/email.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-workflow-notify-noop-success",
+      "title": "the workflow-automation `NOTIFICATION` action executor (`NotificationExecutor::execute`) is the same shipped-stub patter",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:161-198 — the workflow-automation `NOTIFICATION` action executor (`NotificationExecutor::execute`) is the same shipped-stub pattern as the email action: role targets (line 117-118 'Would send to users with role') and building-resident targets (line 128-129 'Would send to building residents') are only `tracing::debug!`-logged, never resolved; the execute body logs `\"Workflow sending notification\"` (line 183) and returns `ActionResult::success(...)` (line 198) with the comment 'In production, this would actually send notifications via the notification service'. This executor is also registered in the production default registry (services/actions/mod.rs:205 `registry.register(Box::new(NotificationExecutor::new()))`). A real `NotificationService` / push_fanout pipeline exists in the codebase but is not wired in here. Net effect: automation rules with a notification action report success but deliver nothing to tenants/managers. Fix: inject the notification service and dispatch, or return a not-implemented ActionError rather than fabricated success."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/notification.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-accounting-currency-blind-match",
+      "title": "payment matcher amount corroboration compares line.amount == (invoice.total_amount - invoice.paid_amount) with NO curren",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:197-203 — payment matcher amount corroboration compares line.amount == (invoice.total_amount - invoice.paid_amount) with NO currency comparison; line.currency (accounting.rs:89) is stored but never checked against the invoice currency anywhere in run_payment_matcher",
+        "backend/servers/api-server/src/services/accounting.rs:335 — confirm_match applies line.amount to invoice paid_amount via update_invoice_payment_status_rls regardless of currency; a CZK statement line can be suggested against and confirmed onto an EUR invoice, corrupting AR/paid totals. Full path traced: routes/accounting/statements.rs upload -> process_statement_upload -> run_payment_matcher (auto) -> suggest -> confirm_match applies cross-currency amount"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-stmt-upload-no-tx",
+      "title": "process_statement_upload creates the BankStatement row then inserts each CSV line in a loop on a bare &mut PgConnection ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:49-107 — process_statement_upload creates the BankStatement row then inserts each CSV line in a loop on a bare &mut PgConnection (not a transaction); a mid-file CSV/date parse error (accounting.rs:75,79 returns BadRequest) leaves the statement + already-inserted lines committed",
+        "backend/servers/api-server/src/routes/accounting/statements.rs:51 — caller passes `&mut rls` directly (no rls.begin()), unlike sibling handlers (e.g. routes/accounting/invoices.rs:241 uses rls.begin()); user gets 400 but an orphan/partial bank statement persists, and re-uploading the corrected file creates a duplicate statement — AR duplication / data-integrity risk"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/accounting/statements.rs",
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mn-kmp-sso-error-body-unguarded",
+      "title": "the error branches of createMobileToken / validateAndLogin / getSession / refreshSession call `response.body<SsoError>()",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-native-kmp 2026-10-29..31)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49,77,104,129 — the error branches of createMobileToken / validateAndLogin / getSession / refreshSession call `response.body<SsoError>()` directly (no runCatching). If a non-2xx response body is not valid SsoError JSON (proxy 502 HTML, empty body, truncated payload), the deserialization throws and is swallowed by the outer try/catch, masking the real HTTP status with a generic 'Unknown error' and setting AuthState.Error to the parse-exception message instead of the server reason.",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:174,202,297 — the newer methods (loginWithPassword/register/updateProfile) correctly guard the same parse with `runCatching { response.body<SsoError>() }.getOrElse { ... HTTP status fallback }`. The four SSO-token methods are inconsistent with this pattern and lose the real failure detail on malformed error bodies (user-facing auth/SSO failure path)."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mn-kmp-nearby-tab-placeholder",
+      "title": "the listing-detail 'Nearby' tab renders only NearbyPreviewCard, a static card showing a Map icon + R.string.map_placehol",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-native-kmp 2026-10-29..31)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailTabs.kt:171-197 — the listing-detail 'Nearby' tab renders only NearbyPreviewCard, a static card showing a Map icon + R.string.map_placeholder with no actual map/nearby data. The feature is non-functional in production (reachable from the listing-detail tab bar). Likely an intentional deferred stub, but there is no backing API wire-up and no tracking of the gap; flag as a completeness item so it is either backlogged for implementation or explicitly marked 'coming soon' in the UI.",
+        "No corresponding map/nearby data fetch exists in the KMP shared module (grep for nearby/map data in shared/ found none) — confirms the tab is a pure UI placeholder."
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailTabs.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-docdetail-alert-i18n",
+      "title": "the open-document failure path raises `Alert.alert('Could not open document', 'The file viewer is unavailable on this de",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-rn 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 — the open-document failure path raises `Alert.alert('Could not open document', 'The file viewer is unavailable on this device.')` with hardcoded English strings. The rest of the screen is fully internationalised (it uses `t('documents.detailLoadError')`, `t('documents.notFound')`, `t('common.retry')`, `t('common.loading')` etc.), so non-English users see an untranslated error. Fix: route both strings through react-i18next `t(...)` (e.g. `t('documents.openFailedTitle')` / `t('documents.openFailedBody')`) and add the keys to the locale bundles.",
+        "This is the only user-facing string in DocumentDetailScreen.tsx not wrapped in `t()` — the screen already imports `useTranslation` and uses `t` throughout, so this is an isolated i18n regression on the error branch."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widgetsettings-i18n",
+      "title": "`Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)` and line 79 `Alert.alert('Widge",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-rn 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66 — `Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)` and line 79 `Alert.alert('Widgets Updated', 'All widgets have been refreshed.')` use hardcoded English titles and bodies. The screen imports `useTranslation` and already calls `t('common.loading')` (line 92), so these two confirmation Alerts are i18n gaps — non-English users get untranslated success toasts. Fix: wrap all four literals in `t(...)` with interpolation for the widget name (e.g. `t('widgets.addedBody', { name })`) and add the keys to the locale files.",
+        "Both call sites are in the widget add / refresh success handlers, i.e. reachable on normal user interaction, not a dev-only path."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-diag-i18n",
+      "title": "`Alert.alert('Diagnostic Report', diagnosticReport)` uses a hardcoded English title. This screen is otherwise heavily in",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-rn 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — `Alert.alert('Diagnostic Report', diagnosticReport)` uses a hardcoded English title. This screen is otherwise heavily internationalised (26 `t('...')` call sites, including its other Alerts at lines 64/69/75 which use `t('common.error')` + `t('errors.*')`), so the diagnostic-report dialog title is an isolated i18n gap. The body (`diagnosticReport`) is raw diagnostic text and may legitimately stay untranslated, but the title should go through `t(...)` (e.g. `t('feedback.diagnosticReportTitle')`)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-routes-unguarded",
+      "title": "route groups are composed as flat siblings inside a single <Routes> with NO top-level <ProtectedRoute> wrapper, so each ",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d ppt-web-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx:37-68 — route groups are composed as flat siblings inside a single <Routes> with NO top-level <ProtectedRoute> wrapper, so each group file is solely responsible for its own auth gating.",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:466-473 — financialRoutes() renders /financial, /financial/invoices, /financial/payments, /financial/budgets, /financial/reports with the page-route components directly and NO <ProtectedRoute> wrapper (the file imports ProtectedRoute 0 times). The wrappers (e.g. FinancialDashboardPageRoute, financial.tsx:66-68) only do `const orgId = user?.organizationId ?? ''` + `enabled: !!orgId`; there is no `<Navigate to=\"/login\">` redirect. So an unauthenticated user who deep-links to a financial route gets the sensitive page shell rendered (empty data) instead of being redirected to login, and ProtectedRoute's setReturnUrl() return-to-page-after-login capture is skipped.",
+        "By contrast every other sensitive group wraps each route in <ProtectedRoute> (which redirects unauthenticated users to /login and restores the return URL): buildings.tsx (19 uses), leases.tsx (21), documents.tsx (16), meters.tsx (13), person-months.tsx (9), voting.tsx (7), reports.tsx (5), core.tsx (38). The following groups render with ZERO ProtectedRoute, matching the financial pattern: accounting.tsx (incl. /accounting/invoices, /accounting/payment-matching), ai-dashboards.tsx, disputes.tsx, iot.tsx, messaging.tsx, neighbors.tsx, outages.tsx, announcements.tsx, community.tsx, faults.tsx.",
+        "Not a server-side data leak (the API still 401s and queries are gated on orgId), but a confirmed client-side auth-gating inconsistency / defense-in-depth gap on sensitive routes (financial + accounting most notably). Fix: wrap these groups' routes in <ProtectedRoute> for parity with the rest of the app — or hoist a single <ProtectedRoute> layout route in AppRoutes.tsx so gating can't be forgotten per-group."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.ts",
+        "frontend/apps/ppt-web/src/routes/groups/financial.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-vote-create-non-atomic-orphan",
+      "title": "handleSubmit() runs a non-transactional multi-step sequence under one try/catch: createVote.mutateAsync() (line 148) -> ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d ppt-web-ui 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteCreatePage.tsx:147 — handleSubmit() runs a non-transactional multi-step sequence under one try/catch: createVote.mutateAsync() (line 148) -> per-question loop of addQuestion(vote.id, ...) (line 168) -> optional publishVote(vote.id) (line 172).",
+        "If any addQuestion or publishVote call fails mid-sequence (network/validation), the already-created vote persists server-side with only a partial set of questions; the client shows a generic 'Failed to create vote' toast (lines 182-186) and resets submitting. The user retries and creates a second (duplicate) vote, leaving the first as an orphaned/partial draft.",
+        "Fix direction: create the vote with its questions in a single batched API call; OR roll back by deleting the created vote.id on failure of a later step; OR make the handler resumable (detect an already-created vote.id on retry and continue adding questions instead of re-creating)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/voting/pages/VoteCreatePage.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-full-page-reload",
+      "title": "all six in-app navigation handlers assign to window.location.href for SPA routes: handlePetView (91), handlePetEdit (95)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d ppt-web-ui 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:91 — all six in-app navigation handlers assign to window.location.href for SPA routes: handlePetView (91), handlePetEdit (95), handlePetCreate (129), handleVehicleView (148), handleVehicleEdit (152), and the vehicle create handler.",
+        "This is a react-router-dom SPA (useNavigate is used in 31 other files). window.location.href triggers a full document reload on every view/edit/create click, discarding in-memory React/TanStack Query state and forcing a full app re-bootstrap + re-auth/re-fetch — a noticeable UX regression on an authenticated dashboard. Reachable on any row action (handlers wired directly to buttons).",
+        "Fix direction: replace the window.location.href assignments with useNavigate()/navigate(path) as the rest of the app does. (compliance/ContentModerationPage.tsx:207 has the same pattern but carries an explicit TODO(Phase-2) acknowledgement; RegistryPage does not.)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-bg-workers-unsupervised",
+      "title": "all four long-lived background workers are started with their JoinHandle bound to a discard variable (`let _scheduler_ha",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/main.rs:692,704,715,727 — all four long-lived background workers are started with their JoinHandle bound to a discard variable (`let _scheduler_handle = scheduler.start();`, `let _push_fanout_handle = ...`, `let _quiet_hours_drain_handle = ...`, `let _notification_digest_handle = ...`). Nothing awaits, polls, or re-spawns them.",
+        "backend/servers/api-server/src/services/scheduler/mod.rs:277-280 — the spawned task body is `loop { ticker.tick().await; self.run_scheduled_tasks().await; }` (push_fanout.rs:1697-1700 is the same shape). A panic anywhere inside a tick (not an Err — those are caught per-task and logged) terminates the tokio task; the loop stops permanently and the dropped handle means no supervisor detects the death or restarts it. Scheduled-announcement publish, vote activation/close, push fanout, quiet-hours drain and inactivity digests silently stop server-wide until a process restart.",
+        "This failure mode is known-real in this codebase: the regression test at backend/servers/api-server/src/services/scheduler/mod.rs:~2325 (test_metrics_lock_recovers_from_poison) documents that a prior `.lock().unwrap()` on the metrics mutex poisoned it on one panic so 'every subsequent tick panicked — silently killing all scheduled work'. The mutex idiom was fixed, but the structural gap (no panic supervision / JoinSet / abort-on-panic wiring into shutdown for the spawned worker tasks) remains, so any future reachable panic in a worker loop reproduces the silent total-outage."
+      ],
+      "files": [
+        "backend/servers/api-server/src/main.rs",
+        "backend/servers/api-server/src/services/scheduler/mod.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-voice-device-err-swallowed",
+      "title": "`let _ = self.llm_document_repo.update_voice_device_last_used(&mut *conn, device_id).await;` discards the Result with no",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_commands.rs:233-237 — `let _ = self.llm_document_repo.update_voice_device_last_used(&mut *conn, device_id).await;` discards the Result with no tracing on the Err branch. Every other DB call on this path uses `?` or logs. A persistent failure to update the device's last-used timestamp (e.g. constraint/connection error) is completely invisible in logs/metrics, so device-staleness logic that depends on last_used can silently drift with no operational signal. Low severity (best-effort write, does not corrupt the voice response), but should at least `tracing::warn!` on error rather than swallow silently."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-pkce-nonconst-cmp",
+      "title": "verify_pkce (fn at oauth.rs:939) computes `let computed = URL_SAFE_NO_PAD.encode(sha256(verifier))` then returns `comput",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d api-core 2026-10-29..31)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/oauth.rs:945-946 — verify_pkce (fn at oauth.rs:939) computes `let computed = URL_SAFE_NO_PAD.encode(sha256(verifier))` then returns `computed == challenge`, a non-constant-time String equality on a security-sensitive comparison. Reachable from the token endpoint (oauth.rs:500, exchange_code path) on every S256 PKCE exchange. Prefer a constant-time compare (e.g. subtle::ConstantTimeEq / ring::constant_time::verify_slices_are_equal) to remove the timing side-channel, matching the constant-time posture used elsewhere for secret material. Low severity (PKCE challenge is single-use and the practical attack is marginal) but it is the one secret-material comparison in this file not using a hash/CT primitive — client_secret goes through argon2 verify_password (oauth.rs:334)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-layout-repo-println",
+      "title": "three raw println(...) debug-logging calls left in committed production commonMain code (the console.log equivalent). Th",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-native-kmp 2026-10-29..31)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt:48,57,68 — three raw println(...) debug-logging calls left in committed production commonMain code (the console.log equivalent). They log only HTTP status / echoed screen name / exception message (no tokens or PII, so not a security leak), but println in KMP shared code is swallowed on Android (no logcat tag/level) and clutters the iOS console; the codebase has no other println in commonMain. Route through a proper logging abstraction (expect/actual logger or Napier) or drop them.",
+        "grep -rni 'println' mobile-native/shared/src/commonMain --include='*.kt' returns only these three lines in the segment"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/layout/LayoutRepository.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-qrscan-no-consumer-no-camera",
+      "title": "all tagged 'Epic 49 - Story 49.3: QR Code Scanning'. An app-wide grep (excluding the qrcode/ dir itself and *.test.*) fi",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-rn 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts exports parseQRCode (line 29), getQRCodeAction (line 247) and provideScanFeedback (line 333); QRCodeGenerator.ts exports the generator — all tagged 'Epic 49 - Story 49.3: QR Code Scanning'. An app-wide grep (excluding the qrcode/ dir itself and *.test.*) finds ZERO consumers of parseQRCode / getQRCodeAction / QRCodeGenerator / provideScanFeedback anywhere in frontend/apps/mobile/src. The parse+action library is dead code from the app's perspective.",
+        "There is NO camera/scanner capability wired in: a grep for expo-camera / expo-barcode-scanner / BarCodeScanner / CameraView / useCameraPermissions across src returns nothing, and frontend/apps/mobile/package.json declares no camera|barcode|scanner|vision dependency. So even though the parsing logic exists, the app physically cannot scan a QR code — there is no scanner screen and no camera module. Story 49.3's user-facing capability is unimplemented despite the supporting library being present (a feature that looks shipped by file presence but is not reachable).",
+        "Contrast confirms this is a genuine omission, not a static-analysis artifact: the sibling module qrcode/DeepLinkHandler.ts IS wired at runtime (consumed via hooks/useDeepLinkRouting.ts -> App.tsx, and Linking.addEventListener), so the unused-ness of the scanner/generator is specific, not a whole-dir quirk. Secondary latent concern for when it is eventually wired: getQRCodeAction's external_url branch (QRCodeScanner.ts:314-319) returns {action:'open_url'} for ANY http(s) URL with only a textual confirmation string and no host allowlist/scheme hardening — a scanned malicious QR would map straight to an open-URL action once a consumer exists. Suggested vector: either wire a camera scanner screen (add expo-camera, build the scan UI, consume parseQRCode + enforce getQRCodeAction confirmations with a host allowlist) or remove the dead qrcode scan/generate library and mark Story 49.3 incomplete."
+      ],
+      "files": [
+        "frontend/apps/mobile/package.js",
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-voice-module-unwired",
+      "title": "no screen, navigation entry, or App.tsx imports the voice module.",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-rn 2026-10-29..31)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/voice/ ships VoiceAssistant.ts and VoiceCommands.ts (plus types.ts, index.ts, VoiceCommands.i18n.test.ts). An app-wide grep for VoiceAssistant / VoiceCommands (excluding the voice/ dir and *.test.*) finds ZERO consumers across frontend/apps/mobile/src — no screen, navigation entry, or App.tsx imports the voice module.",
+        "This is a cross-stack completeness gap, not merely dead FE code: the backend implements the counterpart service at backend/servers/api-server/src/services/voice_commands.rs (VoiceCommandProcessor: parse_command, process_command, action_report_fault/check_balance/check_meter/etc., persisted via llm_document_repo.create_voice_command). So the server side of voice assistant is built and RLS-scoped, but the mobile client that would drive it is present-yet-unwired — the feature cannot be exercised end-to-end from the app.",
+        "Impact low-medium: no runtime crash (the module simply never runs), but a built feature library with a live backend is silently inert, which both misrepresents delivery status and risks bit-rot. Confidence medium: verified no static consumer via app-wide grep; RN does not use dynamic require for these modules. Suggested vector: either wire the voice entry point (a screen/button that instantiates VoiceAssistant and calls the /voice backend) or explicitly defer and mark the mobile voice story incomplete so the backend endpoint isn't left as an untested surface."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_commands.rs"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mnk-portfolio-analytics-silent-drop",
+      "title": "getPortfolioAnalytics fans out one getListingAnalytics(listing.id) call per listing via `async { ... .getOrNull() }.awai",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-native-kmp 2026-10-29..31)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt:118-124 — getPortfolioAnalytics fans out one getListingAnalytics(listing.id) call per listing via `async { ... .getOrNull() }.awaitAll().filterNotNull()`. A per-listing analytics call that fails (timeout, 5xx, auth lapse) returns null and is silently dropped, so the folded portfolio totals (totalViews/totalInquiries/totalFavorites, lines 130-139) silently UNDERCOUNT and the realtor is shown wrong figures with no error and no partial-data indicator — the outer Result stays success.",
+        "Same block fans out up to 100 concurrent requests unbounded (listMyListings(limit = 100) at :113 feeds the map), with no concurrency cap/semaphore — a realtor with a large portfolio issues up to 100 simultaneous HTTP requests on one analytics screen open, risking connection-pool exhaustion / server rate-limit rejections that then feed back into the silent-undercount above.",
+        "Confidence medium: static trace of the fan-out and filterNotNull is unambiguous, but the real-world failure rate / whether the server caps the client was not runtime-verified."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "code-review-mnk-portfolio-analytics-partial-untested",
+      "title": "getPortfolioAnalytics has coverage only for happy-path folding: getPortfolioAnalytics_folds_per_listing_series_by_date (",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d mobile-native-kmp 2026-10-29..31)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt — getPortfolioAnalytics has coverage only for happy-path folding: getPortfolioAnalytics_folds_per_listing_series_by_date (line 155) and getPortfolioAnalytics_keeps_days_with_inquiries_but_zero_views (205). There is NO test exercising the partial-failure path where one or more getListingAnalytics calls fail and are dropped by filterNotNull (PortalListingsRepository.kt:118-124).",
+        "Because the silent-undercount behaviour of finding code-review-mnk-portfolio-analytics-silent-drop is untested, a future change (e.g. deciding to fail the whole call, or to surface a partial flag) has no regression guard, and the current questionable behaviour is effectively frozen by omission.",
+        "Confidence medium: test-file enumeration is exact; the judgement that the partial-failure branch is important is a reviewer call."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonTest/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepositoryTest.kt"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "title": "ppt-web PR #3186 touched routes/groups/iot.tsx without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "PR #3186 (code-review-ppt-web-core-iot-ws-hasgivenup-dropped) merged 2026-10-30 20:36 UTC touched frontend/apps/ppt-web/src/routes/groups/iot.tsx (ppt-web route trigger per screen-map.yml) + feature IotDashboardPage, but NO docs/screens/ppt/*.md file was updated in the diff. IoT dashboard surfaces a new offline/hasGivenUp UI state — the screen-map should document it.",
+        "Heuristic: route-touched-without-screen-doc is a best-effort flag; surface for human review (false-positives when the route is purely shell / aggregates multiple screens).",
+        "Confidence medium: route trigger set matched; whether iot.tsx has a corresponding screen-map not independently verified at this run (would need /screens query)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx",
+      "title": "Churn hotspot: reality-web agency/[slug]/page.tsx — 5 touches in 14d (new hotspot)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-10-17..31"
+      ],
+      "evidence": [
+        "git log --since=2026-10-17 origin/dev --name-only: `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx` touched 5 times in the 14d window — new top-3 hotspot (was absent from prior hotspot_history).",
+        "Suggests page-level churn around realtor-api shape validation / safe-error log redaction / i18n price fix (noted in prior roadmap 2026-10-26). A page-level test (SSR 404, locale, slug edge cases) is missing per pm-qa 2026-10-31 action-list item."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
     }
   ]
 }

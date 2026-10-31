@@ -244,14 +244,14 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign [done: merged in #3188 2026-10-30 — 403→404 contract fixed in assign_violation]",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
       "depends_on": [
         "UNRESOLVED:pm-security"
       ],
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-10-28",
       "first_open_at": "2026-10-28T11:00:00Z"
@@ -493,7 +493,139 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-scrum-master-human-review-sweep-6-prs-2026-10-31",
+      "action": "Human review pass on the 6 merged needs-human-review PRs #3185/#3186/#3188/#3189/#3190/#3191, prioritising #3188 (security IDOR contract change) and #3190 (session leak)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-violations-prs-sequence-3171-3075",
+      "action": "Land #3171 (add_evidence manager role gate), then rebase and finish #3075 (violations number-count race) sequentially; serialize merges on violations.rs",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-triage-security-drafts-3192-3193-3198",
+      "action": "Triage security-flavoured drafts #3192 (appeal no status guard), #3193 (moderation report flood), #3198 (os-rng expect panics): mark ready and request review",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-resolve-3108-portfolio-summary-500",
+      "action": "Resolve #3108 (owner-analytics portfolio-summary 500 schema drift): fix migration/query mismatch and un-draft",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-decision-3119-and-finish-3197",
+      "action": "Get reviewer decision on #3119 (NewsScreen i18n defaultValue) and un-draft/finish #3197 (reality-web listing-edit price-zero)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-scrum-master-churn-hotspot-investigation-2026-10-31",
+      "action": "Investigate churn hotspots (reality-web agency/[slug]/page.tsx, deny.toml, migration.rs) for instability; run coverage scan to refresh planning",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-mobile-native-kmp-runway-decision",
+      "action": "Route the two ready mobile-native-kmp plans (inquiries-response-contract, create-listing-not-wired) to a runner with Android egress, OR explicitly park them as 'operator-gated' so they stop counting as ready",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-inquiries-jvm-contract-test",
+      "action": "Add a JSON-contract test for /inquiries (decode recorded server fixture with kotlinx-serialization) that runs in commonTest/JVM layer with no AGP; or a backend OpenAPI-vs-DTO contract check",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-triage-3119-newsscreen-i18n",
+      "action": "Triage #3119 (NewsScreen i18n defaultValue, 13d non-draft, no reviewDecision): request a review, merge, or convert to draft/close with a reason within 2 days",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-regression-test-gating-drafts-3192-3193-3197-3198",
+      "action": "Gate drafts #3192/#3193/#3197/#3198 on a regression-test checklist before ready-for-review (each needs failing-before/passing-after test)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-authz-matrix-violations-and-agency-page-tests",
+      "action": "Add role×endpoint authz matrix tests for violations.rs (incl. 404-not-403 existence-leak); add page-level tests for reality-web agency/[slug]/page.tsx (SSR, locale, slug 404)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
+    },
+    {
+      "id": "pm-qa-schedule-open-test-gap-items",
+      "action": "Schedule open test-gap backlog (comparison-parse-shape localStorage tamper first; then toast-setstate-after-unmount, invoice-feature-no-i18n, listing-edit-i18n-sk)",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-31"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-10-31T03:14:30Z"
 }

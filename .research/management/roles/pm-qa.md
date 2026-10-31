@@ -1,50 +1,43 @@
-# pm-qa — QA / Test lens (2026-08-25)
+# pm-qa
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues. Previous run: 2026-06-15 (71 days stale)._
+_Generated: 2026-10-31 — daily routine Phase 1.6 rotating role_
 
-## Role JSON
+## Summary
 
-```json
-{
-  "role": "pm-qa",
-  "summary": "13 PRs merged in this window fixed real defects but 7 of them lack the test that would guard against re-regression — the auto-fix loop is now producing enough follow-up-issue-and-close activity that a QA test-shadow discipline is the next lever. The atomic-claim concurrency test (#2834 / #2831 closure) and the booking-connect authz test (#2821) are the two high-priority gaps this run.",
-  "next_actions": [
-    {"action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / closed #2831) — assert at-most-once delivery under 2 racing api-server replicas contending on the same held-notification batch", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Integration test spins up 2 api-server replicas against shared Postgres + Redis, both drain the same held-notification set, assertion: exactly-one send per (user, channel, notification_id)."},
-    {"action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable before this window)", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Test attempts direct-connect credential write as (tenant, staff, admin-of-other-org) roles; asserts 403; asserts manager succeeds."},
-    {"action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Jest-expo test renders VoteDetailScreen in the loading-then-loaded transition; asserts no React warning; snapshot stable."},
-    {"action": "Add fuzz/property test for CSV export sanitizer (#2827 / closed #2822) — CR × LF × CRLF × formula-injection prefixes × every export column type", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "proptest crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × column-type; asserts no raw newline, no formula prefix escape, header preserved."},
-    {"action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test encrypts token → writes DB row → reads back → decrypts → equality; additional assertion: DB byte-inspection does not contain plaintext token substring."},
-    {"action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / closed #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Vitest render test opens dialog with assessment A, types reason/notes, cancels, opens with assessment B; asserts inputs empty."}
-  ],
-  "risks": [
-    {"risk": "3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them", "probability": "high", "impact": "medium", "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it."},
-    {"risk": "PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race — the exact scenario the fix was written for is unverified", "probability": "medium", "impact": "high", "mitigation": "Add integration test with 2 racing api-server replicas contending on the same held-notification batch; assert at-most-once delivery."},
-    {"risk": "PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest — a future field-rename or key-derivation change could silently store plaintext", "probability": "medium", "impact": "high", "mitigation": "Add unit + integration test covering encrypt(token) → DB row → decrypt(row) → token equality across Alexa/Google/fallback; assert stored bytes are not the plaintext token."},
-    {"risk": "PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs — formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class and remain unfuzzed", "probability": "medium", "impact": "medium", "mitigation": "Add a property/fuzz test crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × every export column type."},
-    {"risk": "Auto-fix loop closed 7/7 in-window follow-ups but the same-window close creates the illusion the fixes are proven — 5 of the 7 shipped without a regression test. The loop's compensating-transaction property masks a growing test-shadow debt.", "probability": "high", "impact": "medium", "mitigation": "Adopt a policy: any dispatcher-spawned fix PR requires a failing-on-main test file in the same PR before it can enter the merge queue; enforce via CI diff-guard."}
-  ],
-  "open_questions": [
-    "Should the mobile-rn ESLint gate (react-hooks + no-hardcoded-strings) be blocking on first adoption or warn-only for one sprint to let the existing violations be fixed batch-wise?",
-    "Is there an existing PPT test harness for spinning up 2 api-server replicas against shared Postgres+Redis, or does the atomic-claim concurrency test need new fixture infra?",
-    "Do we have canonical fuzz-corpus discipline for sanitizers (CSV, XSS, HTML), or is each sanitizer testing its own inputs today?",
-    "The 'test-shadow' pattern (fix PR without regression test) — is the pm-qa Definition-of-Done gate advisory or blocking? DEC-001-style formalization needed?"
-  ],
-  "decisions_needed": [
-    "Should any dispatcher-spawned fix PR require a failing-on-main test file in the same PR before it can enter the merge queue (enforced via CI diff-guard)? — owner: pm-tech-lead + pm-qa",
-    "Frontend mobile lint gate rollout — blocking on first adoption vs warn-only for one sprint? — owner: pm-frontend + pm-qa",
-    "Fuzz-corpus discipline for shared sanitizers (CSV, XSS, HTML, JSON) — do we ship a shared proptest corpus crate under backend/crates/? — owner: pm-tech-lead"
-  ]
-}
-```
+Test discipline on research-driven PRs is strong this week (5 of 6 merged PRs shipped regression tests; #3188 is covered by earlier #3183/#2744, and #3190 is a test-only audit). The real gaps are structural. Two ready mobile-native-kmp plans cannot land in the cloud runner, 5 recently touched hotspots lack a coverage view, and #3119 plus the open test-gap backlog are going stale. Based on the supplied Phase 1 data plus sprint-status.yaml only; I did not verify PR contents, CI results, or the churned files.
 
-## Notes
+## Next actions
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-09-25 (assuming ~30-day-per-role cadence).
-- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-qa 2026-08-25"`; four risks and one carried risk-flavor appended to `risks.json`.
-- Coverage epic-80 (rotation idx 5) re-checked — all 3 stories still `done`; last_checked stamped 2026-08-25. No PR in this window touched dispute routes.
-- Merged-PR observations that shaped this run:
-  - #2835 fixed a React `rules-of-hooks` violation in mobile-rn VoteDetailScreen — a `eslint-plugin-react-hooks` lint gate on frontend/apps/mobile would have caught this before code review.
-  - #2836 / #2837 shipped hardcoded English strings in mobile-rn — same lint story, different rule (`i18next/no-literal-string`).
-  - #2834 atomic-claim fix for quiet-hours drain — closes #2831 but is the exact scenario a >1-replica concurrency test should own.
-  - #2838 centralized voice OAuth token encryption — should ship with a round-trip test as a matter of hygiene.
-- Auto-review loop closed 7/7 in-window; net test-shadow debt grew by ~5 fixes-without-tests (raised as pm-qa risk this run).
+- [high] Route the two ready mobile-native-kmp plans (inquiries-response-contract, create-listing-not-wired) to a runner with Android egress (local/operator or a CI job with AGP access), or mark them 'operator-gated' in the plan index — dependency: pm-devops — DoD: Each plan has an assigned executable runway, or is explicitly parked with an owner, so it stops counting as 'ready'
+- [high] Add a JSON-contract test for /inquiries (decode a recorded server fixture with kotlinx-serialization, covering the missing field behind MissingFieldException) that runs in the commonTest/JVM layer with no AGP, or a backend OpenAPI-vs-DTO contract check — dependency: pm-backend — DoD: A test fails on the current contract mismatch and can run without the Android toolchain
+- [medium] Triage #3119 (NewsScreen i18n defaultValue, open 13d, non-draft, no reviewDecision): request a review or merge, or convert to draft/close with a reason. Confirm it ships a test asserting localized strings with no defaultValue fallback — dependency: pm-dev — DoD: #3119 has a reviewDecision, or is merged or closed, within 2 days
+- [medium] Gate the open drafts #3192, #3193, #3197, #3198 on a regression-test checklist before ready-for-review. Each needs a negative or edge test: appeal status guard illegal transitions, duplicate report dedup race, price=0 and NaN, RNG failure path — dependency: pm-dev — DoD: Each PR body lists the test file and the failing-before/passing-after evidence
+- [medium] Add a coverage review for hotspots reality-web agency/[slug]/page.tsx (5 changes in 14d) and backend violations.rs (5 changes in 14d), plus compliance_wave1b_tests.rs. Check for a page-level test (SSR 404, locale, slug edge cases) and a role-by-endpoint authz matrix for violations (403 vs 404 per role) — dependency: pm-dev — DoD: A matrix of role x endpoint x expected status exists as tests, and a page test exists for the agency slug route
+- [low] Schedule the open test-gap backlog items (comparison-parse-shape localStorage tamper crash first; then toast-setstate-after-unmount, invoice-feature-no-i18n, listing-edit-i18n-sk), and add a defensive-parse test for the tamper case — dependency: none — DoD: Comparison parse has a test with malformed localStorage and does not crash; the remaining items are ticketed with owners
+
+## Risks
+
+- [high / high] mobile-native-kmp has high-confidence ready plans that are structurally unlandable in the cloud runner (AGP egress blocked, #2652). Known runtime bugs (MissingFieldException on every /inquiries call, realtor submit hardwired to NotImplementedError) persist in the Reality mobile app with no test net or delivery path
+  - Mitigation: Operator or local runway, JVM-only contract tests, and a release-notes caveat or feature flag until fixed
+- [medium / high] Repeated authz and IDOR patching in violations.rs (5 changes in 14d, including 403->404). Regressions could re-open cross-tenant existence leaks if the role x endpoint matrix is not exhaustive
+  - Mitigation: Table-driven authz tests across all violation endpoints (anonymous, tenant, other-org manager, owner), including the 404-not-403 existence-leak assertion
+- [high / medium] UC-ACC Phase-A accounting has been in review for 91 days (#2555, #2559), operator-gated. Accounting involves money handling, so the longer it waits the larger the unreviewed test and diff surface and the harder the merge, and no release-readiness signal exists for it
+  - Mitigation: Operator decision on merge, split or close; rebase and re-run CI; list the accounting rounding and NaN edge cases alongside the AccountingInvoiceForm guard from #3191
+- [medium / medium] Coverage is reactive rather than preventive. The sprint-status.yaml header still names Epic 6/7A/8A/10A even though every epic is done (reconciled 2026-10-26), so the active sprint has no defined acceptance criteria to review for post-MVP hardening. Also, 4 drafts and #3119 sit open without explicit test gating
+  - Mitigation: Define a hardening sprint goal and exit criteria, and require a regression test or a documented waiver per fix PR
+- [medium / low] Client-side robustness gaps remain open: the localStorage tamper crash in reality-web comparison, the toast setState after unmount, and missing i18n in the invoice and listing-edit sk locales. These can surface as user-visible crashes or untranslated UI in the sk/cs/de markets
+  - Mitigation: Fix with unit tests; add an i18n key-parity lint or test across sk, cs, de, en
+
+## Open questions
+
+- Is there any non-cloud runner (a self-hosted or operator machine) that can execute mobile-native Gradle builds for the two ready KMP plans, and who owns it?
+- Do #3183/#2744 cover all violations.rs role/authz paths changed in the last 14 days, or only the 403->404 IDOR case?
+- Does the agency/[slug]/page.tsx hotspot have any existing test (SSR, ISR, 404, locale), and what drove 5 changes in 14 days?
+- What is the blocking reason for #3119 (no reviewer assigned, or CI failing) and does it include a test?
+- What is the release-readiness target (a dev->main cut date) for post-MVP hardening, and are #2555/#2559 in or out of scope for it?
+
+## Decisions needed
+
+- Decide whether the two unlandable KMP plans move to an operator-run lane or are deprioritized, which would stop them showing as ready — owner: pm-orchestrator
+- Decide whether #2555/#2559 UC-ACC Phase-A are merged, split, or closed after 91 days — owner: operator/pm-po
+- Decide on a policy that fix PRs must include a regression test or an explicit waiver — owner: pm-qa/pm-dev
