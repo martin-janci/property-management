@@ -212,78 +212,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-neighbors-stale-token-usememo",
-      "action": "useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T02:41:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-iot-ws-hasgivenup-dropped",
-      "action": "useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-27T02:41:56Z (score=1 conf=medium vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T02:41:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
-      "id": "gh-issue-3187",
-      "action": "Failing test on dev blocks backend CI: cross_org_assign_violation_is_not_found (assign returns 403, expects 404) (Closes #3187)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-27T08:26:25Z (#3187)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T08:26:25Z",
-      "issue_ref": {
-        "number": 3187,
-        "url": "https://github.com/martin-janci/property-management/issues/3187",
-        "labels": [
-          "bug",
-          "security",
-          "follow-up"
-        ]
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-vote-detail-ranked-no-order",
-      "action": "VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both at L452-453) — no rank position is shown or captured, so a ranked ballot cannot express preference order and submits a bare option set as answers",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "open",
-      "source": "rotating-expert-review 2026-10-27 (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-27T22:30:00Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
       "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
       "owner_role": "pm-frontend",
@@ -301,18 +229,6 @@
       }
     },
     {
-      "id": "pm-frontend-ppt-web-authed-roots-session-leak-2026-10-28",
-      "action": "ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups — TanStack caches leak across users on a shared workstation; audit all feature-group root query keys",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
       "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
@@ -321,30 +237,6 @@
       "depends_on": [
         "UNRESOLVED:pm-qa"
       ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
-      "id": "pm-frontend-reality-web-share-comparison-404-2026-10-28",
-      "action": "reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s; map to canonical GET endpoint or implement the missing route",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
-      "id": "pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28",
-      "action": "reality-web listing detail SSR crashes on partial 200 body — JSON-LD build dereferences undefined fields; add defensive guards + unit test for missing-field body",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-10-28",
@@ -399,74 +291,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
-      "action": "ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift",
-      "action": "ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-os-rng-expect-panics",
-      "action": "reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listing-edit-price-zero",
-      "action": "reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
       "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
       "owner_role": "pm-qa",
@@ -501,23 +325,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-connstatus-div-as-button-role",
-      "action": "ppt-web ConnectionStatus renders <div role=\"status\"> as the reconnect button — a11y role mismatch",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
       "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
       "owner_role": "pm-tech-lead",
@@ -532,23 +339,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
-      "action": "ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
       }
     },
     {
@@ -569,54 +359,23 @@
       }
     },
     {
-      "id": "code-review-reality-server-reports-status-filter-unvalidated",
-      "action": "reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum",
-      "owner_role": "pm-devops",
-      "priority": "low",
+      "id": "gh-issue-3206",
+      "action": "Follow-up: ranked-ballot a11y labels/hint render raw i18n keys — missing voting.* keys + no-op `t() ?? literal` fallback (PR #3189) (Closes #3206)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=dx)",
+      "source": "dispatcher-issue-ingest 2026-10-31T18:30:41Z (#3206)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
-      }
-    },
-    {
-      "id": "code-review-reality-web-comparison-parse-shape",
-      "action": "reality-web comparison-context JSON.parse(localStorage) with no shape check — tampered value crashes .some(...)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listing-edit-i18n-sk",
-      "action": "reality-web listing-edit page hardcodes Slovak user-facing strings — i18n gap on cs/de/en locales",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
+      "first_open_at": "2026-10-31T18:30:41Z",
+      "issue_ref": {
+        "number": 3206,
+        "url": "https://github.com/martin-janci/property-management/issues/3206",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],

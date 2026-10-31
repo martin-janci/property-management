@@ -460,9 +460,104 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Inserat bearbeiten",
+      "breadcrumbAccount": "← Mein Konto",
+      "breadcrumb": "Inserat #{id} bearbeiten",
+      "stepLabel": "Schritt {step} von {total}: {stepTitle}",
+      "asideTitle": "Schritte",
+      "back": "← Zurück",
+      "next": "Weiter →",
       "save": "Änderungen speichern",
+      "saving": "Speichern…",
+      "loading": "Inserat wird geladen…",
+      "loadFailed": "Das Inserat konnte nicht geladen werden.",
+      "backToAccount": "← Zurück zum Konto",
+      "priceInvalid": "Geben Sie einen gültigen Preis größer als 0 € ein (Schritt 4).",
+      "saveFailed": "Speichern fehlgeschlagen, bitte versuchen Sie es erneut.",
       "success": "Inserat gespeichert!",
-      "title": "Inserat bearbeiten"
+      "successBody": "Die Änderungen am Inserat #{id} wurden erfolgreich gespeichert.",
+      "viewListing": "Inserat ansehen",
+      "moreEdits": "Weitere Änderungen",
+      "steps": {
+        "type": {
+          "title": "Typ & Lage",
+          "description": "Immobilientyp und Adresse"
+        },
+        "details": {
+          "title": "Details",
+          "description": "Fläche, Zimmer, Etage"
+        },
+        "photos": {
+          "title": "Fotos",
+          "description": "Fotos verwalten"
+        },
+        "price": {
+          "title": "Preis",
+          "description": "Angebotspreis aktualisieren"
+        },
+        "summary": {
+          "title": "Zusammenfassung",
+          "description": "Prüfen und speichern"
+        }
+      },
+      "fields": {
+        "transactionType": "Art des Geschäfts",
+        "propertyType": "Immobilientyp",
+        "address": "Adresse",
+        "addressPlaceholder": "Straße und Hausnummer",
+        "city": "Stadt / Gemeinde",
+        "cityPlaceholder": "z. B. Bratislava",
+        "area": "Fläche (m²)",
+        "areaPlaceholder": "z. B. 72",
+        "rooms": "Anzahl der Zimmer",
+        "roomsPlaceholder": "z. B. 3",
+        "floor": "Etage",
+        "floorPlaceholder": "z. B. 4",
+        "totalFloors": "Etagen insgesamt",
+        "totalFloorsPlaceholder": "z. B. 8",
+        "yearBuilt": "Baujahr",
+        "yearBuiltPlaceholder": "z. B. 2005",
+        "description": "Beschreibung",
+        "price": "Preis (€)",
+        "priceNegotiable": "Preis verhandelbar",
+        "status": "Status des Inserats"
+      },
+      "transactionOptions": {
+        "sale": "Verkauf",
+        "rent": "Miete"
+      },
+      "propertyOptions": {
+        "apartment": "Wohnung",
+        "house": "Haus",
+        "land": "Grundstück",
+        "commercial": "Gewerbe"
+      },
+      "statusOptions": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "draft": "Entwurf"
+      },
+      "photos": {
+        "existing": "Vorhandene Fotos",
+        "alt": "Foto",
+        "remove": "Foto entfernen",
+        "addNew": "Neue Fotos hinzufügen",
+        "addedCount": "+ {count} neue Fotos"
+      },
+      "summary": {
+        "title": "Zusammenfassung der Änderungen",
+        "type": "Typ",
+        "location": "Lage",
+        "area": "Fläche",
+        "rooms": "Zimmer",
+        "floor": "Etage",
+        "year": "Baujahr",
+        "price": "Preis",
+        "status": "Status",
+        "photos": "Fotos",
+        "negotiable": "(verhandelbar)",
+        "photosValue": "{existing} vorhanden + {added} neu"
+      }
     },
     "priceMap": {
       "clickHint": "Klicken Sie auf einen Bezirk für detaillierte Statistiken.",

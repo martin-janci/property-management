@@ -1,0 +1,56 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-31",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven; claimable backlog below floor (14 < 36). Oldest-unreviewed non-saturated segment selected: mobile-rn (review_cursor 2026-10-27, 0 open findings). Frontend expert primary + Tester secondary. Scope: frontend/apps/mobile/src/.",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-widget-provider-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:94 — getAllWidgetConfigs() does `return stored ? JSON.parse(stored) : []` with no try/catch; a corrupted/truncated AsyncStorage value at WIDGET_CONFIG_KEY throws an uncaught SyntaxError.",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 — getAllCachedData() has the same unguarded JSON.parse(stored) on WIDGET_DATA_KEY.",
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts:108 — updateWidget() calls getAllWidgetConfigs() OUTSIDE the try block, so the SyntaxError propagates uncaught out of the widget refresh path.",
+        "Contrast: NFCCredentialManager.ts (226, 353) explicitly catches the corrupted-stored-JSON case — the widget provider should apply the same handling instead of crashing."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-unchecked-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:98 — apiRequest returns (await response.json()) as T with no runtime shape validation; a 2xx body that drifts from the generated type propagates undefined fields into screen rendering instead of failing cleanly.",
+        "Repo precedent: reality-web hardened this class in realtor-api.ts (parseJsonBody) and listings/[slug]/page.tsx (parseListingDetail); mobile's central helper has not adopted the guard."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-widgets-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/ — WidgetDataProvider and WidgetBridge are public classes driving native widget registration/refresh, with zero test coverage; the crash path in code-review-mobile-rn-widget-provider-json-parse is completely unverified."
+      ],
+      "expert": "tester"
+    }
+  ]
+}

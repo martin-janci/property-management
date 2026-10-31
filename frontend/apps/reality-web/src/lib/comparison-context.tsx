@@ -12,6 +12,37 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 const MAX_COMPARISON_ITEMS = 4;
 const STORAGE_KEY = 'ppt-comparison';
 
+/**
+ * Runtime shape guard for a persisted comparison entry.
+ *
+ * `JSON.parse` only rejects malformed JSON — a tampered or corrupt stored value
+ * that is still valid JSON (e.g. `{}`, `"x"`, `42`, `null`, `[{}]`) parses fine
+ * but is not an array of listings. Feeding that straight into state makes the
+ * array operations downstream (`.some`, `.map`, `.filter`, `.length`) throw and
+ * crash the provider. We only ever key off `id`, so an entry counts as usable
+ * when it is an object carrying a string `id`.
+ */
+function isStoredListing(value: unknown): value is ListingSummary {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { id?: unknown }).id === 'string'
+  );
+}
+
+/**
+ * Parse a raw localStorage string into a safe listing array. Any malformed
+ * value (bad JSON, non-array, or an array with unusable entries) degrades
+ * gracefully to the usable subset — never throws.
+ */
+function parseStoredListings(raw: string): ListingSummary[] {
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+  return parsed.filter(isStoredListing);
+}
+
 interface ComparisonContextValue {
   listings: ListingSummary[];
   isInComparison: (listingId: string) => boolean;
@@ -37,10 +68,15 @@ export function ComparisonProvider({ children }: { children: React.ReactNode }) 
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        setListings(parsed);
+        const parsed = parseStoredListings(stored);
+        if (parsed.length > 0) {
+          setListings(parsed);
+        } else {
+          // Nothing usable in the stored value — drop it.
+          localStorage.removeItem(STORAGE_KEY);
+        }
       } catch {
-        // Invalid data, clear it
+        // Invalid JSON, clear it
         localStorage.removeItem(STORAGE_KEY);
       }
     }

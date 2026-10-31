@@ -11,12 +11,46 @@ import type {
 } from '@ppt/api-client';
 import { type FormEvent, useMemo, useState } from 'react';
 
+/**
+ * Parse a numeric <input> value, normalizing the empty/invalid case to 0.
+ * `parseFloat('')` returns NaN, which would otherwise flow into item state and
+ * produce NaN line totals that bypass the submit guard. Non-finite results
+ * (NaN, ±Infinity) collapse to 0 so totals stay a real number.
+ */
+function parseNumericInput(value: string): number {
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 const VAT_RATE_OPTIONS: { label: string; value: AccountingVatRate }[] = [
   { label: 'Standard (21% CZ / 20% SK)', value: 'standard' },
   { label: 'Reduced (10%)', value: 'reduced' },
   { label: 'First Reduced (15% CZ)', value: 'first_reduced' },
   { label: 'Zero (0%)', value: 'zero' },
 ];
+
+/**
+ * Resolve the effective VAT rate (%) for a line item. A named `vatRateType`
+ * derives the rate from the invoice country; absent a named type the custom
+ * `vatRate` the user typed is used verbatim. This is the single source of truth
+ * for the rate shown in the UI AND persisted in the payload — keeping them in
+ * sync so a stored invoice can never drift from what the user saw (e.g. a SK
+ * standard line showing 20% must not persist the stale default 21%).
+ */
+function resolveVatRate(item: AccountingCreateInvoiceItem, country: 'CZ' | 'SK'): number {
+  switch (item.vatRateType) {
+    case 'standard':
+      return country === 'CZ' ? 21 : 20;
+    case 'reduced':
+      return 10;
+    case 'first_reduced':
+      return country === 'CZ' ? 15 : 10;
+    case 'zero':
+      return 0;
+    default:
+      return item.vatRate;
+  }
+}
 
 interface AccountingInvoiceFormProps {
   contacts: AccountingContact[];
@@ -52,15 +86,7 @@ export function AccountingInvoiceForm({
 
     for (const item of items) {
       const b = item.qty * item.unitPrice;
-      let rate = item.vatRate;
-
-      if (item.vatRateType) {
-        if (item.vatRateType === 'standard') rate = country === 'CZ' ? 21 : 20;
-        else if (item.vatRateType === 'reduced') rate = 10;
-        else if (item.vatRateType === 'first_reduced') rate = country === 'CZ' ? 15 : 10;
-        else if (item.vatRateType === 'zero') rate = 0;
-      }
-
+      const rate = resolveVatRate(item, country);
       const v = b * (rate / 100);
       base += b;
       vat += v;
@@ -77,6 +103,23 @@ export function AccountingInvoiceForm({
       return;
     }
 
+    // Normalize each item's vatRate to the rate the UI derived and displayed, so
+    // the persisted payload matches the totals the user saw (no stale vatRate).
+    const submittedItems = items
+      .filter((i) => i.description.trim() !== '')
+      .map((i) => ({ ...i, vatRate: resolveVatRate(i, country) }));
+
+    // Defense in depth: never persist a line with a non-finite qty/unitPrice
+    // (e.g. a cleared field left NaN in state). parseNumericInput normalizes on
+    // entry, but guard the submit path too so NaN totals can never be sent.
+    const hasNonFinite = submittedItems.some(
+      (i) => !Number.isFinite(i.qty) || !Number.isFinite(i.unitPrice)
+    );
+    if (hasNonFinite) {
+      alert('Quantity and unit price must be valid numbers');
+      return;
+    }
+
     onSubmit({
       contactId,
       number,
@@ -84,7 +127,7 @@ export function AccountingInvoiceForm({
       dueDate,
       currency,
       variableSymbol: variableSymbol || undefined,
-      items: items.filter((i) => i.description.trim() !== ''),
+      items: submittedItems,
       country,
     });
   };
@@ -255,7 +298,7 @@ export function AccountingInvoiceForm({
                     <input
                       type="number"
                       value={item.qty}
-                      onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value))}
+                      onChange={(e) => updateItem(index, 'qty', parseNumericInput(e.target.value))}
                       className="block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
                     />
                   </td>
@@ -263,7 +306,9 @@ export function AccountingInvoiceForm({
                     <input
                       type="number"
                       value={item.unitPrice}
-                      onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value))}
+                      onChange={(e) =>
+                        updateItem(index, 'unitPrice', parseNumericInput(e.target.value))
+                      }
                       className="block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
                     />
                   </td>
@@ -291,7 +336,9 @@ export function AccountingInvoiceForm({
                       <input
                         type="number"
                         value={item.vatRate}
-                        onChange={(e) => updateItem(index, 'vatRate', parseFloat(e.target.value))}
+                        onChange={(e) =>
+                          updateItem(index, 'vatRate', parseNumericInput(e.target.value))
+                        }
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
                         placeholder="%"
                       />

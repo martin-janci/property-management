@@ -346,6 +346,21 @@ async fn assign_violation(
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
 
+    // Org-scoped existence check FIRST. A violation that belongs to another
+    // tenant — or one that genuinely doesn't exist — must surface as 404, the
+    // same as every other by-id handler here. Running this before the assignee
+    // gate below prevents leaking a foreign violation's existence via the
+    // assignee 403 (cross-tenant IDOR, same class as the read handlers).
+    if state
+        .violation_repo
+        .get_violation_for_org(violation_id, org_id)
+        .await
+        .map_err(|e| internal_error(&format!("Failed to load violation: {}", e)))?
+        .is_none()
+    {
+        return Err(not_found_error("Violation not found"));
+    }
+
     // A violation may only be assigned to a user who belongs to the manager's
     // own organization. Without this check a manager could set `assigned_to` to
     // any user UUID, including users outside their org.

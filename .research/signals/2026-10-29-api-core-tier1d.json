@@ -1,0 +1,39 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=19 < floor=36). No per-run CHURN_FILES so churn-aligned N/A. Oldest-unreviewed per review_cursor, skipping saturated (>=3 open code-review-findings) and already-reviewed-today segments: ppt-web-ui @2026-10-22 skipped (5 open, saturated), reality-web @2026-10-23 skipped (3 open, saturated), mobile-native-kmp @2026-10-25 skipped (already reviewed today, signal file 2026-10-29-mobile-native-kmp-tier1d.json exists), api-handlers @2026-10-26 skipped (3 open, saturated). Next non-saturated, not-reviewed-today = api-core (cursor @2026-10-27, 0 open code-review-findings; ties with ppt-web-core @2026-10-27 which has 2 open — api-core sorts first and is unsaturated).",
+  "experts_used": [
+    "rust"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-core-accounting-currency-blind-match",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:197-203 — payment matcher amount corroboration compares line.amount == (invoice.total_amount - invoice.paid_amount) with NO currency comparison; line.currency (accounting.rs:89) is stored but never checked against the invoice currency anywhere in run_payment_matcher",
+        "backend/servers/api-server/src/services/accounting.rs:335 — confirm_match applies line.amount to invoice paid_amount via update_invoice_payment_status_rls regardless of currency; a CZK statement line can be suggested against and confirmed onto an EUR invoice, corrupting AR/paid totals. Full path traced: routes/accounting/statements.rs upload -> process_statement_upload -> run_payment_matcher (auto) -> suggest -> confirm_match applies cross-currency amount"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-stmt-upload-no-tx",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs:49-107 — process_statement_upload creates the BankStatement row then inserts each CSV line in a loop on a bare &mut PgConnection (not a transaction); a mid-file CSV/date parse error (accounting.rs:75,79 returns BadRequest) leaves the statement + already-inserted lines committed",
+        "backend/servers/api-server/src/routes/accounting/statements.rs:51 — caller passes `&mut rls` directly (no rls.begin()), unlike sibling handlers (e.g. routes/accounting/invoices.rs:241 uses rls.begin()); user gets 400 but an orphan/partial bank statement persists, and re-uploading the corrected file creates a duplicate statement — AR duplication / data-integrity risk"
+      ],
+      "expert": "rust"
+    }
+  ]
+}
