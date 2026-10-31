@@ -325,23 +325,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-portal-listing-price-unvalidated",
-      "action": "reality-server create/update_listing accepts price without positivity / NaN guard (DECIMAL has no CHECK)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "gh-issue-3206",
       "action": "Follow-up: ranked-ballot a11y labels/hint render raw i18n keys — missing voting.* keys + no-op `t() ?? literal` fallback (PR #3189) (Closes #3206)",
       "owner_role": "pm-tech-lead",

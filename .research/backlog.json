@@ -13567,7 +13567,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [reality-server] 2026-10-28"
       ],
@@ -13586,7 +13586,12 @@
       "segment": "reality-server",
       "score_delta": 1,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-10-31T22:25:55Z",
+        "assignment_status": "merged",
+        "pr_number": 3207
+      }
     },
     {
       "id": "code-review-reality-server-reports-status-filter-unvalidated",
