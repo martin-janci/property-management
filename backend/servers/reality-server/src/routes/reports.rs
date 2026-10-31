@@ -31,6 +31,11 @@ const MAX_REPORT_DESCRIPTION_LEN: usize = 5000;
 const MAX_REPORT_ATTACHMENTS: usize = 10;
 const MAX_URL_LEN: usize = 2048;
 
+/// Canonical `listing_reports.status` values a reporter may filter by. Mirrors
+/// the status comment in migration `00106_create_listing_reports.sql` and the
+/// `MyReportsQuery::status` doc. Keep in sync with the moderation workflow.
+const REPORT_STATUS_VALUES: [&str; 4] = ["received", "in_review", "resolved", "rejected"];
+
 /// Reject `javascript:`, `data:`, `file:`, etc. URLs that would later be
 /// rendered in `<img src=>` / `<a href=>` on the frontend (stored XSS).
 /// Inlined locally per H7 brief. NOTE: this is an XSS-focused scheme check
@@ -357,6 +362,27 @@ pub async fn list_my_reports(
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
     let offset = crate::util::clamp_offset(query.offset);
 
+    // Validate the optional status filter against the documented enum. An
+    // unrecognised value (typo, wrong case, or a status that doesn't exist)
+    // was previously bound straight into `status = $4` and silently matched
+    // zero rows, returning a 200 empty page indistinguishable from "you have no
+    // reports with this status" — a confusing success where a 400 belongs. A
+    // blank value means "no filter". Do NOT echo the offending value back
+    // (reflected-XSS hygiene, as in `submit_report`); list the allowed values.
+    let status_filter: Option<String> = match query.status.as_deref().map(str::trim) {
+        None | Some("") => None,
+        Some(s) if REPORT_STATUS_VALUES.contains(&s) => Some(s.to_string()),
+        Some(_) => {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!(
+                    "Invalid status filter. Allowed values: {}",
+                    REPORT_STATUS_VALUES.join(", ")
+                ),
+            ));
+        }
+    };
+
     let mut conn = state
         .acquire_public_conn()
         .await
@@ -377,7 +403,7 @@ pub async fn list_my_reports(
     .bind(principal.user_id)
     .bind(limit)
     .bind(offset)
-    .bind(&query.status)
+    .bind(&status_filter)
     .fetch_all(&mut *conn)
     .await
     .map_err(|e| crate::util::errors::db_error("list reports", e))?;
@@ -417,7 +443,7 @@ pub async fn list_my_reports(
         "#,
     )
     .bind(principal.user_id)
-    .bind(&query.status)
+    .bind(&status_filter)
     .fetch_one(&mut *conn)
     .await
     .map_err(|e| crate::util::errors::db_error("count reports", e))?;
