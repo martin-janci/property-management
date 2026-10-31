@@ -102,7 +102,13 @@ fn validate_enum(
 /// persisted and surface as a broken public listing. `rust_decimal::Decimal`
 /// cannot represent NaN or infinity, so finiteness is guaranteed by the type;
 /// only positivity needs an explicit check here.
-fn validate_price(_price: Decimal) -> Result<(), (axum::http::StatusCode, String)> {
+fn validate_price(price: Decimal) -> Result<(), (axum::http::StatusCode, String)> {
+    if price <= Decimal::ZERO {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Invalid price: must be greater than zero".to_string(),
+        ));
+    }
     Ok(())
 }
 
@@ -639,7 +645,8 @@ mod tests {
     #[test]
     fn rejects_negative_price() {
         // -1.5
-        let err = validate_price(Decimal::new(-15, 1)).expect_err("negative price must be rejected");
+        let err =
+            validate_price(Decimal::new(-15, 1)).expect_err("negative price must be rejected");
         assert_eq!(err.0, StatusCode::BAD_REQUEST);
     }
 
