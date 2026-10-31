@@ -460,9 +460,104 @@
       "newsletterTitle": "Odber noviniek"
     },
     "listingEdit": {
+      "title": "Upraviť inzerát",
+      "breadcrumbAccount": "← Môj účet",
+      "breadcrumb": "Upraviť inzerát #{id}",
+      "stepLabel": "Krok {step} z {total}: {stepTitle}",
+      "asideTitle": "Kroky",
+      "back": "← Späť",
+      "next": "Ďalej →",
       "save": "Uložiť zmeny",
+      "saving": "Ukladám…",
+      "loading": "Načítavam inzerát…",
+      "loadFailed": "Načítanie inzerátu zlyhalo.",
+      "backToAccount": "← Späť na účet",
+      "priceInvalid": "Zadajte platnú cenu väčšiu ako 0 € (krok 4).",
+      "saveFailed": "Uloženie zlyhalo, skúste znova.",
       "success": "Inzerát bol uložený!",
-      "title": "Upraviť inzerát"
+      "successBody": "Zmeny v inzeráte #{id} boli úspešne uložené.",
+      "viewListing": "Zobraziť inzerát",
+      "moreEdits": "Ďalšie úpravy",
+      "steps": {
+        "type": {
+          "title": "Typ a poloha",
+          "description": "Typ nehnuteľnosti a adresa"
+        },
+        "details": {
+          "title": "Detaily",
+          "description": "Plocha, izby, poschodie"
+        },
+        "photos": {
+          "title": "Fotografie",
+          "description": "Spravovať fotografie"
+        },
+        "price": {
+          "title": "Cena",
+          "description": "Aktualizovať požadovanú cenu"
+        },
+        "summary": {
+          "title": "Súhrn",
+          "description": "Skontrolovať a uložiť"
+        }
+      },
+      "fields": {
+        "transactionType": "Typ transakcie",
+        "propertyType": "Typ nehnuteľnosti",
+        "address": "Adresa",
+        "addressPlaceholder": "Ulica a číslo",
+        "city": "Mesto / Obec",
+        "cityPlaceholder": "Napr. Bratislava",
+        "area": "Plocha (m²)",
+        "areaPlaceholder": "Napr. 72",
+        "rooms": "Počet izieb",
+        "roomsPlaceholder": "Napr. 3",
+        "floor": "Poschodie",
+        "floorPlaceholder": "Napr. 4",
+        "totalFloors": "Celkový počet poschodí",
+        "totalFloorsPlaceholder": "Napr. 8",
+        "yearBuilt": "Rok výstavby",
+        "yearBuiltPlaceholder": "Napr. 2005",
+        "description": "Popis",
+        "price": "Cena (€)",
+        "priceNegotiable": "Cena je dohodou",
+        "status": "Stav inzerátu"
+      },
+      "transactionOptions": {
+        "sale": "Predaj",
+        "rent": "Prenájom"
+      },
+      "propertyOptions": {
+        "apartment": "Byt",
+        "house": "Dom",
+        "land": "Pozemok",
+        "commercial": "Komerčné"
+      },
+      "statusOptions": {
+        "active": "Aktívny",
+        "inactive": "Neaktívny",
+        "draft": "Koncept"
+      },
+      "photos": {
+        "existing": "Existujúce fotografie",
+        "alt": "Foto",
+        "remove": "Odstrániť fotografiu",
+        "addNew": "Pridať nové fotografie",
+        "addedCount": "+ {count} nových fotografií"
+      },
+      "summary": {
+        "title": "Súhrn zmien",
+        "type": "Typ",
+        "location": "Poloha",
+        "area": "Plocha",
+        "rooms": "Izby",
+        "floor": "Poschodie",
+        "year": "Rok",
+        "price": "Cena",
+        "status": "Stav",
+        "photos": "Fotografie",
+        "negotiable": "(dohodou)",
+        "photosValue": "{existing} existujúcich + {added} nových"
+      }
     },
     "priceMap": {
       "clickHint": "Kliknite na mestskú štvrť pre detailné štatistiky.",
