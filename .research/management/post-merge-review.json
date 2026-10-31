@@ -1,9 +1,32 @@
 {
-  "generated": "2026-10-28T10:30:53Z",
+  "generated": "2026-10-31T16:35:49Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-10-31T16:35:49Z",
+      "prs_scanned": 8,
+      "clean": [
+        3198,
+        3197,
+        3191,
+        3190,
+        3186,
+        3185,
+        3188
+      ],
+      "with_issues": [
+        {
+          "pr": 3189,
+          "issue": 3206,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "ranked-ballot a11y labels/hint render raw i18n keys: voting.moveUp/moveDown/rankHint absent from all 6 mobile locale bundles, and t(key) ?? literal is a no-op under react-i18next (missing key resolves to the key string). Fix: add keys + use t(key,{defaultValue}) as PR #3186 did."
+        }
+      ],
+      "note": "Dispatcher Phase 2.5 post-merge review (DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-17), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 8 in-window dev merges lacking post-merge-reviewed/no-review-needed: #3198/#3197 (2026-10-31), #3189/#3191/#3190/#3186/#3185/#3188 (2026-10-30). All prior in-window merges already carried post-merge-reviewed; dependabot #3137/#3007/#2961/#3133/#3089 are closed-unmerged (null merged_at), skipped. 7 CLEAN, 1 follow-up (#3206 on PR #3189). Clean verdicts: #3198 reality-server removes OS-RNG .expect() panics in SSO (503 on entropy failure) + password-reset with 2 PKCE tests; #3197 reality-web resolveListingPrice rejects empty/0/negative/NaN price with vitest suite (hardcoded-sk error string matches the surrounding unlocalized _mock WIP edit page, not a regression); #3191 ppt-web parseNumericInput + submit guard blocks NaN qty/unitPrice totals w/ RTL test; #3190 ppt-web test-only logout-purge drift guard enforcing personMonthKeys + any directly-imported api-client *Keys factory; #3186 ppt-web wires useIotWebSocket.hasGivenUp -> isOffline banner w/ test, i18n via correct t(key,{defaultValue}); #3185 ppt-web neighbors hooks re-key useMemo on current token (fixes stale-Bearer-after-refresh) w/ 2 token-rotation tests; #3188 api-server assign_violation org-scoped existence check first (cross-org IDOR 403-leak -> 404) is covered by the existing cross_org_assign_violation_is_not_found regression test, so no test-gap."
+    },
     {
       "run_at": "2026-10-28T10:30:53Z",
       "prs_scanned": 0,
@@ -680,25 +703,6 @@
         3023,
         2969,
         2967
-      ]
-    },
-    {
-      "run_at": "2026-10-05T10:38:43Z",
-      "prs_scanned": 4,
-      "clean": [
-        3022,
-        3021,
-        3019,
-        3018
-      ],
-      "with_issues": [],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-21), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL HTTP-403; direct git transfer proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred the commit to the orchestrator's Phase 6 (no git add/commit; no branch checkout; did NOT touch assignments.json/action-list.json/backlog.json/archives; review-only). Enumeration via list_pull_requests(closed, base=dev, sort=updated desc, perPage=50); merged detected by non-null merged_at (MCP 'merged' bool unreliable). 4 net-new merges in window lacking post-merge-reviewed/no-review-needed: #3022, #3021, #3019 (reality-web) and #3018 (dispatcher-infra prompts). All reviewed inline (<=5, no subagent fan-out). #3022 (gh-issue-3016, merged 10-05) CLEAN: /sell wizard drops dead contactName/contactPhone/contactEmail (collected but never in the createListing POST body) + removes now-unused EMAIL_RE/PHONE_RE; step-5 validation emptied (terms enforced via disabled Publish); 2 regression tests pin no-contact-keys payload + no-inputs-on-step-5 (fail on main). Contact sourced from authenticated realtor server-side. #3021 (code-review-reality-web-price-alert-markread-silent-fail, merged 10-05) CLEAN: handleMarkRead/handleMarkAllRead wrap mutateAsync in try/catch, set actionError, render inline role=alert aria-live=assertive banner reusing error.description i18n (all 6 locales); mirrors RealtorManagement/import-wizard pattern; IG3 test asserts assertive banner + request-attempted. #3019 (gh-issue-3017, merged 10-05) CLEAN: /report attachment control disabled (label->div aria-disabled, file input removed, 'coming soon' hint) so the page no longer implies evidence is sent while handleSubmit silently drops it; removed dead attachments state; 2 IG3 tests (no file input + attachment-free POST body). Residual hardcoded-Slovak strings are pre-existing file-wide debt, out of scope -> not filed. #3018 (gh-issue-3012, merged 10-05) CLEAN: prompt/skill docs only (ppt-implement SKILL.md + dispatcher-prompt.md + implementer-prompt.md) forbidding git stash inside shared /tmp/ppt-worktrees worktrees; common-git-dir shared-stash reasoning is technically correct; recommends two-commit IG3 split + out-of-repo scratch copy. No source/code change. No follow-up issues opened (nothing actionable). All 4 PRs labeled post-merge-reviewed via issue_write update (each had no prior labels, so no clobber); no breadcrumb comments (no issues). Dependabot top-of-list PRs (#2975,#2973,#2974,#2965,#2964,#2963,#2959,#2939,#2958,#2591,#2933,#2808) are closed-unmerged (no merged_at). #463 @2026-05-24 predates window. All other in-window merges already carry post-merge-reviewed from prior runs.",
-      "focus_prs": [
-        3022,
-        3021,
-        3019,
-        3018
       ]
     }
   ]
