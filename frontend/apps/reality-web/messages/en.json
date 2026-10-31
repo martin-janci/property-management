@@ -460,9 +460,104 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Edit listing",
+      "breadcrumbAccount": "← My account",
+      "breadcrumb": "Edit listing #{id}",
+      "stepLabel": "Step {step} of {total}: {stepTitle}",
+      "asideTitle": "Steps",
+      "back": "← Back",
+      "next": "Next →",
       "save": "Save changes",
+      "saving": "Saving…",
+      "loading": "Loading listing…",
+      "loadFailed": "Could not load the listing.",
+      "backToAccount": "← Back to account",
+      "priceInvalid": "Enter a valid price greater than €0 (step 4).",
+      "saveFailed": "Saving failed, please try again.",
       "success": "Listing saved!",
-      "title": "Edit listing"
+      "successBody": "Changes to listing #{id} were saved successfully.",
+      "viewListing": "View listing",
+      "moreEdits": "More edits",
+      "steps": {
+        "type": {
+          "title": "Type & location",
+          "description": "Property type and address"
+        },
+        "details": {
+          "title": "Details",
+          "description": "Area, rooms, floor"
+        },
+        "photos": {
+          "title": "Photos",
+          "description": "Manage photos"
+        },
+        "price": {
+          "title": "Price",
+          "description": "Update the asking price"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Review and save"
+        }
+      },
+      "fields": {
+        "transactionType": "Transaction type",
+        "propertyType": "Property type",
+        "address": "Address",
+        "addressPlaceholder": "Street and number",
+        "city": "City / Town",
+        "cityPlaceholder": "e.g. Bratislava",
+        "area": "Area (m²)",
+        "areaPlaceholder": "e.g. 72",
+        "rooms": "Number of rooms",
+        "roomsPlaceholder": "e.g. 3",
+        "floor": "Floor",
+        "floorPlaceholder": "e.g. 4",
+        "totalFloors": "Total floors",
+        "totalFloorsPlaceholder": "e.g. 8",
+        "yearBuilt": "Year built",
+        "yearBuiltPlaceholder": "e.g. 2005",
+        "description": "Description",
+        "price": "Price (€)",
+        "priceNegotiable": "Price is negotiable",
+        "status": "Listing status"
+      },
+      "transactionOptions": {
+        "sale": "Sale",
+        "rent": "Rent"
+      },
+      "propertyOptions": {
+        "apartment": "Apartment",
+        "house": "House",
+        "land": "Land",
+        "commercial": "Commercial"
+      },
+      "statusOptions": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "draft": "Draft"
+      },
+      "photos": {
+        "existing": "Existing photos",
+        "alt": "Photo",
+        "remove": "Remove photo",
+        "addNew": "Add new photos",
+        "addedCount": "+ {count} new photos"
+      },
+      "summary": {
+        "title": "Summary of changes",
+        "type": "Type",
+        "location": "Location",
+        "area": "Area",
+        "rooms": "Rooms",
+        "floor": "Floor",
+        "year": "Year",
+        "price": "Price",
+        "status": "Status",
+        "photos": "Photos",
+        "negotiable": "(negotiable)",
+        "photosValue": "{existing} existing + {added} new"
+      }
     },
     "priceMap": {
       "clickHint": "Click on a district for detailed statistics.",

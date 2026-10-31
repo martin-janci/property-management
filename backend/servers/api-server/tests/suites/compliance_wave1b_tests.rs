@@ -1349,3 +1349,174 @@ async fn verify_audit_integrity_super_admin_returns_integrity_report(pool: PgPoo
         "expected 'verified' boolean field"
     );
 }
+
+// ===========================================================================
+// EDD write endpoints: authorised caller + unknown id -> 404 (not 500)
+// ===========================================================================
+//
+// The `*_requires_compliance_role` cases above use an UNDER-privileged token,
+// so they stop at the role gate (403) before the record lookup ever runs — they
+// cannot pin what an *authorised* compliance officer sees when the `edd_id` is
+// unknown or belongs to another org. Each EDD write handler resolves the record
+// with `edd_repo.get_edd(edd_id, org_id)` and maps the `None` case to 404; any
+// repo error maps to 500. These tests pin the clean 404 so a future refactor
+// that collapses "not found" into the 500 arm (the exact class of bug #3174
+// fixed for moderation `assign`/`unassign`) is caught. The lookup runs for an
+// org-scoped id, so a cross-org record is equally invisible (404), which also
+// guards tenant isolation on the write path without duplicating the dedicated
+// cross-org IDOR suite's read-path coverage.
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn upload_edd_document_unknown_edd_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "edd-doc-404").await;
+    let user_id = seed_user(&pool, "comp-edd-doc-404").await;
+    seed_membership(&pool, org_id, user_id, "platform_admin").await;
+    let token = mint_token(user_id, Some(org_id), Some("platform_admin"));
+
+    // Body must pass `validate_edd_document` (which runs BEFORE the lookup) so
+    // the request reaches `get_edd` and surfaces the 404, not a 400.
+    let unknown = Uuid::new_v4();
+    let body = json!({
+        "document_type": "passport",
+        "original_filename": "passport.pdf",
+        "file_path": "uploads/edd/passport.pdf",
+        "file_size_bytes": 10240,
+        "mime_type": "application/pdf"
+    });
+    let resp = app
+        .post(&format!("/api/v1/aml-dsa/edd/{unknown}/documents"))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(body)
+        .build();
+    assert_eq!(app.execute(resp).await.status, StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn verify_edd_document_unknown_edd_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "edd-verify-404").await;
+    let user_id = seed_user(&pool, "comp-edd-verify-404").await;
+    seed_membership(&pool, org_id, user_id, "platform_admin").await;
+    let token = mint_token(user_id, Some(org_id), Some("platform_admin"));
+
+    // The EDD-record lookup gates before the document is ever touched, so an
+    // unknown `edd_id` must 404 regardless of the (also-unknown) `doc_id`.
+    let unknown_edd = Uuid::new_v4();
+    let unknown_doc = Uuid::new_v4();
+    let body = json!({ "status": "verified" });
+    let resp = app
+        .post(&format!(
+            "/api/v1/aml-dsa/edd/{unknown_edd}/documents/{unknown_doc}/verify"
+        ))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(body)
+        .build();
+    assert_eq!(app.execute(resp).await.status, StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_edd_note_unknown_edd_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "edd-note-404").await;
+    let user_id = seed_user(&pool, "comp-edd-note-404").await;
+    seed_membership(&pool, org_id, user_id, "platform_admin").await;
+    let token = mint_token(user_id, Some(org_id), Some("platform_admin"));
+
+    // Content must be non-empty to clear `validate_text_field` (runs before the
+    // lookup) so the request reaches `get_edd` and 404s rather than 400s.
+    let unknown = Uuid::new_v4();
+    let body = json!({ "content": "regression: note against a non-existent EDD record" });
+    let resp = app
+        .post(&format!("/api/v1/aml-dsa/edd/{unknown}/notes"))
+        .bearer(&token)
+        .tenant(org_id)
+        .json(body)
+        .build();
+    assert_eq!(app.execute(resp).await.status, StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn complete_edd_unknown_edd_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "edd-complete-404").await;
+    let user_id = seed_user(&pool, "comp-edd-complete-404").await;
+    seed_membership(&pool, org_id, user_id, "platform_admin").await;
+    let token = mint_token(user_id, Some(org_id), Some("platform_admin"));
+
+    // NOTE: the `complete_edd` *happy path* is `#[ignore]`d for a server-side
+    // 500 in the repo-level `complete_edd` call. The unknown-id lookup fails
+    // earlier, at `get_edd().ok_or(NOT_FOUND)`, so this path is 404 and pins
+    // that the 500 bug lives strictly in the state-transition call, not the
+    // existence check.
+    let unknown = Uuid::new_v4();
+    let resp = app
+        .post(&format!("/api/v1/aml-dsa/edd/{unknown}/complete"))
+        .bearer(&token)
+        .tenant(org_id)
+        .build();
+    assert_eq!(app.execute(resp).await.status, StatusCode::NOT_FOUND);
+}
+
+// ===========================================================================
+// DSA: platform-principal positive paths (first authorised-caller coverage)
+// ===========================================================================
+//
+// Every DSA case above is negative-only — it proves a tenant-scoped principal
+// (JWT role platform_admin but `users.principal_kind = 'staff'`) is rejected by
+// the `RequestPrincipal` platform gate with 403. None exercises the authorised
+// side, so a regression that broke the platform-principal accept arm (or the
+// read itself) would pass unnoticed. A user whose `principal_kind = 'platform'`
+// reaching these handlers with no resolved tenant hits the
+// `(None, Platform) => effective_org = None` arm and is allowed; these two
+// read-only endpoints then return 200 against an empty dataset.
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_dsa_reports_platform_principal_returns_array(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    // `principal_kind = 'platform'` is what the DSA gate requires; the JWT role
+    // is irrelevant because `RequestPrincipal` re-derives the kind from the
+    // trusted `users` column and trusts only `sub` from the token. No tenant
+    // header: a platform operator has no org context.
+    let user_id = seed_user_with_principal(&pool, "plat-dsa-list", "platform").await;
+    let token = mint_token(user_id, None, None);
+
+    let resp = app
+        .get("/api/v1/aml-dsa/dsa/reports")
+        .bearer(&token)
+        .build();
+    let r = app.execute(resp).await;
+    assert_eq!(r.status, StatusCode::OK);
+    assert!(
+        r.json_value().is_array(),
+        "expected a DSA reports array for a platform principal"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_dsa_metrics_platform_principal_returns_metrics(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user_id = seed_user_with_principal(&pool, "plat-dsa-metrics", "platform").await;
+    let token = mint_token(user_id, None, None);
+
+    let resp = app
+        .get("/api/v1/aml-dsa/dsa/metrics")
+        .bearer(&token)
+        .build();
+    let r = app.execute(resp).await;
+    assert_eq!(r.status, StatusCode::OK);
+    let body = r.json_value();
+    assert!(body["pending_cases"].is_number(), "expected pending_cases");
+    assert!(
+        body["sla_compliance_rate"].is_number(),
+        "expected sla_compliance_rate"
+    );
+    // Empty dataset: no cases => the handler's `else` branch reports full SLA.
+    assert_eq!(
+        body["sla_compliance_rate"].as_f64(),
+        Some(100.0),
+        "empty queue must report 100% SLA compliance"
+    );
+}

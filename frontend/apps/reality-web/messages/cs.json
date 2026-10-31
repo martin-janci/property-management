@@ -460,9 +460,104 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Upravit inzerát",
+      "breadcrumbAccount": "← Můj účet",
+      "breadcrumb": "Upravit inzerát #{id}",
+      "stepLabel": "Krok {step} z {total}: {stepTitle}",
+      "asideTitle": "Kroky",
+      "back": "← Zpět",
+      "next": "Dále →",
       "save": "Uložit změny",
+      "saving": "Ukládám…",
+      "loading": "Načítám inzerát…",
+      "loadFailed": "Načtení inzerátu selhalo.",
+      "backToAccount": "← Zpět na účet",
+      "priceInvalid": "Zadejte platnou cenu větší než 0 € (krok 4).",
+      "saveFailed": "Uložení selhalo, zkuste to znovu.",
       "success": "Inzerát byl uložen!",
-      "title": "Upravit inzerát"
+      "successBody": "Změny v inzerátu #{id} byly úspěšně uloženy.",
+      "viewListing": "Zobrazit inzerát",
+      "moreEdits": "Další úpravy",
+      "steps": {
+        "type": {
+          "title": "Typ a poloha",
+          "description": "Typ nemovitosti a adresa"
+        },
+        "details": {
+          "title": "Detaily",
+          "description": "Plocha, pokoje, podlaží"
+        },
+        "photos": {
+          "title": "Fotografie",
+          "description": "Spravovat fotografie"
+        },
+        "price": {
+          "title": "Cena",
+          "description": "Aktualizovat požadovanou cenu"
+        },
+        "summary": {
+          "title": "Souhrn",
+          "description": "Zkontrolovat a uložit"
+        }
+      },
+      "fields": {
+        "transactionType": "Typ transakce",
+        "propertyType": "Typ nemovitosti",
+        "address": "Adresa",
+        "addressPlaceholder": "Ulice a číslo",
+        "city": "Město / Obec",
+        "cityPlaceholder": "Např. Praha",
+        "area": "Plocha (m²)",
+        "areaPlaceholder": "Např. 72",
+        "rooms": "Počet pokojů",
+        "roomsPlaceholder": "Např. 3",
+        "floor": "Podlaží",
+        "floorPlaceholder": "Např. 4",
+        "totalFloors": "Celkový počet podlaží",
+        "totalFloorsPlaceholder": "Např. 8",
+        "yearBuilt": "Rok výstavby",
+        "yearBuiltPlaceholder": "Např. 2005",
+        "description": "Popis",
+        "price": "Cena (€)",
+        "priceNegotiable": "Cena dohodou",
+        "status": "Stav inzerátu"
+      },
+      "transactionOptions": {
+        "sale": "Prodej",
+        "rent": "Pronájem"
+      },
+      "propertyOptions": {
+        "apartment": "Byt",
+        "house": "Dům",
+        "land": "Pozemek",
+        "commercial": "Komerční"
+      },
+      "statusOptions": {
+        "active": "Aktivní",
+        "inactive": "Neaktivní",
+        "draft": "Koncept"
+      },
+      "photos": {
+        "existing": "Stávající fotografie",
+        "alt": "Foto",
+        "remove": "Odstranit fotografii",
+        "addNew": "Přidat nové fotografie",
+        "addedCount": "+ {count} nových fotografií"
+      },
+      "summary": {
+        "title": "Souhrn změn",
+        "type": "Typ",
+        "location": "Poloha",
+        "area": "Plocha",
+        "rooms": "Pokoje",
+        "floor": "Podlaží",
+        "year": "Rok",
+        "price": "Cena",
+        "status": "Stav",
+        "photos": "Fotografie",
+        "negotiable": "(dohodou)",
+        "photosValue": "{existing} stávajících + {added} nových"
+      }
     },
     "priceMap": {
       "clickHint": "Klikněte na čtvrť pro detailní statistiky.",

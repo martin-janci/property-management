@@ -468,9 +468,104 @@
       "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
+      "title": "Edytuj ogłoszenie",
+      "breadcrumbAccount": "← Moje konto",
+      "breadcrumb": "Edytuj ogłoszenie #{id}",
+      "stepLabel": "Krok {step} z {total}: {stepTitle}",
+      "asideTitle": "Kroki",
+      "back": "← Wstecz",
+      "next": "Dalej →",
       "save": "Zapisz zmiany",
+      "saving": "Zapisywanie…",
+      "loading": "Wczytywanie ogłoszenia…",
+      "loadFailed": "Nie udało się wczytać ogłoszenia.",
+      "backToAccount": "← Powrót do konta",
+      "priceInvalid": "Podaj prawidłową cenę większą niż 0 € (krok 4).",
+      "saveFailed": "Zapis nie powiódł się, spróbuj ponownie.",
       "success": "Ogłoszenie zapisane!",
-      "title": "Edytuj ogłoszenie"
+      "successBody": "Zmiany w ogłoszeniu #{id} zostały pomyślnie zapisane.",
+      "viewListing": "Zobacz ogłoszenie",
+      "moreEdits": "Dalsze zmiany",
+      "steps": {
+        "type": {
+          "title": "Typ i lokalizacja",
+          "description": "Typ nieruchomości i adres"
+        },
+        "details": {
+          "title": "Szczegóły",
+          "description": "Powierzchnia, pokoje, piętro"
+        },
+        "photos": {
+          "title": "Zdjęcia",
+          "description": "Zarządzaj zdjęciami"
+        },
+        "price": {
+          "title": "Cena",
+          "description": "Zaktualizuj cenę ofertową"
+        },
+        "summary": {
+          "title": "Podsumowanie",
+          "description": "Sprawdź i zapisz"
+        }
+      },
+      "fields": {
+        "transactionType": "Typ transakcji",
+        "propertyType": "Typ nieruchomości",
+        "address": "Adres",
+        "addressPlaceholder": "Ulica i numer",
+        "city": "Miasto / Gmina",
+        "cityPlaceholder": "Np. Warszawa",
+        "area": "Powierzchnia (m²)",
+        "areaPlaceholder": "Np. 72",
+        "rooms": "Liczba pokoi",
+        "roomsPlaceholder": "Np. 3",
+        "floor": "Piętro",
+        "floorPlaceholder": "Np. 4",
+        "totalFloors": "Łączna liczba pięter",
+        "totalFloorsPlaceholder": "Np. 8",
+        "yearBuilt": "Rok budowy",
+        "yearBuiltPlaceholder": "Np. 2005",
+        "description": "Opis",
+        "price": "Cena (€)",
+        "priceNegotiable": "Cena do negocjacji",
+        "status": "Status ogłoszenia"
+      },
+      "transactionOptions": {
+        "sale": "Sprzedaż",
+        "rent": "Wynajem"
+      },
+      "propertyOptions": {
+        "apartment": "Mieszkanie",
+        "house": "Dom",
+        "land": "Działka",
+        "commercial": "Komercyjna"
+      },
+      "statusOptions": {
+        "active": "Aktywne",
+        "inactive": "Nieaktywne",
+        "draft": "Szkic"
+      },
+      "photos": {
+        "existing": "Istniejące zdjęcia",
+        "alt": "Zdjęcie",
+        "remove": "Usuń zdjęcie",
+        "addNew": "Dodaj nowe zdjęcia",
+        "addedCount": "+ {count} nowych zdjęć"
+      },
+      "summary": {
+        "title": "Podsumowanie zmian",
+        "type": "Typ",
+        "location": "Lokalizacja",
+        "area": "Powierzchnia",
+        "rooms": "Pokoje",
+        "floor": "Piętro",
+        "year": "Rok",
+        "price": "Cena",
+        "status": "Status",
+        "photos": "Zdjęcia",
+        "negotiable": "(do negocjacji)",
+        "photosValue": "{existing} istniejących + {added} nowych"
+      }
     },
     "priceMap": {
       "clickHint": "Kliknij dzielnicę po szczegółowe statystyki.",

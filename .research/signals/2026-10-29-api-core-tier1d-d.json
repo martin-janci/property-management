@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "api-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=19 < floor=36). No per-run CHURN_FILES, so churn-aligned N/A. mobile-native-kmp skipped (cloud-gated / unlandable). Applied skill saturation guard (>=3 open code-review-findings in backlog) against directive priority order: reality-web skipped (3 open, saturated), api-handlers skipped (3 open, saturated), reality-server skipped (3 open, saturated), ppt-web-ui skipped (5 open, saturated). Next non-saturated per directive priority = api-core (0 open code-review-findings in backlog). api-core received 3 sibling tier1d signal files earlier today (accounting.rs x2, scheduler x2, plus one empty -b); this pass deliberately targets UNMINED service files (services/syndication.rs, services/actions/*) with zero overlap against those or the ~24 api-core entries in seen_signals. jwt.rs, stripe.rs signature verify, and id_ocr.rs reviewed and found clean.",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-core-syndication-worker-missing",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/syndication.rs:289 — `SyndicationService::process_syndication_job` is the only code that would actually push a listing to an external portal and flip syndication status, but it has ZERO production callers (grep for `process_syndication_job` across backend yields only its own definition). The enqueue side IS production-reachable: routes/listings.rs:546 calls `create_status_change_jobs` and routes/listings.rs:661 calls `create_publish_jobs` when a manager publishes a listing to SReality/Bezrealitky/Nehnutelnosti/Reality-Portal. Those insert rows into the `syndication` background-job queue (SYNDICATION_QUEUE, syndication.rs:15), but no scheduler task or background worker drains that queue (grep for `syndication` under services/scheduler/ is empty; the BackgroundScheduler has no syndication job). Net effect: listings are never actually syndicated and the background_jobs table accumulates unclaimed syndication rows indefinitely, silently — the manager sees the publish succeed with no error.",
+        "backend/servers/api-server/src/services/syndication.rs:287-333 — even if a worker were wired up, `process_syndication_job` is an explicit placeholder: the PUBLISH branch logs `\"Simulate publishing to portal\"`, fabricates a fake external id (`format!(\"{}_{}\", payload.portal, uuid::Uuid::new_v4())`, line 318), and calls `update_syndication_status(..., SYNCED, Some(&external_id), ...)`. STATUS_CHANGE/UPDATE/REMOVE branches (lines 334-403) likewise flip the row to SYNCED/REMOVED with no real portal API call. So wiring it as-is would record fabricated SYNCED state (and bogus external ids) for portals the listing was never actually sent to. Fix: implement the real portal API calls (or keep the queue unprocessed but surface a 'syndication not yet available' state to the manager instead of silently enqueuing dead jobs)."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-workflow-email-noop-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/email.rs:86-112 — the workflow-automation `SEND_EMAIL` action executor (`EmailExecutor::execute`) never sends an email. It substitutes the template, validates the `to` address, then just `tracing::info!(\"Workflow sending email\")` and returns `ActionResult::success(json!({\"sent_to\": to, \"subject\": subject, \"sent_at\": chrono::Utc::now().to_rfc3339(), ...}))`. The comment at line 96 states 'Simulate email sending (in production, integrate with EmailService)'. This executor IS registered in the production default registry (services/actions/mod.rs:204 `registry.register(Box::new(EmailExecutor::new()))`), so any automation rule a manager builds with a send-email action reports success and records a fabricated `sent_at` while no email is ever dispatched. An actual `EmailService` exists and is used elsewhere (services/email.rs) but is not injected here. Fix: inject EmailService into EmailExecutor and send, or make the action return a not-implemented ActionError instead of fabricated success so rule authors aren't misled."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-core-workflow-notify-noop-success",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/notification.rs:161-198 — the workflow-automation `NOTIFICATION` action executor (`NotificationExecutor::execute`) is the same shipped-stub pattern as the email action: role targets (line 117-118 'Would send to users with role') and building-resident targets (line 128-129 'Would send to building residents') are only `tracing::debug!`-logged, never resolved; the execute body logs `\"Workflow sending notification\"` (line 183) and returns `ActionResult::success(...)` (line 198) with the comment 'In production, this would actually send notifications via the notification service'. This executor is also registered in the production default registry (services/actions/mod.rs:205 `registry.register(Box::new(NotificationExecutor::new()))`). A real `NotificationService` / push_fanout pipeline exists in the codebase but is not wired in here. Net effect: automation rules with a notification action report success but deliver nothing to tenants/managers. Fix: inject the notification service and dispatch, or return a not-implemented ActionError rather than fabricated success."
+      ],
+      "expert": "rust"
+    }
+  ]
+}

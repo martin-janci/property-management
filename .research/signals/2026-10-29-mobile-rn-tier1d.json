@@ -1,0 +1,53 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-10-29",
+  "segment_reviewed": "mobile-rn",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable=19 < floor=36). No per-run CHURN_FILES so churn-aligned N/A. Oldest-unreviewed per review_cursor, skipping saturated (>=3 open code-review-findings) and already-reviewed-today segments: ppt-web-ui @2026-10-22 skipped (5 open, saturated), reality-web @2026-10-23 skipped (3 open, saturated), mobile-native-kmp @2026-10-25 skipped (already reviewed today, signal file 2026-10-29-mobile-native-kmp-tier1d.json exists), api-handlers @2026-10-26 skipped (3 open, saturated). Next non-saturated, not-reviewed-today = mobile-rn (cursor @2026-10-27, 0 open code-review-findings, last actual signal 2026-10-27).",
+  "experts_used": [
+    "frontend",
+    "tester"
+  ],
+  "signals": [
+    {
+      "id": "code-review-mobile-rn-docdetail-alert-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx:118 — the open-document failure path raises `Alert.alert('Could not open document', 'The file viewer is unavailable on this device.')` with hardcoded English strings. The rest of the screen is fully internationalised (it uses `t('documents.detailLoadError')`, `t('documents.notFound')`, `t('common.retry')`, `t('common.loading')` etc.), so non-English users see an untranslated error. Fix: route both strings through react-i18next `t(...)` (e.g. `t('documents.openFailedTitle')` / `t('documents.openFailedBody')`) and add the keys to the locale bundles.",
+        "This is the only user-facing string in DocumentDetailScreen.tsx not wrapped in `t()` — the screen already imports `useTranslation` and uses `t` throughout, so this is an isolated i18n regression on the error branch."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-widgetsettings-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/settings/WidgetSettingsScreen.tsx:66 — `Alert.alert('Widget Added', `${widgetMeta?.name ?? type} widget has been configured.`)` and line 79 `Alert.alert('Widgets Updated', 'All widgets have been refreshed.')` use hardcoded English titles and bodies. The screen imports `useTranslation` and already calls `t('common.loading')` (line 92), so these two confirmation Alerts are i18n gaps — non-English users get untranslated success toasts. Fix: wrap all four literals in `t(...)` with interpolation for the widget name (e.g. `t('widgets.addedBody', { name })`) and add the keys to the locale files.",
+        "Both call sites are in the widget add / refresh success handlers, i.e. reachable on normal user interaction, not a dev-only path."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-diag-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:216 — `Alert.alert('Diagnostic Report', diagnosticReport)` uses a hardcoded English title. This screen is otherwise heavily internationalised (26 `t('...')` call sites, including its other Alerts at lines 64/69/75 which use `t('common.error')` + `t('errors.*')`), so the diagnostic-report dialog title is an isolated i18n gap. The body (`diagnosticReport`) is raw diagnostic text and may legitimately stay untranslated, but the title should go through `t(...)` (e.g. `t('feedback.diagnosticReportTitle')`)."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
