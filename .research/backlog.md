@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-10-28 10:53 UTC by routine</sub>
+<sub>Last regenerated: 2026-10-31 12:45 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -226,13 +226,15 @@
 | 2 | bug | Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt` | rotating-expert-review [mobile-native-kmp] | 2026-10-25 | open | — |
 | 2 | test-gap | Screen-map drift: PR #3166 touched reality-web agency page without updating docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/agency/[slug]/page.tsx (+1)` | PR #3166 | 2026-10-26 | done | — |
 | 2 | bug | violations.rs assign_violation: Manager can set assigned_to to a user outside the org (no org-membership check on assignee) | `backend/servers/api-server/src/routes/violations.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-26 | 2026-10-26 | done | — |
-| 2 | bug | useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh | `frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts (+1)` | rotating-expert-review [ppt-web-core] 2026-10-27 | 2026-10-27 | open | — |
-| 2 | bug | reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes) | `backend/servers/reality-server/src/handlers/users/mod.rs (+1)` | rotating-expert-review [reality-server] 2026-10-28 | 2026-10-28 | open | — |
+| 2 | bug | useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh | `frontend/apps/ppt-web/src/features/neighbors/hooks/useNeighbors.ts (+1)` | rotating-expert-review [ppt-web-core] 2026-10-27 | 2026-10-27 | done | — |
+| 2 | bug | reality-server OS-RNG failure panics password-reset + SSO authorize paths (.expect on try_fill_bytes) | `backend/servers/reality-server/src/handlers/users/mod.rs (+1)` | rotating-expert-review [reality-server] 2026-10-28 | 2026-10-28 | done | — |
 | 2 | bug | api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content | `backend/servers/api-server/src/routes/aml_dsa/moderation.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | open | — |
 | 2 | bug | api-handlers file_appeal has no status guard → owner can re-file after a final appeal decision | `backend/servers/api-server/src/routes/aml_dsa/moderation.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | open | — |
 | 2 | bug | ppt-web AccountingInvoiceForm persists stale item.vatRate=21 while UI shows country/type-derived rate — financial drift | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx` | rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | open | — |
-| 2 | bug | ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx` | rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | open | — |
-| 2 | bug | reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist | `frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx` | rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | open | — |
+| 2 | bug | ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx` | rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | done | — |
+| 2 | bug | reality-web listing edit handleSave coerces empty price to 0 via `Number(form.price) || 0` — silent price=0 persist | `frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx` | rotating-expert-review [reality-web] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | done | — |
+| 2 | test-gap | Screen-map drift: PR #3186 (ppt-web iot route) merged without updating docs/screens/ppt/ | `docs/screens/ppt/ (+1)` | PR #3186 | 2026-10-31 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3197 (reality-web listing-edit route) merged without updating docs/screens/reality/ | `docs/screens/reality/ (+1)` | PR #3197 | 2026-10-31 | open | — |
 | 1 | triage | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | — | #836 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | — | #845 (+1) | 2026-05-31 | done | — |
 | 1 | triage | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | — | #849 (+1) | 2026-05-31 | done | — |
@@ -482,7 +484,7 @@
 | 1 | test-gap | Churn hotspot: frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx — merged PR touched this file heavily this run | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx` | top-3 churn 2026-10-26 (PR #3153) | 2026-10-26 | done | — |
 | 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs — merged PR touched this file heavily this run | `backend/servers/api-server/tests/suites/community_cross_tenant_idor_tests.rs` | top-3 churn 2026-10-26 (PR #3070) | 2026-10-26 | done | — |
 | 1 | test-gap | test-gap: no cross-tenant IDOR regression suite for violations.rs mutation handlers (role-authz suite covers 403 but not xtenant 404) | `backend/servers/api-server/tests/suites/violations_role_authz_tests.rs (+1)` | rotating-expert-review [api-handlers] 2026-10-26 | 2026-10-26 | done | — |
-| 1 | dx | useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts (+1)` | rotating-expert-review [ppt-web-core] 2026-10-27 | 2026-10-27 | open | — |
+| 1 | dx | useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path | `frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.ts (+1)` | rotating-expert-review [ppt-web-core] 2026-10-27 | 2026-10-27 | done | — |
 | 1 | dx | stalled review: PR #3108 gh-issue-3104 fix owner-analytics portfolio summary 500 (schema drift) (11d open, draft) | — | PR #3108 | 2026-10-28 | needs-human-judgement | — |
 | 1 | dx | stalled review: PR #3075 code-review-api-handlers-violations-number-count-race serialize numbering (15d open, draft) | — | PR #3075 | 2026-10-28 | needs-human-judgement | — |
 | 1 | dx | stalled review: PR #3119 gh-issue-3116 i18n defaultValue fallback on NewsScreen (10d open, no review) | — | PR #3119 | 2026-10-28 | needs-human-judgement | — |

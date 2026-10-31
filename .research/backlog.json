@@ -13886,6 +13886,48 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "title": "Screen-map drift: PR #3186 (ppt-web iot route) merged without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "PR #3186 (code-review-ppt-web-core-iot-ws-hasgivenup-dropped) touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating any docs/screens/ppt/*.md"
+      ],
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "title": "Screen-map drift: PR #3197 (reality-web listing-edit route) merged without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3197"
+      ],
+      "evidence": [
+        "PR #3197 (code-review-reality-web-listing-edit-price-zero) touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating any docs/screens/reality/*.md"
+      ],
+      "files": [
+        "docs/screens/reality/",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-10-31",
+      "updated_at": "2026-10-31",
+      "plan": null
     }
   ]
 }

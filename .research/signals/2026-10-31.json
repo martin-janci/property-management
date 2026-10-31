@@ -1,0 +1,212 @@
+{
+  "date": "2026-10-31",
+  "run_type": "incremental",
+  "lag_hours": 72,
+  "trigger_payload": "buffer-low: claimable=14/72 — refill planner",
+  "notes": [
+    "Routine last ran 2026-10-28; 3-day lag — lag_warning emitted (Δ0).",
+    "Phase 1.5 (ppt-dev-review) skipped — token budget on 3-day catch-up run.",
+    "Phase 1.6 (ppt-project-management) skipped — token budget; pm_cursor not advanced; G16 is no-op per routine-prompt § G16.",
+    "Phase 5 (auto-fix) no candidate — no high-confidence/score≥3 allowlist signal this run."
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-10-31",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "last_run_iso=2026-10-28T10:54:38Z; now=2026-10-31; lag ≈ 72h (> 36h threshold)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3186",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3186 (code-review-ppt-web-core-iot-ws-hasgivenup-dropped) touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating any docs/screens/ppt/*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/ppt/",
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3197",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3197 (code-review-reality-web-listing-edit-price-zero) touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating any docs/screens/reality/*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "docs/screens/reality/",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-3137",
+      "type": "dep-update-noise",
+      "source": "PR #3137",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot npm-minor-patch group bump closed-not-merged 2026-10-29; superseded by #3195 (30 updates)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-3007",
+      "type": "dep-update-noise",
+      "source": "PR #3007",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot gradle-minor-patch group bump closed-not-merged 2026-10-29; superseded by #3194 (7 updates)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-2961",
+      "type": "dep-update-noise",
+      "source": "PR #2961",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot kotlin group bump closed-not-merged 2026-10-29; superseded by #3196 (5 updates)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f + head -1 grep",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state cursors",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length==unique|length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals seen cumulative check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score>8 length==0",
+      "observed": "true",
+      "expected": "true",
+      "note": "no items hit decay this run (no open item older than 14d)"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no new plans this run",
+      "observed": "no plans/<slug>.md added",
+      "expected": "no plans or each has adversarial pass note"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/",
+      "observed": "0 new",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secrets regex | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists skipped phases + cursors not advanced for them",
+      "observed": "pm_cursor + review_cursor unchanged; brief notes skips",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "n/a this run — no plans in prior commit changed state",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files vs ls-tree HEAD archive count",
+      "observed": "22=22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty + no new auto_fix_history",
+      "observed": "empty",
+      "expected": "<=1 PR + <=1 issue + <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "n/a — Phase 1.6 skipped (pm_cursor unchanged)",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached grep telegram-token-regex | wc -l",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlist-type signal with confidence=high and score>=3 this run"
+}
