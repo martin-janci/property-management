@@ -306,6 +306,20 @@
         "score": 1,
         "vector": "test-gap"
       }
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs-retry1",
+      "action": "Churn hotspot: backend/servers/reality-server/src/routes/price_map.rs — merged PR touched this file heavily this run [retry 1/2 of failed churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-01T20:25:51Z (retry_of=churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs reason=failed-no-pr cooldown_ok newest_failure=2026-10-25T19:25:07Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-01T20:25:51Z",
+      "retry_of": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
+      "retry_round": 1
     }
   ],
   "generated": "2026-10-28T11:00:00Z"
