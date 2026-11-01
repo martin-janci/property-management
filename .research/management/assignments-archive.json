@@ -1683,6 +1683,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-e690d369",
+      "status": "merged",
+      "claimed_at": "2026-11-01T04:33:49Z",
+      "last_updated": "2026-11-01T12:40:15Z",
+      "status_changed_at": "2026-11-01T12:40:15Z",
+      "pr_number": 3210,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3210",
+      "merged_at": "2026-11-01T12:34:40Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=test-only;cross-org-404-reads-verified-consistent-with-siblings;CI-green;draft-flag-noted",
+      "last_reviewed_oid": "94f4604d27b27a0b46d7858388a494101b482aa6",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-01T10:31:25Z"
+    },
+    {
       "task_id": "churn-hotspot-backend/servers/api-server/src/services/auth_policy.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-124a37e8",
       "status": "merged",
@@ -2391,6 +2413,28 @@
       "merge_attempted_at": "2026-10-10T20:33:53Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-reality-web-e686b784",
+      "status": "merged",
+      "claimed_at": "2026-11-01T08:32:42Z",
+      "last_updated": "2026-11-01T12:40:15Z",
+      "status_changed_at": "2026-11-01T12:40:15Z",
+      "pr_number": 3212,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3212",
+      "merged_at": "2026-11-01T12:34:46Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=behavior-preserving _status extraction; tests+CI green; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "8f2138774ffe48aa28f007367d40406319b78c05",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
@@ -7415,6 +7459,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-30T04:35:02Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-invoice-feature-n-904e8b2a",
+      "status": "merged",
+      "claimed_at": "2026-11-01T04:33:49Z",
+      "last_updated": "2026-11-01T12:40:15Z",
+      "status_changed_at": "2026-11-01T12:40:15Z",
+      "pr_number": 3211,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3211",
+      "merged_at": "2026-11-01T12:34:43Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=i18n+dialog-fix-complete-all-6-locales;CI-green;posted-as-COMMENT(bot-cannot-self-approve)",
+      "last_reviewed_oid": "66d3b4e371f75ef3e3171b55d80c8904d85a6501",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-01T10:31:25Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-invoice-qty-price-nan",
@@ -18439,6 +18505,28 @@
       "merge_attempted_at": "2026-10-30T20:41:51Z"
     },
     {
+      "task_id": "gh-issue-3206",
+      "branch": "auto-impl/gh-issue-3206-e0d34b16",
+      "status": "merged",
+      "claimed_at": "2026-11-01T04:33:49Z",
+      "last_updated": "2026-11-01T12:40:15Z",
+      "status_changed_at": "2026-11-01T12:40:15Z",
+      "pr_number": 3209,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3209",
+      "merged_at": "2026-11-01T12:35:00Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=clean-i18n-defaultValue-fix-all-6-locales-ci-green",
+      "last_reviewed_oid": "acdbeb6a474f1bdad4208f183317fb6017c2a86e",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-01T10:31:25Z"
+    },
+    {
       "task_id": "integrations-webhook-hardening-audit-2026-07-23",
       "branch": "auto-impl/integrations-webhook-hardening-audit-202-9c0fcfa0",
       "status": "merged",
@@ -20175,6 +20263,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "branch": "auto-impl/repeated-churn-backend-servers-api-serve-328fc240",
+      "status": "merged",
+      "claimed_at": "2026-11-01T08:32:42Z",
+      "last_updated": "2026-11-01T12:40:15Z",
+      "status_changed_at": "2026-11-01T12:40:15Z",
+      "pr_number": 3214,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3214",
+      "merged_at": "2026-11-01T12:33:15Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=test-only fixture consolidation; coverage preserved; CI green; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "8c9bfe8a4c0167861310309f18ef6539dad0e3c5",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "repeated-churn-backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs",
       "branch": "auto-impl/repeated-churn-backend-servers-api-serve-6a3993ce",
       "status": "failed",
@@ -21733,5 +21843,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-10-31T20:46:12Z"
+  "archived_at": "2026-11-01T12:40:22Z"
 }
