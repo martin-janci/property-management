@@ -2726,5 +2726,68 @@
     "deleteFailed": "Nepodarilo sa odstrániť záznam",
     "saved": "Osoba-mesiac uložená",
     "saveFailed": "Nepodarilo sa uložiť osobu-mesiac"
+  },
+  "accounting": {
+    "title": "Vystavené faktúry",
+    "subtitle": "Natívne účtovníctvo MVP",
+    "createInvoice": "Vytvoriť faktúru",
+    "newInvoice": "Nová faktúra",
+    "createFailed": "Faktúru sa nepodarilo vytvoriť",
+    "deleteFailed": "Faktúru sa nepodarilo odstrániť",
+    "deleteConfirmTitle": "Odstrániť faktúru",
+    "deleteConfirmMessage": "Naozaj chcete odstrániť túto faktúru?",
+    "emptyTitle": "Nenašli sa žiadne faktúry",
+    "emptyBody": "Začnite vytvorením svojej prvej faktúry.",
+    "due": "Splatnosť: {{date}}",
+    "vat": "DPH: {{amount}}",
+    "editLabel": "Upraviť faktúru",
+    "deleteLabel": "Odstrániť faktúru",
+    "status": {
+      "draft": "Koncept",
+      "issued": "Vystavená",
+      "paid": "Zaplatená",
+      "partiallyPaid": "Čiastočne zaplatená",
+      "overdue": "Po splatnosti"
+    },
+    "form": {
+      "contact": "Kontakt",
+      "selectContact": "Vyberte kontakt",
+      "invoiceNumber": "Číslo faktúry",
+      "variableSymbol": "Variabilný symbol",
+      "issueDate": "Dátum vystavenia",
+      "dueDate": "Dátum splatnosti",
+      "currency": "Mena",
+      "vatCountry": "Krajina DPH",
+      "country": {
+        "cz": "Česká republika",
+        "sk": "Slovensko"
+      },
+      "lineItems": "Položky",
+      "addItem": "Pridať položku",
+      "itemDescriptionPlaceholder": "Popis položky",
+      "customPercent": "Vlastné %",
+      "remove": "Odstrániť",
+      "baseAmount": "Základ",
+      "vatAmount": "Suma DPH",
+      "total": "Spolu",
+      "updateInvoice": "Aktualizovať faktúru",
+      "col": {
+        "description": "Popis",
+        "qty": "Množstvo",
+        "unitPrice": "Jednotková cena",
+        "vatRate": "Sadzba DPH",
+        "total": "Spolu"
+      },
+      "vatRate": {
+        "standard": "Základná (21% CZ / 20% SK)",
+        "reduced": "Znížená (10%)",
+        "firstReduced": "Prvá znížená (15% CZ)",
+        "zero": "Nulová (0%)"
+      },
+      "errors": {
+        "requiredFields": "Vyplňte všetky povinné polia",
+        "invalidNumbers": "Množstvo a jednotková cena musia byť platné čísla"
+      }
+    }
   }
 }

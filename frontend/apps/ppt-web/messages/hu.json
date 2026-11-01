@@ -2592,5 +2592,68 @@
     "deleteFailed": "Nem sikerült törölni a bejegyzést",
     "saved": "Személy-hónap elmentve",
     "saveFailed": "Nem sikerült menteni a személy-hónapot"
+  },
+  "accounting": {
+    "title": "Kiállított számlák",
+    "subtitle": "Natív könyvelés MVP",
+    "createInvoice": "Számla létrehozása",
+    "newInvoice": "Új számla",
+    "createFailed": "A számla létrehozása nem sikerült",
+    "deleteFailed": "A számla törlése nem sikerült",
+    "deleteConfirmTitle": "Számla törlése",
+    "deleteConfirmMessage": "Biztosan törli ezt a számlát?",
+    "emptyTitle": "Nem található számla",
+    "emptyBody": "Kezdje az első számla létrehozásával.",
+    "due": "Esedékes: {{date}}",
+    "vat": "ÁFA: {{amount}}",
+    "editLabel": "Számla szerkesztése",
+    "deleteLabel": "Számla törlése",
+    "status": {
+      "draft": "Piszkozat",
+      "issued": "Kiállítva",
+      "paid": "Fizetve",
+      "partiallyPaid": "Részben fizetve",
+      "overdue": "Lejárt"
+    },
+    "form": {
+      "contact": "Kapcsolat",
+      "selectContact": "Válasszon kapcsolatot",
+      "invoiceNumber": "Számlaszám",
+      "variableSymbol": "Változó szimbólum",
+      "issueDate": "Kiállítás dátuma",
+      "dueDate": "Esedékesség dátuma",
+      "currency": "Pénznem",
+      "vatCountry": "ÁFA ország",
+      "country": {
+        "cz": "Csehország",
+        "sk": "Szlovákia"
+      },
+      "lineItems": "Tételek",
+      "addItem": "Tétel hozzáadása",
+      "itemDescriptionPlaceholder": "Tétel leírása",
+      "customPercent": "Egyéni %",
+      "remove": "Eltávolítás",
+      "baseAmount": "Nettó összeg",
+      "vatAmount": "ÁFA összege",
+      "total": "Összesen",
+      "updateInvoice": "Számla frissítése",
+      "col": {
+        "description": "Leírás",
+        "qty": "Menny.",
+        "unitPrice": "Egységár",
+        "vatRate": "ÁFA-kulcs",
+        "total": "Összesen"
+      },
+      "vatRate": {
+        "standard": "Normál (21% CZ / 20% SK)",
+        "reduced": "Kedvezményes (10%)",
+        "firstReduced": "Első kedvezményes (15% CZ)",
+        "zero": "Nulla (0%)"
+      },
+      "errors": {
+        "requiredFields": "Töltse ki az összes kötelező mezőt",
+        "invalidNumbers": "A mennyiségnek és az egységárnak érvényes számnak kell lennie"
+      }
+    }
   }
 }
