@@ -21,6 +21,7 @@ import { formatPrice } from '@/lib/format';
 import { getMyListing, type ListingDraft, RealtorApiError, updateListing } from '@/lib/realtor-api';
 import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPES } from './_mock';
 import { resolveListingPrice } from './_price';
+import { mapListingStatusToForm, resolveStatusUpdate } from './_status';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
 // TODO: replace file upload with @ppt/ui-kit/FileUpload once available
@@ -137,17 +138,10 @@ function EditWizardContent() {
     setLoading(true);
     getMyListing(listingId)
       .then((listing) => {
-        // Backend lifecycle statuses (`active`/`paused`/…) → the form's
-        // 3-state control; terminal/unknown values (`sold`/`rented`/`archived`)
-        // fall back to `draft` for display only.
-        const mappedStatus: ListingEditFormData['status'] =
-          listing.status === 'active'
-            ? 'active'
-            : listing.status === 'draft'
-              ? 'draft'
-              : listing.status === 'paused'
-                ? 'inactive'
-                : 'draft';
+        // Backend lifecycle status → the form's 3-state control. Terminal/
+        // unknown values fall back to `draft` for display only; the real state
+        // is preserved on save by `resolveStatusUpdate`. See `_status.ts`.
+        const mappedStatus = mapListingStatusToForm(listing.status);
         setInitialStatus(mappedStatus);
         setForm({
           transactionType: (listing.transactionType as 'sale' | 'rent') ?? 'sale',
@@ -192,21 +186,14 @@ function EditWizardContent() {
     setSaving(true);
     try {
       const floor = typeof form.floor === 'number' ? form.floor : Number(form.floor) || undefined;
-      // Only emit `status` when the owner deliberately changed the 3-state
-      // control. Otherwise omit it so the backend preserves the listing's real
-      // lifecycle state — without this, editing any field on a sold/rented/
-      // archived listing (all displayed as `draft`) would COALESCE that `draft`
-      // back over the terminal state and silently downgrade it (#1762).
-      // Publishing (`active`) stays moderation-gated server-side, so it is never
-      // sent directly even on an explicit change.
-      const statusChanged = form.status !== initialStatus;
-      const status: ListingDraft['status'] | undefined = !statusChanged
-        ? undefined
-        : form.status === 'inactive'
-          ? 'paused'
-          : form.status === 'draft'
-            ? 'draft'
-            : undefined;
+      // Emit `status` only when the owner deliberately changed the control, so
+      // the backend preserves the listing's real lifecycle state (terminal
+      // states display as `draft`); `active` is never sent directly (publishing
+      // is moderation-gated). See `_status.ts` / #1762.
+      const status: ListingDraft['status'] | undefined = resolveStatusUpdate(
+        form.status,
+        initialStatus
+      );
       await updateListing(listingId, {
         title: form.description?.slice(0, 80) || `${form.propertyType} ${form.city}`,
         description: form.description,
