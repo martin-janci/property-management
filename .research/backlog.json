@@ -13926,6 +13926,232 @@
         "assignment_status": "merged",
         "pr_number": 3199
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "title": "Churn hotspot: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — top-3 churn this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit log 2026-10-28..2026-11-01"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx touched 3x in window (2026-10-28..2026-11-01); runs_seen=1"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx",
+      "title": "Churn hotspot: frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — top-3 churn this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit log 2026-10-28..2026-11-01"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx touched 3x in window (2026-10-28..2026-11-01); runs_seen=1"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/routes/portal_listings.rs",
+      "title": "Churn hotspot: backend/servers/reality-server/src/routes/portal_listings.rs — top-3 churn this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "commit log 2026-10-28..2026-11-01"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/portal_listings.rs touched 2x in window (2026-10-28..2026-11-01); runs_seen=1"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/portal_listings.rs"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "hotfix-no-test-pr-3188",
+      "title": "Add regression test for assign_violation cross-org IDOR fix (PR #3188)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3188"
+      ],
+      "evidence": [
+        "PR #3188 (fix(UC-violations): assign_violation org-scoped 404 before assignee gate) merged 2026-10-30",
+        "Diff touched only backend/servers/api-server/src/routes/violations.rs (15 adds, no test file in change set)",
+        "Fix resolved gh-issue-3187 (cross_org_assign_violation_is_not_found) — cross-org IDOR → 404 contract"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/violations.rs"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3203-reality",
+      "title": "screen-map-drift: PR #3203 touched reality routes without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3203"
+      ],
+      "evidence": [
+        "PR #3203 (code-review-reality-web-listing-edit-i18n-sk) modified frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating docs/screens/reality/account-listing-edit.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "title": "screen-map-drift: PR #3197 touched reality routes without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3197"
+      ],
+      "evidence": [
+        "PR #3197 (code-review-reality-web-listing-edit-price-zero) modified frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without updating docs/screens/reality/account-listing-edit.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "title": "screen-map-drift: PR #3186 touched ppt routes without updating docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "PR #3186 (code-review-ppt-web-core-iot-ws-hasgivenup-dropped) modified frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating docs/screens/ppt/iot.md"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-disputes-cards-no-i18n",
+      "title": "The disputes feature's presentational card layer renders user-facing English string literals with NO useTranslation impo",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "The disputes feature's presentational card layer renders user-facing English string literals with NO useTranslation import, inside an app that ships react-i18next with sk/cs/de/en locales. The surrounding pages are translated (DisputeList.tsx uses t() for title/filters/empty-state; MediationChatThread.tsx and MediationResolutionForm.tsx are fully t()-wrapped), so these cards are the un-wrapped gap, not a missing capability.",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeCard.tsx:147-151 — hardcoded `Filed by {name}`, `Assigned to {name}`, and the relative-time literals `Today` / `${daysAgo} days ago` (also lacks plural handling for 1 day). No useTranslation in the file.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ResolutionCard.tsx:118,180 — hardcoded headings `Resolution Proposal`, `Votes`, plus `Assigned to:` / `Due:` row labels (L161,163). No useTranslation.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ActionItemCard.tsx:73-89,118,126,139 — hardcoded status/relative-time strings `Completed`, `Overdue by {n} days`, `Due today`, `Due tomorrow`, `Due in {n} days`, and labels `Assigned to:`, `Completed:`, `Escalated:`. No useTranslation; no plural handling.",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeTimeline.tsx:85,94,97 — hardcoded `Just now`, heading `Activity Timeline`, and empty-state `No activity yet.`. No useTranslation.",
+        "Fix vector: add const { t, i18n } = useTranslation() to each of the 4 card files and move the literals to disputes.* keys (e.g. disputes.card.filedBy, disputes.actionItem.dueInDays with i18next plural forms, disputes.timeline.empty); add the keys to the sk/cs/de/en locale bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: literals certain by static read, all four cards reachable from the shipped DisputesPage/DisputeDetailPage/MediationWorkspacePage; severity LOW (+1) i18n gap per the skill's score-delta table.",
+        "expert: frontend+completeness"
+      ],
+      "files": [
+        "DisputeList.tsx",
+        "MediationChatThread.tsx",
+        "MediationResolutionForm.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/components/ActionItemCard.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeCard.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-price-map-unthrottled-agg-dos",
+      "title": "backend/servers/reality-server/src/routes/price_map.rs:226 get_price_map is the handler for the PUBLIC, UNAUTHENTICATED ",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:226 get_price_map is the handler for the PUBLIC, UNAUTHENTICATED GET /api/v1/price-map (mounted bare at main.rs:515 `.nest(\"/api/v1/price-map\", routes::price_map::router())`, router() at price_map.rs:174 attaches no auth/throttle layer).",
+        "reality-server has NO global per-IP rate-limit layer: the only abuse control (state.inquiry_rate_limiters) is invoked INSIDE the anonymous inquiry (routes/inquiries.rs enforce_inquiry_rate_limit) and report (routes/reports.rs enforce_public_report_rate_limit) POST handlers. The main.rs layer stack (L521-575: DefaultBodyLimit, security_headers, TraceLayer, CorsLayer, host_tenant_middleware) adds no request-rate throttle. So the price-map GET is reachable unthrottled.",
+        "On every cache MISS it runs an expensive double-CTE aggregation over `listings` (price_map.rs:253-330): current_period + prior_period, each a full `AVG(CASE WHEN size_sqm>0 THEN price/size_sqm END) ... GROUP BY city` scan. The cache_key (price_map.rs:253-259) is `\"{mode}:{time_window}:{property_type}:{city}\"` and embeds the RAW free-text `query.city` (L258) — an attacker rotating `?city=a1`, `?city=a2`, ... forces a guaranteed cache miss every request, so each request re-runs both aggregations against the DB.",
+        "The BoundedCache (MAX_PRICE_MAP_CACHE_ENTRIES=10_000 with LRU/insertion-order eviction, price_map.rs:57/142) bounds only MEMORY under a distinct-key flood (the existing #3132 tests confirm the OOM guard). It does NOT throttle the per-miss DB aggregation, and the LRU eviction means a distinct-key flood also evicts all legitimately-cached aggregations, collapsing the hit rate and the 1h cache benefit for real visitors. Net effect: an unauthenticated single-IP caller can impose repeated expensive GROUP BY load on the shared public DB pool and bust the cache for everyone.",
+        "Fix vector: add a per-IP throttle to the price-map GET (reuse the existing TenantRateLimiterSet / client_ip_bucket primitive already used for inquiries/reports), and/or reduce cache-miss amplification by validating+canonicalising `city` (trim/lowercase/known-city allowlist) before it enters cache_key so arbitrary free-text can't mint unbounded distinct keys. Confidence medium: the absent throttle layer and per-miss aggregation are certain by static read; 'medium' (not high) because the DB cost per aggregation was not runtime-measured from this cloud runner.",
+        "expert: rust"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs",
+        "main.rs",
+        "price_map.rs",
+        "routes/inquiries.rs",
+        "routes/reports.rs"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-price-map-mode-unvalidated",
+      "title": "backend/servers/reality-server/src/routes/price_map.rs:230 `let mode = query.mode.clone().unwrap_or_else(|| \"sale\".to_st",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:230 `let mode = query.mode.clone().unwrap_or_else(|| \"sale\".to_string());` — the `mode` query param is accepted with NO allowlist validation and bound directly as `transaction_type = $1` (L324 `.bind(&mode)`).",
+        "This is inconsistent with its own sibling param in the SAME handler: `time_window` IS validated against a closed match (price_map.rs:238-253) — `1m|3m|12m|5y` map to intervals and any other value returns `400 BAD_REQUEST` ('Unsupported time_window ...'). `mode` gets no such treatment, though the only meaningful DB values are the transaction_type enum (e.g. sale/rent).",
+        "Consequence: an arbitrary `?mode=foo` does NOT 400 — it silently matches zero rows, returns `200 OK` with an empty `districts: []`, echoes the bogus `mode` back in PriceMapResponse (price_map.rs:204-212 / response build), and is cached under cache_key `\"foo:3m::\"` (L253-259). A silent empty 200 for an unsupported enum value is a contract defect (clients can't distinguish 'no data for a valid filter' from 'invalid filter'), and it compounds the distinct-key cache-miss surface of the sibling finding.",
+        "Fix vector: validate `mode` against the transaction_type allowlist up-front and return 400 on unknown values, mirroring the existing `time_window` closed-match guard a few lines above. Low severity / contract-consistency. Confidence medium: the missing validation and the silent-empty-200 path are certain by static read.",
+        "expert: rust"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/price_map.rs",
+        "price_map.rs"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
     }
   ]
 }
