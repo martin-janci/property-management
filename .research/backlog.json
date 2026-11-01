@@ -13819,7 +13819,8 @@
       "score": 1,
       "status": "done",
       "sources": [
-        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
+        "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)",
+        "PR #3211"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx — never imports useTranslation; every user-facing string is hardcoded English (field labels, table headers, buttons, VAT_RATE_OPTIONS labels).",
@@ -13947,7 +13948,8 @@
       "sources": [
         "churn 2026-11-01 (14d window)",
         "PR #3197 (price-zero reject)",
-        "PR #3203 (i18n sk→en/cs/de/hu/pl)"
+        "PR #3203 (i18n sk→en/cs/de/hu/pl)",
+        "PR #3212"
       ],
       "evidence": [
         "216 lines of churn this run (top-1 raw-churn). Two merged PRs touched the same page in rapid succession: #3197 rejected empty/invalid price (silent 0 persist) and #3203 localized hardcoded Slovak user-facing strings across 6 message files.",
@@ -13996,7 +13998,8 @@
       "status": "done",
       "sources": [
         "hotspot_history runs_seen 1 -> 2 (2026-10-28 + 2026-11-01)",
-        "PR #3204 (strengthen compliance wave-1b regression coverage)"
+        "PR #3204 (strengthen compliance wave-1b regression coverage)",
+        "PR #3214"
       ],
       "evidence": [
         "runs_seen reaches 2 — the Wave-1b test suite is being iteratively expanded 2 routine runs in a row. Underlying moderation/appeal production code still shifting (see open items appeal-no-status-guard, moderation-report-flood). Worth watching for churn-hotspot repair when the suite stabilises.",

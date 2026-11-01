@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-01 06:50 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-01 16:39 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -234,12 +234,12 @@
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs (+2)` | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs (+4)` | issue #160 (+2) | 2026-05-23 | done | — |
 | 1 | test-gap | Churn hotspot: frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx — ranked-ballot rendering tests reworked | `frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx` | churn 2026-11-01 (14d window) (+1) | 2026-11-01 | open | — |
-| 1 | test-gap | Churn hotspot: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — listing-edit page churning across price-guard + i18n fixes | `frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx` | churn 2026-11-01 (14d window) (+2) | 2026-11-01 | open | — |
-| 1 | test-gap | Repeated churn: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — compliance Wave-1b suite still expanding 2 routine windows in a row | `backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs` | hotspot_history runs_seen 1 -> 2 (2026-10-28 + 2026-11-01) (+1) | 2026-11-01 | open | — |
-| 1 | test-gap | Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches) | `backend/servers/api-server/src/routes/violations.rs` | churn 2026-10-28 (14d window) | 2026-10-28 | open | — |
+| 1 | test-gap | Churn hotspot: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — listing-edit page churning across price-guard + i18n fixes | `frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx` | churn 2026-11-01 (14d window) (+3) | 2026-11-01 | done | — |
+| 1 | test-gap | Repeated churn: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — compliance Wave-1b suite still expanding 2 routine windows in a row | `backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs` | hotspot_history runs_seen 1 -> 2 (2026-10-28 + 2026-11-01) (+2) | 2026-11-01 | done | — |
+| 1 | test-gap | Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches) | `backend/servers/api-server/src/routes/violations.rs` | churn 2026-10-28 (14d window) | 2026-10-28 | done | — |
 | 1 | test-gap | Churn hotspot: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — 3 touches in 14d (iterative compliance hardening) | `backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs` | churn 2026-10-28 (14d window) | 2026-10-28 | done | — |
 | 1 | refactor | ppt-web ConnectionStatus renders <div role="status"> as the reconnect button — a11y role mismatch | `frontend/apps/ppt-web/src/components/ConnectionStatus.tsx` | rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | done | — |
-| 1 | refactor | ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx (+1)` | rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | open | — |
+| 1 | refactor | ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx (+1)` | rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d) (+1) | 2026-10-28 | done | — |
 | 1 | bug | ppt-web Toast ToastItem schedules setCopied timer with no unmount cleanup — dangling timer / stale state | `frontend/apps/ppt-web/src/components/Toast.tsx` | rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d) | 2026-10-28 | done | — |
 | 1 | bug | reality-server create/update_listing accepts price without positivity / NaN guard (DECIMAL has no CHECK) | `backend/servers/reality-server/src/routes/portal_listings.rs (+1)` | rotating-expert-review [reality-server] 2026-10-28 | 2026-10-28 | done | — |
 | 1 | dx | reality-server list_my_reports binds unvalidated status filter — silent empty page vs documented enum | `backend/servers/reality-server/src/routes/reports.rs` | rotating-expert-review [reality-server] 2026-10-28 | 2026-10-28 | done | — |

@@ -183,5 +183,31 @@
       "observed": "0",
       "expected": "0"
     }
+  ],
+  "reruns": [
+    {
+      "at_iso": "2026-11-01T16:39:09Z",
+      "reason": "second buffer-low payload fire; captures 5 PRs merged in gap (#3209-3214) + records coverage=0-stories observation",
+      "cursor_advanced": {
+        "last_pr_seen": {
+          "from": 3207,
+          "to": 3214
+        },
+        "last_commit_sha": {
+          "from": "3a57b3374",
+          "to": "dd9774154"
+        },
+        "last_run_iso": {
+          "from": "2026-11-01T06:48:00Z",
+          "to": "2026-11-01T16:39:09Z"
+        }
+      },
+      "new_signals": [],
+      "phase_1_6_run": false,
+      "phase_1_6_skipped_reason": "same-day re-run; pm_cursor already at next_index=3 (pm-qa) from 06:48 UTC state (not advanced today); no new delivery state in 10h gap; defer role rotation to next distinct-day fire",
+      "auto_fix_actions": [],
+      "auto_fix_skipped_reason": "no new signals this re-run",
+      "notes": "PR # appended to sources on 3 done backlog rows (code-review-ppt-web-ui-invoice-feature-no-i18n <= PR #3211; churn-hotspot-...listing-edit <= PR #3212; repeated-churn-...compliance_wave1b <= PR #3214)."
+    }
   ]
 }
