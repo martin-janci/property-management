@@ -13926,6 +13926,73 @@
         "assignment_status": "merged",
         "pr_number": 3199
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "title": "Churn hotspot: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — listing-edit page churning across price-guard + i18n fixes",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-11-01 (14d window)",
+        "PR #3197 (price-zero reject)",
+        "PR #3203 (i18n sk→en/cs/de/hu/pl)"
+      ],
+      "evidence": [
+        "216 lines of churn this run (top-1 raw-churn). Two merged PRs touched the same page in rapid succession: #3197 rejected empty/invalid price (silent 0 persist) and #3203 localized hardcoded Slovak user-facing strings across 6 message files.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx — ranked-ballot rendering tests reworked",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "churn 2026-11-01 (14d window)",
+        "PR #3189 (render ranked vote questions as ordered ballot)"
+      ],
+      "evidence": [
+        "162 lines of churn (top-3 raw-churn this run) from PR #3189 which also edited the paired VoteDetailScreen.tsx by 158 lines. Follow-up issue #3206 flags that the ranked-ballot a11y labels still render raw i18n keys — PR #3209 (draft) is iterating on the same test.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "title": "Repeated churn: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — compliance Wave-1b suite still expanding 2 routine windows in a row",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen 1 -> 2 (2026-10-28 + 2026-11-01)",
+        "PR #3204 (strengthen compliance wave-1b regression coverage)"
+      ],
+      "evidence": [
+        "runs_seen reaches 2 — the Wave-1b test suite is being iteratively expanded 2 routine runs in a row. Underlying moderation/appeal production code still shifting (see open items appeal-no-status-guard, moderation-report-flood). Worth watching for churn-hotspot repair when the suite stabilises.",
+        "This signal is the instability-proxy counterpart to the (now-done) churn-hotspot item for the same file."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
     }
   ]
 }
