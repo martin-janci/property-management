@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-01",
+  "generated_at": "2026-11-01T04:35:00Z",
+  "trigger": "scheduled",
+  "trigger_payload": "buffer-low: claimable=12/72 — refill planner",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-01",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-10-28T10:54:38Z — 89h / 3d since; dispatcher kept ticking (16 PRs merged, 1 new issue)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-11-01",
+      "score_delta": 1,
+      "evidence": "3 touches since 2026-10-28 across PRs #3197/#3203 — listing-edit price + i18n + validation surface",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-11-01",
+      "score_delta": 1,
+      "evidence": "3 touches since 2026-10-28 across PRs #3191/#3202 — invoice qty/price NaN + vatRate payload drift",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/lib/comparison-context.tsx",
+      "type": "churn-hotspot",
+      "source": "churn-scan 2026-11-01",
+      "score_delta": 1,
+      "evidence": "2 touches since 2026-10-28 across PR #3199 — comparison localStorage shape guard",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no eligible signal met confidence=high + score>=3 + allowlist this run",
+  "phase_15_skipped": "dispatcher ran tier1d dev-review signals daily during the lag window — ppt-web-core, reality-web, reality-server, api-core, mobile-rn, mobile-native-kmp all covered 2026-10-29..2026-11-01",
+  "phase_16_skipped": "heavy subagent cost given 89h lag; pm_cursor + coverage_cursor untouched so G16 is a no-op",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f .research/briefs/2026-11-01.md && head -1 ... grep", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq --slurpfile prev ... compare cursors",                      "observed": "true",   "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique|length))' backlog.json","observed": "true",   "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative double-count",                               "observed": "true",   "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "cap/decay — all open items < 14d old, no scores > 8",          "observed": "true",   "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "no new plans this run — vacuously true",                       "observed": "no new plans", "expected": "annotations present if plans added" },
+    { "goal": "G7", "passed": true,  "command": "0 new plans ≤ 2",                                               "observed": "0",      "expected": "≤2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l","observed": "0",      "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "secret/private-hostname scan on staged diff",                   "observed": "0",      "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md",                      "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — no phase failed",                       "observed": "none",   "expected": "none" },
+    { "goal": "G12", "passed": true, "command": "plan promotions converge — no plans deleted this run",          "observed": "true",   "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive-only-grows (count unchanged this run)",                 "observed": "21==21", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",            "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline — no auto-fix this run",                    "observed": "0 actions", "expected": "≤1/≤1/≤1" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — gate is no-op",                              "observed": "skipped", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token value in staged diff",                        "observed": "0",      "expected": "0" }
+  ]
+}
