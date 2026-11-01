@@ -10,6 +10,7 @@ import type {
   AccountingVatRate,
 } from '@ppt/api-client';
 import { type FormEvent, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Parse a numeric <input> value, normalizing the empty/invalid case to 0.
@@ -22,11 +23,12 @@ function parseNumericInput(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-const VAT_RATE_OPTIONS: { label: string; value: AccountingVatRate }[] = [
-  { label: 'Standard (21% CZ / 20% SK)', value: 'standard' },
-  { label: 'Reduced (10%)', value: 'reduced' },
-  { label: 'First Reduced (15% CZ)', value: 'first_reduced' },
-  { label: 'Zero (0%)', value: 'zero' },
+/** VAT rate options, by value + the `accounting.form.vatRate.*` i18n key. */
+const VAT_RATE_OPTIONS: { i18nKey: string; value: AccountingVatRate }[] = [
+  { i18nKey: 'accounting.form.vatRate.standard', value: 'standard' },
+  { i18nKey: 'accounting.form.vatRate.reduced', value: 'reduced' },
+  { i18nKey: 'accounting.form.vatRate.firstReduced', value: 'first_reduced' },
+  { i18nKey: 'accounting.form.vatRate.zero', value: 'zero' },
 ];
 
 /**
@@ -67,6 +69,8 @@ export function AccountingInvoiceForm({
   onCancel,
   isSubmitting,
 }: AccountingInvoiceFormProps) {
+  const { t } = useTranslation();
+  const [formError, setFormError] = useState<string | null>(null);
   const [contactId, setContactId] = useState(initialData?.contactId || '');
   const [number, setNumber] = useState(initialData?.number || '');
   const [issueDate, setIssueDate] = useState(
@@ -99,7 +103,7 @@ export function AccountingInvoiceForm({
     e.preventDefault();
 
     if (!contactId || !number || !dueDate || items.length === 0) {
-      alert('Please fill all required fields');
+      setFormError(t('accounting.form.errors.requiredFields'));
       return;
     }
 
@@ -116,10 +120,11 @@ export function AccountingInvoiceForm({
       (i) => !Number.isFinite(i.qty) || !Number.isFinite(i.unitPrice)
     );
     if (hasNonFinite) {
-      alert('Quantity and unit price must be valid numbers');
+      setFormError(t('accounting.form.errors.invalidNumbers'));
       return;
     }
 
+    setFormError(null);
     onSubmit({
       contactId,
       number,
@@ -161,14 +166,16 @@ export function AccountingInvoiceForm({
         {/* Basic Info */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Contact *</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('accounting.form.contact')} *
+            </label>
             <select
               value={contactId}
               onChange={(e) => setContactId(e.target.value)}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               required
             >
-              <option value="">Select a contact</option>
+              <option value="">{t('accounting.form.selectContact')}</option>
               {contacts.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -177,7 +184,9 @@ export function AccountingInvoiceForm({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Invoice Number *</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('accounting.form.invoiceNumber')} *
+            </label>
             <input
               type="text"
               value={number}
@@ -187,7 +196,9 @@ export function AccountingInvoiceForm({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Variable Symbol</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('accounting.form.variableSymbol')}
+            </label>
             <input
               type="text"
               value={variableSymbol}
@@ -200,7 +211,9 @@ export function AccountingInvoiceForm({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Issue Date *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('accounting.form.issueDate')} *
+              </label>
               <input
                 type="date"
                 value={issueDate}
@@ -210,7 +223,9 @@ export function AccountingInvoiceForm({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Due Date *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('accounting.form.dueDate')} *
+              </label>
               <input
                 type="date"
                 value={dueDate}
@@ -222,7 +237,9 @@ export function AccountingInvoiceForm({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Currency *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('accounting.form.currency')} *
+              </label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
@@ -234,14 +251,16 @@ export function AccountingInvoiceForm({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">VAT Country *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('accounting.form.vatCountry')} *
+              </label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value as 'CZ' | 'SK')}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               >
-                <option value="CZ">Czech Republic</option>
-                <option value="SK">Slovakia</option>
+                <option value="CZ">{t('accounting.form.country.cz')}</option>
+                <option value="SK">{t('accounting.form.country.sk')}</option>
               </select>
             </div>
           </div>
@@ -251,13 +270,13 @@ export function AccountingInvoiceForm({
       {/* Items */}
       <div className="mt-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Line Items</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('accounting.form.lineItems')}</h3>
           <button
             type="button"
             onClick={addItem}
             className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded hover:bg-blue-100"
           >
-            + Add Item
+            + {t('accounting.form.addItem')}
           </button>
         </div>
         <div className="overflow-x-auto">
@@ -265,19 +284,19 @@ export function AccountingInvoiceForm({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
+                  {t('accounting.form.col.description')}
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Qty
+                  {t('accounting.form.col.qty')}
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Unit Price
+                  {t('accounting.form.col.unitPrice')}
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  VAT Rate
+                  {t('accounting.form.col.vatRate')}
                 </th>
                 <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
+                  {t('accounting.form.col.total')}
                 </th>
                 <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
@@ -291,7 +310,7 @@ export function AccountingInvoiceForm({
                       value={item.description}
                       onChange={(e) => updateItem(index, 'description', e.target.value)}
                       className="block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
-                      placeholder="Item description"
+                      placeholder={t('accounting.form.itemDescriptionPlaceholder')}
                     />
                   </td>
                   <td className="px-3 py-4 w-20">
@@ -327,10 +346,10 @@ export function AccountingInvoiceForm({
                     >
                       {VAT_RATE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
-                          {opt.label}
+                          {t(opt.i18nKey)}
                         </option>
                       ))}
-                      <option value="custom">Custom %</option>
+                      <option value="custom">{t('accounting.form.customPercent')}</option>
                     </select>
                     {!item.vatRateType && (
                       <input
@@ -353,7 +372,7 @@ export function AccountingInvoiceForm({
                       onClick={() => removeItem(index)}
                       className="text-red-400 hover:text-red-600"
                     >
-                      Remove
+                      {t('accounting.form.remove')}
                     </button>
                   </td>
                 </tr>
@@ -367,25 +386,35 @@ export function AccountingInvoiceForm({
       <div className="flex justify-end pt-6 border-t border-gray-200">
         <div className="w-64 space-y-2">
           <div className="flex justify-between text-sm text-gray-600">
-            <span>Base Amount:</span>
+            <span>{t('accounting.form.baseAmount')}:</span>
             <span>
               {totals.base.toFixed(2)} {currency}
             </span>
           </div>
           <div className="flex justify-between text-sm text-gray-600">
-            <span>VAT Amount:</span>
+            <span>{t('accounting.form.vatAmount')}:</span>
             <span>
               {totals.vat.toFixed(2)} {currency}
             </span>
           </div>
           <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-100 pt-2">
-            <span>Total:</span>
+            <span>{t('accounting.form.total')}:</span>
             <span>
               {totals.total.toFixed(2)} {currency}
             </span>
           </div>
         </div>
       </div>
+
+      {/* Validation error (inline, replaces the old native alert) */}
+      {formError && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {formError}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex justify-end gap-3 mt-8">
@@ -394,14 +423,18 @@ export function AccountingInvoiceForm({
           onClick={onCancel}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : initialData ? 'Update Invoice' : 'Create Invoice'}
+          {isSubmitting
+            ? t('common.saving')
+            : initialData
+              ? t('accounting.form.updateInvoice')
+              : t('accounting.createInvoice')}
         </button>
       </div>
     </form>
