@@ -1,0 +1,47 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-01",
+  "segment_reviewed": "reality-server",
+  "selection_reason": "oldest-unreviewed (dispatcher-tier1d-demand-driven; claimable backlog below floor, 10 < 36; deterministic refills found nothing). CHURN_FILES not supplied this slice, so SKILL Step 1 priority 2 applies. The review_cursor in .research/state.json is stale/not-advanced by prior generator runs: it lists reality-web 2026-10-23 and ppt-web-ui 2026-10-22 as oldest, but .research/signals/ shows BOTH were actually reviewed on 2026-10-31 (2026-10-31-reality-web-tier1d.json, 2026-10-31-ppt-web-ui-tier1d.json) plus ppt-web-ui again on 2026-11-01. The dispatcher prompt also explicitly directs rotation away from ppt-web-ui (reviewed 2026-10-31). Using the signals/ ledger as ground truth for what was actually reviewed: the only segments with NO recent (Oct 29 - Nov 1) review activity are api-handlers and reality-server. Saturation check (open code-review-finding in backlog.json by segment): api-handlers=3 (>=3 => SKILL Step 1 saturation-skip), reality-server=0 (not saturated) => selected reality-server. Rust expert primary only per Step 2 (reality-server has no secondary expert). NOTE: the segment root in the SKILL map (backend/reality-server/src/) is stale; the crate now lives at backend/servers/reality-server/src/ (workspace reorg into crates/ + servers/) and was reviewed there. The segment is exceptionally hardened: all non-test unwrap()/expect() are provably guarded (inquiries is_valid_phone L274 empty-checked above; extractors/auth.rs L63 strip_prefix after a matching find; state.rs expect/panic are startup fail-fast only); zero unsafe; no todo!()/unimplemented!() in prod paths; CORS rejects wildcard origins with credentials (main.rs get_cors_allowed_origins); SSO introspection has a documented negative-cache-poisoning guard (routes/sso.rs introspect_pm_token_inner) and the redirect_uri flow has an allowlist + open-redirect guard + injection guard; every dynamic SQL uses sqlx::AssertSqlSafe with a proof-comment and binds all request input ($1/$2/$3); listings/articles/comments pagination is clamped + unit-tested; favorites/saved_searches/agent_reviews all scope by principal.user_id, agent_reviews enforces 1-5 rating bounds + self-review rejection + verified-interaction gate; the saved-search alert drainer has per-alert error isolation and a zero-period-panic guard; anonymous inquiry/report POSTs are per-IP throttled with a spoof-resistant bucket key. The 2 findings below are the genuine residue, both in routes/price_map.rs, capped under the 3-max (no nits padded; an empty-inquiry-message gap was judged a nit and dropped).",
+  "experts_used": [
+    "rust"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-price-map-unthrottled-agg-dos",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:226 get_price_map is the handler for the PUBLIC, UNAUTHENTICATED GET /api/v1/price-map (mounted bare at main.rs:515 `.nest(\"/api/v1/price-map\", routes::price_map::router())`, router() at price_map.rs:174 attaches no auth/throttle layer).",
+        "reality-server has NO global per-IP rate-limit layer: the only abuse control (state.inquiry_rate_limiters) is invoked INSIDE the anonymous inquiry (routes/inquiries.rs enforce_inquiry_rate_limit) and report (routes/reports.rs enforce_public_report_rate_limit) POST handlers. The main.rs layer stack (L521-575: DefaultBodyLimit, security_headers, TraceLayer, CorsLayer, host_tenant_middleware) adds no request-rate throttle. So the price-map GET is reachable unthrottled.",
+        "On every cache MISS it runs an expensive double-CTE aggregation over `listings` (price_map.rs:253-330): current_period + prior_period, each a full `AVG(CASE WHEN size_sqm>0 THEN price/size_sqm END) ... GROUP BY city` scan. The cache_key (price_map.rs:253-259) is `\"{mode}:{time_window}:{property_type}:{city}\"` and embeds the RAW free-text `query.city` (L258) — an attacker rotating `?city=a1`, `?city=a2`, ... forces a guaranteed cache miss every request, so each request re-runs both aggregations against the DB.",
+        "The BoundedCache (MAX_PRICE_MAP_CACHE_ENTRIES=10_000 with LRU/insertion-order eviction, price_map.rs:57/142) bounds only MEMORY under a distinct-key flood (the existing #3132 tests confirm the OOM guard). It does NOT throttle the per-miss DB aggregation, and the LRU eviction means a distinct-key flood also evicts all legitimately-cached aggregations, collapsing the hit rate and the 1h cache benefit for real visitors. Net effect: an unauthenticated single-IP caller can impose repeated expensive GROUP BY load on the shared public DB pool and bust the cache for everyone.",
+        "Fix vector: add a per-IP throttle to the price-map GET (reuse the existing TenantRateLimiterSet / client_ip_bucket primitive already used for inquiries/reports), and/or reduce cache-miss amplification by validating+canonicalising `city` (trim/lowercase/known-city allowlist) before it enters cache_key so arbitrary free-text can't mint unbounded distinct keys. Confidence medium: the absent throttle layer and per-miss aggregation are certain by static read; 'medium' (not high) because the DB cost per aggregation was not runtime-measured from this cloud runner.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-price-map-mode-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:230 `let mode = query.mode.clone().unwrap_or_else(|| \"sale\".to_string());` — the `mode` query param is accepted with NO allowlist validation and bound directly as `transaction_type = $1` (L324 `.bind(&mode)`).",
+        "This is inconsistent with its own sibling param in the SAME handler: `time_window` IS validated against a closed match (price_map.rs:238-253) — `1m|3m|12m|5y` map to intervals and any other value returns `400 BAD_REQUEST` ('Unsupported time_window ...'). `mode` gets no such treatment, though the only meaningful DB values are the transaction_type enum (e.g. sale/rent).",
+        "Consequence: an arbitrary `?mode=foo` does NOT 400 — it silently matches zero rows, returns `200 OK` with an empty `districts: []`, echoes the bogus `mode` back in PriceMapResponse (price_map.rs:204-212 / response build), and is cached under cache_key `\"foo:3m::\"` (L253-259). A silent empty 200 for an unsupported enum value is a contract defect (clients can't distinguish 'no data for a valid filter' from 'invalid filter'), and it compounds the distinct-key cache-miss surface of the sibling finding.",
+        "Fix vector: validate `mode` against the transaction_type allowlist up-front and return 400 on unknown values, mirroring the existing `time_window` closed-match guard a few lines above. Low severity / contract-consistency. Confidence medium: the missing validation and the silent-empty-200 path are certain by static read.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    }
+  ]
+}
