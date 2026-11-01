@@ -1,0 +1,54 @@
+{
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier 1d; cursor 2026-10-22). NOTE: a prior Tier 1d run the same day also reviewed ppt-web-ui (2026-11-01-ppt-web-ui-tier1d.json) because the cursor was not advanced; this run advances it.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "generated_at": "2026-11-01T04:40:00Z",
+  "generator": "dispatcher-tier-1d",
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-payment-match-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61 — confirmMutation = useMutation({ mutationFn: confirmMatch, onSuccess }) has no onError",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:68 — rejectMutation likewise has only onSuccess, no onError",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:286-337 — confirm/reject consumed only via .isPending/.variables; no .isError/error UI and no ErrorBoundary. uploadMutation DOES surface .isError at :112, so the omission is inconsistent. A failed confirm/reject of a bank-statement payment match fails silently. accounting is a wired feature.",
+        "No existing backlog finding covers PaymentMatchingPage (prior accounting-invoice-silent-fail is a different file)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-doc-search-raw-err-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearch.tsx:236 — renders raw API/network error text with a hardcoded English prefix (not wrapped in t()); minor info-leak + i18n gap",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearch.tsx:210,229,241 — additional hardcoded English strings while same component already uses t() for aria labels. documents is a wired feature."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-buildings-err-raw-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx:70 — error-state heading 'Error loading buildings' hardcoded English (not t())",
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx:72 — renders raw API/network error text directly; i18n gap + minor info-leak on a wired core management page."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
