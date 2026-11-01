@@ -343,6 +343,57 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "action": "Churn hotspot: frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx — ranked-ballot rendering tests reworked",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-01T08:27:17Z (score=1 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-01T08:27:17Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "action": "Churn hotspot: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — listing-edit page churning across price-guard + i18n fixes",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-01T08:27:17Z (score=1 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-01T08:27:17Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "action": "Repeated churn: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — compliance Wave-1b suite still expanding 2 routine windows in a row",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-01T08:27:17Z (score=1 conf=high vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-01T08:27:17Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "test-gap"
+      }
     }
   ],
   "generated": "2026-10-28T11:00:00Z"

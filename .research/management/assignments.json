@@ -193,7 +193,7 @@
       "branch": "auto-impl/gh-issue-3206-e0d34b16",
       "status": "review",
       "claimed_at": "2026-11-01T04:33:49Z",
-      "last_updated": "2026-11-01T08:33:00Z",
+      "last_updated": "2026-11-01T08:36:57Z",
       "status_changed_at": "2026-11-01T06:31:11Z",
       "pr_number": 3209,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3209",
@@ -208,14 +208,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-01T08:36:57Z"
     },
     {
       "task_id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
       "branch": "auto-impl/code-review-mobile-rn-vote-detail-dead-i-674d11d6",
       "status": "review",
       "claimed_at": "2026-11-01T04:33:49Z",
-      "last_updated": "2026-11-01T08:33:00Z",
+      "last_updated": "2026-11-01T08:36:57Z",
       "status_changed_at": "2026-11-01T06:31:11Z",
       "pr_number": 3208,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3208",
@@ -230,14 +230,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-01T08:36:57Z"
     },
     {
       "task_id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-e690d369",
       "status": "review",
       "claimed_at": "2026-11-01T04:33:49Z",
-      "last_updated": "2026-11-01T08:33:00Z",
+      "last_updated": "2026-11-01T08:36:57Z",
       "status_changed_at": "2026-11-01T06:31:11Z",
       "pr_number": 3210,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3210",
@@ -252,14 +252,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-01T08:36:57Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-invoice-feature-n-904e8b2a",
       "status": "review",
       "claimed_at": "2026-11-01T04:33:49Z",
-      "last_updated": "2026-11-01T08:33:00Z",
+      "last_updated": "2026-11-01T08:36:57Z",
       "status_changed_at": "2026-11-01T06:31:11Z",
       "pr_number": 3211,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3211",
@@ -274,7 +274,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-11-01T08:36:57Z"
     },
     {
       "task_id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
@@ -343,5 +343,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-01T06:33:13Z"
+  "generated": "2026-11-01T08:39:34Z"
 }
