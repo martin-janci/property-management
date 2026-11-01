@@ -13926,6 +13926,471 @@
         "assignment_status": "merged",
         "pr_number": 3199
       }
+    },
+    {
+      "id": "code-review-api-core-api-call-client-build-expect",
+      "title": "api core api call client build expect",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (api-core segment)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/actions/api_call.rs:308 — ApiCallExecutor::with_ip_resolver() does `reqwest::Client::builder().timeout(60s).user_agent(..).redirect(..).dns_resolver(SsrfGuardResolver).build().expect(\"Failed to create HTTP client\")`. reqwest::ClientBuilder::build() is fallible (TLS backend init, proxy-from-env parse); on failure this panics instead of returning a Result the caller can log and fail-closed on.",
+        "This is the exact same pattern the team already accepted and fixed in this segment: done finding code-review-api-core-push-fanout-client-build-expect ('push_fanout.rs builds 3 reqwest clients with .expect() in production constructors'). push_fanout.rs:433/626/1042 were the flagged trio; they are now addressed, leaving api_call.rs:308 as the only remaining production (non-test) fallible-build().expect() in the api-core services layer (test module in this file starts at L604). The fix mirrors the accepted one: make the constructor (or a try_new) return Result and have the composition root log a precise 'workflow HTTP transport misconfigured' error.",
+        "Severity LOW, identical rationale to the accepted push_fanout finding: ApiCallExecutor::new() is called once at action-registry init (services/actions/mod.rs:206 registry.register(Box::new(ApiCallExecutor::new()))), i.e. a bootstrap/startup path, so the practical effect is a fail-fast crash at startup rather than a per-request panic — close to the acceptable startup-validation pattern in main.rs. Flagged for consistency with the precedent (same vector, same score=1) and because it is the sole leftover instance of that pattern; do NOT inflate.",
+        "NOTE for triage: api-core was reviewed statically this slice and is otherwise exceptionally clean, confirming the earlier reviewer's assessment. Verified no finding in: unwrap/expect audit (11 prod-path hits total, all safe — Decimal::from_str on hard-coded literals in accounting.rs:155/193/200/202/212, argon2 params and OS-rng expects in auth.rs:62/97 and oauth.rs:918 which are catastrophic-only, JwtService::new at main.rs:556 is startup); no unsafe blocks; no reachable todo!()/unimplemented!() (all panics are startup config-validation in totp.rs:76/94/109 + main.rs, or inside #[cfg(test)]); all sqlx queries use $-bound parameters (no string-interpolated SQL); Stripe webhook verify_signature uses constant-time ct_eq + replay-window + overflow-proof skew; OAuth is PKCE-S256-only (plain rejected) with atomic find_and_consume_authorization_code (replay-safe) and argon2-hashed client secrets; workflow_executor compute_backoff_seconds is overflow-safe (exp capped at 30, saturating_mul, min cap); validate_email guards parts.len() before indexing; best-effort writes (notification.record_sent, update_voice_device_last_used) are deliberately fire-and-forget with tracing. This single +1 is the only defensible signal in the segment."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-parse",
+      "title": "mobile native kmp sso error body parse",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 — createMobileToken / validateAndLogin / getSession / refreshSession each parse the HTTP error branch with a non-defensive `val error: SsoError = response.body()`. If the error response body is not a valid SsoError JSON object (a proxy/load-balancer HTML 502/504, an empty body, a plain-text rate-limit message, or any non-matching error shape), `response.body<SsoError>()` throws a kotlinx JsonConvert/deserialization exception.",
+        "The throw is caught by each method's outer `catch (e: Exception)`, so it is not a crash — but the surfaced result is wrong. In validateAndLogin (SsoService.kt:83-86 catch) the deep-link SSO login path sets `_authState.value = AuthState.Error(e.message ?: \"Unknown error\")`, so the user sees a raw serialization-exception string instead of a meaningful auth failure; getSession/refreshSession return `Result.failure(e)` where `e` is the parse error, masking the real HTTP cause (e.g. a 503).",
+        "This is an internal inconsistency, not a theoretical nit: the same class already uses the defensive pattern `runCatching { response.body<SsoError>() }.map { it.errorDescription ?: it.error }.getOrElse { \"... (HTTP ${response.status.value})\" }` in loginWithPassword (SsoService.kt:174), register (:202) and updateProfile (:297). The four older SSO methods were simply never updated to match. Fix vector: wrap the error-body decode in the same runCatching fallback so a non-JSON error body yields a stable 'HTTP <code>' message rather than a leaked parser exception. Confidence medium: reachability traced; depends on the server/proxy emitting a non-SsoError error body.",
+        "expert: kotlin"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-decimal-serializer-throws",
+      "title": "mobile native kmp decimal serializer throws",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt:46 `DecimalAsLongSerializer.deserialize` does `raw.substringBefore('.').toLong()` and :62 `DecimalAsDoubleSerializer.deserialize` does `raw.toDouble()` directly on the raw JSON primitive content, with no guard. An empty string (`\"\"`), a non-numeric string, a value with a thousands separator, or a `+`-prefixed literal makes `toLong()/toDouble()` throw NumberFormatException during deserialization.",
+        "These serializers were introduced specifically (per the file's own docstring, issue #2331) because a single bad monetary field decode `silently killed the whole price-tracking payload decode`. They fixed the fractional-string case but still throw on empty/malformed input, so the same blast radius remains: one unexpected monetary field value fails `response.body()` for the entire GET /api/v1/favorites or GET /api/v1/favorites/alerts response — the repo catch (FavoritesRepository) turns it into Result.failure and PriceTrackingViewModel.load (favorites/PriceTrackingViewModel.kt) renders the full-screen errorMessage state, blanking all favorites, not just the one field.",
+        "Fix vector: make the serializers truly wire-tolerant as their docstring claims — e.g. `raw.substringBefore('.').toLongOrNull() ?: 0L` (and `toDoubleOrNull() ?: 0.0`), or throw a typed field-scoped error, so a single malformed value degrades to a 0/zeroed field instead of failing the entire list decode. Confidence medium: static trace of serializer->repo->VM is certain; triggering requires the server to emit an out-of-contract decimal string (the annotated fields are non-nullable).",
+        "expert: kotlin"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/DecimalStringSerializers.kt"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-favorites-hardcoded-m2",
+      "title": "mobile native kmp favorites hardcoded m2",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (mobile-native-kmp segment)"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt:651 `listingMeta` builds a user-facing label with a hardcoded unit string: `listing.areaSqm?.toInt()?.let { add(\"$it m²\") }` (and `listing.rooms?.let { add(\"$it+1\") }`). This is committed Android (not commonMain) UI code where the i18n resource system is available.",
+        "The same area label is already localized elsewhere in the same app: mobile-native/androidApp/.../ui/home/HomeScreen.kt:490 uses `stringResource(R.string.area_m2, it)`. So the FavoritesScreen card renders an unlocalized unit while the Home card renders the localized one — an i18n inconsistency, not just a missing string. (The identical `\"$it m²\"` at shared/.../listing/SearchState.kt:253 is expected — commonMain cannot reach stringResource — so only the androidApp FavoritesScreen site is the gap.)",
+        "Fix vector: replace the hardcoded `\"$it m²\"` (and the `\"$it+1\"` room format) in FavoritesScreen.listingMeta with the existing `R.string.area_m2` / an equivalent rooms string resource, matching HomeScreen. Low severity, i18n gap. Confidence medium: confirmed by direct comparison of the two call sites.",
+        "expert: kotlin"
+      ],
+      "files": [
+        "mobile-native/androidApp/.../ui/home/HomeScreen.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/favorites/FavoritesScreen.kt"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widget-provider-json-parse",
+      "title": "mobile rn widget provider json parse",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (mobile-rn segment)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:94 — getAllWidgetConfigs() does `return stored ? JSON.parse(stored) : []` with no try/catch; a corrupted/truncated AsyncStorage value at WIDGET_CONFIG_KEY throws an uncaught SyntaxError.",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts:351 — getAllCachedData() has the same unguarded JSON.parse(stored) on WIDGET_DATA_KEY.",
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts:108 — updateWidget() calls getAllWidgetConfigs() OUTSIDE the try block, so the SyntaxError propagates uncaught out of the widget refresh path.",
+        "Contrast: NFCCredentialManager.ts (226, 353) explicitly catches the corrupted-stored-JSON case — the widget provider should apply the same handling instead of crashing."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/widgets/WidgetBridge.ts",
+        "frontend/apps/mobile/src/widgets/WidgetDataProvider.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-unchecked-cast",
+      "title": "mobile rn useapi unchecked cast",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (mobile-rn segment)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useApi.ts:98 — apiRequest returns (await response.json()) as T with no runtime shape validation; a 2xx body that drifts from the generated type propagates undefined fields into screen rendering instead of failing cleanly.",
+        "Repo precedent: reality-web hardened this class in realtor-api.ts (parseJsonBody) and listings/[slug]/page.tsx (parseListingDetail); mobile's central helper has not adopted the guard."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useApi.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-widgets-no-tests",
+      "title": "mobile rn widgets no tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (mobile-rn segment)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/widgets/ — WidgetDataProvider and WidgetBridge are public classes driving native widget registration/refresh, with zero test coverage; the crash path in code-review-mobile-rn-widget-provider-json-parse is completely unverified."
+      ],
+      "files": [
+        "<see evidence>"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-financial-query-no-error",
+      "title": "ppt web core financial query no error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx:70-84 — the financial DASHBOARD route component fires three useQuery calls (L70 ar-aging getARAgingReport, L75 overdue-invoices getOverdueInvoices, L80 invoices listInvoices) and destructures ONLY { data, isLoading } from each. No isError/error is read anywhere for these three queries and there is no ErrorBoundary wrapper. On any backend failure (5xx / network / 401-after-refresh-fail) the query data stays undefined and the code falls back to fabricated defaults: L88-94 totals default to { current:0, days_30:0, days_60:0, days_90_plus:0, total:0 }, L95 invoices=[], L96 overdueInvoices=[]. L99-101 then compute totalOutstanding/totalOverdue from those empty arrays. Net effect: a failed accounts-receivable / overdue fetch renders a money-facing FinancialDashboardPage (L115-122) showing a confident EUR 0 outstanding / EUR 0 overdue / EUR 0 total as if real, with zero error indication to the manager.",
+        "This is a silent-failure UX/data-integrity bug on a financial surface: misleading zeros are arguably worse than a visible error because a manager may read 'nothing overdue' and act on it. The same file already demonstrates the correct pattern in its reports section (L401-458: incomeQuery/balanceQuery/cashFlowQuery with `error={activeQuery.error instanceof Error ? activeQuery.error.message : null}`), so the dashboard section is an inconsistency, not a missing capability. Same class recurs at L265-280 (payments: paymentsData/unallocatedData/invoicesData queries, L275 and L280 don't even destructure isLoading or error).",
+        "Fix vector: destructure isError/error from the three dashboard queries, surface a page-level error state (mirror the L458 reports pattern or an ErrorState fallback) instead of defaulting monetary totals to 0, and distinguish 'genuinely zero' from 'fetch failed'. Confidence medium: the discard of error is certain by static read and the route is reachable in production; 'medium' not 'high' only because runtime behaviour of the exact query failure wasn't executed from here.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-person-months-units-swallow",
+      "title": "ppt web core person months units swallow",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.tsx:84-96 — useBuildingUnits fires a useQuery for the building's units (L85, queryFn GETs /units via getApiClient, L88-93) but destructures ONLY { data, isLoading } and returns `{ units: data ?? [], isLoading }` (L95). The query's isError/error is never read. On a failed /units fetch (500, network drop, or a 401 the refresh can't recover) the hook silently returns units:[] with isLoading:false, so the caller (L157 `useBuildingUnits(buildingId)`, which reads only `{ units, isLoading: unitsLoading }`) renders an EMPTY units dropdown with no error — the user sees 'no units' for a building that actually has units.",
+        "Notably the hook's own docstring (L78-82) records that an EARLIER silent-empty-dropdown bug was already fixed here (a raw fetch() 'bypassed the JWT interceptor and 401'd for real signed-in users, silently leaving the units dropdown empty' — fixed by routing through getApiClient so Bearer-token injection applies). That fix addressed the auth cause but the query's own error branch is still swallowed, so any OTHER failure reproduces the identical empty-dropdown symptom the comment warns about.",
+        "Fix vector: surface the query error — e.g. return isError/error from useBuildingUnits and render an inline error/retry in the units selector instead of an indistinguishable empty list, so 'building has no units' and 'units failed to load' are not conflated. Confidence medium: the swallow is certain by static read and the hook is reachable from the person-months route; medium not high as the failure path wasn't executed.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/person-months.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-tokens-localstorage-xss",
+      "title": "ppt web core tokens localstorage xss",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (ppt-web-core segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:116-191 — tokenStorage persists BOTH the access JWT and the long-lived refresh JWT in localStorage (ACCESS_TOKEN_KEY 'ppt_access_token' L98, REFRESH_TOKEN_KEY; getItem/setItem at L122/L130 for access, L138/L146 for refresh). localStorage is readable by any JavaScript executing in the SPA origin, so a single XSS anywhere in ppt-web can exfiltrate the refresh token, which grants silent, repeated access-token re-minting (refreshTokenInternal L405-438 POSTs it to authApi.refreshToken) = durable full account takeover that survives the victim's session and the access-token TTL.",
+        "This is a documented/accepted MVP tradeoff, not a novel defect: L116 comment reads 'Token Storage (localStorage for MVP, httpOnly cookies later)'. Flagging it as a LOW-severity tracked-debt vector so the pending migration to httpOnly, Secure, SameSite cookies (which removes the token from JS reach) stays on the backlog rather than silently becoming permanent. Note the refresh token in particular should move server-side; keeping only a short-lived access token in memory (not localStorage) materially reduces blast radius even before the full cookie migration.",
+        "Fix vector: move the refresh token (and ideally the access token) to an httpOnly Secure SameSite=strict cookie set by api-server, leaving the SPA to rely on cookie-based auth for the refresh endpoint; requires a coordinated api-server change (CSRF protection on the cookie path). Confidence medium: storage mechanism certain by static read; severity kept LOW (+1) because it is an explicitly commented, accepted decision, not an unflagged mistake.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-my-unit-page-no-i18n-states",
+      "title": "ppt web ui my unit page no i18n states",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/my-unit/pages/MyUnitPage.tsx:45-62 — the resident-facing My Unit page imports useTranslation and uses t() for its loaded content, but its ERROR state and EMPTY state are hardcoded English literals: L49 `Could not load your unit: {error instanceof Error ? error.message : 'Unknown error'}` (both the prefix and the 'Unknown error' fallback are raw English), L57 `<h1>My Unit</h1>`, L58 `You are not currently registered as a resident of any unit.`, L59 `If you believe this is a mistake, please contact your building manager.`. A sk/cs/de resident whose unit fetch fails, or who has no unit yet, sees these screens in English only.",
+        "This is an intra-file i18n inconsistency, not a missing capability: the same component already depends on t() for the happy path (L21 `const { t } = useTranslation()`), so the error/empty branches are simply un-wrapped. Mirrors the already-tracked VotingPage/RegistryPage no-i18n class but in a DISTINCT, previously-unflagged feature dir (my-unit). Dedup: grep of all *ppt-web-ui*.json signals shows no prior my-unit finding.",
+        "Fix vector: wrap the four literals in t('myUnit.error.*' / 'myUnit.empty.*') keys and translate the 'Unknown error' fallback (reuse the shared common.unknownError key if one exists). Confidence medium: the literals are certain by static read and both branches are reachable (error = query failure, empty = resident with no unit); severity LOW (+1) as an i18n gap per the skill table.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/my-unit/pages/MyUnitPage.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-invitations-date-locale-ignored",
+      "title": "ppt web ui invitations date locale ignored",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/neighbors/pages/InvitationsPage.tsx:70-77 — formatDate calls `new Date(dateString).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })`, passing `undefined` as the locale argument. `undefined` makes the runtime fall back to the BROWSER locale, not the app's selected i18n language. In this 4-language app (sk/cs/de/en) a user who has switched the UI to Slovak but whose browser is English will see neighbor-invitation dates (sent/expiry) formatted in English, diverging from the rest of the page which is translated via t().",
+        "The repo has an established opposite convention: 12 call sites pass `i18n.language` into toLocale*String (e.g. features/disputes MediationChatThread -> formatTime(createdAt, i18n.language)). InvitationsPage ignores it. HONEST SCOPE CAVEAT: this is a widespread pattern — `grep toLocale*(undefined` returns 21 sites across features, so `undefined` is currently the majority habit; this signal flags InvitationsPage as the representative instance on a user-facing invitation list and proposes standardizing on the i18n.language convention. Previously-unflagged dir (neighbors not in the 35 flagged dirs for this class).",
+        "Fix vector: thread `const { i18n } = useTranslation()` and pass `i18n.language` as the first arg to toLocaleDateString (here and, as a follow-up sweep, at the other 20 `(undefined` sites). Confidence medium: the `undefined` locale is certain by static read; severity LOW (+1) — locale/i18n inconsistency, visible only when browser locale != selected app language.",
+        "expert: completeness"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/neighbors/pages/InvitationsPage.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-mock-data",
+      "title": "reality web realtor id mock data",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (reality-web segment)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx is a DYNAMIC public route (/[locale]/realtor/[id], agent/realtor public profile) but renders 100% static mock data: L13 imports MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS from ./_mock and L23 `const agent = MOCK_AGENT`, L240 maps MOCK_AGENT_LISTINGS, L335 maps MOCK_AGENT_REVIEWS. The route's `[id]` param is NEVER read (no useParams; the only `.id` references are mock-array `key` props at L242/L337) — so every agent id (e.g. /realtor/123 vs /realtor/456) serves the identical fake agent 'MOCK_AGENT'. This is the same class of defect already fixed elsewhere in this app: app/[locale]/profile/page.tsx's own docstring (L13) records that rendering 'MOCK_PROFILE (Tomas Novotny) to every visitor' was 'a UX bug' and it now calls getMyRealtorProfile(); the /sell wizard was likewise fixed (done finding code-review-reality-web-sell-wizard-no-persist). The realtor profile page was never wired to the reality-server realtor API (lib/realtor-api.ts getMyRealtorProfile / an agent-by-id fetch).",
+        "The contact form is also non-functional: L25-31 handleSendMessage only does setMessageSent(true)/setContactOpen(false) after an e.preventDefault() — it never POSTs the visitor's message/lead to the backend, so every 'contact this agent' submission on the public portal is silently discarded while showing the user a success state (L535 messageSent banner).",
+        "Compounding SEO impact: the page is `'use client'` (L1) with no generateMetadata and no SSR data — unlike the sibling public listing page (app/[locale]/listings/[slug]/page.tsx) which is a server component with generateMetadata + notFound() for correct 404s. A public, SEO-indexed agent directory page rendered client-only from mock data gives crawlers empty/placeholder content and a 200 for every arbitrary id.",
+        "Fix vector: wire the page to a server-side fetch of the agent identified by params.id (mirroring listings/[slug]/page.tsx: resolve host, fetch, parse/validate, notFound() when absent), render real listings/reviews, and wire handleSendMessage to the reality-server lead/contact endpoint with success/error states. Confidence medium: the mock-only rendering and unused `id` param are certain by static read; 'medium' (not high) only because the backend agent-profile endpoint's availability wasn't compile-verified from here."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n",
+      "title": "reality web realtor id no i18n",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (reality-web segment)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx imports NO useTranslations (grep count 0) yet is a fully user-facing page on a 4-locale portal (sk/cs/de/en). All copy is hardcoded Slovak literals, e.g. L164 `{ label: 'Aktivne inzeraty', value: ... }`, plus the stat labels, section headings ('Aktivne ponuky' L230, 'Hodnotenia' L332) and the contact-modal strings. Non-Slovak visitors (cs/de/en) see Slovak text throughout the agent profile.",
+        "This is the same i18n-gap class already caught and fixed repeatedly in this exact segment: done findings code-review-reality-web-comparison-view-i18n (ComparisonView.tsx), code-review-reality-web-realtor-mgmt-i18n (components/agency/RealtorManagement.tsx) and code-review-reality-web-agency-errorstate-i18n. The realtor PROFILE page (app/[locale]/realtor/[id]/page.tsx) is a distinct file from RealtorManagement.tsx and was missed. Note it DOES carry a `data-i18n=\"pages.agent-profile.root\"` marker (L35), confirming an i18n key namespace was planned but the strings were never wired to next-intl.",
+        "Fix vector: add `const t = useTranslations('pages.agent-profile')` and move every hardcoded Slovak string into messages/{en,sk,cs,de}.json under that namespace. Low severity, i18n gap. Confidence medium: 0 useTranslations confirmed by grep; individual missed strings sampled directly.",
+        "expert: frontend"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-disputes-cards-no-i18n",
+      "title": "ppt web ui disputes cards no i18n",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher dev-review 2026-10-31 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "The disputes feature's presentational card layer renders user-facing English string literals with NO useTranslation import, inside an app that ships react-i18next with sk/cs/de/en locales. The surrounding pages are translated (DisputeList.tsx uses t() for title/filters/empty-state; MediationChatThread.tsx and MediationResolutionForm.tsx are fully t()-wrapped), so these cards are the un-wrapped gap, not a missing capability.",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeCard.tsx:147-151 — hardcoded `Filed by {name}`, `Assigned to {name}`, and the relative-time literals `Today` / `${daysAgo} days ago` (also lacks plural handling for 1 day). No useTranslation in the file.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ResolutionCard.tsx:118,180 — hardcoded headings `Resolution Proposal`, `Votes`, plus `Assigned to:` / `Due:` row labels (L161,163). No useTranslation.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ActionItemCard.tsx:73-89,118,126,139 — hardcoded status/relative-time strings `Completed`, `Overdue by {n} days`, `Due today`, `Due tomorrow`, `Due in {n} days`, and labels `Assigned to:`, `Completed:`, `Escalated:`. No useTranslation; no plural handling."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/ActionItemCard.ts",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeCard.ts",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeTimeline.ts",
+        "frontend/apps/ppt-web/src/features/disputes/components/ResolutionCard.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "title": "Churn hotspot: page.tsx — 2 touches this run",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 2026-10-28..HEAD"
+      ],
+      "evidence": [
+        "2 touches since 2026-10-28 (merged in PR #3197 + #3203, listing-edit page.tsx)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx",
+      "title": "Churn hotspot: AccountingInvoiceForm.tsx — 2 touches this run",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 2026-10-28..HEAD"
+      ],
+      "evidence": [
+        "2 touches since 2026-10-28 (merged in PR #3202 (vatRate) + #3191 (NaN parse guard))"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.test.tsx",
+      "title": "Churn hotspot: AccountingInvoiceForm.test.tsx — 2 touches this run",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "git log 2026-10-28..HEAD"
+      ],
+      "evidence": [
+        "2 touches since 2026-10-28 (test file tracks the churn PRs #3202 + #3191)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.test.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3186-ppt",
+      "title": "Screen-map drift: PR #3186 touched ppt routes without updating docs/screens/pp",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3186"
+      ],
+      "evidence": [
+        "PR #3186 touched frontend/apps/ppt-web/src/routes/groups/iot.tsx without updating any docs/screens/ppt/*.md (iot screen docs exist: iot.md, iot-dashboard.md, iot-sensors.md, iot-thresholds.md)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.ts"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3197-reality",
+      "title": "Screen-map drift: PR #3197 touched reality routes without updating docs/screen",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3197"
+      ],
+      "evidence": [
+        "PR #3197 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{_price.ts,_price.test.ts,page.tsx} without updating docs/screens/reality/listing-edit.md or account-listing-edit.md"
+      ],
+      "files": [
+        "docs/screens/reality/listing-edit.md"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3203-reality",
+      "title": "Screen-map drift: PR #3203 touched reality routes without updating docs/screen",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3203"
+      ],
+      "evidence": [
+        "PR #3203 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{_mock.ts,page.i18n.test.tsx,page.tsx} without updating docs/screens/reality/listing-edit.md or account-listing-edit.md"
+      ],
+      "files": [
+        "docs/screens/reality/listing-edit.md"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null
     }
   ]
 }

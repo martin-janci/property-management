@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-10-28T10:54:38Z",
-  "last_run_ms": 300000,
-  "last_pr_seen": 3183,
-  "last_issue_seen": 3187,
-  "last_commit_sha": "6666e23a",
+  "last_run_iso": "2026-11-01T02:36:48Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3207,
+  "last_issue_seen": 3206,
+  "last_commit_sha": "8631d42956",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -656,6 +656,21 @@
       "runs_seen": 1,
       "last_seen": "2026-10-28",
       "recent_churn": 3
+    },
+    "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-01",
+      "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-01",
+      "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-01",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -1297,7 +1312,34 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.test.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceForm.tsx",
+    "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+    "code-review-api-core-api-call-client-build-expect",
+    "code-review-mobile-native-kmp-decimal-serializer-throws",
+    "code-review-mobile-native-kmp-favorites-hardcoded-m2",
+    "code-review-mobile-native-kmp-sso-error-body-parse",
+    "code-review-mobile-rn-useapi-unchecked-cast",
+    "code-review-mobile-rn-widget-provider-json-parse",
+    "code-review-mobile-rn-widgets-no-tests",
+    "code-review-ppt-web-core-financial-query-no-error",
+    "code-review-ppt-web-core-person-months-units-swallow",
+    "code-review-ppt-web-core-tokens-localstorage-xss",
+    "code-review-ppt-web-ui-disputes-cards-no-i18n",
+    "code-review-ppt-web-ui-invitations-date-locale-ignored",
+    "code-review-ppt-web-ui-my-unit-page-no-i18n-states",
+    "code-review-reality-web-realtor-id-mock-data",
+    "code-review-reality-web-realtor-id-no-i18n",
+    "dep-update-noise-pr-3173",
+    "dep-update-noise-pr-3176",
+    "dep-update-noise-pr-3194",
+    "dep-update-noise-pr-3195",
+    "dep-update-noise-pr-3196",
+    "lag-warning-2026-11-01",
+    "screen-map-drift-pr-3186-ppt",
+    "screen-map-drift-pr-3197-reality",
+    "screen-map-drift-pr-3203-reality"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -1311,8 +1353,8 @@
     "mobile-native-kmp": "2026-10-25"
   },
   "stats": {
-    "runs": 108,
-    "vectors_created": 482,
+    "runs": 109,
+    "vectors_created": 503,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
