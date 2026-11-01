@@ -1,187 +1,56 @@
 {
   "run": "2026-11-01",
-  "last_run_iso_prev": "2026-10-28T10:54:38Z",
-  "lag_hours": 91,
-  "trigger_payload": "buffer-low: claimable=6/72 (floor=36) — pipeline WIP-jammed on human-gated merges; refill planner",
-  "signals": [
-    {
-      "id": "lag-warning-2026-11-01",
-      "type": "lag_warning",
-      "source": "state.last_run_iso=2026-10-28T10:54:38Z",
-      "score_delta": 0,
-      "evidence": "routine has not run in 91h (~3d 19h). Previous brief was 2026-10-28; no briefs for 2026-10-29 / 10-30 / 10-31. Dispatcher kept ticking (26 dispatcher commits in the gap) so backlog/management artifacts are not stale.",
-      "confidence": "high",
-      "candidate_vector": "process"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
-      "type": "churn-hotspot",
-      "source": "churn 2026-11-01 (14d window since 2026-10-28T10:54:38Z)",
-      "score_delta": 1,
-      "evidence": "216 lines churn (top-1 raw this run) from PR #3197 (reject empty/invalid listing price) and PR #3203 (localize listing-edit wizard across all locales). runs_seen=1.",
-      "confidence": "high",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
-      "type": "churn-hotspot",
-      "source": "churn 2026-11-01 (14d window)",
-      "score_delta": 0,
-      "evidence": "171 lines churn this run (PR #3204 strengthen compliance wave-1b regression coverage). Re-emit — id already in seen_signals; cumulative-type, score not re-applied. Backlog item is terminal (done, reconciled with PR #3204 2026-10-31); no reopen.",
-      "confidence": "high",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
-      "type": "churn-hotspot",
-      "source": "churn 2026-11-01 (14d window)",
-      "score_delta": 1,
-      "evidence": "162 lines churn (top-3 raw) from PR #3189 (ranked-ballot ordering fix) plus adjacent VoteDetailScreen.tsx 158-line edit. runs_seen=1.",
-      "confidence": "high",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
-      "type": "repeated-churn",
-      "source": "hotspot_history runs_seen 1 -> 2",
-      "score_delta": 1,
-      "evidence": "runs_seen advances to 2 (2026-10-28 top-3 + 2026-11-01 top-3). Instability proxy: compliance Wave-1b test suite still being expanded iteratively 2 routine windows in a row.",
-      "confidence": "high",
-      "candidate_vector": "test-gap"
-    },
-    {
-      "id": "dep-update-noise-2026-11-01-grouped",
-      "type": "dep-update-noise",
-      "source": "closed-unmerged dependabot PRs #3137 (npm-minor-patch 29 updates), #3007 (gradle-minor-patch 6 updates), #2961 (kotlin group 4 updates)",
-      "score_delta": 0,
-      "evidence": "3 dependabot grouped-bump PRs closed-unmerged on 2026-10-29 10:14-10:21 UTC — superseded by newer bump cycles. No score, log in brief.",
-      "confidence": "high",
-      "candidate_vector": null
-    }
+  "run_sequence_today": 2,
+  "last_run_iso_prev": "2026-11-01T06:48:00Z",
+  "lag_hours": 14,
+  "trigger_payload": "buffer-low: claimable=7/72 — refill planner",
+  "trigger_payload_prev_today": "buffer-low: claimable=6/72 (floor=36) — pipeline WIP-jammed on human-gated merges; refill planner",
+  "signals": [],
+  "notes": [
+    "Second routine run today. Morning run at 06:50 UTC (commit ec00eec) processed 16 merged PRs #3185-#3207 since the 2026-10-28 cursor and produced 6 signals (lag_warning + 3 churn-hotspot + 1 repeated-churn + 1 dep-update-noise). All 6 signals and the 3 new backlog rows derived from them are already recorded under commit ec00eec; see .research/signals/2026-11-01.json in that commit for the full morning audit trail (overwritten here per routine's same-day idempotent-rewrite rule).",
+    "This incremental run advances cursors to reflect PRs merged in the 14h gap and the new dispatcher drafts opened since 12:30 UTC. No new fact-grade signals derived: the 5 merged PRs (#3209/#3210/#3211/#3212/#3214) are all dispatcher follow-ups whose backlog items were already marked `done` by the morning run; the 2 new open PRs (#3208 code-review-mobile-rn-vote-detail-dead-i18n-fb, #3213 churn-hotspot VoteDetailScreen.test.tsx) are dispatcher-opened claims of signals already in state.seen_signals.",
+    "No lag_warning: 14h < 36h threshold.",
+    "Churn-hotspot & repeated-churn: same 14-day window inspection; files flagged in morning run are still the top-3 (listing-edit/page.tsx, compliance_wave1b_tests.rs, VoteDetailScreen.test.tsx). Cumulative-type rule: re-emission with new runs_seen only when a new routine window ticks the counter — this is same-window-same-run from the morning's perspective, so no re-emit this slice.",
+    "Phase 1.5 skipped — dispatcher Tier-1d saturation unchanged since morning (per morning brief Open-questions note).",
+    "Phase 1.6 skipped — same rationale; management artifacts current.",
+    "Resolution check: 0 open-or-ready backlog items match any of PR #3209/#3210/#3211/#3212/#3214 titles; all 5 PRs resolve items already marked `done` in prior runs (reconciled via dispatcher reconciled.pr_number)."
   ],
+  "merged_prs_since_prev_run": [
+    { "number": 3209, "merged_at": "2026-11-01T12:35:00Z", "title": "gh-issue-3206: fix ranked-ballot a11y labels/hint rendering raw i18n keys", "backlog_match": null, "notes": "closes #3206; dispatcher assignment resolved" },
+    { "number": 3210, "merged_at": "2026-11-01T12:34:40Z", "title": "churn-hotspot/violations: pin cross-org 404 on get_rule/get_action/get_appeal reads", "backlog_match": null, "notes": "churn-hotspot follow-up" },
+    { "number": 3211, "merged_at": "2026-11-01T12:34:43Z", "title": "code-review-ppt-web-ui-invoice-feature-no-i18n", "backlog_match": null, "notes": "already-done backlog row" },
+    { "number": 3212, "merged_at": "2026-11-01T12:34:46Z", "title": "churn-hotspot reality-web listing-edit/page.tsx extract _status helper", "backlog_match": null, "notes": "already-done backlog row" },
+    { "number": 3214, "merged_at": "2026-11-01T12:33:15Z", "title": "repeated-churn compliance_wave1b_tests.rs consolidate suite fixtures", "backlog_match": null, "notes": "already-done backlog row" }
+  ],
+  "new_open_prs_since_prev_run": [
+    { "number": 3208, "updated_at": "2026-11-01T18:35:41Z", "title": "code-review-mobile-rn-vote-detail-dead-i18n-fb", "draft": false, "reviewer_verdict": "approve", "needs_human_review_label": false },
+    { "number": 3213, "updated_at": "2026-11-01T10:35:33Z", "title": "churn-hotspot VoteDetailScreen.test.tsx stabilize ranked-ballot rendering tests", "draft": true, "reviewer_verdict": "changes", "needs_human_review_label": false }
+  ],
+  "pipeline_wip_snapshot": {
+    "assignments_in_review": 10,
+    "prs_approved_but_needs_human_review_label": 7,
+    "prs_approved_but_needs_human_review_numbers": [3024, 3075, 3108, 3119, 3171, 3184, 3192, 3193],
+    "comment": "net progress: morning snapshot was 12 PRs stuck → now 7 (after 5 merged in gap). Pipeline-WIP jam continues to clear organically."
+  },
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — all open items have score < 3 and no signal of eligible allowlist type (screen-map-drift / orphan / fixme-in-merged-code / lockfile-drift / stalled-review) fired this run",
+  "auto_fix_skipped_reason": "no candidate — no new signal in this slice (empty signals[]) ⇒ no auto-fix candidate; same conclusion as morning run (allowlist shape not matched by any carried-over signal of score>=3)",
   "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f .research/briefs/2026-11-01.md && head -1 | grep ^# 2026-11-01$",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq slurpfile prev state advancement",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq [.items[].id] | (length == (unique | length))",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "non-cumulative dup score check",
-      "observed": "true",
-      "expected": "true",
-      "note": "churn-hotspot-compliance_wave1b_tests.rs re-emits with score_delta=0 (cumulative type)"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "score cap 8 + decay sweep",
-      "observed": "true",
-      "expected": "true",
-      "note": "no open items older than 14d; decay vacuous this run"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "no new plans",
-      "observed": "vacuous",
-      "expected": "vacuous"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "<=2 new plans",
-      "observed": "0",
-      "expected": "<=2"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "secrets scan",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "backlog.md byte-identity regen diff",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "no failed phases",
-      "observed": "vacuous",
-      "expected": "vacuous"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "plans convergence",
-      "observed": "no changes",
-      "expected": "vacuous"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive count 22 >= HEAD 22",
-      "observed": "22>=22",
-      "expected": ">="
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "IDEAS_TRIAGE.md byte-identity regen diff",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto_fix_actions length <=3 + idempotency",
-      "observed": "0 actions",
-      "expected": "<=3"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "Phase 1.6 skipped -> no-op",
-      "observed": "skipped",
-      "expected": "vacuous"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "Telegram token scan",
-      "observed": "0",
-      "expected": "0"
-    }
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-11-01.md && head -1 .research/briefs/2026-11-01.md | grep -q '^# 2026-11-01$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "state advancement vs HEAD", "observed": "last_pr_seen 3207->3214, last_commit_sha 3a57b33->26e7a75, last_run_iso advanced, stats.runs 109->110", "expected": "any field advanced" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "signals[] empty — no re-emit possible", "observed": "vacuous (empty)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap 8 + decay sweep (14d)", "observed": "no cap violations; oldest open updated_at 2026-10-25 (7d) — no decay triggers this run", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans", "observed": "vacuous", "expected": "vacuous" },
+    { "goal": "G7", "passed": true, "command": "0 new plans <= 2", "observed": "0", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets scan on staged .research/", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md byte-identity regen diff", "observed": "identical (only timestamp widget changed; backlog.json unchanged)", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "no failed phases", "observed": "vacuous", "expected": "vacuous" },
+    { "goal": "G12", "passed": true, "command": "plans convergence (every HEAD plan still present or in _archive)", "observed": "17 active + 21 _archive — all present", "expected": "vacuous" },
+    { "goal": "G13", "passed": true, "command": "archive count >= HEAD count", "observed": "21 >= 21", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identity regen diff", "observed": "identical (only timestamp widget changed)", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions discipline", "observed": "0 actions, kill switch unset", "expected": "<=3 and idempotent" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run — gate is no-op", "observed": "skipped", "expected": "vacuous" },
+    { "goal": "G17", "passed": true, "command": "Telegram token scan on staged diff", "observed": "0", "expected": "0" }
   ]
 }
