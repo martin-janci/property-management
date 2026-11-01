@@ -177,14 +177,18 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
         <View style={s.header}>
           {onBack && (
             <Pressable onPress={onBack} style={styles.backLink}>
-              <Text style={styles.backLinkText}>← {t('common.back') ?? 'Back'}</Text>
+              <Text style={styles.backLinkText}>
+                ← {t('common.back', { defaultValue: 'Back' })}
+              </Text>
             </Pressable>
           )}
-          <Text style={s.headerTitle}>{t('voting.title') ?? 'Voting'}</Text>
+          <Text style={s.headerTitle}>{t('voting.title', { defaultValue: 'Voting' })}</Text>
         </View>
         <View style={s.emptyState}>
           <Text style={s.emptyIcon}>⚠️</Text>
-          <Text style={s.emptyTitle}>{t('voting.missingId') ?? 'No vote selected'}</Text>
+          <Text style={s.emptyTitle}>
+            {t('voting.missingId', { defaultValue: 'No vote selected' })}
+          </Text>
         </View>
       </View>
     );
@@ -228,18 +232,20 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
     if (!activeUnit) return;
     if (!allRequiredAnswered) {
       Alert.alert(
-        t('voting.confirmVoteTitle') ?? 'Confirm vote',
-        t('voting.answerRequired') ?? 'Please answer all required questions'
+        t('voting.confirmVoteTitle', { defaultValue: 'Confirm vote' }),
+        t('voting.answerRequired', { defaultValue: 'Please answer all required questions' })
       );
       return;
     }
     Alert.alert(
-      t('voting.confirmVoteTitle') ?? 'Confirm vote',
-      t('voting.confirmVoteMessage') ?? 'Submit your ballot? This action cannot be undone.',
+      t('voting.confirmVoteTitle', { defaultValue: 'Confirm vote' }),
+      t('voting.confirmVoteMessage', {
+        defaultValue: 'Submit your ballot? This action cannot be undone.',
+      }),
       [
-        { text: t('common.cancel') ?? 'Cancel', style: 'cancel' },
+        { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: t('voting.submit') ?? 'Submit',
+          text: t('voting.submit', { defaultValue: 'Submit' }),
           style: 'default',
           onPress: () => {
             castMutation.mutate(
@@ -256,12 +262,15 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
                   queryClient.invalidateQueries({ queryKey: ['voting', 'detail', voteId] });
                   queryClient.invalidateQueries({ queryKey: ['voting', 'list'] });
                   Alert.alert(
-                    t('voting.voteSubmitted') ?? 'Ballot submitted',
-                    `${t('voting.confirmationNumber') ?? 'Confirmation'}: ${receipt.confirmation_number}`
+                    t('voting.voteSubmitted', { defaultValue: 'Ballot submitted' }),
+                    `${t('voting.confirmationNumber', { defaultValue: 'Confirmation' })}: ${receipt.confirmation_number}`
                   );
                 },
                 onError: (err) => {
-                  Alert.alert(t('voting.castError') ?? "Couldn't submit ballot", err.message);
+                  Alert.alert(
+                    t('voting.castError', { defaultValue: "Couldn't submit ballot" }),
+                    err.message
+                  );
                 },
               }
             );
@@ -297,11 +306,13 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
       <View style={s.header}>
         {onBack && (
           <Pressable onPress={onBack} style={styles.backLink}>
-            <Text style={styles.backLinkText}>← {t('voting.title') ?? 'Voting'}</Text>
+            <Text style={styles.backLinkText}>
+              ← {t('voting.title', { defaultValue: 'Voting' })}
+            </Text>
           </Pressable>
         )}
         <Text style={s.headerTitle} numberOfLines={2}>
-          {detail?.title ?? t('common.loading') ?? 'Loading…'}
+          {detail?.title ?? t('common.loading', { defaultValue: 'Loading…' })}
         </Text>
         {detail && (
           <Text style={s.headerSubtitle}>
@@ -323,7 +334,9 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
         ) : loadError ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>{t('voting.loadError') ?? "Couldn't load vote"}</Text>
+            <Text style={s.emptyTitle}>
+              {t('voting.loadError', { defaultValue: "Couldn't load vote" })}
+            </Text>
           </View>
         ) : (
           <>
@@ -351,7 +364,9 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
             {questions.length === 0 ? (
               <View style={s.emptyState}>
                 <Text style={s.emptyIcon}>📋</Text>
-                <Text style={s.emptyTitle}>{t('voting.noQuestions') ?? 'No questions yet'}</Text>
+                <Text style={s.emptyTitle}>
+                  {t('voting.noQuestions', { defaultValue: 'No questions yet' })}
+                </Text>
               </View>
             ) : (
               questions.map((q, idx) => (
@@ -377,7 +392,9 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
                 {castMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={s.primaryButtonText}>{t('voting.submit') ?? 'Submit ballot'}</Text>
+                  <Text style={s.primaryButtonText}>
+                    {t('voting.submit', { defaultValue: 'Submit ballot' })}
+                  </Text>
                 )}
               </Pressable>
             )}
@@ -404,7 +421,7 @@ function StatusBanner({ status, alreadyVoted, canVote, eligibilityReason }: Stat
       <View style={[styles.banner, styles.bannerSuccess]}>
         <Text style={styles.bannerIcon}>✓</Text>
         <Text style={styles.bannerText}>
-          {t('voting.youHaveVoted') ?? 'You have already voted on this ballot.'}
+          {t('voting.youHaveVoted', { defaultValue: 'You have already voted on this ballot.' })}
         </Text>
       </View>
     );
@@ -412,7 +429,9 @@ function StatusBanner({ status, alreadyVoted, canVote, eligibilityReason }: Stat
   if (status && status !== 'active') {
     return (
       <View style={[styles.banner, styles.bannerMuted]}>
-        <Text style={styles.bannerText}>{t('voting.notActive') ?? `Voting is ${status}.`}</Text>
+        <Text style={styles.bannerText}>
+          {t('voting.notActive', { defaultValue: `Voting is ${status}.` })}
+        </Text>
       </View>
     );
   }
@@ -436,7 +455,9 @@ function UnitPicker({ units, activeUnitId, onSelect }: UnitPickerProps) {
   const { t } = useTranslation();
   return (
     <View style={s.card}>
-      <Text style={[s.cardTitle, { marginBottom: 8 }]}>{t('voting.votingAs') ?? 'Voting as'}</Text>
+      <Text style={[s.cardTitle, { marginBottom: 8 }]}>
+        {t('voting.votingAs', { defaultValue: 'Voting as' })}
+      </Text>
       <View style={styles.unitRow}>
         {units.map((u) => {
           const active = u.unit_id === activeUnitId;
@@ -589,8 +610,9 @@ function RankedQuestionCard({
       </Text>
       <Text style={[s.cardBody, { marginBottom: 8 }]}>
         {question.description ??
-          t('voting.rankHint') ??
-          'Order the options by preference (1 = most preferred).'}
+          t('voting.rankHint', {
+            defaultValue: 'Order the options by preference (1 = most preferred).',
+          })}
       </Text>
 
       <View style={{ marginTop: 8 }}>
@@ -608,7 +630,7 @@ function RankedQuestionCard({
               disabled={disabled || i === 0}
               onPress={() => move(i, -1)}
               accessibilityRole="button"
-              accessibilityLabel={t('voting.moveUp') ?? 'Move up'}
+              accessibilityLabel={t('voting.moveUp', { defaultValue: 'Move up' })}
             >
               <Text style={styles.rankButtonText}>↑</Text>
             </Pressable>
@@ -620,7 +642,7 @@ function RankedQuestionCard({
               disabled={disabled || i === order.length - 1}
               onPress={() => move(i, 1)}
               accessibilityRole="button"
-              accessibilityLabel={t('voting.moveDown') ?? 'Move down'}
+              accessibilityLabel={t('voting.moveDown', { defaultValue: 'Move down' })}
             >
               <Text style={styles.rankButtonText}>↓</Text>
             </Pressable>

@@ -30,7 +30,7 @@ exports[`VoteDetailScreen — branch render snapshots renders a stable snapshot 
         }
       }
     >
-      common.loading
+      Loading…
     </Text>
   </View>
   <RCTScrollView
@@ -89,7 +89,7 @@ exports[`VoteDetailScreen — branch render snapshots renders a stable snapshot 
         }
       }
     >
-      voting.title
+      Voting
     </Text>
   </View>
   <View
@@ -121,7 +121,7 @@ exports[`VoteDetailScreen — branch render snapshots renders a stable snapshot 
         }
       }
     >
-      voting.missingId
+      No vote selected
     </Text>
   </View>
 </View>

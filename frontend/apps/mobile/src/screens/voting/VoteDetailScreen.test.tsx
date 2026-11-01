@@ -76,7 +76,9 @@ describe('VoteDetailScreen — hook ordering', () => {
 
   it('renders the missing-id error state without crashing', () => {
     renderScreen({ voteId: undefined });
-    expect(screen.getByText('voting.missingId')).toBeTruthy();
+    // The screen renders the i18n fallback (defaultValue), not the raw key:
+    // `t('voting.missingId', { defaultValue: 'No vote selected' })`.
+    expect(screen.getByText('No vote selected')).toBeTruthy();
   });
 
   it('does not throw a hook-order error when voteId changes from missing to present', () => {
@@ -112,7 +114,7 @@ describe('VoteDetailScreen — branch render snapshots', () => {
 
     const { toJSON } = renderScreen({ voteId: undefined });
 
-    expect(screen.getByText('voting.missingId')).toBeTruthy();
+    expect(screen.getByText('No vote selected')).toBeTruthy();
     expect(toJSON()).toMatchSnapshot();
   });
 
@@ -253,15 +255,16 @@ describe('VoteDetailScreen — ranked ballot', () => {
     expect(screen.getByText('3')).toBeTruthy();
 
     // One move-up and one move-down control per option — the buggy renderer
-    // had none, so these queries throw there.
-    expect(screen.getAllByLabelText('voting.moveUp')).toHaveLength(3);
-    expect(screen.getAllByLabelText('voting.moveDown')).toHaveLength(3);
+    // had none, so these queries throw there. Accessibility labels come from
+    // the i18n fallback (defaultValue), not the raw key.
+    expect(screen.getAllByLabelText('Move up')).toHaveLength(3);
+    expect(screen.getAllByLabelText('Move down')).toHaveLength(3);
   });
 
   it('submits the full declared option order when the voter does not reorder', () => {
     renderScreen({ voteId: 'vote-1' });
 
-    fireEvent.press(screen.getByText('voting.submit'));
+    fireEvent.press(screen.getByText('Submit ballot'));
     confirmSubmit();
 
     expect(mutate).toHaveBeenCalledTimes(1);
@@ -278,9 +281,9 @@ describe('VoteDetailScreen — ranked ballot', () => {
     renderScreen({ voteId: 'vote-1' });
 
     // Push the top option (Roof repair) down one position → B, A, C.
-    fireEvent.press(screen.getAllByLabelText('voting.moveDown')[0]);
+    fireEvent.press(screen.getAllByLabelText('Move down')[0]);
 
-    fireEvent.press(screen.getByText('voting.submit'));
+    fireEvent.press(screen.getByText('Submit ballot'));
     confirmSubmit();
 
     expect(mutate).toHaveBeenCalledWith(
