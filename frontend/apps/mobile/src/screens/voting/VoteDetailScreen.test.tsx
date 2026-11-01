@@ -253,15 +253,18 @@ describe('VoteDetailScreen — ranked ballot', () => {
     expect(screen.getByText('3')).toBeTruthy();
 
     // One move-up and one move-down control per option — the buggy renderer
-    // had none, so these queries throw there.
-    expect(screen.getAllByLabelText('voting.moveUp')).toHaveLength(3);
-    expect(screen.getAllByLabelText('voting.moveDown')).toHaveLength(3);
+    // had none, so these queries throw there. Assert on the *resolved*
+    // accessibility label (the `t(key, { defaultValue })` fallback), not the
+    // raw key — a regression that drops the defaultValue idiom (so VoiceOver /
+    // TalkBack announce "voting.moveUp") fails here (#3206).
+    expect(screen.getAllByLabelText('Move up')).toHaveLength(3);
+    expect(screen.getAllByLabelText('Move down')).toHaveLength(3);
   });
 
   it('submits the full declared option order when the voter does not reorder', () => {
     renderScreen({ voteId: 'vote-1' });
 
-    fireEvent.press(screen.getByText('voting.submit'));
+    fireEvent.press(screen.getByText('Submit ballot'));
     confirmSubmit();
 
     expect(mutate).toHaveBeenCalledTimes(1);
@@ -278,9 +281,9 @@ describe('VoteDetailScreen — ranked ballot', () => {
     renderScreen({ voteId: 'vote-1' });
 
     // Push the top option (Roof repair) down one position → B, A, C.
-    fireEvent.press(screen.getAllByLabelText('voting.moveDown')[0]);
+    fireEvent.press(screen.getAllByLabelText('Move down')[0]);
 
-    fireEvent.press(screen.getByText('voting.submit'));
+    fireEvent.press(screen.getByText('Submit ballot'));
     confirmSubmit();
 
     expect(mutate).toHaveBeenCalledWith(
