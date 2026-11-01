@@ -1,8 +1,8 @@
 {
   "run": "2026-11-01",
-  "last_run_iso_prev": "2026-10-28T10:54:38Z",
-  "lag_hours": 91,
-  "trigger_payload": "buffer-low: claimable=6/72 (floor=36) — pipeline WIP-jammed on human-gated merges; refill planner",
+  "last_run_iso_prev": "2026-11-01T06:48:00Z",
+  "lag_hours": 12,
+  "trigger_payload": "buffer-low: claimable=6/72 — backlog drained, refill planner (incremental rerun 11h40m after morning convergence)",
   "signals": [
     {
       "id": "lag-warning-2026-11-01",
@@ -60,7 +60,7 @@
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — all open items have score < 3 and no signal of eligible allowlist type (screen-map-drift / orphan / fixme-in-merged-code / lockfile-drift / stalled-review) fired this run",
+  "auto_fix_skipped_reason": "no candidate — same-day incremental rerun; no new signals of allowlist shape; no open item has score>=3 of eligible type",
   "goal_checks": [
     {
       "goal": "G1",
@@ -183,5 +183,6 @@
       "observed": "0",
       "expected": "0"
     }
-  ]
+  ],
+  "incremental_run_notes": "Mid-day rerun 11h40m after the morning routine commit (ec00eec). 5 PRs merged in the gap (#3209/#3210/#3211/#3212/#3214) all map to backlog items already marked done. 2 issues updated (#3164 closed completed, #3206 closed via #3209). No new backlog rows, no new plans, no auto-fix. Cursor advance: last_pr_seen 3207->3214, last_commit_sha 3a57b3374->16d956978, last_run_iso 06:48 UTC -> this run."
 }
