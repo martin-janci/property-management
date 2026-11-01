@@ -192,7 +192,11 @@
     "voted": "Abgestimmt",
     "results": "Ergebnisse",
     "deadline": "Frist",
-    "noPolls": "Keine aktiven Abstimmungen"
+    "noPolls": "Keine aktiven Abstimmungen",
+    "submit": "Stimme abgeben",
+    "moveUp": "Nach oben verschieben",
+    "moveDown": "Nach unten verschieben",
+    "rankHint": "Ordnen Sie die Optionen nach Präferenz (1 = am meisten bevorzugt)."
   },
   "documents": {
     "title": "Dokumente",

@@ -239,7 +239,7 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
       [
         { text: t('common.cancel') ?? 'Cancel', style: 'cancel' },
         {
-          text: t('voting.submit') ?? 'Submit',
+          text: t('voting.submit', { defaultValue: 'Submit ballot' }),
           style: 'default',
           onPress: () => {
             castMutation.mutate(
@@ -377,7 +377,9 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
                 {castMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={s.primaryButtonText}>{t('voting.submit') ?? 'Submit ballot'}</Text>
+                  <Text style={s.primaryButtonText}>
+                    {t('voting.submit', { defaultValue: 'Submit ballot' })}
+                  </Text>
                 )}
               </Pressable>
             )}
@@ -589,8 +591,9 @@ function RankedQuestionCard({
       </Text>
       <Text style={[s.cardBody, { marginBottom: 8 }]}>
         {question.description ??
-          t('voting.rankHint') ??
-          'Order the options by preference (1 = most preferred).'}
+          t('voting.rankHint', {
+            defaultValue: 'Order the options by preference (1 = most preferred).',
+          })}
       </Text>
 
       <View style={{ marginTop: 8 }}>
@@ -608,7 +611,7 @@ function RankedQuestionCard({
               disabled={disabled || i === 0}
               onPress={() => move(i, -1)}
               accessibilityRole="button"
-              accessibilityLabel={t('voting.moveUp') ?? 'Move up'}
+              accessibilityLabel={t('voting.moveUp', { defaultValue: 'Move up' })}
             >
               <Text style={styles.rankButtonText}>↑</Text>
             </Pressable>
@@ -620,7 +623,7 @@ function RankedQuestionCard({
               disabled={disabled || i === order.length - 1}
               onPress={() => move(i, 1)}
               accessibilityRole="button"
-              accessibilityLabel={t('voting.moveDown') ?? 'Move down'}
+              accessibilityLabel={t('voting.moveDown', { defaultValue: 'Move down' })}
             >
               <Text style={styles.rankButtonText}>↓</Text>
             </Pressable>
