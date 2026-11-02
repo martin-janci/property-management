@@ -17,10 +17,14 @@
  * helpers that already de-churned this page.
  */
 export function resolveOptionalNumber(
-  value: number | string | null | undefined,
+  value: number | string | null | undefined
 ): number | undefined {
-  // Faithful extraction of the previous inline coercion
-  // (`typeof x === 'number' ? x : Number(x) || undefined`). See `_number.test.ts`:
-  // this drops a genuinely-entered zero that arrives as a string (`'0'`).
-  return typeof value === 'number' ? value : Number(value) || undefined;
+  // Empty / missing fields are omitted from the PATCH so the backend keeps the
+  // stored value.
+  if (value === '' || value === null || value === undefined) return undefined;
+  // Coerce number OR string the same way (the previous inline
+  // `Number(x) || undefined` dropped a genuinely-entered zero that arrived as
+  // the string '0'); omit only genuinely non-numeric values.
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : undefined;
 }
