@@ -320,6 +320,91 @@
       "first_open_at": "2026-11-01T20:25:51Z",
       "retry_of": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-feature-no-i18n",
+      "action": "code-review ppt-web-ui: entire community feature (posts, groups, events, marketplace, comments) is shipped English-only — only PostCard.tsx uses useTranslation",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-02T04:28:10Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-02T04:28:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3212-reality",
+      "action": "Screen-map drift: PR #3212 extracted _status helper on reality-web account/listing-edit route without touching docs/screens/reality/account-listing-edit.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-02T04:28:10Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-02T04:28:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
+      "action": "code-review ppt-web-ui: EvidenceUploader validate() returns hardcoded English error strings rendered to user; drop-zone + placeholder hardcoded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-02T04:28:10Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-02T04:28:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "action": "Repeated churn: mobile-rn VoteDetailScreen.test.tsx — runs_seen 1→2 (PR #3189 then #3209)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-02T04:28:10Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-02T04:28:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "action": "Repeated churn: reality-web account listing edit page — runs_seen 1→2 (PR #3197/#3203/#3212)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-02T04:28:10Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-02T04:28:10Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-10-28T11:00:00Z"
