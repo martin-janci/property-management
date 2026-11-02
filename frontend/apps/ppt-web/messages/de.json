@@ -916,7 +916,16 @@
     "draftRestored": "Ihr gespeicherter Entwurf wurde wiederhergestellt.",
     "filePageTitle": "Streitfall einreichen",
     "subjectPlaceholder": "Kurze Zusammenfassung des Streitfalls",
-    "descriptionPlaceholder": "Beschreiben Sie den Streitfall im Detail. Geben Sie Daten, Uhrzeiten und konkrete Vorfälle an (mindestens 30 Zeichen)."
+    "descriptionPlaceholder": "Beschreiben Sie den Streitfall im Detail. Geben Sie Daten, Uhrzeiten und konkrete Vorfälle an (mindestens 30 Zeichen).",
+    "evidence": {
+      "unsupportedType": "Nicht unterstützter Dateityp: {{type}}",
+      "fileTooLarge": "Datei zu groß (max. {{maxMb}} MB): {{name}}",
+      "dropHint": "Dateien hierher ziehen oder <1>durchsuchen</1>",
+      "formatHint": "JPG, PNG, PDF, MP3, MP4 · max. {{maxMb}} MB pro Datei · bis zu {{maxFiles}} Dateien",
+      "descriptionPlaceholder": "Kurze Beschreibung (optional)",
+      "descriptionLabel": "Beschreibung für {{name}}",
+      "removeLabel": "{{name}} entfernen"
+    }
   },
   "financial": {
     "title": "Finanzen",

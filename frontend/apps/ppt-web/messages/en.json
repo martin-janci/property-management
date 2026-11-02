@@ -1025,7 +1025,16 @@
     "draftRestored": "Restored your saved draft.",
     "filePageTitle": "File a Dispute",
     "subjectPlaceholder": "Brief summary of the dispute",
-    "descriptionPlaceholder": "Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters)."
+    "descriptionPlaceholder": "Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters).",
+    "evidence": {
+      "unsupportedType": "Unsupported file type: {{type}}",
+      "fileTooLarge": "File too large (max {{maxMb}} MB): {{name}}",
+      "dropHint": "Drop files here or <1>browse</1>",
+      "formatHint": "JPG, PNG, PDF, MP3, MP4 · max {{maxMb}} MB per file · up to {{maxFiles}} files",
+      "descriptionPlaceholder": "Short description (optional)",
+      "descriptionLabel": "Description for {{name}}",
+      "removeLabel": "Remove {{name}}"
+    }
   },
   "financial": {
     "title": "Financial",
