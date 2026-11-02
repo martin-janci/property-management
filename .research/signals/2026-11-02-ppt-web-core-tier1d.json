@@ -1,0 +1,57 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-02",
+  "segment_reviewed": "ppt-web-core",
+  "selection_reason": "dispatcher-tier1d-demand-driven (claimable buffer starved 7 < floor 36). SKILL Step 1 priority 2 (oldest-unreviewed): CHURN_FILES not supplied this slice. review_cursor from .research/state.json sorted ascending: reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, {api-core, ppt-web-core, mobile-rn} 2026-10-27, reality-server 2026-10-28. The nominal oldest (reality-web) AND the next three cursors (mobile-native-kmp, api-handlers, ppt-web-ui) were already covered by separate Tier-1d runs earlier this same UTC day (signals/2026-11-02-{reality-web,mobile-native-kmp,api-handlers,ppt-web-ui}-tier1d.json all exist), so re-reviewing them would duplicate today's work. Advanced to the next uncovered segment in the 2026-10-27 tie group and picked ppt-web-core (warm frontend context from the reality-web pass, token-efficient; alternatives api-core/mobile-rn equal by date). Saturation check against open code-review-finding rows in backlog.json: ppt-web-core = 0 open (not saturated). Scope per SKILL segment map: frontend/apps/ppt-web/src/ core infra only (hooks/, lib/, contexts/, routes/ router + App.tsx), explicitly excluding components/ + pages/ + features/ (those are the ppt-web-ui segment). Static analysis only; no compile, no test run. Frontend expert.",
+  "experts_used": [
+    "frontend"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-core-route-auth-guard-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "evidence": [
+        "7 of the 21 feature route-group fragments composed into the flat <Routes> table in routes/AppRoutes.tsx render their routes with NO route-level authentication gate: accounting.tsx (2 routes: /accounting/invoices, /accounting/payment-matching), financial.tsx (5), messaging.tsx (3), faults.tsx (5), announcements.tsx (4), community.tsx (6), neighbors.tsx (3) = 28 routes. None of these 7 files reference ProtectedRoute, AuthRequiredGate, <Navigate>, or isAuthenticated (verified by grep over each file). AppRoutes.tsx wraps NOTHING in a parent guard — it is a flat <Routes> with each group's <Route path=...> inlined — so protection is per-route inside each group, and these 7 groups have none.",
+        "The app's established, documented route-auth convention is <ProtectedRoute> (components/ProtectedRoute.tsx: redirects unauthenticated users to /login via <Navigate replace>, stores the return URL via @ppt/shared setReturnUrl, and fail-closes on missing role) or <AuthRequiredGate>. The other 14 groups apply it to every route: buildings.tsx (PR x19 / 9 routes), core.tsx (x38 / 31), leases.tsx (x21 / 10), rentals.tsx (x15 / 7), meters.tsx (x13 / 6), documents.tsx (PR x16 + AG x4 / 8), person-months.tsx (x9 / 4), voting.tsx (x7 / 3), reports.tsx (x5 / 2), notifications.tsx (x3 / 2), and iot/ai-dashboards/disputes/outages via AuthRequiredGate. The 7 unguarded groups are the stark outlier.",
+        "Confirmed the gap is NOT merely delegated to the page component: frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx and .../PaymentMatchingPage.tsx (the lazy targets at routes/lazyRoutes.tsx:261-266) contain no useAuth / ProtectedRoute / <Navigate> / redirect / /login reference, and financial/pages/InvoiceManagementPage.tsx likewise has no auth gate. faults.tsx DOES import useAuth but only reads `user` for role-based UI (isManager toggles, e.g. line 335), never to redirect — so an unauthenticated direct navigation to /accounting/invoices, /financial/*, or /messages renders the page shell instead of bouncing to /login with a stored return URL.",
+        "Impact is defense-in-depth + consistency, not a confirmed server-side data leak: reality-server/api-server still enforce authz, and lib/api.ts's 401 interceptor (single-flight refresh then onUnauthorized teardown, api.ts:249-269) is a backstop once a page issues an API call. But the sensitive subset — accounting (invoices/payment-matching), financial, and messaging (private threads) — should fail-closed at the route layer like every other money/PII surface in the app; today they render to anonymous users and skip the return-URL capture. Landable frontend-only remedy: wrap each <Route element> in these 7 groups with <ProtectedRoute> (add requiredRoles={MANAGER_ROLES} from routes/shared.tsx where manager-gated, matching buildings/leases/financial-sibling usage). Verify with an RTL/route test that an unauthenticated render of /accounting/invoices yields <Navigate to=\"/login\">. Confidence medium: route + page files statically confirmed guard-free and the ProtectedRoute convention is unambiguous, but unauthenticated render behavior was not runtime-executed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-101 — buildWebSocketUrl() appends the raw JWT to the handshake URL as a query parameter: `url.searchParams.set('token', token)`, producing e.g. wss://host/ws?token=<jwt>. The file documents this as an intentional browser constraint (lines 86-92: browsers cannot set an Authorization header on a WebSocket handshake, so the api-server reads the JWT from the `token` query param), so this is a known-tradeoff hardening item, not an undocumented bug.",
+        "Residual risk the comment does not address: full request URLs (including the query string) are routinely captured by reverse-proxy / load-balancer / CDN access logs and APM traces, and can surface in browser history — so a long-lived bearer JWT in the WS URL has a wider exposure surface than a header-borne token. Standard mitigation is a dedicated short-lived, single-use WS connect ticket (issued by a POST, valid seconds, exchanged for the socket) or sending the JWT in the first post-connect WS frame rather than the handshake URL.",
+        "Low severity / for triage: this is a defense-in-depth suggestion on an explicitly documented design that the api-server currently depends on; changing it requires a coordinated server change, so it is backlog-worthy only if WS access logs are retained with query strings. Flagged for a human to confirm the proxy/log posture before investing. Confidence medium (static read of the documented design; log-retention posture not verified)."
+      ]
+    }
+  ]
+}
