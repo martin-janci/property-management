@@ -1,0 +1,38 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-02",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven; claimable buffer starved 7<36). reality-web (cursor 2026-10-23) / mobile-native-kmp / ppt-web-ui were all already covered by sibling Tier-1d runs today — re-reviewing would collide signal IDs — so advanced to the next oldest-unreviewed cursor: api-handlers (2026-10-26). 2 open code-review-findings in backlog.json < 3 saturation floor, not saturated.",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-install-webhook-example-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:1675-1687 (create portal connection handler) — base_url = std::env::var(\"API_BASE_URL\").unwrap_or_else(|_| \"https://api.ppt.example.com\".to_string()), then webhook_url = format!(\"{}/api/v1/integrations/webhooks/portal/{}\", base_url, connection_id) is returned in the 201 PortalConnectionResponse and published to the external portal provider (sreality/bezrealitky/immowelt/custom) as the endpoint they must POST webhooks to. If API_BASE_URL is unset or misconfigured in ANY environment, every portal install silently hands out a webhook URL on the placeholder/example domain api.ppt.example.com — an operator-unowned host. Consequences: (a) inbound portal webhooks never reach api-server (integration silently broken, no error surfaced to the installer); (b) api.ppt.example.com is registerable by a third party, so a misconfigured deploy could direct real portal webhook deliveries — which the portal_webhooks receiver expects to carry HMAC-signed, tenant-scoped payloads — to an attacker-controllable endpoint. Should fail closed (reject/500 CONFIG_ERROR) when API_BASE_URL is unset rather than defaulting to an example domain, mirroring the fail-closed secret handling already used for the *_WEBHOOK_SECRET env vars (portal_webhooks.rs get_portal_webhook_secret, #2263)."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-redirect-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/voice.rs:189-197 (exchange_voice_oauth_tokens) — redirect_uri is read via std::env::var(\"ALEXA_REDIRECT_URI\") / std::env::var(\"GOOGLE_VOICE_REDIRECT_URI\").unwrap_or_else(|_| \"https://ppt.three-two-bit.com/api/v1/webhooks/voice/oauth/callback\".to_string()), hardcoding the production host as the fallback. The OAuth spec requires the redirect_uri sent in the code->token exchange (oauth_manager.exchange_code at :200) to byte-match the one used in the authorize step. On any non-prod environment (staging / worktree *.dev / local) where the platform-specific REDIRECT_URI env var is not set, the exchange falls back to the prod URI, so it mismatches the authorize-step URI and the provider rejects the exchange — voice-device OAuth linking silently fails on every non-prod deploy with only a generic OAUTH_EXCHANGE_FAILED surfaced. Should derive the fallback from the same API_BASE_URL/host config the rest of the server uses, or fail closed when unset, rather than baking in ppt.three-two-bit.com."
+      ],
+      "expert": "rust"
+    }
+  ]
+}
