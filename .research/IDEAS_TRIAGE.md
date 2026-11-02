@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-11-01 06:50 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-02 03:16 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -9,11 +9,11 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
 | 1 | PR #2489 closed unmerged: dependabot npm-minor-patch (5→4 update group) superseded by #2491 | PR #2489 | 2026-07-23 | dropped |
-| 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061 (+1) | 2026-06-07 | done |
 | 1 | Issue #769 (no labels, OPEN): Current dev review: Deploy server | #769 (+2) | 2026-06-07 | done |
 | 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | #789 (+2) | 2026-06-07 | done |
 | 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | #950 (+2) | 2026-06-07 | done |
 | 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | #952 (+2) | 2026-06-07 | done |
+| 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061 (+1) | 2026-06-07 | done |
 | 1 | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | #749 (+1) | 2026-06-06 | done |
 | 1 | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | #755 (+1) | 2026-06-06 | done |
 | 1 | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | #764 (+1) | 2026-06-06 | done |

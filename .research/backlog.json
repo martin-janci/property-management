@@ -13973,18 +13973,20 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "churn 2026-11-01 (14d window)",
-        "PR #3189 (render ranked vote questions as ordered ballot)"
+        "PR #3189 (render ranked vote questions as ordered ballot)",
+        "PR #3209",
+        "churn 2026-11-01 (14d window)"
       ],
       "evidence": [
         "162 lines of churn (top-3 raw-churn this run) from PR #3189 which also edited the paired VoteDetailScreen.tsx by 158 lines. Follow-up issue #3206 flags that the ranked-ballot a11y labels still render raw i18n keys — PR #3209 (draft) is iterating on the same test.",
-        "runs_seen=1."
+        "runs_seen=1.",
+        "cumulative re-emit 2026-11-02: PR #3209 (ranked-ballot a11y) touched this file again — hotspot runs_seen 1→2; captured as new repeated-churn signal with score +1."
       ],
       "files": [
         "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
       ],
       "created_at": "2026-11-01",
-      "updated_at": "2026-11-01",
+      "updated_at": "2026-11-02",
       "plan": null
     },
     {
@@ -14013,6 +14015,115 @@
         "assignment_status": "merged",
         "pr_number": 3214
       }
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "title": "Repeated churn: reality-web account listing edit page — runs_seen 1→2 (PR #3197/#3203/#3212)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
+        "PR #3212 (extract _status helper)"
+      ],
+      "evidence": [
+        "PR #3212 (merged 2026-11-01) extracted the status mapping into a tested _status.ts helper + unit tests on the same page — hotspot runs_seen 1→2.",
+        "The prior-run churn (PR #3197 price-zero reject + PR #3203 i18n sk) is the same file; the extraction was the correct refactor response. Flagging the repeated-churn so the next touch triggers a review before another cycle lands."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "title": "Repeated churn: mobile-rn VoteDetailScreen.test.tsx — runs_seen 1→2 (PR #3189 then #3209)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
+        "PR #3189",
+        "PR #3209"
+      ],
+      "evidence": [
+        "PR #3189 (ranked-ballot ordering) and PR #3209 (ranked-ballot a11y labels/hint fix for issue #3206) both edit the same test file within 48h — hotspot runs_seen 1→2.",
+        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3212-reality",
+      "title": "Screen-map drift: PR #3212 extracted _status helper on reality-web account/listing-edit route without touching docs/screens/reality/account-listing-edit.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3212"
+      ],
+      "evidence": [
+        "PR #3212 modified frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + _status.ts + _status.test.ts (a reality-web route under the drift-detection trigger set) with zero changes under docs/screens/reality/. The matching screen-map doc is docs/screens/reality/account-listing-edit.md.",
+        "Heuristic — the extraction is a visible refactor (status-mapping now a tested helper) that the Build/Api-status section of the screen-map should reflect. The /screens validate CI runs on dev; the drift here is just unfilled Agent Log + Notes, not a schema breakage."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-feature-no-i18n",
+      "title": "code-review ppt-web-ui: entire community feature (posts, groups, events, marketplace, comments) is shipped English-only — only PostCard.tsx uses useTranslation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "signals/2026-11-02-ppt-web-ui-tier1d.json: 1 of 17 .tsx files under frontend/apps/ppt-web/src/features/community/ imports react-i18next. EventForm.tsx:137,154,274,291,297-304; GroupForm.tsx:125,142,251; GroupList.tsx:135,276,153; CreatePostForm.tsx:160,178; CommentList.tsx:140; MarketplacePage.tsx:194,265,274; ItemForm.tsx:180,204,221; EventsPage.tsx:153,254; CreateGroupPage.tsx:45 — all hardcoded English.",
+        "Sibling features (disputes, buildings) are t()-wrapped; ppt-web ships react-i18next with sk/cs/de/en locales. Landable frontend-only remedy: add useTranslation + t('community.*') keys. Verifiable via pnpm --filter @ppt/web typecheck + Vitest/RTL per-locale label assertions."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
+      "title": "code-review ppt-web-ui: EvidenceUploader validate() returns hardcoded English error strings rendered to user; drop-zone + placeholder hardcoded",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "signals/2026-11-02-ppt-web-ui-tier1d.json: frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 return hardcoded English Unsupported-file-type / File-too-large strings into item.error, rendered to the user at :266-268. The file already imports useTranslation and t()-wraps every aria-label — inconsistent gap, not untranslated-everywhere.",
+        "Also hardcoded: :213-218 drop-zone copy, :274 Short-description placeholder, :278/:312 raw-template aria-labels. Distinct from 2026-11-01 disputes-cards-no-i18n (card layer only, no EvidenceUploader)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
     }
   ]
 }

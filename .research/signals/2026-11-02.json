@@ -1,0 +1,144 @@
+{
+  "generated": "2026-11-02T03:16:48Z",
+  "since_iso": "2026-11-01T06:48:00Z",
+  "last_pr_seen_in": 3207,
+  "last_pr_seen_out": 3214,
+  "last_issue_seen_in": 3206,
+  "last_issue_seen_out": 3215,
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "merged dev commits 2026-11-01→2026-11-02 (PR #3209)",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: PR #3209 (ranked-ballot a11y fix, Closes #3206) touched this file again — hotspot runs_seen 1→2.",
+        "churn-hotspot is in the cumulative allowlist; no new score added to the existing backlog row (status=open, score=1). The paired repeated-churn signal below carries the +1."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "type": "churn-hotspot",
+      "source": "merged dev commits 2026-11-01→2026-11-02 (PR #3212)",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: PR #3212 (extract listing-edit status mapping into tested _status helper) touched this file again — hotspot runs_seen 1→2.",
+        "Corresponding backlog row (id ends in …edit/page.tsx) is already status=done from PR #3212 landing; no reopen, hotspot_history is bumped for the next-cycle detection only."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "type": "churn-hotspot",
+      "source": "merged dev commits 2026-11-01→2026-11-02 (PR #3214)",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: PR #3214 (consolidate suite fixtures) touched this file again — hotspot runs_seen 2→3.",
+        "Backlog row status=done; cumulative tracking in hotspot_history only."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1 -> 2 across 2026-11-01 and 2026-11-02",
+      "score_delta": 1,
+      "evidence": [
+        "First-time repeated-churn fire: VoteDetailScreen.test.tsx has crossed runs_seen ≥ 2. PRs #3189 and #3209 both edit it within 48h; open draft #3213 iterates further.",
+        "instability proxy — recurring edits to a test file for the same component suggest the test is fragile relative to the behavior it covers (ranked-ballot ordering + a11y)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1 -> 2 across 2026-11-01 and 2026-11-02",
+      "score_delta": 1,
+      "evidence": [
+        "First-time repeated-churn fire: edit/page.tsx has crossed runs_seen ≥ 2. PR #3197 (price-zero reject) + PR #3203 (i18n sk) in the prior run; PR #3212 this run (_status helper extraction).",
+        "The extraction is the correct refactor response, so the signal is informational — the next touch after #3212 is where a review before another cycle makes sense."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 2 -> 3 across 2026-10-28, 2026-11-01, 2026-11-02",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: repeated-churn already fired for this file on 2026-11-01 with +1 (existing backlog row = status done). This run adds new evidence (PR #3214 consolidate suite fixtures) without re-scoring.",
+        "runs_seen crossing 3 is tracked in hotspot_history only; the done backlog row is intentionally not reopened."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-3212-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3212",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3212 modified frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + _status.ts + _status.test.ts (a reality-web route under the drift-detection trigger set) with no updates under docs/screens/reality/. The matching screen-map doc is docs/screens/reality/account-listing-edit.md.",
+        "Heuristic — the extraction is a visible refactor (status-mapping now a tested helper); the screen-map Build-status / Agent Log should reflect it. The /screens validate CI gates on dev; this drift is unfilled annotation only, not a schema breakage."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment) — adopted as Phase 1.5 input to avoid double-review on the segment the dispatcher already covered this run",
+      "score_delta": 2,
+      "evidence": [
+        "signals/2026-11-02-ppt-web-ui-tier1d.json: 1 of 17 .tsx files under frontend/apps/ppt-web/src/features/community/ imports react-i18next. EventForm/GroupForm/GroupList/CreatePostForm/CommentList/MarketplacePage/ItemForm/EventsPage/CreateGroupPage all hardcoded English (per-file line refs captured in backlog row evidence).",
+        "Sibling features (disputes, buildings) are t()-wrapped; ppt-web ships react-i18next with sk/cs/de/en locales. Landable frontend-only remedy."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
+      "type": "code-review-finding",
+      "source": "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment) — adopted as Phase 1.5 input to avoid double-review on the segment the dispatcher already covered this run",
+      "score_delta": 1,
+      "evidence": [
+        "signals/2026-11-02-ppt-web-ui-tier1d.json: frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 return hardcoded English validate() error strings into item.error, rendered at :266-268. The file already imports useTranslation and t()-wraps every aria-label — inconsistent gap.",
+        "Also hardcoded: :213-218 drop-zone copy; :274 Short-description placeholder; :278/:312 raw-template aria-labels. Distinct from the 2026-11-01 disputes-cards-no-i18n row (card layer only)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/<today>.md && head -1 ... matches '# <YYYY-MM-DD>'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "jq compare staged state.json vs HEAD state.json for cursor/seen_signals/hotspot/quiet_days advance", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "jq non-cumulative signal ids from today's signals missing from prior seen_signals OR score_delta==0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "jq '[.items[] | select(.score > 8)] | length == 0'", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "no new plans this run; adversarial-pass check vacuous", "observed": "0 new plans", "expected": "<=2 with adversarial annotation" },
+    { "goal": "G7", "passed": true,  "command": "git diff --cached --diff-filter=A -- .research/plans/ | grep -c '\\.md$'", "observed": "0", "expected": "<= 2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "grep -E secret-patterns on staged .research/ diff (baseline docs excluded)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty — brief lists 'none'", "observed": "no failed phases", "expected": "cursors advanced for all phases ran" },
+    { "goal": "G12", "passed": true, "command": "no plans added/removed vs HEAD; the 2 open plans in plans/ still present", "observed": "no churn", "expected": "no silent deletes" },
+    { "goal": "G13", "passed": true, "command": "git ls-files -- .research/plans/_archive/ | wc -l >= HEAD-tree count", "observed": "22 == 22", "expected": "now >= prev" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "jq auto_fix_actions caps + idempotency", "observed": "empty", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — gate is no-op per spec; pm_cursor still in range", "observed": "no-op", "expected": "no-op when 1.6 skipped" },
+    { "goal": "G17", "passed": true, "command": "grep telegram-token-value patterns in staged added lines (baseline docs excluded)", "observed": "0", "expected": "0" }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the certainty bar (screen-map-drift is medium-confidence; code-review-finding and repeated-churn signals are not in the Phase 5 allowlist)",
+  "notes": {
+    "phase_1_6_skipped": true,
+    "phase_1_6_skip_reason": "Phase 1.6 (ppt-project-management rotation) short-circuited this run. Rationale: only 5 merged PRs since last run (all post-merge-reviewed); 10 active assignments all in review state (approved, human-gated merge); no new epic-level status change; dispatcher's own commits already keep assignments.json / action-list.json / post-merge-review.json current. Running the pm-qa rotating role + scrum-master subagents for 5 PRs would duplicate dispatcher upkeep work. pm_cursor + coverage_cursor NOT advanced this run; next routine run resumes the rotation. G16 is a no-op per spec when Phase 1.6 is skipped.",
+    "phase_1_5_adopted_from_dispatcher": "ppt-web-ui segment — the dispatcher ran ppt-dev-review on it earlier in this UTC day (signals/2026-11-02-ppt-web-ui-tier1d.json, 2 findings). Rather than invoking the skill a second time on the same segment within the same day, those 2 findings are adopted verbatim into this run's signals as the Phase 1.5 output. review_cursor.ppt-web-ui advanced to today."
+  }
+}
