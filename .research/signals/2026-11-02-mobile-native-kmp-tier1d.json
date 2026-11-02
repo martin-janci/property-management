@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-02",
+  "segment_reviewed": "mobile-native-kmp",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven; claimable buffer starved, 7 < floor 36). CHURN_FILES not supplied by the dispatcher this slice, and state.json hotspot_history is stale (mostly 2026-05; most recent entry push_fanout.rs 2026-10-25, an api-core path), so SKILL Step 1 priority 2 (oldest-unreviewed) applies. review_cursor (from .research/state.json), sorted ascending: reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core/ppt-web-core/mobile-rn 2026-10-27, reality-server 2026-10-28, ppt-web-ui 2026-11-02. The two oldest (reality-web 2026-10-23, ppt-web-ui 2026-11-02) were already covered by today's existing tier1d signal files (2026-11-02-reality-web-tier1d.json, 2026-11-02-ppt-web-ui-tier1d.json), so they are excluded to avoid same-day double-coverage. Saturation check against open code-review-finding rows in backlog.json: mobile-native-kmp=2 open (<3, not saturated; api-handlers=2). Oldest remaining non-saturated, not-covered-today segment is mobile-native-kmp (2026-10-25) => selected. Kotlin expert primary + Tester secondary per Step 2. Scope reviewed: mobile-native/ (103 .kt files across shared/commonMain, shared/iosMain, androidApp). Static analysis only; no Gradle build, no test run. Grep hit-lists: `!!` (8 non-test UI hits), GlobalScope/MainScope (0), TODO()/NotImplementedError (1 in androidApp Navigation.kt), iosMain actual stubs (0 — SsoStateStore.ios + PlatformConfig.ios both fully implemented), suspend funcs not returning Result (reviewed ProfileStatsLoader.load, getListingDetailLayout, getListingsNearby — all internally try/caught or guarded). The 8 `!!` hits are all Compose UI dereferences guarded by an enclosing when/if branch on loading state (ListingDetailScreen, AccountScreen:174 guarded by `if (... && notificationPrefs != null)`, InquiriesScreen/FavoritesScreen errorMessage) — low value, not flagged.",
+  "experts_used": [
+    "kotlin",
+    "tester"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 — the Screen.CreateListing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The entire realtor create-listing flow is non-functional in production: a realtor who opens the form and taps submit always receives a failure, never a created listing.",
+        "Full reachable production path traced (hence confidence high): MyListingsScreen `onCreateClick` (Navigation.kt ~:487) navigates to `Screen.CreateListing.route` => the composable above => onSubmit. CreateListingScreen.kt:41 declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>` and at :95-121 collects the full form input, calls onSubmit(...) and branches `onSuccess = { onCreated() }`, so the UI/form is complete and ready — only the handler is a stub.",
+        "Root cause: PortalListingsRepository.kt exposes only listMyListings (:40), getListingAnalytics (:74) and getPortfolioAnalytics (:111) — there is NO create method, and no POST /api/v1/portal/listings (or equivalent) call exists anywhere in the shared module (grep for create/post across shared confirms none). So the stub cannot be removed without first adding the repository method + wiring.",
+        "Landable remedy (mobile-native only): add `suspend fun createListing(input: CreateListingInput): Result<ListingId>` (or Result<Unit>) to PortalListingsRepository backed by the reality-server create endpoint, then replace the Navigation.kt:493 lambda with a call to it. Verifiable statically + via a commonTest mock-engine repository test asserting the POST body and success/failure mapping (the repo already has sibling path-encoding/analytics tests to mirror). Severity medium: no crash/data-loss/security impact, but a complete user-facing realtor feature is dead on a shipped navigation route."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nearby-dead-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt:118 — `suspend fun getListingsNearby(latitude, longitude, radiusKm, limit): Result<ListingSearchResponse>` (calls GET /api/v1/listings/nearby) has ZERO call sites in the whole repo: grep for `getListingsNearby` across mobile-native/ returns only its own declaration (no androidApp screen, no iOS/Swift, no ViewModel references it).",
+        "It also has NO test: grep for `getListingsNearby` across *Test.kt files is empty, whereas its sibling methods in the same file (search, suggestions) and the LayoutRepository are covered by mock-engine commonTest suites (e.g. LayoutRepositoryTest). So this is both dead code and an untested public API surface.",
+        "The implementation itself is fine (try/catch -> Result, status check), so this is a low-severity completeness/test-gap smell, not a correctness bug. Remedy options (mobile-native only): either wire it into a nearby-listings UI surface and add a mock-engine commonTest (asserting lat/lng/radius_km/limit query params + success/failure mapping, mirroring the existing path-encoding tests), or delete it if the nearby feature is not planned. Confidence medium: reachability traced by static grep only, not runtime-confirmed."
+      ]
+    }
+  ]
+}
