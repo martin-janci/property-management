@@ -6,6 +6,7 @@
  */
 
 import type { CreateGroupRequest } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { GroupForm } from '../components/GroupForm';
 
 interface CreateGroupPageProps {
@@ -15,6 +16,7 @@ interface CreateGroupPageProps {
 }
 
 export function CreateGroupPage({ isSubmitting, onSubmit, onCancel }: CreateGroupPageProps) {
+  const { t } = useTranslation();
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-6">
@@ -37,12 +39,14 @@ export function CreateGroupPage({ isSubmitting, onSubmit, onCancel }: CreateGrou
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Groups
+          {t('community.common.backToGroups')}
         </button>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Group</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+          {t('community.createGroup.title')}
+        </h1>
         <GroupForm
           isSubmitting={isSubmitting}
           onSubmit={(data) => onSubmit(data as CreateGroupRequest)}

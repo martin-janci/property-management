@@ -6,7 +6,9 @@
  */
 
 import type { PostComment } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CommentListProps {
   comments: PostComment[];
@@ -28,15 +30,15 @@ interface CommentItemProps {
   onDelete?: (commentId: string) => void;
 }
 
-function formatTimeAgo(dateString: string): string {
+function formatTimeAgo(dateString: string, t: TFunction): string {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
+  if (seconds < 60) return t('community.comments.justNow');
+  if (seconds < 3600) return t('community.comments.minutes', { count: Math.floor(seconds / 60) });
+  if (seconds < 86400) return t('community.comments.hours', { count: Math.floor(seconds / 3600) });
+  if (seconds < 604800) return t('community.comments.days', { count: Math.floor(seconds / 86400) });
   return date.toLocaleDateString();
 }
 
@@ -49,6 +51,7 @@ function CommentItem({
   onEdit,
   onDelete,
 }: CommentItemProps) {
+  const { t } = useTranslation();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const isCurrentUser = comment.authorId === currentUserId;
@@ -84,7 +87,7 @@ function CommentItem({
         <div className="bg-gray-100 rounded-lg px-3 py-2">
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm text-gray-900">{comment.authorName}</span>
-            <span className="text-xs text-gray-500">{formatTimeAgo(comment.createdAt)}</span>
+            <span className="text-xs text-gray-500">{formatTimeAgo(comment.createdAt, t)}</span>
           </div>
           <p className="text-sm text-gray-800 mt-1">{comment.content}</p>
         </div>
@@ -98,7 +101,7 @@ function CommentItem({
               comment.isLikedByUser ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {comment.isLikedByUser ? 'Liked' : 'Like'}
+            {comment.isLikedByUser ? t('community.comments.liked') : t('community.comments.like')}
             {comment.likeCount > 0 && ` (${comment.likeCount})`}
           </button>
           {!isNested && (
@@ -107,7 +110,7 @@ function CommentItem({
               onClick={() => setShowReplyForm(!showReplyForm)}
               className="text-gray-500 hover:text-gray-700 font-medium"
             >
-              Reply
+              {t('community.comments.reply')}
             </button>
           )}
           {isCurrentUser && (
@@ -117,14 +120,14 @@ function CommentItem({
                 onClick={() => onEdit?.(comment.id)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                Edit
+                {t('community.common.edit')}
               </button>
               <button
                 type="button"
                 onClick={() => onDelete?.(comment.id)}
                 className="text-red-500 hover:text-red-700"
               >
-                Delete
+                {t('community.common.delete')}
               </button>
             </>
           )}
@@ -137,7 +140,7 @@ function CommentItem({
               type="text"
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
-              placeholder="Write a reply..."
+              placeholder={t('community.comments.replyPlaceholder')}
               className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded-full focus:ring-blue-500 focus:border-blue-500"
             />
             <button
@@ -145,7 +148,7 @@ function CommentItem({
               disabled={!replyContent.trim()}
               className="px-3 py-1 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Reply
+              {t('community.comments.reply')}
             </button>
           </form>
         )}
@@ -180,6 +183,7 @@ export function CommentList({
   onDelete,
   isLoading,
 }: CommentListProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     const skeletonKeys = ['skeleton-1', 'skeleton-2', 'skeleton-3'];
     return (
@@ -200,7 +204,7 @@ export function CommentList({
   if (comments.length === 0) {
     return (
       <div className="text-center py-6">
-        <p className="text-sm text-gray-500">No comments yet. Be the first to comment!</p>
+        <p className="text-sm text-gray-500">{t('community.comments.empty')}</p>
       </div>
     );
   }

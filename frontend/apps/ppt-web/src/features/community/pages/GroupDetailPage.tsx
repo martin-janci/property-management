@@ -7,6 +7,7 @@
 
 import type { CommunityGroup, GroupMember, GroupMemberRole } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GroupMemberList } from '../components/GroupMemberList';
 
 interface GroupDetailPageProps {
@@ -50,14 +51,15 @@ export function GroupDetailPage({
   onRemoveMember,
   onBanMember,
 }: GroupDetailPageProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('about');
 
   const canManageMembers = isAdmin || isOwner;
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'about', label: 'About' },
-    { id: 'members', label: `Members (${group.memberCount})` },
-    { id: 'posts', label: `Posts (${group.postCount})` },
+    { id: 'about', label: t('community.groupDetail.tabAbout') },
+    { id: 'members', label: t('community.groupDetail.tabMembers', { count: group.memberCount }) },
+    { id: 'posts', label: t('community.groupDetail.tabPosts', { count: group.postCount }) },
   ];
 
   return (
@@ -77,7 +79,7 @@ export function GroupDetailPage({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Groups
+        {t('community.common.backToGroups')}
       </button>
 
       {/* Header */}
@@ -87,7 +89,7 @@ export function GroupDetailPage({
           {group.coverImageUrl && (
             <img
               src={group.coverImageUrl}
-              alt={`${group.name} cover`}
+              alt={t('community.groupCard.coverAlt', { name: group.name })}
               className="w-full h-full object-cover"
             />
           )}
@@ -100,7 +102,7 @@ export function GroupDetailPage({
                   clipRule="evenodd"
                 />
               </svg>
-              Official
+              {t('community.common.official')}
             </span>
           )}
         </div>
@@ -144,10 +146,10 @@ export function GroupDetailPage({
                       d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                     />
                   </svg>
-                  {group.memberCount} members
+                  {t('community.groupDetail.members', { count: group.memberCount })}
                 </span>
                 <span>•</span>
-                <span className="capitalize">{group.visibility}</span>
+                <span>{t(`community.groupCard.visibility.${group.visibility}`)}</span>
               </div>
             </div>
 
@@ -159,7 +161,7 @@ export function GroupDetailPage({
                       type="button"
                       onClick={onNavigateToSettings}
                       className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-                      title="Group Settings"
+                      title={t('community.groupDetail.groupSettings')}
                     >
                       <svg
                         className="w-5 h-5"
@@ -188,9 +190,15 @@ export function GroupDetailPage({
                     onClick={onLeave}
                     disabled={isLeaving || isOwner}
                     className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
-                    title={isOwner ? 'Owners cannot leave the group' : 'Leave group'}
+                    title={
+                      isOwner
+                        ? t('community.groupDetail.ownersCannotLeave')
+                        : t('community.groupDetail.leaveGroupTitle')
+                    }
                   >
-                    {isLeaving ? 'Leaving...' : 'Leave Group'}
+                    {isLeaving
+                      ? t('community.groupDetail.leaving')
+                      : t('community.groupDetail.leaveGroup')}
                   </button>
                 </>
               ) : (
@@ -200,7 +208,9 @@ export function GroupDetailPage({
                   disabled={isJoining}
                   className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {isJoining ? 'Joining...' : 'Join Group'}
+                  {isJoining
+                    ? t('community.groupDetail.joining')
+                    : t('community.groupDetail.joinGroup')}
                 </button>
               )}
             </div>
@@ -232,10 +242,16 @@ export function GroupDetailPage({
       <div className="mt-6">
         {activeTab === 'about' && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">About this group</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {t('community.groupDetail.aboutTitle')}
+            </h2>
             <p className="text-gray-600 whitespace-pre-wrap">{group.description}</p>
             <div className="mt-6 pt-4 border-t text-sm text-gray-500">
-              <p>Created on {new Date(group.createdAt).toLocaleDateString()}</p>
+              <p>
+                {t('community.groupDetail.createdOn', {
+                  date: new Date(group.createdAt).toLocaleDateString(),
+                })}
+              </p>
             </div>
           </div>
         )}
@@ -243,10 +259,12 @@ export function GroupDetailPage({
         {activeTab === 'members' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Members</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('community.groupDetail.membersTitle')}
+              </h2>
               {canManageMembers && (
                 <button type="button" className="text-sm text-blue-600 hover:text-blue-800">
-                  Invite Members
+                  {t('community.groupDetail.inviteMembers')}
                 </button>
               )}
             </div>
@@ -277,9 +295,7 @@ export function GroupDetailPage({
                 d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
               />
             </svg>
-            <p className="mt-4 text-gray-500">
-              Posts will be shown here. See the Feed tab for all community posts.
-            </p>
+            <p className="mt-4 text-gray-500">{t('community.groupDetail.postsPlaceholder')}</p>
           </div>
         )}
       </div>
@@ -287,14 +303,16 @@ export function GroupDetailPage({
       {/* Admin Actions */}
       {(isAdmin || isOwner) && (
         <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Admin Actions</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {t('community.groupDetail.adminActions')}
+          </h2>
           <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={onEdit}
               className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
             >
-              Edit Group
+              {t('community.groupDetail.editGroup')}
             </button>
             {isOwner && (
               <button
@@ -302,7 +320,7 @@ export function GroupDetailPage({
                 onClick={onDelete}
                 className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50"
               >
-                Delete Group
+                {t('community.groupDetail.deleteGroup')}
               </button>
             )}
           </div>

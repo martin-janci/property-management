@@ -6,6 +6,8 @@
  */
 
 import type { ItemCondition, ItemListingType, ItemStatus, MarketplaceItem } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 interface ItemCardProps {
   item: MarketplaceItem;
@@ -17,12 +19,12 @@ interface ItemCardProps {
   isCurrentUser?: boolean;
 }
 
-const conditionLabels: Record<ItemCondition, string> = {
-  new: 'New',
-  like_new: 'Like New',
-  good: 'Good',
-  fair: 'Fair',
-  poor: 'Poor',
+const conditionKeys: Record<ItemCondition, string> = {
+  new: 'community.marketplace.condition.new',
+  like_new: 'community.marketplace.condition.likeNew',
+  good: 'community.marketplace.condition.good',
+  fair: 'community.marketplace.condition.fair',
+  poor: 'community.marketplace.condition.poor',
 };
 
 const conditionColors: Record<ItemCondition, string> = {
@@ -33,11 +35,11 @@ const conditionColors: Record<ItemCondition, string> = {
   poor: 'bg-red-100 text-red-800',
 };
 
-const listingTypeLabels: Record<ItemListingType, string> = {
-  sale: 'For Sale',
-  free: 'Free',
-  wanted: 'Wanted',
-  trade: 'For Trade',
+const listingTypeKeys: Record<ItemListingType, string> = {
+  sale: 'community.marketplace.listingType.sale',
+  free: 'community.marketplace.listingType.free',
+  wanted: 'community.marketplace.listingType.wanted',
+  trade: 'community.marketplace.listingType.trade',
 };
 
 const listingTypeColors: Record<ItemListingType, string> = {
@@ -58,26 +60,30 @@ const statusColors: Record<ItemStatus, string> = {
 function formatPrice(
   price: number | undefined,
   currency: string | undefined,
-  listingType: ItemListingType
+  listingType: ItemListingType,
+  t: TFunction
 ): string {
-  if (listingType === 'free') return 'FREE';
-  if (listingType === 'wanted') return 'Wanted';
-  if (listingType === 'trade') return 'Trade';
-  if (price === undefined) return 'Contact for price';
+  if (listingType === 'free') return t('community.itemCard.price.free');
+  if (listingType === 'wanted') return t('community.itemCard.price.wanted');
+  if (listingType === 'trade') return t('community.itemCard.price.trade');
+  if (price === undefined) return t('community.itemCard.price.contact');
   return new Intl.NumberFormat(undefined, {
     style: 'currency',
     currency: currency || 'EUR',
   }).format(price);
 }
 
-function formatTimeAgo(dateString: string): string {
+function formatTimeAgo(dateString: string, t: TFunction): string {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  if (seconds < 3600)
+    return t('community.itemCard.minutesAgo', { count: Math.floor(seconds / 60) });
+  if (seconds < 86400)
+    return t('community.itemCard.hoursAgo', { count: Math.floor(seconds / 3600) });
+  if (seconds < 604800)
+    return t('community.itemCard.daysAgo', { count: Math.floor(seconds / 86400) });
   return date.toLocaleDateString();
 }
 
@@ -90,6 +96,7 @@ export function ItemCard({
   onMarkSold,
   isCurrentUser,
 }: ItemCardProps) {
+  const { t } = useTranslation();
   const isAvailable = item.status === 'active';
   const isReserved = item.status === 'reserved';
   const isSold = item.status === 'sold';
@@ -124,7 +131,7 @@ export function ItemCard({
         <span
           className={`absolute top-2 left-2 px-2 py-1 text-xs font-medium rounded ${listingTypeColors[item.listingType]}`}
         >
-          {listingTypeLabels[item.listingType]}
+          {t(listingTypeKeys[item.listingType])}
         </span>
         {/* Image Count */}
         {item.imageUrls.length > 1 && (
@@ -150,7 +157,11 @@ export function ItemCard({
         {!isAvailable && (
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <span className="bg-white text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-              {isReserved ? 'Reserved' : isSold ? 'Sold' : item.status}
+              {isReserved
+                ? t('community.itemCard.reserved')
+                : isSold
+                  ? t('community.itemCard.sold')
+                  : item.status}
             </span>
           </div>
         )}
@@ -160,7 +171,7 @@ export function ItemCard({
       <div className="p-4">
         {/* Price */}
         <div className="text-lg font-bold text-gray-900">
-          {formatPrice(item.price, item.currency, item.listingType)}
+          {formatPrice(item.price, item.currency, item.listingType, t)}
         </div>
 
         {/* Title */}
@@ -177,7 +188,7 @@ export function ItemCard({
           <span className="text-gray-500">{item.category}</span>
           <span className="text-gray-300">•</span>
           <span className={`px-1.5 py-0.5 rounded ${conditionColors[item.condition]}`}>
-            {conditionLabels[item.condition]}
+            {t(conditionKeys[item.condition])}
           </span>
         </div>
 
@@ -206,13 +217,13 @@ export function ItemCard({
 
         {/* Stats */}
         <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
-          <span>{formatTimeAgo(item.createdAt)}</span>
+          <span>{formatTimeAgo(item.createdAt, t)}</span>
           <span>•</span>
-          <span>{item.viewCount} views</span>
+          <span>{t('community.itemCard.views', { count: item.viewCount })}</span>
           {item.messageCount > 0 && (
             <>
               <span>•</span>
-              <span>{item.messageCount} messages</span>
+              <span>{t('community.itemCard.messages', { count: item.messageCount })}</span>
             </>
           )}
         </div>
@@ -227,7 +238,7 @@ export function ItemCard({
               onClick={() => onEdit?.(item.id)}
               className="text-sm text-gray-600 hover:text-gray-800"
             >
-              Edit
+              {t('community.common.edit')}
             </button>
             {isAvailable && (
               <button
@@ -235,7 +246,7 @@ export function ItemCard({
                 onClick={() => onMarkSold?.(item.id)}
                 className="text-sm text-green-600 hover:text-green-800"
               >
-                Mark Sold
+                {t('community.itemCard.markSold')}
               </button>
             )}
             <button
@@ -243,7 +254,7 @@ export function ItemCard({
               onClick={() => onDelete?.(item.id)}
               className="text-sm text-red-600 hover:text-red-800"
             >
-              Delete
+              {t('community.common.delete')}
             </button>
           </div>
         ) : (
@@ -267,14 +278,14 @@ export function ItemCard({
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
-            Contact Seller
+            {t('community.itemCard.contactSeller')}
           </button>
         )}
         <button
           type="button"
           onClick={() => onView?.(item.id)}
           className="p-2 text-gray-400 hover:text-gray-600 rounded"
-          title="View Details"
+          title={t('community.itemCard.viewDetails')}
         >
           <svg
             className="w-5 h-5"

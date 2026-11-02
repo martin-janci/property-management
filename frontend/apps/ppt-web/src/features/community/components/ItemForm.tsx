@@ -12,6 +12,7 @@ import type {
   UpdateItemRequest,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ItemFormProps {
   initialData?: Partial<CreateItemRequest>;
@@ -21,31 +22,32 @@ interface ItemFormProps {
   onCancel: () => void;
 }
 
-const categories = [
-  'Electronics',
-  'Furniture',
-  'Clothing',
-  'Books',
-  'Sports',
-  'Home & Garden',
-  'Kids & Baby',
-  'Vehicles',
-  'Other',
+// `value` is the canonical string sent to the API; `key` resolves the label.
+const categories: { value: string; key: string }[] = [
+  { value: 'Electronics', key: 'electronics' },
+  { value: 'Furniture', key: 'furniture' },
+  { value: 'Clothing', key: 'clothing' },
+  { value: 'Books', key: 'books' },
+  { value: 'Sports', key: 'sports' },
+  { value: 'Home & Garden', key: 'homeGarden' },
+  { value: 'Kids & Baby', key: 'kidsBaby' },
+  { value: 'Vehicles', key: 'vehicles' },
+  { value: 'Other', key: 'other' },
 ];
 
-const conditions: { value: ItemCondition; label: string; description: string }[] = [
-  { value: 'new', label: 'New', description: 'Brand new, never used' },
-  { value: 'like_new', label: 'Like New', description: 'Used once or twice, perfect condition' },
-  { value: 'good', label: 'Good', description: 'Lightly used, minor signs of wear' },
-  { value: 'fair', label: 'Fair', description: 'Used regularly, visible wear' },
-  { value: 'poor', label: 'Poor', description: 'Heavy wear, may need repair' },
+const conditions: { value: ItemCondition; key: string }[] = [
+  { value: 'new', key: 'new' },
+  { value: 'like_new', key: 'likeNew' },
+  { value: 'good', key: 'good' },
+  { value: 'fair', key: 'fair' },
+  { value: 'poor', key: 'poor' },
 ];
 
-const listingTypes: { value: ItemListingType; label: string; description: string }[] = [
-  { value: 'sale', label: 'For Sale', description: 'Selling for a price' },
-  { value: 'free', label: 'Free', description: 'Giving away for free' },
-  { value: 'wanted', label: 'Wanted', description: 'Looking to buy' },
-  { value: 'trade', label: 'For Trade', description: 'Looking to trade' },
+const listingTypes: { value: ItemListingType; key: string }[] = [
+  { value: 'sale', key: 'sale' },
+  { value: 'free', key: 'free' },
+  { value: 'wanted', key: 'wanted' },
+  { value: 'trade', key: 'trade' },
 ];
 
 export function ItemForm({
@@ -55,9 +57,10 @@ export function ItemForm({
   onSubmit,
   onCancel,
 }: ItemFormProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [category, setCategory] = useState(initialData?.category || categories[0]);
+  const [category, setCategory] = useState(initialData?.category || categories[0].value);
   const [condition, setCondition] = useState<ItemCondition>(initialData?.condition || 'good');
   const [listingType, setListingType] = useState<ItemListingType>(
     initialData?.listingType || 'sale'
@@ -74,23 +77,23 @@ export function ItemForm({
     const newErrors: Record<string, string> = {};
 
     if (!title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('community.itemForm.errors.titleRequired');
     } else if (title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters';
+      newErrors.title = t('community.itemForm.errors.titleMin');
     } else if (title.length > 100) {
-      newErrors.title = 'Title must be less than 100 characters';
+      newErrors.title = t('community.itemForm.errors.titleMax');
     }
 
     if (!description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = t('community.itemForm.errors.descriptionRequired');
     } else if (description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
+      newErrors.description = t('community.itemForm.errors.descriptionMin');
     }
 
     if (showPrice && price) {
       const priceNum = Number(price);
       if (Number.isNaN(priceNum) || priceNum < 0) {
-        newErrors.price = 'Please enter a valid price';
+        newErrors.price = t('community.itemForm.errors.invalidPrice');
       }
     }
 
@@ -139,11 +142,17 @@ export function ItemForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Image Upload */}
       <div>
-        <span className="block text-sm font-medium text-gray-700 mb-2">Photos (up to 10)</span>
+        <span className="block text-sm font-medium text-gray-700 mb-2">
+          {t('community.itemForm.photos')}
+        </span>
         <div className="flex flex-wrap gap-3 mb-3">
           {imageUrls.map((url, index) => (
             <div key={url} className="relative w-24 h-24 rounded-lg overflow-hidden border">
-              <img src={url} alt={`Item ${index + 1}`} className="w-full h-full object-cover" />
+              <img
+                src={url}
+                alt={t('community.itemForm.imageAlt', { index: index + 1 })}
+                className="w-full h-full object-cover"
+              />
               <button
                 type="button"
                 onClick={() => removeImageUrl(index)}
@@ -177,7 +186,7 @@ export function ItemForm({
             type="url"
             value={imageInput}
             onChange={(e) => setImageInput(e.target.value)}
-            placeholder="Enter image URL"
+            placeholder={t('community.itemForm.imageUrlPlaceholder')}
             className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           />
           <button
@@ -186,7 +195,7 @@ export function ItemForm({
             disabled={!imageInput.trim() || !isValidUrl(imageInput) || imageUrls.length >= 10}
             className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
           >
-            Add
+            {t('community.common.add')}
           </button>
         </div>
       </div>
@@ -194,14 +203,14 @@ export function ItemForm({
       {/* Title */}
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Title <span className="text-red-500">*</span>
+          {t('community.itemForm.titleLabel')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="What are you selling?"
+          placeholder={t('community.itemForm.titlePlaceholder')}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.title ? 'border-red-300' : 'border-gray-300'
           }`}
@@ -212,13 +221,13 @@ export function ItemForm({
       {/* Description */}
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Description <span className="text-red-500">*</span>
+          {t('community.itemForm.descriptionLabel')} <span className="text-red-500">*</span>
         </label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe your item in detail..."
+          placeholder={t('community.itemForm.descriptionPlaceholder')}
           rows={4}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.description ? 'border-red-300' : 'border-gray-300'
@@ -229,7 +238,9 @@ export function ItemForm({
 
       {/* Listing Type */}
       <fieldset>
-        <legend className="block text-sm font-medium text-gray-700 mb-2">Listing Type</legend>
+        <legend className="block text-sm font-medium text-gray-700 mb-2">
+          {t('community.itemForm.listingTypeLegend')}
+        </legend>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {listingTypes.map((type) => (
             <label
@@ -248,8 +259,12 @@ export function ItemForm({
                 onChange={(e) => setListingType(e.target.value as ItemListingType)}
                 className="sr-only"
               />
-              <span className="text-sm font-medium text-gray-900">{type.label}</span>
-              <span className="text-xs text-gray-500 text-center mt-1">{type.description}</span>
+              <span className="text-sm font-medium text-gray-900">
+                {t(`community.itemForm.listingTypes.${type.key}.label`)}
+              </span>
+              <span className="text-xs text-gray-500 text-center mt-1">
+                {t(`community.itemForm.listingTypes.${type.key}.description`)}
+              </span>
             </label>
           ))}
         </div>
@@ -260,14 +275,14 @@ export function ItemForm({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price
+              {t('community.itemForm.priceLabel')}
             </label>
             <input
               type="number"
               id="price"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              placeholder="0.00"
+              placeholder={t('community.itemForm.pricePlaceholder')}
               min="0"
               step="0.01"
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
@@ -278,7 +293,7 @@ export function ItemForm({
           </div>
           <div>
             <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
-              Currency
+              {t('community.itemForm.currencyLabel')}
             </label>
             <select
               id="currency"
@@ -298,7 +313,7 @@ export function ItemForm({
       {/* Category */}
       <div>
         <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-          Category
+          {t('community.itemForm.categoryLabel')}
         </label>
         <select
           id="category"
@@ -307,8 +322,8 @@ export function ItemForm({
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
         >
           {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
+            <option key={cat.value} value={cat.value}>
+              {t(`community.marketplace.categories.${cat.key}`)}
             </option>
           ))}
         </select>
@@ -316,7 +331,9 @@ export function ItemForm({
 
       {/* Condition */}
       <fieldset>
-        <legend className="block text-sm font-medium text-gray-700 mb-2">Condition</legend>
+        <legend className="block text-sm font-medium text-gray-700 mb-2">
+          {t('community.itemForm.conditionLegend')}
+        </legend>
         <div className="space-y-2">
           {conditions.map((cond) => (
             <label
@@ -336,8 +353,12 @@ export function ItemForm({
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
               />
               <div className="ml-3">
-                <span className="block text-sm font-medium text-gray-900">{cond.label}</span>
-                <span className="block text-xs text-gray-500">{cond.description}</span>
+                <span className="block text-sm font-medium text-gray-900">
+                  {t(`community.itemForm.conditions.${cond.key}.label`)}
+                </span>
+                <span className="block text-xs text-gray-500">
+                  {t(`community.itemForm.conditions.${cond.key}.description`)}
+                </span>
               </div>
             </label>
           ))}
@@ -352,7 +373,7 @@ export function ItemForm({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('community.common.cancel')}
         </button>
         <button
           type="submit"
@@ -361,11 +382,11 @@ export function ItemForm({
         >
           {isSubmitting
             ? isEditing
-              ? 'Updating...'
-              : 'Creating...'
+              ? t('community.itemForm.updating')
+              : t('community.itemForm.creating')
             : isEditing
-              ? 'Update Listing'
-              : 'Create Listing'}
+              ? t('community.itemForm.update')
+              : t('community.itemForm.create')}
         </button>
       </div>
     </form>

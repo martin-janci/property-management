@@ -7,6 +7,7 @@
 
 import type { CommunityPost, CreatePostRequest, ListPostsParams, PostType } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CreatePostForm } from '../components/CreatePostForm';
 import { PostCard } from '../components/PostCard';
 
@@ -34,19 +35,19 @@ interface FeedPageProps {
 
 type FeedFilter = 'all' | 'my_groups' | 'building';
 
-const feedFilters: { value: FeedFilter; label: string }[] = [
-  { value: 'all', label: 'All Posts' },
-  { value: 'my_groups', label: 'My Groups' },
-  { value: 'building', label: 'Building' },
+const feedFilters: { value: FeedFilter; key: string }[] = [
+  { value: 'all', key: 'all' },
+  { value: 'my_groups', key: 'myGroups' },
+  { value: 'building', key: 'building' },
 ];
 
-const postTypeFilters: { value: PostType | ''; label: string }[] = [
-  { value: '', label: 'All Types' },
-  { value: 'text', label: 'Text' },
-  { value: 'image', label: 'Photos' },
-  { value: 'poll', label: 'Polls' },
-  { value: 'event', label: 'Events' },
-  { value: 'item', label: 'Items' },
+const postTypeFilters: { value: PostType | ''; key: string }[] = [
+  { value: '', key: 'all' },
+  { value: 'text', key: 'text' },
+  { value: 'image', key: 'photos' },
+  { value: 'poll', key: 'polls' },
+  { value: 'event', key: 'events' },
+  { value: 'item', key: 'items' },
 ];
 
 export function FeedPage({
@@ -70,6 +71,7 @@ export function FeedPage({
   onLoadMore,
   hasMore,
 }: FeedPageProps) {
+  const { t } = useTranslation();
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
   const [typeFilter, setTypeFilter] = useState<PostType | ''>('');
 
@@ -95,8 +97,8 @@ export function FeedPage({
     <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Community Feed</h1>
-        <p className="mt-1 text-sm text-gray-500">See what's happening in your community</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('community.feed.title')}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t('community.feed.subtitle')}</p>
       </div>
 
       {/* Create Post */}
@@ -128,7 +130,7 @@ export function FeedPage({
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                {filter.label}
+                {t(`community.feed.filters.${filter.key}`)}
               </button>
             ))}
           </div>
@@ -141,13 +143,13 @@ export function FeedPage({
           >
             {postTypeFilters.map((type) => (
               <option key={type.value} value={type.value}>
-                {type.label}
+                {t(`community.feed.types.${type.key}`)}
               </option>
             ))}
           </select>
 
           <span className="ml-auto text-sm text-gray-500">
-            {total} {total === 1 ? 'post' : 'posts'}
+            {total} {total === 1 ? t('community.feed.post') : t('community.feed.posts')}
           </span>
         </div>
       </div>
@@ -187,10 +189,10 @@ export function FeedPage({
               d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No posts yet</h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Be the first to share something with your community!
-          </p>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('community.feed.emptyTitle')}
+          </h3>
+          <p className="mt-2 text-sm text-gray-500">{t('community.feed.emptyBody')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -218,7 +220,7 @@ export function FeedPage({
                 disabled={isLoading}
                 className="px-6 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
               >
-                {isLoading ? 'Loading...' : 'Load More'}
+                {isLoading ? t('community.common.loading') : t('community.common.loadMore')}
               </button>
             </div>
           )}
