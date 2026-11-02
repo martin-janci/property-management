@@ -36,7 +36,7 @@ use axum::http::StatusCode;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{create_authenticated_user, TestApp, TestUser};
+use crate::common::{create_authenticated_user, mint_tenant_token, TestApp, TestUser};
 use db::models::compliance::ModeratedContentType;
 use db::repositories::ComplianceRepository;
 
@@ -306,4 +306,87 @@ async fn repo_file_appeal_is_org_scoped(pool: PgPool) {
         .await
         .expect("owner-org appeal succeeds");
     assert!(ok.appeal_filed, "in-org appeal must mutate the case");
+}
+
+// ===========================================================================
+// (4) file_appeal is guarded by the appeal's final-decision status: once an
+//     appeal has a final decision (appeal_approved / appeal_rejected), even the
+//     legitimate content owner cannot re-file a fresh appeal to reset the case
+//     back into the `appealed` state (code-review: api-handlers `file_appeal`
+//     had no status guard, so an owner could endlessly re-open a closed appeal).
+// ===========================================================================
+
+/// Seed a moderation case in `org` owned by `owner` with an explicit `status`.
+///
+/// Mirrors [`seed_moderation_case`] but lets the caller place the case in a
+/// terminal appeal state so the status guard can be exercised.
+async fn seed_moderation_case_with_status(
+    pool: &PgPool,
+    org: Uuid,
+    owner: Uuid,
+    status: &str,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO moderation_cases
+               (content_type, content_id, content_owner_id, organization_id,
+                report_source, status, priority)
+           VALUES ('listing', $1, $2, $3, 'user', $4::moderation_status, 3)
+           RETURNING id"#,
+    )
+    .bind(Uuid::new_v4())
+    .bind(owner)
+    .bind(org)
+    .bind(status)
+    .fetch_one(pool)
+    .await
+    .expect("seed moderation case with status")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn file_appeal_rejected_after_final_decision(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // An owner acting on their OWN content, inside the case's own org — both the
+    // tenant-isolation and ownership gates pass, so the ONLY thing that can stop
+    // the re-file is the final-decision status guard under test.
+    let org = seed_org(&pool, "final").await;
+    let owner = seed_user(&pool, "final-owner").await;
+    let case_id = seed_moderation_case_with_status(&pool, org, owner, "appeal_rejected").await;
+
+    // Mint a token whose subject == content owner and tenant == case org.
+    let token = mint_tenant_token(
+        owner,
+        "final-owner@pap43.test",
+        org,
+        common::tenant::TenantRole::OrgAdmin,
+    );
+
+    let resp = app
+        .post(&format!(
+            "/api/v1/aml-dsa/moderation/cases/{case_id}/appeal"
+        ))
+        .bearer(&token)
+        .json(serde_json::json!({ "reason": "let me try again" }))
+        .send()
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::CONFLICT,
+        "re-filing an appeal after a final decision must be refused (409), not re-opened. Body: {}",
+        resp.text()
+    );
+
+    // The case must still carry its final decision — the blocked re-file must
+    // not have reset status back to `appealed` or flipped `appeal_filed_at`.
+    let status: String =
+        sqlx::query_scalar("SELECT status::text FROM moderation_cases WHERE id = $1")
+            .bind(case_id)
+            .fetch_one(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        status, "appeal_rejected",
+        "the final appeal decision must be preserved after a blocked re-file"
+    );
 }
