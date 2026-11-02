@@ -134,29 +134,43 @@ describe('VoteDetailScreen — branch render snapshots', () => {
 });
 
 /**
- * Ranked-choice ballot regression
- * (code-review-mobile-rn-vote-detail-ranked-no-order).
+ * Ranked-choice ballot rendering (UC-04 / Epic 5).
  *
- * The screen used to group `ranked` questions with `multiple_choice` into one
- * `isMulti` checkbox renderer (QuestionCard). That meant a ranked ballot showed
- * no rank position and captured nothing until the voter tapped an option, so a
- * ranked question submitted a bare, order-less option set (or nothing at all)
- * and could not express preference order — even though the backend weights
- * ranked answers by array position (repositories/vote.rs).
+ * `ranked` questions get their own reorderable renderer (RankedQuestionCard):
+ * every option shows its 1-based rank position with move-up / move-down
+ * controls, the declared option order is the default ballot, and casting
+ * always submits the full ordered option-id list (the backend weights answers
+ * by array position — repositories/vote.rs).
  *
- * The fix gives `ranked` its own reorderable renderer that:
- *   - shows every option with its 1-based rank position,
- *   - offers move-up / move-down controls to reorder,
- *   - defaults to the declared option order, and
- *   - always submits the full ordered option-id list.
- *
- * On the buggy (pre-fix) code every assertion below fails: there are no
- * move controls, and casting submits an empty answer set for the untouched
- * ranked question.
+ * These tests bind only to the component's stable surface — option text, the
+ * resolved "Move up" / "Move down" accessibility labels (the component renders
+ * the `t(key, { defaultValue })` fallback, not the raw key), and the cast
+ * payload — so they survive styling / layout churn. The checkbox renderer this
+ * path replaced exposed none of those controls and submitted an order-less set.
  */
 describe('VoteDetailScreen — ranked ballot', () => {
+  const VOTE_ID = 'vote-1';
+
+  const RANKED_QUESTION = {
+    id: 'q-ranked',
+    vote_id: VOTE_ID,
+    question_text: 'Rank these priorities',
+    description: null,
+    question_type: 'ranked',
+    // Declared order === default ballot: Roof repair, Garden, Elevator.
+    options: [
+      { id: 'opt-a', text: 'Roof repair', order: 0 },
+      { id: 'opt-b', text: 'Garden', order: 1 },
+      { id: 'opt-c', text: 'Elevator', order: 2 },
+    ],
+    display_order: 0,
+    is_required: true,
+  };
+  const OPTION_LABELS = RANKED_QUESTION.options.map((o) => o.text);
+  const DECLARED_ORDER = RANKED_QUESTION.options.map((o) => o.id);
+
   const DETAIL = {
-    id: 'vote-1',
+    id: VOTE_ID,
     title: 'Budget priorities',
     description: null,
     status: 'active',
@@ -171,23 +185,8 @@ describe('VoteDetailScreen — ranked ballot', () => {
     question_count: 1,
   };
 
-  const RANKED_QUESTION = {
-    id: 'q-ranked',
-    vote_id: 'vote-1',
-    question_text: 'Rank these priorities',
-    description: null,
-    question_type: 'ranked',
-    options: [
-      { id: 'opt-a', text: 'Roof repair', order: 0 },
-      { id: 'opt-b', text: 'Garden', order: 1 },
-      { id: 'opt-c', text: 'Elevator', order: 2 },
-    ],
-    display_order: 0,
-    is_required: true,
-  };
-
   const ELIGIBILITY = {
-    vote_id: 'vote-1',
+    vote_id: VOTE_ID,
     user_id: 'user-1',
     eligible_units: [
       {
@@ -209,6 +208,8 @@ describe('VoteDetailScreen — ranked ballot', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApiMutation.mockReturnValue({ mutate, isPending: false });
+    // Route each query by its URL suffix, so the order the screen issues them
+    // in is irrelevant to the test.
     mockUseApiQuery.mockImplementation((_key: unknown, url: string) => {
       if (url.endsWith('/questions')) {
         return { data: [RANKED_QUESTION], isLoading: false, error: null };
@@ -218,79 +219,82 @@ describe('VoteDetailScreen — ranked ballot', () => {
       }
       return { data: DETAIL, isLoading: false, error: null };
     });
-    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     (Alert.alert as jest.Mock).mockRestore?.();
   });
 
-  // Fire the "default"-styled button of the most recent Alert.alert with
-  // buttons — that's the vote-confirmation action that triggers the cast.
-  function confirmSubmit() {
-    const calls = (Alert.alert as jest.Mock).mock.calls;
-    for (let i = calls.length - 1; i >= 0; i--) {
-      const buttons = calls[i][2];
-      if (Array.isArray(buttons)) {
-        const confirm = buttons.find((b: { style?: string }) => b.style === 'default');
-        confirm?.onPress?.();
-        return;
-      }
+  // Press "submit", then fire the confirm (`style: 'default'`) button of the
+  // confirmation Alert so the cast actually runs. Throws a clear error if submit
+  // never reached a confirmation dialog, so a regression that drops the confirm
+  // step fails loudly instead of silently skipping the cast assertions.
+  function castBallot() {
+    // The submit button renders the *resolved* label via
+    // `t('voting.submit', { defaultValue: 'Submit ballot' })`, so press the
+    // visible English text, not the raw i18n key.
+    fireEvent.press(screen.getByText('Submit ballot'));
+    const withButtons = [...(Alert.alert as jest.Mock).mock.calls]
+      .reverse()
+      .find((call) => Array.isArray(call[2]));
+    if (!withButtons) {
+      throw new Error('submit did not open a confirmation dialog with buttons');
     }
-    throw new Error('no Alert with buttons was shown — submit did not reach confirmation');
+    const confirm = withButtons[2].find((b: { style?: string }) => b.style === 'default');
+    if (!confirm) {
+      throw new Error('confirmation dialog had no default (confirm) button');
+    }
+    confirm.onPress?.();
   }
 
-  it('renders each ranked option with its position and reorder controls', () => {
-    renderScreen({ voteId: 'vote-1' });
+  // The answers map of the single cast the screen performed.
+  function castAnswers(): Record<string, string | string[]> {
+    expect(mutate).toHaveBeenCalledTimes(1);
+    return mutate.mock.calls[0][0].answers;
+  }
 
-    expect(screen.getByText('Roof repair')).toBeTruthy();
-    expect(screen.getByText('Garden')).toBeTruthy();
-    expect(screen.getByText('Elevator')).toBeTruthy();
+  it('shows every option with a reorder control and a 1-based rank position', () => {
+    renderScreen({ voteId: VOTE_ID });
 
-    // Rank badges 1/2/3 — absent on the buggy checkbox renderer.
-    expect(screen.getByText('1')).toBeTruthy();
-    expect(screen.getByText('2')).toBeTruthy();
-    expect(screen.getByText('3')).toBeTruthy();
+    for (const label of OPTION_LABELS) {
+      expect(screen.getByText(label)).toBeOnTheScreen();
+    }
 
     // One move-up and one move-down control per option — the buggy renderer
-    // had none, so these queries throw there. Assert on the *resolved*
-    // accessibility label (the `t(key, { defaultValue })` fallback), not the
-    // raw key — a regression that drops the defaultValue idiom (so VoiceOver /
+    // had none. Assert on the *resolved* accessibility label (the
+    // `t(key, { defaultValue })` fallback the component renders), not the raw
+    // key — a regression that drops the defaultValue idiom (so VoiceOver /
     // TalkBack announce "voting.moveUp") fails here (#3206).
-    expect(screen.getAllByLabelText('Move up')).toHaveLength(3);
-    expect(screen.getAllByLabelText('Move down')).toHaveLength(3);
+    expect(screen.getAllByLabelText('Move up')).toHaveLength(OPTION_LABELS.length);
+    expect(screen.getAllByLabelText('Move down')).toHaveLength(OPTION_LABELS.length);
+
+    // Rank badges read 1..N in row order (bare-digit text nodes). Collecting
+    // them is robust to stray copy elsewhere on screen, unlike a global
+    // getByText('1'), and pins the declared ordering.
+    const positions = screen.getAllByText(/^\d+$/).map((node) => String(node.props.children));
+    expect(positions).toEqual(['1', '2', '3']);
   });
 
   it('submits the full declared option order when the voter does not reorder', () => {
-    renderScreen({ voteId: 'vote-1' });
+    renderScreen({ voteId: VOTE_ID });
 
-    fireEvent.press(screen.getByText('Submit ballot'));
-    confirmSubmit();
+    castBallot();
 
-    expect(mutate).toHaveBeenCalledTimes(1);
     expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        unit_id: 'unit-1',
-        answers: { 'q-ranked': ['opt-a', 'opt-b', 'opt-c'] },
-      }),
+      expect.objectContaining({ unit_id: 'unit-1', answers: { 'q-ranked': DECLARED_ORDER } }),
       expect.anything()
     );
   });
 
   it('captures the reordered preference list in the cast answers', () => {
-    renderScreen({ voteId: 'vote-1' });
+    renderScreen({ voteId: VOTE_ID });
 
-    // Push the top option (Roof repair) down one position → B, A, C.
+    // Move the top option (Roof repair) down one place → Garden, Roof repair,
+    // Elevator. Use the resolved accessibility label the component renders.
     fireEvent.press(screen.getAllByLabelText('Move down')[0]);
+    castBallot();
 
-    fireEvent.press(screen.getByText('Submit ballot'));
-    confirmSubmit();
-
-    expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        answers: { 'q-ranked': ['opt-b', 'opt-a', 'opt-c'] },
-      }),
-      expect.anything()
-    );
+    expect(castAnswers()).toEqual({ 'q-ranked': ['opt-b', 'opt-a', 'opt-c'] });
   });
 });
