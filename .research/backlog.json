@@ -13196,7 +13196,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "top-3 churn 2026-10-26 (PR #3072)"
       ],
@@ -13209,7 +13209,12 @@
       ],
       "created_at": "2026-10-26",
       "updated_at": "2026-10-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3184
+      }
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
@@ -13663,7 +13668,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13683,7 +13688,12 @@
       "segment": "api-handlers",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3192
+      }
     },
     {
       "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
@@ -13971,7 +13981,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3189 (render ranked vote questions as ordered ballot)",
         "PR #3209",
@@ -13987,7 +13997,12 @@
       ],
       "created_at": "2026-11-01",
       "updated_at": "2026-11-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3213
+      }
     },
     {
       "id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
@@ -14022,7 +14037,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
         "PR #3212 (extract _status helper)"
@@ -14036,7 +14051,12 @@
       ],
       "created_at": "2026-11-02",
       "updated_at": "2026-11-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3217
+      }
     },
     {
       "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
@@ -14067,7 +14087,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3212"
       ],
@@ -14081,7 +14101,12 @@
       ],
       "created_at": "2026-11-02",
       "updated_at": "2026-11-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3216
+      }
     },
     {
       "id": "code-review-ppt-web-ui-community-feature-no-i18n",
@@ -14089,7 +14114,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment)"
       ],
@@ -14102,7 +14127,12 @@
       ],
       "created_at": "2026-11-02",
       "updated_at": "2026-11-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3220
+      }
     },
     {
       "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
@@ -14110,7 +14140,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment)"
       ],
@@ -14123,7 +14153,12 @@
       ],
       "created_at": "2026-11-02",
       "updated_at": "2026-11-02",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3218
+      }
     }
   ]
 }

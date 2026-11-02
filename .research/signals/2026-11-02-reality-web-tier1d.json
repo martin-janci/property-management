@@ -1,0 +1,50 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-02",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "dispatcher-tier1d-demand-driven (buffer below floor; reality-web is top 7-day churn segment AND oldest-unreviewed cursor 2026-10-23; 0 open findings — not saturated)",
+  "experts_used": [
+    "frontend"
+  ],
+  "signals": [
+    {
+      "id": "code-review-reality-web-pricealerts-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98,108 — handleMarkRead/handleMarkAllRead catch blocks log the raw mutation rejection via console.error('Failed to mark price alert read:', err) / console.error('Failed to mark all price alerts read:', err). The err originates from @ppt/reality-api-client hooks (useMarkFavoriteAlertRead/useMarkAllFavoriteAlertsRead, imported at lines 13-18), i.e. the generated api-client. The repo's own lib/safe-error.ts documents that api-client rejections embed the originating request (config.data/request/response.config.data) and MUST be routed through toSafeLogMessage(err) to avoid serializing secret-bearing request bodies into the console. Sibling reality-web surfaces already comply (FeedImport.tsx:520, CrmConnection.tsx:409, RealtorManagement.tsx:579 all use toSafeLogMessage(error)); these two call sites bypass it — a convention/leak-prevention regression on a user-facing path."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-unchecked-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — shared-comparison loader fetches `${getApiBase()}/api/v1/listings/${id}` and returns `response.json() as Promise<ListingSummary>`, an unchecked cast of untrusted-shape network data across an API boundary. The loaded objects are pushed into comparison state via addToComparison (line 70) and later dereferenced at render in ComparisonView (listing.title/price/photos). The sibling fetch of the SAME endpoint in app/[locale]/listings/[slug]/page.tsx:86 deliberately routes the body through parseListingDetail() because a 200 can carry a malformed/partial body; this path has no such guard, so a wrong-shaped body is stored and can crash the client-side comparison view. `id` is also interpolated into the URL unencoded (sourced from the ?ids= query param via compare/page.tsx:24)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:64,80 — console.error('Error loading shared listing:', result.reason) and console.error('Error loading shared listings:', err) log raw rejection objects to the browser console, bypassing the toSafeLogMessage() primitive the app standardized on (lib/safe-error.ts) to keep api-client request payloads out of logs. Same class as the PriceAlerts finding; lower severity because result.reason here is an Error the loader constructs itself, but the line-80 catch-all can still receive an arbitrary carrier object."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}
