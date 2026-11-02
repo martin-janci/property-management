@@ -20,6 +20,7 @@ import { Footer, Header } from '@/components/ui';
 import { formatPrice } from '@/lib/format';
 import { getMyListing, type ListingDraft, RealtorApiError, updateListing } from '@/lib/realtor-api';
 import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPES } from './_mock';
+import { resolveOptionalNumber } from './_number';
 import { resolveListingPrice } from './_price';
 import { mapListingStatusToForm, resolveStatusUpdate } from './_status';
 
@@ -185,7 +186,6 @@ function EditWizardContent() {
     }
     setSaving(true);
     try {
-      const floor = typeof form.floor === 'number' ? form.floor : Number(form.floor) || undefined;
       // Emit `status` only when the owner deliberately changed the control, so
       // the backend preserves the listing's real lifecycle state (terminal
       // states display as `draft`); `active` is never sent directly (publishing
@@ -205,9 +205,11 @@ function EditWizardContent() {
         city: form.city,
         postalCode: form.postalCode || undefined,
         country: form.country || undefined,
-        sizeSqm: typeof form.area === 'number' ? form.area : Number(form.area) || undefined,
-        rooms: typeof form.rooms === 'number' ? form.rooms : Number(form.rooms) || undefined,
-        floor,
+        // Optional numeric fields coerce through one helper so a genuinely-
+        // entered 0 isn't silently dropped (see `_number.ts`).
+        sizeSqm: resolveOptionalNumber(form.area),
+        rooms: resolveOptionalNumber(form.rooms),
+        floor: resolveOptionalNumber(form.floor),
         isNegotiable: form.priceNegotiable,
         ...(status ? { status } : {}),
       });
