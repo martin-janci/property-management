@@ -1,0 +1,50 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-01",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "churn-aligned (dispatcher-tier1d-demand-driven; claimable buffer starved, 7 < floor 36, backlog/retry refills empty). CHURN_FILES not explicitly supplied, so derived from recent git churn (git log --since=2026-10-25): ppt-web UI components/features churned heavily (components/Toast.tsx, ConnectionStatus.tsx, features/accounting/*, features/ai-chat/*) -> ppt-web-ui. ppt-web-ui is ALSO the oldest-unreviewed cursor in .research/state.json (ppt-web-ui 2026-10-22, the oldest). Backlog saturation check (open code-review-finding in backlog.json): ppt-web-ui=0 open (<3) => NOT saturated per skill Step 1. NOTE: three sibling tier1d slices this same run already produced ppt-web-ui findings (2026-11-01-ppt-web-ui-tier1d{,-2,-3}.json, 7 findings total across accounting/payment-matching, documents, buildings, registry, portfolio-performance, disputes). This slice deliberately targets the ai-chat feature (Epic 127), which NONE of the sibling slices touched and which has NO existing backlog finding (done or open) -- all 3 findings below are confirmed-distinct, non-duplicate. Frontend expert primary + Completeness secondary per skill Step 2 for ppt-web-ui.",
+  "experts_used": ["frontend", "completeness"],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-aichat-first-msg-stale-sid",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/ChatInterface.tsx:48 — `const sendMessage = useSendMessage(currentSessionId || '')` binds the mutation to the session id captured at render time.",
+        "ChatInterface.tsx:93-120 handleSendMessage: when there is no current session, it awaits createSession, calls setCurrentSessionId(session.id), then `setTimeout(async () => { await sendMessage.mutateAsync({ content }) }, 100)`. The setTimeout closes over the SAME sendMessage instance from this render, which is still bound to the empty session id (currentSessionId was null). setCurrentSessionId does not update the already-captured mutation, so the first message of a brand-new chat POSTs to `/ai/chat/sessions//messages` (empty session id) — the happy-path first message silently fails/404s. The 100ms setTimeout is also a timing race (code comment admits: 'This is a simplified version - in production you'd want better state management'). Fix: pass the freshly-created session id into the send call (e.g. useSendMessage taking sessionId as a mutate arg, or call the API with the returned session.id directly) and drop the setTimeout."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-aichat-mutation-err-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/ChatInterface.tsx:61-141 — createSession (New chat), deleteSession, and messageFeedback failures are caught with empty `catch {}` blocks commented '// Error handling is managed by mutation', but the only error UI rendered is `sendMessage.isError` (ChatInterface.tsx:254-258). A failed 'New chat' (createSession) or 'Delete session' (deleteSession) therefore produces NO user-facing error — the action silently does nothing. Completeness gap: there is no isError branch or toast for createSession.isError / deleteSession.isError, contradicting the swallowing comments. Add user-visible error states (or route these through the shared Toast) for the create/delete mutations."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-suggested-q-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/SuggestedQuestions.tsx:75-108 — getDefaultSuggestedQuestions() returns hardcoded English `text` ('How do I report a maintenance issue?', etc.) and `category` labels ('Faults','Voting','Utilities','Community','Events','Finance'). These are rendered directly (SuggestedQuestions.tsx:62-65 `question.category` / `question.text`) while every other string in the same component and in ChatInterface uses t(). i18n gap: the welcome-screen quick-start prompts are English-only for sk/cs/de locales, breaking the multi-language requirement. Move the default questions behind i18n keys (t('aiChat.suggested.*')) or fetch localized suggestions."
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

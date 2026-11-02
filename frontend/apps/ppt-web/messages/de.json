@@ -2617,5 +2617,68 @@
     "deleteFailed": "Eintrag konnte nicht gelöscht werden",
     "saved": "Personenmonat gespeichert",
     "saveFailed": "Personenmonat konnte nicht gespeichert werden"
+  },
+  "accounting": {
+    "title": "Ausgestellte Rechnungen",
+    "subtitle": "Natives Rechnungswesen MVP",
+    "createInvoice": "Rechnung erstellen",
+    "newInvoice": "Neue Rechnung",
+    "createFailed": "Rechnung konnte nicht erstellt werden",
+    "deleteFailed": "Rechnung konnte nicht gelöscht werden",
+    "deleteConfirmTitle": "Rechnung löschen",
+    "deleteConfirmMessage": "Möchten Sie diese Rechnung wirklich löschen?",
+    "emptyTitle": "Keine Rechnungen gefunden",
+    "emptyBody": "Erstellen Sie zunächst Ihre erste Rechnung.",
+    "due": "Fällig: {{date}}",
+    "vat": "MwSt.: {{amount}}",
+    "editLabel": "Rechnung bearbeiten",
+    "deleteLabel": "Rechnung löschen",
+    "status": {
+      "draft": "Entwurf",
+      "issued": "Ausgestellt",
+      "paid": "Bezahlt",
+      "partiallyPaid": "Teilweise bezahlt",
+      "overdue": "Überfällig"
+    },
+    "form": {
+      "contact": "Kontakt",
+      "selectContact": "Kontakt auswählen",
+      "invoiceNumber": "Rechnungsnummer",
+      "variableSymbol": "Variables Symbol",
+      "issueDate": "Ausstellungsdatum",
+      "dueDate": "Fälligkeitsdatum",
+      "currency": "Währung",
+      "vatCountry": "MwSt.-Land",
+      "country": {
+        "cz": "Tschechien",
+        "sk": "Slowakei"
+      },
+      "lineItems": "Positionen",
+      "addItem": "Position hinzufügen",
+      "itemDescriptionPlaceholder": "Positionsbeschreibung",
+      "customPercent": "Benutzerdefiniert %",
+      "remove": "Entfernen",
+      "baseAmount": "Nettobetrag",
+      "vatAmount": "MwSt.-Betrag",
+      "total": "Gesamt",
+      "updateInvoice": "Rechnung aktualisieren",
+      "col": {
+        "description": "Beschreibung",
+        "qty": "Menge",
+        "unitPrice": "Einzelpreis",
+        "vatRate": "MwSt.-Satz",
+        "total": "Gesamt"
+      },
+      "vatRate": {
+        "standard": "Standard (21% CZ / 20% SK)",
+        "reduced": "Ermäßigt (10%)",
+        "firstReduced": "Erster ermäßigter (15% CZ)",
+        "zero": "Null (0%)"
+      },
+      "errors": {
+        "requiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
+        "invalidNumbers": "Menge und Einzelpreis müssen gültige Zahlen sein"
+      }
+    }
   }
 }

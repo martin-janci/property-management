@@ -2598,5 +2598,68 @@
     "deleteFailed": "Nie udało się usunąć wpisu",
     "saved": "Osobomiesiąc zapisany",
     "saveFailed": "Nie udało się zapisać osobomiesiąca"
+  },
+  "accounting": {
+    "title": "Wystawione faktury",
+    "subtitle": "Natywna księgowość MVP",
+    "createInvoice": "Utwórz fakturę",
+    "newInvoice": "Nowa faktura",
+    "createFailed": "Nie udało się utworzyć faktury",
+    "deleteFailed": "Nie udało się usunąć faktury",
+    "deleteConfirmTitle": "Usuń fakturę",
+    "deleteConfirmMessage": "Czy na pewno chcesz usunąć tę fakturę?",
+    "emptyTitle": "Nie znaleziono faktur",
+    "emptyBody": "Zacznij od utworzenia pierwszej faktury.",
+    "due": "Termin: {{date}}",
+    "vat": "VAT: {{amount}}",
+    "editLabel": "Edytuj fakturę",
+    "deleteLabel": "Usuń fakturę",
+    "status": {
+      "draft": "Szkic",
+      "issued": "Wystawiona",
+      "paid": "Opłacona",
+      "partiallyPaid": "Częściowo opłacona",
+      "overdue": "Przeterminowana"
+    },
+    "form": {
+      "contact": "Kontakt",
+      "selectContact": "Wybierz kontakt",
+      "invoiceNumber": "Numer faktury",
+      "variableSymbol": "Symbol zmienny",
+      "issueDate": "Data wystawienia",
+      "dueDate": "Termin płatności",
+      "currency": "Waluta",
+      "vatCountry": "Kraj VAT",
+      "country": {
+        "cz": "Czechy",
+        "sk": "Słowacja"
+      },
+      "lineItems": "Pozycje",
+      "addItem": "Dodaj pozycję",
+      "itemDescriptionPlaceholder": "Opis pozycji",
+      "customPercent": "Niestandardowy %",
+      "remove": "Usuń",
+      "baseAmount": "Kwota netto",
+      "vatAmount": "Kwota VAT",
+      "total": "Razem",
+      "updateInvoice": "Zaktualizuj fakturę",
+      "col": {
+        "description": "Opis",
+        "qty": "Ilość",
+        "unitPrice": "Cena jedn.",
+        "vatRate": "Stawka VAT",
+        "total": "Razem"
+      },
+      "vatRate": {
+        "standard": "Standardowa (21% CZ / 20% SK)",
+        "reduced": "Obniżona (10%)",
+        "firstReduced": "Pierwsza obniżona (15% CZ)",
+        "zero": "Zerowa (0%)"
+      },
+      "errors": {
+        "requiredFields": "Wypełnij wszystkie wymagane pola",
+        "invalidNumbers": "Ilość i cena jednostkowa muszą być prawidłowymi liczbami"
+      }
+    }
   }
 }

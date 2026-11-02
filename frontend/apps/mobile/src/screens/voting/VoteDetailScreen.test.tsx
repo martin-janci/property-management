@@ -143,7 +143,8 @@ describe('VoteDetailScreen — branch render snapshots', () => {
  * by array position — repositories/vote.rs).
  *
  * These tests bind only to the component's stable surface — option text, the
- * `voting.moveUp` / `voting.moveDown` accessibility labels, and the cast
+ * resolved "Move up" / "Move down" accessibility labels (the component renders
+ * the `t(key, { defaultValue })` fallback, not the raw key), and the cast
  * payload — so they survive styling / layout churn. The checkbox renderer this
  * path replaced exposed none of those controls and submitted an order-less set.
  */
@@ -230,7 +231,10 @@ describe('VoteDetailScreen — ranked ballot', () => {
   // never reached a confirmation dialog, so a regression that drops the confirm
   // step fails loudly instead of silently skipping the cast assertions.
   function castBallot() {
-    fireEvent.press(screen.getByText('voting.submit'));
+    // The submit button renders the *resolved* label via
+    // `t('voting.submit', { defaultValue: 'Submit ballot' })`, so press the
+    // visible English text, not the raw i18n key.
+    fireEvent.press(screen.getByText('Submit ballot'));
     const withButtons = [...(Alert.alert as jest.Mock).mock.calls]
       .reverse()
       .find((call) => Array.isArray(call[2]));
@@ -257,10 +261,13 @@ describe('VoteDetailScreen — ranked ballot', () => {
       expect(screen.getByText(label)).toBeOnTheScreen();
     }
 
-    // One move-up and one move-down control per option, found by the stable
-    // accessibility labels the component exposes.
-    expect(screen.getAllByLabelText('voting.moveUp')).toHaveLength(OPTION_LABELS.length);
-    expect(screen.getAllByLabelText('voting.moveDown')).toHaveLength(OPTION_LABELS.length);
+    // One move-up and one move-down control per option — the buggy renderer
+    // had none. Assert on the *resolved* accessibility label (the
+    // `t(key, { defaultValue })` fallback the component renders), not the raw
+    // key — a regression that drops the defaultValue idiom (so VoiceOver /
+    // TalkBack announce "voting.moveUp") fails here (#3206).
+    expect(screen.getAllByLabelText('Move up')).toHaveLength(OPTION_LABELS.length);
+    expect(screen.getAllByLabelText('Move down')).toHaveLength(OPTION_LABELS.length);
 
     // Rank badges read 1..N in row order (bare-digit text nodes). Collecting
     // them is robust to stray copy elsewhere on screen, unlike a global
@@ -283,8 +290,9 @@ describe('VoteDetailScreen — ranked ballot', () => {
   it('captures the reordered preference list in the cast answers', () => {
     renderScreen({ voteId: VOTE_ID });
 
-    // Move the top option (Roof repair) down one place → Garden, Roof repair, Elevator.
-    fireEvent.press(screen.getAllByLabelText('voting.moveDown')[0]);
+    // Move the top option (Roof repair) down one place → Garden, Roof repair,
+    // Elevator. Use the resolved accessibility label the component renders.
+    fireEvent.press(screen.getAllByLabelText('Move down')[0]);
     castBallot();
 
     expect(castAnswers()).toEqual({ 'q-ranked': ['opt-b', 'opt-a', 'opt-c'] });
