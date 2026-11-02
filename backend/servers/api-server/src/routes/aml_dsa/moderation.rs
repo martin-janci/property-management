@@ -523,6 +523,22 @@ pub(super) async fn file_appeal(
         ));
     }
 
+    // Status guard: once an appeal has reached a final decision
+    // (approved / rejected), the right to appeal is spent. Without this
+    // guard the owner could re-POST and `file_appeal` would unconditionally
+    // reset the case back to `appealed`, erasing the final decision and
+    // re-opening a closed case indefinitely. A spent appeal is a conflict with
+    // the case's terminal state, so refuse with 409.
+    if matches!(
+        existing.status,
+        ModerationStatus::AppealApproved | ModerationStatus::AppealRejected
+    ) {
+        return Err((
+            StatusCode::CONFLICT,
+            "This appeal already has a final decision and cannot be re-filed".to_string(),
+        ));
+    }
+
     let case = state
         .compliance_repo
         .file_appeal(id, org_id, &req.reason)
