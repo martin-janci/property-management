@@ -179,7 +179,13 @@ impl BoundedCache {
 /// default escape character is backslash, so we backslash-escape those three
 /// characters (backslash first) before wrapping in the substring wildcards.
 fn city_like_pattern(city: &str) -> String {
-    format!("%{}%", city)
+    // Backslash-escape LIKE metacharacters (backslash first) so user input is
+    // matched literally under Postgres ILIKE's default `\` escape character.
+    let escaped = city
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    format!("%{escaped}%")
 }
 
 /// Create price map router.
