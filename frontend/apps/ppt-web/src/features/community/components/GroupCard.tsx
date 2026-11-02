@@ -6,6 +6,7 @@
  */
 
 import type { CommunityGroupSummary, GroupVisibility } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface GroupCardProps {
   group: CommunityGroupSummary;
@@ -67,10 +68,10 @@ const visibilityIcons: Record<GroupVisibility, React.JSX.Element> = {
   ),
 };
 
-const visibilityLabels: Record<GroupVisibility, string> = {
-  public: 'Public',
-  private: 'Private',
-  hidden: 'Hidden',
+const visibilityKeys: Record<GroupVisibility, string> = {
+  public: 'community.groupCard.visibility.public',
+  private: 'community.groupCard.visibility.private',
+  hidden: 'community.groupCard.visibility.hidden',
 };
 
 export function GroupCard({
@@ -81,6 +82,7 @@ export function GroupCard({
   isJoining,
   isLeaving,
 }: GroupCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
       {/* Cover Image */}
@@ -88,7 +90,7 @@ export function GroupCard({
         {group.coverImageUrl && (
           <img
             src={group.coverImageUrl}
-            alt={`${group.name} cover`}
+            alt={t('community.groupCard.coverAlt', { name: group.name })}
             className="w-full h-full object-cover"
           />
         )}
@@ -101,7 +103,7 @@ export function GroupCard({
                 clipRule="evenodd"
               />
             </svg>
-            Official
+            {t('community.common.official')}
           </span>
         )}
       </div>
@@ -114,7 +116,7 @@ export function GroupCard({
             <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
               <span className="flex items-center gap-1">
                 {visibilityIcons[group.visibility]}
-                {visibilityLabels[group.visibility]}
+                {t(visibilityKeys[group.visibility])}
               </span>
               <span>•</span>
               <span>{group.category}</span>
@@ -140,7 +142,10 @@ export function GroupCard({
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
               />
             </svg>
-            {group.memberCount} {group.memberCount === 1 ? 'member' : 'members'}
+            {group.memberCount}{' '}
+            {group.memberCount === 1
+              ? t('community.groupCard.member')
+              : t('community.groupCard.members')}
           </div>
 
           <div className="flex items-center gap-2">
@@ -149,7 +154,7 @@ export function GroupCard({
               onClick={() => onView?.(group.id)}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
-              View
+              {t('community.common.view')}
             </button>
             {group.isMember ? (
               <button
@@ -158,7 +163,7 @@ export function GroupCard({
                 disabled={isLeaving}
                 className="px-3 py-1 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
               >
-                {isLeaving ? 'Leaving...' : 'Leave'}
+                {isLeaving ? t('community.groupCard.leaving') : t('community.groupCard.leave')}
               </button>
             ) : (
               <button
@@ -167,7 +172,7 @@ export function GroupCard({
                 disabled={isJoining}
                 className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {isJoining ? 'Joining...' : 'Join'}
+                {isJoining ? t('community.groupCard.joining') : t('community.groupCard.join')}
               </button>
             )}
           </div>

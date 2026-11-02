@@ -7,6 +7,7 @@
 
 import type { CreateGroupRequest, GroupVisibility, UpdateGroupRequest } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface GroupFormProps {
   initialData?: Partial<CreateGroupRequest>;
@@ -16,12 +17,21 @@ interface GroupFormProps {
   onCancel: () => void;
 }
 
-const categories = ['Social', 'Sports', 'Hobbies', 'Parenting', 'Pets', 'Business', 'Other'];
+// `value` is the canonical string sent to the API; `key` resolves the label.
+const categories: { value: string; key: string }[] = [
+  { value: 'Social', key: 'social' },
+  { value: 'Sports', key: 'sports' },
+  { value: 'Hobbies', key: 'hobbies' },
+  { value: 'Parenting', key: 'parenting' },
+  { value: 'Pets', key: 'pets' },
+  { value: 'Business', key: 'business' },
+  { value: 'Other', key: 'other' },
+];
 
-const visibilityOptions: { value: GroupVisibility; label: string; description: string }[] = [
-  { value: 'public', label: 'Public', description: 'Anyone can find and join this group' },
-  { value: 'private', label: 'Private', description: 'Anyone can find but must request to join' },
-  { value: 'hidden', label: 'Hidden', description: 'Only invited users can find this group' },
+const visibilityOptions: { value: GroupVisibility; key: string }[] = [
+  { value: 'public', key: 'public' },
+  { value: 'private', key: 'private' },
+  { value: 'hidden', key: 'hidden' },
 ];
 
 export function GroupForm({
@@ -31,9 +41,10 @@ export function GroupForm({
   onSubmit,
   onCancel,
 }: GroupFormProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [category, setCategory] = useState(initialData?.category || categories[0]);
+  const [category, setCategory] = useState(initialData?.category || categories[0].value);
   const [visibility, setVisibility] = useState<GroupVisibility>(
     initialData?.visibility || 'public'
   );
@@ -44,27 +55,27 @@ export function GroupForm({
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Group name is required';
+      newErrors.name = t('community.groupForm.errors.nameRequired');
     } else if (name.length < 3) {
-      newErrors.name = 'Group name must be at least 3 characters';
+      newErrors.name = t('community.groupForm.errors.nameMin');
     } else if (name.length > 100) {
-      newErrors.name = 'Group name must be less than 100 characters';
+      newErrors.name = t('community.groupForm.errors.nameMax');
     }
 
     if (!description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = t('community.groupForm.errors.descriptionRequired');
     } else if (description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
+      newErrors.description = t('community.groupForm.errors.descriptionMin');
     } else if (description.length > 1000) {
-      newErrors.description = 'Description must be less than 1000 characters';
+      newErrors.description = t('community.groupForm.errors.descriptionMax');
     }
 
     if (!category) {
-      newErrors.category = 'Category is required';
+      newErrors.category = t('community.groupForm.errors.categoryRequired');
     }
 
     if (coverImageUrl && !isValidUrl(coverImageUrl)) {
-      newErrors.coverImageUrl = 'Please enter a valid URL';
+      newErrors.coverImageUrl = t('community.groupForm.errors.invalidUrl');
     }
 
     setErrors(newErrors);
@@ -100,7 +111,7 @@ export function GroupForm({
         {coverImageUrl && (
           <img
             src={coverImageUrl}
-            alt="Cover preview"
+            alt={t('community.groupForm.coverPreviewAlt')}
             className="w-full h-full object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
@@ -108,21 +119,23 @@ export function GroupForm({
           />
         )}
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-          <span className="text-white text-lg font-medium">{name || 'Group Name'}</span>
+          <span className="text-white text-lg font-medium">
+            {name || t('community.groupForm.namePreviewDefault')}
+          </span>
         </div>
       </div>
 
       {/* Name */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Group Name <span className="text-red-500">*</span>
+          {t('community.groupForm.nameLabel')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter group name"
+          placeholder={t('community.groupForm.namePlaceholder')}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.name ? 'border-red-300' : 'border-gray-300'
           }`}
@@ -133,13 +146,13 @@ export function GroupForm({
       {/* Description */}
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Description <span className="text-red-500">*</span>
+          {t('community.groupForm.descriptionLabel')} <span className="text-red-500">*</span>
         </label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe what your group is about..."
+          placeholder={t('community.groupForm.descriptionPlaceholder')}
           rows={4}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.description ? 'border-red-300' : 'border-gray-300'
@@ -158,7 +171,7 @@ export function GroupForm({
       {/* Category */}
       <div>
         <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-          Category <span className="text-red-500">*</span>
+          {t('community.groupForm.categoryLabel')} <span className="text-red-500">*</span>
         </label>
         <select
           id="category"
@@ -169,8 +182,8 @@ export function GroupForm({
           }`}
         >
           {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
+            <option key={cat.value} value={cat.value}>
+              {t(`community.groupList.categories.${cat.key}`)}
             </option>
           ))}
         </select>
@@ -179,7 +192,9 @@ export function GroupForm({
 
       {/* Visibility */}
       <fieldset>
-        <legend className="block text-sm font-medium text-gray-700 mb-2">Visibility</legend>
+        <legend className="block text-sm font-medium text-gray-700 mb-2">
+          {t('community.groupForm.visibilityLegend')}
+        </legend>
         <div className="space-y-2">
           {visibilityOptions.map((option) => (
             <label
@@ -199,8 +214,12 @@ export function GroupForm({
                 className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
               />
               <div className="ml-3">
-                <span className="block text-sm font-medium text-gray-900">{option.label}</span>
-                <span className="block text-xs text-gray-500">{option.description}</span>
+                <span className="block text-sm font-medium text-gray-900">
+                  {t(`community.groupForm.visibilityOptions.${option.key}.label`)}
+                </span>
+                <span className="block text-xs text-gray-500">
+                  {t(`community.groupForm.visibilityOptions.${option.key}.description`)}
+                </span>
               </div>
             </label>
           ))}
@@ -210,14 +229,14 @@ export function GroupForm({
       {/* Cover Image URL */}
       <div>
         <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700">
-          Cover Image URL (optional)
+          {t('community.groupForm.coverUrlLabel')}
         </label>
         <input
           type="url"
           id="coverImageUrl"
           value={coverImageUrl}
           onChange={(e) => setCoverImageUrl(e.target.value)}
-          placeholder="https://example.com/image.jpg"
+          placeholder={t('community.groupForm.coverUrlPlaceholder')}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.coverImageUrl ? 'border-red-300' : 'border-gray-300'
           }`}
@@ -235,7 +254,7 @@ export function GroupForm({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('community.common.cancel')}
         </button>
         <button
           type="submit"
@@ -244,11 +263,11 @@ export function GroupForm({
         >
           {isSubmitting
             ? isEditing
-              ? 'Updating...'
-              : 'Creating...'
+              ? t('community.groupForm.updating')
+              : t('community.groupForm.creating')
             : isEditing
-              ? 'Update Group'
-              : 'Create Group'}
+              ? t('community.groupForm.update')
+              : t('community.groupForm.create')}
         </button>
       </div>
     </form>

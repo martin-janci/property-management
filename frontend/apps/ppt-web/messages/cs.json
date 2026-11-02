@@ -2705,7 +2705,426 @@
     "leaveFailed": "Nepodařilo se opustit skupinu",
     "groupDeleted": "Skupina odstraněna.",
     "deleteFailed": "Nepodařilo se odstranit skupinu",
-    "deleteGroupConfirm": "Odstranit tuto skupinu? Tuto akci nelze vrátit zpět."
+    "deleteGroupConfirm": "Odstranit tuto skupinu? Tuto akci nelze vrátit zpět.",
+    "common": {
+      "edit": "Upravit",
+      "delete": "Smazat",
+      "cancel": "Zrušit",
+      "add": "Přidat",
+      "view": "Zobrazit",
+      "search": "Hledat",
+      "previous": "Předchozí",
+      "next": "Další",
+      "loading": "Načítání...",
+      "loadMore": "Načíst další",
+      "backToGroups": "Zpět na skupiny",
+      "official": "Oficiální",
+      "pageOf": "Strana {{page}} z {{total}}"
+    },
+    "post": {
+      "pinned": "Připnuto",
+      "justNow": "právě teď",
+      "minutesAgo": "před {{count}} min",
+      "hoursAgo": "před {{count}} h",
+      "daysAgo": "před {{count}} d",
+      "likes": "{{count}} líbí se",
+      "comments": "{{count}} komentářů",
+      "shares": "{{count}} sdílení",
+      "like": "Líbí se",
+      "comment": "Komentovat",
+      "share": "Sdílet",
+      "mediaAlt": "Média příspěvku {{index}}"
+    },
+    "comments": {
+      "justNow": "právě teď",
+      "minutes": "{{count}} min",
+      "hours": "{{count}} h",
+      "days": "{{count}} d",
+      "liked": "Líbí se mi",
+      "like": "Líbí se",
+      "reply": "Odpovědět",
+      "replyPlaceholder": "Napište odpověď...",
+      "empty": "Zatím žádné komentáře. Buďte první!"
+    },
+    "feed": {
+      "title": "Komunitní kanál",
+      "subtitle": "Podívejte se, co se děje ve vaší komunitě",
+      "filters": {
+        "all": "Všechny příspěvky",
+        "myGroups": "Moje skupiny",
+        "building": "Budova"
+      },
+      "types": {
+        "all": "Všechny typy",
+        "text": "Text",
+        "photos": "Fotky",
+        "polls": "Ankety",
+        "events": "Události",
+        "items": "Inzeráty"
+      },
+      "post": "příspěvek",
+      "posts": "příspěvků",
+      "emptyTitle": "Zatím žádné příspěvky",
+      "emptyBody": "Buďte první, kdo se o něco podělí s komunitou!"
+    },
+    "createPost": {
+      "types": {
+        "text": "Text",
+        "photo": "Foto",
+        "poll": "Anketa"
+      },
+      "visibility": {
+        "group": "Pouze skupina",
+        "building": "Budova",
+        "public": "Veřejné"
+      },
+      "contentPlaceholder": "Co máte na mysli?",
+      "imageUrlPlaceholder": "Zadejte URL obrázku",
+      "previewAlt": "Náhled {{index}}",
+      "posting": "Přidávání...",
+      "submit": "Přidat"
+    },
+    "groupList": {
+      "title": "Komunitní skupiny",
+      "subtitle": "Spojte se se sousedy prostřednictvím společných zájmů",
+      "create": "Vytvořit skupinu",
+      "searchPlaceholder": "Hledat skupiny...",
+      "categoryLabel": "Kategorie",
+      "visibilityLabel": "Viditelnost",
+      "myGroupsOnly": "Pouze moje skupiny",
+      "emptyTitle": "Nebyly nalezeny žádné skupiny",
+      "emptyBodyMember": "Zatím jste se nepřipojili k žádné skupině.",
+      "emptyBodyDefault": "Zkuste upravit filtry nebo vytvořte novou skupinu.",
+      "showing": "Zobrazeno {{count}} z {{total}} skupin",
+      "categories": {
+        "allCategories": "Všechny kategorie",
+        "social": "Společenské",
+        "sports": "Sport",
+        "hobbies": "Koníčky",
+        "parenting": "Rodičovství",
+        "pets": "Domácí mazlíčci",
+        "business": "Byznys",
+        "other": "Ostatní"
+      },
+      "visibility": {
+        "all": "Všechny skupiny",
+        "public": "Veřejné",
+        "private": "Soukromé"
+      }
+    },
+    "groupCard": {
+      "visibility": {
+        "public": "Veřejná",
+        "private": "Soukromá",
+        "hidden": "Skrytá"
+      },
+      "member": "člen",
+      "members": "členů",
+      "joining": "Připojování...",
+      "join": "Připojit se",
+      "leaving": "Odcházení...",
+      "leave": "Opustit",
+      "coverAlt": "Obal skupiny {{name}}"
+    },
+    "groupForm": {
+      "visibilityOptions": {
+        "public": {
+          "label": "Veřejná",
+          "description": "Tuto skupinu může najít a připojit se k ní kdokoli"
+        },
+        "private": {
+          "label": "Soukromá",
+          "description": "Kdokoli ji najde, ale o členství musí požádat"
+        },
+        "hidden": {
+          "label": "Skrytá",
+          "description": "Tuto skupinu najdou jen pozvaní uživatelé"
+        }
+      },
+      "namePreviewDefault": "Název skupiny",
+      "nameLabel": "Název skupiny",
+      "namePlaceholder": "Zadejte název skupiny",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "Popište, o čem je vaše skupina...",
+      "categoryLabel": "Kategorie",
+      "visibilityLegend": "Viditelnost",
+      "coverPreviewAlt": "Náhled obalu",
+      "coverUrlLabel": "URL titulního obrázku (volitelné)",
+      "coverUrlPlaceholder": "https://example.com/image.jpg",
+      "errors": {
+        "nameRequired": "Název skupiny je povinný",
+        "nameMin": "Název skupiny musí mít alespoň 3 znaky",
+        "nameMax": "Název skupiny musí mít méně než 100 znaků",
+        "descriptionRequired": "Popis je povinný",
+        "descriptionMin": "Popis musí mít alespoň 10 znaků",
+        "descriptionMax": "Popis musí mít méně než 1000 znaků",
+        "categoryRequired": "Kategorie je povinná",
+        "invalidUrl": "Zadejte platnou URL adresu"
+      },
+      "updating": "Aktualizace...",
+      "creating": "Vytváření...",
+      "update": "Aktualizovat skupinu",
+      "create": "Vytvořit skupinu"
+    },
+    "groupMembers": {
+      "roles": {
+        "owner": "Vlastník",
+        "admin": "Správce",
+        "moderator": "Moderátor",
+        "member": "Člen"
+      },
+      "empty": "Zatím žádní členové",
+      "pendingApproval": "Čeká na schválení",
+      "you": "(vy)",
+      "joined": "Připojen/a {{date}}",
+      "makeModerator": "Nastavit jako moderátora",
+      "makeAdmin": "Nastavit jako správce",
+      "removeFromGroup": "Odebrat ze skupiny",
+      "banFromGroup": "Zablokovat ve skupině"
+    },
+    "groupDetail": {
+      "tabAbout": "O skupině",
+      "tabMembers": "Členové ({{count}})",
+      "tabPosts": "Příspěvky ({{count}})",
+      "members": "{{count}} členů",
+      "groupSettings": "Nastavení skupiny",
+      "ownersCannotLeave": "Vlastníci nemohou opustit skupinu",
+      "leaveGroupTitle": "Opustit skupinu",
+      "leaving": "Odcházení...",
+      "leaveGroup": "Opustit skupinu",
+      "joining": "Připojování...",
+      "joinGroup": "Připojit se ke skupině",
+      "aboutTitle": "O této skupině",
+      "createdOn": "Vytvořeno {{date}}",
+      "membersTitle": "Členové",
+      "inviteMembers": "Pozvat členy",
+      "postsPlaceholder": "Příspěvky se zobrazí zde. Všechny komunitní příspěvky najdete na kartě Kanál.",
+      "adminActions": "Akce správce",
+      "editGroup": "Upravit skupinu",
+      "deleteGroup": "Smazat skupinu"
+    },
+    "createGroup": {
+      "title": "Vytvořit novou skupinu"
+    },
+    "events": {
+      "title": "Komunitní události",
+      "subtitle": "Objevujte a účastněte se událostí ve své komunitě",
+      "create": "Vytvořit událost",
+      "time": {
+        "upcoming": "Nadcházející",
+        "past": "Minulé",
+        "all": "Všechny"
+      },
+      "status": {
+        "all": "Všechny stavy",
+        "published": "Publikované",
+        "draft": "Koncept",
+        "cancelled": "Zrušené",
+        "completed": "Dokončené"
+      },
+      "rsvp": {
+        "all": "Všechny odpovědi",
+        "going": "Zúčastním se",
+        "maybe": "Možná",
+        "notGoing": "Nezúčastním se"
+      },
+      "event": "událost",
+      "events": "událostí",
+      "emptyTitle": "Nebyly nalezeny žádné události",
+      "emptyBodyUpcoming": "Žádné nadcházející události. Vytvořte první!",
+      "emptyBodyDefault": "Žádné události neodpovídají filtrům."
+    },
+    "eventCard": {
+      "relative": {
+        "past": "Proběhlo",
+        "today": "Dnes",
+        "tomorrow": "Zítra",
+        "inDays": "Za {{count}} dní",
+        "inWeeks": "Za {{count}} týdnů",
+        "inMonths": "Za {{count}} měsíců"
+      },
+      "status": {
+        "draft": "Koncept",
+        "published": "Publikované",
+        "cancelled": "Zrušené",
+        "completed": "Dokončené"
+      },
+      "going": "{{count}} přijde",
+      "maybe": "{{count}} možná",
+      "max": "Max. {{count}}",
+      "rsvpGoing": "Zúčastníte se",
+      "rsvpMaybe": "Máte zájem",
+      "rsvpNotGoing": "Odmítli jste",
+      "btnGoing": "Zúčastním se",
+      "btnMaybe": "Možná",
+      "btnCantGo": "Nemůžu",
+      "ended": "Událost skončila",
+      "eventCancelled": "Událost zrušena",
+      "rsvpNotAvailable": "Odpověď není dostupná",
+      "addToCalendar": "Přidat do kalendáře",
+      "editEvent": "Upravit událost",
+      "deleteEvent": "Smazat událost"
+    },
+    "eventForm": {
+      "titlePreviewDefault": "Název události",
+      "titleLabel": "Název události",
+      "titlePlaceholder": "Zadejte název události",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "O čem je tato událost?",
+      "locationLabel": "Místo",
+      "locationPlaceholder": "např. Společenská místnost",
+      "locationDetailsLabel": "Podrobnosti o místě (volitelné)",
+      "locationDetailsPlaceholder": "např. Budova A, 2. patro",
+      "dateTime": "Datum a čas",
+      "allDay": "Celodenní událost",
+      "start": "Začátek",
+      "end": "Konec",
+      "coverUrlLabel": "URL titulního obrázku (volitelné)",
+      "coverUrlPlaceholder": "https://example.com/image.jpg",
+      "coverPreviewAlt": "Náhled obalu",
+      "maxAttendeesLabel": "Maximální počet účastníků (volitelné)",
+      "maxAttendeesPlaceholder": "Ponechte prázdné pro neomezený počet",
+      "errors": {
+        "titleRequired": "Název je povinný",
+        "titleMin": "Název musí mít alespoň 3 znaky",
+        "descriptionRequired": "Popis je povinný",
+        "descriptionMin": "Popis musí mít alespoň 10 znaků",
+        "locationRequired": "Místo je povinné",
+        "startRequired": "Datum začátku je povinné",
+        "endRequired": "Datum konce je povinné",
+        "endAfterStart": "Datum konce musí být po datu začátku",
+        "invalidUrl": "Zadejte platnou URL adresu",
+        "invalidNumber": "Zadejte platné číslo"
+      },
+      "updating": "Aktualizace...",
+      "creating": "Vytváření...",
+      "update": "Aktualizovat událost",
+      "create": "Vytvořit událost"
+    },
+    "marketplace": {
+      "title": "Tržiště",
+      "subtitle": "Kupujte, prodávejte a směňujte se sousedy",
+      "create": "Vytvořit inzerát",
+      "searchPlaceholder": "Hledat inzeráty...",
+      "categories": {
+        "allCategories": "Všechny kategorie",
+        "electronics": "Elektronika",
+        "furniture": "Nábytek",
+        "clothing": "Oblečení",
+        "books": "Knihy",
+        "sports": "Sport",
+        "homeGarden": "Dům a zahrada",
+        "kidsBaby": "Děti a miminka",
+        "vehicles": "Vozidla",
+        "other": "Ostatní"
+      },
+      "listingType": {
+        "all": "Všechny typy",
+        "sale": "Na prodej",
+        "free": "Zdarma",
+        "wanted": "Koupím",
+        "trade": "Na výměnu"
+      },
+      "condition": {
+        "all": "Jakýkoli stav",
+        "new": "Nové",
+        "likeNew": "Jako nové",
+        "good": "Dobré",
+        "fair": "Průměrné",
+        "poor": "Opotřebené"
+      },
+      "minPrice": "Min €",
+      "maxPrice": "Max €",
+      "item": "inzerát",
+      "items": "inzerátů",
+      "emptyTitle": "Nebyly nalezeny žádné inzeráty",
+      "emptyBody": "Zkuste upravit filtry nebo vytvořte nový inzerát."
+    },
+    "itemCard": {
+      "price": {
+        "free": "ZDARMA",
+        "wanted": "Koupím",
+        "trade": "Výměna",
+        "contact": "Cena na vyžádání"
+      },
+      "minutesAgo": "před {{count}} min",
+      "hoursAgo": "před {{count}} h",
+      "daysAgo": "před {{count}} d",
+      "reserved": "Rezervováno",
+      "sold": "Prodáno",
+      "views": "{{count}} zobrazení",
+      "messages": "{{count}} zpráv",
+      "markSold": "Označit jako prodané",
+      "contactSeller": "Kontaktovat prodejce",
+      "viewDetails": "Zobrazit detaily"
+    },
+    "itemForm": {
+      "listingTypes": {
+        "sale": {
+          "label": "Na prodej",
+          "description": "Prodej za cenu"
+        },
+        "free": {
+          "label": "Zdarma",
+          "description": "Daruji zdarma"
+        },
+        "wanted": {
+          "label": "Koupím",
+          "description": "Hledám ke koupi"
+        },
+        "trade": {
+          "label": "Na výměnu",
+          "description": "Hledám k výměně"
+        }
+      },
+      "conditions": {
+        "new": {
+          "label": "Nové",
+          "description": "Zcela nové, nepoužité"
+        },
+        "likeNew": {
+          "label": "Jako nové",
+          "description": "Použité jednou dvakrát, perfektní stav"
+        },
+        "good": {
+          "label": "Dobré",
+          "description": "Lehce použité, drobné známky opotřebení"
+        },
+        "fair": {
+          "label": "Průměrné",
+          "description": "Pravidelně používané, viditelné opotřebení"
+        },
+        "poor": {
+          "label": "Opotřebené",
+          "description": "Výrazné opotřebení, může vyžadovat opravu"
+        }
+      },
+      "photos": "Fotky (max. 10)",
+      "imageUrlPlaceholder": "Zadejte URL obrázku",
+      "imageAlt": "Položka {{index}}",
+      "titleLabel": "Název",
+      "titlePlaceholder": "Co prodáváte?",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "Popište svůj inzerát podrobně...",
+      "listingTypeLegend": "Typ inzerátu",
+      "priceLabel": "Cena",
+      "pricePlaceholder": "0,00",
+      "currencyLabel": "Měna",
+      "categoryLabel": "Kategorie",
+      "conditionLegend": "Stav",
+      "errors": {
+        "titleRequired": "Název je povinný",
+        "titleMin": "Název musí mít alespoň 3 znaky",
+        "titleMax": "Název musí mít méně než 100 znaků",
+        "descriptionRequired": "Popis je povinný",
+        "descriptionMin": "Popis musí mít alespoň 10 znaků",
+        "invalidPrice": "Zadejte platnou cenu"
+      },
+      "updating": "Aktualizace...",
+      "creating": "Vytváření...",
+      "update": "Aktualizovat inzerát",
+      "create": "Vytvořit inzerát"
+    }
   },
   "meters": {
     "readingSubmitted": "Odečet odeslán",

@@ -6,6 +6,7 @@
  */
 
 import type { CommunityPost, PostType } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 interface PostCardProps {
@@ -103,15 +104,15 @@ const postTypeIcons: Record<PostType, React.JSX.Element> = {
   ),
 };
 
-function formatTimeAgo(dateString: string): string {
+function formatTimeAgo(dateString: string, t: TFunction): string {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  if (seconds < 60) return t('community.post.justNow');
+  if (seconds < 3600) return t('community.post.minutesAgo', { count: Math.floor(seconds / 60) });
+  if (seconds < 86400) return t('community.post.hoursAgo', { count: Math.floor(seconds / 3600) });
+  if (seconds < 604800) return t('community.post.daysAgo', { count: Math.floor(seconds / 86400) });
   return date.toLocaleDateString();
 }
 
@@ -154,7 +155,7 @@ export function PostCard({
               {postTypeIcons[post.type]}
             </span>
           </div>
-          <p className="text-xs text-gray-500">{formatTimeAgo(post.createdAt)}</p>
+          <p className="text-xs text-gray-500">{formatTimeAgo(post.createdAt, t)}</p>
         </div>
 
         {/* Menu */}
@@ -186,14 +187,14 @@ export function PostCard({
                 onClick={() => onEdit?.(post.id)}
                 className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
               >
-                Edit
+                {t('community.common.edit')}
               </button>
               <button
                 type="button"
                 onClick={() => onDelete?.(post.id)}
                 className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
               >
-                Delete
+                {t('community.common.delete')}
               </button>
             </div>
           </div>
@@ -201,7 +202,7 @@ export function PostCard({
 
         {/* Pinned Badge */}
         {post.isPinned && (
-          <span className="text-amber-500" title="Pinned">
+          <span className="text-amber-500" title={t('community.post.pinned')}>
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M9.828.722a.5.5 0 01.354 0l7 3A.5.5 0 0117.5 4v1.5a.5.5 0 01-.5.5h-1v4.5a.5.5 0 01-.5.5H13v5.5a.5.5 0 01-.5.5h-5a.5.5 0 01-.5-.5V11H4.5a.5.5 0 01-.5-.5V6h-1a.5.5 0 01-.5-.5V4a.5.5 0 01.328-.472l7-3z" />
             </svg>
@@ -241,7 +242,7 @@ export function PostCard({
               >
                 <img
                   src={url}
-                  alt={`Post media ${index + 1}`}
+                  alt={t('community.post.mediaAlt', { index: index + 1 })}
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 {index === 3 && post.mediaUrls.length > 4 && (
@@ -259,9 +260,9 @@ export function PostCard({
 
       {/* Stats */}
       <div className="px-4 py-2 flex items-center gap-4 text-sm text-gray-500 border-t border-b">
-        <span>{post.likeCount} likes</span>
-        <span>{post.commentCount} comments</span>
-        <span>{post.shareCount} shares</span>
+        <span>{t('community.post.likes', { count: post.likeCount })}</span>
+        <span>{t('community.post.comments', { count: post.commentCount })}</span>
+        <span>{t('community.post.shares', { count: post.shareCount })}</span>
       </div>
 
       {/* Actions */}
@@ -290,7 +291,7 @@ export function PostCard({
               d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
             />
           </svg>
-          Like
+          {t('community.post.like')}
         </button>
         <button
           type="button"
@@ -311,7 +312,7 @@ export function PostCard({
               d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
             />
           </svg>
-          Comment
+          {t('community.post.comment')}
         </button>
         <button
           type="button"
@@ -332,7 +333,7 @@ export function PostCard({
               d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
             />
           </svg>
-          Share
+          {t('community.post.share')}
         </button>
       </div>
     </div>

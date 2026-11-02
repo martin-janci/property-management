@@ -7,6 +7,7 @@
 
 import type { CommunityEvent, EventStatus, ListEventsParams, RsvpStatus } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EventCard } from '../components/EventCard';
 
 interface EventsPageProps {
@@ -26,25 +27,25 @@ interface EventsPageProps {
 
 type TimeFilter = 'upcoming' | 'past' | 'all';
 
-const timeFilters: { value: TimeFilter; label: string }[] = [
-  { value: 'upcoming', label: 'Upcoming' },
-  { value: 'past', label: 'Past' },
-  { value: 'all', label: 'All' },
+const timeFilters: { value: TimeFilter; key: string }[] = [
+  { value: 'upcoming', key: 'upcoming' },
+  { value: 'past', key: 'past' },
+  { value: 'all', key: 'all' },
 ];
 
-const statusFilters: { value: EventStatus | ''; label: string }[] = [
-  { value: '', label: 'All Status' },
-  { value: 'published', label: 'Published' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'completed', label: 'Completed' },
+const statusFilters: { value: EventStatus | ''; key: string }[] = [
+  { value: '', key: 'all' },
+  { value: 'published', key: 'published' },
+  { value: 'draft', key: 'draft' },
+  { value: 'cancelled', key: 'cancelled' },
+  { value: 'completed', key: 'completed' },
 ];
 
-const rsvpFilters: { value: RsvpStatus | ''; label: string }[] = [
-  { value: '', label: 'All RSVPs' },
-  { value: 'going', label: 'Going' },
-  { value: 'maybe', label: 'Maybe' },
-  { value: 'not_going', label: 'Not Going' },
+const rsvpFilters: { value: RsvpStatus | ''; key: string }[] = [
+  { value: '', key: 'all' },
+  { value: 'going', key: 'going' },
+  { value: 'maybe', key: 'maybe' },
+  { value: 'not_going', key: 'notGoing' },
 ];
 
 export function EventsPage({
@@ -61,6 +62,7 @@ export function EventsPage({
   onExportCalendar,
   onFilterChange,
 }: EventsPageProps) {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(12);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
@@ -133,8 +135,8 @@ export function EventsPage({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Community Events</h1>
-          <p className="mt-1 text-sm text-gray-500">Discover and join events in your community</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('community.events.title')}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t('community.events.subtitle')}</p>
         </div>
         <button
           type="button"
@@ -150,7 +152,7 @@ export function EventsPage({
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Create Event
+          {t('community.events.create')}
         </button>
       </div>
 
@@ -170,7 +172,7 @@ export function EventsPage({
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                {filter.label}
+                {t(`community.events.time.${filter.key}`)}
               </button>
             ))}
           </div>
@@ -183,7 +185,7 @@ export function EventsPage({
           >
             {statusFilters.map((status) => (
               <option key={status.value} value={status.value}>
-                {status.label}
+                {t(`community.events.status.${status.key}`)}
               </option>
             ))}
           </select>
@@ -196,13 +198,13 @@ export function EventsPage({
           >
             {rsvpFilters.map((rsvp) => (
               <option key={rsvp.value} value={rsvp.value}>
-                {rsvp.label}
+                {t(`community.events.rsvp.${rsvp.key}`)}
               </option>
             ))}
           </select>
 
           <span className="ml-auto text-sm text-gray-500">
-            {total} {total === 1 ? 'event' : 'events'}
+            {total} {total === 1 ? t('community.events.event') : t('community.events.events')}
           </span>
         </div>
       </div>
@@ -240,18 +242,20 @@ export function EventsPage({
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No events found</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('community.events.emptyTitle')}
+          </h3>
           <p className="mt-2 text-sm text-gray-500">
             {timeFilter === 'upcoming'
-              ? 'No upcoming events. Create one to get started!'
-              : 'No events match your filters.'}
+              ? t('community.events.emptyBodyUpcoming')
+              : t('community.events.emptyBodyDefault')}
           </p>
           <button
             type="button"
             onClick={onNavigateToCreate}
             className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Create Event
+            {t('community.events.create')}
           </button>
         </div>
       ) : (
@@ -281,10 +285,10 @@ export function EventsPage({
                 disabled={page === 1}
                 className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Previous
+                {t('community.common.previous')}
               </button>
               <span className="text-sm text-gray-600">
-                Page {page} of {totalPages}
+                {t('community.common.pageOf', { page, total: totalPages })}
               </span>
               <button
                 type="button"
@@ -292,7 +296,7 @@ export function EventsPage({
                 disabled={page === totalPages}
                 className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Next
+                {t('community.common.next')}
               </button>
             </div>
           )}

@@ -8,6 +8,7 @@
 import type { CreatePostRequest, PostType, PostVisibility } from '@ppt/api-client';
 import type * as React from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CreatePostFormProps {
   groupId?: string;
@@ -18,10 +19,10 @@ interface CreatePostFormProps {
   onCancel?: () => void;
 }
 
-const postTypes: { value: PostType; label: string; icon: React.JSX.Element }[] = [
+const postTypes: { value: PostType; labelKey: string; icon: React.JSX.Element }[] = [
   {
     value: 'text',
-    label: 'Text',
+    labelKey: 'community.createPost.types.text',
     icon: (
       <svg
         className="w-5 h-5"
@@ -41,7 +42,7 @@ const postTypes: { value: PostType; label: string; icon: React.JSX.Element }[] =
   },
   {
     value: 'image',
-    label: 'Photo',
+    labelKey: 'community.createPost.types.photo',
     icon: (
       <svg
         className="w-5 h-5"
@@ -61,7 +62,7 @@ const postTypes: { value: PostType; label: string; icon: React.JSX.Element }[] =
   },
   {
     value: 'poll',
-    label: 'Poll',
+    labelKey: 'community.createPost.types.poll',
     icon: (
       <svg
         className="w-5 h-5"
@@ -81,10 +82,10 @@ const postTypes: { value: PostType; label: string; icon: React.JSX.Element }[] =
   },
 ];
 
-const visibilityOptions: { value: PostVisibility; label: string }[] = [
-  { value: 'group', label: 'Group Only' },
-  { value: 'building', label: 'Building' },
-  { value: 'public', label: 'Public' },
+const visibilityOptions: { value: PostVisibility; labelKey: string }[] = [
+  { value: 'group', labelKey: 'community.createPost.visibility.group' },
+  { value: 'building', labelKey: 'community.createPost.visibility.building' },
+  { value: 'public', labelKey: 'community.createPost.visibility.public' },
 ];
 
 export function CreatePostForm({
@@ -95,6 +96,7 @@ export function CreatePostForm({
   onSubmit,
   onCancel,
 }: CreatePostFormProps) {
+  const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [postType, setPostType] = useState<PostType>('text');
   const [visibility, setVisibility] = useState<PostVisibility>('group');
@@ -157,7 +159,7 @@ export function CreatePostForm({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onFocus={() => setIsExpanded(true)}
-              placeholder="What's on your mind?"
+              placeholder={t('community.createPost.contentPlaceholder')}
               rows={isExpanded ? 3 : 1}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none"
             />
@@ -175,7 +177,7 @@ export function CreatePostForm({
                     type="url"
                     value={mediaInput}
                     onChange={(e) => setMediaInput(e.target.value)}
-                    placeholder="Enter image URL"
+                    placeholder={t('community.createPost.imageUrlPlaceholder')}
                     className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   />
                   <button
@@ -184,7 +186,7 @@ export function CreatePostForm({
                     disabled={!mediaInput.trim() || !isValidUrl(mediaInput)}
                     className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
                   >
-                    Add
+                    {t('community.common.add')}
                   </button>
                 </div>
                 {mediaUrls.length > 0 && (
@@ -193,7 +195,7 @@ export function CreatePostForm({
                       <div key={url} className="relative group">
                         <img
                           src={url}
-                          alt={`Preview ${index + 1}`}
+                          alt={t('community.createPost.previewAlt', { index: index + 1 })}
                           className="h-16 w-16 object-cover rounded"
                         />
                         <button
@@ -224,7 +226,7 @@ export function CreatePostForm({
                   }`}
                 >
                   {type.icon}
-                  {type.label}
+                  {t(type.labelKey)}
                 </button>
               ))}
             </div>
@@ -238,7 +240,7 @@ export function CreatePostForm({
               >
                 {visibilityOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </option>
                 ))}
               </select>
@@ -253,7 +255,7 @@ export function CreatePostForm({
                     }}
                     className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
                   >
-                    Cancel
+                    {t('community.common.cancel')}
                   </button>
                 )}
                 <button
@@ -261,7 +263,9 @@ export function CreatePostForm({
                   disabled={!content.trim() || isSubmitting}
                   className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Posting...' : 'Post'}
+                  {isSubmitting
+                    ? t('community.createPost.posting')
+                    : t('community.createPost.submit')}
                 </button>
               </div>
             </div>

@@ -12,6 +12,7 @@ import type {
   MarketplaceItem,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ItemCard } from '../components/ItemCard';
 
 interface MarketplacePageProps {
@@ -28,34 +29,37 @@ interface MarketplacePageProps {
   onFilterChange: (params: ListItemsParams) => void;
 }
 
-const categories = [
-  'All Categories',
-  'Electronics',
-  'Furniture',
-  'Clothing',
-  'Books',
-  'Sports',
-  'Home & Garden',
-  'Kids & Baby',
-  'Vehicles',
-  'Other',
+const ALL_CATEGORIES = 'All Categories';
+
+// `value` is the canonical string sent to the API; `key` resolves the label.
+const categories: { value: string; key: string }[] = [
+  { value: ALL_CATEGORIES, key: 'allCategories' },
+  { value: 'Electronics', key: 'electronics' },
+  { value: 'Furniture', key: 'furniture' },
+  { value: 'Clothing', key: 'clothing' },
+  { value: 'Books', key: 'books' },
+  { value: 'Sports', key: 'sports' },
+  { value: 'Home & Garden', key: 'homeGarden' },
+  { value: 'Kids & Baby', key: 'kidsBaby' },
+  { value: 'Vehicles', key: 'vehicles' },
+  { value: 'Other', key: 'other' },
 ];
 
-const listingTypeFilters: { value: ItemListingType | ''; label: string }[] = [
-  { value: '', label: 'All Types' },
-  { value: 'sale', label: 'For Sale' },
-  { value: 'free', label: 'Free' },
-  { value: 'wanted', label: 'Wanted' },
-  { value: 'trade', label: 'For Trade' },
+const listingTypeFilters: { value: ItemListingType | ''; key: string }[] = [
+  { value: '', key: 'all' },
+  { value: 'sale', key: 'sale' },
+  { value: 'free', key: 'free' },
+  { value: 'wanted', key: 'wanted' },
+  { value: 'trade', key: 'trade' },
 ];
 
-const conditionFilters: { value: ItemCondition | ''; label: string }[] = [
-  { value: '', label: 'Any Condition' },
-  { value: 'new', label: 'New' },
-  { value: 'like_new', label: 'Like New' },
-  { value: 'good', label: 'Good' },
-  { value: 'fair', label: 'Fair' },
-  { value: 'poor', label: 'Poor' },
+const conditionFilters: { value: ItemCondition | ''; key: string }[] = [
+  { value: '', key: 'all' },
+  { value: 'new', key: 'new' },
+  { value: 'like_new', key: 'likeNew' },
+  { value: 'good', key: 'good' },
+  { value: 'fair', key: 'fair' },
+  { value: 'poor', key: 'poor' },
 ];
 
 export function MarketplacePage({
@@ -71,10 +75,11 @@ export function MarketplacePage({
   onMarkSold,
   onFilterChange,
 }: MarketplacePageProps) {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(12);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All Categories');
+  const [category, setCategory] = useState(ALL_CATEGORIES);
   const [listingType, setListingType] = useState<ItemListingType | ''>('');
   const [condition, setCondition] = useState<ItemCondition | ''>('');
   const [minPrice, setMinPrice] = useState('');
@@ -93,7 +98,7 @@ export function MarketplacePage({
       page: newPage,
       pageSize,
       search: search || undefined,
-      category: category !== 'All Categories' ? category : undefined,
+      category: category !== ALL_CATEGORIES ? category : undefined,
       listingType: listingType || undefined,
       condition: condition || undefined,
       status: 'active',
@@ -109,7 +114,7 @@ export function MarketplacePage({
       page: 1,
       pageSize,
       search: search || undefined,
-      category: newCategory !== 'All Categories' ? newCategory : undefined,
+      category: newCategory !== ALL_CATEGORIES ? newCategory : undefined,
       listingType: listingType || undefined,
       condition: condition || undefined,
       status: 'active',
@@ -125,7 +130,7 @@ export function MarketplacePage({
       page: 1,
       pageSize,
       search: search || undefined,
-      category: category !== 'All Categories' ? category : undefined,
+      category: category !== ALL_CATEGORIES ? category : undefined,
       listingType: type || undefined,
       condition: condition || undefined,
       status: 'active',
@@ -141,7 +146,7 @@ export function MarketplacePage({
       page: 1,
       pageSize,
       search: search || undefined,
-      category: category !== 'All Categories' ? category : undefined,
+      category: category !== ALL_CATEGORIES ? category : undefined,
       listingType: listingType || undefined,
       condition: cond || undefined,
       status: 'active',
@@ -159,8 +164,8 @@ export function MarketplacePage({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Marketplace</h1>
-          <p className="mt-1 text-sm text-gray-500">Buy, sell, and trade with your neighbors</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('community.marketplace.title')}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t('community.marketplace.subtitle')}</p>
         </div>
         <button
           type="button"
@@ -176,7 +181,7 @@ export function MarketplacePage({
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Create Listing
+          {t('community.marketplace.create')}
         </button>
       </div>
 
@@ -191,7 +196,7 @@ export function MarketplacePage({
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search items..."
+                  placeholder={t('community.marketplace.searchPlaceholder')}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 />
                 <svg
@@ -214,7 +219,7 @@ export function MarketplacePage({
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Search
+              {t('community.common.search')}
             </button>
           </div>
 
@@ -226,8 +231,8 @@ export function MarketplacePage({
               className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+                <option key={cat.value} value={cat.value}>
+                  {t(`community.marketplace.categories.${cat.key}`)}
                 </option>
               ))}
             </select>
@@ -239,7 +244,7 @@ export function MarketplacePage({
             >
               {listingTypeFilters.map((type) => (
                 <option key={type.value} value={type.value}>
-                  {type.label}
+                  {t(`community.marketplace.listingType.${type.key}`)}
                 </option>
               ))}
             </select>
@@ -251,7 +256,7 @@ export function MarketplacePage({
             >
               {conditionFilters.map((cond) => (
                 <option key={cond.value} value={cond.value}>
-                  {cond.label}
+                  {t(`community.marketplace.condition.${cond.key}`)}
                 </option>
               ))}
             </select>
@@ -262,7 +267,7 @@ export function MarketplacePage({
                 type="number"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
-                placeholder="Min €"
+                placeholder={t('community.marketplace.minPrice')}
                 min="0"
                 className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
@@ -271,14 +276,15 @@ export function MarketplacePage({
                 type="number"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                placeholder="Max €"
+                placeholder={t('community.marketplace.maxPrice')}
                 min="0"
                 className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             <span className="ml-auto text-sm text-gray-500">
-              {total} {total === 1 ? 'item' : 'items'}
+              {total}{' '}
+              {total === 1 ? t('community.marketplace.item') : t('community.marketplace.items')}
             </span>
           </div>
         </form>
@@ -323,16 +329,16 @@ export function MarketplacePage({
               d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No items found</h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Try adjusting your filters or create a new listing.
-          </p>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('community.marketplace.emptyTitle')}
+          </h3>
+          <p className="mt-2 text-sm text-gray-500">{t('community.marketplace.emptyBody')}</p>
           <button
             type="button"
             onClick={onNavigateToCreate}
             className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Create Listing
+            {t('community.marketplace.create')}
           </button>
         </div>
       ) : (
@@ -361,10 +367,10 @@ export function MarketplacePage({
                 disabled={page === 1}
                 className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Previous
+                {t('community.common.previous')}
               </button>
               <span className="text-sm text-gray-600">
-                Page {page} of {totalPages}
+                {t('community.common.pageOf', { page, total: totalPages })}
               </span>
               <button
                 type="button"
@@ -372,7 +378,7 @@ export function MarketplacePage({
                 disabled={page === totalPages}
                 className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Next
+                {t('community.common.next')}
               </button>
             </div>
           )}
