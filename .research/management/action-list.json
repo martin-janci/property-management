@@ -320,7 +320,127 @@
       "first_open_at": "2026-11-01T20:25:51Z",
       "retry_of": "churn-hotspot-backend/servers/reality-server/src/routes/price_map.rs",
       "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-triage-stalled-prs-2026-11-02",
+      "action": "Triage the stalled PRs #3075 (violations number race), #3108 (owner-analytics 500), #2555 and #2559 (accounting invoice lifecycle and QR), and #3119 (NewsScreen i18n): merge, rework or close each",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-refill-signal-scans-2026-11-02",
+      "action": "Run fresh per-package code-review signal scans and a default-mode re-rank to refill the action buffer (claimable=7/72)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-moderation-appeal-fix-2026-11-02",
+      "action": "Fix file_appeal status guard and rate-limit/dedup /moderation/report (addresses two score-2 open backlog items)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-ktor-http-timeout-2026-11-02",
+      "action": "Add HttpTimeout to the shared Ktor client in mobile-native (resolves code-review-mobile-native-kmp-http-client-no-timeout)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-scrum-master-refresh-sprint-status-2026-11-02",
+      "action": "Refresh sprint-status.yaml sprint name/goal (still describes Dec-2025 Epic 6/7A/8A/10A sprint); reconcile test_hardening_batch (#480, #483, #484 closed on GitHub but still listed open)",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-qa-reconcile-test-hardening-batch-2026-11-02",
+      "action": "Reconcile test_hardening_batch in sprint-status.yaml: mark #480, #483 and #484 closed (GitHub, 2026-05-26) and set the batch to done, or record why they were closed",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-qa-kmp-inquiries-contract-tests-2026-11-02",
+      "action": "Add contract tests for code-review-mobile-native-kmp-inquiries-response-contract before merging its fix (KMP test decodes real reality-server inquiry response, fails on current contract mismatch)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-qa-negative-tests-flood-appeal-timeout-2026-11-02",
+      "action": "Add negative state-transition tests (moderation-report-flood, appeal-no-status-guard) and a Ktor timeout test (http-client-no-timeout) to each fix",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-qa-violations-role-endpoint-matrix-2026-11-02",
+      "action": "Audit violations_role_authz_tests.rs and violations_cross_org_idor_tests.rs for a full role x endpoint matrix; confirm #3214 fixture consolidation kept the same test count and assertions",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
+    },
+    {
+      "id": "pm-qa-mobile-locale-flake-rerun-2026-11-02",
+      "action": "Before merging #3213 and #3208, run locale-key completeness check across the 6 locales and re-run the stabilized VoteDetailScreen test repeatedly to confirm no flake",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-02",
+      "first_open_at": "2026-11-02T00:00:00Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-02T00:40:50Z"
 }

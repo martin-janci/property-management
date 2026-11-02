@@ -1,0 +1,183 @@
+{
+  "generated": "2026-11-02T00:46:16Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3212-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3212",
+      "score_delta": 2,
+      "evidence": "PR #3212 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_status.ts,_status.test.ts} without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-moderation-native-alert",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:143 — alert(t('moderation.prompts.assignError')) on mutation error path"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-news-list-native-confirm-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx:77 — if (!confirm('Are you sure you want to delete this article?')) return — native dialog + hardcoded English on destructive action"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-events-page-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/community/pages/EventsPage.tsx:136-137 — hardcoded 'Community Events' h1 + 'Discover and join events in your community' subheader; component imports no useTranslation hook"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ... state.json diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s dedup non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[] | select(.score > 8)] length == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "max open-item age 8d < 14d threshold",
+      "observed": "true (no-op)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans adversarial pass",
+      "observed": "n/a (0 new plans)",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached | grep plans/ | wc -l",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secret-patterns | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "grep Phases that failed: none in brief",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior plan slug still in plans/ or _archive/",
+      "observed": "all accounted",
+      "expected": "all accounted"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now (22) >= HEAD (22)",
+      "observed": "22 >= 22",
+      "expected": "monotonic"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps and idempotency",
+      "observed": "true (0 actions)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor liveness",
+      "observed": "pm_cursor 3->4 advanced; coverage_cursor 0->1 advanced",
+      "expected": "both > 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached | grep telegram-token patterns | wc -l",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

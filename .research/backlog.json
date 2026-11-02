@@ -14013,6 +14013,98 @@
         "assignment_status": "merged",
         "pr_number": 3214
       }
+    },
+    {
+      "id": "screen-map-drift-pr-3212-reality",
+      "title": "reality-web listing-edit refactor (PR #3212) didn't update docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3212",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "evidence": [
+        "PR #3212 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_status.ts,_status.test.ts} without touching docs/screens/reality/*.md",
+        "docs/screens/reality/account-listing-edit.md exists but was not updated with the _status helper extraction"
+      ],
+      "files": [
+        "docs/screens/reality/account-listing-edit.md",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/_status.ts",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-content-moderation-native-alert",
+      "title": "ContentModerationPage uses native alert() for error UX (same pattern just fixed in accounting)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-11-02"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:143 — alert(t('moderation.prompts.assignError')) on mutation error path",
+        "PR #3211 just removed the same anti-pattern from Accounting Invoice but left compliance untouched",
+        "App standard elsewhere: ConfirmationDialog / Toast components"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-news-list-native-confirm-i18n",
+      "title": "NewsListPage delete uses native confirm() with hardcoded English",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-11-02"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx:77 — if (!confirm('Are you sure you want to delete this article?')) return",
+        "Native dialog + hardcoded English string on a destructive action — doubly broken",
+        "Same i18n + dialog pattern that PR #3211 standardised across accounting"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/news/pages/NewsListPage.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-events-page-no-i18n",
+      "title": "Community EventsPage has no i18n hook — hardcoded English header/subheader",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [ppt-web-ui] 2026-11-02"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/community/pages/EventsPage.tsx:136-137 — hardcoded 'Community Events' h1 and 'Discover and join events in your community' subheader",
+        "Component imports no useTranslation / useLocale — the entire page ships English only",
+        "GroupList / CommentList / GroupMemberList in features/community also carry English strings — pattern-level gap"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/pages/EventsPage.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/CommentList.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/GroupList.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
     }
   ]
 }

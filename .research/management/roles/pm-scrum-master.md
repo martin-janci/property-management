@@ -1,47 +1,61 @@
-# pm-scrum-master — 2026-10-19
+# pm-scrum-master — 2026-11-02
 
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+_Role report rendered from the always-on Scrum Master pass of the research routine (Phase 1.6)._
 
 ## Summary
 
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
-
-## Shipped since last run (2 PRs)
-
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
+All six sprint epics and all 49 coverage stories are done. The last 5 merged PRs were hardening, test and i18n work. The real queue is the backlog (7 open, 2 ready, 5 stalled-review), which is too thin to refill the 7/72 action buffer without new signal scans.
 
 ## Sprint progress
 
-- **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
+- Sprint: **Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth**
+- Epics done: **6 / 6**
 
-## Next actions (top 3)
+## Shipped since last run (5 PRs)
 
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
+- #3209 — fix ranked-ballot a11y labels (closes #3206)
+- #3210 — violations cross-org 404 pin on `get_rule` / `get_action` / `get_appeal`
+- #3211 — Accounting Invoice i18n + drop native `alert` / `confirm`
+- #3212 — reality-web listing-edit `_status` helper extracted with tests
+- #3214 — `compliance_wave1b_tests` fixture consolidation
 
-## Risks
+## Next actions (top 6)
+
+| Priority | Action | Owner |
+|---|---|---|
+| high | Triage stalled PRs #3075 (violations number race), #3108 (owner-analytics 500), #2555 / #2559 (accounting invoice lifecycle + QR), #3119 (NewsScreen i18n): merge, rework or close each | pm-tech-lead |
+| high | Run fresh per-package code-review signal scans and a default-mode re-rank to refill the action buffer | none |
+| medium | Fix `file_appeal` status guard and rate-limit / dedup `/moderation/report` | pm-security |
+| medium | Add `HttpTimeout` to the shared Ktor client in mobile-native | none |
+| medium | Implement the two ready KMP plans (create-listing wiring, InquiriesResponse contract) | none |
+| low | Refresh `sprint-status.yaml` sprint name/goal (still shows Dec-2025 Epic 6/7A/8A/10A sprint); reconcile `test_hardening_batch` | none |
+
+## Risks (top 5)
 
 | Risk | P | I | Mitigation |
 |---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
-
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
+| Action buffer starvation (7/72): open + ready backlog is only 9 items, coverage has no gaps to feed it | high | medium | Run new signal scans; broaden the scan vectors; do not rely on coverage upkeep |
+| Churn-hotspot items keep spawning small test-consolidation PRs on the same four areas (low-value throughput) | high | low | Pause churn-hotspot generation for those files until #3213 and #3208 land |
+| Five stalled PRs, some open 10–15 days, including the violations race and the owner-analytics 500 | medium | medium | Force a merge-or-close decision this cycle |
+| Violations number `COUNT(*)+1` race and appeal re-file with no status guard remain open in the module that just received hardening PRs | medium | medium | Land #3075 and the appeal guard together |
+| `sprint-status.yaml` is stale (sprint name from 2025) — downstream reports may mislead | medium | low | Refresh the sprint metadata |
 
 ## Blockers
 
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
-
-## Open questions
-
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
+- **PR #3075 / backlog `violations-number-count-race`** — stalled review; the fix is needed before more violations hardening (owner: pm-tech-lead)
+- **PR #3108 — owner-analytics portfolio summary 500** — stalled review on a schema-drift fix for a user-facing 500 (owner: rust-backend)
+- **PRs #2555 / #2559 — accounting invoice lifecycle + QR** — open 13–15 days, awaiting human judgement (owner: pm-product-owner)
 
 ## Decisions needed
 
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- Merge, rework or close stalled PRs #2555, #2559, #3075, #3108, #3119 — owner: pm-tech-lead
+- Approve a new scan cycle (scan vectors + packages) to refill the action buffer — owner: pm-product-owner
+- Cap churn-hotspot item generation for test-consolidation files — owner: pm-scrum-master
+
+## Open questions
+
+- Does #3213 (draft) fully close the open `VoteDetailScreen` churn-hotspot backlog item?
+- Is #3208 awaiting review or CI, and is it related to stalled PR #3119 (same NewsScreen / i18n defaultValue fallback pattern)?
+- Is `test_hardening_batch` (`thb-2026-05-25`) still in-progress? Items #480 and #484 look unreconciled.
+- Are UC-33.1 to UC-33.3 (flagged missing in coverage `screen_gaps`) intentionally unscoped?
+- Why is `pm_cursor.role_last_run.pm-scrum-master` unset, and does the dispatcher need it?

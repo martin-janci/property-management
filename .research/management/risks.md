@@ -1,8 +1,8 @@
 # PPT Risks
 
-_Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
+_Generated: 2026-11-02T00:41:04Z (routine Phase 1.6)_
 
-**Open: 26** · Total: 26
+**Open: 36** · Total: 36
 
 | ID | Owner | Prob | Impact | Risk | Mitigation |
 |---|---|---|---|---|---|
@@ -32,3 +32,13 @@ _Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
 | `pm-backend-rustsec-advisories-gating-backend-merges-2026-10-26` | pm-security | high | high | Issue #3168 — 3 new RUSTSEC advisories on dev gate every backend PR merge; this is the second cargo-deny gate in a month | Resolve #3168 (bump offending crate(s) or bounded exception); schedule a quarterly cargo-tree review |
 | `pm-frontend-mobile-rn-fake-submit-pattern-cluster-2026-10-28` | pm-frontend | high | high | Three independent frontend code-review findings in 7 days reveal mobile-rn / reality-web have 'wire-the-button-but-not-t | Add a per-screen e2e-smoke gate: for every form with a Submit button, a MSW/Mirage mock asserts the  |
 | `pm-frontend-rotation-stale-83-days-2026-10-28` | pm-scrum-master | medium | medium | pm-frontend rotation has been stale 83 days (last run 2026-08-06) while the backlog accumulated 12 frontend/mobile code- | Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the curr |
+| `pm-scrum-master-action-buffer-starvation-2026-11-02` | pm-scrum-master | high | medium | Action buffer starvation (claimable 7/72): the open + ready backlog is only 9 items and coverage has no gaps to feed it  | Run new signal scans and broaden scan vectors; do not rely on coverage upkeep |
+| `pm-scrum-master-churn-hotspot-test-consolidation-cycle-2026-11-02` | pm-scrum-master | high | low | Churn-hotspot items keep spawning small test-consolidation PRs on the same four areas (reality-web listing-edit, ppt-web | Pause churn-hotspot generation for those files until #3213 and #3208 land |
+| `pm-scrum-master-stalled-prs-10-15-days-2026-11-02` | pm-scrum-master | medium | medium | Five stalled PRs (#2555, #2559, #3075, #3108, #3119) open 10-15 days, including the violations number race and the owner | Force a merge or close decision this cycle |
+| `pm-scrum-master-violations-count-race-and-appeal-guard-open-2026-11-02` | pm-scrum-master | medium | medium | Violations number COUNT(*)+1 race and appeal re-file with no status guard remain open in the same module that just recei | Land #3075 and the appeal guard together |
+| `pm-scrum-master-sprint-status-stale-2026-11-02` | pm-scrum-master | medium | low | sprint-status.yaml is stale (sprint name from 2025, all epics done); downstream reports derived from it may mislead | Refresh the sprint metadata |
+| `pm-qa-sprint-tracking-stale-2026-11-02` | pm-qa | high | medium | Sprint tracking is stale, so no story-level acceptance criteria exist to test against; real work lives only in the backl | Open a new sprint with explicit stories and acceptance criteria for the backlog plans |
+| `pm-qa-closed-hardening-without-tests-2026-11-02` | pm-qa | medium | high | Closed hardening issues (#480 WebSocket auth, #483 voice-device IDOR, #484 dispatch) may have been closed without regres | Grep the test suites for each issue's scenario and record evidence in the batch |
+| `pm-qa-kmp-contract-untested-2026-11-02` | pm-qa | medium | high | KMP Reality Portal contract and wiring bugs are 'ready' but untested; mobile-native CI only runs Gradle unit tests, with | Add contract tests against the OpenAPI spec before shipping |
+| `pm-qa-fixture-consolidation-mask-regressions-2026-11-02` | pm-qa | low | medium | Fixture consolidation (#3214) and test-only stabilization (#3213) can mask regressions through weakened assertions or hi | Compare assertion counts before and after; require repeated green runs |
+| `pm-qa-moderation-flood-no-negative-tests-2026-11-02` | pm-qa | medium | medium | Moderation-report flooding and the missing appeal status guard are abuse and invalid-state paths with no negative tests | Prioritise these above the score-1 items |

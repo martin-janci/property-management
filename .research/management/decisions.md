@@ -120,3 +120,14 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-10-28, pm-frontend):** eslint-plugin-react-hooks + i18next/no-literal-string in `frontend/apps/mobile` — carried from 2026-08-25, now 64 days unresolved; the exact defects it predicts keep landing (VoteDetail dead i18n fallback, ranked ballot). Proposal: enable both, warn-only for one sprint, blocking from the next. Owner: pm-frontend + pm-qa.
 - **NEW (2026-10-28, pm-frontend):** Per-form MSW/Mirage e2e-smoke gate before merge — three "wire-the-button-but-not-the-POST" bugs (ReportFault, reality-web /sell, VoteDetail ranked) in 7 days. Scope question: every form Submit-handler, or only critical paths (fault reporting, selling, voting)? Owner: pm-qa + pm-tech-lead.
 - **NEW (2026-10-28, pm-scrum-master):** Staleness-bias in `pm_cursor` rotation — pm-frontend came up 83 days stale while 12 UI findings accumulated. Proposal: if any pm-* role is >60 days stale, prefer it over the current rotation index on the next run. Owner: pm-scrum-master.
+
+---
+
+## Decisions logged 2026-11-02 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-11-02, pm-scrum-master):** Triage the 5 stalled PRs — #2555 / #2559 / #3075 / #3108 / #3119 — within 24h. Each gets merge, rework, or close; `needs-human-judgement` backlog rows cleared on the decision. Owner: pm-tech-lead.
+- **NEW (2026-11-02, pm-scrum-master):** Approve a new per-package code-review signal scan cycle to refill the action buffer (claimable 7/72). Coverage upkeep cannot widen it — every coverage story is already done, so the backlog is the only well, and it's thin. Owner: pm-product-owner.
+- **NEW (2026-11-02, pm-scrum-master):** Cap churn-hotspot item generation for test-consolidation files (reality-web listing-edit, ppt-web accounting, mobile VoteDetailScreen, backend violations/compliance tests) until #3213 and #3208 land. The last two routine windows have been dominated by small test-only PRs on the same four areas. Owner: pm-scrum-master.
+- **NEW (2026-11-02, pm-qa):** Open a new sprint (or formally retire the current one) so the backlog plans have a gating context. `sprint-status.yaml` sprint from 2025-12-21 shows every epic done — QA cannot gate on acceptance criteria that no longer exist. Owner: pm-scrum-master.
+- **NEW (2026-11-02, pm-qa):** Standard — every `ready` code-review plan must include a failing-first regression test before an implementer picks it up. The two ready KMP plans (`code-review-mobile-native-kmp-create-listing-not-wired`, `-inquiries-response-contract`) are the first candidates. Owner: pm-qa + pm-tech-lead.
+- **NEW (2026-11-02, pm-qa):** Decide whether score-1 churn test files (violations_role_authz, compliance_wave1b) get scheduled cleanup or are accepted as-is. Current state is "they re-churn every ~2 weeks on fixture tweaks" — cheap but adds noise to the churn signal. Owner: pm-tech-lead.
