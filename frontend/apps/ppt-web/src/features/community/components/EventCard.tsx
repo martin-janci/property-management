@@ -6,6 +6,8 @@
  */
 
 import type { CommunityEvent, EventStatus, RsvpStatus } from '@ppt/api-client';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 interface EventCardProps {
   event: CommunityEvent;
@@ -61,18 +63,18 @@ function formatEventDate(startDate: string, endDate: string, allDay: boolean): s
   return `${start.toLocaleDateString(undefined, dateOptions)} ${start.toLocaleTimeString(undefined, timeOptions)} - ${end.toLocaleDateString(undefined, dateOptions)} ${end.toLocaleTimeString(undefined, timeOptions)}`;
 }
 
-function getRelativeTime(dateString: string): string {
+function getRelativeTime(dateString: string, t: TFunction): string {
   const date = new Date(dateString);
   const now = new Date();
   const diff = date.getTime() - now.getTime();
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  if (days < 0) return 'Past';
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Tomorrow';
-  if (days < 7) return `In ${days} days`;
-  if (days < 30) return `In ${Math.floor(days / 7)} weeks`;
-  return `In ${Math.floor(days / 30)} months`;
+  if (days < 0) return t('community.eventCard.relative.past');
+  if (days === 0) return t('community.eventCard.relative.today');
+  if (days === 1) return t('community.eventCard.relative.tomorrow');
+  if (days < 7) return t('community.eventCard.relative.inDays', { count: days });
+  if (days < 30) return t('community.eventCard.relative.inWeeks', { count: Math.floor(days / 7) });
+  return t('community.eventCard.relative.inMonths', { count: Math.floor(days / 30) });
 }
 
 export function EventCard({
@@ -85,6 +87,7 @@ export function EventCard({
   isCurrentUserOrganizer,
   isRsvping,
 }: EventCardProps) {
+  const { t } = useTranslation();
   const isPast = new Date(event.endDate) < new Date();
   const isCancelled = event.status === 'cancelled';
   const canRsvp = !isPast && !isCancelled && event.status === 'published';
@@ -110,7 +113,7 @@ export function EventCard({
           <span
             className={`absolute top-3 right-3 px-2 py-1 text-xs font-medium rounded ${statusColors[event.status]}`}
           >
-            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+            {t(`community.eventCard.status.${event.status}`)}
           </span>
         )}
       </div>
@@ -120,7 +123,7 @@ export function EventCard({
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <span className="text-xs font-medium text-purple-600">
-              {getRelativeTime(event.startDate)}
+              {getRelativeTime(event.startDate, t)}
             </span>
             <button
               type="button"
@@ -193,7 +196,7 @@ export function EventCard({
                 clipRule="evenodd"
               />
             </svg>
-            {event.goingCount} going
+            {t('community.eventCard.going', { count: event.goingCount })}
           </span>
           <span className="flex items-center gap-1">
             <svg
@@ -208,9 +211,13 @@ export function EventCard({
                 clipRule="evenodd"
               />
             </svg>
-            {event.maybeCount} maybe
+            {t('community.eventCard.maybe', { count: event.maybeCount })}
           </span>
-          {event.maxAttendees && <span className="text-gray-400">Max {event.maxAttendees}</span>}
+          {event.maxAttendees && (
+            <span className="text-gray-400">
+              {t('community.eventCard.max', { count: event.maxAttendees })}
+            </span>
+          )}
         </div>
 
         {/* User RSVP Status */}
@@ -219,9 +226,9 @@ export function EventCard({
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${rsvpColors[event.userRsvp]}`}
             >
-              {event.userRsvp === 'going' && "You're going"}
-              {event.userRsvp === 'maybe' && "You're interested"}
-              {event.userRsvp === 'not_going' && 'You declined'}
+              {event.userRsvp === 'going' && t('community.eventCard.rsvpGoing')}
+              {event.userRsvp === 'maybe' && t('community.eventCard.rsvpMaybe')}
+              {event.userRsvp === 'not_going' && t('community.eventCard.rsvpNotGoing')}
             </span>
           </div>
         )}
@@ -241,7 +248,7 @@ export function EventCard({
                   : 'bg-green-100 text-green-700 hover:bg-green-200'
               }`}
             >
-              Going
+              {t('community.eventCard.btnGoing')}
             </button>
             <button
               type="button"
@@ -253,7 +260,7 @@ export function EventCard({
                   : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
               }`}
             >
-              Maybe
+              {t('community.eventCard.btnMaybe')}
             </button>
             <button
               type="button"
@@ -265,12 +272,16 @@ export function EventCard({
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Can't Go
+              {t('community.eventCard.btnCantGo')}
             </button>
           </div>
         ) : (
           <span className="text-sm text-gray-500">
-            {isPast ? 'Event ended' : isCancelled ? 'Event cancelled' : 'RSVP not available'}
+            {isPast
+              ? t('community.eventCard.ended')
+              : isCancelled
+                ? t('community.eventCard.eventCancelled')
+                : t('community.eventCard.rsvpNotAvailable')}
           </span>
         )}
 
@@ -279,7 +290,7 @@ export function EventCard({
             type="button"
             onClick={() => onExportCalendar?.(event.id)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded"
-            title="Add to Calendar"
+            title={t('community.eventCard.addToCalendar')}
           >
             <svg
               className="w-5 h-5"
@@ -302,7 +313,7 @@ export function EventCard({
                 type="button"
                 onClick={() => onEdit?.(event.id)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded"
-                title="Edit Event"
+                title={t('community.eventCard.editEvent')}
               >
                 <svg
                   className="w-5 h-5"
@@ -323,7 +334,7 @@ export function EventCard({
                 type="button"
                 onClick={() => onDelete?.(event.id)}
                 className="p-2 text-gray-400 hover:text-red-600 rounded"
-                title="Delete Event"
+                title={t('community.eventCard.deleteEvent')}
               >
                 <svg
                   className="w-5 h-5"

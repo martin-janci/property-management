@@ -13196,7 +13196,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "top-3 churn 2026-10-26 (PR #3072)"
       ],
@@ -13209,7 +13209,12 @@
       ],
       "created_at": "2026-10-26",
       "updated_at": "2026-10-26",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3184
+      }
     },
     {
       "id": "churn-hotspot-frontend/apps/ppt-web/src/features/iot/hooks/useIotWebSocket.reconnect.test.tsx",
@@ -13488,7 +13493,7 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn 2026-10-28 (14d window)"
       ],
@@ -13501,7 +13506,12 @@
       ],
       "created_at": "2026-10-28",
       "updated_at": "2026-10-28",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-01T14:26:20Z",
+        "assignment_status": "merged",
+        "pr_number": 3210
+      }
     },
     {
       "id": "churn-hotspot-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
@@ -13658,7 +13668,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [api-handlers] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13678,7 +13688,12 @@
       "segment": "api-handlers",
       "score_delta": 2,
       "candidate_vector": "bug",
-      "expert": "rust"
+      "expert": "rust",
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3192
+      }
     },
     {
       "id": "code-review-ppt-web-ui-toast-setstate-after-unmount",
@@ -13812,7 +13827,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review [ppt-web-ui] 2026-10-28 (dispatcher tier-1d)"
       ],
@@ -13832,7 +13847,12 @@
       "segment": "ppt-web-ui",
       "score_delta": 1,
       "candidate_vector": "refactor",
-      "expert": "frontend"
+      "expert": "frontend",
+      "reconciled": {
+        "at": "2026-11-01T14:26:20Z",
+        "assignment_status": "merged",
+        "pr_number": 3211
+      }
     },
     {
       "id": "code-review-reality-web-listing-edit-price-zero",
@@ -13925,6 +13945,219 @@
         "at": "2026-10-31T20:29:22Z",
         "assignment_status": "merged",
         "pr_number": 3199
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "title": "Churn hotspot: frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx — listing-edit page churning across price-guard + i18n fixes",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "churn 2026-11-01 (14d window)",
+        "PR #3197 (price-zero reject)",
+        "PR #3203 (i18n sk→en/cs/de/hu/pl)"
+      ],
+      "evidence": [
+        "216 lines of churn this run (top-1 raw-churn). Two merged PRs touched the same page in rapid succession: #3197 rejected empty/invalid price (silent 0 persist) and #3203 localized hardcoded Slovak user-facing strings across 6 message files.",
+        "runs_seen=1."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-01T14:26:20Z",
+        "assignment_status": "merged",
+        "pr_number": 3212
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "title": "Churn hotspot: frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx — ranked-ballot rendering tests reworked",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #3189 (render ranked vote questions as ordered ballot)",
+        "PR #3209",
+        "churn 2026-11-01 (14d window)"
+      ],
+      "evidence": [
+        "162 lines of churn (top-3 raw-churn this run) from PR #3189 which also edited the paired VoteDetailScreen.tsx by 158 lines. Follow-up issue #3206 flags that the ranked-ballot a11y labels still render raw i18n keys — PR #3209 (draft) is iterating on the same test.",
+        "runs_seen=1.",
+        "cumulative re-emit 2026-11-02: PR #3209 (ranked-ballot a11y) touched this file again — hotspot runs_seen 1→2; captured as new repeated-churn signal with score +1."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3213
+      }
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs",
+      "title": "Repeated churn: backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs — compliance Wave-1b suite still expanding 2 routine windows in a row",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "hotspot_history runs_seen 1 -> 2 (2026-10-28 + 2026-11-01)",
+        "PR #3204 (strengthen compliance wave-1b regression coverage)"
+      ],
+      "evidence": [
+        "runs_seen reaches 2 — the Wave-1b test suite is being iteratively expanded 2 routine runs in a row. Underlying moderation/appeal production code still shifting (see open items appeal-no-status-guard, moderation-report-flood). Worth watching for churn-hotspot repair when the suite stabilises.",
+        "This signal is the instability-proxy counterpart to the (now-done) churn-hotspot item for the same file."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs"
+      ],
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-01T14:26:20Z",
+        "assignment_status": "merged",
+        "pr_number": 3214
+      }
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "title": "Repeated churn: reality-web account listing edit page — runs_seen 1→2 (PR #3197/#3203/#3212)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
+        "PR #3212 (extract _status helper)"
+      ],
+      "evidence": [
+        "PR #3212 (merged 2026-11-01) extracted the status mapping into a tested _status.ts helper + unit tests on the same page — hotspot runs_seen 1→2.",
+        "The prior-run churn (PR #3197 price-zero reject + PR #3203 i18n sk) is the same file; the extraction was the correct refactor response. Flagging the repeated-churn so the next touch triggers a review before another cycle lands."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3217
+      }
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "title": "Repeated churn: mobile-rn VoteDetailScreen.test.tsx — runs_seen 1→2 (PR #3189 then #3209)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
+        "PR #3189",
+        "PR #3209"
+      ],
+      "evidence": [
+        "PR #3189 (ranked-ballot ordering) and PR #3209 (ranked-ballot a11y labels/hint fix for issue #3206) both edit the same test file within 48h — hotspot runs_seen 1→2.",
+        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3212-reality",
+      "title": "Screen-map drift: PR #3212 extracted _status helper on reality-web account/listing-edit route without touching docs/screens/reality/account-listing-edit.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #3212"
+      ],
+      "evidence": [
+        "PR #3212 modified frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + _status.ts + _status.test.ts (a reality-web route under the drift-detection trigger set) with zero changes under docs/screens/reality/. The matching screen-map doc is docs/screens/reality/account-listing-edit.md.",
+        "Heuristic — the extraction is a visible refactor (status-mapping now a tested helper) that the Build/Api-status section of the screen-map should reflect. The /screens validate CI runs on dev; the drift here is just unfilled Agent Log + Notes, not a schema breakage."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3216
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-feature-no-i18n",
+      "title": "code-review ppt-web-ui: entire community feature (posts, groups, events, marketplace, comments) is shipped English-only — only PostCard.tsx uses useTranslation",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "signals/2026-11-02-ppt-web-ui-tier1d.json: 1 of 17 .tsx files under frontend/apps/ppt-web/src/features/community/ imports react-i18next. EventForm.tsx:137,154,274,291,297-304; GroupForm.tsx:125,142,251; GroupList.tsx:135,276,153; CreatePostForm.tsx:160,178; CommentList.tsx:140; MarketplacePage.tsx:194,265,274; ItemForm.tsx:180,204,221; EventsPage.tsx:153,254; CreateGroupPage.tsx:45 — all hardcoded English.",
+        "Sibling features (disputes, buildings) are t()-wrapped; ppt-web ships react-i18next with sk/cs/de/en locales. Landable frontend-only remedy: add useTranslation + t('community.*') keys. Verifiable via pnpm --filter @ppt/web typecheck + Vitest/RTL per-locale label assertions."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3220
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
+      "title": "code-review ppt-web-ui: EvidenceUploader validate() returns hardcoded English error strings rendered to user; drop-zone + placeholder hardcoded",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "dispatcher Tier-1d rotating-expert-review 2026-11-02 (ppt-web-ui segment)"
+      ],
+      "evidence": [
+        "signals/2026-11-02-ppt-web-ui-tier1d.json: frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 return hardcoded English Unsupported-file-type / File-too-large strings into item.error, rendered to the user at :266-268. The file already imports useTranslation and t()-wraps every aria-label — inconsistent gap, not untranslated-everywhere.",
+        "Also hardcoded: :213-218 drop-zone copy, :274 Short-description placeholder, :278/:312 raw-template aria-labels. Distinct from 2026-11-01 disputes-cards-no-i18n (card layer only, no EvidenceUploader)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "created_at": "2026-11-02",
+      "updated_at": "2026-11-02",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-02T12:38:59Z",
+        "assignment_status": "merged",
+        "pr_number": 3218
       }
     }
   ]

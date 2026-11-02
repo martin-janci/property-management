@@ -195,23 +195,6 @@
       "first_open_at": "2026-10-28T00:34:57Z"
     },
     {
-      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
-      "action": "Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heavily this run",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-26T04:28:55Z (score=1 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-26T04:28:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
       "action": "VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key string on a miss), so the English fallbacks are dead code and a missing locale key renders the raw key to users instead of the intended fallback",
       "owner_role": "pm-frontend",
@@ -257,23 +240,6 @@
       "first_open_at": "2026-10-28T11:00:00Z"
     },
     {
-      "id": "code-review-api-handlers-appeal-no-status-guard",
-      "action": "api-handlers file_appeal has no status guard → owner can re-file after a final appeal decision",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-handlers-moderation-report-flood",
       "action": "api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content",
       "owner_role": "pm-backend",
@@ -291,57 +257,20 @@
       }
     },
     {
-      "id": "churn-hotspot-backend/servers/api-server/src/routes/violations.rs",
-      "action": "Churn hotspot: backend/servers/api-server/src/routes/violations.rs — 3 touches in 14d (role/role-authz/IDOR patches)",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
-      "action": "ppt-web Accounting Invoice feature ships entirely in hardcoded English — no i18n hook, uses native alert/confirm",
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "action": "Repeated churn: mobile-rn VoteDetailScreen.test.tsx — runs_seen 1→2 (PR #3189 then #3209)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-backlog-refill 2026-10-28T12:32:16Z (score=1 conf=medium vector=refactor)",
+      "source": "dispatcher-backlog-refill 2026-11-02T04:28:10Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-10-28T12:32:16Z",
+      "first_open_at": "2026-11-02T04:28:10Z",
       "backlog_ref": {
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "gh-issue-3206",
-      "action": "Follow-up: ranked-ballot a11y labels/hint render raw i18n keys — missing voting.* keys + no-op `t() ?? literal` fallback (PR #3189) (Closes #3206)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-10-31T18:30:41Z (#3206)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-10-31T18:30:41Z",
-      "issue_ref": {
-        "number": 3206,
-        "url": "https://github.com/martin-janci/property-management/issues/3206",
-        "labels": [
-          "follow-up",
-          "from-merged-review"
-        ]
       }
     }
   ],

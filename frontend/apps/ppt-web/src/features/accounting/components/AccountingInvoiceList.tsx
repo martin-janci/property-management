@@ -3,13 +3,15 @@
  */
 
 import type { AccountingInvoice, AccountingInvoiceStatus } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
-const INVOICE_STATUS_LABELS: Record<AccountingInvoiceStatus, string> = {
-  draft: 'Draft',
-  issued: 'Issued',
-  paid: 'Paid',
-  partially_paid: 'Partially Paid',
-  overdue: 'Overdue',
+/** Map the API's snake_case status onto its `accounting.status.*` i18n key. */
+const INVOICE_STATUS_I18N_KEYS: Record<AccountingInvoiceStatus, string> = {
+  draft: 'accounting.status.draft',
+  issued: 'accounting.status.issued',
+  paid: 'accounting.status.paid',
+  partially_paid: 'accounting.status.partiallyPaid',
+  overdue: 'accounting.status.overdue',
 };
 
 const INVOICE_STATUS_STYLES: Record<AccountingInvoiceStatus, string> = {
@@ -35,6 +37,8 @@ export function AccountingInvoiceList({
   onEditInvoice,
   onDeleteInvoice,
 }: AccountingInvoiceListProps) {
+  const { t, i18n } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -56,8 +60,8 @@ export function AccountingInvoiceList({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900">No invoices found</h3>
-        <p className="mt-1 text-sm text-gray-500">Get started by creating your first invoice.</p>
+        <h3 className="text-lg font-medium text-gray-900">{t('accounting.emptyTitle')}</h3>
+        <p className="mt-1 text-sm text-gray-500">{t('accounting.emptyBody')}</p>
       </div>
     );
   }
@@ -75,11 +79,12 @@ export function AccountingInvoiceList({
                 <div className="flex flex-col">
                   <p className="text-sm font-medium text-blue-600 truncate">{invoice.number}</p>
                   <p className="text-xs text-gray-500">
-                    Due:{' '}
-                    {new Date(invoice.dueDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
+                    {t('accounting.due', {
+                      date: new Date(invoice.dueDate).toLocaleDateString(i18n.language, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      }),
                     })}
                   </p>
                 </div>
@@ -88,12 +93,14 @@ export function AccountingInvoiceList({
                     <p className="text-sm font-semibold text-gray-900">
                       {invoice.totalAmount.toFixed(2)} {invoice.currency}
                     </p>
-                    <p className="text-xs text-gray-500">VAT: {invoice.vatAmount.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">
+                      {t('accounting.vat', { amount: invoice.vatAmount.toFixed(2) })}
+                    </p>
                   </div>
                   <p
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${INVOICE_STATUS_STYLES[invoice.status]}`}
                   >
-                    {INVOICE_STATUS_LABELS[invoice.status]}
+                    {t(INVOICE_STATUS_I18N_KEYS[invoice.status])}
                   </p>
                   <div className="flex items-center gap-2">
                     {onEditInvoice && (
@@ -104,6 +111,7 @@ export function AccountingInvoiceList({
                           onEditInvoice(invoice.id);
                         }}
                         className="text-gray-400 hover:text-blue-600"
+                        aria-label={t('accounting.editLabel')}
                       >
                         <svg
                           className="h-5 w-5"
@@ -128,6 +136,7 @@ export function AccountingInvoiceList({
                           onDeleteInvoice(invoice.id);
                         }}
                         className="text-gray-400 hover:text-red-600"
+                        aria-label={t('accounting.deleteLabel')}
                       >
                         <svg
                           className="h-5 w-5"

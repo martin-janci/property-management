@@ -1,0 +1,67 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-01",
+  "segment_reviewed": "ppt-web-ui",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier 1d demand-driven; claim buffer starved). CHURN_FILES not supplied this slice, so SKILL Step 1 priority 2 (oldest-unreviewed) applies. review_cursor read from .research/state.json (top-level review_cursor; no state.review_cursor key present), sorted ascending: ppt-web-ui 2026-10-22, reality-web 2026-10-23, mobile-native-kmp 2026-10-25, api-handlers 2026-10-26, api-core/ppt-web-core/mobile-rn 2026-10-27, reality-server 2026-10-28. Saturation check against open code-review-finding rows in backlog.json (status==open): api-handlers=3 (SATURATED, skipped), mobile-native-kmp=2, all others 0. Oldest non-saturated segment = ppt-web-ui (2026-10-22) => selected. Note: two earlier Tier 1d runs the same day also reviewed ppt-web-ui (2026-11-01-ppt-web-ui-tier1d.json disputes cards i18n; -2 PaymentMatchingPage mutations / DocumentSearch / BuildingsPage) because the cursor was not yet advanced. This run deliberately targets DISTINCT files/issues (registry + compliance-moderation navigation, portfolio-performance dashboard) not covered by those runs or the open accounting-invoice i18n row. Frontend expert primary + Completeness secondary per Step 2. Scope reviewed: frontend/apps/ppt-web/src/pages/ + components/ + features/**/{pages,components} (the UI segment). Static analysis only; no compile, no test run.",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-ppt-web-ui-registry-full-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:91,95,129,148,152,186 — six internal navigations are done with `window.location.href = '/registry/pets/...'` / `/registry/vehicles/...` (view, edit, new for both pets and vehicles) instead of React Router. Every click triggers a full browser page reload inside a Vite SPA: the TanStack Query cache is dropped, all in-memory app/auth/router state is lost, and the JS bundle is re-downloaded and the app re-bootstrapped.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:207 — same anti-pattern for case detail: `window.location.href = `/compliance/moderation/cases/${caseId}`` (handleViewContent), with an explicit `// TODO(Phase-2): Use React Router's useNavigate` comment acknowledging it.",
+        "Contrast (correct usage): IntegrationsPage.tsx:355 uses window.location.href = res.auth_url for an EXTERNAL OAuth redirect, which is legitimate — the finding is only the INTERNAL-route cases above.",
+        "Supporting concern (verify): neither RegistryPage nor ContentModerationPage is lazy-imported into any frontend/apps/ppt-web/src/routes/groups/*.tsx group (grep for the component names across src/routes returns no import; there is no registry.tsx or compliance.tsx route group). If the `/registry/*` and `/compliance/moderation/cases/:id` paths are not registered in the router, these full-reload navigations also land on unrouted URLs (not-found), making them broken links rather than merely slow ones. The implementer should confirm route registration while converting to useNavigate.",
+        "Fix vector: replace window.location.href with const navigate = useNavigate(); navigate('/registry/pets/...') for the internal cases, and register the target routes if missing. Cloud-verifiable (ppt-web: biome + typecheck). Confidence medium: the literals and reload behaviour are certain by static read; the route-non-registration is inferred from absent imports. Severity LOW (+1) refactor/UX smell per the skill score table.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-card-noop-click",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:264-271 — each PropertyCard is rendered with `onClick={() => { /* TODO: navigate to property detail route */ }}` — an empty handler body.",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/components/PropertyCard.tsx:77-79 — PropertyCard renders a `<div className=\"... cursor-pointer hover:shadow-lg transition-shadow\" onClick={onClick}>`, so each card presents itself as interactive (pointer cursor + hover elevation). The user clicks a property card on the shipped portfolio dashboard expecting to open its detail, and nothing happens — a dead interactive element / incomplete feature, not just a missing route.",
+        "Secondary a11y note: the clickable element is a bare <div> with onClick and no role=\"button\"/tabIndex/keyboard handler, so even once wired it is not keyboard-accessible.",
+        "Fix vector: either wire onClick to navigate(`/portfolio/properties/${property.property_id}`) (and add the route), or drop the cursor-pointer/hover affordance until the detail view exists so the card does not advertise a non-existent action. Cloud-verifiable (ppt-web: biome + typecheck). Confidence medium (static read, card reachable from the shipped PortfolioDashboardPage). Severity LOW (+1).",
+        "expert: completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx has NO useTranslation import and renders user-facing English string literals directly, inside an app that ships react-i18next with sk/cs/de/en locales.",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:259 — hardcoded error state `Failed to load property performance.`",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:261 — hardcoded empty state `No properties in this portfolio yet.`",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:280 — hardcoded error state `Failed to load financial metrics.`",
+        "Distinct from the i18n findings already written 2026-11-01 (disputes cards, DocumentSearch, BuildingsPage) and from the open accounting-invoice-no-i18n backlog row — this is the portfolio-performance dashboard, not previously flagged.",
+        "Fix vector: add const { t } = useTranslation() and move the literals to portfolio.* keys (e.g. portfolio.cards.loadError, portfolio.cards.empty, portfolio.metrics.loadError); add keys to sk/cs/de/en bundles. Cloud-verifiable (ppt-web: biome + typecheck). Confidence medium. Severity LOW (+1) i18n gap per the skill score table.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

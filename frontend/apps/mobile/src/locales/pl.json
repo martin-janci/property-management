@@ -192,7 +192,11 @@
     "voted": "Zaglosowano",
     "results": "Wyniki",
     "deadline": "Termin",
-    "noPolls": "Brak aktywnych ankiet"
+    "noPolls": "Brak aktywnych ankiet",
+    "submit": "Oddaj głos",
+    "moveUp": "Przenieś w górę",
+    "moveDown": "Przenieś w dół",
+    "rankHint": "Uporządkuj opcje według preferencji (1 = najbardziej preferowana)."
   },
   "documents": {
     "title": "Dokumenty",

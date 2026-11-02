@@ -1,0 +1,51 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-01",
+  "segment_reviewed": "reality-web",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven; claimable buffer starved, honest_claimable=6 < floor 36; backlog source exhausted and remaining claimable is mostly mobile-native/KMP which is cloud-un-landable). CHURN_FILES not supplied this slice, so SKILL Step 1 priority 2 applies. Cloud-verify constraint: only reality-web / ppt-web / admin-web / reality-server findings can land in the cloud runner (api-server needs pg #2949, mobile-native egress-blocked #2652, mobile-rn jest-rot #2951). review_cursor (.research/state.json) ascending over the cloud-verifiable web subset: ppt-web-ui 2026-10-22, reality-web 2026-10-23, ppt-web-core 2026-10-27, reality-server 2026-10-28. ppt-web-ui (nominal oldest) was ALREADY reviewed twice today — see 2026-11-01-ppt-web-ui-tier1d.json (disputes-cards i18n) and 2026-11-01-ppt-web-ui-tier1d-2.json (payment-matching silent-fail, doc-search, buildings-err) — so re-selecting it a third time would only produce overlapping findings; skipped to avoid triplicate. Next oldest non-saturated cloud-verifiable segment is reality-web (2026-10-23), with 0 open code-review-finding rows in backlog.json (not saturated) and no reality-web slice yet today => selected. Frontend expert primary (Step 2: reality-web -> Frontend only). Scope reviewed: frontend/apps/reality-web/src/app/[locale]/ (pages) + src/components/ (realtor, import, comparison, states). Static analysis only; no compile, no test run. Checked-and-cleared (NOT findings): ComparisonUrlHandler `{error}` renders t('loadError') not raw text; CsvImport `{error.message}` is a CSV row/col validation message in a fully-t()-wrapped component; realtor/ListingForm.tsx IS i18n'd (useTranslations('listingForm')); listings/[slug]/page.tsx SSR getListing returns null on !ok and generateMetadata/page handle null via notFound(); report/page.tsx uses real useSubmitReport (its _mock is only static REPORT_PROBLEMS categories).",
+  "experts_used": [
+    "frontend",
+    "completeness"
+  ],
+  "findings_count": 2,
+  "signals": [
+    {
+      "id": "code-review-reality-web-agent-profile-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx — the PUBLIC agent/realtor profile page (route /[locale]/realtor/[id], screen-map docs/screens/reality/agent-profile.md) is shipped backed entirely by static mock constants and never reads the [id] route param.",
+        "page.tsx:13 imports { MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS } from './_mock'; :23 `const agent = MOCK_AGENT;` is assigned unconditionally — there is no fetch / useQuery / getRealtor(id) call anywhere in the file, so every realtor id renders the same fake agent, the same fake listings (:240 MOCK_AGENT_LISTINGS.map), and the same fake reviews (:335 MOCK_AGENT_REVIEWS.map). useParams/[id] is not consumed.",
+        "page.tsx:24-30 handleSendMessage(e) only does setMessageSent(true)+setContactOpen(false) — the public contact-the-agent form POSTs nothing to reality-server; the inquiry is silently dropped while the UI claims success.",
+        "page.tsx:14-15 carry `// TODO: replace listing cards ...` / `// TODO: replace status badges ...`, and the page mixes hardcoded Slovak literals (:230 `Aktívne ponuky (...)`, :332 `Hodnotenia (...)`) with useLocale() but no next-intl t() — the data-i18n attributes are decorative, the visible strings are literals.",
+        "Impact: a user-facing public page serves fabricated agent/listing/review data for every realtor and a contact form that is a no-op. Completeness bug class (page returns mock unconditionally; contact action not wired). Cloud-verifiable (reality-web: biome + typecheck + the existing page tests). Confidence medium (certain by static read; reachability certain — it is the shipped public route); severity MEDIUM (+2) per the skill score-delta table (user-facing path not wired to backend).",
+        "expert: completeness+frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-flow-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "The authenticated realtor/account self-service pages in reality-web bypass next-intl entirely (zero useTranslations/getTranslations import), rendering hardcoded English chrome + error fallbacks, inside an app that ships next-intl 4 with sk/cs/de/en and whose public listing pages ARE localized. The shared @/components/realtor/ListingForm these pages embed IS correctly t()-wrapped, so the gap is the page-level wrapper code, not a missing capability.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx (UC-51.1) — no i18n; hardcoded `Realtor profile`, `Buyers and renters see this information...`, field labels (`Name`, `Email`...), `Loading profile…`, validation `Name is required`, success `Profile updated.`, and error fallbacks `Could not load profile.` (:48) / `Could not save profile.` (:82).",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx (UC-51.4) — no i18n; hardcoded `Create listing`, `Publish a new property to Reality Portal.`, submitLabel=`Publish listing`, and error fallback `Could not create listing. Please try again.` (:27).",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx (UC-51.5) — no i18n; hardcoded `Missing listing id.`, load/save error fallbacks `Could not load listing.` (:42) / `Could not save listing.`.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx — no i18n; hardcoded time-range labels `Last 7 days`/`Last 30 days`/`Last 90 days`/`Last year` (:15-18) and error fallback `Could not load analytics.` (:54).",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx (:40 `Could not save profile.`) and account/password/page.tsx both import no next-intl — same hardcoded-English class on the account self-service flow.",
+        "Fix vector: add useTranslations(...) to each page and move the literals to locale namespaces (realtor.*, account.*), populate sk/cs/de/en bundles. Cloud-verifiable (reality-web: biome + typecheck). Confidence medium (literals certain by static read; all pages are shipped authenticated routes); severity LOW (+1) i18n gap per the skill score-delta table. Distinct from the ppt-web-ui i18n findings written earlier today (different app/segment).",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    }
+  ]
+}

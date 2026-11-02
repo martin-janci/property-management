@@ -1,9 +1,60 @@
 {
-  "generated": "2026-10-31T16:35:49Z",
+  "generated": "2026-11-02T14:45:34Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-02T14:45:34Z",
+      "prs_scanned": 8,
+      "clean": [
+        3218,
+        3220,
+        3217,
+        3213,
+        3216,
+        3219,
+        3192,
+        3184
+      ],
+      "with_issues": []
+    },
+    {
+      "run_at": "2026-11-01T14:32:05Z",
+      "prs_scanned": 13,
+      "clean": [
+        3211,
+        3210,
+        3209,
+        3214,
+        3212,
+        3207,
+        3205,
+        3204,
+        3203,
+        3202,
+        3201,
+        3200,
+        3199
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Tier-1d demand-driven backlog generator run (claim buffer starved: honest claimable=6 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-18), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 13 net-new in-window dev merges lacking post-merge-reviewed/no-review-needed: #3211/#3210/#3209/#3214/#3212 (2026-11-01), #3207 (2026-10-31 20:45Z), #3205/#3204/#3203/#3202/#3201/#3200/#3199 (2026-10-31 18:26-18:27Z). Everything #3188 and older already carried post-merge-reviewed from prior runs; dependabot #3137/#3007/#2961/#3133/#3089 are closed-unmerged (null merged_at), skipped. ALL 13 CLEAN, 0 follow-ups opened. Clean verdicts: #3211 ppt-web Accounting Invoice i18n + drops native alert/confirm (chrome strings -> react-i18next); #3210 api-server test-only cross-org 404 regression suite for get_rule/get_action/get_appeal by-id reads (same-org-200/cross-org-404), pins the #850 *_for_org threading; #3209 mobile-RN resolves prior-run finding #3206: ranked-ballot a11y labels/hint now use t(key,{defaultValue}) and voting.submit/moveUp/moveDown/rankHint added to all 6 locale bundles, tests assert resolved labels not raw keys; #3214 api-server test-only: consolidate compliance_wave1b_tests fixtures onto shared seed_org/seed_membership + unprivileged_app/authorized_app Caller fixtures (behavior-preserving churn fix); #3212 reality-web extract listing-edit status mapping into tested _status.ts (mapListingStatusToForm/resolveStatusUpdate), preserves #1762 terminal-state-downgrade guard, behavior-preserving; #3207 reality-server validate_price rejects <=0 portal listing price on create/update (DECIMAL has no CHECK, Decimal can't be NaN) w/ unit tests; #3205 reality-server list_my_reports validates status filter against documented enum (400 not silent empty 200), no reflected echo, w/ regression test; #3204 api-server test-only: EDD write unknown-id 404 tests (guards #3174 500-collapse class) + first DSA platform-principal positive paths; #3203 reality-web localizes listing-edit wizard across all 6 locales (sk/cs/de/en/pl/hu) w/ per-locale i18n coverage test, companion to #3197/#3207/#3212; #3202 ppt-web resolveVatRate single-source-of-truth normalizes submitted item.vatRate to UI-derived rate (no stale 21% drift) w/ RTL test; #3201 ppt-web ConnectionStatus reconnect becomes a real <button> distinct from role=status live-region, aria-label connectionStatus.clickToReconnect present in all 6 message bundles (verified not a raw-key gap), w/ a11y tests; #3200 ppt-web ToastItem clears the 2s 'copied' reset timer on unmount via useRef+useEffect cleanup (no setState-after-unmount) w/ fake-timer regression test; #3199 reality-web ComparisonProvider guards localStorage rehydration against malformed-but-valid-JSON shapes (parseStoredListings + isStoredListing), degrades to usable subset, w/ tampered-value tests. No Task fan-out tool available to this subagent, so all 13 diffs reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc); merged detected by non-null merged_at. All 13 PRs labeled post-merge-reviewed via issue_write update (none had prior labels, so label-set writes clobbered nothing). No breadcrumb comments (no issues opened). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives.",
+      "focus_prs": [
+        3211,
+        3210,
+        3209,
+        3214,
+        3212,
+        3207,
+        3205,
+        3204,
+        3203,
+        3202,
+        3201,
+        3200,
+        3199
+      ]
+    },
     {
       "run_at": "2026-10-31T16:35:49Z",
       "prs_scanned": 8,
@@ -638,72 +689,6 @@
         3020
       ],
       "note": "Dispatcher Phase 2.5 post-merge review. repo=martin-janci/property-management, window=14d (merged>=2026-09-25), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI GraphQL blocked from Claude Code sessions; direct git transfer + gh api writes proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only; deferred commit to orchestrator Phase 6 (no git add/commit/push; did NOT touch assignments.json/action-list.json/backlog.json/archives; review-only). Enumeration via search_pull_requests(is:merged base:dev merged:>=2026-09-25, sort=updated desc, perPage=15); total_count=52 in window, capped at 15 most-recent. 7 already carried post-merge-reviewed (3032/3034/3031/3033/3026/3025/3020) -> skipped. 8 net-new reviewed inline (<=5 cap honoured; no subagent fan-out tool available to this agent). 7 CLEAN: #3051 (lease currency from VITE_DEFAULT_CURRENCY config, tests), #3050 (rentals 4 mutations surface non-auth errors via toast, tests + en.json keys), #3048 (community group join/leave error+success toasts, full 6-locale i18n + tests), #3047 (reality-web /profile routed through next-intl across 6 locales + tests; minor: new `rooms` key lacks ICU plural for sk/cs/pl/hu -> low, not filed), #3045 (reuse errors.groupNotFound/common.back in group-detail not-found + source-guard test), #3046 (register reports_submit in @ppt/sitemap + surface report id on /report success, tests; /report MSG copy stays hardcoded Slovak per acknowledged pre-existing pattern), #3043 (reset SyncSchedule save-error banner on re-edit via local saveError state + reopen-after-failure test; closes #3029). 1 WITH ISSUE: #3044 -> #3057 (frontend)."
-    },
-    {
-      "run_at": "2026-10-08T10:30:55Z",
-      "prs_scanned": 8,
-      "clean": [
-        3036,
-        3020,
-        3025,
-        3026
-      ],
-      "with_issues": [
-        {
-          "pr": 3031,
-          "issue": 3039,
-          "findings": 1,
-          "specialist": "frontend",
-          "note": "/sell createListing POSTs /api/v1/listings (GET-only) -> 405; real route /api/v1/my/listings"
-        },
-        {
-          "pr": 3034,
-          "issue": 3040,
-          "findings": 1,
-          "specialist": "frontend",
-          "note": "group-detail not-found uses untranslated community.groups.* keys; reuse errors.groupNotFound"
-        },
-        {
-          "pr": 3033,
-          "issue": 3041,
-          "findings": 1,
-          "specialist": "frontend",
-          "note": "reality-web /profile hardcoded Slovak copy in next-intl app"
-        },
-        {
-          "pr": 3032,
-          "issue": 3042,
-          "findings": 2,
-          "specialist": "frontend",
-          "note": "register POST /api/v1/reports in @ppt/sitemap + surface report id"
-        }
-      ]
-    },
-    {
-      "run_at": "2026-10-07T08:32:59Z",
-      "prs_scanned": 4,
-      "clean": [
-        3027,
-        3023,
-        2969
-      ],
-      "with_issues": [
-        {
-          "pr": 2967,
-          "issue": 3029,
-          "findings": 2,
-          "specialist": "react-web",
-          "note": "reality-web. PR #2967 (code-review-reality-web-syncschedule-save-silent-fail, merged 10-05) correctly fixes the silent save failure: handleSave wraps updateMutation.mutateAsync in try/catch, keeps the edit form open on failure, renders inline role=alert banner, saveError i18n added to all 6 locales, 3 regression tests. 1 low-sev correctness/UX finding + 1 low test-gap -> issue #3029: the banner is gated on the PERSISTENT React Query flag updateMutation.isError (stays true until next mutate()/reset()), and Cancel (setIsEditing(false)) does not reset the mutation -> Cancel then re-open Edit re-shows the stale 'Couldn't save changes' banner before any new attempt. Sibling PR #2969 (merged same day) solved the identical class in CrmConnection/FeedImport the clean way: local createError state reset at top of each handleCreate. Proposal: port the local-saveError pattern to SyncSchedule + clear on cancel/re-edit + add a reopen-after-failure test. The reopen path is also untested in SyncSchedule.test.tsx."
-        }
-      ],
-      "skipped_already_reviewed": [],
-      "note": "Dispatcher Phase 2.5 post-merge review. Window=14d (merged>=2026-09-23), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. Cloud runner: GitHub MCP (mcp__github__*) for all GH I/O (gh CLI token INVALID in env; direct git transfer proxy-403). DISPATCHER_OWNED_COMMIT=1 so wrote post-merge-review.json + last-merged-review.txt only and deferred the commit to the orchestrator's Phase 6 (no git add/commit/push; no branch checkout; did NOT touch assignments.json/action-list.json/backlog.json/archives; review-only). Enumeration via list_pull_requests(closed, base=dev, sort=updated desc, perPage=40); merged detected by non-null merged_at (MCP 'merged' bool unreliable, reports false). 4 net-new merges in window lacking post-merge-reviewed/no-review-needed: #3027, #3023 (ppt-web screen-map docs), #2967, #2969 (reality-web import error-surfacing). All reviewed inline (<=5, no subagent fan-out). #3027 (screen-map-drift-pr-3002-ppt, merged 10-05) CLEAN: docs-only \u2014 reconciles ppt/dashboard-manager + dashboard-resident screen-maps with PR #3002 role-gate (Specific+Agent Log notes, no frontmatter/code change). #3023 (screen-map-drift-pr-2995-ppt, merged 10-05) CLEAN: docs-only \u2014 ppt/home screen-map reconciled with PR #2995 CTA-role-drift fix (isManagerRole/MANAGER_ROLES note). #2969 (code-review-reality-web-import-create-mutation-silent-fail, merged 10-05) CLEAN: AddConnectionModal (CrmConnection) + AddFeedModal (FeedImport) wrap create mutateAsync in try/catch, local createError state reset per-attempt, inline role=alert aria-live=assertive banner, createError i18n in all 6 locales, comprehensive wizard-flow tests (error-shown/stays-open/success-closes) for both modals; modals exported for test. Right shape. #2967 => 1 follow-up issue #3029 (react-web, low): persistent updateMutation.isError banner re-shows on Cancel->re-edit (sibling #2969 uses the cleaner reset-per-attempt local state). All 4 PRs labeled post-merge-reviewed via issue_write update (needs-human-review preserved on #2967/#2969; #3027/#3023 had none). Breadcrumb comment on #2967 -> #3029. Dependabot top-of-list PRs (#2975,#2973,#2974,#2965) are closed-unmerged (no merged_at). All other in-window merges already carry post-merge-reviewed from prior runs (#3022,#3021,#3019,#3018 @10-05; #2744,#3005 @10-03; #3015,#3014,#3013 @10-02; #3010,#3011,#3009 @10-01; #3001,#3002,#3004 @09-30; 09-27 batch; #2980,#2979 @09-26).",
-      "focus_prs": [
-        3027,
-        3023,
-        2969,
-        2967
-      ]
     }
   ]
 }

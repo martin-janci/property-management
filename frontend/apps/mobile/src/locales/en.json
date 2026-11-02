@@ -192,7 +192,11 @@
     "voted": "Voted",
     "results": "Results",
     "deadline": "Deadline",
-    "noPolls": "No active polls"
+    "noPolls": "No active polls",
+    "submit": "Submit ballot",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "rankHint": "Order the options by preference (1 = most preferred)."
   },
   "documents": {
     "title": "Documents",

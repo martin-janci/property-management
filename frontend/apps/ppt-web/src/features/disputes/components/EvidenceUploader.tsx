@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 export interface PendingEvidence {
   /** Unique stable ID generated client-side */
@@ -66,15 +66,21 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
     };
   }, []);
 
-  const validate = useCallback((file: File): string | null => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      return `Unsupported file type: ${file.type || file.name}`;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return `File too large (max 50 MB): ${file.name}`;
-    }
-    return null;
-  }, []);
+  const validate = useCallback(
+    (file: File): string | null => {
+      if (!ACCEPTED_TYPES.includes(file.type)) {
+        return t('disputes.evidence.unsupportedType', { type: file.type || file.name });
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return t('disputes.evidence.fileTooLarge', {
+          maxMb: MAX_FILE_SIZE / 1024 / 1024,
+          name: file.name,
+        });
+      }
+      return null;
+    },
+    [t]
+  );
 
   const addFiles = useCallback(
     (incoming: FileList | File[]) => {
@@ -211,10 +217,16 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
               </svg>
             </div>
             <p className="text-sm font-medium text-gray-700">
-              Drop files here or <span className="text-blue-600 underline">browse</span>
+              <Trans
+                i18nKey="disputes.evidence.dropHint"
+                components={{ 1: <span className="text-blue-600 underline" /> }}
+              />
             </p>
             <p className="text-xs text-gray-500">
-              JPG, PNG, PDF, MP3, MP4 · max 50 MB per file · up to {MAX_FILES} files
+              {t('disputes.evidence.formatHint', {
+                maxMb: MAX_FILE_SIZE / 1024 / 1024,
+                maxFiles: MAX_FILES,
+              })}
             </p>
           </div>
         </div>
@@ -271,11 +283,11 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
                     type="text"
                     value={item.description}
                     onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
-                    placeholder="Short description (optional)"
+                    placeholder={t('disputes.evidence.descriptionPlaceholder')}
                     className="w-full text-sm px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     disabled={disabled || item.status === 'uploading'}
                     maxLength={200}
-                    aria-label={`Description for ${item.file.name}`}
+                    aria-label={t('disputes.evidence.descriptionLabel', { name: item.file.name })}
                   />
                 )}
               </div>
@@ -309,7 +321,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
                   onClick={() => handleRemove(item.id)}
                   disabled={disabled || item.status === 'uploading'}
                   className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                  aria-label={`Remove ${item.file.name}`}
+                  aria-label={t('disputes.evidence.removeLabel', { name: item.file.name })}
                 >
                   <svg
                     className="w-5 h-5"

@@ -192,7 +192,11 @@
     "voted": "Hlasovano",
     "results": "Vysledky",
     "deadline": "Termin",
-    "noPolls": "Zadna aktivni hlasovani"
+    "noPolls": "Zadna aktivni hlasovani",
+    "submit": "Odeslat hlasování",
+    "moveUp": "Posunout nahoru",
+    "moveDown": "Posunout dolů",
+    "rankHint": "Seřaďte možnosti podle preference (1 = nejvíce preferovaná)."
   },
   "documents": {
     "title": "Dokumenty",

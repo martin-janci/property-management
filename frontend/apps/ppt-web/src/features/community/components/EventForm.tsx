@@ -7,6 +7,7 @@
 
 import type { CreateEventRequest, UpdateEventRequest } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface EventFormProps {
   groupId: string;
@@ -25,6 +26,7 @@ export function EventForm({
   onSubmit,
   onCancel,
 }: EventFormProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [location, setLocation] = useState(initialData?.location || '');
@@ -40,37 +42,37 @@ export function EventForm({
     const newErrors: Record<string, string> = {};
 
     if (!title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('community.eventForm.errors.titleRequired');
     } else if (title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters';
+      newErrors.title = t('community.eventForm.errors.titleMin');
     }
 
     if (!description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = t('community.eventForm.errors.descriptionRequired');
     } else if (description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
+      newErrors.description = t('community.eventForm.errors.descriptionMin');
     }
 
     if (!location.trim()) {
-      newErrors.location = 'Location is required';
+      newErrors.location = t('community.eventForm.errors.locationRequired');
     }
 
     if (!startDate) {
-      newErrors.startDate = 'Start date is required';
+      newErrors.startDate = t('community.eventForm.errors.startRequired');
     }
 
     if (!endDate) {
-      newErrors.endDate = 'End date is required';
+      newErrors.endDate = t('community.eventForm.errors.endRequired');
     } else if (new Date(endDate) <= new Date(startDate)) {
-      newErrors.endDate = 'End date must be after start date';
+      newErrors.endDate = t('community.eventForm.errors.endAfterStart');
     }
 
     if (coverImageUrl && !isValidUrl(coverImageUrl)) {
-      newErrors.coverImageUrl = 'Please enter a valid URL';
+      newErrors.coverImageUrl = t('community.eventForm.errors.invalidUrl');
     }
 
     if (maxAttendees && (Number.isNaN(Number(maxAttendees)) || Number(maxAttendees) < 1)) {
-      newErrors.maxAttendees = 'Please enter a valid number';
+      newErrors.maxAttendees = t('community.eventForm.errors.invalidNumber');
     }
 
     setErrors(newErrors);
@@ -112,7 +114,7 @@ export function EventForm({
         {coverImageUrl && (
           <img
             src={coverImageUrl}
-            alt="Cover preview"
+            alt={t('community.eventForm.coverPreviewAlt')}
             className="w-full h-full object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
@@ -120,21 +122,23 @@ export function EventForm({
           />
         )}
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-          <span className="text-white text-lg font-medium">{title || 'Event Title'}</span>
+          <span className="text-white text-lg font-medium">
+            {title || t('community.eventForm.titlePreviewDefault')}
+          </span>
         </div>
       </div>
 
       {/* Title */}
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Event Title <span className="text-red-500">*</span>
+          {t('community.eventForm.titleLabel')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter event title"
+          placeholder={t('community.eventForm.titlePlaceholder')}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.title ? 'border-red-300' : 'border-gray-300'
           }`}
@@ -145,13 +149,13 @@ export function EventForm({
       {/* Description */}
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Description <span className="text-red-500">*</span>
+          {t('community.eventForm.descriptionLabel')} <span className="text-red-500">*</span>
         </label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="What's this event about?"
+          placeholder={t('community.eventForm.descriptionPlaceholder')}
           rows={4}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.description ? 'border-red-300' : 'border-gray-300'
@@ -164,14 +168,14 @@ export function EventForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-            Location <span className="text-red-500">*</span>
+            {t('community.eventForm.locationLabel')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g., Community Room"
+            placeholder={t('community.eventForm.locationPlaceholder')}
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
               errors.location ? 'border-red-300' : 'border-gray-300'
             }`}
@@ -180,14 +184,14 @@ export function EventForm({
         </div>
         <div>
           <label htmlFor="locationDetails" className="block text-sm font-medium text-gray-700">
-            Location Details (optional)
+            {t('community.eventForm.locationDetailsLabel')}
           </label>
           <input
             type="text"
             id="locationDetails"
             value={locationDetails}
             onChange={(e) => setLocationDetails(e.target.value)}
-            placeholder="e.g., Building A, Floor 2"
+            placeholder={t('community.eventForm.locationDetailsPlaceholder')}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -196,7 +200,9 @@ export function EventForm({
       {/* Date & Time */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Date & Time</span>
+          <span className="text-sm font-medium text-gray-700">
+            {t('community.eventForm.dateTime')}
+          </span>
           <label className="flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -204,13 +210,13 @@ export function EventForm({
               onChange={(e) => setAllDay(e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <span className="ml-2 text-sm text-gray-600">All day event</span>
+            <span className="ml-2 text-sm text-gray-600">{t('community.eventForm.allDay')}</span>
           </label>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="startDate" className="block text-sm text-gray-600">
-              Start <span className="text-red-500">*</span>
+              {t('community.eventForm.start')} <span className="text-red-500">*</span>
             </label>
             <input
               type={allDay ? 'date' : 'datetime-local'}
@@ -225,7 +231,7 @@ export function EventForm({
           </div>
           <div>
             <label htmlFor="endDate" className="block text-sm text-gray-600">
-              End <span className="text-red-500">*</span>
+              {t('community.eventForm.end')} <span className="text-red-500">*</span>
             </label>
             <input
               type={allDay ? 'date' : 'datetime-local'}
@@ -244,14 +250,14 @@ export function EventForm({
       {/* Cover Image URL */}
       <div>
         <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700">
-          Cover Image URL (optional)
+          {t('community.eventForm.coverUrlLabel')}
         </label>
         <input
           type="url"
           id="coverImageUrl"
           value={coverImageUrl}
           onChange={(e) => setCoverImageUrl(e.target.value)}
-          placeholder="https://example.com/image.jpg"
+          placeholder={t('community.eventForm.coverUrlPlaceholder')}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.coverImageUrl ? 'border-red-300' : 'border-gray-300'
           }`}
@@ -264,14 +270,14 @@ export function EventForm({
       {/* Max Attendees */}
       <div>
         <label htmlFor="maxAttendees" className="block text-sm font-medium text-gray-700">
-          Maximum Attendees (optional)
+          {t('community.eventForm.maxAttendeesLabel')}
         </label>
         <input
           type="number"
           id="maxAttendees"
           value={maxAttendees}
           onChange={(e) => setMaxAttendees(e.target.value)}
-          placeholder="Leave empty for unlimited"
+          placeholder={t('community.eventForm.maxAttendeesPlaceholder')}
           min="1"
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
             errors.maxAttendees ? 'border-red-300' : 'border-gray-300'
@@ -288,7 +294,7 @@ export function EventForm({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('community.common.cancel')}
         </button>
         <button
           type="submit"
@@ -297,11 +303,11 @@ export function EventForm({
         >
           {isSubmitting
             ? isEditing
-              ? 'Updating...'
-              : 'Creating...'
+              ? t('community.eventForm.updating')
+              : t('community.eventForm.creating')
             : isEditing
-              ? 'Update Event'
-              : 'Create Event'}
+              ? t('community.eventForm.update')
+              : t('community.eventForm.create')}
         </button>
       </div>
     </form>

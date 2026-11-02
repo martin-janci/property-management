@@ -192,7 +192,11 @@
     "voted": "Szavazott",
     "results": "Eredmenyek",
     "deadline": "Hatarido",
-    "noPolls": "Nincsenek aktiv szavazasok"
+    "noPolls": "Nincsenek aktiv szavazasok",
+    "submit": "Szavazat leadása",
+    "moveUp": "Mozgatás felfelé",
+    "moveDown": "Mozgatás lefelé",
+    "rankHint": "Rendezze a lehetőségeket preferencia szerint (1 = legjobban preferált)."
   },
   "documents": {
     "title": "Dokumentumok",

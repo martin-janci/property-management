@@ -169,6 +169,25 @@ impl BoundedCache {
     }
 }
 
+/// Build the ILIKE pattern for the optional `city` substring filter.
+///
+/// The user-supplied `city` is matched as a substring (`%…%`), but LIKE/ILIKE
+/// metacharacters (`%`, `_`, and the `\` escape char) inside the user's own
+/// input must be matched *literally* — otherwise `?city=100%` degrades to
+/// "match every city" and `?city=a_b` matches `axb`, silently returning the
+/// wrong aggregation on the public, unauthenticated endpoint. Postgres LIKE's
+/// default escape character is backslash, so we backslash-escape those three
+/// characters (backslash first) before wrapping in the substring wildcards.
+fn city_like_pattern(city: &str) -> String {
+    // Backslash-escape LIKE metacharacters (backslash first) so user input is
+    // matched literally under Postgres ILIKE's default `\` escape character.
+    let escaped = city
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    format!("%{escaped}%")
+}
+
 /// Create price map router.
 pub fn router() -> Router<AppState> {
     Router::new().route("/", get(get_price_map))
@@ -330,7 +349,7 @@ pub async fn get_price_map(
         interval = interval,
     );
 
-    let city_pattern = query.city.as_ref().map(|c| format!("%{}%", c));
+    let city_pattern = query.city.as_deref().map(city_like_pattern);
 
     // SAFETY (sqlx::AssertSqlSafe): the only value interpolated into `sql` via
     // `format!` is `interval`, a `&'static str` chosen from the closed match on
@@ -382,6 +401,24 @@ pub async fn get_price_map(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Regression: the `city` substring filter must treat LIKE/ILIKE
+    /// metacharacters in the *user's* input literally. Before the escape fix,
+    /// `?city=100%` built the pattern `%100%%` — where the embedded `%` is a
+    /// wildcard — so the filter matched every city instead of the literal
+    /// "100%", and `?city=a_b` matched `axb`. The public endpoint then returned
+    /// a wrong (over-broad) aggregation. After the fix the metacharacters are
+    /// backslash-escaped and only plain substrings pass through unchanged.
+    #[test]
+    fn city_like_pattern_escapes_like_metacharacters() {
+        // Plain input is unchanged — backward-compatible substring match.
+        assert_eq!(city_like_pattern("Bratislava"), "%Bratislava%");
+        // `%` and `_` in user input must be escaped so they match literally.
+        assert_eq!(city_like_pattern("100%"), "%100\\%%");
+        assert_eq!(city_like_pattern("a_b"), "%a\\_b%");
+        // The escape character itself must be escaped first.
+        assert_eq!(city_like_pattern("c:\\d"), "%c:\\\\d%");
+    }
 
     /// Regression for the unbounded-cache DoS: an anonymous caller rotating
     /// distinct `city` values inserts a brand-new key every time within the TTL

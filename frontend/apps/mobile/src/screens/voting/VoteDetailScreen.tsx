@@ -245,7 +245,7 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
       [
         { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: t('voting.submit', { defaultValue: 'Submit' }),
+          text: t('voting.submit', { defaultValue: 'Submit ballot' }),
           style: 'default',
           onPress: () => {
             castMutation.mutate(

@@ -916,7 +916,16 @@
     "draftRestored": "A mentett piszkozatot visszaállítottuk.",
     "filePageTitle": "Vita benyújtása",
     "subjectPlaceholder": "A vita rövid összefoglalása",
-    "descriptionPlaceholder": "Írja le részletesen a vitát. Adja meg a dátumokat, időpontokat és konkrét eseményeket (legalább 30 karakter)."
+    "descriptionPlaceholder": "Írja le részletesen a vitát. Adja meg a dátumokat, időpontokat és konkrét eseményeket (legalább 30 karakter).",
+    "evidence": {
+      "unsupportedType": "Nem támogatott fájltípus: {{type}}",
+      "fileTooLarge": "A fájl túl nagy (max. {{maxMb}} MB): {{name}}",
+      "dropHint": "Húzza ide a fájlokat, vagy <1>tallózzon</1>",
+      "formatHint": "JPG, PNG, PDF, MP3, MP4 · max. {{maxMb}} MB fájlonként · legfeljebb {{maxFiles}} fájl",
+      "descriptionPlaceholder": "Rövid leírás (nem kötelező)",
+      "descriptionLabel": "{{name}} leírása",
+      "removeLabel": "{{name}} eltávolítása"
+    }
   },
   "financial": {
     "title": "Pénzügyek",
@@ -2567,7 +2576,426 @@
     "leaveFailed": "Nem sikerült elhagyni a csoportot",
     "groupDeleted": "Csoport törölve.",
     "deleteFailed": "Nem sikerült törölni a csoportot",
-    "deleteGroupConfirm": "Törli ezt a csoportot? Ez a művelet nem vonható vissza."
+    "deleteGroupConfirm": "Törli ezt a csoportot? Ez a művelet nem vonható vissza.",
+    "common": {
+      "edit": "Szerkesztés",
+      "delete": "Törlés",
+      "cancel": "Mégse",
+      "add": "Hozzáadás",
+      "view": "Megtekintés",
+      "search": "Keresés",
+      "previous": "Előző",
+      "next": "Következő",
+      "loading": "Betöltés...",
+      "loadMore": "Továbbiak betöltése",
+      "backToGroups": "Vissza a csoportokhoz",
+      "official": "Hivatalos",
+      "pageOf": "{{page}}. oldal / {{total}}"
+    },
+    "post": {
+      "pinned": "Rögzítve",
+      "justNow": "épp most",
+      "minutesAgo": "{{count}} perce",
+      "hoursAgo": "{{count}} órája",
+      "daysAgo": "{{count}} napja",
+      "likes": "{{count}} kedvelés",
+      "comments": "{{count}} hozzászólás",
+      "shares": "{{count}} megosztás",
+      "like": "Tetszik",
+      "comment": "Hozzászólás",
+      "share": "Megosztás",
+      "mediaAlt": "Bejegyzés médiája {{index}}"
+    },
+    "comments": {
+      "justNow": "épp most",
+      "minutes": "{{count}} p",
+      "hours": "{{count}} ó",
+      "days": "{{count}} n",
+      "liked": "Kedvelve",
+      "like": "Tetszik",
+      "reply": "Válasz",
+      "replyPlaceholder": "Írj választ...",
+      "empty": "Még nincs hozzászólás. Legyen Ön az első!"
+    },
+    "feed": {
+      "title": "Közösségi hírfolyam",
+      "subtitle": "Nézze meg, mi történik a közösségében",
+      "filters": {
+        "all": "Összes bejegyzés",
+        "myGroups": "Csoportjaim",
+        "building": "Épület"
+      },
+      "types": {
+        "all": "Összes típus",
+        "text": "Szöveg",
+        "photos": "Fotók",
+        "polls": "Szavazások",
+        "events": "Események",
+        "items": "Tárgyak"
+      },
+      "post": "bejegyzés",
+      "posts": "bejegyzés",
+      "emptyTitle": "Még nincs bejegyzés",
+      "emptyBody": "Legyen Ön az első, aki megoszt valamit a közösséggel!"
+    },
+    "createPost": {
+      "types": {
+        "text": "Szöveg",
+        "photo": "Fotó",
+        "poll": "Szavazás"
+      },
+      "visibility": {
+        "group": "Csak csoport",
+        "building": "Épület",
+        "public": "Nyilvános"
+      },
+      "contentPlaceholder": "Mi jár a fejében?",
+      "imageUrlPlaceholder": "Add meg a kép URL-jét",
+      "previewAlt": "Előnézet {{index}}",
+      "posting": "Közzététel...",
+      "submit": "Közzététel"
+    },
+    "groupList": {
+      "title": "Közösségi csoportok",
+      "subtitle": "Kapcsolódjon szomszédaihoz közös érdeklődés mentén",
+      "create": "Csoport létrehozása",
+      "searchPlaceholder": "Csoportok keresése...",
+      "categoryLabel": "Kategória",
+      "visibilityLabel": "Láthatóság",
+      "myGroupsOnly": "Csak a csoportjaim",
+      "emptyTitle": "Nincs találat",
+      "emptyBodyMember": "Még egyetlen csoporthoz sem csatlakozott.",
+      "emptyBodyDefault": "Módosítsa a szűrőket, vagy hozzon létre új csoportot.",
+      "showing": "{{count}} / {{total}} csoport megjelenítve",
+      "categories": {
+        "allCategories": "Összes kategória",
+        "social": "Közösségi",
+        "sports": "Sport",
+        "hobbies": "Hobbik",
+        "parenting": "Szülőség",
+        "pets": "Háziállatok",
+        "business": "Üzlet",
+        "other": "Egyéb"
+      },
+      "visibility": {
+        "all": "Összes csoport",
+        "public": "Nyilvános",
+        "private": "Privát"
+      }
+    },
+    "groupCard": {
+      "visibility": {
+        "public": "Nyilvános",
+        "private": "Privát",
+        "hidden": "Rejtett"
+      },
+      "member": "tag",
+      "members": "tag",
+      "joining": "Csatlakozás...",
+      "join": "Csatlakozás",
+      "leaving": "Kilépés...",
+      "leave": "Kilépés",
+      "coverAlt": "{{name}} borítója"
+    },
+    "groupForm": {
+      "visibilityOptions": {
+        "public": {
+          "label": "Nyilvános",
+          "description": "Bárki megtalálhatja és csatlakozhat a csoporthoz"
+        },
+        "private": {
+          "label": "Privát",
+          "description": "Bárki megtalálhatja, de kérnie kell a csatlakozást"
+        },
+        "hidden": {
+          "label": "Rejtett",
+          "description": "A csoportot csak meghívott felhasználók találhatják meg"
+        }
+      },
+      "namePreviewDefault": "Csoport neve",
+      "nameLabel": "Csoport neve",
+      "namePlaceholder": "Adja meg a csoport nevét",
+      "descriptionLabel": "Leírás",
+      "descriptionPlaceholder": "Írja le, miről szól a csoport...",
+      "categoryLabel": "Kategória",
+      "visibilityLegend": "Láthatóság",
+      "coverPreviewAlt": "Borító előnézete",
+      "coverUrlLabel": "Borítókép URL-je (opcionális)",
+      "coverUrlPlaceholder": "https://example.com/image.jpg",
+      "errors": {
+        "nameRequired": "A csoport neve kötelező",
+        "nameMin": "A csoport nevének legalább 3 karakternek kell lennie",
+        "nameMax": "A csoport neve legfeljebb 100 karakter lehet",
+        "descriptionRequired": "A leírás kötelező",
+        "descriptionMin": "A leírásnak legalább 10 karakternek kell lennie",
+        "descriptionMax": "A leírás legfeljebb 1000 karakter lehet",
+        "categoryRequired": "A kategória kötelező",
+        "invalidUrl": "Adjon meg érvényes URL-t"
+      },
+      "updating": "Frissítés...",
+      "creating": "Létrehozás...",
+      "update": "Csoport frissítése",
+      "create": "Csoport létrehozása"
+    },
+    "groupMembers": {
+      "roles": {
+        "owner": "Tulajdonos",
+        "admin": "Adminisztrátor",
+        "moderator": "Moderátor",
+        "member": "Tag"
+      },
+      "empty": "Még nincsenek tagok",
+      "pendingApproval": "Jóváhagyásra vár",
+      "you": "(Ön)",
+      "joined": "Csatlakozott: {{date}}",
+      "makeModerator": "Moderátorrá tesz",
+      "makeAdmin": "Adminisztrátorrá tesz",
+      "removeFromGroup": "Eltávolítás a csoportból",
+      "banFromGroup": "Kitiltás a csoportból"
+    },
+    "groupDetail": {
+      "tabAbout": "Névjegy",
+      "tabMembers": "Tagok ({{count}})",
+      "tabPosts": "Bejegyzések ({{count}})",
+      "members": "{{count}} tag",
+      "groupSettings": "Csoport beállításai",
+      "ownersCannotLeave": "A tulajdonosok nem hagyhatják el a csoportot",
+      "leaveGroupTitle": "Csoport elhagyása",
+      "leaving": "Kilépés...",
+      "leaveGroup": "Csoport elhagyása",
+      "joining": "Csatlakozás...",
+      "joinGroup": "Csatlakozás a csoporthoz",
+      "aboutTitle": "A csoportról",
+      "createdOn": "Létrehozva: {{date}}",
+      "membersTitle": "Tagok",
+      "inviteMembers": "Tagok meghívása",
+      "postsPlaceholder": "A bejegyzések itt jelennek meg. Az összes közösségi bejegyzést a Hírfolyam fülön találja.",
+      "adminActions": "Adminisztrátori műveletek",
+      "editGroup": "Csoport szerkesztése",
+      "deleteGroup": "Csoport törlése"
+    },
+    "createGroup": {
+      "title": "Új csoport létrehozása"
+    },
+    "events": {
+      "title": "Közösségi események",
+      "subtitle": "Fedezzen fel és csatlakozzon a közösség eseményeihez",
+      "create": "Esemény létrehozása",
+      "time": {
+        "upcoming": "Közelgő",
+        "past": "Korábbi",
+        "all": "Összes"
+      },
+      "status": {
+        "all": "Összes állapot",
+        "published": "Közzétéve",
+        "draft": "Vázlat",
+        "cancelled": "Lemondva",
+        "completed": "Befejezve"
+      },
+      "rsvp": {
+        "all": "Összes visszajelzés",
+        "going": "Részt veszek",
+        "maybe": "Talán",
+        "notGoing": "Nem veszek részt"
+      },
+      "event": "esemény",
+      "events": "esemény",
+      "emptyTitle": "Nincs találat",
+      "emptyBodyUpcoming": "Nincs közelgő esemény. Hozzon létre egyet!",
+      "emptyBodyDefault": "Nincs a szűrőknek megfelelő esemény."
+    },
+    "eventCard": {
+      "relative": {
+        "past": "Elmúlt",
+        "today": "Ma",
+        "tomorrow": "Holnap",
+        "inDays": "{{count}} nap múlva",
+        "inWeeks": "{{count}} hét múlva",
+        "inMonths": "{{count}} hónap múlva"
+      },
+      "status": {
+        "draft": "Vázlat",
+        "published": "Közzétéve",
+        "cancelled": "Lemondva",
+        "completed": "Befejezve"
+      },
+      "going": "{{count}} résztvevő",
+      "maybe": "{{count}} talán",
+      "max": "Max. {{count}}",
+      "rsvpGoing": "Ön részt vesz",
+      "rsvpMaybe": "Ön érdeklődik",
+      "rsvpNotGoing": "Ön elutasította",
+      "btnGoing": "Részt veszek",
+      "btnMaybe": "Talán",
+      "btnCantGo": "Nem tudok",
+      "ended": "Az esemény véget ért",
+      "eventCancelled": "Az eseményt lemondták",
+      "rsvpNotAvailable": "A visszajelzés nem elérhető",
+      "addToCalendar": "Hozzáadás a naptárhoz",
+      "editEvent": "Esemény szerkesztése",
+      "deleteEvent": "Esemény törlése"
+    },
+    "eventForm": {
+      "titlePreviewDefault": "Esemény címe",
+      "titleLabel": "Esemény címe",
+      "titlePlaceholder": "Adja meg az esemény címét",
+      "descriptionLabel": "Leírás",
+      "descriptionPlaceholder": "Miről szól ez az esemény?",
+      "locationLabel": "Helyszín",
+      "locationPlaceholder": "pl. közösségi terem",
+      "locationDetailsLabel": "Helyszín részletei (opcionális)",
+      "locationDetailsPlaceholder": "pl. A épület, 2. emelet",
+      "dateTime": "Dátum és idő",
+      "allDay": "Egész napos esemény",
+      "start": "Kezdés",
+      "end": "Vége",
+      "coverUrlLabel": "Borítókép URL-je (opcionális)",
+      "coverUrlPlaceholder": "https://example.com/image.jpg",
+      "coverPreviewAlt": "Borító előnézete",
+      "maxAttendeesLabel": "Résztvevők maximális száma (opcionális)",
+      "maxAttendeesPlaceholder": "Hagyja üresen a korlátlan értékhez",
+      "errors": {
+        "titleRequired": "A cím kötelező",
+        "titleMin": "A címnek legalább 3 karakternek kell lennie",
+        "descriptionRequired": "A leírás kötelező",
+        "descriptionMin": "A leírásnak legalább 10 karakternek kell lennie",
+        "locationRequired": "A helyszín kötelező",
+        "startRequired": "A kezdés dátuma kötelező",
+        "endRequired": "A befejezés dátuma kötelező",
+        "endAfterStart": "A befejezés dátumának a kezdés után kell lennie",
+        "invalidUrl": "Adjon meg érvényes URL-t",
+        "invalidNumber": "Adjon meg érvényes számot"
+      },
+      "updating": "Frissítés...",
+      "creating": "Létrehozás...",
+      "update": "Esemény frissítése",
+      "create": "Esemény létrehozása"
+    },
+    "marketplace": {
+      "title": "Piactér",
+      "subtitle": "Vásároljon, adjon el és cseréljen a szomszédaival",
+      "create": "Hirdetés létrehozása",
+      "searchPlaceholder": "Tárgyak keresése...",
+      "categories": {
+        "allCategories": "Összes kategória",
+        "electronics": "Elektronika",
+        "furniture": "Bútor",
+        "clothing": "Ruházat",
+        "books": "Könyvek",
+        "sports": "Sport",
+        "homeGarden": "Otthon és kert",
+        "kidsBaby": "Gyerek és baba",
+        "vehicles": "Járművek",
+        "other": "Egyéb"
+      },
+      "listingType": {
+        "all": "Összes típus",
+        "sale": "Eladó",
+        "free": "Ingyen",
+        "wanted": "Keresett",
+        "trade": "Cserére"
+      },
+      "condition": {
+        "all": "Bármilyen állapot",
+        "new": "Új",
+        "likeNew": "Újszerű",
+        "good": "Jó",
+        "fair": "Közepes",
+        "poor": "Rossz"
+      },
+      "minPrice": "Min. €",
+      "maxPrice": "Max. €",
+      "item": "tárgy",
+      "items": "tárgy",
+      "emptyTitle": "Nincs találat",
+      "emptyBody": "Módosítsa a szűrőket, vagy hozzon létre új hirdetést."
+    },
+    "itemCard": {
+      "price": {
+        "free": "INGYEN",
+        "wanted": "Keresett",
+        "trade": "Csere",
+        "contact": "Ár egyeztetés alapján"
+      },
+      "minutesAgo": "{{count}} perce",
+      "hoursAgo": "{{count}} órája",
+      "daysAgo": "{{count}} napja",
+      "reserved": "Lefoglalva",
+      "sold": "Eladva",
+      "views": "{{count}} megtekintés",
+      "messages": "{{count}} üzenet",
+      "markSold": "Megjelölés eladottként",
+      "contactSeller": "Eladó megkeresése",
+      "viewDetails": "Részletek megtekintése"
+    },
+    "itemForm": {
+      "listingTypes": {
+        "sale": {
+          "label": "Eladó",
+          "description": "Eladás adott áron"
+        },
+        "free": {
+          "label": "Ingyen",
+          "description": "Ingyen elvihető"
+        },
+        "wanted": {
+          "label": "Keresett",
+          "description": "Megvásárolnám"
+        },
+        "trade": {
+          "label": "Cserére",
+          "description": "Cserélném"
+        }
+      },
+      "conditions": {
+        "new": {
+          "label": "Új",
+          "description": "Vadonatúj, használatlan"
+        },
+        "likeNew": {
+          "label": "Újszerű",
+          "description": "Egyszer-kétszer használt, tökéletes állapot"
+        },
+        "good": {
+          "label": "Jó",
+          "description": "Enyhén használt, apró kopásnyomokkal"
+        },
+        "fair": {
+          "label": "Közepes",
+          "description": "Rendszeresen használt, látható kopással"
+        },
+        "poor": {
+          "label": "Rossz",
+          "description": "Erős kopás, javításra szorulhat"
+        }
+      },
+      "photos": "Fotók (max. 10)",
+      "imageUrlPlaceholder": "Add meg a kép URL-jét",
+      "imageAlt": "Tárgy {{index}}",
+      "titleLabel": "Cím",
+      "titlePlaceholder": "Mit árul?",
+      "descriptionLabel": "Leírás",
+      "descriptionPlaceholder": "Írja le részletesen a tárgyat...",
+      "listingTypeLegend": "Hirdetés típusa",
+      "priceLabel": "Ár",
+      "pricePlaceholder": "0,00",
+      "currencyLabel": "Pénznem",
+      "categoryLabel": "Kategória",
+      "conditionLegend": "Állapot",
+      "errors": {
+        "titleRequired": "A cím kötelező",
+        "titleMin": "A címnek legalább 3 karakternek kell lennie",
+        "titleMax": "A cím legfeljebb 100 karakter lehet",
+        "descriptionRequired": "A leírás kötelező",
+        "descriptionMin": "A leírásnak legalább 10 karakternek kell lennie",
+        "invalidPrice": "Adjon meg érvényes árat"
+      },
+      "updating": "Frissítés...",
+      "creating": "Létrehozás...",
+      "update": "Hirdetés frissítése",
+      "create": "Hirdetés létrehozása"
+    }
   },
   "leases": {
     "created": "Bérleti szerződés létrehozva",
@@ -2592,5 +3020,68 @@
     "deleteFailed": "Nem sikerült törölni a bejegyzést",
     "saved": "Személy-hónap elmentve",
     "saveFailed": "Nem sikerült menteni a személy-hónapot"
+  },
+  "accounting": {
+    "title": "Kiállított számlák",
+    "subtitle": "Natív könyvelés MVP",
+    "createInvoice": "Számla létrehozása",
+    "newInvoice": "Új számla",
+    "createFailed": "A számla létrehozása nem sikerült",
+    "deleteFailed": "A számla törlése nem sikerült",
+    "deleteConfirmTitle": "Számla törlése",
+    "deleteConfirmMessage": "Biztosan törli ezt a számlát?",
+    "emptyTitle": "Nem található számla",
+    "emptyBody": "Kezdje az első számla létrehozásával.",
+    "due": "Esedékes: {{date}}",
+    "vat": "ÁFA: {{amount}}",
+    "editLabel": "Számla szerkesztése",
+    "deleteLabel": "Számla törlése",
+    "status": {
+      "draft": "Piszkozat",
+      "issued": "Kiállítva",
+      "paid": "Fizetve",
+      "partiallyPaid": "Részben fizetve",
+      "overdue": "Lejárt"
+    },
+    "form": {
+      "contact": "Kapcsolat",
+      "selectContact": "Válasszon kapcsolatot",
+      "invoiceNumber": "Számlaszám",
+      "variableSymbol": "Változó szimbólum",
+      "issueDate": "Kiállítás dátuma",
+      "dueDate": "Esedékesség dátuma",
+      "currency": "Pénznem",
+      "vatCountry": "ÁFA ország",
+      "country": {
+        "cz": "Csehország",
+        "sk": "Szlovákia"
+      },
+      "lineItems": "Tételek",
+      "addItem": "Tétel hozzáadása",
+      "itemDescriptionPlaceholder": "Tétel leírása",
+      "customPercent": "Egyéni %",
+      "remove": "Eltávolítás",
+      "baseAmount": "Nettó összeg",
+      "vatAmount": "ÁFA összege",
+      "total": "Összesen",
+      "updateInvoice": "Számla frissítése",
+      "col": {
+        "description": "Leírás",
+        "qty": "Menny.",
+        "unitPrice": "Egységár",
+        "vatRate": "ÁFA-kulcs",
+        "total": "Összesen"
+      },
+      "vatRate": {
+        "standard": "Normál (21% CZ / 20% SK)",
+        "reduced": "Kedvezményes (10%)",
+        "firstReduced": "Első kedvezményes (15% CZ)",
+        "zero": "Nulla (0%)"
+      },
+      "errors": {
+        "requiredFields": "Töltse ki az összes kötelező mezőt",
+        "invalidNumbers": "A mennyiségnek és az egységárnak érvényes számnak kell lennie"
+      }
+    }
   }
 }
