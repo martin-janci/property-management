@@ -918,7 +918,16 @@
     "draftRestored": "Przywrócono zapisany szkic.",
     "filePageTitle": "Zgłoś spór",
     "subjectPlaceholder": "Krótkie podsumowanie sporu",
-    "descriptionPlaceholder": "Opisz szczegółowo spór. Podaj daty, godziny i konkretne zdarzenia (minimum 30 znaków)."
+    "descriptionPlaceholder": "Opisz szczegółowo spór. Podaj daty, godziny i konkretne zdarzenia (minimum 30 znaków).",
+    "evidence": {
+      "unsupportedType": "Nieobsługiwany typ pliku: {{type}}",
+      "fileTooLarge": "Plik zbyt duży (maks. {{maxMb}} MB): {{name}}",
+      "dropHint": "Przeciągnij pliki tutaj lub <1>przeglądaj</1>",
+      "formatHint": "JPG, PNG, PDF, MP3, MP4 · maks. {{maxMb}} MB na plik · do {{maxFiles}} plików",
+      "descriptionPlaceholder": "Krótki opis (opcjonalnie)",
+      "descriptionLabel": "Opis dla {{name}}",
+      "removeLabel": "Usuń {{name}}"
+    }
   },
   "financial": {
     "title": "Finanse",

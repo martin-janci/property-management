@@ -965,7 +965,16 @@
     "draftRestored": "Obnovili sme váš uložený návrh.",
     "filePageTitle": "Podať spor",
     "subjectPlaceholder": "Stručné zhrnutie sporu",
-    "descriptionPlaceholder": "Podrobne opíšte spor. Uveďte dátumy, časy a konkrétne incidenty (minimálne 30 znakov)."
+    "descriptionPlaceholder": "Podrobne opíšte spor. Uveďte dátumy, časy a konkrétne incidenty (minimálne 30 znakov).",
+    "evidence": {
+      "unsupportedType": "Nepodporovaný typ súboru: {{type}}",
+      "fileTooLarge": "Súbor je príliš veľký (max {{maxMb}} MB): {{name}}",
+      "dropHint": "Presuňte súbory sem alebo <1>prehľadávajte</1>",
+      "formatHint": "JPG, PNG, PDF, MP3, MP4 · max {{maxMb}} MB na súbor · až {{maxFiles}} súborov",
+      "descriptionPlaceholder": "Krátky popis (voliteľné)",
+      "descriptionLabel": "Popis pre {{name}}",
+      "removeLabel": "Odstrániť {{name}}"
+    }
   },
   "financial": {
     "title": "Financie",
