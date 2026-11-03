@@ -352,7 +352,11 @@
     "saveFailed": "A mentés sikertelen",
     "deleteFailed": "A törlés sikertelen",
     "submitFailed": "A beküldés sikertelen",
-    "pleaseTryAgain": "Kérjük, próbálja újra."
+    "pleaseTryAgain": "Kérjük, próbálja újra.",
+    "enabled": "Bekapcsolva",
+    "disabled": "Kikapcsolva",
+    "more": "További lehetőségek",
+    "settings": "Beállítások"
   },
   "nav": {
     "home": "Főoldal",
@@ -552,7 +556,15 @@
       "regenerating": "Generálás…",
       "saveNewCodes": "Mentse el ezt a(z) {{count}} új helyreállítási kódot — többé nem jelennek meg.",
       "done": "Kész"
-    }
+    },
+    "completingSignIn": "Bejelentkezés befejezése…",
+    "redirecting": "Átirányítás…",
+    "signInFailed": "A bejelentkezés sikertelen",
+    "backToLogin": "Vissza a bejelentkezéshez",
+    "callbackMissingParams": "Érvénytelen visszahívási URL: hiányzik a code vagy a state paraméter.",
+    "stateValidationFailed": "A hitelesítés sikertelen (a state paraméter nem egyezik). Jelentkezzen be újra.",
+    "ssoCallbackFailed": "Az SSO-bejelentkezés sikertelen. Próbálja újra.",
+    "ssoProviderError": "Az identitásszolgáltató hibát adott vissza."
   },
   "home": {
     "title": "Ingatlankezelő rendszer",
@@ -1128,7 +1140,8 @@
         "message": "Váratlan hiba történt."
       },
       "rateLimitRetry": "Kérjük, várjon {{seconds}} másodpercet, mielőtt újra próbálkozik."
-    }
+    },
+    "neighborNotFound": "A szomszéd nem található."
   },
   "notifications": {
     "title": "Értesítések",
@@ -1896,16 +1909,62 @@
     "sensorRegistered": "Érzékelő regisztrálva",
     "sensorRegisterFailed": "Az érzékelő regisztrálása sikertelen",
     "sensorUpdated": "Érzékelő frissítve",
-    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen"
+    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen",
+    "live": "Élő",
+    "offline": "Offline",
+    "offlineBannerTitle": "Az élő frissítések kapcsolata megszakadt",
+    "offlineBannerMessage": "A valós idejű telemetriai kapcsolat megszakadt, és nem sikerült helyreállítani. A megjelenített értékek elavultak lehetnek – töltse újra az oldalt."
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Ugrás az Integrációkhoz"
+      "goToIotAlerts": "Ugrás az érzékelőriasztásokhoz",
+      "goToIntegrations": "Ugrás az Integrációkhoz",
+      "goToDashboard": "Ugrás az áttekintéshez",
+      "goToDocuments": "Ugrás a dokumentumokhoz",
+      "goToNews": "Ugrás a hírekhez",
+      "goToEmergency": "Ugrás a vészhelyzeti kapcsolatokhoz",
+      "goToDisputes": "Ugrás a vitákhoz",
+      "goToOutages": "Ugrás a szolgáltatáskiesésekhez",
+      "goToIot": "Ugrás az okosépülethez",
+      "goToSensors": "Ugrás az érzékelőkhöz",
+      "createDispute": "Vita benyújtása",
+      "createOutage": "Szolgáltatáskiesés bejelentése",
+      "uploadDocument": "Dokumentum feltöltése",
+      "goToAccessibility": "Akadálymentességi beállítások",
+      "goToPrivacy": "Adatvédelmi beállítások"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Airbnb és Booking.com csatornák összekapcsolása és a szinkronizálás kezelése"
+      "goToIotAlerts": "IoT-küszöbriasztások: nyugtázás és megoldás",
+      "goToIntegrations": "Airbnb és Booking.com csatornák összekapcsolása és a szinkronizálás kezelése",
+      "goToDashboard": "Kezdőlap",
+      "goToDocuments": "Az épület és a szervezet dokumentumai",
+      "goToNews": "Hírek és közlemények",
+      "goToEmergency": "Vészhelyzeti kapcsolatok listája",
+      "goToDisputes": "Viták és közvetítések áttekintése",
+      "goToOutages": "Tervezett és nem tervezett szolgáltatáskiesések",
+      "goToIot": "IoT-érzékelők, telemetria és riasztások",
+      "goToSensors": "Regisztrált IoT-eszközök kezelése",
+      "createDispute": "Új hivatalos vita benyújtása",
+      "createOutage": "A lakók értesítése a szolgáltatás megszakításáról",
+      "uploadDocument": "Új dokumentum feltöltése",
+      "goToAccessibility": "Megjelenítés, mozgás és billentyűzetes vezérlés",
+      "goToPrivacy": "Adatvédelem és személyes adatok (GDPR)"
+    },
+    "title": "Parancspaletta",
+    "placeholder": "Írjon be egy parancsot vagy keresőkifejezést…",
+    "searchLabel": "Parancsok keresése",
+    "resultsLabel": "Találatok",
+    "noResults": "Nincs találat",
+    "navigate": "Navigálás",
+    "select": "Kiválasztás",
+    "shortcutHint": "A paletta a(z) {{shortcut}} billentyűkombinációval nyitható meg",
+    "categories": {
+      "recent": "Legutóbbiak",
+      "navigation": "Navigáció",
+      "create": "Létrehozás",
+      "settings": "Beállítások",
+      "action": "Műveletek",
+      "search": "Keresés"
     }
   },
   "sentiment": {
@@ -1954,7 +2013,9 @@
   "messaging": {
     "errors": {
       "downloadFailed": "A melléklet letöltése nem sikerült"
-    }
+    },
+    "messageSent": "Üzenet elküldve",
+    "sendFailed": "Az üzenet elküldése nem sikerült"
   },
   "notificationTriggers": {
     "title": "Értesítési triggerek",
@@ -3082,6 +3143,40 @@
         "requiredFields": "Töltse ki az összes kötelező mezőt",
         "invalidNumbers": "A mennyiségnek és az egységárnak érvényes számnak kell lennie"
       }
+    }
+  },
+  "notificationAnalytics": {
+    "title": "Értesítési elemzések",
+    "subtitle": "Kézbesítési és hibaarányok értesítési csatornánként.",
+    "forbidden": "Nincs jogosultsága az értesítések kézbesítési elemzéseinek megtekintéséhez.",
+    "failedToLoad": "Az értesítési elemzések betöltése nem sikerült",
+    "empty": "A kiválasztott időszakban nem volt értesítési tevékenység.",
+    "tableCaption": "Értesítéskézbesítési mutatók csatornánként",
+    "alertTitle": "Megnövekedett értesítési hibaarány",
+    "alertBody": "A(z) {{rate}} hibaarány meghaladja a(z) {{threshold}} küszöbértéket {{attempted}} kézbesítési kísérlet alapján.",
+    "allChannels": "Összes csatorna",
+    "channel": "Csatorna",
+    "window": "Időszak",
+    "colChannel": "Csatorna",
+    "colSent": "Elküldve",
+    "colDelivered": "Kézbesítve",
+    "colOpened": "Megnyitva",
+    "colClicked": "Rákattintva",
+    "colFailed": "Sikertelen",
+    "colSkipped": "Kihagyva",
+    "colFailureRate": "Hibaarány",
+    "kpiAttempted": "Kísérletek",
+    "kpiSent": "Elküldve",
+    "kpiFailed": "Sikertelen",
+    "kpiFailureRate": "Hibaarány"
+  },
+  "insurance": {
+    "policyType": "Biztosítás típusa"
+  },
+  "neighbors": {
+    "privacy": {
+      "saved": "Adatvédelmi beállítások mentve.",
+      "saveFailed": "Az adatvédelmi beállítások mentése nem sikerült."
     }
   }
 }

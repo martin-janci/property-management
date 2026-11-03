@@ -352,7 +352,11 @@
     "saveFailed": "Uložení selhalo",
     "deleteFailed": "Odstranění selhalo",
     "submitFailed": "Odeslání selhalo",
-    "pleaseTryAgain": "Zkuste to znovu."
+    "pleaseTryAgain": "Zkuste to znovu.",
+    "enabled": "Zapnuto",
+    "disabled": "Vypnuto",
+    "more": "Další možnosti",
+    "settings": "Nastavení"
   },
   "nav": {
     "home": "Domů",
@@ -553,7 +557,15 @@
       "regenerating": "Generuji…",
       "saveNewCodes": "Uložte si těchto {{count}} nových obnovovacích kódů — již se nezobrazí.",
       "done": "Hotovo"
-    }
+    },
+    "completingSignIn": "Dokončuje se přihlášení…",
+    "redirecting": "Přesměrování…",
+    "signInFailed": "Přihlášení se nezdařilo",
+    "backToLogin": "Zpět na přihlášení",
+    "callbackMissingParams": "Neplatná návratová adresa: chybí parametr code nebo state.",
+    "stateValidationFailed": "Ověření se nezdařilo (neshoda parametru state). Přihlaste se znovu.",
+    "ssoCallbackFailed": "Přihlášení přes SSO se nezdařilo. Zkuste to znovu.",
+    "ssoProviderError": "Poskytovatel identity vrátil chybu."
   },
   "home": {
     "title": "Systém správy nemovitostí",
@@ -1175,7 +1187,8 @@
         "message": "Došlo k neočekávané chybě."
       },
       "rateLimitRetry": "Před dalším pokusem prosím počkejte {{seconds}} sekund."
-    }
+    },
+    "neighborNotFound": "Soused nebyl nalezen."
   },
   "notifications": {
     "title": "Oznámení",
@@ -1978,16 +1991,62 @@
     "sensorRegistered": "Senzor zaregistrován",
     "sensorRegisterFailed": "Nepodařilo se zaregistrovat senzor",
     "sensorUpdated": "Senzor aktualizován",
-    "sensorUpdateFailed": "Nepodařilo se aktualizovat senzor"
+    "sensorUpdateFailed": "Nepodařilo se aktualizovat senzor",
+    "live": "Živě",
+    "offline": "Offline",
+    "offlineBannerTitle": "Aktualizace v reálném čase jsou odpojeny",
+    "offlineBannerMessage": "Spojení s telemetrií v reálném čase bylo přerušeno a nepodařilo se jej obnovit. Zobrazené hodnoty nemusí být aktuální – obnovte stránku."
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Přejít na Integrace"
+      "goToIotAlerts": "Přejít na upozornění senzorů",
+      "goToIntegrations": "Přejít na Integrace",
+      "goToDashboard": "Přejít na přehled",
+      "goToDocuments": "Přejít na dokumenty",
+      "goToNews": "Přejít na novinky",
+      "goToEmergency": "Přejít na nouzové kontakty",
+      "goToDisputes": "Přejít na spory",
+      "goToOutages": "Přejít na odstávky",
+      "goToIot": "Přejít na chytrou budovu",
+      "goToSensors": "Přejít na senzory",
+      "createDispute": "Podat spor",
+      "createOutage": "Nahlásit odstávku",
+      "uploadDocument": "Nahrát dokument",
+      "goToAccessibility": "Nastavení přístupnosti",
+      "goToPrivacy": "Nastavení soukromí"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Připojte kanály Airbnb a Booking.com a spravujte synchronizaci"
+      "goToIotAlerts": "Prahová upozornění IoT: potvrzení a vyřešení",
+      "goToIntegrations": "Připojte kanály Airbnb a Booking.com a spravujte synchronizaci",
+      "goToDashboard": "Úvodní stránka",
+      "goToDocuments": "Dokumenty budovy a organizace",
+      "goToNews": "Novinky a oznámení",
+      "goToEmergency": "Adresář nouzových kontaktů",
+      "goToDisputes": "Přehled sporů a mediací",
+      "goToOutages": "Plánované a neplánované odstávky",
+      "goToIot": "Senzory IoT, telemetrie a upozornění",
+      "goToSensors": "Správa registrovaných zařízení IoT",
+      "createDispute": "Podat nový formální spor",
+      "createOutage": "Informovat obyvatele o přerušení služeb",
+      "uploadDocument": "Nahrát nový dokument",
+      "goToAccessibility": "Zobrazení, pohyb a ovládání klávesnicí",
+      "goToPrivacy": "Soukromí a osobní údaje (GDPR)"
+    },
+    "title": "Paleta příkazů",
+    "placeholder": "Zadejte příkaz nebo hledaný výraz…",
+    "searchLabel": "Hledat příkazy",
+    "resultsLabel": "Výsledky",
+    "noResults": "Nebyly nalezeny žádné příkazy",
+    "navigate": "Procházet",
+    "select": "Vybrat",
+    "shortcutHint": "Paletu otevřete zkratkou {{shortcut}}",
+    "categories": {
+      "recent": "Nedávné",
+      "navigation": "Navigace",
+      "create": "Vytvořit",
+      "settings": "Nastavení",
+      "action": "Akce",
+      "search": "Hledat"
     }
   },
   "documentTemplates": {
@@ -2092,7 +2151,9 @@
   "messaging": {
     "errors": {
       "downloadFailed": "Přílohu se nepodařilo stáhnout"
-    }
+    },
+    "messageSent": "Zpráva byla odeslána",
+    "sendFailed": "Zprávu se nepodařilo odeslat"
   },
   "notificationTriggers": {
     "title": "Spouštěče oznámení",
@@ -3214,6 +3275,40 @@
         "requiredFields": "Vyplňte všechna povinná pole",
         "invalidNumbers": "Množství a jednotková cena musí být platná čísla"
       }
+    }
+  },
+  "notificationAnalytics": {
+    "title": "Analytika upozornění",
+    "subtitle": "Míra doručení a selhání podle kanálu upozornění.",
+    "forbidden": "Nemáte oprávnění zobrazit analytiku doručování upozornění.",
+    "failedToLoad": "Nepodařilo se načíst analytiku upozornění",
+    "empty": "Ve zvoleném období nebyla zaznamenána žádná aktivita upozornění.",
+    "tableCaption": "Metriky doručování upozornění podle kanálu",
+    "alertTitle": "Zvýšená míra selhání upozornění",
+    "alertBody": "Míra selhání {{rate}} překračuje práh {{threshold}} při {{attempted}} pokusech o doručení.",
+    "allChannels": "Všechny kanály",
+    "channel": "Kanál",
+    "window": "Období",
+    "colChannel": "Kanál",
+    "colSent": "Odesláno",
+    "colDelivered": "Doručeno",
+    "colOpened": "Otevřeno",
+    "colClicked": "Kliknuto",
+    "colFailed": "Selhalo",
+    "colSkipped": "Přeskočeno",
+    "colFailureRate": "Míra selhání",
+    "kpiAttempted": "Pokusy",
+    "kpiSent": "Odesláno",
+    "kpiFailed": "Selhalo",
+    "kpiFailureRate": "Míra selhání"
+  },
+  "insurance": {
+    "policyType": "Typ pojistky"
+  },
+  "neighbors": {
+    "privacy": {
+      "saved": "Nastavení soukromí bylo uloženo.",
+      "saveFailed": "Nastavení soukromí se nepodařilo uložit."
     }
   }
 }

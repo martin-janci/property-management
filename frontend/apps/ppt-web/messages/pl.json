@@ -352,7 +352,11 @@
     "saveFailed": "Zapisywanie nie powiodło się",
     "deleteFailed": "Usuwanie nie powiodło się",
     "submitFailed": "Przesyłanie nie powiodło się",
-    "pleaseTryAgain": "Spróbuj ponownie."
+    "pleaseTryAgain": "Spróbuj ponownie.",
+    "enabled": "Włączone",
+    "disabled": "Wyłączone",
+    "more": "Więcej opcji",
+    "settings": "Ustawienia"
   },
   "nav": {
     "home": "Strona główna",
@@ -554,7 +558,15 @@
       "regenerating": "Generowanie…",
       "saveNewCodes": "Zapisz te {{count}} nowe kody odzyskiwania — nie zostaną pokazane ponownie.",
       "done": "Gotowe"
-    }
+    },
+    "completingSignIn": "Kończenie logowania…",
+    "redirecting": "Przekierowywanie…",
+    "signInFailed": "Logowanie nie powiodło się",
+    "backToLogin": "Powrót do logowania",
+    "callbackMissingParams": "Nieprawidłowy adres zwrotny: brak parametru code lub state.",
+    "stateValidationFailed": "Uwierzytelnianie nie powiodło się (niezgodność parametru state). Zaloguj się ponownie.",
+    "ssoCallbackFailed": "Logowanie przez SSO nie powiodło się. Spróbuj ponownie.",
+    "ssoProviderError": "Dostawca tożsamości zwrócił błąd."
   },
   "home": {
     "title": "System zarządzania nieruchomościami",
@@ -1130,7 +1142,8 @@
         "message": "Wystąpił nieoczekiwany błąd."
       },
       "rateLimitRetry": "Poczekaj {{seconds}} sekund przed ponowną próbą."
-    }
+    },
+    "neighborNotFound": "Nie znaleziono sąsiada."
   },
   "notifications": {
     "title": "Powiadomienia",
@@ -1902,16 +1915,62 @@
     "sensorRegistered": "Czujnik zarejestrowany",
     "sensorRegisterFailed": "Nie udało się zarejestrować czujnika",
     "sensorUpdated": "Czujnik zaktualizowany",
-    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika"
+    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika",
+    "live": "Na żywo",
+    "offline": "Offline",
+    "offlineBannerTitle": "Aktualizacje na żywo zostały rozłączone",
+    "offlineBannerMessage": "Połączenie z telemetrią w czasie rzeczywistym zostało przerwane i nie udało się go przywrócić. Wyświetlane odczyty mogą być nieaktualne – odśwież stronę."
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Przejdź do Integracji"
+      "goToIotAlerts": "Przejdź do alertów czujników",
+      "goToIntegrations": "Przejdź do Integracji",
+      "goToDashboard": "Przejdź do pulpitu",
+      "goToDocuments": "Przejdź do dokumentów",
+      "goToNews": "Przejdź do aktualności",
+      "goToEmergency": "Przejdź do kontaktów alarmowych",
+      "goToDisputes": "Przejdź do sporów",
+      "goToOutages": "Przejdź do przerw w dostawach",
+      "goToIot": "Przejdź do inteligentnego budynku",
+      "goToSensors": "Przejdź do czujników",
+      "createDispute": "Zgłoś spór",
+      "createOutage": "Zgłoś przerwę w dostawie",
+      "uploadDocument": "Prześlij dokument",
+      "goToAccessibility": "Ustawienia dostępności",
+      "goToPrivacy": "Ustawienia prywatności"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Połącz kanały Airbnb i Booking.com oraz zarządzaj synchronizacją"
+      "goToIotAlerts": "Alerty progowe IoT: potwierdzanie i rozwiązywanie",
+      "goToIntegrations": "Połącz kanały Airbnb i Booking.com oraz zarządzaj synchronizacją",
+      "goToDashboard": "Strona główna",
+      "goToDocuments": "Dokumenty budynku i organizacji",
+      "goToNews": "Aktualności i ogłoszenia",
+      "goToEmergency": "Spis kontaktów alarmowych",
+      "goToDisputes": "Przegląd sporów i mediacji",
+      "goToOutages": "Planowane i nieplanowane przerwy w dostawach",
+      "goToIot": "Czujniki IoT, telemetria i alerty",
+      "goToSensors": "Zarządzaj zarejestrowanymi urządzeniami IoT",
+      "createDispute": "Zgłoś nowy formalny spór",
+      "createOutage": "Powiadom mieszkańców o przerwie w dostawie usług",
+      "uploadDocument": "Prześlij nowy dokument",
+      "goToAccessibility": "Wyświetlanie, ruch i sterowanie klawiaturą",
+      "goToPrivacy": "Prywatność i dane osobowe (RODO)"
+    },
+    "title": "Paleta poleceń",
+    "placeholder": "Wpisz polecenie lub szukaną frazę…",
+    "searchLabel": "Szukaj poleceń",
+    "resultsLabel": "Wyniki",
+    "noResults": "Nie znaleziono poleceń",
+    "navigate": "Nawiguj",
+    "select": "Wybierz",
+    "shortcutHint": "Naciśnij {{shortcut}}, aby otworzyć paletę",
+    "categories": {
+      "recent": "Ostatnie",
+      "navigation": "Nawigacja",
+      "create": "Utwórz",
+      "settings": "Ustawienia",
+      "action": "Akcje",
+      "search": "Szukaj"
     }
   },
   "sentiment": {
@@ -1960,7 +2019,9 @@
   "messaging": {
     "errors": {
       "downloadFailed": "Nie udało się pobrać załącznika"
-    }
+    },
+    "messageSent": "Wiadomość wysłana",
+    "sendFailed": "Nie udało się wysłać wiadomości"
   },
   "notificationTriggers": {
     "title": "Wyzwalacze powiadomień",
@@ -3088,6 +3149,40 @@
         "requiredFields": "Wypełnij wszystkie wymagane pola",
         "invalidNumbers": "Ilość i cena jednostkowa muszą być prawidłowymi liczbami"
       }
+    }
+  },
+  "notificationAnalytics": {
+    "title": "Analityka powiadomień",
+    "subtitle": "Wskaźniki dostarczeń i błędów według kanału powiadomień.",
+    "forbidden": "Nie masz uprawnień do wyświetlania analityki dostarczania powiadomień.",
+    "failedToLoad": "Nie udało się wczytać analityki powiadomień",
+    "empty": "W wybranym okresie nie odnotowano aktywności powiadomień.",
+    "tableCaption": "Wskaźniki dostarczania powiadomień według kanału",
+    "alertTitle": "Podwyższony wskaźnik błędów powiadomień",
+    "alertBody": "Wskaźnik błędów {{rate}} przekracza próg {{threshold}} przy {{attempted}} próbach dostarczenia.",
+    "allChannels": "Wszystkie kanały",
+    "channel": "Kanał",
+    "window": "Okres",
+    "colChannel": "Kanał",
+    "colSent": "Wysłane",
+    "colDelivered": "Dostarczone",
+    "colOpened": "Otwarte",
+    "colClicked": "Kliknięte",
+    "colFailed": "Nieudane",
+    "colSkipped": "Pominięte",
+    "colFailureRate": "Wskaźnik błędów",
+    "kpiAttempted": "Próby",
+    "kpiSent": "Wysłane",
+    "kpiFailed": "Nieudane",
+    "kpiFailureRate": "Wskaźnik błędów"
+  },
+  "insurance": {
+    "policyType": "Rodzaj polisy"
+  },
+  "neighbors": {
+    "privacy": {
+      "saved": "Ustawienia prywatności zostały zapisane.",
+      "saveFailed": "Nie udało się zapisać ustawień prywatności."
     }
   }
 }
