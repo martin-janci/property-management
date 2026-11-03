@@ -26,6 +26,7 @@ import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import { ReportsPage, ScheduleDetailPage } from '../lazyRoutes';
+import { MANAGER_ROLES } from '../shared';
 
 /**
  * Map a backend `ErrorResponse.code` from the create-schedule endpoint to a
@@ -324,7 +325,7 @@ export function reportRoutes() {
       <Route
         path="/reports"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ReportsPageRoute />
           </ProtectedRoute>
         }
@@ -332,7 +333,7 @@ export function reportRoutes() {
       <Route
         path="/reports/schedules/:scheduleId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ScheduleDetailPageRoute />
           </ProtectedRoute>
         }

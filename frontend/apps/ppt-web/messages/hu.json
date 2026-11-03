@@ -1128,7 +1128,9 @@
         "message": "Váratlan hiba történt."
       },
       "rateLimitRetry": "Kérjük, várjon {{seconds}} másodpercet, mielőtt újra próbálkozik."
-    }
+    },
+    "accessDenied": "Hozzáférés megtagadva",
+    "backToDashboard": "Vissza az áttekintéshez"
   },
   "notifications": {
     "title": "Értesítések",

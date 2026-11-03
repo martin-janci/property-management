@@ -34,7 +34,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { AuthRequiredGate, useToast } from '../../components';
+import { AuthRequiredGate, ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import type { AlertStateFilter, SensorFormValues, ThresholdFormValues } from '../../features/iot';
 import { useIotWebSocket } from '../../features/iot';
@@ -45,7 +45,7 @@ import {
   IotSensorListPage,
   IotThresholdConfigPage,
 } from '../lazyRoutes';
-import { transformBuildingForUI } from '../shared';
+import { MANAGER_ROLES, transformBuildingForUI } from '../shared';
 
 /** Map a numeric-string form field to a number, or null when blank. */
 function toIntOrNull(value: string): number | null {
@@ -645,12 +645,54 @@ function ThresholdConfigPageRoute() {
 export function iotRoutes() {
   return (
     <>
-      <Route path="/iot" element={<IotDashboardPageRoute />} />
-      <Route path="/iot/alerts" element={<IotAlertsPageRoute />} />
-      <Route path="/iot/sensors" element={<SensorListPageRoute />} />
-      <Route path="/iot/sensors/new" element={<RegisterSensorPageRoute />} />
-      <Route path="/iot/sensors/:sensorId/edit" element={<EditSensorPageRoute />} />
-      <Route path="/iot/sensors/:sensorId/thresholds" element={<ThresholdConfigPageRoute />} />
+      <Route
+        path="/iot"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <IotDashboardPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/alerts"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <IotAlertsPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <SensorListPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <RegisterSensorPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/:sensorId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <EditSensorPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/iot/sensors/:sensorId/thresholds"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <ThresholdConfigPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

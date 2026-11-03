@@ -1313,7 +1313,9 @@
         "message": "An unexpected error occurred."
       },
       "rateLimitRetry": "Please wait {{seconds}} seconds before trying again."
-    }
+    },
+    "accessDenied": "Access Denied",
+    "backToDashboard": "Back to dashboard"
   },
   "notifications": {
     "title": "Notifications",
