@@ -134,6 +134,23 @@ export function toUiVote(s: ApiVoteSummary): Vote {
   };
 }
 
+/** Compute the quorum progress-bar fill width as a percentage in `[0, 100]`.
+ *
+ *  Guards the division against a zero/negative or non-finite `required`
+ *  (`eligible_count` null or 0 maps to `requiredQuorum === 0` via `toUiVote`).
+ *  Previously the screen computed `(current / required) * 100` inline, so a
+ *  zero `required` produced `0 / 0 = NaN` (or `n / 0 = Infinity`) and a
+ *  `width: "NaN%"` style string the renderer silently dropped, leaving a
+ *  broken/empty bar. Returns `0` when there is no eligible population to
+ *  measure against, and clamps the ratio to `100` so an over-quorum count
+ *  can't overflow the bar. Exported so the width math can be unit-tested
+ *  without rendering the screen. */
+export function quorumProgressPercent(current: number, required: number): number {
+  if (!Number.isFinite(required) || required <= 0) return 0;
+  if (!Number.isFinite(current) || current <= 0) return 0;
+  return Math.min((current / required) * 100, 100);
+}
+
 interface VotingScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
@@ -299,7 +316,7 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
                     style={[
                       styles.quorumProgress,
                       {
-                        width: `${Math.min((vote.currentQuorum / vote.requiredQuorum) * 100, 100)}%`,
+                        width: `${quorumProgressPercent(vote.currentQuorum, vote.requiredQuorum)}%`,
                       },
                       vote.currentQuorum >= vote.requiredQuorum && styles.quorumMet,
                     ]}
