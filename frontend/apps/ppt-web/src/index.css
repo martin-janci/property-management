@@ -54,59 +54,6 @@
  * Tailwind @layer rules always lose to unlayered ones in the cascade,
  * so component-level theming for the nav and error pages lives here.
  */
-.app-nav {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 1rem;
-  background-color: var(--color-surface, #ffffff);
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-.app-nav > .ml-auto {
-  margin-left: auto;
-}
-
-@media (max-width: 640px) {
-  .app-nav {
-    gap: 0.5rem 0.75rem;
-    padding: 0.5rem 0.75rem;
-  }
-  .app-nav a {
-    /* Larger tap target than the body-text 0.875rem the desktop nav uses;
-       WCAG 2.5.5 recommends ≥24×24 CSS px for touch targets. With the
-       0.5rem column-gap this keeps adjacent links comfortably apart. */
-    padding: 0.25rem 0;
-    min-height: 1.75rem;
-    display: inline-flex;
-    align-items: center;
-  }
-  .app-nav > .ml-auto {
-    /* On phones the action cluster wraps to its own row below the links
-       instead of being pushed off-screen by the auto margin. */
-    margin-left: 0;
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
-.app-nav a {
-  color: var(--color-text-secondary, #4b5563);
-  font-weight: 500;
-  font-size: 0.875rem;
-  text-decoration: none;
-}
-
-.app-nav a:hover {
-  color: var(--color-primary, #2563eb);
-}
-
-.app-nav a[aria-current="page"] {
-  color: var(--color-primary, #2563eb);
-}
-
 .error-page h1 {
   font-size: 1.5rem;
   font-weight: 600;
@@ -155,4 +102,17 @@
 
 .btn-outline-token:hover {
   background-color: var(--color-surface-hover, #f3f4f6);
+}
+
+.home-card {
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  background-color: var(--color-surface, #f9fafb);
+  border: 1px solid var(--color-border, #e5e7eb);
+  color: var(--color-text, #1f2937);
+}
+
+.home-card__text {
+  margin: 0;
+  color: var(--color-text-secondary, #6b7280);
 }

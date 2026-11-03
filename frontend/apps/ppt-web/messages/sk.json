@@ -362,7 +362,7 @@
     "units": "Jednotky",
     "faults": "Poruchy",
     "documents": "Dokumenty",
-    "news": "Správy",
+    "news": "Novinky",
     "announcements": "Oznámenia",
     "financial": "Financie",
     "community": "Komunita",
@@ -375,11 +375,22 @@
     "privacy": "Súkromie",
     "admin": "Administrácia",
     "aiChat": "AI asistent",
-    "iotAlerts": "Sensor Alerts",
+    "iotAlerts": "Upozornenia senzorov",
     "integrations": "Integrácie",
     "portalWebhooks": "Webhooky portálov",
     "notificationTriggers": "Spúšťače notifikácií",
-    "notificationAnalytics": "Analytika notifikácií"
+    "notificationAnalytics": "Analytika notifikácií",
+    "myUnit": "Môj byt",
+    "voting": "Hlasovanie",
+    "reports": "Reporty",
+    "accounting": "Účtovníctvo",
+    "automations": "Automatizácie",
+    "iot": "Inteligentná budova",
+    "rentals": "Krátkodobý prenájom",
+    "sessions": "Aktívne relácie",
+    "messages": "Správy",
+    "meters": "Merače",
+    "outages": "Odstávky"
   },
   "auth": {
     "signIn": "Prihlásiť sa",
@@ -558,8 +569,51 @@
     }
   },
   "home": {
-    "title": "Systém správy nehnuteľností",
-    "welcome": "Vitajte v systéme správy nehnuteľností."
+    "title": "Správa domu bez papierovania",
+    "welcome": "Vitajte v systéme správy nehnuteľností.",
+    "tagline": "Jedno miesto pre správcov, vlastníkov aj nájomníkov: hláste poruchy, hlasujte o rozhodnutiach, sledujte náklady a buďte informovaní.",
+    "audiences": {
+      "title": "Pre každého v dome",
+      "managers": {
+        "title": "Správcovia",
+        "text": "Spravujte viacero domov z jedného prehľadu: poruchy, oznámenia, odpočty meračov, financie aj schôdze vlastníkov."
+      },
+      "owners": {
+        "title": "Vlastníci",
+        "text": "Hlasujte online, čítajte zápisnice a dokumenty, sledujte fond opráv a svoje platby."
+      },
+      "tenants": {
+        "title": "Nájomníci a obyvatelia",
+        "text": "Nahláste poruchu za minútu, dostávajte upozornenia na odstávky a buďte v kontakte so správcom aj susedmi."
+      }
+    },
+    "features": {
+      "title": "Čo všetko zvládnete",
+      "faults": {
+        "title": "Hlásenie porúch",
+        "text": "Nahláste problém aj s fotkou, sledujte jeho stav a uvidíte, kto ho rieši."
+      },
+      "voting": {
+        "title": "Hlasovanie online",
+        "text": "Pripravte hlasovanie vlastníkov, zbierajte hlasy elektronicky a zverejnite výsledky."
+      },
+      "communication": {
+        "title": "Oznámenia a správy",
+        "text": "Informujte všetkých o odstávkach, údržbe a schôdzach a píšte správcovi priamo."
+      },
+      "finance": {
+        "title": "Financie",
+        "text": "Zálohové platby, faktúry, rozpočty a fond opráv — prehľadne pre každého vlastníka."
+      },
+      "meters": {
+        "title": "Odpočty meračov",
+        "text": "Zadajte stav merača online aj s fotkou a porovnajte spotrebu medzi obdobiami."
+      },
+      "documents": {
+        "title": "Dokumenty",
+        "text": "Zmluvy, zápisnice, domový poriadok a vyúčtovania bezpečne na jednom mieste."
+      }
+    }
   },
   "facilities": {
     "bookings": {
@@ -3216,6 +3270,41 @@
         "requiredFields": "Vyplňte všetky povinné polia",
         "invalidNumbers": "Množstvo a jednotková cena musia byť platné čísla"
       }
+    }
+  },
+  "shell": {
+    "brand": "Správa nehnuteľností",
+    "mainNavigation": "Hlavná navigácia",
+    "openMenu": "Otvoriť menu",
+    "closeMenu": "Zavrieť menu",
+    "createAccount": "Vytvoriť účet",
+    "sections": {
+      "overview": "Prehľad",
+      "operations": "Prevádzka budovy",
+      "governance": "Vlastníci a správa domu",
+      "community": "Komunita",
+      "finance": "Financie",
+      "rentals": "Nájmy a prenájom",
+      "tools": "Nástroje"
+    },
+    "account": {
+      "password": "Heslo",
+      "twoFactor": "Dvojfaktorové overenie",
+      "notifications": "Nastavenia upozornení"
+    },
+    "roles": {
+      "super_admin": "Superadministrátor",
+      "platform_admin": "Administrátor platformy",
+      "org_admin": "Administrátor organizácie",
+      "manager": "Správca",
+      "technical_manager": "Technický správca",
+      "property_manager": "Správca nehnuteľností",
+      "owner": "Vlastník",
+      "owner_delegate": "Splnomocnenec vlastníka",
+      "tenant": "Nájomník",
+      "resident": "Obyvateľ",
+      "guest": "Hosť",
+      "real_estate_agent": "Realitný maklér"
     }
   }
 }

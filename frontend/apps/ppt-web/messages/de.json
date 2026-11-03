@@ -373,11 +373,22 @@
     "privacy": "Datenschutz",
     "admin": "Administration",
     "aiChat": "KI-Assistent",
-    "iotAlerts": "Sensor Alerts",
+    "iotAlerts": "Sensorwarnungen",
     "integrations": "Integrationen",
     "portalWebhooks": "Portal-Webhooks",
     "notificationTriggers": "Benachrichtigungsauslöser",
-    "notificationAnalytics": "Benachrichtigungsanalyse"
+    "notificationAnalytics": "Benachrichtigungsanalyse",
+    "myUnit": "Meine Wohnung",
+    "voting": "Abstimmungen",
+    "reports": "Berichte",
+    "accounting": "Buchhaltung",
+    "automations": "Automatisierungen",
+    "iot": "Smart Building",
+    "rentals": "Kurzzeitvermietung",
+    "sessions": "Aktive Sitzungen",
+    "messages": "Nachrichten",
+    "meters": "Zähler",
+    "outages": "Störungen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -555,8 +566,51 @@
     }
   },
   "home": {
-    "title": "Immobilienverwaltungssystem",
-    "welcome": "Willkommen im Immobilienverwaltungssystem."
+    "title": "Hausverwaltung ohne Papierkram",
+    "welcome": "Willkommen im Immobilienverwaltungssystem.",
+    "tagline": "Ein Ort für Verwalter, Eigentümer und Mieter: Schäden melden, über Beschlüsse abstimmen, Kosten verfolgen und informiert bleiben.",
+    "audiences": {
+      "title": "Für alle im Haus",
+      "managers": {
+        "title": "Hausverwaltungen",
+        "text": "Mehrere Gebäude in einer Übersicht: Schäden, Aushänge, Zählerstände, Finanzen und Eigentümerversammlungen."
+      },
+      "owners": {
+        "title": "Eigentümer",
+        "text": "Online abstimmen, Protokolle und Dokumente lesen, Rücklage und eigene Zahlungen verfolgen."
+      },
+      "tenants": {
+        "title": "Mieter und Bewohner",
+        "text": "Schäden in einer Minute melden, über Ausfälle informiert werden und mit Verwaltung und Nachbarn in Kontakt bleiben."
+      }
+    },
+    "features": {
+      "title": "Was Sie erledigen können",
+      "faults": {
+        "title": "Schadensmeldungen",
+        "text": "Probleme mit Foto melden, den Status verfolgen und sehen, wer sich darum kümmert."
+      },
+      "voting": {
+        "title": "Online-Abstimmungen",
+        "text": "Eigentümerbeschlüsse vorbereiten, Stimmen elektronisch sammeln und Ergebnisse veröffentlichen."
+      },
+      "communication": {
+        "title": "Aushänge und Nachrichten",
+        "text": "Alle über Ausfälle, Wartung und Versammlungen informieren und der Verwaltung direkt schreiben."
+      },
+      "finance": {
+        "title": "Finanzen",
+        "text": "Vorauszahlungen, Rechnungen, Budgets und Rücklage — transparent für jeden Eigentümer."
+      },
+      "meters": {
+        "title": "Zählerstände",
+        "text": "Zählerstände online mit Foto melden und den Verbrauch zwischen Zeiträumen vergleichen."
+      },
+      "documents": {
+        "title": "Dokumente",
+        "text": "Verträge, Protokolle, Hausordnung und Abrechnungen sicher an einem Ort."
+      }
+    }
   },
   "facilities": {
     "bookings": {
@@ -3107,6 +3161,27 @@
         "requiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
         "invalidNumbers": "Menge und Einzelpreis müssen gültige Zahlen sein"
       }
+    }
+  },
+  "shell": {
+    "brand": "Hausverwaltung",
+    "mainNavigation": "Hauptnavigation",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "createAccount": "Konto erstellen",
+    "sections": {
+      "overview": "Übersicht",
+      "operations": "Gebäudebetrieb",
+      "governance": "Eigentümer & Verwaltung",
+      "community": "Gemeinschaft",
+      "finance": "Finanzen",
+      "rentals": "Miete & Vermietung",
+      "tools": "Werkzeuge"
+    },
+    "account": {
+      "password": "Passwort",
+      "twoFactor": "Zwei-Faktor-Authentifizierung",
+      "notifications": "Benachrichtigungseinstellungen"
     }
   }
 }
