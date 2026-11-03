@@ -306,6 +306,57 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-data",
+      "action": "reality-web agent public profile (/realtor/[id]) renders hardcoded MOCK_AGENT for every id and its contact form fakes submit (no API call)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-03T08:26:12Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T08:26:12Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-feed-sync-silent-fail",
+      "action": "reality-web FeedImport 'Sync now' fires useSyncFeedSource mutation with no error handling — sync failures are silent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-03T08:26:12Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T08:26:12Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-untranslated",
+      "action": "reality-web inquiries page renders raw inquiry.type enum via .replace('_',' ') — untranslated for sk/cs/de users",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-03T08:26:12Z (score=1 conf=medium vector=i18n)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T08:26:12Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "i18n"
+      }
     }
   ],
   "generated": "2026-10-28T11:00:00Z"
