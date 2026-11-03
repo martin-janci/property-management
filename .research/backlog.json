@@ -14068,17 +14068,20 @@
       "sources": [
         "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
         "PR #3189",
-        "PR #3209"
+        "PR #3209",
+        "PR #3213",
+        "PR #3221"
       ],
       "evidence": [
         "PR #3189 (ranked-ballot ordering) and PR #3209 (ranked-ballot a11y labels/hint fix for issue #3206) both edit the same test file within 48h — hotspot runs_seen 1→2.",
-        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path."
+        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path.",
+        "runs_seen 2 -> 3 (2026-11-01, 2026-11-02, 2026-11-03) — PR #3213 stabilize + PR #3221 branch-tests decouple (draft, dispatcher-claimed)"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
       ],
       "created_at": "2026-11-02",
-      "updated_at": "2026-11-02",
+      "updated_at": "2026-11-03",
       "plan": null
     },
     {
@@ -14325,6 +14328,102 @@
       "score_delta": 1,
       "candidate_vector": "i18n",
       "expert": "frontend"
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "title": "screen-map-drift: PR #3217 touched reality-web edit/page.tsx without updating docs/screens/reality",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3217"
+      ],
+      "evidence": [
+        "PR #3217 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_number.ts,_number.test.ts} without a docs/screens/reality/*.md update",
+        "best-effort heuristic — diff is helper extraction (_number.ts) from page.tsx, not a UI change; a human review candidate rather than a promotable plan"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-moderation-take-action-no-state-guard",
+      "title": "take_moderation_action lacks status guard — overwrites AppealApproved/Rejected cases",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-11-03",
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:437",
+        "backend/crates/db/src/repositories/compliance.rs:803"
+      ],
+      "evidence": [
+        "moderation.rs:437 take_moderation_action has no status guard (file_appeal gained one in PR #3192; this sibling did not)",
+        "compliance.rs:803-826 UPDATE lacks `status NOT IN ('appeal_approved','appeal_rejected')` predicate — moderator Remove action on an approved appeal silently erases the appeal decision",
+        "Scenario: owner's appeal was approved (content stays). Manager-role moderator POSTs action=Remove — handler maps to ModerationStatus::Removed, UPDATE flips the row, appeal is erased. Fully bypasses the PR #3192 file_appeal fix via a sibling route"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": "plans/code-review-api-handlers-moderation-take-action-no-state-guard.md"
+    },
+    {
+      "id": "code-review-api-handlers-moderation-decide-appeal-no-state-guard",
+      "title": "decide_appeal lacks state guard — fabricates appeal outcomes on cases without filed appeals",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-11-03",
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:597",
+        "backend/crates/db/src/repositories/compliance.rs:877"
+      ],
+      "evidence": [
+        "moderation.rs:597 decide_appeal validates decision/rationale but never loads the case nor checks that appeal_filed = TRUE or status = Appealed before calling compliance_repo.decide_appeal",
+        "compliance.rs:877-895 UPDATE lacks `appeal_filed = TRUE AND status = 'appealed'` predicate — moderator can POST /moderation/cases/{id}/appeal/decide on a case with no filed appeal; UPDATE succeeds and fabricates appeal_decision/decided_by/decided_at",
+        "Scenario A: fabricated appeal outcome used in later DSA Art. 17 statements of reasons. Scenario B: re-POST on AppealApproved overwrites prior decided_by/decided_at (audit forensics loss). Companion gap to the file_appeal status guard added in PR #3192"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": "plans/code-review-api-handlers-moderation-decide-appeal-no-state-guard.md"
+    },
+    {
+      "id": "code-review-api-handlers-moderation-file-appeal-no-audit",
+      "title": "file_appeal mutates state without a compliance_audit entry — DSA Art. 20 complaints missing from audit_logs",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers] 2026-11-03",
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480",
+        "backend/servers/api-server/src/routes/aml_dsa/shared.rs:69"
+      ],
+      "evidence": [
+        "moderation.rs:480-567 file_appeal is the only state-mutating moderation handler that does NOT call write_compliance_audit (take_moderation_action :449 and decide_appeal :609 both do)",
+        "moderation.rs:554-558 only emits tracing::info!(case_id, appealed_by, \"Appeal filed\") — rotated application logs, not the persistent audit_logs table AML/DSA record-keeping relies on",
+        "Scenario: EU DSA Art. 20 internal complaint filed; content_owner_id + appeal_reason + timestamp live only on moderation_cases + a tracing span. Later audit/export or regulator Art. 24 request cannot reconstruct who filed what and when"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
     }
   ]
 }

@@ -306,7 +306,115 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-qa-assign-violation-xtenant-404-contract-decide-2026-11-03",
+      "action": "Decide the cross-tenant 404-vs-role-403 contract for violations.assign and either fix assign_violation to return 404 cross-tenant OR adjust the regression test's role shape — unblocks backend.yml on dev (#3187)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [
+        "UNRESOLVED:pm-security"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
+    },
+    {
+      "id": "pm-qa-announcement-fanout-rls-integration-test-2026-11-03",
+      "action": "Replace pure-Rust announcement fan-out model test with #[sqlx::test] integration test pinning the actual RLS policy (closes carried #2484 risk)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
+    },
+    {
+      "id": "pm-qa-votedetail-cast-post-contract-assert-2026-11-03",
+      "action": "Add VoteDetailScreen.test.tsx contract assertion that onSubmit emits POST to /api/v1/votes/{id}/cast with the collected ballot — close the ranked-ballot regression class driving the 2nd churn run",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-frontend",
+      "depends_on": [
+        "UNRESOLVED:pm-frontend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
+    },
+    {
+      "id": "pm-qa-dispute-kpis-unquarantine-window-validation-2026-11-03",
+      "action": "Un-quarantine the dispute KPIs test and add window_start<=window_end validation + reporting-consumer-contract case (carried from pm-backend 2026-07-30 risk)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-backend",
+      "depends_on": [
+        "UNRESOLVED:pm-backend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
+    },
+    {
+      "id": "pm-qa-msw-submit-smoke-gate-2026-11-03",
+      "action": "Adopt the per-screen MSW/Mirage submit-smoke gate (mobile + reality-web): any form with a Submit button must assert the network call emits with the collected payload (closes the fake-submit-pattern cluster class)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "pm-frontend",
+      "depends_on": [
+        "UNRESOLVED:pm-frontend"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
+    },
+    {
+      "id": "pm-qa-sprint-status-vs-blockers-reconcile-2026-11-03",
+      "action": "Audit sprint-status.yaml drift vs coverage.json — the 2026-10-26 reconcile pass still leaves blockers list unchanged although #3187 is now the dominant one; make sprint-status the single source of truth for CI-gating blockers",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "pm-scrum-master",
+      "depends_on": [
+        "UNRESOLVED:pm-scrum-master"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
+    },
+    {
+      "id": "pm-scrum-master-rustsec-3168-resolve-2026-11-03",
+      "action": "Resolve #3168 cargo-deny RUSTSEC advisories (bump transitive crate or bounded exception with deadline captured in action-list) — unblocks every backend PR merge",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [
+        "UNRESOLVED:pm-security"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
+    },
+    {
+      "id": "pm-scrum-master-staleness-bias-pm-cursor-2026-11-03",
+      "action": "Add staleness-bias to pm_cursor rotation (prefer any role >60d stale over current index) — closes the carried pm-frontend-rotation-stale meta-risk; one-file change to routine code",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T06:30:00Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-03T06:30:00Z"
 }

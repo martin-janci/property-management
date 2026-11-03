@@ -1,50 +1,56 @@
-# pm-qa — QA / Test lens (2026-08-25)
+# pm-qa — rotating role report
 
-_Rotation idx 3 of 8. Read-only static analysis of sprint-status + merged PRs + open issues. Previous run: 2026-06-15 (71 days stale)._
+_Generated: 2026-11-03 (routine Phase 1.6, 70-day stale rotation slot)_
 
-## Role JSON
+## Summary
+
+Test discipline is up this window — all 5 merged PRs (#3216 docs, #3217 reality-web, #3218 ppt-web, #3219 reality-server, #3220 ppt-web) shipped a two-commit `test:`/`fix:` TDD split with explicit fails-before-fix evidence (IG3). But VoteDetailScreen.test.tsx is on its 2nd consecutive churn run (PRs #3189 → #3209), the pure-Rust announcement fan-out model test still fakes the RLS predicate (carried risk from 2026-07-23), and #3187 (`cross_org_assign_violation_is_not_found` expects 404, gets 403) continues to block backend CI on `dev` — so the gating fault is a test-vs-code contract gap, exactly pm-qa territory.
+
+## Risk-based test view (top gaps this cycle)
+
+| Area | Risk | Priority | Test type needed |
+|---|---|---|---|
+| violations.rs `assign` cross-tenant contract | Dev CI red; manager-role 403 masks the cross-tenant 404 contract (#3187) | **high** | integration (axum + sqlx), mirror of `community_cross_tenant_idor_tests.rs` |
+| mobile-rn voting feature | VoteDetailScreen.test.tsx churn 2/2 — suite is unstable/under-asserting (ranked-ballot + i18n fallback bugs both landed on top of green tests) | high | add contract test for `vote.cast` POST + i18n lockstep guard |
+| Announcement cross-tenant fan-out (carried #2484) | SQL predicate re-modelled in pure Rust — RLS could regress silently | medium | replace with `#[sqlx::test]` integration pinning the actual policy |
+| Dispute KPIs endpoint (carried) | Quarantined test in main; shape regression could ship undetected | medium | un-quarantine + add window validation + consumer-contract test |
+| Mobile-rn form submission pattern | 3 "wire-the-button-but-not-POST" bugs in 7 days — chronic defect class | high | per-screen MSW smoke asserting Submit emits POST with payload |
+
+## Release-readiness signal — **AMBER**
+
+- `backend.yml` on `dev` is currently red (#3187 and #3168 cargo-deny). No backend PR can merge until either is cleared.
+- Frontend lanes green. 5513 ppt-web tests + 378 reality-web tests pass.
+- No release-blocking regression in the merged window; all 5 PRs carried green CI + fails-before-fix proof.
+
+## next_actions
 
 ```json
-{
-  "role": "pm-qa",
-  "summary": "13 PRs merged in this window fixed real defects but 7 of them lack the test that would guard against re-regression — the auto-fix loop is now producing enough follow-up-issue-and-close activity that a QA test-shadow discipline is the next lever. The atomic-claim concurrency test (#2834 / #2831 closure) and the booking-connect authz test (#2821) are the two high-priority gaps this run.",
-  "next_actions": [
-    {"action": "Add >1-replica concurrency integration test for quiet-hours drain atomic claim (#2834 / closed #2831) — assert at-most-once delivery under 2 racing api-server replicas contending on the same held-notification batch", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Integration test spins up 2 api-server replicas against shared Postgres + Redis, both drain the same held-notification set, assertion: exactly-one send per (user, channel, notification_id)."},
-    {"action": "Add authz regression test for direct-connect OTA credential writes (#2821) — assert non-manager role is rejected at the booking-connect endpoint (was hijackable before this window)", "priority": "high", "dependency": "rust-backend", "definition_of_done": "Test attempts direct-connect credential write as (tenant, staff, admin-of-other-org) roles; asserts 403; asserts manager succeeds."},
-    {"action": "Add regression test for VoteDetailScreen conditional-hooks fix (#2835) — snapshot render with the empty/loading branch that triggered the rules-of-hooks violation", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Jest-expo test renders VoteDetailScreen in the loading-then-loaded transition; asserts no React warning; snapshot stable."},
-    {"action": "Add fuzz/property test for CSV export sanitizer (#2827 / closed #2822) — CR × LF × CRLF × formula-injection prefixes × every export column type", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "proptest crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × column-type; asserts no raw newline, no formula prefix escape, header preserved."},
-    {"action": "Add unit + integration test for voice OAuth token encryption round-trip after centralization (#2838) — cover Alexa + Google + fallback provider; assert no plaintext at rest", "priority": "medium", "dependency": "rust-backend", "definition_of_done": "Test encrypts token → writes DB row → reads back → decrypts → equality; additional assertion: DB byte-inspection does not contain plaintext token substring."},
-    {"action": "Add ppt-web test asserting AML EDD/Review dialog state resets per assessment (#2833 / closed #2832) — open dialog on assessment A, cancel, open on assessment B, assert reason/notes cleared", "priority": "medium", "dependency": "pm-frontend", "definition_of_done": "Vitest render test opens dialog with assessment A, types reason/notes, cancels, opens with assessment B; asserts inputs empty."}
-  ],
-  "risks": [
-    {"risk": "3 of this window's mobile-rn PRs (#2835 conditional hooks / #2836 hardcoded en / #2837 hardcoded en) fixed defects that eslint-plugin-react-hooks + a no-hardcoded-strings rule would catch statically — every future mobile-rn PR risks reintroducing them", "probability": "high", "impact": "medium", "mitigation": "Adopt eslint-plugin-react-hooks + i18next-hardcoded-strings ESLint config in frontend/apps/mobile; gate CI on it."},
-    {"risk": "PR #2834 (atomic claim for quiet-hours drain) closes #2831 but no test exercises the >1 api-server-replica race — the exact scenario the fix was written for is unverified", "probability": "medium", "impact": "high", "mitigation": "Add integration test with 2 racing api-server replicas contending on the same held-notification batch; assert at-most-once delivery."},
-    {"risk": "PR #2838 centralized voice OAuth token encryption but there is no round-trip test asserting no plaintext at rest — a future field-rename or key-derivation change could silently store plaintext", "probability": "medium", "impact": "high", "mitigation": "Add unit + integration test covering encrypt(token) → DB row → decrypt(row) → token equality across Alexa/Google/fallback; assert stored bytes are not the plaintext token."},
-    {"risk": "PR #2827 neutralizes CR/LF in the CSV export sanitizer but the test suite likely only covers the reported inputs — formula-injection prefixes (= + - @) combined with CR/LF are the classic bypass class and remain unfuzzed", "probability": "medium", "impact": "medium", "mitigation": "Add a property/fuzz test crossing {CR, LF, CRLF, NUL, U+2028, U+2029} × {=, +, -, @, tab} × every export column type."},
-    {"risk": "Auto-fix loop closed 7/7 in-window follow-ups but the same-window close creates the illusion the fixes are proven — 5 of the 7 shipped without a regression test. The loop's compensating-transaction property masks a growing test-shadow debt.", "probability": "high", "impact": "medium", "mitigation": "Adopt a policy: any dispatcher-spawned fix PR requires a failing-on-main test file in the same PR before it can enter the merge queue; enforce via CI diff-guard."}
-  ],
-  "open_questions": [
-    "Should the mobile-rn ESLint gate (react-hooks + no-hardcoded-strings) be blocking on first adoption or warn-only for one sprint to let the existing violations be fixed batch-wise?",
-    "Is there an existing PPT test harness for spinning up 2 api-server replicas against shared Postgres+Redis, or does the atomic-claim concurrency test need new fixture infra?",
-    "Do we have canonical fuzz-corpus discipline for sanitizers (CSV, XSS, HTML), or is each sanitizer testing its own inputs today?",
-    "The 'test-shadow' pattern (fix PR without regression test) — is the pm-qa Definition-of-Done gate advisory or blocking? DEC-001-style formalization needed?"
-  ],
-  "decisions_needed": [
-    "Should any dispatcher-spawned fix PR require a failing-on-main test file in the same PR before it can enter the merge queue (enforced via CI diff-guard)? — owner: pm-tech-lead + pm-qa",
-    "Frontend mobile lint gate rollout — blocking on first adoption vs warn-only for one sprint? — owner: pm-frontend + pm-qa",
-    "Fuzz-corpus discipline for shared sanitizers (CSV, XSS, HTML, JSON) — do we ship a shared proptest corpus crate under backend/crates/? — owner: pm-tech-lead"
-  ]
-}
+[
+  {"action":"Decide the cross-tenant 404-vs-role-403 contract for violations.assign and either fix assign_violation to return 404 cross-tenant OR adjust the regression test's role shape — unblocks backend.yml on dev (#3187)","priority":"high","dependency":"pm-security","definition_of_done":"backend.yml green on dev; cross_org_assign_violation_is_not_found passes with the chosen contract documented in violations_mutation_cross_org_idor_tests.rs"},
+  {"action":"Open integration-level sqlx replacement for the pure-Rust announcement fan-out model test (#2484 carried)","priority":"medium","dependency":"none","definition_of_done":"announcement_targeting_rls_integration_test.rs lands and the pure-Rust model is deleted or demoted to a unit-only sanity check"},
+  {"action":"Add VoteDetailScreen.test.tsx contract assertion that onSubmit emits POST to /api/v1/votes/{id}/cast with the collected ballot — close the ranked-ballot regression class driving the 2nd churn run","priority":"high","dependency":"pm-frontend","definition_of_done":"test fails before the next ranked-ballot regression; VoteDetailScreen stops hitting the hotspot list"},
+  {"action":"Un-quarantine the dispute KPIs test and add window_start<=window_end validation + reporting-consumer-contract case (carried from pm-backend 2026-07-30 risk)","priority":"medium","dependency":"pm-backend","definition_of_done":"dispute KPIs test executes in default CI run; shape regression surfaces before merge"},
+  {"action":"Adopt the per-screen MSW/Mirage submit-smoke gate (mobile + reality-web): any form with a Submit button must assert the network call emits with the collected payload (closes the fake-submit-pattern cluster class)","priority":"high","dependency":"pm-frontend","definition_of_done":"CI job rejects a PR that adds a Submit handler without an MSW assertion; retrofit at least ReportFault + reality-web /sell + VoteDetail"},
+  {"action":"Audit sprint-status.yaml drift vs coverage.json — the 2026-10-26 reconcile pass still leaves blockers list unchanged although #3187 is now the dominant one; make sprint-status the single source of truth for CI-gating blockers too","priority":"low","dependency":"pm-scrum-master","definition_of_done":"sprint-status.yaml `blockers:` reflects #3187/#3168/#3164/#3131 or explicitly delegates them to action-list.json"}
+]
 ```
 
-## Notes
+## risks
 
-- Rotation idx 3 of 8; next pm-qa run ~ 2026-09-25 (assuming ~30-day-per-role cadence).
-- Six pm-qa next_actions appended to `action-list.json` with `source = "pm-qa 2026-08-25"`; four risks and one carried risk-flavor appended to `risks.json`.
-- Coverage epic-80 (rotation idx 5) re-checked — all 3 stories still `done`; last_checked stamped 2026-08-25. No PR in this window touched dispute routes.
-- Merged-PR observations that shaped this run:
-  - #2835 fixed a React `rules-of-hooks` violation in mobile-rn VoteDetailScreen — a `eslint-plugin-react-hooks` lint gate on frontend/apps/mobile would have caught this before code review.
-  - #2836 / #2837 shipped hardcoded English strings in mobile-rn — same lint story, different rule (`i18next/no-literal-string`).
-  - #2834 atomic-claim fix for quiet-hours drain — closes #2831 but is the exact scenario a >1-replica concurrency test should own.
-  - #2838 centralized voice OAuth token encryption — should ship with a round-trip test as a matter of hygiene.
-- Auto-review loop closed 7/7 in-window; net test-shadow debt grew by ~5 fixes-without-tests (raised as pm-qa risk this run).
+```json
+[
+  {"risk":"VoteDetailScreen.test.tsx is on consecutive-run churn (runs_seen=2) while mobile-rn voting bugs keep landing on top of green tests — the test suite is passing but under-asserting the ranked-ballot + i18n lifecycle, so each bug costs a round-trip","probability":"high","impact":"medium","mitigation":"Convert the test from render-smoke to behavior-contract: assert cast-POST payload, ranked ballot ordering, and i18n defaultValue fallbacks; freeze the test shape with a lockstep guard"},
+  {"risk":"Backend CI on dev is red (#3187 + #3168) long enough that implementers start merging around it or shipping without re-running CI — classic broken-windows for a test gate","probability":"medium","impact":"high","mitigation":"Treat #3187 as a release-blocker: pm-security owns the contract decision today, pm-qa validates the fix; add a routine Phase-6 alarm when dev CI stays red >24h"},
+  {"risk":"Three 'wire-but-no-POST' mobile/web regressions in 7 days suggest the e2e-smoke gap pm-frontend already surfaced is still not shipping — pm-qa must co-own the eslint/MSW gate roll-out or the pattern will keep landing","probability":"high","impact":"high","mitigation":"Co-sign the lint+MSW gate action with pm-frontend; QA DoD includes a per-screen Submit-POST smoke before any new form-screen merge"}
+]
+```
+
+## open_questions
+
+- Is the intended cross-tenant contract for violations.assign 404 (opacity, matches community IDOR pattern) or 403 (role-gate first)? pm-security owns this call; without the answer #3187 cannot land.
+- Should the dispute KPIs test un-quarantine happen before or after the carried pm-backend window_start validation lands? Sequence matters for TDD evidence.
+
+## decisions_needed
+
+- Cross-tenant 404-vs-403 contract for violations mutation handlers — owner: pm-security
+- Adopt per-screen Submit-POST MSW gate across mobile + reality-web — owner: pm-frontend (with pm-qa co-signing the DoD)

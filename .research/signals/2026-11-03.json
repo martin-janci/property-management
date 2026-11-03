@@ -1,0 +1,286 @@
+{
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-11-02T03:16:48Z..2026-11-03",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit — 2 touches this run (PR #3213 stabilize + PR #3221 branch-tests decouple). hotspot_history runs_seen 2 -> 3. Churn: 24 lines."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit — runs_seen 2 -> 3 (2026-11-01, 2026-11-02, 2026-11-03) PRs #3189, #3209, #3213, #3221. Branch-tests decouple PR #3221 still in review."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "cumulative": true
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3217",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3217 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_number.ts,_number.test.ts} with no docs/screens/reality/*.md update.",
+        "Best-effort heuristic — the diff is helper extraction (page.tsx -> _number.ts), not a UI change. Treat as a human review candidate; the Phase 3 readiness gate deprioritises these."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bump actions/setup-java 5 -> 6, open 36 days, no reviewDecision"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2590",
+      "type": "dep-update-noise",
+      "source": "PR #2590",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bump expo-device 56.0.4 -> 57.0.1, open 60 days"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2589",
+      "type": "dep-update-noise",
+      "source": "PR #2589",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bump @testing-library/react-native 13.3.3 -> 14.0.1, open 60 days"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2588",
+      "type": "dep-update-noise",
+      "source": "PR #2588",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bump expo-status-bar 56.0.4 -> 57.0.1, open 60 days"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-2584",
+      "type": "dep-update-noise",
+      "source": "PR #2584",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot bump sentry Rust 0.48.5 -> 0.49.0, open 60 days"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "code-review-api-handlers-moderation-take-action-no-state-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:437 — take_moderation_action has no status guard (file_appeal gained one in PR #3192; sibling did not).",
+        "backend/crates/db/src/repositories/compliance.rs:803-826 — UPDATE lacks status NOT IN ('appeal_approved','appeal_rejected') predicate.",
+        "Scenario: owner's appeal approved; moderator POSTs action=Remove; UPDATE flips row and erases appeal decision. Bypasses PR #3192 via sibling route."
+      ],
+      "expert": "security",
+      "sources": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:410",
+        "backend/crates/db/src/repositories/compliance.rs:786"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-moderation-decide-appeal-no-state-guard",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:597 — decide_appeal validates decision/rationale but never loads the case and never checks appeal_filed = TRUE or status = Appealed before calling compliance_repo.decide_appeal.",
+        "backend/crates/db/src/repositories/compliance.rs:877-895 — UPDATE lacks appeal_filed = TRUE AND status = 'appealed' predicate.",
+        "Scenario A: moderator POSTs decide-appeal on a case with no filed appeal — fabricated outcome. Scenario B: re-POST on AppealApproved overwrites prior decided_by/decided_at — audit forensics loss."
+      ],
+      "expert": "security",
+      "sources": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:577",
+        "backend/crates/db/src/repositories/compliance.rs:864"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs",
+        "backend/crates/db/src/repositories/compliance.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-moderation-file-appeal-no-audit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480-567 — file_appeal mutates state (appeal_filed, appeal_reason, status='appealed') without calling write_compliance_audit; the helper is called only at :449 (take_moderation_action) and :609 (decide_appeal).",
+        "moderation.rs:554-558 — only emits tracing::info!, which lands in rotated application logs, not audit_logs.",
+        "Scenario: EU DSA Art. 20 internal complaint filed; the actor-indexed entry is missing from audit_logs; a later Art. 24 regulator request cannot reconstruct the actor/time of the filing."
+      ],
+      "expert": "security",
+      "sources": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs:480",
+        "backend/servers/api-server/src/routes/aml_dsa/shared.rs:69"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/aml_dsa/moderation.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches date",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq .items ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative dup signals with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap <=8 + no open items with updated_at <= today-14 to decay",
+      "observed": "no cap violation; 0 decay-eligible",
+      "expected": "cap ok, decay ok"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan annotated with adversarial pass in brief",
+      "observed": "2/2 annotated passed",
+      "expected": "annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; metadata + 11 headings + mode + ticked cap + Files resolve",
+      "observed": "2 plans; all checks pass; all file paths resolve",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan on staged diff (exempt baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen (pinned TS)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phase-failures list matches cursor non-advancement",
+      "observed": "all phases succeeded; cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD count",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen (pinned TS)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions this run (no allowlist candidate)",
+      "expected": "caps + idempotency ok"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor in 0..7; coverage_cursor advanced vs HEAD",
+      "observed": "pm 3->4, cc 0->1, 13 epics",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot token in staged diff (exempt baseline docs)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no allowlist signal met high-conf + score >= 3 this run; the two security plans are >= 3 but ineligible — code fixes are not in Phase 5 allowlist)"
+}

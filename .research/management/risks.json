@@ -1,7 +1,40 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-03T06:30:00Z",
   "items": [
+    {
+      "id": "pm-qa-votedetail-churn-under-asserting-2026-11-03",
+      "risk": "VoteDetailScreen.test.tsx is on consecutive-run churn (runs_seen=2) while mobile-rn voting bugs keep landing on top of green tests — the test suite is passing but under-asserting the ranked-ballot + i18n lifecycle, so each bug costs a round-trip",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Convert the test from render-smoke to behavior-contract: assert cast-POST payload, ranked ballot ordering, and i18n defaultValue fallbacks; freeze the test shape with a lockstep guard",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open",
+      "source": "pm-qa 2026-11-03"
+    },
+    {
+      "id": "pm-qa-dev-ci-red-broken-windows-2026-11-03",
+      "risk": "Backend CI on dev is red (#3187 + #3168) long enough that implementers start merging around it or shipping without re-running CI — classic broken-windows for a test gate",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Treat #3187 as a release-blocker: pm-security owns the contract decision today, pm-qa validates the fix; add a routine Phase-6 alarm when dev CI stays red >24h",
+      "owner_role": "pm-qa",
+      "trigger": "backend.yml red on dev for >24h",
+      "status": "open",
+      "source": "pm-qa 2026-11-03"
+    },
+    {
+      "id": "pm-scrum-master-rotation-skew-backend-heavy-2026-11-03",
+      "risk": "Role rotation is skewing backend-heavy — pm-qa 70-day stale (now running), pm-devops 64d; staleness-weighted rotation was proposed 2026-10-28 but is still unqueued. Finding velocity by domain drifts further from staleness every week the bias is not shipped",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Land the staleness-bias change on pm_cursor (prefer any role >60d stale over the current index) — single-file change to routine code; closes the carried pm-frontend-rotation-stale meta-risk",
+      "owner_role": "pm-scrum-master",
+      "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open",
+      "source": "pm-scrum-master 2026-11-03"
+    },
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
       "risk": "utoipa-swagger-ui egress 403 (#2966) renders api-server structurally unbuildable in the cloud runner \u2014 every backend-touching dispatcher task is CLOUD-BUILD-BLOCKED, including all 3 open cross-tenant IDOR retries (#2944/#2945/#2946). Security fixes are not landing because the toolchain can't compile, not because the fix is hard",
