@@ -9,7 +9,7 @@
  * Person-months hang off a building (and, for the unit views, a unit), so every
  * route is nested under `/buildings/:buildingId`. The building- and unit-level
  * endpoints only return units that already have an entry, so the building-level
- * wrappers also list the building's units (`/api/v1/units?buildingId=`) and
+ * wrappers also list the building's units (`/api/v1/buildings/{id}/units`) and
  * left-join the counts onto them — units with no data show a count of 0.
  */
 import type {
@@ -68,6 +68,11 @@ const currentMonth = new Date().getMonth() + 1;
 // Building units (no person-months endpoint lists all units, so fetch them)
 // ============================================================================
 
+/** Page size for `GET /buildings/{id}/units` (the backend caps `limit` at 100). */
+const UNIT_PAGE_SIZE = 100;
+/** Safety cap on pages fetched (10 000 units). */
+const MAX_UNIT_PAGES = 100;
+
 interface BuildingUnit {
   id: string;
   designation: string;
@@ -86,10 +91,20 @@ export function useBuildingUnits(buildingId: string | undefined) {
     queryKey: ['person-months', 'building-units', buildingId ?? ''],
     enabled: !!buildingId,
     queryFn: async (): Promise<BuildingUnit[]> => {
-      const res = await getApiClient().get<{
-        data: Array<{ id: string; unitNumber: string }>;
-      }>('/units', { params: { buildingId, limit: 500 } });
-      return (res.data.data ?? []).map((u) => ({ id: u.id, designation: u.unitNumber }));
+      // `GET /buildings/{id}/units` caps `limit` at 100, so page until `total`.
+      const units: BuildingUnit[] = [];
+      for (let page = 0; page < MAX_UNIT_PAGES; page++) {
+        const res = await getApiClient().get<{
+          units: Array<{ id: string; designation: string }>;
+          total: number;
+        }>(`/buildings/${buildingId}/units`, {
+          params: { offset: units.length, limit: UNIT_PAGE_SIZE },
+        });
+        const batch = res.data.units ?? [];
+        units.push(...batch.map((u) => ({ id: u.id, designation: u.designation })));
+        if (batch.length === 0 || units.length >= res.data.total) break;
+      }
+      return units;
     },
   });
   return { units: data ?? [], isLoading };
