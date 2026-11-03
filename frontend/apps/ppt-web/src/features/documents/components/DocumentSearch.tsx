@@ -16,13 +16,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DocumentSearchResult as SearchResultCard } from './DocumentSearchResult';
 
-/** Human-readable labels for the audience filter chips (7a-3). */
-const ACCESS_SCOPE_LABELS: Record<AccessScope, string> = {
-  organization: 'All members',
-  building: 'Building',
-  unit: 'Unit',
-  user: 'Private',
-  public: 'Public',
+/** i18n keys for the audience filter chip labels (7a-3). */
+const ACCESS_SCOPE_LABEL_KEYS: Record<AccessScope, string> = {
+  organization: 'documents.search.audience.organization',
+  building: 'documents.search.audience.building',
+  unit: 'documents.search.audience.unit',
+  user: 'documents.search.audience.user',
+  public: 'documents.search.audience.public',
 };
 
 interface DocumentSearchProps {
@@ -132,7 +132,7 @@ export function DocumentSearch({
             type="text"
             value={query}
             onChange={handleQueryChange}
-            placeholder="Search document contents, titles, and descriptions..."
+            placeholder={t('documents.search.placeholder')}
             className="search-input"
           />
           {isLoading && <span className="loading-spinner" />}
@@ -143,7 +143,7 @@ export function DocumentSearch({
       <div className="search-filters">
         {/* Category Filter */}
         <fieldset className="filter-group">
-          <legend className="filter-label">Categories</legend>
+          <legend className="filter-label">{t('documents.search.categories')}</legend>
           <div className="filter-chips">
             {DOCUMENT_CATEGORIES.map((category) => (
               <button
@@ -153,7 +153,7 @@ export function DocumentSearch({
                 className={`filter-chip ${selectedCategories.includes(category) ? 'active' : ''}`}
                 aria-pressed={selectedCategories.includes(category)}
               >
-                {category}
+                {t(`documents.category.${category}`, { defaultValue: category })}
               </button>
             ))}
           </div>
@@ -161,7 +161,7 @@ export function DocumentSearch({
 
         {/* OCR Status Filter */}
         <fieldset className="filter-group">
-          <legend className="filter-label">OCR Status</legend>
+          <legend className="filter-label">{t('documents.search.ocrStatus')}</legend>
           <div className="filter-chips">
             {(['completed', 'pending', 'processing', 'failed'] as OcrStatus[]).map((status) => (
               <button
@@ -171,7 +171,7 @@ export function DocumentSearch({
                 className={`filter-chip ${ocrStatusFilter.includes(status) ? 'active' : ''}`}
                 aria-pressed={ocrStatusFilter.includes(status)}
               >
-                {status}
+                {t(`documents.search.ocr.${status}`)}
               </button>
             ))}
           </div>
@@ -179,18 +179,20 @@ export function DocumentSearch({
 
         {/* Audience / Access Scope Filter (RLS-aware, 7a-3) */}
         <fieldset className="filter-group">
-          <legend className="filter-label">Audience</legend>
+          <legend className="filter-label">{t('documents.search.audienceLegend')}</legend>
           <div className="filter-chips">
-            {(Object.keys(ACCESS_SCOPE_LABELS) as AccessScope[]).map((scope) => (
+            {(Object.keys(ACCESS_SCOPE_LABEL_KEYS) as AccessScope[]).map((scope) => (
               <button
                 key={scope}
                 type="button"
                 onClick={() => setAccessScopeFilter((prev) => (prev === scope ? undefined : scope))}
                 className={`filter-chip ${accessScopeFilter === scope ? 'active' : ''}`}
                 aria-pressed={accessScopeFilter === scope}
-                title={`Show only documents visible to: ${ACCESS_SCOPE_LABELS[scope]}`}
+                title={t('documents.search.audienceTitle', {
+                  audience: t(ACCESS_SCOPE_LABEL_KEYS[scope]),
+                })}
               >
-                {ACCESS_SCOPE_LABELS[scope]}
+                {t(ACCESS_SCOPE_LABEL_KEYS[scope])}
               </button>
             ))}
           </div>
@@ -198,7 +200,7 @@ export function DocumentSearch({
 
         {/* Date Range */}
         <div className="filter-group">
-          <span className="filter-label">Date Range</span>
+          <span className="filter-label">{t('documents.search.dateRange')}</span>
           <div className="date-inputs">
             <input
               type="date"
@@ -207,7 +209,7 @@ export function DocumentSearch({
               className="date-input"
               aria-label={t('aria.fromDate')}
             />
-            <span>to</span>
+            <span>{t('documents.search.dateTo')}</span>
             <input
               type="date"
               value={dateTo}
@@ -226,20 +228,22 @@ export function DocumentSearch({
               checked={hasSummaryFilter === true}
               onChange={(e) => setHasSummaryFilter(e.target.checked ? true : undefined)}
             />
-            Has AI summary
+            {t('documents.search.hasSummary')}
           </label>
         </div>
       </div>
 
       {/* Results */}
       <div className="search-results">
-        {error && <div className="error-message">Error searching documents: {error.message}</div>}
+        {error && (
+          <div className="error-message">
+            {t('documents.search.error', { error: error.message })}
+          </div>
+        )}
 
         {data && debouncedQuery.length >= 2 && (
           <div className="results-header">
-            <span>
-              Found {data.total} document{data.total !== 1 ? 's' : ''} in {data.took_ms}ms
-            </span>
+            <span>{t('documents.search.found', { count: data.total, ms: data.took_ms })}</span>
           </div>
         )}
 
@@ -252,11 +256,13 @@ export function DocumentSearch({
         ))}
 
         {data && data.results.length === 0 && debouncedQuery.length >= 2 && (
-          <div className="no-results">No documents found matching "{debouncedQuery}"</div>
+          <div className="no-results">
+            {t('documents.search.noResults', { query: debouncedQuery })}
+          </div>
         )}
 
         {debouncedQuery.length > 0 && debouncedQuery.length < 2 && (
-          <div className="search-hint">Type at least 2 characters to search</div>
+          <div className="search-hint">{t('documents.search.minChars', { count: 2 })}</div>
         )}
       </div>
 

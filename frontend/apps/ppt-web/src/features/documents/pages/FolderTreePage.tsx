@@ -72,9 +72,9 @@ function FolderDocuments({
   if (error) {
     return (
       <div className="fd__error" role="alert">
-        <p>Dokumenty sa nepodarilo načítať.</p>
+        <p>{t('documents.browse.loadError')}</p>
         <button type="button" className="fd__retry" onClick={() => refetch()}>
-          Skúsiť znova
+          {t('common.tryAgain')}
         </button>
       </div>
     );
@@ -95,9 +95,9 @@ function FolderDocuments({
           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
           <polyline points="14 2 14 8 20 8" />
         </svg>
-        <p>Priečinok je prázdny</p>
+        <p>{t('documents.folder.folderEmpty')}</p>
         <Link to="/documents/upload" className="fd__upload-link">
-          Nahrať dokumenty
+          {t('documents.folder.uploadDocuments')}
         </Link>
       </div>
     );
@@ -117,7 +117,8 @@ function FolderDocuments({
                 <span className="fd__body">
                   <span className="fd__title">{doc.title}</span>
                   <span className="fd__meta">
-                    {doc.category} · {(doc.size_bytes / 1024).toFixed(1)} KB
+                    {t(`documents.category.${doc.category}`, { defaultValue: doc.category })} ·{' '}
+                    {(doc.size_bytes / 1024).toFixed(1)} KB
                   </span>
                 </span>
               </button>
@@ -126,8 +127,8 @@ function FolderDocuments({
                   type="button"
                   className="fd__move-btn"
                   onClick={() => onMoveRequest(doc)}
-                  aria-label={`Presunúť ${doc.file_name} do priečinka`}
-                  title="Presunúť do priečinka"
+                  aria-label={t('documents.browse.moveFile', { name: doc.file_name })}
+                  title={t('documents.browse.moveToFolder')}
                 >
                   <svg
                     width="14"
@@ -151,7 +152,7 @@ function FolderDocuments({
       {data && data.total > docs.length && (
         <li className="fd__more">
           <Link to={`/documents?folder_id=${folderId}`} className="fd__more-link">
-            Zobraziť všetkých {data.total} dokumentov →
+            {t('documents.folder.showAll', { count: data.total })} →
           </Link>
         </li>
       )}
@@ -216,12 +217,12 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
       <div className="ftp__header">
         <nav className="ftp__breadcrumb" aria-label={t('aria.navigation')}>
           <Link to="/documents" className="ftp__bc-link">
-            Dokumenty
+            {t('documents.title')}
           </Link>
           <span className="ftp__bc-sep" aria-hidden="true">
             /
           </span>
-          <span className="ftp__bc-current">Priečinky</span>
+          <span className="ftp__bc-current">{t('documents.page.folders')}</span>
         </nav>
         <div className="ftp__header-actions">
           <Link to="/documents/upload" className="ftp__upload-btn">
@@ -238,7 +239,7 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            Nahrať dokument
+            {t('documents.upload')}
           </Link>
           <Link to="/documents" className="ftp__back-btn">
             <svg
@@ -253,7 +254,7 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
-            Späť na dokumenty
+            {t('common.backToDocuments')}
           </Link>
         </div>
       </div>
@@ -281,13 +282,12 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
                   className="ftp__folder-bc"
                 />
               ) : (
-                <h2 className="ftp__content-title">Všetky dokumenty</h2>
+                <h2 className="ftp__content-title">{t('documents.folder.allDocuments')}</h2>
               )}
             </div>
             {selectedFolderId && selectedFolderDocs && (
               <span className="ftp__content-count">
-                {selectedFolderDocs.total} dokument
-                {selectedFolderDocs.total !== 1 ? 'ov' : ''}
+                {t('documents.browse.totalCount', { count: selectedFolderDocs.total })}
               </span>
             )}
           </div>
@@ -312,7 +312,9 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
           {/* Suppress unused variable lint: selectedDocumentId is used for detail panel integration */}
           {selectedDocumentId && (
             <div className="ftp__detail-hint" aria-live="polite">
-              <span className="sr-only">Dokument {selectedDocumentId} vybraný</span>
+              <span className="sr-only">
+                {t('documents.folder.documentSelected', { id: selectedDocumentId })}
+              </span>
             </div>
           )}
         </section>

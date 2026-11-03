@@ -3,6 +3,8 @@
  * Epic 77: Dispute Resolution (Story 77.1, 77.3)
  */
 
+import { useTranslation } from 'react-i18next';
+
 export type DisputeCategory =
   | 'noise'
   | 'damage'
@@ -53,15 +55,16 @@ const statusColors: Record<DisputeStatus, string> = {
   closed: 'bg-gray-100 text-gray-800',
 };
 
-const statusLabels: Record<DisputeStatus, string> = {
-  filed: 'Filed',
-  under_review: 'Under Review',
-  mediation: 'In Mediation',
-  awaiting_response: 'Awaiting Response',
-  resolved: 'Resolved',
-  escalated: 'Escalated',
-  withdrawn: 'Withdrawn',
-  closed: 'Closed',
+/** i18n keys for dispute status labels. */
+const statusLabelKeys: Record<DisputeStatus, string> = {
+  filed: 'disputes.statusFiled',
+  under_review: 'disputes.statusUnderReview',
+  mediation: 'disputes.statusInMediation',
+  awaiting_response: 'disputes.statusAwaitingResponse',
+  resolved: 'disputes.statusResolved',
+  escalated: 'disputes.statusEscalated',
+  withdrawn: 'disputes.statusWithdrawn',
+  closed: 'disputes.statusClosed',
 };
 
 const priorityColors: Record<DisputePriority, string> = {
@@ -71,25 +74,27 @@ const priorityColors: Record<DisputePriority, string> = {
   urgent: 'text-red-600 font-bold',
 };
 
-const priorityLabels: Record<DisputePriority, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-  urgent: 'Urgent',
+/** i18n keys for dispute priority labels. */
+const priorityLabelKeys: Record<DisputePriority, string> = {
+  low: 'disputes.priorityLow',
+  medium: 'disputes.priorityMedium',
+  high: 'disputes.priorityHigh',
+  urgent: 'disputes.priorityUrgent',
 };
 
-const categoryLabels: Record<DisputeCategory, string> = {
-  noise: 'Noise',
-  damage: 'Property Damage',
-  payment: 'Payment',
-  lease_terms: 'Lease Terms',
-  common_area: 'Common Area',
-  parking: 'Parking',
-  pets: 'Pets',
-  maintenance: 'Maintenance',
-  privacy: 'Privacy',
-  harassment: 'Harassment',
-  other: 'Other',
+/** i18n keys for dispute category labels. */
+const categoryLabelKeys: Record<DisputeCategory, string> = {
+  noise: 'disputes.categoryNoise',
+  damage: 'disputes.categoryPropertyDamage',
+  payment: 'disputes.categoryPayment',
+  lease_terms: 'disputes.categoryLeaseTerms',
+  common_area: 'disputes.categoryCommonArea',
+  parking: 'disputes.categoryParking',
+  pets: 'disputes.categoryPets',
+  maintenance: 'disputes.categoryMaintenance',
+  privacy: 'disputes.categoryPrivacy',
+  harassment: 'disputes.categoryHarassment',
+  other: 'disputes.categoryOther',
 };
 
 const categoryIcons: Record<DisputeCategory, string> = {
@@ -113,6 +118,7 @@ interface DisputeCardProps {
 }
 
 export function DisputeCard({ dispute, onView, onManage }: DisputeCardProps) {
+  const { t } = useTranslation();
   const daysAgo = Math.floor(
     (Date.now() - new Date(dispute.createdAt).getTime()) / (1000 * 60 * 60 * 24)
   );
@@ -126,7 +132,7 @@ export function DisputeCard({ dispute, onView, onManage }: DisputeCardProps) {
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${statusColors[dispute.status]}`}
             >
-              {statusLabels[dispute.status]}
+              {t(statusLabelKeys[dispute.status])}
             </span>
           </div>
           <button
@@ -137,18 +143,24 @@ export function DisputeCard({ dispute, onView, onManage }: DisputeCardProps) {
             {dispute.title}
           </button>
           <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-            <span>{categoryLabels[dispute.category]}</span>
+            <span>{t(categoryLabelKeys[dispute.category])}</span>
             <span className={priorityColors[dispute.priority]}>
-              {priorityLabels[dispute.priority]} Priority
+              {t('disputes.priorityWithLabel', {
+                priority: t(priorityLabelKeys[dispute.priority]),
+              })}
             </span>
-            <span>{dispute.partyCount} parties</span>
+            <span>{t('disputes.partyCount', { count: dispute.partyCount })}</span>
           </div>
           <div className="mt-2 text-sm text-gray-500">
-            <span>Filed by {dispute.filedByName}</span>
+            <span>{t('disputes.filedByName', { name: dispute.filedByName })}</span>
             {dispute.assignedToName && (
-              <span className="ml-3">Assigned to {dispute.assignedToName}</span>
+              <span className="ml-3">
+                {t('disputes.assignedToName', { name: dispute.assignedToName })}
+              </span>
             )}
-            <span className="ml-3">{daysAgo === 0 ? 'Today' : `${daysAgo} days ago`}</span>
+            <span className="ml-3">
+              {daysAgo === 0 ? t('disputes.today') : t('disputes.filedDaysAgo', { count: daysAgo })}
+            </span>
           </div>
         </div>
         <div className="flex gap-2">
@@ -157,7 +169,7 @@ export function DisputeCard({ dispute, onView, onManage }: DisputeCardProps) {
             onClick={() => onView(dispute.id)}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            View
+            {t('disputes.view')}
           </button>
           {onManage &&
             ['filed', 'under_review', 'mediation', 'awaiting_response'].includes(
@@ -168,7 +180,7 @@ export function DisputeCard({ dispute, onView, onManage }: DisputeCardProps) {
                 onClick={() => onManage(dispute.id)}
                 className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                Manage
+                {t('disputes.manage')}
               </button>
             )}
         </div>
@@ -177,4 +189,4 @@ export function DisputeCard({ dispute, onView, onManage }: DisputeCardProps) {
   );
 }
 
-export { categoryIcons, categoryLabels, priorityLabels, statusLabels };
+export { categoryIcons, categoryLabelKeys, priorityLabelKeys, statusLabelKeys };

@@ -272,7 +272,7 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
     if (error) {
       showToast({
         type: 'error',
-        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        title: t('announcements.failedToLoadOne', { defaultValue: 'Failed to load announcement' }),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }
@@ -547,7 +547,7 @@ function EditAnnouncementPageInner({ announcementId }: { announcementId: string 
     if (error) {
       showToast({
         type: 'error',
-        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        title: t('announcements.failedToLoadOne', { defaultValue: 'Failed to load announcement' }),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
     }

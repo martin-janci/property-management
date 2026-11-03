@@ -30,6 +30,7 @@ interface FolderOptionProps {
 }
 
 function FolderOption({ node, depth, selectedId, onSelect }: FolderOptionProps) {
+  const { t } = useTranslation();
   const { folder, children } = node;
   const [expanded, setExpanded] = useState(depth < 1);
   const isSelected = selectedId === folder.id;
@@ -47,7 +48,7 @@ function FolderOption({ node, depth, selectedId, onSelect }: FolderOptionProps) 
           onClick={() => setExpanded((p) => !p)}
           aria-expanded={hasChildren ? expanded : undefined}
           tabIndex={hasChildren ? 0 : -1}
-          aria-label={expanded ? 'Zbaliť' : 'Rozbaliť'}
+          aria-label={expanded ? t('documents.folder.collapse') : t('documents.folder.expand')}
         >
           {hasChildren ? (
             <svg
@@ -162,7 +163,7 @@ export function FolderBreadcrumb({ crumbs, onNavigate, className = '' }: FolderB
             <line x1="8" y1="21" x2="16" y2="21" />
             <line x1="12" y1="17" x2="12" y2="21" />
           </svg>
-          Všetky
+          {t('documents.folder.breadcrumbRoot')}
         </button>
 
         {crumbs.map((crumb, idx) => {
@@ -325,7 +326,7 @@ export function MoveFolderDialog({
       >
         {/* Header */}
         <div className="mfd__header">
-          <h3 className="mfd__title">Presunúť do priečinka</h3>
+          <h3 className="mfd__title">{t('documents.browse.moveToFolder')}</h3>
           <button
             type="button"
             className="mfd__close"
@@ -352,13 +353,15 @@ export function MoveFolderDialog({
           {documentTitles.length === 1 ? (
             <span className="mfd__doc-name">{documentTitles[0]}</span>
           ) : (
-            <span className="mfd__doc-name">{documentTitles.length} dokumentov</span>
+            <span className="mfd__doc-name">
+              {t('documents.move.documentCount', { count: documentTitles.length })}
+            </span>
           )}
         </div>
 
         {/* Destination label */}
         <div className="mfd__dest-label">
-          <span className="mfd__dest-prefix">Cieľ:</span>
+          <span className="mfd__dest-prefix">{t('documents.move.destination')}</span>
           {selectedName ? (
             <span className="mfd__dest-value mfd__dest-value--folder">
               <svg
@@ -373,7 +376,9 @@ export function MoveFolderDialog({
               {selectedName}
             </span>
           ) : (
-            <span className="mfd__dest-value mfd__dest-value--root">Koreň (bez priečinka)</span>
+            <span className="mfd__dest-value mfd__dest-value--root">
+              {t('documents.move.rootNoFolder')}
+            </span>
           )}
         </div>
 
@@ -399,7 +404,7 @@ export function MoveFolderDialog({
               <line x1="8" y1="21" x2="16" y2="21" />
               <line x1="12" y1="17" x2="12" y2="21" />
             </svg>
-            Všetky dokumenty (bez priečinka)
+            {t('documents.move.allDocumentsNoFolder')}
             {selectedId === null && (
               <svg
                 width="13"
@@ -426,12 +431,12 @@ export function MoveFolderDialog({
 
           {error && !isLoading && (
             <p className="mfd__error" role="alert">
-              Priečinky sa nepodarilo načítať.
+              {t('documents.folder.loadError')}
             </p>
           )}
 
           {!isLoading && !error && tree.length === 0 && (
-            <p className="mfd__empty">Žiadne priečinky</p>
+            <p className="mfd__empty">{t('documents.folder.empty')}</p>
           )}
 
           {!isLoading && !error && tree.length > 0 && (
@@ -457,7 +462,7 @@ export function MoveFolderDialog({
             onClick={onCancel}
             disabled={isPending}
           >
-            Zrušiť
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -466,7 +471,7 @@ export function MoveFolderDialog({
             disabled={isPending || !hasChanged}
             aria-busy={isPending}
           >
-            {isPending ? 'Presúvam…' : 'Presunúť sem'}
+            {isPending ? t('documents.move.moving') : t('documents.move.moveHere')}
           </button>
         </div>
       </div>
