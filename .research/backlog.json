@@ -14159,6 +14159,69 @@
         "assignment_status": "merged",
         "pr_number": 3218
       }
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "title": "PR #3217 touched reality-web account/listings/[id]/edit without updating docs/screens/reality/account-listing-edit.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3217"
+      ],
+      "evidence": [
+        "PR #3217 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_number.ts,_number.test.ts} without updating docs/screens/reality/account-listing-edit.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-cs-json",
+      "title": "Churn hotspot: ppt-web messages/cs.json — touched in i18n fill-in PRs #3218 and #3220",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3218",
+        "PR #3220"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/messages/cs.json touched 2x this run across i18n fill-in PRs #3218 (EvidenceUploader) and #3220 (community feature)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/cs.json"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-messages-de-json",
+      "title": "Churn hotspot: ppt-web messages/de.json — touched in i18n fill-in PRs #3218 and #3220",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3218",
+        "PR #3220"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/messages/de.json touched 2x this run across i18n fill-in PRs #3218 and #3220"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/de.json"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,168 @@
+{
+  "generated": "2026-11-03T04:34:00Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3217",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3217 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_number.ts,_number.test.ts} without updating docs/screens/reality/account-listing-edit.md"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/cs.json",
+      "type": "churn-hotspot",
+      "source": "merged PRs #3218, #3220",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/ppt-web/messages/cs.json touched 2x this run across i18n fill-in PRs #3218 (EvidenceUploader) and #3220 (community feature)"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/de.json",
+      "type": "churn-hotspot",
+      "source": "merged PRs #3218, #3220",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/ppt-web/messages/de.json touched 2x this run across i18n fill-in PRs #3218 and #3220"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "merged PRs #3218, #3220",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "cumulative re-emit: frontend/apps/ppt-web/messages/en.json touched again 2x this run across i18n fill-in PRs #3218 and #3220 (previously in seen_signals; score not re-applied)"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "phase_notes": {
+    "phase_1_5_skipped_reason": "fork context budget — next run picks reality-web (oldest unreviewed) with churn alignment to PR #3217",
+    "phase_1_6_skipped_reason": "fork context budget — pm-qa still queued (role_last_run=2026-08-25, severely stale)"
+  },
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief + head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state-advance",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq items[].id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no non-cumulative double count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score>8 == 0; no decay-eligible items this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a - no new plans",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs present in active or _archive/",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "22>=22",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3 total, <=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op",
+      "observed": "pm_cursor unchanged",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
