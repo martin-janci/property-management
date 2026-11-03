@@ -668,7 +668,159 @@
     "units": "Egységek",
     "floors": "Emeletek",
     "yearBuilt": "Építés éve",
-    "manager": "Kezelő"
+    "manager": "Kezelő",
+    "view": "Megtekintés",
+    "status": {
+      "active": "Aktív",
+      "under_construction": "Építés alatt",
+      "renovation": "Felújítás alatt",
+      "inactive": "Inaktív"
+    },
+    "type": {
+      "residential": "Lakóépület",
+      "commercial": "Kereskedelmi épület",
+      "mixed": "Vegyes használatú",
+      "industrial": "Ipari épület"
+    },
+    "list": {
+      "subtitle_one": "{{count}} épület a szervezetében",
+      "subtitle_other": "{{count}} épület a szervezetében",
+      "addBuilding": "Épület hozzáadása",
+      "allStatuses": "Összes állapot",
+      "allTypes": "Összes típus",
+      "statusFilter": "Szűrés állapot szerint",
+      "typeFilter": "Szűrés típus szerint",
+      "emptyTitle": "Nincsenek épületek",
+      "emptyBody": "Kezdje az első épület hozzáadásával.",
+      "pageOf": "<bold>{{page}}</bold>. oldal / <bold>{{totalPages}}</bold>"
+    },
+    "card": {
+      "unitCount_one": "{{count}} egység",
+      "unitCount_other": "{{count}} egység",
+      "floorCount_one": "{{count}} emelet",
+      "floorCount_other": "{{count}} emelet"
+    },
+    "errors": {
+      "loadFailed": "Az épületek betöltése sikertelen",
+      "unexpected": "Váratlan hiba történt",
+      "notFoundBody": "A keresett épület nem található.",
+      "generic": "Hiba történt. Kérjük, próbálja újra."
+    },
+    "detail": {
+      "personMonths": "Személyhónapok",
+      "type": "Típus",
+      "totalArea": "Teljes alapterület",
+      "floorFallback": "{{number}}. emelet",
+      "noFloors": "Ehhez az épülethez nincsenek emeletek megadva.",
+      "commonAreas": "Közös helyiségek",
+      "noCommonAreas": "Ehhez az épülethez nincsenek közös helyiségek megadva."
+    },
+    "commonAreaType": {
+      "staircase": "Lépcsőház",
+      "elevator": "Lift",
+      "lobby": "Előcsarnok",
+      "hallway": "Folyosó",
+      "basement": "Pince",
+      "attic": "Padlás",
+      "parking": "Parkoló",
+      "garage": "Garázs",
+      "garden": "Kert",
+      "playground": "Játszótér",
+      "pool": "Medence",
+      "gym": "Edzőterem",
+      "laundry_room": "Mosókonyha",
+      "storage_room": "Tároló",
+      "other": "Egyéb"
+    },
+    "map": {
+      "title": "Helyszín",
+      "openInOsm": "Megnyitás az OpenStreetMapen",
+      "iframeTitle": "Térkép: {{name}}",
+      "iframeTitleFallback": "Az épület helyét mutató térkép"
+    },
+    "unitType": {
+      "apartment": "Lakás",
+      "commercial": "Üzlethelyiség",
+      "parking": "Parkolóhely",
+      "storage": "Tároló",
+      "other": "Egyéb"
+    },
+    "occupancy": {
+      "unknown": "Ismeretlen",
+      "owner_occupied": "Tulajdonos lakja",
+      "rented": "Bérbe adva",
+      "vacant": "Üres"
+    },
+    "unitForm": {
+      "addTitle": "Egység hozzáadása",
+      "editTitle": "Egység szerkesztése",
+      "designation": "Megjelölés",
+      "designationPlaceholder": "pl. „3B” vagy „101”",
+      "floor": "Emelet",
+      "entrance": "Bejárat",
+      "type": "Típus",
+      "occupancy": "Használat",
+      "size": "Alapterület (m²)",
+      "rooms": "Szobák",
+      "share": "Tulajdoni hányad (%)",
+      "description": "Leírás",
+      "saving": "Mentés…",
+      "errors": {
+        "designationRequired": "A megjelölés megadása kötelező.",
+        "designationTooLong": "A megjelölés legfeljebb {{max}} karakter lehet.",
+        "floorInteger": "Az emelet csak egész szám lehet.",
+        "shareRequired": "A tulajdoni hányad megadása kötelező.",
+        "shareRange": "A tulajdoni hányadnak 0 és 100 között kell lennie.",
+        "sizeInvalid": "Az alapterület nem lehet negatív.",
+        "roomsInvalid": "A szobák száma nem negatív egész szám lehet."
+      }
+    },
+    "unitsSection": {
+      "showArchived": "Archiváltak megjelenítése",
+      "loadFailed": "Az egységek betöltése sikertelen",
+      "loadFailedBody": "Az egységek listája nem tölthető be.",
+      "empty": "Ehhez az épülethez még nincsenek egységek. Az „Egység hozzáadása” gombbal hozhat létre egyet.",
+      "unit": "Egység",
+      "status": "Állapot",
+      "active": "Aktív",
+      "archived": "Archivált",
+      "restore": "Visszaállítás",
+      "archive": "Archiválás",
+      "archiving": "Archiválás…",
+      "archiveTitle": "Egység archiválása",
+      "archiveConfirm": "Archiválja a(z) <bold>{{designation}}</bold> egységet? Eltűnik az aktív egységek listájáról, de később visszaállítható.",
+      "floorGround": "földszint",
+      "floorBasement": "-{{level}}"
+    },
+    "myUnit": {
+      "title": "Saját egységem",
+      "subtitle": "Az egység adatai és az Ön lakói státusza.",
+      "loading": "Egység betöltése…",
+      "loadError": "Az egység betöltése sikertelen: {{message}}",
+      "unknownError": "Ismeretlen hiba",
+      "emptyNotRegistered": "Jelenleg egyetlen egységhez sincs lakóként hozzárendelve.",
+      "emptyContactManager": "Ha úgy gondolja, hogy ez tévedés, forduljon az épület kezelőjéhez.",
+      "chooseUnit": "Válasszon egységet",
+      "unitHeading": "{{designation}} egység",
+      "entrance": "{{entrance}} bejárat",
+      "size": "Alapterület",
+      "ownershipShare": "Tulajdoni hányad",
+      "building": "Épület",
+      "residency": "Az Ön lakói adatai",
+      "role": "Szerepkör",
+      "primaryContact": "Elsődleges kapcsolattartó",
+      "active": "Aktív",
+      "ended": "Megszűnt",
+      "since": "Kezdete",
+      "until": "Vége",
+      "privacyNote": "Adatvédelmi okokból az egység többi lakója és tulajdonosa itt nem jelenik meg.",
+      "residentType": {
+        "owner": "Tulajdonos",
+        "tenant": "Bérlő",
+        "family_member": "Családtag",
+        "subtenant": "Albérlő"
+      }
+    }
   },
   "documents": {
     "title": "Dokumentumok",
@@ -929,15 +1081,296 @@
   },
   "financial": {
     "title": "Pénzügyek",
-    "invoices": "Számlák",
-    "payments": "Fizetések",
-    "budget": "Költségvetés",
     "amount": "Összeg",
     "dueDate": "Esedékesség",
     "paidDate": "Fizetés dátuma",
     "statusPaid": "Fizetve",
     "statusPending": "Függőben",
-    "statusOverdue": "Késedelmes"
+    "statusOverdue": "Késedelmes",
+    "invoices": {
+      "title": "Számlák kezelése",
+      "subtitle": "Számlák kiállítása, küldése és követése",
+      "createNew": "Számla kiállítása",
+      "searchPlaceholder": "Számlák keresése…",
+      "allStatuses": "Összes állapot",
+      "empty": "Nem található számla",
+      "columns": {
+        "number": "Számlaszám",
+        "issueDate": "Kiállítás dátuma",
+        "dueDate": "Esedékesség",
+        "status": "Állapot",
+        "total": "Összesen",
+        "balanceDue": "Fizetendő"
+      },
+      "send": "Küldés",
+      "pdf": "PDF",
+      "pdfDownloading": "PDF…",
+      "viewAria": "A(z) {{number}} számla részletei",
+      "pagination": "{{from}}–{{to}} / {{total}} számla",
+      "sent": "Számla elküldve",
+      "sendFailed": "A számla küldése sikertelen",
+      "pdfFailed": "A PDF letöltése sikertelen"
+    },
+    "payments": {
+      "title": "Befizetések kezelése",
+      "subtitle": "Befizetések rögzítése és párosítása",
+      "recordPayment": "Befizetés rögzítése",
+      "totalReceived": "Összes beérkezett",
+      "pendingReconciliation": "Párosításra vár",
+      "pendingReconciliationTitle": "Párosításra vár",
+      "recentPayments": "Legutóbbi befizetések",
+      "matchFailed": "A befizetés párosítása sikertelen",
+      "autoMatchFailed": "Az automatikus párosítás sikertelen"
+    },
+    "budgets": {
+      "title": "Költségvetések kezelése",
+      "subtitle": "Költségvetések tervezése és követése",
+      "createNew": "Költségvetés létrehozása",
+      "budgetsList": "Költségvetések",
+      "noBudgets": "Nem található költségvetés",
+      "createFirst": "Hozza létre az első költségvetést"
+    },
+    "startDate": "Kezdő dátum",
+    "endDate": "Záró dátum",
+    "view": "Megtekintés",
+    "invoiceStatus": {
+      "draft": "Piszkozat",
+      "sent": "Elküldve",
+      "paid": "Kifizetve",
+      "partial": "Részben kifizetve",
+      "overdue": "Lejárt",
+      "cancelled": "Sztornózva",
+      "void": "Érvénytelen"
+    },
+    "paymentMethod": {
+      "bank_transfer": "Banki átutalás",
+      "card": "Bankkártya",
+      "cash": "Készpénz",
+      "check": "Csekk",
+      "online": "Online fizetés",
+      "direct_debit": "Csoportos beszedés",
+      "other": "Egyéb"
+    },
+    "paymentStatus": {
+      "pending": "Függőben",
+      "completed": "Teljesítve",
+      "failed": "Sikertelen",
+      "refunded": "Visszatérítve",
+      "cancelled": "Visszavonva"
+    },
+    "budgetStatus": {
+      "draft": "Piszkozat",
+      "approved": "Jóváhagyva",
+      "active": "Aktív",
+      "closed": "Lezárva"
+    },
+    "buildingFilter": {
+      "label": "Épület:",
+      "allBuildings": "Összes épület"
+    },
+    "dateRange": {
+      "today": "Ma",
+      "week": "Ezen a héten",
+      "month": "Ebben a hónapban",
+      "quarter": "Ebben a negyedévben",
+      "year": "Ebben az évben",
+      "clear": "Törlés",
+      "from": "Kezdete:",
+      "to": "Vége:"
+    },
+    "dashboard": {
+      "title": "Pénzügyi áttekintés",
+      "totalBalance": "Teljes egyenleg",
+      "totalBalanceSubtitle": "Az összes számlán",
+      "outstanding": "Kintlévőség",
+      "outstandingSubtitle": "Függő befizetések",
+      "overdueSubtitle_one": "{{count}} lejárt számla",
+      "overdueSubtitle_other": "{{count}} lejárt számla"
+    },
+    "invoiceChart": {
+      "title": "Számlák állapota",
+      "empty": "Még nincsenek számlák"
+    },
+    "recentPayments": {
+      "empty": "Nincsenek friss befizetések",
+      "viewAll": "Összes megtekintése",
+      "reference": "Hiv.: {{reference}}"
+    },
+    "overdueInvoices": {
+      "title": "Lejárt számlák",
+      "empty": "Nincsenek lejárt számlák",
+      "daysOverdue_one": "{{count}} napja lejárt",
+      "daysOverdue_other": "{{count}} napja lejárt",
+      "dueAndBalance": "Esedékes: {{date}} • Fizetendő: {{amount}}",
+      "sendReminder": "Emlékeztető küldése"
+    },
+    "arAging": {
+      "title": "Követelések korosítása",
+      "empty": "Nincs nyitott követelés",
+      "unit": "Egység",
+      "current": "Nem lejárt",
+      "days1to30": "1–30 nap",
+      "days31to60": "31–60 nap",
+      "days60plus": "60 napon túl",
+      "total": "Összesen",
+      "viewUnit": "A(z) {{unit}} egység részletei"
+    },
+    "invoiceDetail": {
+      "title": "{{number}} számla",
+      "billingPeriod": "Elszámolási időszak",
+      "lineItems": "Tételek",
+      "description": "Leírás",
+      "quantity": "Mennyiség",
+      "unitPrice": "Egységár",
+      "tax": "ÁFA-kulcs",
+      "sending": "Küldés…",
+      "send": "Számla küldése",
+      "downloadPdf": "PDF letöltése",
+      "paymentHistory": "Befizetések előzményei"
+    },
+    "totals": {
+      "subtotal": "Részösszeg:",
+      "tax": "ÁFA:",
+      "total": "Összesen:",
+      "paid": "Kifizetve:",
+      "balanceDue": "Fizetendő:"
+    },
+    "form": {
+      "unit": "Egység",
+      "selectUnit": "Válasszon egységet",
+      "unitRequired": "Az egység megadása kötelező",
+      "currency": "Pénznem",
+      "notes": "Megjegyzések",
+      "notesPlaceholder": "Opcionális megjegyzés",
+      "removeRow": "Eltávolítás",
+      "saving": "Mentés…"
+    },
+    "invoiceForm": {
+      "billingPeriodStart": "Elszámolási időszak kezdete",
+      "billingPeriodEnd": "Elszámolási időszak vége",
+      "dueDateRequired": "Az esedékesség megadása kötelező",
+      "itemsRequired": "Legalább egy tétel megadása kötelező",
+      "addItem": "Tétel hozzáadása",
+      "taxRatePlaceholder": "ÁFA %",
+      "notesPlaceholder": "A számlán megjelenő opcionális megjegyzés",
+      "submitting": "Létrehozás…"
+    },
+    "paymentForm": {
+      "allocateToInvoices": "Hozzárendelés számlákhoz",
+      "autoFillAmount": "Összeg kitöltése ({{amount}})",
+      "due": "Esedékes: {{date}}",
+      "amountRequired": "Adjon meg érvényes összeget",
+      "paymentMethod": "Fizetési mód",
+      "selectPaymentMethod": "Válasszon fizetési módot",
+      "paymentMethodRequired": "A fizetési mód megadása kötelező",
+      "reference": "Hivatkozási szám",
+      "referencePlaceholder": "Banki hivatkozás, csekkszám stb.",
+      "paymentDate": "Fizetés dátuma",
+      "submitting": "Rögzítés…"
+    },
+    "reconciliation": {
+      "title": "Befizetések párosítása",
+      "allReconciled": "Minden párosítva",
+      "allReconciledBody": "Nincs párosítatlan befizetés vagy kifizetetlen számla",
+      "autoMatchAll": "Összes automatikus párosítása",
+      "unallocatedPayments": "Párosítatlan befizetések ({{count}})",
+      "noUnallocated": "Nincs párosítatlan befizetés",
+      "unpaidInvoices": "Kifizetetlen számlák ({{count}})",
+      "noUnpaid": "Nincs kifizetetlen számla",
+      "due": "Esedékes: {{date}}",
+      "payment": "Befizetés:",
+      "amount": "Összeg:",
+      "invoice": "Számla:",
+      "amountDue": "({{amount}} fizetendő)",
+      "match": "Párosítás"
+    },
+    "budget": {
+      "overBudget": "Költségvetés felett",
+      "percentUsed": "{{percent}}% felhasználva",
+      "budgetAmount": "Keret: {{amount}}",
+      "budget": "Költségvetés",
+      "actual": "Tényleges",
+      "variance": "Eltérés",
+      "noBudgetForYear": "Nincs költségvetés a(z) {{year}}. évre",
+      "overviewTitle": "Költségvetés áttekintése – {{year}}",
+      "percentOfBudgetUsed": "A költségvetés {{percent}}%-a felhasználva",
+      "editBudget": "Költségvetés szerkesztése",
+      "totalBudget": "Teljes költségvetés",
+      "totalSpent": "Összes kiadás",
+      "totalActual": "Tényleges összesen",
+      "remaining": "Fennmaradó",
+      "alertTitle": "Költségvetési figyelmeztetés",
+      "categoryCount_one": "{{count}} kategória",
+      "categoryCount_other": "{{count}} kategória",
+      "alertBody_one": "Túllépte a költségvetést: {{categories}}.",
+      "alertBody_other": "Túllépték a költségvetést: {{categories}}."
+    },
+    "budgetForm": {
+      "year": "Költségvetési év",
+      "categories": "Költségvetési kategóriák",
+      "addCategory": "Kategória hozzáadása",
+      "categoryNamePlaceholder": "Kategória neve",
+      "categoriesRequired": "Legalább egy összeggel rendelkező kategória szükséges",
+      "save": "Költségvetés mentése",
+      "defaultCategories": {
+        "maintenance": "Karbantartás",
+        "utilities": "Közüzemi díjak",
+        "insurance": "Biztosítás",
+        "managementFees": "Kezelési díjak",
+        "repairs": "Javítások",
+        "cleaning": "Takarítás",
+        "security": "Vagyonvédelem",
+        "landscaping": "Kertgondozás",
+        "reserveFund": "Felújítási alap",
+        "other": "Egyéb"
+      }
+    },
+    "reports": {
+      "title": "Pénzügyi kimutatások",
+      "subtitle": "Eredménykimutatás, mérleg és cash-flow kimutatás.",
+      "tabs": {
+        "incomeStatement": "Eredménykimutatás",
+        "balanceSheet": "Mérleg",
+        "cashFlow": "Cash flow"
+      },
+      "from": "Kezdete",
+      "to": "Vége",
+      "asOf": "Fordulónap",
+      "export": "Exportálás:",
+      "exporting": "Exportálás…",
+      "exportFailed": "Az exportálás sikertelen",
+      "noEntries": "Nincsenek tételek",
+      "balance": "Egyenleg",
+      "asOfDate": "Fordulónap: {{date}}",
+      "balanceSheetEmpty": "Válasszon fordulónapot a mérleg megtekintéséhez.",
+      "incomeStatementEmpty": "Válasszon időszakot az eredménykimutatás megtekintéséhez.",
+      "cashFlowEmpty": "Válasszon időszakot a cash-flow kimutatás megtekintéséhez.",
+      "noAccounts": "Nincsenek számlák",
+      "totalAssets": "Eszközök összesen",
+      "totalLiabilities": "Kötelezettségek összesen",
+      "netEquity": "Saját tőke",
+      "incomeStatement": {
+        "revenue": "Bevételek",
+        "totalRevenue": "Bevételek összesen",
+        "expenses": "Kiadások",
+        "totalExpenses": "Kiadások összesen",
+        "netIncome": "Nettó eredmény"
+      },
+      "cashFlow": {
+        "inflows": "Befizetések",
+        "totalInflows": "Befizetések összesen",
+        "outflows": "Kifizetések",
+        "totalOutflows": "Kifizetések összesen",
+        "netCashFlow": "Nettó pénzáramlás"
+      },
+      "accountType": {
+        "operating": "Működési számla",
+        "reserve": "Felújítási alap",
+        "utilities": "Közüzemi díjak",
+        "unit_ledger": "Egységszámlák",
+        "custom": "Egyéni"
+      }
+    }
   },
   "announcements": {
     "form": {

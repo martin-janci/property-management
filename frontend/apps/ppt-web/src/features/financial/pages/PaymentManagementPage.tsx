@@ -134,7 +134,7 @@ export function PaymentManagementPage({
           <div className="flex flex-wrap gap-4 items-center">
             <div>
               <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.startDate')}
+                {t('financial.startDate')}
               </label>
               <input
                 type="date"
@@ -146,7 +146,7 @@ export function PaymentManagementPage({
             </div>
             <div>
               <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.endDate')}
+                {t('financial.endDate')}
               </label>
               <input
                 type="date"

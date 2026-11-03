@@ -3,6 +3,8 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/formatting';
 
 interface BudgetCategory {
   name: string;
@@ -18,18 +20,19 @@ interface BudgetFormProps {
   isSubmitting?: boolean;
 }
 
-const DEFAULT_CATEGORIES = [
-  'Maintenance',
-  'Utilities',
-  'Insurance',
-  'Management Fees',
-  'Repairs',
-  'Cleaning',
-  'Security',
-  'Landscaping',
-  'Reserve Fund',
-  'Other',
-];
+/** Default category name keys (`financial.budgetForm.defaultCategories.<key>`). */
+const DEFAULT_CATEGORY_KEYS = [
+  'maintenance',
+  'utilities',
+  'insurance',
+  'managementFees',
+  'repairs',
+  'cleaning',
+  'security',
+  'landscaping',
+  'reserveFund',
+  'other',
+] as const;
 
 interface FormErrors {
   categories?: string;
@@ -43,9 +46,15 @@ export function BudgetForm({
   onCancel,
   isSubmitting,
 }: BudgetFormProps) {
+  const { t } = useTranslation();
   const [budgetYear, setBudgetYear] = useState(year);
   const [categories, setCategories] = useState<BudgetCategory[]>(
-    initialCategories || DEFAULT_CATEGORIES.map((name) => ({ name, amount: 0 }))
+    () =>
+      initialCategories ||
+      DEFAULT_CATEGORY_KEYS.map((key) => ({
+        name: t(`financial.budgetForm.defaultCategories.${key}`),
+        amount: 0,
+      }))
   );
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -54,7 +63,7 @@ export function BudgetForm({
 
     const hasValidCategory = categories.some((cat) => cat.name.trim() && cat.amount > 0);
     if (!hasValidCategory) {
-      newErrors.categories = 'At least one category with amount is required';
+      newErrors.categories = t('financial.budgetForm.categoriesRequired');
     }
 
     setErrors(newErrors);
@@ -93,7 +102,7 @@ export function BudgetForm({
       {/* Year Selection */}
       <div>
         <label htmlFor="budget-year" className="block text-sm font-medium text-gray-700">
-          Budget Year
+          {t('financial.budgetForm.year')}
         </label>
         <select
           id="budget-year"
@@ -112,13 +121,15 @@ export function BudgetForm({
       {/* Budget Categories */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <span className="block text-sm font-medium text-gray-700">Budget Categories</span>
+          <span className="block text-sm font-medium text-gray-700">
+            {t('financial.budgetForm.categories')}
+          </span>
           <button
             type="button"
             onClick={addCategory}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            + Add Category
+            + {t('financial.budgetForm.addCategory')}
           </button>
         </div>
         {errors.categories && <p className="mb-2 text-sm text-red-600">{errors.categories}</p>}
@@ -130,7 +141,8 @@ export function BudgetForm({
                 type="text"
                 value={category.name}
                 onChange={(e) => updateCategory(index, 'name', e.target.value)}
-                placeholder="Category name"
+                placeholder={t('financial.budgetForm.categoryNamePlaceholder')}
+                aria-label={t('financial.budgetForm.categoryNamePlaceholder')}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
               <div className="relative w-40">
@@ -146,6 +158,7 @@ export function BudgetForm({
                   min="0"
                   step="0.01"
                   placeholder="0.00"
+                  aria-label={t('financial.amount')}
                   className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -153,6 +166,8 @@ export function BudgetForm({
                 type="button"
                 onClick={() => removeCategory(index)}
                 className="text-red-600 hover:text-red-800 px-2"
+                aria-label={t('financial.form.removeRow')}
+                title={t('financial.form.removeRow')}
               >
                 ✕
               </button>
@@ -163,13 +178,9 @@ export function BudgetForm({
         {/* Total */}
         <div className="mt-4 pt-4 border-t flex justify-end">
           <div className="text-right">
-            <p className="text-sm text-gray-500">Total Budget</p>
+            <p className="text-sm text-gray-500">{t('financial.budget.totalBudget')}</p>
             <p className="text-xl font-bold text-gray-900">
-              {currency}{' '}
-              {totalBudget.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {formatCurrency(totalBudget, currency)}
             </p>
           </div>
         </div>
@@ -183,14 +194,14 @@ export function BudgetForm({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : 'Save Budget'}
+          {isSubmitting ? t('financial.form.saving') : t('financial.budgetForm.save')}
         </button>
       </div>
     </form>

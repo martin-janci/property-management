@@ -2,19 +2,15 @@
  * BudgetCard component for displaying budget vs actual spending.
  */
 
+import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/formatting';
+
 interface BudgetCardProps {
   category: string;
   budgeted: number;
   actual: number;
   currency?: string;
   period?: string;
-}
-
-function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount);
 }
 
 export function BudgetCard({
@@ -24,6 +20,7 @@ export function BudgetCard({
   currency = 'EUR',
   period,
 }: BudgetCardProps) {
+  const { t } = useTranslation();
   const variance = budgeted - actual;
   const percentUsed = budgeted > 0 ? (actual / budgeted) * 100 : 0;
   const isOverBudget = actual > budgeted;
@@ -43,7 +40,7 @@ export function BudgetCard({
         </div>
         {isOverBudget && (
           <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-            Over Budget
+            {t('financial.budget.overBudget')}
           </span>
         )}
       </div>
@@ -57,23 +54,25 @@ export function BudgetCard({
           />
         </div>
         <div className="flex justify-between mt-1 text-xs text-gray-500">
-          <span>{percentUsed.toFixed(0)}% used</span>
-          <span>{formatCurrency(budgeted, currency)} budget</span>
+          <span>{t('financial.budget.percentUsed', { percent: percentUsed.toFixed(0) })}</span>
+          <span>
+            {t('financial.budget.budgetAmount', { amount: formatCurrency(budgeted, currency) })}
+          </span>
         </div>
       </div>
 
       {/* Values */}
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-xs text-gray-500">Budget</p>
+          <p className="text-xs text-gray-500">{t('financial.budget.budget')}</p>
           <p className="text-sm font-medium text-gray-900">{formatCurrency(budgeted, currency)}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">Actual</p>
+          <p className="text-xs text-gray-500">{t('financial.budget.actual')}</p>
           <p className="text-sm font-medium text-gray-900">{formatCurrency(actual, currency)}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">Variance</p>
+          <p className="text-xs text-gray-500">{t('financial.budget.variance')}</p>
           <p className={`text-sm font-medium ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {variance >= 0 ? '+' : ''}
             {formatCurrency(variance, currency)}

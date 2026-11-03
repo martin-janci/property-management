@@ -6,8 +6,9 @@
  * @see Story 81.2 - Wire buildings page to API
  */
 
-import type { BuildingStatus, BuildingType } from '@ppt/api-client';
+import type { BuildingStatus } from '@ppt/api-client';
 import { isSafeImageUrl } from '@ppt/shared';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { BuildingLocationMap, UnitsSection } from '../components';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
@@ -16,13 +17,6 @@ interface BuildingDetailPageProps {
   buildingId: string;
 }
 
-const STATUS_LABELS: Record<BuildingStatus, string> = {
-  active: 'Active',
-  under_construction: 'Under Construction',
-  renovation: 'Renovation',
-  inactive: 'Inactive',
-};
-
 const STATUS_COLORS: Record<BuildingStatus, string> = {
   active: 'bg-green-100 text-green-800',
   under_construction: 'bg-yellow-100 text-yellow-800',
@@ -30,14 +24,8 @@ const STATUS_COLORS: Record<BuildingStatus, string> = {
   inactive: 'bg-gray-100 text-gray-800',
 };
 
-const TYPE_LABELS: Record<BuildingType, string> = {
-  residential: 'Residential',
-  commercial: 'Commercial',
-  mixed: 'Mixed Use',
-  industrial: 'Industrial',
-};
-
 export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
+  const { t } = useTranslation();
   const {
     data: building,
     isLoading: buildingLoading,
@@ -63,17 +51,17 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <h3 className="text-sm font-medium text-red-800">Building not found</h3>
+          <h3 className="text-sm font-medium text-red-800">{t('errors.buildingNotFound')}</h3>
           <p className="mt-2 text-sm text-red-700">
             {buildingError instanceof Error
               ? buildingError.message
-              : 'The requested building could not be found.'}
+              : t('buildings.errors.notFoundBody')}
           </p>
           <Link
             to="/buildings"
             className="mt-4 inline-block text-sm text-blue-600 hover:text-blue-800"
           >
-            Back to buildings
+            {t('common.backToBuildings')}
           </Link>
         </div>
       </div>
@@ -100,7 +88,7 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to buildings
+        {t('common.backToBuildings')}
       </Link>
 
       {/* Header */}
@@ -137,7 +125,7 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[building.status]}`}
             >
-              {STATUS_LABELS[building.status]}
+              {t(`buildings.status.${building.status}`, { defaultValue: building.status })}
             </span>
           </div>
 
@@ -149,35 +137,37 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
               to={`/buildings/${buildingId}/person-months`}
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"
             >
-              Person-months
+              {t('buildings.detail.personMonths')}
             </Link>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500">Type</p>
-              <p className="text-lg font-semibold text-gray-900">{TYPE_LABELS[building.type]}</p>
+              <p className="text-sm text-gray-500">{t('buildings.detail.type')}</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {t(`buildings.type.${building.type}`, { defaultValue: building.type })}
+              </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500">Units</p>
+              <p className="text-sm text-gray-500">{t('buildings.units')}</p>
               <p className="text-lg font-semibold text-gray-900">{building.unitCount}</p>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500">Floors</p>
+              <p className="text-sm text-gray-500">{t('buildings.floors')}</p>
               <p className="text-lg font-semibold text-gray-900">{building.floorCount}</p>
             </div>
             {building.yearBuilt && (
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500">Year Built</p>
+                <p className="text-sm text-gray-500">{t('buildings.yearBuilt')}</p>
                 <p className="text-lg font-semibold text-gray-900">{building.yearBuilt}</p>
               </div>
             )}
             {building.totalAreaM2 && (
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500">Total Area</p>
+                <p className="text-sm text-gray-500">{t('buildings.detail.totalArea')}</p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {building.totalAreaM2.toLocaleString()} m2
+                  {building.totalAreaM2.toLocaleString()} m²
                 </p>
               </div>
             )}
@@ -190,7 +180,7 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
 
       {/* Floors Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Floors</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('buildings.floors')}</h2>
         {floorsLoading ? (
           <div className="flex justify-center py-4">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
@@ -203,14 +193,18 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
               >
                 <div>
-                  <span className="font-medium">{floor.name || `Floor ${floor.number}`}</span>
-                  <span className="text-gray-500 text-sm ml-2">({floor.unitCount} units)</span>
+                  <span className="font-medium">
+                    {floor.name || t('buildings.detail.floorFallback', { number: floor.number })}
+                  </span>
+                  <span className="text-gray-500 text-sm ml-2">
+                    ({t('buildings.card.unitCount', { count: floor.unitCount })})
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No floors defined for this building.</p>
+          <p className="text-gray-500 text-sm">{t('buildings.detail.noFloors')}</p>
         )}
       </div>
 
@@ -219,7 +213,9 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
 
       {/* Common Areas Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Common Areas</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {t('buildings.detail.commonAreas')}
+        </h2>
         {areasLoading ? (
           <div className="flex justify-center py-4">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
@@ -229,16 +225,20 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
             {commonAreas.map((area) => (
               <div key={area.id} className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-medium text-gray-900">{area.name}</h3>
-                <p className="text-sm text-gray-500 capitalize">{area.type.replace('_', ' ')}</p>
+                <p className="text-sm text-gray-500 capitalize">
+                  {t(`buildings.commonAreaType.${area.type}`, {
+                    defaultValue: area.type.replace('_', ' '),
+                  })}
+                </p>
                 {area.description && (
                   <p className="text-sm text-gray-600 mt-1">{area.description}</p>
                 )}
-                {area.areaM2 && <p className="text-sm text-gray-500 mt-1">{area.areaM2} m2</p>}
+                {area.areaM2 && <p className="text-sm text-gray-500 mt-1">{area.areaM2} m²</p>}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No common areas defined for this building.</p>
+          <p className="text-gray-500 text-sm">{t('buildings.detail.noCommonAreas')}</p>
         )}
       </div>
     </div>

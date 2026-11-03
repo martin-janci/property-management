@@ -669,7 +669,165 @@
     "units": "Jednotky",
     "floors": "Patra",
     "yearBuilt": "Rok výstavby",
-    "manager": "Správce"
+    "manager": "Správce",
+    "view": "Zobrazit",
+    "status": {
+      "active": "Aktivní",
+      "under_construction": "Ve výstavbě",
+      "renovation": "V rekonstrukci",
+      "inactive": "Neaktivní"
+    },
+    "type": {
+      "residential": "Bytový dům",
+      "commercial": "Komerční budova",
+      "mixed": "Polyfunkční budova",
+      "industrial": "Průmyslová budova"
+    },
+    "list": {
+      "subtitle_one": "{{count}} budova ve vaší organizaci",
+      "subtitle_few": "{{count}} budovy ve vaší organizaci",
+      "subtitle_many": "{{count}} budov ve vaší organizaci",
+      "subtitle_other": "{{count}} budov ve vaší organizaci",
+      "addBuilding": "Přidat budovu",
+      "allStatuses": "Všechny stavy",
+      "allTypes": "Všechny typy",
+      "statusFilter": "Filtrovat podle stavu",
+      "typeFilter": "Filtrovat podle typu",
+      "emptyTitle": "Žádné budovy",
+      "emptyBody": "Začněte přidáním první budovy.",
+      "pageOf": "Strana <bold>{{page}}</bold> z <bold>{{totalPages}}</bold>"
+    },
+    "card": {
+      "unitCount_one": "{{count}} jednotka",
+      "unitCount_few": "{{count}} jednotky",
+      "unitCount_many": "{{count}} jednotek",
+      "unitCount_other": "{{count}} jednotek",
+      "floorCount_one": "{{count}} patro",
+      "floorCount_few": "{{count}} patra",
+      "floorCount_many": "{{count}} pater",
+      "floorCount_other": "{{count}} pater"
+    },
+    "errors": {
+      "loadFailed": "Budovy se nepodařilo načíst",
+      "unexpected": "Došlo k neočekávané chybě",
+      "notFoundBody": "Požadovanou budovu se nepodařilo najít.",
+      "generic": "Něco se pokazilo. Zkuste to znovu."
+    },
+    "detail": {
+      "personMonths": "Osobaměsíce",
+      "type": "Typ",
+      "totalArea": "Celková plocha",
+      "floorFallback": "{{number}}. patro",
+      "noFloors": "Pro tuto budovu nejsou definována žádná patra.",
+      "commonAreas": "Společné prostory",
+      "noCommonAreas": "Pro tuto budovu nejsou definovány žádné společné prostory."
+    },
+    "commonAreaType": {
+      "staircase": "Schodiště",
+      "elevator": "Výtah",
+      "lobby": "Vstupní hala",
+      "hallway": "Chodba",
+      "basement": "Suterén",
+      "attic": "Půda",
+      "parking": "Parkoviště",
+      "garage": "Garáž",
+      "garden": "Zahrada",
+      "playground": "Dětské hřiště",
+      "pool": "Bazén",
+      "gym": "Posilovna",
+      "laundry_room": "Prádelna",
+      "storage_room": "Sklad",
+      "other": "Jiné"
+    },
+    "map": {
+      "title": "Poloha",
+      "openInOsm": "Otevřít v OpenStreetMap",
+      "iframeTitle": "Mapa – {{name}}",
+      "iframeTitleFallback": "Mapa polohy budovy"
+    },
+    "unitType": {
+      "apartment": "Byt",
+      "commercial": "Nebytový prostor",
+      "parking": "Parkovací stání",
+      "storage": "Sklep",
+      "other": "Jiné"
+    },
+    "occupancy": {
+      "unknown": "Neznámé",
+      "owner_occupied": "Užívá vlastník",
+      "rented": "Pronajatý",
+      "vacant": "Neobsazený"
+    },
+    "unitForm": {
+      "addTitle": "Přidat jednotku",
+      "editTitle": "Upravit jednotku",
+      "designation": "Označení",
+      "designationPlaceholder": "např. „3B“ nebo „101“",
+      "floor": "Patro",
+      "entrance": "Vchod",
+      "type": "Typ",
+      "occupancy": "Obsazenost",
+      "size": "Výměra (m²)",
+      "rooms": "Počet pokojů",
+      "share": "Podíl (%)",
+      "description": "Popis",
+      "saving": "Ukládá se…",
+      "errors": {
+        "designationRequired": "Označení je povinné.",
+        "designationTooLong": "Označení může mít nejvýše {{max}} znaků.",
+        "floorInteger": "Patro musí být celé číslo.",
+        "shareRequired": "Spoluvlastnický podíl je povinný.",
+        "shareRange": "Spoluvlastnický podíl musí být v rozsahu 0 až 100.",
+        "sizeInvalid": "Výměra nesmí být záporná.",
+        "roomsInvalid": "Počet pokojů musí být nezáporné celé číslo."
+      }
+    },
+    "unitsSection": {
+      "showArchived": "Zobrazit archivované",
+      "loadFailed": "Jednotky se nepodařilo načíst",
+      "loadFailedBody": "Seznam jednotek se nepodařilo načíst.",
+      "empty": "Tato budova zatím nemá žádné jednotky. Novou přidáte tlačítkem „Přidat jednotku“.",
+      "unit": "Jednotka",
+      "status": "Stav",
+      "active": "Aktivní",
+      "archived": "Archivovaná",
+      "restore": "Obnovit",
+      "archive": "Archivovat",
+      "archiving": "Archivuje se…",
+      "archiveTitle": "Archivovat jednotku",
+      "archiveConfirm": "Archivovat jednotku <bold>{{designation}}</bold>? Skryje se ze seznamu aktivních jednotek, ale později ji můžete obnovit.",
+      "floorGround": "přízemí",
+      "floorBasement": "{{level}}. PP"
+    },
+    "myUnit": {
+      "title": "Moje jednotka",
+      "subtitle": "Údaje o vaší jednotce a váš vztah k ní.",
+      "loading": "Načítá se vaše jednotka…",
+      "loadError": "Vaši jednotku se nepodařilo načíst: {{message}}",
+      "unknownError": "Neznámá chyba",
+      "emptyNotRegistered": "Momentálně vás neevidujeme jako obyvatele žádné jednotky.",
+      "emptyContactManager": "Pokud jde podle vás o chybu, kontaktujte správce budovy.",
+      "chooseUnit": "Vyberte jednotku",
+      "unitHeading": "Jednotka {{designation}}",
+      "entrance": "vchod {{entrance}}",
+      "size": "Výměra",
+      "ownershipShare": "Spoluvlastnický podíl",
+      "building": "Budova",
+      "residency": "Váš vztah k jednotce",
+      "role": "Role",
+      "primaryContact": "Hlavní kontaktní osoba",
+      "active": "Aktivní",
+      "ended": "Ukončeno",
+      "since": "Od",
+      "until": "Do",
+      "privacyNote": "Z důvodu ochrany soukromí se zde nezobrazují ostatní obyvatelé ani vlastníci této jednotky.",
+      "residentType": {
+        "owner": "Vlastník",
+        "tenant": "Nájemník",
+        "family_member": "Člen domácnosti",
+        "subtenant": "Podnájemník"
+      }
+    }
   },
   "documents": {
     "title": "Dokumenty",
@@ -976,15 +1134,304 @@
   },
   "financial": {
     "title": "Finance",
-    "invoices": "Faktury",
-    "payments": "Platby",
-    "budget": "Rozpočet",
     "amount": "Částka",
     "dueDate": "Datum splatnosti",
     "paidDate": "Datum platby",
     "statusPaid": "Zaplaceno",
     "statusPending": "Čekající",
-    "statusOverdue": "Po splatnosti"
+    "statusOverdue": "Po splatnosti",
+    "invoices": {
+      "title": "Správa faktur",
+      "subtitle": "Vystavujte, odesílejte a sledujte faktury",
+      "createNew": "Vystavit fakturu",
+      "searchPlaceholder": "Hledat faktury…",
+      "allStatuses": "Všechny stavy",
+      "empty": "Nebyly nalezeny žádné faktury",
+      "columns": {
+        "number": "Číslo faktury",
+        "issueDate": "Datum vystavení",
+        "dueDate": "Datum splatnosti",
+        "status": "Stav",
+        "total": "Celkem",
+        "balanceDue": "Zbývá uhradit"
+      },
+      "send": "Odeslat",
+      "pdf": "PDF",
+      "pdfDownloading": "PDF…",
+      "viewAria": "Zobrazit detail faktury {{number}}",
+      "pagination": "Zobrazeno {{from}}–{{to}} z {{total}} faktur",
+      "sent": "Faktura byla odeslána",
+      "sendFailed": "Fakturu se nepodařilo odeslat",
+      "pdfFailed": "PDF se nepodařilo stáhnout"
+    },
+    "payments": {
+      "title": "Správa plateb",
+      "subtitle": "Zaznamenávejte a párujte platby",
+      "recordPayment": "Zaznamenat platbu",
+      "totalReceived": "Přijato celkem",
+      "pendingReconciliation": "Čeká na spárování",
+      "pendingReconciliationTitle": "Čeká na spárování",
+      "recentPayments": "Poslední platby",
+      "matchFailed": "Platbu se nepodařilo spárovat",
+      "autoMatchFailed": "Platby se nepodařilo automaticky spárovat"
+    },
+    "budgets": {
+      "title": "Správa rozpočtů",
+      "subtitle": "Plánujte a sledujte rozpočty",
+      "createNew": "Vytvořit rozpočet",
+      "budgetsList": "Rozpočty",
+      "noBudgets": "Nebyly nalezeny žádné rozpočty",
+      "createFirst": "Vytvořte první rozpočet"
+    },
+    "startDate": "Datum od",
+    "endDate": "Datum do",
+    "view": "Zobrazit",
+    "invoiceStatus": {
+      "draft": "Koncept",
+      "sent": "Odeslaná",
+      "paid": "Uhrazená",
+      "partial": "Částečně uhrazená",
+      "overdue": "Po splatnosti",
+      "cancelled": "Zrušená",
+      "void": "Neplatná"
+    },
+    "paymentMethod": {
+      "bank_transfer": "Bankovní převod",
+      "card": "Platební karta",
+      "cash": "Hotovost",
+      "check": "Šek",
+      "online": "Online platba",
+      "direct_debit": "Inkaso",
+      "other": "Jiné"
+    },
+    "paymentStatus": {
+      "pending": "Čekající",
+      "completed": "Dokončená",
+      "failed": "Neúspěšná",
+      "refunded": "Vrácená",
+      "cancelled": "Zrušená"
+    },
+    "budgetStatus": {
+      "draft": "Koncept",
+      "approved": "Schválený",
+      "active": "Aktivní",
+      "closed": "Uzavřený"
+    },
+    "buildingFilter": {
+      "label": "Budova:",
+      "allBuildings": "Všechny budovy"
+    },
+    "dateRange": {
+      "today": "Dnes",
+      "week": "Tento týden",
+      "month": "Tento měsíc",
+      "quarter": "Toto čtvrtletí",
+      "year": "Tento rok",
+      "clear": "Zrušit filtr",
+      "from": "Od:",
+      "to": "Do:"
+    },
+    "dashboard": {
+      "title": "Finanční přehled",
+      "totalBalance": "Celkový zůstatek",
+      "totalBalanceSubtitle": "Na všech účtech",
+      "outstanding": "Neuhrazeno",
+      "outstandingSubtitle": "Očekávané platby",
+      "overdueSubtitle_one": "{{count}} faktura po splatnosti",
+      "overdueSubtitle_few": "{{count}} faktury po splatnosti",
+      "overdueSubtitle_many": "{{count}} faktur po splatnosti",
+      "overdueSubtitle_other": "{{count}} faktur po splatnosti"
+    },
+    "invoiceChart": {
+      "title": "Stav faktur",
+      "empty": "Zatím žádné faktury"
+    },
+    "recentPayments": {
+      "empty": "Žádné nedávné platby",
+      "viewAll": "Zobrazit vše",
+      "reference": "Ref.: {{reference}}"
+    },
+    "overdueInvoices": {
+      "title": "Faktury po splatnosti",
+      "empty": "Žádné faktury po splatnosti",
+      "daysOverdue_one": "{{count}} den po splatnosti",
+      "daysOverdue_few": "{{count}} dny po splatnosti",
+      "daysOverdue_many": "{{count}} dní po splatnosti",
+      "daysOverdue_other": "{{count}} dní po splatnosti",
+      "dueAndBalance": "Splatnost: {{date}} • Zbývá uhradit: {{amount}}",
+      "sendReminder": "Poslat upomínku"
+    },
+    "arAging": {
+      "title": "Věková struktura pohledávek",
+      "empty": "Žádné neuhrazené pohledávky",
+      "unit": "Jednotka",
+      "current": "Do splatnosti",
+      "days1to30": "1–30 dní",
+      "days31to60": "31–60 dní",
+      "days60plus": "Více než 60 dní",
+      "total": "Celkem",
+      "viewUnit": "Zobrazit detail jednotky {{unit}}"
+    },
+    "invoiceDetail": {
+      "title": "Faktura {{number}}",
+      "billingPeriod": "Zúčtovací období",
+      "lineItems": "Položky",
+      "description": "Popis",
+      "quantity": "Množství",
+      "unitPrice": "Jednotková cena",
+      "tax": "Sazba DPH",
+      "sending": "Odesílá se…",
+      "send": "Odeslat fakturu",
+      "downloadPdf": "Stáhnout PDF",
+      "paymentHistory": "Historie plateb"
+    },
+    "totals": {
+      "subtotal": "Mezisoučet:",
+      "tax": "DPH:",
+      "total": "Celkem:",
+      "paid": "Uhrazeno:",
+      "balanceDue": "Zbývá uhradit:"
+    },
+    "form": {
+      "unit": "Jednotka",
+      "selectUnit": "Vyberte jednotku",
+      "unitRequired": "Jednotka je povinná",
+      "currency": "Měna",
+      "notes": "Poznámky",
+      "notesPlaceholder": "Volitelná poznámka",
+      "removeRow": "Odebrat",
+      "saving": "Ukládá se…"
+    },
+    "invoiceForm": {
+      "billingPeriodStart": "Začátek zúčtovacího období",
+      "billingPeriodEnd": "Konec zúčtovacího období",
+      "dueDateRequired": "Datum splatnosti je povinné",
+      "itemsRequired": "Zadejte alespoň jednu položku",
+      "addItem": "Přidat položku",
+      "taxRatePlaceholder": "DPH %",
+      "notesPlaceholder": "Volitelná poznámka, která se zobrazí na faktuře",
+      "submitting": "Vytváří se…"
+    },
+    "paymentForm": {
+      "allocateToInvoices": "Přiřadit k fakturám",
+      "autoFillAmount": "Doplnit částku ({{amount}})",
+      "due": "Splatnost: {{date}}",
+      "amountRequired": "Zadejte platnou částku",
+      "paymentMethod": "Způsob platby",
+      "selectPaymentMethod": "Vyberte způsob platby",
+      "paymentMethodRequired": "Způsob platby je povinný",
+      "reference": "Variabilní symbol / reference",
+      "referencePlaceholder": "VS, číslo šeku apod.",
+      "paymentDate": "Datum platby",
+      "submitting": "Zaznamenává se…"
+    },
+    "reconciliation": {
+      "title": "Párování plateb",
+      "allReconciled": "Vše je spárováno",
+      "allReconciledBody": "Žádné nespárované platby ani neuhrazené faktury",
+      "autoMatchAll": "Automaticky spárovat vše",
+      "unallocatedPayments": "Nespárované platby ({{count}})",
+      "noUnallocated": "Žádné nespárované platby",
+      "unpaidInvoices": "Neuhrazené faktury ({{count}})",
+      "noUnpaid": "Žádné neuhrazené faktury",
+      "due": "Splatnost: {{date}}",
+      "payment": "Platba:",
+      "amount": "Částka:",
+      "invoice": "Faktura:",
+      "amountDue": "(zbývá {{amount}})",
+      "match": "Spárovat"
+    },
+    "budget": {
+      "overBudget": "Překročený rozpočet",
+      "percentUsed": "Čerpáno {{percent}} %",
+      "budgetAmount": "Rozpočet {{amount}}",
+      "budget": "Rozpočet",
+      "actual": "Skutečnost",
+      "variance": "Odchylka",
+      "noBudgetForYear": "Na rok {{year}} není nastaven rozpočet",
+      "overviewTitle": "Přehled rozpočtu – {{year}}",
+      "percentOfBudgetUsed": "Vyčerpáno {{percent}} % rozpočtu",
+      "editBudget": "Upravit rozpočet",
+      "totalBudget": "Celkový rozpočet",
+      "totalSpent": "Celkové čerpání",
+      "totalActual": "Skutečnost celkem",
+      "remaining": "Zbývá",
+      "alertTitle": "Upozornění na rozpočet",
+      "categoryCount_one": "{{count}} kategorie",
+      "categoryCount_few": "{{count}} kategorie",
+      "categoryCount_many": "{{count}} kategorií",
+      "categoryCount_other": "{{count}} kategorií",
+      "alertBody_one": "Kategorie {{categories}} překročila rozpočet.",
+      "alertBody_few": "Kategorie {{categories}} překročily rozpočet.",
+      "alertBody_many": "Kategorie {{categories}} překročily rozpočet.",
+      "alertBody_other": "Kategorie {{categories}} překročily rozpočet."
+    },
+    "budgetForm": {
+      "year": "Rozpočtový rok",
+      "categories": "Rozpočtové kategorie",
+      "addCategory": "Přidat kategorii",
+      "categoryNamePlaceholder": "Název kategorie",
+      "categoriesRequired": "Zadejte alespoň jednu kategorii s částkou",
+      "save": "Uložit rozpočet",
+      "defaultCategories": {
+        "maintenance": "Údržba",
+        "utilities": "Energie a služby",
+        "insurance": "Pojištění",
+        "managementFees": "Odměna za správu",
+        "repairs": "Opravy",
+        "cleaning": "Úklid",
+        "security": "Ostraha objektu",
+        "landscaping": "Údržba zeleně",
+        "reserveFund": "Fond oprav",
+        "other": "Ostatní"
+      }
+    },
+    "reports": {
+      "title": "Finanční výkazy",
+      "subtitle": "Výkaz zisku a ztráty, rozvaha a výkaz peněžních toků.",
+      "tabs": {
+        "incomeStatement": "Výkaz zisku a ztráty",
+        "balanceSheet": "Rozvaha",
+        "cashFlow": "Peněžní toky"
+      },
+      "from": "Od",
+      "to": "Do",
+      "asOf": "K datu",
+      "export": "Export:",
+      "exporting": "Exportuje se…",
+      "exportFailed": "Export se nezdařil",
+      "noEntries": "Žádné položky",
+      "balance": "Zůstatek",
+      "asOfDate": "K {{date}}",
+      "balanceSheetEmpty": "Vyberte datum, ke kterému chcete zobrazit rozvahu.",
+      "incomeStatementEmpty": "Vyberte období pro zobrazení výkazu zisku a ztráty.",
+      "cashFlowEmpty": "Vyberte období pro zobrazení výkazu peněžních toků.",
+      "noAccounts": "Žádné účty",
+      "totalAssets": "Aktiva celkem",
+      "totalLiabilities": "Závazky celkem",
+      "netEquity": "Vlastní kapitál",
+      "incomeStatement": {
+        "revenue": "Výnosy",
+        "totalRevenue": "Výnosy celkem",
+        "expenses": "Náklady",
+        "totalExpenses": "Náklady celkem",
+        "netIncome": "Hospodářský výsledek"
+      },
+      "cashFlow": {
+        "inflows": "Příjmy",
+        "totalInflows": "Příjmy celkem",
+        "outflows": "Výdaje",
+        "totalOutflows": "Výdaje celkem",
+        "netCashFlow": "Čistý peněžní tok"
+      },
+      "accountType": {
+        "operating": "Provozní účet",
+        "reserve": "Fond oprav",
+        "utilities": "Energie a služby",
+        "unit_ledger": "Účty jednotek",
+        "custom": "Vlastní"
+      }
+    }
   },
   "announcements": {
     "form": {

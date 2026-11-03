@@ -731,7 +731,159 @@
     "units": "Units",
     "floors": "Floors",
     "yearBuilt": "Year Built",
-    "manager": "Manager"
+    "manager": "Manager",
+    "view": "View",
+    "status": {
+      "active": "Active",
+      "under_construction": "Under Construction",
+      "renovation": "Renovation",
+      "inactive": "Inactive"
+    },
+    "type": {
+      "residential": "Residential",
+      "commercial": "Commercial",
+      "mixed": "Mixed Use",
+      "industrial": "Industrial"
+    },
+    "list": {
+      "subtitle_one": "{{count}} building in your organization",
+      "subtitle_other": "{{count}} buildings in your organization",
+      "addBuilding": "Add Building",
+      "allStatuses": "All Statuses",
+      "allTypes": "All Types",
+      "statusFilter": "Filter by status",
+      "typeFilter": "Filter by type",
+      "emptyTitle": "No buildings",
+      "emptyBody": "Get started by adding your first building.",
+      "pageOf": "Showing page <bold>{{page}}</bold> of <bold>{{totalPages}}</bold>"
+    },
+    "card": {
+      "unitCount_one": "{{count}} unit",
+      "unitCount_other": "{{count}} units",
+      "floorCount_one": "{{count}} floor",
+      "floorCount_other": "{{count}} floors"
+    },
+    "errors": {
+      "loadFailed": "Error loading buildings",
+      "unexpected": "An unexpected error occurred",
+      "notFoundBody": "The requested building could not be found.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "detail": {
+      "personMonths": "Person-months",
+      "type": "Type",
+      "totalArea": "Total Area",
+      "floorFallback": "Floor {{number}}",
+      "noFloors": "No floors defined for this building.",
+      "commonAreas": "Common Areas",
+      "noCommonAreas": "No common areas defined for this building."
+    },
+    "commonAreaType": {
+      "staircase": "Staircase",
+      "elevator": "Elevator",
+      "lobby": "Lobby",
+      "hallway": "Hallway",
+      "basement": "Basement",
+      "attic": "Attic",
+      "parking": "Parking",
+      "garage": "Garage",
+      "garden": "Garden",
+      "playground": "Playground",
+      "pool": "Pool",
+      "gym": "Gym",
+      "laundry_room": "Laundry room",
+      "storage_room": "Storage room",
+      "other": "Other"
+    },
+    "map": {
+      "title": "Location",
+      "openInOsm": "Open in OpenStreetMap",
+      "iframeTitle": "Map showing {{name}}",
+      "iframeTitleFallback": "Building location map"
+    },
+    "unitType": {
+      "apartment": "Apartment",
+      "commercial": "Commercial",
+      "parking": "Parking",
+      "storage": "Storage",
+      "other": "Other"
+    },
+    "occupancy": {
+      "unknown": "Unknown",
+      "owner_occupied": "Owner occupied",
+      "rented": "Rented",
+      "vacant": "Vacant"
+    },
+    "unitForm": {
+      "addTitle": "Add unit",
+      "editTitle": "Edit unit",
+      "designation": "Designation",
+      "designationPlaceholder": "e.g. \"3B\" or \"101\"",
+      "floor": "Floor",
+      "entrance": "Entrance",
+      "type": "Type",
+      "occupancy": "Occupancy",
+      "size": "Size (m²)",
+      "rooms": "Rooms",
+      "share": "Share (%)",
+      "description": "Description",
+      "saving": "Saving…",
+      "errors": {
+        "designationRequired": "Designation is required.",
+        "designationTooLong": "Designation must be {{max}} characters or fewer.",
+        "floorInteger": "Floor must be a whole number.",
+        "shareRequired": "Ownership share is required.",
+        "shareRange": "Ownership share must be between 0 and 100.",
+        "sizeInvalid": "Size must be a non-negative number.",
+        "roomsInvalid": "Rooms must be a non-negative whole number."
+      }
+    },
+    "unitsSection": {
+      "showArchived": "Show archived",
+      "loadFailed": "Could not load units",
+      "loadFailedBody": "The units could not be loaded.",
+      "empty": "No units defined for this building yet. Use “Add unit” to create one.",
+      "unit": "Unit",
+      "status": "Status",
+      "active": "Active",
+      "archived": "Archived",
+      "restore": "Restore",
+      "archive": "Archive",
+      "archiving": "Archiving…",
+      "archiveTitle": "Archive unit",
+      "archiveConfirm": "Archive unit <bold>{{designation}}</bold>? It will be hidden from the active list but can be restored later.",
+      "floorGround": "G",
+      "floorBasement": "B{{level}}"
+    },
+    "myUnit": {
+      "title": "My Unit",
+      "subtitle": "Your unit details and residency status.",
+      "loading": "Loading your unit…",
+      "loadError": "Could not load your unit: {{message}}",
+      "unknownError": "Unknown error",
+      "emptyNotRegistered": "You are not currently registered as a resident of any unit.",
+      "emptyContactManager": "If you believe this is a mistake, please contact your building manager.",
+      "chooseUnit": "Choose a unit",
+      "unitHeading": "Unit {{designation}}",
+      "entrance": "Entrance {{entrance}}",
+      "size": "Size",
+      "ownershipShare": "Ownership share",
+      "building": "Building",
+      "residency": "Your residency",
+      "role": "Role",
+      "primaryContact": "Primary contact",
+      "active": "Active",
+      "ended": "Ended",
+      "since": "Since",
+      "until": "Until",
+      "privacyNote": "For your privacy, other residents and owners of this unit are not shown here.",
+      "residentType": {
+        "owner": "Owner",
+        "tenant": "Tenant",
+        "family_member": "Family member",
+        "subtenant": "Subtenant"
+      }
+    }
   },
   "documents": {
     "title": "Documents",
@@ -1047,7 +1199,26 @@
     "invoices": {
       "title": "Invoice Management",
       "subtitle": "Create, send, and track invoices",
-      "createNew": "Create Invoice"
+      "createNew": "Create Invoice",
+      "searchPlaceholder": "Search invoices...",
+      "allStatuses": "All Statuses",
+      "empty": "No invoices found",
+      "columns": {
+        "number": "Invoice #",
+        "issueDate": "Issue Date",
+        "dueDate": "Due Date",
+        "status": "Status",
+        "total": "Total",
+        "balanceDue": "Balance Due"
+      },
+      "send": "Send",
+      "pdf": "PDF",
+      "pdfDownloading": "PDF…",
+      "viewAria": "View invoice details for {{number}}",
+      "pagination": "Showing {{from}} to {{to}} of {{total}} invoices",
+      "sent": "Invoice sent",
+      "sendFailed": "Failed to send invoice",
+      "pdfFailed": "Failed to download PDF"
     },
     "payments": {
       "title": "Payment Management",
@@ -1056,7 +1227,9 @@
       "totalReceived": "Total Received",
       "pendingReconciliation": "Pending Reconciliation",
       "pendingReconciliationTitle": "Pending Reconciliation",
-      "recentPayments": "Recent Payments"
+      "recentPayments": "Recent Payments",
+      "matchFailed": "Failed to allocate payment",
+      "autoMatchFailed": "Failed to auto-match payments"
     },
     "budgets": {
       "title": "Budget Management",
@@ -1065,6 +1238,247 @@
       "budgetsList": "Budgets",
       "noBudgets": "No budgets found",
       "createFirst": "Create Your First Budget"
+    },
+    "startDate": "Start date",
+    "endDate": "End date",
+    "view": "View",
+    "invoiceStatus": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "paid": "Paid",
+      "partial": "Partial",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled",
+      "void": "Void"
+    },
+    "paymentMethod": {
+      "bank_transfer": "Bank Transfer",
+      "card": "Card",
+      "cash": "Cash",
+      "check": "Check",
+      "online": "Online Payment",
+      "direct_debit": "Direct Debit",
+      "other": "Other"
+    },
+    "paymentStatus": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "failed": "Failed",
+      "refunded": "Refunded",
+      "cancelled": "Cancelled"
+    },
+    "budgetStatus": {
+      "draft": "Draft",
+      "approved": "Approved",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "buildingFilter": {
+      "label": "Building:",
+      "allBuildings": "All Buildings"
+    },
+    "dateRange": {
+      "today": "Today",
+      "week": "This Week",
+      "month": "This Month",
+      "quarter": "This Quarter",
+      "year": "This Year",
+      "clear": "Clear",
+      "from": "From:",
+      "to": "To:"
+    },
+    "dashboard": {
+      "title": "Financial Dashboard",
+      "totalBalance": "Total Balance",
+      "totalBalanceSubtitle": "Across all accounts",
+      "outstanding": "Outstanding",
+      "outstandingSubtitle": "Pending payments",
+      "overdueSubtitle_one": "{{count}} invoice past due",
+      "overdueSubtitle_other": "{{count}} invoices past due"
+    },
+    "invoiceChart": {
+      "title": "Invoice Status",
+      "empty": "No invoices yet"
+    },
+    "recentPayments": {
+      "empty": "No recent payments",
+      "viewAll": "View all",
+      "reference": "Ref: {{reference}}"
+    },
+    "overdueInvoices": {
+      "title": "Overdue Invoices",
+      "empty": "No overdue invoices",
+      "daysOverdue_one": "{{count}} day overdue",
+      "daysOverdue_other": "{{count}} days overdue",
+      "dueAndBalance": "Due: {{date}} • Balance: {{amount}}",
+      "sendReminder": "Send Reminder"
+    },
+    "arAging": {
+      "title": "Accounts Receivable Aging",
+      "empty": "No outstanding receivables",
+      "unit": "Unit",
+      "current": "Current",
+      "days1to30": "1-30 Days",
+      "days31to60": "31-60 Days",
+      "days60plus": "60+ Days",
+      "total": "Total",
+      "viewUnit": "View details for unit {{unit}}"
+    },
+    "invoiceDetail": {
+      "title": "Invoice {{number}}",
+      "billingPeriod": "Billing Period",
+      "lineItems": "Line Items",
+      "description": "Description",
+      "quantity": "Qty",
+      "unitPrice": "Unit Price",
+      "tax": "Tax",
+      "sending": "Sending...",
+      "send": "Send Invoice",
+      "downloadPdf": "Download PDF",
+      "paymentHistory": "Payment History"
+    },
+    "totals": {
+      "subtotal": "Subtotal:",
+      "tax": "Tax:",
+      "total": "Total:",
+      "paid": "Paid:",
+      "balanceDue": "Balance Due:"
+    },
+    "form": {
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "unitRequired": "Unit is required",
+      "currency": "Currency",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes",
+      "removeRow": "Remove",
+      "saving": "Saving..."
+    },
+    "invoiceForm": {
+      "billingPeriodStart": "Billing Period Start",
+      "billingPeriodEnd": "Billing Period End",
+      "dueDateRequired": "Due date is required",
+      "itemsRequired": "At least one line item is required",
+      "addItem": "Add Item",
+      "taxRatePlaceholder": "Tax %",
+      "notesPlaceholder": "Optional notes to include on the invoice",
+      "submitting": "Creating..."
+    },
+    "paymentForm": {
+      "allocateToInvoices": "Allocate to Invoices",
+      "autoFillAmount": "Auto-fill amount ({{amount}})",
+      "due": "Due: {{date}}",
+      "amountRequired": "Valid amount is required",
+      "paymentMethod": "Payment Method",
+      "selectPaymentMethod": "Select payment method",
+      "paymentMethodRequired": "Payment method is required",
+      "reference": "Reference Number",
+      "referencePlaceholder": "Bank ref, check #, etc.",
+      "paymentDate": "Payment Date",
+      "submitting": "Recording..."
+    },
+    "reconciliation": {
+      "title": "Payment Reconciliation",
+      "allReconciled": "All Reconciled",
+      "allReconciledBody": "No unallocated payments or unpaid invoices",
+      "autoMatchAll": "Auto-Match All",
+      "unallocatedPayments": "Unallocated Payments ({{count}})",
+      "noUnallocated": "No unallocated payments",
+      "unpaidInvoices": "Unpaid Invoices ({{count}})",
+      "noUnpaid": "No unpaid invoices",
+      "due": "Due: {{date}}",
+      "payment": "Payment:",
+      "amount": "Amount:",
+      "invoice": "Invoice:",
+      "amountDue": "({{amount}} due)",
+      "match": "Match"
+    },
+    "budget": {
+      "overBudget": "Over Budget",
+      "percentUsed": "{{percent}}% used",
+      "budgetAmount": "{{amount}} budget",
+      "budget": "Budget",
+      "actual": "Actual",
+      "variance": "Variance",
+      "noBudgetForYear": "No budget set for {{year}}",
+      "overviewTitle": "Budget Overview - {{year}}",
+      "percentOfBudgetUsed": "{{percent}}% of budget used",
+      "editBudget": "Edit Budget",
+      "totalBudget": "Total Budget",
+      "totalSpent": "Total Spent",
+      "totalActual": "Total Actual",
+      "remaining": "Remaining",
+      "alertTitle": "Budget Alert",
+      "categoryCount_one": "{{count}} category",
+      "categoryCount_other": "{{count}} categories",
+      "alertBody_one": "{{categories}} is over budget.",
+      "alertBody_other": "{{categories}} are over budget."
+    },
+    "budgetForm": {
+      "year": "Budget Year",
+      "categories": "Budget Categories",
+      "addCategory": "Add Category",
+      "categoryNamePlaceholder": "Category name",
+      "categoriesRequired": "At least one category with amount is required",
+      "save": "Save Budget",
+      "defaultCategories": {
+        "maintenance": "Maintenance",
+        "utilities": "Utilities",
+        "insurance": "Insurance",
+        "managementFees": "Management Fees",
+        "repairs": "Repairs",
+        "cleaning": "Cleaning",
+        "security": "Security",
+        "landscaping": "Landscaping",
+        "reserveFund": "Reserve Fund",
+        "other": "Other"
+      }
+    },
+    "reports": {
+      "title": "Financial Reports",
+      "subtitle": "Income statement, balance sheet, and cash-flow reports.",
+      "tabs": {
+        "incomeStatement": "Income Statement",
+        "balanceSheet": "Balance Sheet",
+        "cashFlow": "Cash Flow"
+      },
+      "from": "From",
+      "to": "To",
+      "asOf": "As of",
+      "export": "Export:",
+      "exporting": "Exporting…",
+      "exportFailed": "Export failed",
+      "noEntries": "No entries",
+      "balance": "Balance",
+      "asOfDate": "As of {{date}}",
+      "balanceSheetEmpty": "Select an as-of date to view the balance sheet.",
+      "incomeStatementEmpty": "Select a date range to view the income statement.",
+      "cashFlowEmpty": "Select a date range to view the cash-flow statement.",
+      "noAccounts": "No accounts",
+      "totalAssets": "Total Assets",
+      "totalLiabilities": "Total Liabilities",
+      "netEquity": "Net Equity",
+      "incomeStatement": {
+        "revenue": "Revenue",
+        "totalRevenue": "Total Revenue",
+        "expenses": "Expenses",
+        "totalExpenses": "Total Expenses",
+        "netIncome": "Net Income"
+      },
+      "cashFlow": {
+        "inflows": "Inflows",
+        "totalInflows": "Total Inflows",
+        "outflows": "Outflows",
+        "totalOutflows": "Total Outflows",
+        "netCashFlow": "Net Cash Flow"
+      },
+      "accountType": {
+        "operating": "Operating",
+        "reserve": "Reserve",
+        "utilities": "Utilities",
+        "unit_ledger": "Unit Ledgers",
+        "custom": "Custom"
+      }
     }
   },
   "announcements": {

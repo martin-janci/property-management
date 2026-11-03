@@ -172,14 +172,14 @@ function InvoiceManagementPageRoute() {
       queryClient.invalidateQueries({ queryKey: ['financial', 'invoices', orgId] });
       showToast({
         type: 'success',
-        title: t('financial.invoices.sent', { defaultValue: 'Invoice sent' }),
+        title: t('financial.invoices.sent'),
         message: '',
       });
     },
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.invoices.sendFailed', { defaultValue: 'Failed to send invoice' }),
+        title: t('financial.invoices.sendFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -204,7 +204,7 @@ function InvoiceManagementPageRoute() {
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
+        title: t('financial.invoices.pdfFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -306,9 +306,7 @@ function PaymentManagementPageRoute() {
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.payments.matchFailed', {
-          defaultValue: 'Failed to allocate payment',
-        }),
+        title: t('financial.payments.matchFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -319,9 +317,7 @@ function PaymentManagementPageRoute() {
     onError: (err) => {
       showToast({
         type: 'error',
-        title: t('financial.payments.autoMatchFailed', {
-          defaultValue: 'Failed to auto-match payments',
-        }),
+        title: t('financial.payments.autoMatchFailed'),
         message: err instanceof Error ? err.message : '',
       });
     },
@@ -434,7 +430,7 @@ function FinancialReportsPageRoute() {
       .catch((err) => {
         showToast({
           type: 'error',
-          title: t('financial.reports.exportFailed', { defaultValue: 'Export failed' }),
+          title: t('financial.reports.exportFailed'),
           message: err instanceof Error ? err.message : '',
         });
       })

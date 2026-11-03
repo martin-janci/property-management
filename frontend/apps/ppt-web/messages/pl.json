@@ -670,7 +670,165 @@
     "units": "Lokale",
     "floors": "Piętra",
     "yearBuilt": "Rok budowy",
-    "manager": "Zarządca"
+    "manager": "Zarządca",
+    "view": "Wyświetl",
+    "status": {
+      "active": "Aktywny",
+      "under_construction": "W budowie",
+      "renovation": "W remoncie",
+      "inactive": "Nieaktywny"
+    },
+    "type": {
+      "residential": "Mieszkalny",
+      "commercial": "Komercyjny",
+      "mixed": "Mieszany",
+      "industrial": "Przemysłowy"
+    },
+    "list": {
+      "subtitle_one": "{{count}} budynek w Twojej organizacji",
+      "subtitle_few": "{{count}} budynki w Twojej organizacji",
+      "subtitle_many": "{{count}} budynków w Twojej organizacji",
+      "subtitle_other": "{{count}} budynku w Twojej organizacji",
+      "addBuilding": "Dodaj budynek",
+      "allStatuses": "Wszystkie statusy",
+      "allTypes": "Wszystkie typy",
+      "statusFilter": "Filtruj według statusu",
+      "typeFilter": "Filtruj według typu",
+      "emptyTitle": "Brak budynków",
+      "emptyBody": "Zacznij od dodania pierwszego budynku.",
+      "pageOf": "Strona <bold>{{page}}</bold> z <bold>{{totalPages}}</bold>"
+    },
+    "card": {
+      "unitCount_one": "{{count}} lokal",
+      "unitCount_few": "{{count}} lokale",
+      "unitCount_many": "{{count}} lokali",
+      "unitCount_other": "{{count}} lokalu",
+      "floorCount_one": "{{count}} piętro",
+      "floorCount_few": "{{count}} piętra",
+      "floorCount_many": "{{count}} pięter",
+      "floorCount_other": "{{count}} piętra"
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać budynków",
+      "unexpected": "Wystąpił nieoczekiwany błąd",
+      "notFoundBody": "Nie znaleziono żądanego budynku.",
+      "generic": "Coś poszło nie tak. Spróbuj ponownie."
+    },
+    "detail": {
+      "personMonths": "Osobomiesiące",
+      "type": "Typ",
+      "totalArea": "Powierzchnia całkowita",
+      "floorFallback": "Piętro {{number}}",
+      "noFloors": "Dla tego budynku nie zdefiniowano pięter.",
+      "commonAreas": "Części wspólne",
+      "noCommonAreas": "Dla tego budynku nie zdefiniowano części wspólnych."
+    },
+    "commonAreaType": {
+      "staircase": "Klatka schodowa",
+      "elevator": "Winda",
+      "lobby": "Hol",
+      "hallway": "Korytarz",
+      "basement": "Piwnica",
+      "attic": "Strych",
+      "parking": "Parking",
+      "garage": "Garaż",
+      "garden": "Ogród",
+      "playground": "Plac zabaw",
+      "pool": "Basen",
+      "gym": "Siłownia",
+      "laundry_room": "Pralnia",
+      "storage_room": "Pomieszczenie gospodarcze",
+      "other": "Inne"
+    },
+    "map": {
+      "title": "Lokalizacja",
+      "openInOsm": "Otwórz w OpenStreetMap",
+      "iframeTitle": "Mapa: {{name}}",
+      "iframeTitleFallback": "Mapa lokalizacji budynku"
+    },
+    "unitType": {
+      "apartment": "Mieszkanie",
+      "commercial": "Lokal użytkowy",
+      "parking": "Miejsce postojowe",
+      "storage": "Komórka lokatorska",
+      "other": "Inny"
+    },
+    "occupancy": {
+      "unknown": "Nieznany",
+      "owner_occupied": "Zajmowany przez właściciela",
+      "rented": "Wynajęty",
+      "vacant": "Pusty"
+    },
+    "unitForm": {
+      "addTitle": "Dodaj lokal",
+      "editTitle": "Edytuj lokal",
+      "designation": "Oznaczenie",
+      "designationPlaceholder": "np. „3B” lub „101”",
+      "floor": "Piętro",
+      "entrance": "Klatka",
+      "type": "Typ",
+      "occupancy": "Zajętość",
+      "size": "Powierzchnia (m²)",
+      "rooms": "Pokoje",
+      "share": "Udział (%)",
+      "description": "Opis",
+      "saving": "Zapisywanie…",
+      "errors": {
+        "designationRequired": "Oznaczenie jest wymagane.",
+        "designationTooLong": "Oznaczenie może mieć maksymalnie {{max}} znaków.",
+        "floorInteger": "Piętro musi być liczbą całkowitą.",
+        "shareRequired": "Udział we współwłasności jest wymagany.",
+        "shareRange": "Udział musi mieścić się w przedziale od 0 do 100.",
+        "sizeInvalid": "Powierzchnia nie może być ujemna.",
+        "roomsInvalid": "Liczba pokoi musi być nieujemną liczbą całkowitą."
+      }
+    },
+    "unitsSection": {
+      "showArchived": "Pokaż zarchiwizowane",
+      "loadFailed": "Nie udało się wczytać lokali",
+      "loadFailedBody": "Nie udało się wczytać listy lokali.",
+      "empty": "Ten budynek nie ma jeszcze lokali. Użyj przycisku „Dodaj lokal”, aby dodać pierwszy.",
+      "unit": "Lokal",
+      "status": "Status",
+      "active": "Aktywny",
+      "archived": "Zarchiwizowany",
+      "restore": "Przywróć",
+      "archive": "Archiwizuj",
+      "archiving": "Archiwizowanie…",
+      "archiveTitle": "Archiwizuj lokal",
+      "archiveConfirm": "Zarchiwizować lokal <bold>{{designation}}</bold>? Zniknie z listy aktywnych lokali, ale później można go przywrócić.",
+      "floorGround": "parter",
+      "floorBasement": "-{{level}}"
+    },
+    "myUnit": {
+      "title": "Mój lokal",
+      "subtitle": "Szczegóły lokalu i status zamieszkania.",
+      "loading": "Wczytywanie lokalu…",
+      "loadError": "Nie udało się wczytać lokalu: {{message}}",
+      "unknownError": "Nieznany błąd",
+      "emptyNotRegistered": "Obecnie nie jesteś przypisany jako mieszkaniec żadnego lokalu.",
+      "emptyContactManager": "Jeśli uważasz, że to błąd, skontaktuj się z zarządcą budynku.",
+      "chooseUnit": "Wybierz lokal",
+      "unitHeading": "Lokal {{designation}}",
+      "entrance": "klatka {{entrance}}",
+      "size": "Powierzchnia",
+      "ownershipShare": "Udział we współwłasności",
+      "building": "Budynek",
+      "residency": "Twoje zamieszkanie",
+      "role": "Rola",
+      "primaryContact": "Główna osoba kontaktowa",
+      "active": "Aktywne",
+      "ended": "Zakończone",
+      "since": "Od",
+      "until": "Do",
+      "privacyNote": "Ze względu na ochronę prywatności inni mieszkańcy i właściciele tego lokalu nie są tu wyświetlani.",
+      "residentType": {
+        "owner": "Właściciel",
+        "tenant": "Najemca",
+        "family_member": "Członek rodziny",
+        "subtenant": "Podnajemca"
+      }
+    }
   },
   "documents": {
     "title": "Dokumenty",
@@ -931,15 +1089,304 @@
   },
   "financial": {
     "title": "Finanse",
-    "invoices": "Faktury",
-    "payments": "Płatności",
-    "budget": "Budżet",
     "amount": "Kwota",
     "dueDate": "Termin płatności",
     "paidDate": "Data płatności",
     "statusPaid": "Zapłacone",
     "statusPending": "Oczekujące",
-    "statusOverdue": "Zaległe"
+    "statusOverdue": "Zaległe",
+    "invoices": {
+      "title": "Zarządzanie fakturami",
+      "subtitle": "Twórz, wysyłaj i śledź faktury",
+      "createNew": "Utwórz fakturę",
+      "searchPlaceholder": "Szukaj faktur…",
+      "allStatuses": "Wszystkie statusy",
+      "empty": "Nie znaleziono faktur",
+      "columns": {
+        "number": "Nr faktury",
+        "issueDate": "Data wystawienia",
+        "dueDate": "Termin płatności",
+        "status": "Status",
+        "total": "Razem",
+        "balanceDue": "Do zapłaty"
+      },
+      "send": "Wyślij",
+      "pdf": "PDF",
+      "pdfDownloading": "PDF…",
+      "viewAria": "Pokaż szczegóły faktury {{number}}",
+      "pagination": "Wyświetlono {{from}}–{{to}} z {{total}} faktur",
+      "sent": "Faktura została wysłana",
+      "sendFailed": "Nie udało się wysłać faktury",
+      "pdfFailed": "Nie udało się pobrać pliku PDF"
+    },
+    "payments": {
+      "title": "Zarządzanie płatnościami",
+      "subtitle": "Rejestruj i uzgadniaj płatności",
+      "recordPayment": "Zarejestruj płatność",
+      "totalReceived": "Otrzymano łącznie",
+      "pendingReconciliation": "Oczekuje na uzgodnienie",
+      "pendingReconciliationTitle": "Oczekuje na uzgodnienie",
+      "recentPayments": "Ostatnie płatności",
+      "matchFailed": "Nie udało się przypisać płatności",
+      "autoMatchFailed": "Nie udało się automatycznie uzgodnić płatności"
+    },
+    "budgets": {
+      "title": "Zarządzanie budżetami",
+      "subtitle": "Planuj i monitoruj budżety",
+      "createNew": "Utwórz budżet",
+      "budgetsList": "Budżety",
+      "noBudgets": "Nie znaleziono budżetów",
+      "createFirst": "Utwórz pierwszy budżet"
+    },
+    "startDate": "Data od",
+    "endDate": "Data do",
+    "view": "Wyświetl",
+    "invoiceStatus": {
+      "draft": "Szkic",
+      "sent": "Wysłana",
+      "paid": "Opłacona",
+      "partial": "Częściowo opłacona",
+      "overdue": "Po terminie",
+      "cancelled": "Anulowana",
+      "void": "Unieważniona"
+    },
+    "paymentMethod": {
+      "bank_transfer": "Przelew bankowy",
+      "card": "Karta płatnicza",
+      "cash": "Gotówka",
+      "check": "Czek",
+      "online": "Płatność online",
+      "direct_debit": "Polecenie zapłaty",
+      "other": "Inna"
+    },
+    "paymentStatus": {
+      "pending": "Oczekująca",
+      "completed": "Zrealizowana",
+      "failed": "Nieudana",
+      "refunded": "Zwrócona",
+      "cancelled": "Anulowana"
+    },
+    "budgetStatus": {
+      "draft": "Szkic",
+      "approved": "Zatwierdzony",
+      "active": "Aktywny",
+      "closed": "Zamknięty"
+    },
+    "buildingFilter": {
+      "label": "Budynek:",
+      "allBuildings": "Wszystkie budynki"
+    },
+    "dateRange": {
+      "today": "Dziś",
+      "week": "Ten tydzień",
+      "month": "Ten miesiąc",
+      "quarter": "Ten kwartał",
+      "year": "Ten rok",
+      "clear": "Wyczyść",
+      "from": "Od:",
+      "to": "Do:"
+    },
+    "dashboard": {
+      "title": "Pulpit finansowy",
+      "totalBalance": "Saldo łączne",
+      "totalBalanceSubtitle": "Na wszystkich kontach",
+      "outstanding": "Należności",
+      "outstandingSubtitle": "Oczekujące płatności",
+      "overdueSubtitle_one": "{{count}} faktura po terminie",
+      "overdueSubtitle_few": "{{count}} faktury po terminie",
+      "overdueSubtitle_many": "{{count}} faktur po terminie",
+      "overdueSubtitle_other": "{{count}} faktury po terminie"
+    },
+    "invoiceChart": {
+      "title": "Status faktur",
+      "empty": "Brak faktur"
+    },
+    "recentPayments": {
+      "empty": "Brak ostatnich płatności",
+      "viewAll": "Pokaż wszystkie",
+      "reference": "Ref.: {{reference}}"
+    },
+    "overdueInvoices": {
+      "title": "Faktury po terminie",
+      "empty": "Brak faktur po terminie",
+      "daysOverdue_one": "{{count}} dzień po terminie",
+      "daysOverdue_few": "{{count}} dni po terminie",
+      "daysOverdue_many": "{{count}} dni po terminie",
+      "daysOverdue_other": "{{count}} dnia po terminie",
+      "dueAndBalance": "Termin: {{date}} • Do zapłaty: {{amount}}",
+      "sendReminder": "Wyślij przypomnienie"
+    },
+    "arAging": {
+      "title": "Struktura wiekowa należności",
+      "empty": "Brak nierozliczonych należności",
+      "unit": "Lokal",
+      "current": "Bieżące",
+      "days1to30": "1–30 dni",
+      "days31to60": "31–60 dni",
+      "days60plus": "Powyżej 60 dni",
+      "total": "Razem",
+      "viewUnit": "Pokaż szczegóły lokalu {{unit}}"
+    },
+    "invoiceDetail": {
+      "title": "Faktura {{number}}",
+      "billingPeriod": "Okres rozliczeniowy",
+      "lineItems": "Pozycje",
+      "description": "Opis",
+      "quantity": "Ilość",
+      "unitPrice": "Cena jednostkowa",
+      "tax": "Stawka VAT",
+      "sending": "Wysyłanie…",
+      "send": "Wyślij fakturę",
+      "downloadPdf": "Pobierz PDF",
+      "paymentHistory": "Historia płatności"
+    },
+    "totals": {
+      "subtotal": "Suma częściowa:",
+      "tax": "VAT:",
+      "total": "Razem:",
+      "paid": "Zapłacono:",
+      "balanceDue": "Do zapłaty:"
+    },
+    "form": {
+      "unit": "Lokal",
+      "selectUnit": "Wybierz lokal",
+      "unitRequired": "Lokal jest wymagany",
+      "currency": "Waluta",
+      "notes": "Uwagi",
+      "notesPlaceholder": "Opcjonalne uwagi",
+      "removeRow": "Usuń",
+      "saving": "Zapisywanie…"
+    },
+    "invoiceForm": {
+      "billingPeriodStart": "Początek okresu rozliczeniowego",
+      "billingPeriodEnd": "Koniec okresu rozliczeniowego",
+      "dueDateRequired": "Termin płatności jest wymagany",
+      "itemsRequired": "Wymagana jest co najmniej jedna pozycja",
+      "addItem": "Dodaj pozycję",
+      "taxRatePlaceholder": "VAT %",
+      "notesPlaceholder": "Opcjonalne uwagi widoczne na fakturze",
+      "submitting": "Tworzenie…"
+    },
+    "paymentForm": {
+      "allocateToInvoices": "Przypisz do faktur",
+      "autoFillAmount": "Uzupełnij kwotę ({{amount}})",
+      "due": "Termin: {{date}}",
+      "amountRequired": "Podaj prawidłową kwotę",
+      "paymentMethod": "Metoda płatności",
+      "selectPaymentMethod": "Wybierz metodę płatności",
+      "paymentMethodRequired": "Metoda płatności jest wymagana",
+      "reference": "Numer referencyjny",
+      "referencePlaceholder": "Tytuł przelewu, nr czeku itp.",
+      "paymentDate": "Data płatności",
+      "submitting": "Zapisywanie…"
+    },
+    "reconciliation": {
+      "title": "Uzgadnianie płatności",
+      "allReconciled": "Wszystko uzgodnione",
+      "allReconciledBody": "Brak nieprzypisanych płatności i nieopłaconych faktur",
+      "autoMatchAll": "Uzgodnij wszystko automatycznie",
+      "unallocatedPayments": "Nieprzypisane płatności ({{count}})",
+      "noUnallocated": "Brak nieprzypisanych płatności",
+      "unpaidInvoices": "Nieopłacone faktury ({{count}})",
+      "noUnpaid": "Brak nieopłaconych faktur",
+      "due": "Termin: {{date}}",
+      "payment": "Płatność:",
+      "amount": "Kwota:",
+      "invoice": "Faktura:",
+      "amountDue": "(do zapłaty {{amount}})",
+      "match": "Uzgodnij"
+    },
+    "budget": {
+      "overBudget": "Przekroczony budżet",
+      "percentUsed": "Wykorzystano {{percent}}%",
+      "budgetAmount": "Budżet {{amount}}",
+      "budget": "Budżet",
+      "actual": "Wykonanie",
+      "variance": "Odchylenie",
+      "noBudgetForYear": "Brak budżetu na rok {{year}}",
+      "overviewTitle": "Przegląd budżetu – {{year}}",
+      "percentOfBudgetUsed": "Wykorzystano {{percent}}% budżetu",
+      "editBudget": "Edytuj budżet",
+      "totalBudget": "Budżet łączny",
+      "totalSpent": "Wydatki łącznie",
+      "totalActual": "Wykonanie łącznie",
+      "remaining": "Pozostało",
+      "alertTitle": "Alert budżetowy",
+      "categoryCount_one": "{{count}} kategoria",
+      "categoryCount_few": "{{count}} kategorie",
+      "categoryCount_many": "{{count}} kategorii",
+      "categoryCount_other": "{{count}} kategorii",
+      "alertBody_one": "Kategoria {{categories}} przekroczyła budżet.",
+      "alertBody_few": "Kategorie {{categories}} przekroczyły budżet.",
+      "alertBody_many": "Kategorie {{categories}} przekroczyły budżet.",
+      "alertBody_other": "Kategorie {{categories}} przekroczyły budżet."
+    },
+    "budgetForm": {
+      "year": "Rok budżetowy",
+      "categories": "Kategorie budżetu",
+      "addCategory": "Dodaj kategorię",
+      "categoryNamePlaceholder": "Nazwa kategorii",
+      "categoriesRequired": "Wymagana jest co najmniej jedna kategoria z kwotą",
+      "save": "Zapisz budżet",
+      "defaultCategories": {
+        "maintenance": "Konserwacja",
+        "utilities": "Media",
+        "insurance": "Ubezpieczenie",
+        "managementFees": "Opłaty za zarządzanie",
+        "repairs": "Naprawy",
+        "cleaning": "Sprzątanie",
+        "security": "Ochrona",
+        "landscaping": "Pielęgnacja zieleni",
+        "reserveFund": "Fundusz remontowy",
+        "other": "Inne"
+      }
+    },
+    "reports": {
+      "title": "Raporty finansowe",
+      "subtitle": "Rachunek zysków i strat, bilans i rachunek przepływów pieniężnych.",
+      "tabs": {
+        "incomeStatement": "Rachunek zysków i strat",
+        "balanceSheet": "Bilans",
+        "cashFlow": "Przepływy pieniężne"
+      },
+      "from": "Od",
+      "to": "Do",
+      "asOf": "Na dzień",
+      "export": "Eksport:",
+      "exporting": "Eksportowanie…",
+      "exportFailed": "Eksport nie powiódł się",
+      "noEntries": "Brak pozycji",
+      "balance": "Saldo",
+      "asOfDate": "Na dzień {{date}}",
+      "balanceSheetEmpty": "Wybierz datum, na które ma zostać wyświetlony bilans.",
+      "incomeStatementEmpty": "Wybierz zakres dat, aby wyświetlić rachunek zysków i strat.",
+      "cashFlowEmpty": "Wybierz zakres dat, aby wyświetlić rachunek przepływów pieniężnych.",
+      "noAccounts": "Brak kont",
+      "totalAssets": "Aktywa razem",
+      "totalLiabilities": "Zobowiązania razem",
+      "netEquity": "Kapitał własny",
+      "incomeStatement": {
+        "revenue": "Przychody",
+        "totalRevenue": "Przychody razem",
+        "expenses": "Koszty",
+        "totalExpenses": "Koszty razem",
+        "netIncome": "Wynik netto"
+      },
+      "cashFlow": {
+        "inflows": "Wpływy",
+        "totalInflows": "Wpływy razem",
+        "outflows": "Wydatki",
+        "totalOutflows": "Wydatki razem",
+        "netCashFlow": "Przepływy pieniężne netto"
+      },
+      "accountType": {
+        "operating": "Rachunek operacyjny",
+        "reserve": "Fundusz remontowy",
+        "utilities": "Media",
+        "unit_ledger": "Konta lokali",
+        "custom": "Niestandardowe"
+      }
+    }
   },
   "announcements": {
     "form": {

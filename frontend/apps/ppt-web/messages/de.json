@@ -668,7 +668,159 @@
     "units": "Einheiten",
     "floors": "Etagen",
     "yearBuilt": "Baujahr",
-    "manager": "Verwalter"
+    "manager": "Verwalter",
+    "view": "Anzeigen",
+    "status": {
+      "active": "Aktiv",
+      "under_construction": "Im Bau",
+      "renovation": "In Renovierung",
+      "inactive": "Inaktiv"
+    },
+    "type": {
+      "residential": "Wohngebäude",
+      "commercial": "Gewerbegebäude",
+      "mixed": "Gemischt genutzt",
+      "industrial": "Industriegebäude"
+    },
+    "list": {
+      "subtitle_one": "{{count}} Gebäude in Ihrer Organisation",
+      "subtitle_other": "{{count}} Gebäude in Ihrer Organisation",
+      "addBuilding": "Gebäude hinzufügen",
+      "allStatuses": "Alle Status",
+      "allTypes": "Alle Typen",
+      "statusFilter": "Nach Status filtern",
+      "typeFilter": "Nach Typ filtern",
+      "emptyTitle": "Keine Gebäude",
+      "emptyBody": "Fügen Sie zunächst Ihr erstes Gebäude hinzu.",
+      "pageOf": "Seite <bold>{{page}}</bold> von <bold>{{totalPages}}</bold>"
+    },
+    "card": {
+      "unitCount_one": "{{count}} Einheit",
+      "unitCount_other": "{{count}} Einheiten",
+      "floorCount_one": "{{count}} Etage",
+      "floorCount_other": "{{count}} Etagen"
+    },
+    "errors": {
+      "loadFailed": "Gebäude konnten nicht geladen werden",
+      "unexpected": "Ein unerwarteter Fehler ist aufgetreten",
+      "notFoundBody": "Das angeforderte Gebäude wurde nicht gefunden.",
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    },
+    "detail": {
+      "personMonths": "Personenmonate",
+      "type": "Typ",
+      "totalArea": "Gesamtfläche",
+      "floorFallback": "Etage {{number}}",
+      "noFloors": "Für dieses Gebäude sind keine Etagen definiert.",
+      "commonAreas": "Gemeinschaftsflächen",
+      "noCommonAreas": "Für dieses Gebäude sind keine Gemeinschaftsflächen definiert."
+    },
+    "commonAreaType": {
+      "staircase": "Treppenhaus",
+      "elevator": "Aufzug",
+      "lobby": "Eingangshalle",
+      "hallway": "Flur",
+      "basement": "Keller",
+      "attic": "Dachboden",
+      "parking": "Parkplatz",
+      "garage": "Garage",
+      "garden": "Garten",
+      "playground": "Spielplatz",
+      "pool": "Schwimmbad",
+      "gym": "Fitnessraum",
+      "laundry_room": "Waschküche",
+      "storage_room": "Abstellraum",
+      "other": "Sonstiges"
+    },
+    "map": {
+      "title": "Standort",
+      "openInOsm": "In OpenStreetMap öffnen",
+      "iframeTitle": "Karte: {{name}}",
+      "iframeTitleFallback": "Karte mit dem Gebäudestandort"
+    },
+    "unitType": {
+      "apartment": "Wohnung",
+      "commercial": "Gewerbeeinheit",
+      "parking": "Stellplatz",
+      "storage": "Abstellraum",
+      "other": "Sonstige"
+    },
+    "occupancy": {
+      "unknown": "Unbekannt",
+      "owner_occupied": "Eigennutzung",
+      "rented": "Vermietet",
+      "vacant": "Leerstehend"
+    },
+    "unitForm": {
+      "addTitle": "Einheit hinzufügen",
+      "editTitle": "Einheit bearbeiten",
+      "designation": "Bezeichnung",
+      "designationPlaceholder": "z. B. „3B“ oder „101“",
+      "floor": "Etage",
+      "entrance": "Eingang",
+      "type": "Typ",
+      "occupancy": "Belegung",
+      "size": "Fläche (m²)",
+      "rooms": "Zimmer",
+      "share": "Anteil (%)",
+      "description": "Beschreibung",
+      "saving": "Wird gespeichert…",
+      "errors": {
+        "designationRequired": "Bezeichnung ist erforderlich.",
+        "designationTooLong": "Die Bezeichnung darf höchstens {{max}} Zeichen lang sein.",
+        "floorInteger": "Die Etage muss eine ganze Zahl sein.",
+        "shareRequired": "Miteigentumsanteil ist erforderlich.",
+        "shareRange": "Der Miteigentumsanteil muss zwischen 0 und 100 liegen.",
+        "sizeInvalid": "Die Fläche darf nicht negativ sein.",
+        "roomsInvalid": "Die Zimmeranzahl muss eine nicht negative ganze Zahl sein."
+      }
+    },
+    "unitsSection": {
+      "showArchived": "Archivierte anzeigen",
+      "loadFailed": "Einheiten konnten nicht geladen werden",
+      "loadFailedBody": "Die Einheiten konnten nicht geladen werden.",
+      "empty": "Für dieses Gebäude sind noch keine Einheiten angelegt. Verwenden Sie „Einheit hinzufügen“, um eine anzulegen.",
+      "unit": "Einheit",
+      "status": "Status",
+      "active": "Aktiv",
+      "archived": "Archiviert",
+      "restore": "Wiederherstellen",
+      "archive": "Archivieren",
+      "archiving": "Wird archiviert…",
+      "archiveTitle": "Einheit archivieren",
+      "archiveConfirm": "Einheit <bold>{{designation}}</bold> archivieren? Sie wird aus der Liste der aktiven Einheiten ausgeblendet, kann aber später wiederhergestellt werden.",
+      "floorGround": "EG",
+      "floorBasement": "{{level}}. UG"
+    },
+    "myUnit": {
+      "title": "Meine Einheit",
+      "subtitle": "Angaben zu Ihrer Einheit und Ihrem Wohnstatus.",
+      "loading": "Ihre Einheit wird geladen…",
+      "loadError": "Ihre Einheit konnte nicht geladen werden: {{message}}",
+      "unknownError": "Unbekannter Fehler",
+      "emptyNotRegistered": "Sie sind derzeit keiner Einheit als Bewohner zugeordnet.",
+      "emptyContactManager": "Falls dies ein Fehler ist, wenden Sie sich bitte an Ihre Hausverwaltung.",
+      "chooseUnit": "Einheit auswählen",
+      "unitHeading": "Einheit {{designation}}",
+      "entrance": "Eingang {{entrance}}",
+      "size": "Fläche",
+      "ownershipShare": "Miteigentumsanteil",
+      "building": "Gebäude",
+      "residency": "Ihr Wohnverhältnis",
+      "role": "Rolle",
+      "primaryContact": "Hauptansprechpartner",
+      "active": "Aktiv",
+      "ended": "Beendet",
+      "since": "Seit",
+      "until": "Bis",
+      "privacyNote": "Zum Schutz der Privatsphäre werden andere Bewohner und Eigentümer dieser Einheit hier nicht angezeigt.",
+      "residentType": {
+        "owner": "Eigentümer",
+        "tenant": "Mieter",
+        "family_member": "Familienangehöriger",
+        "subtenant": "Untermieter"
+      }
+    }
   },
   "documents": {
     "title": "Dokumente",
@@ -929,15 +1081,296 @@
   },
   "financial": {
     "title": "Finanzen",
-    "invoices": "Rechnungen",
-    "payments": "Zahlungen",
-    "budget": "Budget",
     "amount": "Betrag",
     "dueDate": "Fälligkeitsdatum",
     "paidDate": "Bezahlt am",
     "statusPaid": "Bezahlt",
     "statusPending": "Ausstehend",
-    "statusOverdue": "Überfällig"
+    "statusOverdue": "Überfällig",
+    "invoices": {
+      "title": "Rechnungsverwaltung",
+      "subtitle": "Rechnungen erstellen, versenden und verfolgen",
+      "createNew": "Rechnung erstellen",
+      "searchPlaceholder": "Rechnungen suchen…",
+      "allStatuses": "Alle Status",
+      "empty": "Keine Rechnungen gefunden",
+      "columns": {
+        "number": "Rechnungsnr.",
+        "issueDate": "Rechnungsdatum",
+        "dueDate": "Fälligkeitsdatum",
+        "status": "Status",
+        "total": "Gesamt",
+        "balanceDue": "Offener Betrag"
+      },
+      "send": "Senden",
+      "pdf": "PDF",
+      "pdfDownloading": "PDF…",
+      "viewAria": "Details zu Rechnung {{number}} anzeigen",
+      "pagination": "{{from}}–{{to}} von {{total}} Rechnungen",
+      "sent": "Rechnung versendet",
+      "sendFailed": "Rechnung konnte nicht gesendet werden",
+      "pdfFailed": "PDF konnte nicht heruntergeladen werden"
+    },
+    "payments": {
+      "title": "Zahlungsverwaltung",
+      "subtitle": "Zahlungen erfassen und abgleichen",
+      "recordPayment": "Zahlung erfassen",
+      "totalReceived": "Gesamt eingegangen",
+      "pendingReconciliation": "Abgleich ausstehend",
+      "pendingReconciliationTitle": "Abgleich ausstehend",
+      "recentPayments": "Letzte Zahlungen",
+      "matchFailed": "Zahlung konnte nicht zugeordnet werden",
+      "autoMatchFailed": "Automatischer Zahlungsabgleich fehlgeschlagen"
+    },
+    "budgets": {
+      "title": "Budgetverwaltung",
+      "subtitle": "Budgets planen und verfolgen",
+      "createNew": "Budget erstellen",
+      "budgetsList": "Budgets",
+      "noBudgets": "Keine Budgets gefunden",
+      "createFirst": "Erstes Budget erstellen"
+    },
+    "startDate": "Startdatum",
+    "endDate": "Enddatum",
+    "view": "Anzeigen",
+    "invoiceStatus": {
+      "draft": "Entwurf",
+      "sent": "Versendet",
+      "paid": "Bezahlt",
+      "partial": "Teilweise bezahlt",
+      "overdue": "Überfällig",
+      "cancelled": "Storniert",
+      "void": "Ungültig"
+    },
+    "paymentMethod": {
+      "bank_transfer": "Banküberweisung",
+      "card": "Karte",
+      "cash": "Bargeld",
+      "check": "Scheck",
+      "online": "Online-Zahlung",
+      "direct_debit": "Lastschrift",
+      "other": "Sonstige"
+    },
+    "paymentStatus": {
+      "pending": "Ausstehend",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen",
+      "refunded": "Erstattet",
+      "cancelled": "Storniert"
+    },
+    "budgetStatus": {
+      "draft": "Entwurf",
+      "approved": "Genehmigt",
+      "active": "Aktiv",
+      "closed": "Abgeschlossen"
+    },
+    "buildingFilter": {
+      "label": "Gebäude:",
+      "allBuildings": "Alle Gebäude"
+    },
+    "dateRange": {
+      "today": "Heute",
+      "week": "Diese Woche",
+      "month": "Dieser Monat",
+      "quarter": "Dieses Quartal",
+      "year": "Dieses Jahr",
+      "clear": "Zurücksetzen",
+      "from": "Von:",
+      "to": "Bis:"
+    },
+    "dashboard": {
+      "title": "Finanzübersicht",
+      "totalBalance": "Gesamtsaldo",
+      "totalBalanceSubtitle": "Über alle Konten",
+      "outstanding": "Offene Posten",
+      "outstandingSubtitle": "Ausstehende Zahlungen",
+      "overdueSubtitle_one": "{{count}} überfällige Rechnung",
+      "overdueSubtitle_other": "{{count}} überfällige Rechnungen"
+    },
+    "invoiceChart": {
+      "title": "Rechnungsstatus",
+      "empty": "Noch keine Rechnungen"
+    },
+    "recentPayments": {
+      "empty": "Keine aktuellen Zahlungen",
+      "viewAll": "Alle anzeigen",
+      "reference": "Ref.: {{reference}}"
+    },
+    "overdueInvoices": {
+      "title": "Überfällige Rechnungen",
+      "empty": "Keine überfälligen Rechnungen",
+      "daysOverdue_one": "{{count}} Tag überfällig",
+      "daysOverdue_other": "{{count}} Tage überfällig",
+      "dueAndBalance": "Fällig: {{date}} • Offen: {{amount}}",
+      "sendReminder": "Mahnung senden"
+    },
+    "arAging": {
+      "title": "Altersstruktur der Forderungen",
+      "empty": "Keine offenen Forderungen",
+      "unit": "Einheit",
+      "current": "Nicht fällig",
+      "days1to30": "1–30 Tage",
+      "days31to60": "31–60 Tage",
+      "days60plus": "Über 60 Tage",
+      "total": "Gesamt",
+      "viewUnit": "Details für Einheit {{unit}} anzeigen"
+    },
+    "invoiceDetail": {
+      "title": "Rechnung {{number}}",
+      "billingPeriod": "Abrechnungszeitraum",
+      "lineItems": "Positionen",
+      "description": "Beschreibung",
+      "quantity": "Menge",
+      "unitPrice": "Einzelpreis",
+      "tax": "MwSt.-Satz",
+      "sending": "Wird gesendet…",
+      "send": "Rechnung senden",
+      "downloadPdf": "PDF herunterladen",
+      "paymentHistory": "Zahlungsverlauf"
+    },
+    "totals": {
+      "subtotal": "Zwischensumme:",
+      "tax": "MwSt.:",
+      "total": "Gesamt:",
+      "paid": "Bezahlt:",
+      "balanceDue": "Offener Betrag:"
+    },
+    "form": {
+      "unit": "Einheit",
+      "selectUnit": "Einheit auswählen",
+      "unitRequired": "Einheit ist erforderlich",
+      "currency": "Währung",
+      "notes": "Notizen",
+      "notesPlaceholder": "Optionale Notizen",
+      "removeRow": "Entfernen",
+      "saving": "Wird gespeichert…"
+    },
+    "invoiceForm": {
+      "billingPeriodStart": "Beginn des Abrechnungszeitraums",
+      "billingPeriodEnd": "Ende des Abrechnungszeitraums",
+      "dueDateRequired": "Fälligkeitsdatum ist erforderlich",
+      "itemsRequired": "Mindestens eine Position ist erforderlich",
+      "addItem": "Position hinzufügen",
+      "taxRatePlaceholder": "MwSt. %",
+      "notesPlaceholder": "Optionale Notiz, die auf der Rechnung erscheint",
+      "submitting": "Wird erstellt…"
+    },
+    "paymentForm": {
+      "allocateToInvoices": "Rechnungen zuordnen",
+      "autoFillAmount": "Betrag übernehmen ({{amount}})",
+      "due": "Fällig: {{date}}",
+      "amountRequired": "Gültiger Betrag ist erforderlich",
+      "paymentMethod": "Zahlungsart",
+      "selectPaymentMethod": "Zahlungsart auswählen",
+      "paymentMethodRequired": "Zahlungsart ist erforderlich",
+      "reference": "Referenznummer",
+      "referencePlaceholder": "Bankreferenz, Schecknr. usw.",
+      "paymentDate": "Zahlungsdatum",
+      "submitting": "Wird erfasst…"
+    },
+    "reconciliation": {
+      "title": "Zahlungsabgleich",
+      "allReconciled": "Alles abgeglichen",
+      "allReconciledBody": "Keine nicht zugeordneten Zahlungen oder offenen Rechnungen",
+      "autoMatchAll": "Alle automatisch abgleichen",
+      "unallocatedPayments": "Nicht zugeordnete Zahlungen ({{count}})",
+      "noUnallocated": "Keine nicht zugeordneten Zahlungen",
+      "unpaidInvoices": "Offene Rechnungen ({{count}})",
+      "noUnpaid": "Keine offenen Rechnungen",
+      "due": "Fällig: {{date}}",
+      "payment": "Zahlung:",
+      "amount": "Betrag:",
+      "invoice": "Rechnung:",
+      "amountDue": "({{amount}} offen)",
+      "match": "Zuordnen"
+    },
+    "budget": {
+      "overBudget": "Über Budget",
+      "percentUsed": "{{percent}} % verbraucht",
+      "budgetAmount": "Budget {{amount}}",
+      "budget": "Budget",
+      "actual": "Ist",
+      "variance": "Abweichung",
+      "noBudgetForYear": "Kein Budget für {{year}} festgelegt",
+      "overviewTitle": "Budgetübersicht – {{year}}",
+      "percentOfBudgetUsed": "{{percent}} % des Budgets verbraucht",
+      "editBudget": "Budget bearbeiten",
+      "totalBudget": "Gesamtbudget",
+      "totalSpent": "Gesamtausgaben",
+      "totalActual": "Ist gesamt",
+      "remaining": "Verbleibend",
+      "alertTitle": "Budgetwarnung",
+      "categoryCount_one": "{{count}} Kategorie",
+      "categoryCount_other": "{{count}} Kategorien",
+      "alertBody_one": "{{categories}} liegt über dem Budget.",
+      "alertBody_other": "{{categories}} liegen über dem Budget."
+    },
+    "budgetForm": {
+      "year": "Budgetjahr",
+      "categories": "Budgetkategorien",
+      "addCategory": "Kategorie hinzufügen",
+      "categoryNamePlaceholder": "Kategoriename",
+      "categoriesRequired": "Mindestens eine Kategorie mit Betrag ist erforderlich",
+      "save": "Budget speichern",
+      "defaultCategories": {
+        "maintenance": "Instandhaltung",
+        "utilities": "Nebenkosten",
+        "insurance": "Versicherung",
+        "managementFees": "Verwaltungsgebühren",
+        "repairs": "Reparaturen",
+        "cleaning": "Reinigung",
+        "security": "Sicherheitsdienst",
+        "landscaping": "Grünflächenpflege",
+        "reserveFund": "Instandhaltungsrücklage",
+        "other": "Sonstiges"
+      }
+    },
+    "reports": {
+      "title": "Finanzberichte",
+      "subtitle": "Gewinn- und Verlustrechnung, Bilanz und Kapitalflussrechnung.",
+      "tabs": {
+        "incomeStatement": "Gewinn- und Verlustrechnung",
+        "balanceSheet": "Bilanz",
+        "cashFlow": "Kapitalfluss"
+      },
+      "from": "Von",
+      "to": "Bis",
+      "asOf": "Stichtag",
+      "export": "Export:",
+      "exporting": "Wird exportiert…",
+      "exportFailed": "Export fehlgeschlagen",
+      "noEntries": "Keine Einträge",
+      "balance": "Saldo",
+      "asOfDate": "Stand: {{date}}",
+      "balanceSheetEmpty": "Wählen Sie einen Stichtag, um die Bilanz anzuzeigen.",
+      "incomeStatementEmpty": "Wählen Sie einen Zeitraum, um die Gewinn- und Verlustrechnung anzuzeigen.",
+      "cashFlowEmpty": "Wählen Sie einen Zeitraum, um die Kapitalflussrechnung anzuzeigen.",
+      "noAccounts": "Keine Konten",
+      "totalAssets": "Summe Aktiva",
+      "totalLiabilities": "Summe Verbindlichkeiten",
+      "netEquity": "Eigenkapital",
+      "incomeStatement": {
+        "revenue": "Erträge",
+        "totalRevenue": "Summe Erträge",
+        "expenses": "Aufwendungen",
+        "totalExpenses": "Summe Aufwendungen",
+        "netIncome": "Jahresergebnis"
+      },
+      "cashFlow": {
+        "inflows": "Einzahlungen",
+        "totalInflows": "Summe Einzahlungen",
+        "outflows": "Auszahlungen",
+        "totalOutflows": "Summe Auszahlungen",
+        "netCashFlow": "Netto-Cashflow"
+      },
+      "accountType": {
+        "operating": "Betriebskonto",
+        "reserve": "Rücklage",
+        "utilities": "Nebenkosten",
+        "unit_ledger": "Einheitenkonten",
+        "custom": "Benutzerdefiniert"
+      }
+    }
   },
   "announcements": {
     "form": {

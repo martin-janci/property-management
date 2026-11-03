@@ -7,6 +7,7 @@
 
 import type { ARReportEntry, ARReportTotals, Invoice, Payment } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ARAgingTable,
   BuildingFilter,
@@ -68,6 +69,7 @@ export function FinancialDashboardPage({
   onSendReminder,
   onUnitClick,
 }: FinancialDashboardPageProps) {
+  const { t } = useTranslation();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>();
   const [startDate, setStartDate] = useState<string>();
   const [endDate, setEndDate] = useState<string>();
@@ -93,7 +95,7 @@ export function FinancialDashboardPage({
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">Financial Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('financial.dashboard.title')}</h1>
             <div className="flex flex-col sm:flex-row gap-4">
               <BuildingFilter
                 buildings={buildings}
@@ -119,9 +121,9 @@ export function FinancialDashboardPage({
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <MetricCard
-            title="Total Balance"
+            title={t('financial.dashboard.totalBalance')}
             value={formatCurrency(metrics.totalBalance, metrics.currency)}
-            subtitle="Across all accounts"
+            subtitle={t('financial.dashboard.totalBalanceSubtitle')}
             icon={
               <svg
                 className="w-8 h-8"
@@ -140,9 +142,9 @@ export function FinancialDashboardPage({
             }
           />
           <MetricCard
-            title="Outstanding"
+            title={t('financial.dashboard.outstanding')}
             value={formatCurrency(metrics.totalOutstanding, metrics.currency)}
-            subtitle="Pending payments"
+            subtitle={t('financial.dashboard.outstandingSubtitle')}
             icon={
               <svg
                 className="w-8 h-8"
@@ -161,9 +163,9 @@ export function FinancialDashboardPage({
             }
           />
           <MetricCard
-            title="Overdue"
+            title={t('financial.statusOverdue')}
             value={formatCurrency(metrics.totalOverdue, metrics.currency)}
-            subtitle={`${overdueInvoices.length} invoices past due`}
+            subtitle={t('financial.dashboard.overdueSubtitle', { count: overdueInvoices.length })}
             className={metrics.totalOverdue > 0 ? 'border-l-4 border-red-500' : ''}
             icon={
               <svg
