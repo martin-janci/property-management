@@ -302,12 +302,14 @@
   }
 
   .shell .shell-sidebar {
+    /* Slide-over drawer that sits *under* the sticky top bar (z 40) so the
+       brand and the menu toggle stay visible and tappable while it is open. */
     position: fixed;
-    top: var(--shell-topbar-height);
+    top: 0;
     left: 0;
-    bottom: 0;
-    height: auto;
-    z-index: 50;
+    height: 100dvh;
+    padding-top: calc(var(--shell-topbar-height) + 1rem);
+    z-index: 35;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
     box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.35);
@@ -320,8 +322,8 @@
   .shell .shell-backdrop {
     display: block;
     position: fixed;
-    inset: var(--shell-topbar-height) 0 0 0;
-    z-index: 45;
+    inset: 0;
+    z-index: 30;
     border: 0;
     background: rgb(0 0 0 / 0.35);
   }
