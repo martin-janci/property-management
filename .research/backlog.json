@@ -14064,21 +14064,23 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
         "PR #3189",
-        "PR #3209"
+        "PR #3209",
+        "PR #3213",
+        "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)"
       ],
       "evidence": [
         "PR #3189 (ranked-ballot ordering) and PR #3209 (ranked-ballot a11y labels/hint fix for issue #3206) both edit the same test file within 48h — hotspot runs_seen 1→2.",
-        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path."
+        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path.",
+        "resolved: PR #3213 (churn-hotspot VoteDetailScreen.test.tsx: stabilize ranked-ballot rendering tests) merged 2026-11-02"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
       ],
       "created_at": "2026-11-02",
-      "updated_at": "2026-11-02",
+      "updated_at": "2026-11-03",
       "plan": null
     },
     {
@@ -14325,6 +14327,45 @@
       "score_delta": 1,
       "candidate_vector": "i18n",
       "expert": "frontend"
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-3217-reality",
+      "title": "PR #3217 modified reality-web listings/[id]/edit route without updating docs/screens/reality/*.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3217"
+      ],
+      "evidence": [
+        "PR #3217 modified frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + extracted _number.ts helper + tests, but no docs/screens/reality/*.md touched — screen docs may drift from new helper behavior"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "refactor-stalled-review-pr-3171",
+      "title": "PR #3171 (fix(api-server): gate violations add_evidence on manager role) open 8 days without reviewDecision",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3171"
+      ],
+      "evidence": [
+        "PR #3171 open since 2026-10-26 (8 days) with no reviewDecision — needs-human-review label still attached"
+      ],
+      "files": [],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
     }
   ]
 }
