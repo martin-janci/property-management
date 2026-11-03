@@ -5943,6 +5943,28 @@
       "merge_attempted_at": "2026-08-23T08:36:36Z"
     },
     {
+      "task_id": "code-review-mobile-rn-vote-detail-dead-i18n-fb",
+      "branch": "auto-impl/code-review-mobile-rn-vote-detail-dead-i-674d11d6",
+      "status": "merged",
+      "claimed_at": "2026-11-01T04:33:49Z",
+      "last_updated": "2026-11-03T00:32:12Z",
+      "status_changed_at": "2026-11-03T00:32:12Z",
+      "pr_number": 3208,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3208",
+      "merged_at": "2026-11-03T00:26:09Z",
+      "specialist": null,
+      "implementer_summary": "[2026-11-01 16:34 dispatcher: approved+CI-green, not human-gated, but mergeable=dirty (non-mechanical conflict vs dev, VoteDetailScreen test/snapshot, after sibling #3209 merged) -> needs manual rebase; mechanical auto-rebaser cannot resolve and gh transport is 403 this run; autonomous owner-identity merge also blocked by harness permission classifier. Human rebase+merge required.] [dispatcher 2026-11-02: resolved weeks-stale dev conflict (overlap w/ #3206) via -X theirs, verified biome+typecheck+jest(8/8) green in worktree, pushed merge a01b5bc; CI re-running → ci-pending, next cycle merges]",
+      "reviewer_summary": "verdict=approve head_oid=a01b5bc7c30f60294e23402afac5d3f33ba5bc75 note=re-review after clean dev-merge (a01b5bc) resolving stale conflict; net diff unchanged (3 voting files under screens/voting/, i18n defaultValue fix), CI 40/40 green, 0 unresolved threads, mergeable=clean; merged via owner-identity squash d47eb9ec",
+      "last_reviewed_oid": "a01b5bc7c30f60294e23402afac5d3f33ba5bc75",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 2,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-02T22:36:34Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-vote-detail-ranked-no-order",
       "branch": "auto-impl/code-review-mobile-rn-vote-detail-ranked-03a001c9",
       "status": "merged",
@@ -22021,5 +22043,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-02T12:43:39Z"
+  "archived_at": "2026-11-03T00:32:17Z"
 }
