@@ -1,0 +1,743 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-03T18:40:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-03",
+      "type": "lag_warning",
+      "source": "routine lag check (last_run_iso=2026-11-02T03:16:48Z)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine lag: 39h (last_run_iso=2026-11-02T03:16:48Z, now=2026-11-03T18:40:00Z) > 36h threshold."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3221, #3222",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-1 code churn this run (177 lines). Source: PR #3221, #3222."
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=3",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Repeated churn: runs_seen now 3; recent_churn=177 lines (PR #3221, #3222)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3220",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-2 code churn this run (127 lines). Source: PR #3220."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #3220",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Top-3 code churn this run (104 lines). Source: PR #3220."
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-11-03-grouped",
+      "type": "dep-update-noise",
+      "source": "open dependabot PRs touched since last run",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Open dependabot PRs this run: #2957, #2962, #2972, #3090, #3173, #3176, #3194, #3195, #3196 (all deps groups, routine)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-feedbackmgr-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:139 getDrafts() does `return stored ? JSON.parse(stored) : [];` with NO try/catch. A corrupt or truncated FEEDBACK_DRAFTS_KEY value in AsyncStorage (e.g. an interrupted write, storage corruption, or a stale value from an older schema) makes JSON.parse throw synchronously, so the whole getDrafts() promise rejects and the feedback-draft UI that awaits it crashes instead of degrading to an empty list.",
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:229 getPendingFeedback() has the identical unguarded pattern `return stored ? JSON.parse(stored) : [];` against PENDING_FEEDBACK_KEY. getPendingFeedback feeds the pending-feedback sync/flush path, so a single corrupt entry throws and blocks ALL queued feedback from ever syncing (no isolation, no self-heal).",
+        "This is the SAME class of bug the team already fixed elsewhere in this segment: the prior open finding code-review-mobile-rn-widget-provider-json-parse flagged WidgetDataProvider.getAllWidgetConfigs() for the exact `return stored ? JSON.parse(stored)...` anti-pattern, and the hardened modules in this app (layoutCache.readCachedLayout L22-27, TourManager.loadState L277, HelpCenter.loadUserVotes L191) all wrap the parse in try/catch and drop/ignore the bad value. FeedbackManager was missed.",
+        "Fix vector: wrap each JSON.parse in try/catch returning [] on failure (and ideally AsyncStorage.removeItem the corrupt key, matching layoutCache). Beyond the throw, the parsed value is also returned untyped (no cast, no shape guard) so a wrong-shape-but-valid-JSON blob would propagate malformed drafts/submissions downstream. Confidence medium: the missing guard and the throwing path are certain by static read; not upgraded to high because triggering it requires already-corrupt local storage, not normal input.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-qrhistory-json-parse",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/qrcode/QRCodeScanner.ts:368 getScanHistory() does `return stored ? JSON.parse(stored) : [];` against SCAN_HISTORY_KEY with NO try/catch \u2014 the same unguarded-persisted-parse anti-pattern as FeedbackManager above.",
+        "Blast radius is wider than a read-only getter because getScanHistory() is also on the WRITE path: saveScanToHistory() (frontend/apps/mobile/src/qrcode/QRCodeScanner.ts:345 `const history = await getScanHistory();`) calls it before appending a new entry. So if SCAN_HISTORY_KEY is corrupt, scanning a fresh QR code throws inside saveScanToHistory and the post-scan success handler crashes \u2014 not just the history-list screen. (This is distinct from parsePPTPayload at L138, which IS correctly try-caught.)",
+        "Note the asymmetry: the parse of UNTRUSTED scanned QR payload (parsePPTPayload, L136-142) is defensively wrapped, but the parse of the app's OWN persisted history \u2014 which can still be corrupted by a partial write or OS-level storage issue \u2014 is not. Both should be guarded.",
+        "Fix vector: wrap JSON.parse in try/catch returning [] (and remove the corrupt key), so a bad history blob self-heals on the next scan instead of blocking all future scans. Confidence medium: throwing path certain by static read; requires already-corrupt storage to trigger.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-feedbackmgr-no-tests",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts is a public manager class (saveDraft/getDrafts/getPendingFeedback/submit flow + draft serialization) with ZERO test coverage: a repo-wide search `find frontend/apps/mobile -iname '*feedback*test*'` returns nothing, and no FeedbackManager.test.* exists anywhere in the tree.",
+        "By contrast the neighbouring onboarding/qrcode modules that were recently hardened DO have tests (qrcode/universalLinks.test.ts, qrcode/DeepLinkHandler.test.ts; services/ has backgroundNotifications.test.ts, deepLinkRouting.test.ts, resetLocalData.test.ts), so the gap is specific to FeedbackManager, not a segment-wide norm.",
+        "This mirrors the prior accepted Tester finding code-review-mobile-rn-widgets-no-tests (public classes driving a feature with no tests), applied to a different untested public manager. The missing coverage is also what let the unguarded-JSON.parse defects above (sibling finding code-review-mobile-rn-feedbackmgr-json-parse) ship unnoticed \u2014 a corrupt-storage unit test would have caught them.",
+        "Fix vector: add a FeedbackManager.test.ts covering (a) getDrafts/getPendingFeedback with corrupt stored JSON (should not throw), (b) draft round-trip save/get, (c) pending-feedback flush. Low severity / test-coverage gap. Confidence medium.",
+        "expert: tester"
+      ],
+      "expert": "tester"
+    },
+    {
+      "id": "code-review-ppt-web-ui-payment-match-silent-fail",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:61 \u2014 confirmMutation = useMutation({ mutationFn: confirmMatch, onSuccess }) has no onError",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:68 \u2014 rejectMutation likewise has only onSuccess, no onError",
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx:286-337 \u2014 confirm/reject consumed only via .isPending/.variables; no .isError/error UI and no ErrorBoundary. uploadMutation DOES surface .isError at :112, so the omission is inconsistent. A failed confirm/reject of a bank-statement payment match fails silently. accounting is a wired feature.",
+        "No existing backlog finding covers PaymentMatchingPage (prior accounting-invoice-silent-fail is a different file)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-doc-search-raw-err-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearch.tsx:236 \u2014 renders raw API/network error text with a hardcoded English prefix (not wrapped in t()); minor info-leak + i18n gap",
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentSearch.tsx:210,229,241 \u2014 additional hardcoded English strings while same component already uses t() for aria labels. documents is a wired feature."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-buildings-err-raw-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx:70 \u2014 error-state heading 'Error loading buildings' hardcoded English (not t())",
+        "frontend/apps/ppt-web/src/features/buildings/pages/BuildingsPage.tsx:72 \u2014 renders raw API/network error text directly; i18n gap + minor info-leak on a wired core management page."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-full-reload-nav",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/registry/pages/RegistryPage.tsx:91,95,129,148,152,186 \u2014 six internal navigations are done with `window.location.href = '/registry/pets/...'` / `/registry/vehicles/...` (view, edit, new for both pets and vehicles) instead of React Router. Every click triggers a full browser page reload inside a Vite SPA: the TanStack Query cache is dropped, all in-memory app/auth/router state is lost, and the JS bundle is re-downloaded and the app re-bootstrapped.",
+        "frontend/apps/ppt-web/src/features/compliance/pages/ContentModerationPage.tsx:207 \u2014 same anti-pattern for case detail: `window.location.href = `/compliance/moderation/cases/${caseId}`` (handleViewContent), with an explicit `// TODO(Phase-2): Use React Router's useNavigate` comment acknowledging it.",
+        "Contrast (correct usage): IntegrationsPage.tsx:355 uses window.location.href = res.auth_url for an EXTERNAL OAuth redirect, which is legitimate \u2014 the finding is only the INTERNAL-route cases above.",
+        "Supporting concern (verify): neither RegistryPage nor ContentModerationPage is lazy-imported into any frontend/apps/ppt-web/src/routes/groups/*.tsx group (grep for the component names across src/routes returns no import; there is no registry.tsx or compliance.tsx route group). If the `/registry/*` and `/compliance/moderation/cases/:id` paths are not registered in the router, these full-reload navigations also land on unrouted URLs (not-found), making them broken links rather than merely slow ones. The implementer should confirm route registration while converting to useNavigate.",
+        "Fix vector: replace window.location.href with const navigate = useNavigate(); navigate('/registry/pets/...') for the internal cases, and register the target routes if missing. Cloud-verifiable (ppt-web: biome + typecheck). Confidence medium: the literals and reload behaviour are certain by static read; the route-non-registration is inferred from absent imports. Severity LOW (+1) refactor/UX smell per the skill score table.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-card-noop-click",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:264-271 \u2014 each PropertyCard is rendered with `onClick={() => { /* TODO: navigate to property detail route */ }}` \u2014 an empty handler body.",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/components/PropertyCard.tsx:77-79 \u2014 PropertyCard renders a `<div className=\"... cursor-pointer hover:shadow-lg transition-shadow\" onClick={onClick}>`, so each card presents itself as interactive (pointer cursor + hover elevation). The user clicks a property card on the shipped portfolio dashboard expecting to open its detail, and nothing happens \u2014 a dead interactive element / incomplete feature, not just a missing route.",
+        "Secondary a11y note: the clickable element is a bare <div> with onClick and no role=\"button\"/tabIndex/keyboard handler, so even once wired it is not keyboard-accessible.",
+        "Fix vector: either wire onClick to navigate(`/portfolio/properties/${property.property_id}`) (and add the route), or drop the cursor-pointer/hover affordance until the detail view exists so the card does not advertise a non-existent action. Cloud-verifiable (ppt-web: biome + typecheck). Confidence medium (static read, card reachable from the shipped PortfolioDashboardPage). Severity LOW (+1).",
+        "expert: completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx has NO useTranslation import and renders user-facing English string literals directly, inside an app that ships react-i18next with sk/cs/de/en locales.",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:259 \u2014 hardcoded error state `Failed to load property performance.`",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:261 \u2014 hardcoded empty state `No properties in this portfolio yet.`",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:280 \u2014 hardcoded error state `Failed to load financial metrics.`",
+        "Distinct from the i18n findings already written 2026-11-01 (disputes cards, DocumentSearch, BuildingsPage) and from the open accounting-invoice-no-i18n backlog row \u2014 this is the portfolio-performance dashboard, not previously flagged.",
+        "Fix vector: add const { t } = useTranslation() and move the literals to portfolio.* keys (e.g. portfolio.cards.loadError, portfolio.cards.empty, portfolio.metrics.loadError); add keys to sk/cs/de/en bundles. Cloud-verifiable (ppt-web: biome + typecheck). Confidence medium. Severity LOW (+1) i18n gap per the skill score table.",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-aichat-first-msg-stale-sid",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/ChatInterface.tsx:48 \u2014 `const sendMessage = useSendMessage(currentSessionId || '')` binds the mutation to the session id captured at render time.",
+        "ChatInterface.tsx:93-120 handleSendMessage: when there is no current session, it awaits createSession, calls setCurrentSessionId(session.id), then `setTimeout(async () => { await sendMessage.mutateAsync({ content }) }, 100)`. The setTimeout closes over the SAME sendMessage instance from this render, which is still bound to the empty session id (currentSessionId was null). setCurrentSessionId does not update the already-captured mutation, so the first message of a brand-new chat POSTs to `/ai/chat/sessions//messages` (empty session id) \u2014 the happy-path first message silently fails/404s. The 100ms setTimeout is also a timing race (code comment admits: 'This is a simplified version - in production you'd want better state management'). Fix: pass the freshly-created session id into the send call (e.g. useSendMessage taking sessionId as a mutate arg, or call the API with the returned session.id directly) and drop the setTimeout."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-aichat-mutation-err-swallowed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/ChatInterface.tsx:61-141 \u2014 createSession (New chat), deleteSession, and messageFeedback failures are caught with empty `catch {}` blocks commented '// Error handling is managed by mutation', but the only error UI rendered is `sendMessage.isError` (ChatInterface.tsx:254-258). A failed 'New chat' (createSession) or 'Delete session' (deleteSession) therefore produces NO user-facing error \u2014 the action silently does nothing. Completeness gap: there is no isError branch or toast for createSession.isError / deleteSession.isError, contradicting the swallowing comments. Add user-visible error states (or route these through the shared Toast) for the create/delete mutations."
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-suggested-q-hardcoded-en",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/ai-chat/components/SuggestedQuestions.tsx:75-108 \u2014 getDefaultSuggestedQuestions() returns hardcoded English `text` ('How do I report a maintenance issue?', etc.) and `category` labels ('Faults','Voting','Utilities','Community','Events','Finance'). These are rendered directly (SuggestedQuestions.tsx:62-65 `question.category` / `question.text`) while every other string in the same component and in ChatInterface uses t(). i18n gap: the welcome-screen quick-start prompts are English-only for sk/cs/de locales, breaking the multi-language requirement. Move the default questions behind i18n keys (t('aiChat.suggested.*')) or fetch localized suggestions."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-disputes-cards-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "The disputes feature's presentational card layer renders user-facing English string literals with NO useTranslation import, inside an app that ships react-i18next with sk/cs/de/en locales. The surrounding pages are translated (DisputeList.tsx uses t() for title/filters/empty-state; MediationChatThread.tsx and MediationResolutionForm.tsx are fully t()-wrapped), so these cards are the un-wrapped gap, not a missing capability.",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeCard.tsx:147-151 \u2014 hardcoded `Filed by {name}`, `Assigned to {name}`, and the relative-time literals `Today` / `${daysAgo} days ago` (also lacks plural handling for 1 day). No useTranslation in the file.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ResolutionCard.tsx:118,180 \u2014 hardcoded headings `Resolution Proposal`, `Votes`, plus `Assigned to:` / `Due:` row labels (L161,163). No useTranslation.",
+        "frontend/apps/ppt-web/src/features/disputes/components/ActionItemCard.tsx:73-89,118,126,139 \u2014 hardcoded status/relative-time strings `Completed`, `Overdue by {n} days`, `Due today`, `Due tomorrow`, `Due in {n} days`, and labels `Assigned to:`, `Completed:`, `Escalated:`. No useTranslation; no plural handling.",
+        "frontend/apps/ppt-web/src/features/disputes/components/DisputeTimeline.tsx:85,94,97 \u2014 hardcoded `Just now`, heading `Activity Timeline`, and empty-state `No activity yet.`. No useTranslation.",
+        "Fix vector: add const { t, i18n } = useTranslation() to each of the 4 card files and move the literals to disputes.* keys (e.g. disputes.card.filedBy, disputes.actionItem.dueInDays with i18next plural forms, disputes.timeline.empty); add the keys to the sk/cs/de/en locale bundles. Cloud-verifiable (ppt-web, biome + typecheck). Confidence medium: literals certain by static read, all four cards reachable from the shipped DisputesPage/DisputeDetailPage/MediationWorkspacePage; severity LOW (+1) i18n gap per the skill's score-delta table.",
+        "expert: frontend+completeness"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-price-map-unthrottled-agg-dos",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:226 get_price_map is the handler for the PUBLIC, UNAUTHENTICATED GET /api/v1/price-map (mounted bare at main.rs:515 `.nest(\"/api/v1/price-map\", routes::price_map::router())`, router() at price_map.rs:174 attaches no auth/throttle layer).",
+        "reality-server has NO global per-IP rate-limit layer: the only abuse control (state.inquiry_rate_limiters) is invoked INSIDE the anonymous inquiry (routes/inquiries.rs enforce_inquiry_rate_limit) and report (routes/reports.rs enforce_public_report_rate_limit) POST handlers. The main.rs layer stack (L521-575: DefaultBodyLimit, security_headers, TraceLayer, CorsLayer, host_tenant_middleware) adds no request-rate throttle. So the price-map GET is reachable unthrottled.",
+        "On every cache MISS it runs an expensive double-CTE aggregation over `listings` (price_map.rs:253-330): current_period + prior_period, each a full `AVG(CASE WHEN size_sqm>0 THEN price/size_sqm END) ... GROUP BY city` scan. The cache_key (price_map.rs:253-259) is `\"{mode}:{time_window}:{property_type}:{city}\"` and embeds the RAW free-text `query.city` (L258) \u2014 an attacker rotating `?city=a1`, `?city=a2`, ... forces a guaranteed cache miss every request, so each request re-runs both aggregations against the DB.",
+        "The BoundedCache (MAX_PRICE_MAP_CACHE_ENTRIES=10_000 with LRU/insertion-order eviction, price_map.rs:57/142) bounds only MEMORY under a distinct-key flood (the existing #3132 tests confirm the OOM guard). It does NOT throttle the per-miss DB aggregation, and the LRU eviction means a distinct-key flood also evicts all legitimately-cached aggregations, collapsing the hit rate and the 1h cache benefit for real visitors. Net effect: an unauthenticated single-IP caller can impose repeated expensive GROUP BY load on the shared public DB pool and bust the cache for everyone.",
+        "Fix vector: add a per-IP throttle to the price-map GET (reuse the existing TenantRateLimiterSet / client_ip_bucket primitive already used for inquiries/reports), and/or reduce cache-miss amplification by validating+canonicalising `city` (trim/lowercase/known-city allowlist) before it enters cache_key so arbitrary free-text can't mint unbounded distinct keys. Confidence medium: the absent throttle layer and per-miss aggregation are certain by static read; 'medium' (not high) because the DB cost per aggregation was not runtime-measured from this cloud runner.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-price-map-mode-unvalidated",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-server",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/price_map.rs:230 `let mode = query.mode.clone().unwrap_or_else(|| \"sale\".to_string());` \u2014 the `mode` query param is accepted with NO allowlist validation and bound directly as `transaction_type = $1` (L324 `.bind(&mode)`).",
+        "This is inconsistent with its own sibling param in the SAME handler: `time_window` IS validated against a closed match (price_map.rs:238-253) \u2014 `1m|3m|12m|5y` map to intervals and any other value returns `400 BAD_REQUEST` ('Unsupported time_window ...'). `mode` gets no such treatment, though the only meaningful DB values are the transaction_type enum (e.g. sale/rent).",
+        "Consequence: an arbitrary `?mode=foo` does NOT 400 \u2014 it silently matches zero rows, returns `200 OK` with an empty `districts: []`, echoes the bogus `mode` back in PriceMapResponse (price_map.rs:204-212 / response build), and is cached under cache_key `\"foo:3m::\"` (L253-259). A silent empty 200 for an unsupported enum value is a contract defect (clients can't distinguish 'no data for a valid filter' from 'invalid filter'), and it compounds the distinct-key cache-miss surface of the sibling finding.",
+        "Fix vector: validate `mode` against the transaction_type allowlist up-front and return 400 on unknown values, mirroring the existing `time_window` closed-match guard a few lines above. Low severity / contract-consistency. Confidence medium: the missing validation and the silent-empty-200 path are certain by static read.",
+        "expert: rust"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-data",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx \u2014 the PUBLIC agent/realtor profile page (route /[locale]/realtor/[id], screen-map docs/screens/reality/agent-profile.md) is shipped backed entirely by static mock constants and never reads the [id] route param.",
+        "page.tsx:13 imports { MOCK_AGENT, MOCK_AGENT_LISTINGS, MOCK_AGENT_REVIEWS } from './_mock'; :23 `const agent = MOCK_AGENT;` is assigned unconditionally \u2014 there is no fetch / useQuery / getRealtor(id) call anywhere in the file, so every realtor id renders the same fake agent, the same fake listings (:240 MOCK_AGENT_LISTINGS.map), and the same fake reviews (:335 MOCK_AGENT_REVIEWS.map). useParams/[id] is not consumed.",
+        "page.tsx:24-30 handleSendMessage(e) only does setMessageSent(true)+setContactOpen(false) \u2014 the public contact-the-agent form POSTs nothing to reality-server; the inquiry is silently dropped while the UI claims success.",
+        "page.tsx:14-15 carry `// TODO: replace listing cards ...` / `// TODO: replace status badges ...`, and the page mixes hardcoded Slovak literals (:230 `Akt\u00edvne ponuky (...)`, :332 `Hodnotenia (...)`) with useLocale() but no next-intl t() \u2014 the data-i18n attributes are decorative, the visible strings are literals.",
+        "Impact: a user-facing public page serves fabricated agent/listing/review data for every realtor and a contact form that is a no-op. Completeness bug class (page returns mock unconditionally; contact action not wired). Cloud-verifiable (reality-web: biome + typecheck + the existing page tests). Confidence medium (certain by static read; reachability certain \u2014 it is the shipped public route); severity MEDIUM (+2) per the skill score-delta table (user-facing path not wired to backend).",
+        "expert: completeness+frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-realtor-flow-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "i18n",
+      "evidence": [
+        "The authenticated realtor/account self-service pages in reality-web bypass next-intl entirely (zero useTranslations/getTranslations import), rendering hardcoded English chrome + error fallbacks, inside an app that ships next-intl 4 with sk/cs/de/en and whose public listing pages ARE localized. The shared @/components/realtor/ListingForm these pages embed IS correctly t()-wrapped, so the gap is the page-level wrapper code, not a missing capability.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/profile/page.tsx (UC-51.1) \u2014 no i18n; hardcoded `Realtor profile`, `Buyers and renters see this information...`, field labels (`Name`, `Email`...), `Loading profile\u2026`, validation `Name is required`, success `Profile updated.`, and error fallbacks `Could not load profile.` (:48) / `Could not save profile.` (:82).",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/new/page.tsx (UC-51.4) \u2014 no i18n; hardcoded `Create listing`, `Publish a new property to Reality Portal.`, submitLabel=`Publish listing`, and error fallback `Could not create listing. Please try again.` (:27).",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/listings/[id]/edit/page.tsx (UC-51.5) \u2014 no i18n; hardcoded `Missing listing id.`, load/save error fallbacks `Could not load listing.` (:42) / `Could not save listing.`.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx \u2014 no i18n; hardcoded time-range labels `Last 7 days`/`Last 30 days`/`Last 90 days`/`Last year` (:15-18) and error fallback `Could not load analytics.` (:54).",
+        "frontend/apps/reality-web/src/app/[locale]/account/profile/page.tsx (:40 `Could not save profile.`) and account/password/page.tsx both import no next-intl \u2014 same hardcoded-English class on the account self-service flow.",
+        "Fix vector: add useTranslations(...) to each page and move the literals to locale namespaces (realtor.*, account.*), populate sk/cs/de/en bundles. Cloud-verifiable (reality-web: biome + typecheck). Confidence medium (literals certain by static read; all pages are shipped authenticated routes); severity LOW (+1) i18n gap per the skill score-delta table. Distinct from the ppt-web-ui i18n findings written earlier today (different app/segment).",
+        "expert: frontend"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-handlers-install-webhook-example-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:1675-1687 (create portal connection handler) \u2014 base_url = std::env::var(\"API_BASE_URL\").unwrap_or_else(|_| \"https://api.ppt.example.com\".to_string()), then webhook_url = format!(\"{}/api/v1/integrations/webhooks/portal/{}\", base_url, connection_id) is returned in the 201 PortalConnectionResponse and published to the external portal provider (sreality/bezrealitky/immowelt/custom) as the endpoint they must POST webhooks to. If API_BASE_URL is unset or misconfigured in ANY environment, every portal install silently hands out a webhook URL on the placeholder/example domain api.ppt.example.com \u2014 an operator-unowned host. Consequences: (a) inbound portal webhooks never reach api-server (integration silently broken, no error surfaced to the installer); (b) api.ppt.example.com is registerable by a third party, so a misconfigured deploy could direct real portal webhook deliveries \u2014 which the portal_webhooks receiver expects to carry HMAC-signed, tenant-scoped payloads \u2014 to an attacker-controllable endpoint. Should fail closed (reject/500 CONFIG_ERROR) when API_BASE_URL is unset rather than defaulting to an example domain, mirroring the fail-closed secret handling already used for the *_WEBHOOK_SECRET env vars (portal_webhooks.rs get_portal_webhook_secret, #2263)."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-redirect-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/voice.rs:189-197 (exchange_voice_oauth_tokens) \u2014 redirect_uri is read via std::env::var(\"ALEXA_REDIRECT_URI\") / std::env::var(\"GOOGLE_VOICE_REDIRECT_URI\").unwrap_or_else(|_| \"https://ppt.three-two-bit.com/api/v1/webhooks/voice/oauth/callback\".to_string()), hardcoding the production host as the fallback. The OAuth spec requires the redirect_uri sent in the code->token exchange (oauth_manager.exchange_code at :200) to byte-match the one used in the authorize step. On any non-prod environment (staging / worktree *.dev / local) where the platform-specific REDIRECT_URI env var is not set, the exchange falls back to the prod URI, so it mismatches the authorize-step URI and the provider rejects the exchange \u2014 voice-device OAuth linking silently fails on every non-prod deploy with only a generic OAUTH_EXCHANGE_FAILED surfaced. Should derive the fallback from the same API_BASE_URL/host config the rest of the server uses, or fail closed when unset, rather than baking in ppt.three-two-bit.com."
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "kotlin",
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/realtor/CreateListingScreen.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/realtor/PortalListingsRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 \u2014 the Screen.CreateListing composable wires `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The entire realtor create-listing flow is non-functional in production: a realtor who opens the form and taps submit always receives a failure, never a created listing.",
+        "Full reachable production path traced (hence confidence high): MyListingsScreen `onCreateClick` (Navigation.kt ~:487) navigates to `Screen.CreateListing.route` => the composable above => onSubmit. CreateListingScreen.kt:41 declares `onSubmit: suspend (CreateListingInput) -> Result<Unit>` and at :95-121 collects the full form input, calls onSubmit(...) and branches `onSuccess = { onCreated() }`, so the UI/form is complete and ready \u2014 only the handler is a stub.",
+        "Root cause: PortalListingsRepository.kt exposes only listMyListings (:40), getListingAnalytics (:74) and getPortfolioAnalytics (:111) \u2014 there is NO create method, and no POST /api/v1/portal/listings (or equivalent) call exists anywhere in the shared module (grep for create/post across shared confirms none). So the stub cannot be removed without first adding the repository method + wiring.",
+        "Landable remedy (mobile-native only): add `suspend fun createListing(input: CreateListingInput): Result<ListingId>` (or Result<Unit>) to PortalListingsRepository backed by the reality-server create endpoint, then replace the Navigation.kt:493 lambda with a call to it. Verifiable statically + via a commonTest mock-engine repository test asserting the POST body and success/failure mapping (the repo already has sibling path-encoding/analytics tests to mirror). Severity medium: no crash/data-loss/security impact, but a complete user-facing realtor feature is dead on a shipped navigation route."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nearby-dead-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "tester",
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt:118 \u2014 `suspend fun getListingsNearby(latitude, longitude, radiusKm, limit): Result<ListingSearchResponse>` (calls GET /api/v1/listings/nearby) has ZERO call sites in the whole repo: grep for `getListingsNearby` across mobile-native/ returns only its own declaration (no androidApp screen, no iOS/Swift, no ViewModel references it).",
+        "It also has NO test: grep for `getListingsNearby` across *Test.kt files is empty, whereas its sibling methods in the same file (search, suggestions) and the LayoutRepository are covered by mock-engine commonTest suites (e.g. LayoutRepositoryTest). So this is both dead code and an untested public API surface.",
+        "The implementation itself is fine (try/catch -> Result, status check), so this is a low-severity completeness/test-gap smell, not a correctness bug. Remedy options (mobile-native only): either wire it into a nearby-listings UI surface and add a mock-engine commonTest (asserting lat/lng/radius_km/limit query params + success/failure mapping, mirroring the existing path-encoding tests), or delete it if the nearby feature is not planned. Confidence medium: reachability traced by static grep only, not runtime-confirmed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-route-auth-guard-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/messaging.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/community.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/neighbors.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "evidence": [
+        "7 of the 21 feature route-group fragments composed into the flat <Routes> table in routes/AppRoutes.tsx render their routes with NO route-level authentication gate: accounting.tsx (2 routes: /accounting/invoices, /accounting/payment-matching), financial.tsx (5), messaging.tsx (3), faults.tsx (5), announcements.tsx (4), community.tsx (6), neighbors.tsx (3) = 28 routes. None of these 7 files reference ProtectedRoute, AuthRequiredGate, <Navigate>, or isAuthenticated (verified by grep over each file). AppRoutes.tsx wraps NOTHING in a parent guard \u2014 it is a flat <Routes> with each group's <Route path=...> inlined \u2014 so protection is per-route inside each group, and these 7 groups have none.",
+        "The app's established, documented route-auth convention is <ProtectedRoute> (components/ProtectedRoute.tsx: redirects unauthenticated users to /login via <Navigate replace>, stores the return URL via @ppt/shared setReturnUrl, and fail-closes on missing role) or <AuthRequiredGate>. The other 14 groups apply it to every route: buildings.tsx (PR x19 / 9 routes), core.tsx (x38 / 31), leases.tsx (x21 / 10), rentals.tsx (x15 / 7), meters.tsx (x13 / 6), documents.tsx (PR x16 + AG x4 / 8), person-months.tsx (x9 / 4), voting.tsx (x7 / 3), reports.tsx (x5 / 2), notifications.tsx (x3 / 2), and iot/ai-dashboards/disputes/outages via AuthRequiredGate. The 7 unguarded groups are the stark outlier.",
+        "Confirmed the gap is NOT merely delegated to the page component: frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx and .../PaymentMatchingPage.tsx (the lazy targets at routes/lazyRoutes.tsx:261-266) contain no useAuth / ProtectedRoute / <Navigate> / redirect / /login reference, and financial/pages/InvoiceManagementPage.tsx likewise has no auth gate. faults.tsx DOES import useAuth but only reads `user` for role-based UI (isManager toggles, e.g. line 335), never to redirect \u2014 so an unauthenticated direct navigation to /accounting/invoices, /financial/*, or /messages renders the page shell instead of bouncing to /login with a stored return URL.",
+        "Impact is defense-in-depth + consistency, not a confirmed server-side data leak: reality-server/api-server still enforce authz, and lib/api.ts's 401 interceptor (single-flight refresh then onUnauthorized teardown, api.ts:249-269) is a backstop once a page issues an API call. But the sensitive subset \u2014 accounting (invoices/payment-matching), financial, and messaging (private threads) \u2014 should fail-closed at the route layer like every other money/PII surface in the app; today they render to anonymous users and skip the return-URL capture. Landable frontend-only remedy: wrap each <Route element> in these 7 groups with <ProtectedRoute> (add requiredRoles={MANAGER_ROLES} from routes/shared.tsx where manager-gated, matching buildings/leases/financial-sibling usage). Verify with an RTL/route test that an unauthenticated render of /accounting/invoices yields <Navigate to=\"/login\">. Confidence medium: route + page files statically confirmed guard-free and the ProtectedRoute convention is unambiguous, but unauthenticated render behavior was not runtime-executed."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-101 \u2014 buildWebSocketUrl() appends the raw JWT to the handshake URL as a query parameter: `url.searchParams.set('token', token)`, producing e.g. wss://host/ws?token=<jwt>. The file documents this as an intentional browser constraint (lines 86-92: browsers cannot set an Authorization header on a WebSocket handshake, so the api-server reads the JWT from the `token` query param), so this is a known-tradeoff hardening item, not an undocumented bug.",
+        "Residual risk the comment does not address: full request URLs (including the query string) are routinely captured by reverse-proxy / load-balancer / CDN access logs and APM traces, and can surface in browser history \u2014 so a long-lived bearer JWT in the WS URL has a wider exposure surface than a header-borne token. Standard mitigation is a dedicated short-lived, single-use WS connect ticket (issued by a POST, valid seconds, exchanged for the socket) or sending the JWT in the first post-connect WS frame rather than the handshake URL.",
+        "Low severity / for triage: this is a defense-in-depth suggestion on an explicitly documented design that the api-server currently depends on; changing it requires a coordinated server change, so it is backlog-worthy only if WS access logs are retained with query strings. Flagged for a human to confirm the proxy/log posture before investing. Confidence medium (static read of the documented design; log-retention posture not verified)."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/components/EventForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/GroupForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/CreatePostForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/GroupList.tsx",
+        "frontend/apps/ppt-web/src/features/community/components/CommentList.tsx",
+        "frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx",
+        "frontend/apps/ppt-web/src/features/community/pages/EventsPage.tsx",
+        "frontend/apps/ppt-web/src/features/community/pages/CreateGroupPage.tsx"
+      ],
+      "evidence": [
+        "The entire ppt-web community feature (posts, groups, events, marketplace, comments) is shipped English-only: only 1 of its 17 .tsx files (components/PostCard.tsx) imports useTranslation / react-i18next. ppt-web ships react-i18next with sk/cs/de/en locales, so every other string in this feature is an i18n gap, not a missing capability \u2014 sibling features (disputes pages, buildings, etc.) are t()-wrapped.",
+        "frontend/apps/ppt-web/src/features/community/components/EventForm.tsx:137,154,274 \u2014 hardcoded placeholders 'Enter event title', \"What's this event about?\", 'Leave empty for unlimited'; :291 button 'Cancel'; :297-304 button label 'Creating...' / 'Updating...' / 'Update Event' / 'Create Event' \u2014 all literal English, no useTranslation import in the file.",
+        "frontend/apps/ppt-web/src/features/community/components/GroupForm.tsx:125,142 placeholders 'Enter group name' / 'Describe what your group is about...'; :251 button 'Create Group'. GroupList.tsx:135,276 'Create Group'; :153 placeholder 'Search groups...'. CreatePostForm.tsx:160,178 placeholders \"What's on your mind?\" / 'Enter image URL'. CommentList.tsx:140 placeholder 'Write a reply...'.",
+        "frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx:194,265,274 placeholders 'Search items...' / 'Min \u20ac' / 'Max \u20ac'; ItemForm.tsx:180,204,221 placeholders 'Enter image URL' / 'What are you selling?' / 'Describe your item in detail...'. EventsPage.tsx:153,254 'Create Event'. CreateGroupPage.tsx:45 heading 'Create New Group'.",
+        "Landable frontend-only remedy: add useTranslation to the community components/pages and move the literals behind t('community.*') keys (add the keys to each locale file). Verifiable via `pnpm --filter @ppt/web typecheck` and Vitest/RTL render assertions that non-en locales render localized labels. Confidence medium (static): confirmed only PostCard.tsx uses i18n via grep across all 17 files; breadth (whole feature) makes this a systemic gap rather than one stray string."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "frontend",
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:71,74 \u2014 the validate() helper returns hardcoded English error strings `Unsupported file type: ${...}` and `File too large (max 50 MB): ${file.name}`. These are user-facing: they are stored on item.error and rendered to the user at :266-268 (`{item.error}`). The component already imports useTranslation and uses t() for every aria-label (:167,185,225,288,297), so the visible validation messages are an inconsistent i18n gap, not an untranslated-everywhere file.",
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.tsx:213-218 \u2014 drop-zone visible text 'Drop files here or browse' and the hint 'JPG, PNG, PDF, MP3, MP4 \u00b7 max 50 MB per file \u00b7 up to {MAX_FILES} files' are hardcoded English; :274 input placeholder 'Short description (optional)'; :278,312 the `Description for ${name}` and `Remove ${name}` aria-labels are raw template strings (not t()), unlike the other aria-labels in the same file.",
+        "Distinct from the 2026-11-01 disputes finding (code-review-ppt-web-ui-disputes-cards-no-i18n), which covered the presentational CARD layer (DisputeCard/ResolutionCard/etc.) and did not include EvidenceUploader. Landable frontend-only remedy: wrap the validate() messages, drop-zone copy and placeholder in t('disputes.evidence.*') and pass interpolation params for the file name / limits. Verifiable via `pnpm --filter @ppt/web typecheck` + an RTL test asserting a non-en locale renders localized validation text. Confidence medium (static analysis; not runtime-confirmed)."
+      ]
+    },
+    {
+      "id": "code-review-reality-web-pricealerts-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98,108 \u2014 handleMarkRead/handleMarkAllRead catch blocks log the raw mutation rejection via console.error('Failed to mark price alert read:', err) / console.error('Failed to mark all price alerts read:', err). The err originates from @ppt/reality-api-client hooks (useMarkFavoriteAlertRead/useMarkAllFavoriteAlertsRead, imported at lines 13-18), i.e. the generated api-client. The repo's own lib/safe-error.ts documents that api-client rejections embed the originating request (config.data/request/response.config.data) and MUST be routed through toSafeLogMessage(err) to avoid serializing secret-bearing request bodies into the console. Sibling reality-web surfaces already comply (FeedImport.tsx:520, CrmConnection.tsx:409, RealtorManagement.tsx:579 all use toSafeLogMessage(error)); these two call sites bypass it \u2014 a convention/leak-prevention regression on a user-facing path."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-unchecked-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 \u2014 shared-comparison loader fetches `${getApiBase()}/api/v1/listings/${id}` and returns `response.json() as Promise<ListingSummary>`, an unchecked cast of untrusted-shape network data across an API boundary. The loaded objects are pushed into comparison state via addToComparison (line 70) and later dereferenced at render in ComparisonView (listing.title/price/photos). The sibling fetch of the SAME endpoint in app/[locale]/listings/[slug]/page.tsx:86 deliberately routes the body through parseListingDetail() because a 200 can carry a malformed/partial body; this path has no such guard, so a wrong-shaped body is stored and can crash the client-side comparison view. `id` is also interpolated into the URL unencoded (sourced from the ?ids= query param via compare/page.tsx:24)."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:64,80 \u2014 console.error('Error loading shared listing:', result.reason) and console.error('Error loading shared listings:', err) log raw rejection objects to the browser console, bypassing the toSafeLogMessage() primitive the app standardized on (lib/safe-error.ts) to keep api-client request payloads out of logs. Same class as the PriceAlerts finding; lower severity because result.reason here is an Error the loader constructs itself, but the line-80 catch-all can still receive an arbitrary carrier object."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-handlers-suspend-cascade-silent-skip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/agencies.rs:185-189 (suspend_organization handler) \u2014 after the org is suspended, the code fetches org member user IDs to revoke their sessions: `let user_ids = state.platform_admin_repo.get_org_member_user_ids(id).await.unwrap_or_default();` then loops revoking each user's tokens. The inline comment at :182-184 claims 'Failures here are logged but do not fail the request', but `unwrap_or_default()` silently swallows a DB error on get_org_member_user_ids with NO log line \u2014 only the per-user revoke_all_user_tokens failures inside the loop are logged (:197). If the member-fetch query fails, user_ids is empty, the loop body never runs, and NO member sessions are revoked, with zero trace in logs. Net effect: a just-suspended org's members retain live access tokens until natural expiry (the refresh path drops suspended-org memberships, but outstanding access tokens are not short-circuited), and operators have no signal that the immediate-revocation cascade was skipped. Fix: match the stated contract \u2014 `match ...get_org_member_user_ids(id).await { Ok(ids) => ids, Err(e) => { tracing::error!(org_id=%id, error=%e, \"failed to enumerate members for suspension session-revocation cascade\"); vec![] } }` (or propagate), so the skipped cascade is at least observable."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-templates-list-swallows-db-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/templates.rs:280-297 (list_templates handler, GET /api/v1/templates) \u2014 both repo calls swallow DB errors: `let templates = state.document_template_repo.list(org_id, list_query.clone()).await.unwrap_or_default();` and `let total = state.document_template_repo.count(org_id, list_query).await.unwrap_or(0);`. On any DB error (connection drop, query failure) the handler returns HTTP 200 with `{templates: [], count: 0, total: 0}` \u2014 indistinguishable to the client from a genuinely empty template list, with no error logged. A manager whose templates fail to load sees an empty library and may re-create or assume data loss. The handler's return type is already `Result<_, (StatusCode, Json<ErrorResponse>)>`, so the correct shape is to `.map_err(...)` into a 500 INTERNAL_SERVER_ERROR (as sibling handlers like get_listing in listings.rs:325 do) rather than masking the failure as an empty success."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338-343 (get_listing detail handler) \u2014 after fetching the listing (which correctly `.map_err`s DB errors into 500 at :325), the associated photos and syndications are fetched with `let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();` and `.get_syndications(id).await.unwrap_or_default();`. A DB error on either call is silently swallowed: the handler returns 200 with the listing but an empty photos/syndications array, no log. The caller cannot tell a listing that genuinely has no photos from one whose photo query failed \u2014 on a listing-detail view this renders a photoless listing as if intentional. Lower severity than a list-wide swallow (single-row detail, partial payload), but inconsistent with the same handler's fail-loud treatment of the primary fetch three lines above; should at minimum log the error before degrading to an empty vec."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt:493 - the CreateListing route wires CreateListingScreen's onSubmit to a hard-coded stub: `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }`. The whole realtor 'Create Listing' feature is therefore dead on Android: the form always fails on submit and the listing is never created.",
+        "Full reachable path traced (confidence=high): Screen.CreateListing is a real nav destination reached from MyListingsScreen's onCreateClick (Navigation.kt:484 navController.navigate(Screen.CreateListing.route)). CreateListingScreen (androidApp/.../ui/realtor/CreateListingScreen.kt:39) collects title/description/city/price/currency/transactionType, validates them (title/city/price), then on a valid form calls the suspend `onSubmit(CreateListingInput(...))` at L109 and does result.fold(onSuccess={onCreated()}, onFailure={ generalError = publishFailedMsg }). Because the injected onSubmit always returns Result.failure, every submit lands in onFailure and renders publishFailedMsg; onCreated() (popBackStack to MyListings) is never reached.",
+        "Backend/client gap corroboration: PortalListingsRepository (shared/.../realtor/PortalListingsRepository.kt) exposes only listMyListings(), getListingAnalytics(), getPortfolioAnalytics() - there is no create-listing repository method and no POST call anywhere in the shared module, so the stub cannot simply be swapped for an existing repo call; the create endpoint client binding is genuinely unimplemented.",
+        "Severity MEDIUM (+2): user-facing realtor feature is non-functional on a reachable production path (not a crash - NotImplementedError is returned as Result.failure, not thrown - so no panic, hence +2 not +3). Fix: add a createListing(input) suspend to PortalListingsRepository backed by the reality-server create-listing endpoint and wire it into Navigation.kt:493 in place of the stub.",
+        "expert: kotlin"
+      ],
+      "expert": "kotlin"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 - four methods deserialize the error branch unguarded: `val error: SsoError = response.body()` (createMobileToken L49, validateAndLogin L77, getSession L104, refreshSession L129). If a non-2xx response carries a body that is not valid SsoError JSON (gateway HTML 502/503, plain-text proxy error, empty body), response.body<SsoError>() throws a SerializationException.",
+        "The throw is caught by each method's outer try/catch and turned into Result.failure(e) / AuthState.Error(e.message), so there is no crash - but the user-facing error becomes an opaque kotlinx.serialization message ('Fields [error] are required...') instead of the real HTTP status. This is most impactful on validateAndLogin, the security-critical SSO deep-link token-validation path (see mobile-native/CLAUDE.md SSO deep-link CSRF contract), where a gateway error during callback validation surfaces as a confusing serialization error.",
+        "Inconsistency / fix precedent already in the same file: loginWithPassword (L173-176) and register (L201-204) handle the identical error branch robustly with `runCatching { response.body<SsoError>() }.map { it.errorDescription ?: it.error }.getOrElse { \"...(HTTP ${response.status.value})\" }`, and confirmPasswordReset (L256-258) falls back to response.bodyAsText(). The four SSO/session methods should adopt the same runCatching-with-HTTP-status-fallback pattern.",
+        "Severity LOW (+1): no crash (caught), but degrades error messaging on the auth/SSO path and is an avoidable inconsistency with the file's own established pattern. Confidence medium (static; error-response body contents not runtime-confirmed).",
+        "expert: kotlin"
+      ],
+      "expert": "kotlin"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-11-03.md && head -1 matches '# 2026-11-03'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no duplicate-score re-emit",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "all scores <=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans annotated adversarial-pass",
+      "observed": "1 new plan annotated passed",
+      "expected": "all new plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans metadata+headings+mode+files",
+      "observed": "1 new plan OK",
+      "expected": "<=2 new plans + all fields"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff .research/backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure cursors honest",
+      "observed": "phase 1.5 and 1.6 skipped \u2014 not failed; cursors untouched",
+      "expected": "failed phases don't advance cursors"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows or stays",
+      "observed": "22 \u2265 22",
+      "expected": "now \u2265 HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "no auto_fix_actions this run (no candidate)",
+      "expected": "<=1 pr/issue/comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (phase 1.6 skipped \u2014 no-op gate)",
+      "observed": "noop (phase 1.6 skipped)",
+      "expected": "noop when phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep on staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
