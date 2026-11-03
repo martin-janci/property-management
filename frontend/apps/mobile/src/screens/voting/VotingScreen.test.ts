@@ -1,5 +1,11 @@
 import type { ApiVoteSummary } from './VotingScreen';
-import { formatVoteDate, parseVoteSummaries, toUiStatus, toUiVote } from './VotingScreen';
+import {
+  formatVoteDate,
+  formatVoteDateRange,
+  parseVoteSummaries,
+  toUiStatus,
+  toUiVote,
+} from './VotingScreen';
 
 const validSummary = {
   id: 'vote-1',
@@ -69,6 +75,52 @@ describe('formatVoteDate', () => {
     ['de', /2026/],
   ])('includes the year for locale %s', (locale, yearMatcher) => {
     expect(formatVoteDate(iso, locale as string)).toMatch(yearMatcher as RegExp);
+  });
+
+  // Regression (code-review-mobile-rn-vote-list-invalid-start-date): the list
+  // endpoint's VoteSummary has no start date, so `toUiVote` sets startsAt: ''.
+  // Passing that empty string to `new Date('')` produced an Invalid Date, which
+  // `toLocaleDateString` renders as the literal "Invalid Date" on every card.
+  // An empty or unparseable date must format to '' so callers can omit it.
+  it.each([
+    ['empty string', ''],
+    ['whitespace-only', '   '],
+    ['garbage', 'not-a-date'],
+  ])('returns "" for an unparseable date (%s)', (_label, input) => {
+    expect(formatVoteDate(input, 'en-US')).toBe('');
+  });
+
+  it('never emits the literal "Invalid Date"', () => {
+    expect(formatVoteDate('', 'en-US')).not.toMatch(/invalid date/i);
+    expect(formatVoteDate('nonsense', 'de')).not.toMatch(/invalid date/i);
+  });
+});
+
+describe('formatVoteDateRange', () => {
+  const start = '2026-06-01T00:00:00Z';
+  const end = '2026-07-01T00:00:00Z';
+
+  it('renders "start - end" when both dates are valid', () => {
+    const range = formatVoteDateRange(start, end, 'en-US');
+    expect(range).toBe(`${formatVoteDate(start, 'en-US')} - ${formatVoteDate(end, 'en-US')}`);
+    expect(range).toContain(' - ');
+  });
+
+  // The core bug: startsAt is always '' from the list endpoint. The range must
+  // collapse to just the end date, never "Invalid Date - Jul 1, 2026".
+  it('shows only the end date when the start date is missing', () => {
+    const range = formatVoteDateRange('', end, 'en-US');
+    expect(range).toBe(formatVoteDate(end, 'en-US'));
+    expect(range).not.toMatch(/invalid date/i);
+    expect(range).not.toContain(' - ');
+  });
+
+  it('shows only the start date when the end date is missing', () => {
+    expect(formatVoteDateRange(start, '', 'en-US')).toBe(formatVoteDate(start, 'en-US'));
+  });
+
+  it('returns "" when neither date is present', () => {
+    expect(formatVoteDateRange('', '', 'en-US')).toBe('');
   });
 });
 
