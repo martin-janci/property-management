@@ -7,6 +7,7 @@
  */
 
 import { bearerAuthHeader } from '../auth';
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   CreateSensorRequest,
   CreateSensorThresholdRequest,
@@ -31,7 +32,7 @@ const _win = typeof window !== 'undefined' ? (window as unknown as Record<string
 const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/iot/sensors`;
 
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

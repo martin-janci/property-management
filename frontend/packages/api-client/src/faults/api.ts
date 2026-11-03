@@ -2,6 +2,7 @@
  * Fault API client functions (Epic 4: Fault Reporting & Resolution).
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   AddCommentRequest,
   AddWorkNoteRequest,
@@ -40,7 +41,7 @@ function buildQueryString(
 
 /** Generic fetch wrapper with error handling */
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -190,7 +191,7 @@ export async function addAttachment(faultId: string, file: File): Promise<FaultA
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${API_BASE}/${faultId}/attachments`, {
+  const response = await authenticatedFetch(`${API_BASE}/${faultId}/attachments`, {
     method: 'POST',
     body: formData,
   });
