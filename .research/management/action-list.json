@@ -255,6 +255,57 @@
         "score": 1,
         "vector": "refactor"
       }
+    },
+    {
+      "id": "code-review-mobile-rn-vote-list-invalid-start-date",
+      "action": "mobile VotingScreen renders \"Invalid Date\" as every vote card's start date",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-03T06:25:58Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T06:25:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-vote-quorum-nan-width",
+      "action": "mobile VotingScreen quorum bar width becomes NaN% when eligible_count is null/0",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-03T06:25:58Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T06:25:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-vote-eligibility-reason-i18n",
+      "action": "mobile VoteDetailScreen renders server eligibility.reason string raw, bypassing i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-03T06:25:58Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T06:25:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-10-28T11:00:00Z"

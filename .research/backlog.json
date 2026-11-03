@@ -14243,6 +14243,88 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-data",
+      "title": "reality-web agent public profile (/realtor/[id]) renders hardcoded MOCK_AGENT for every id and its contact form fakes submit (no API call)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-11-03 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:23 — `const agent = MOCK_AGENT;` the page ignores the `[id]` route param entirely and serves the same mock agent (MOCK_AGENT / MOCK_AGENT_LISTINGS / MOCK_AGENT_REVIEWS from ./_mock) for every realtor URL; there is no useQuery/fetch of the real agent by id.",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx:25-31 — handleSendMessage only does setMessageSent(true)/setContactOpen(false); the visitor's contact message is discarded with no reality-server call, so the user sees a success state while the inquiry is silently dropped. Public-facing route; distinct from the already-fixed /profile MOCK_PROFILE and from the report-page-no-submit finding."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-feed-sync-silent-fail",
+      "title": "reality-web FeedImport 'Sync now' fires useSyncFeedSource mutation with no error handling — sync failures are silent",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-11-03 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx:219 — `onClick={() => syncMutation.mutate()}` is fire-and-forget: unlike handleTogglePause (156-165) and handleDelete (167-176) which catch and setActionError, the sync action has no try/catch, onError, or isError surface, so a failed feed sync shows the user nothing.",
+        "frontend/packages/reality-api-client/src/import/hooks.ts:328-343 — useSyncFeedSource defines only onSuccess (invalidateQueries); there is no onError handler, so a non-2xx/network failure from POST /agencies/{id}/feeds/{feedId}/sync is swallowed and the agent assumes the sync started."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/import/FeedImport.tsx",
+        "frontend/packages/reality-api-client/src/import/hooks.ts"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-untranslated",
+      "title": "reality-web inquiries page renders raw inquiry.type enum via .replace('_',' ') — untranslated for sk/cs/de users",
+      "vector": "i18n",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [reality-web] 2026-11-03 (dispatcher tier-1d)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx:67 — `{inquiry.type.replace('_', ' ')}` prints the raw backend enum (e.g. 'viewing_request' -> 'viewing request') directly in the card header; every other label on the page goes through next-intl t(), so this string stays English in the sk/cs/de locales.",
+        "Same file also uses new Date(...).toLocaleDateString() at lines 67/97/109 with no locale argument. Low-severity i18n gap on a user-facing authenticated page; fix: map inquiry.type through t('pages.inquiries.type.<type>') and pass the active locale to date formatting."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "candidate_vector": "i18n",
+      "expert": "frontend"
     }
   ]
 }
