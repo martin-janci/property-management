@@ -3157,6 +3157,7 @@
       "password": "Jelszó",
       "twoFactor": "Kétlépcsős azonosítás",
       "notifications": "Értesítési beállítások"
-    }
+    },
+    "publicNavigation": "Webhely-navigáció"
   }
 }

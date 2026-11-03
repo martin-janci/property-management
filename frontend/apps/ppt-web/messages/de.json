@@ -3182,6 +3182,7 @@
       "password": "Passwort",
       "twoFactor": "Zwei-Faktor-Authentifizierung",
       "notifications": "Benachrichtigungseinstellungen"
-    }
+    },
+    "publicNavigation": "Seitennavigation"
   }
 }

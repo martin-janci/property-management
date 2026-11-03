@@ -3163,6 +3163,7 @@
       "password": "Hasło",
       "twoFactor": "Uwierzytelnianie dwuskładnikowe",
       "notifications": "Ustawienia powiadomień"
-    }
+    },
+    "publicNavigation": "Nawigacja witryny"
   }
 }

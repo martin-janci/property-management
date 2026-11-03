@@ -3303,6 +3303,7 @@
       "resident": "Obyvatel",
       "guest": "Host",
       "real_estate_agent": "Realitní makléř"
-    }
+    },
+    "publicNavigation": "Navigace webu"
   }
 }

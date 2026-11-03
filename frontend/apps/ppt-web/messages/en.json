@@ -5483,6 +5483,7 @@
       "resident": "Resident",
       "guest": "Guest",
       "real_estate_agent": "Real estate agent"
-    }
+    },
+    "publicNavigation": "Site navigation"
   }
 }

@@ -182,7 +182,11 @@ function PublicHeader() {
   return (
     <header className="shell-topbar shell-topbar--public">
       <Brand />
-      <div className="shell-topbar__actions">
+      <nav
+        className="shell-topbar__actions"
+        data-testid="primary-nav"
+        aria-label={t('shell.publicNavigation', { defaultValue: 'Site navigation' })}
+      >
         <LanguageSwitcher />
         <Link to="/login" className="shell-btn shell-btn--ghost">
           {t('auth.signIn')}
@@ -190,7 +194,7 @@ function PublicHeader() {
         <Link to="/register" className="shell-btn shell-btn--primary">
           {t('shell.createAccount', { defaultValue: 'Create account' })}
         </Link>
-      </div>
+      </nav>
     </header>
   );
 }
