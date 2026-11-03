@@ -76,7 +76,9 @@ describe('VoteDetailScreen — hook ordering', () => {
 
   it('renders the missing-id error state without crashing', () => {
     renderScreen({ voteId: undefined });
-    expect(screen.getByText('voting.missingId')).toBeTruthy();
+    // The screen renders the i18n fallback (defaultValue), not the raw key:
+    // `t('voting.missingId', { defaultValue: 'No vote selected' })`.
+    expect(screen.getByText('No vote selected')).toBeTruthy();
   });
 
   it('does not throw a hook-order error when voteId changes from missing to present', () => {
@@ -112,7 +114,7 @@ describe('VoteDetailScreen — branch render snapshots', () => {
 
     const { toJSON } = renderScreen({ voteId: undefined });
 
-    expect(screen.getByText('voting.missingId')).toBeTruthy();
+    expect(screen.getByText('No vote selected')).toBeTruthy();
     expect(toJSON()).toMatchSnapshot();
   });
 
