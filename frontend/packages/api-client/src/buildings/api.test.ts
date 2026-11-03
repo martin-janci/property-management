@@ -2,7 +2,8 @@
  * The backend has no `/buildings/{id}/floors` route (a floor is just the
  * `floor` column of a unit), so `listFloors` derives the floor list from the
  * building's units. These tests pin that it calls the existing paginated units
- * endpoint, pages until `total`, and groups/sorts/counts by floor.
+ * endpoint, pages until `total`, and groups/sorts/counts by floor. Common areas
+ * are not implemented server-side either, so `listCommonAreas` maps 404 → null.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -69,5 +70,41 @@ describe('createBuildingsApi().listFloors', () => {
     const api = createBuildingsApi({ baseUrl: '' });
     await expect(api.listFloors(BUILDING_ID)).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('createBuildingsApi().listCommonAreas', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('resolves null on 404 (backend has no common-areas route) instead of throwing', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({ message: 'Not Found' }),
+    } as Response);
+
+    const api = createBuildingsApi({ baseUrl: '' });
+    await expect(api.listCommonAreas(BUILDING_ID)).resolves.toBeNull();
+    expect(fetchMock.mock.calls[0][0]).toBe(`/api/v1/buildings/${BUILDING_ID}/common-areas`);
+  });
+
+  it('still throws on other errors', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: 'boom' }),
+    } as Response);
+
+    const api = createBuildingsApi({ baseUrl: '' });
+    await expect(api.listCommonAreas(BUILDING_ID)).rejects.toThrow('boom');
   });
 });

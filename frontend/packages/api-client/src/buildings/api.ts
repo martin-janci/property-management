@@ -277,8 +277,12 @@ export const createBuildingsApi = (config: ApiConfig) => {
     /**
      * List common areas in a building.
      */
-    listCommonAreas: async (buildingId: string): Promise<CommonArea[]> => {
+    listCommonAreas: async (buildingId: string): Promise<CommonArea[] | null> => {
       const response = await fetch(`${baseUrl}/${buildingId}/common-areas`, { headers });
+      // The backend does not implement common areas yet: a 404 means the
+      // feature is unavailable (resolve `null`, so the query neither errors
+      // nor retries), not that the request failed.
+      if (response.status === 404) return null;
       return handleResponse(response);
     },
 

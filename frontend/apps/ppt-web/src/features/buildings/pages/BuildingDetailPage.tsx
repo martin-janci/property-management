@@ -217,30 +217,32 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
       {/* Units Section */}
       <UnitsSection buildingId={buildingId} />
 
-      {/* Common Areas Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Common Areas</h2>
-        {areasLoading ? (
-          <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
-          </div>
-        ) : commonAreas && commonAreas.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {commonAreas.map((area) => (
-              <div key={area.id} className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900">{area.name}</h3>
-                <p className="text-sm text-gray-500 capitalize">{area.type.replace('_', ' ')}</p>
-                {area.description && (
-                  <p className="text-sm text-gray-600 mt-1">{area.description}</p>
-                )}
-                {area.areaM2 && <p className="text-sm text-gray-500 mt-1">{area.areaM2} m2</p>}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-sm">No common areas defined for this building.</p>
-        )}
-      </div>
+      {/* Common Areas Section — hidden when the backend does not offer it (`null`). */}
+      {commonAreas !== null && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Common Areas</h2>
+          {areasLoading ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+            </div>
+          ) : commonAreas && commonAreas.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {commonAreas.map((area) => (
+                <div key={area.id} className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium text-gray-900">{area.name}</h3>
+                  <p className="text-sm text-gray-500 capitalize">{area.type.replace('_', ' ')}</p>
+                  {area.description && (
+                    <p className="text-sm text-gray-600 mt-1">{area.description}</p>
+                  )}
+                  {area.areaM2 && <p className="text-sm text-gray-500 mt-1">{area.areaM2} m2</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No common areas defined for this building.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
