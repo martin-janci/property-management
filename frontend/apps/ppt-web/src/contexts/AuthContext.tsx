@@ -225,7 +225,11 @@ function decodeJwtPayload(token: string | null | undefined): Record<string, unkn
   try {
     const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padded = b64 + '==='.slice((b64.length + 3) % 4);
-    const json = atob(padded);
+    // JWT payloads are UTF-8; `atob` yields one char per byte, so decode the
+    // bytes explicitly or names with diacritics come out mangled.
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
     return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return null;
@@ -290,6 +294,53 @@ export function deriveActiveRole(
     if (tenants.some((t) => t.role === role)) return role;
   }
   return tenants[0].role;
+}
+
+/**
+ * Build the session user from a login / SSO token response.
+ *
+ * api-server's `POST /auth/login` (and the SSO exchange) return only the token
+ * pair plus `tenants` — there is no embedded `user` object. Reading
+ * `response.user.role` therefore threw "Cannot read properties of undefined"
+ * and made every real (non-mock) sign-in fail. When `user` is absent we derive
+ * it from the access-token claims (`sub`, `email`, `name`) and the active
+ * tenant membership, which also supplies the organization used for the
+ * `X-Tenant-ID` header.
+ */
+export function buildSessionUser(response: {
+  accessToken: string;
+  tenants?: TenantMembership[];
+  user?: AuthUser | null;
+}): AuthUser {
+  const role = response.user?.role ?? deriveActiveRole(response.accessToken, response.tenants);
+  const tenants = response.tenants ?? [];
+  const claims = decodeJwtPayload(response.accessToken) ?? {};
+  const claimTenantId = typeof claims.tenant_id === 'string' ? claims.tenant_id : undefined;
+  const activeTenant =
+    tenants.find((t) => t.tenantId === claimTenantId) ??
+    tenants.find((t) => t.role === role) ??
+    tenants[0];
+
+  if (response.user) {
+    return {
+      ...response.user,
+      ...(role != null ? { role } : {}),
+      organizationId: response.user.organizationId ?? activeTenant?.tenantId,
+      organizationName: response.user.organizationName ?? activeTenant?.tenantName,
+    };
+  }
+
+  const name = typeof claims.name === 'string' ? claims.name.trim() : '';
+  const [firstName, ...rest] = name ? name.split(/\s+/) : [];
+  return {
+    id: typeof claims.sub === 'string' ? claims.sub : '',
+    email: typeof claims.email === 'string' ? claims.email : '',
+    firstName: firstName || undefined,
+    lastName: rest.length > 0 ? rest.join(' ') : undefined,
+    role,
+    organizationId: activeTenant?.tenantId,
+    organizationName: activeTenant?.tenantName,
+  };
 }
 
 // ============================================================================
@@ -532,10 +583,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Derive role from the JWT `tenant_id` claim (or, failing that, the
       // highest-privilege membership) instead of `tenants[0]`. See #482.
-      const derivedRole =
-        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
-      const userWithRole: AuthUser =
-        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+      const userWithRole: AuthUser = buildSessionUser(response);
 
       // Store tokens, user, and tenant memberships.
       // Tenants are persisted so that refreshTokenInternal can call
@@ -569,10 +617,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authApi = getAuthApi();
       const response = await authApi.exchangeSsoCode(request);
 
-      const derivedRole =
-        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
-      const userWithRole: AuthUser =
-        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+      const userWithRole: AuthUser = buildSessionUser(response);
 
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
