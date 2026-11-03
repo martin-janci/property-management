@@ -6,6 +6,7 @@
 
 import type { CategoryPreference, NotificationChannel } from '@ppt/api-client';
 import { ALL_CHANNELS, CATEGORY_DESCRIPTIONS, CATEGORY_LABELS } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface CategoryPreferenceCardProps {
   preference: CategoryPreference;
@@ -64,17 +65,20 @@ const CHANNEL_ICONS: Record<NotificationChannel, React.JSX.Element> = {
   ),
 };
 
-const CHANNEL_LABELS: Record<NotificationChannel, string> = {
-  push: 'Push',
-  email: 'Email',
-  in_app: 'In-App',
-};
-
 export function CategoryPreferenceCard({
   preference,
   loading,
   onToggleChannel,
 }: CategoryPreferenceCardProps) {
+  const { t } = useTranslation();
+  const categoryLabel = t(
+    `settings.notifications.advanced.categories.${preference.category}.label`,
+    {
+      defaultValue: CATEGORY_LABELS[preference.category],
+    }
+  );
+  const channelLabel = (channel: NotificationChannel) =>
+    t(`settings.notifications.advanced.channelShort.${channel}`);
   const allEnabled = ALL_CHANNELS.every((ch) => preference.channels[ch]);
   const allDisabled = ALL_CHANNELS.every((ch) => !preference.channels[ch]);
 
@@ -82,21 +86,21 @@ export function CategoryPreferenceCard({
     <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">
-            {CATEGORY_LABELS[preference.category]}
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-900">{categoryLabel}</h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            {CATEGORY_DESCRIPTIONS[preference.category]}
+            {t(`settings.notifications.advanced.categories.${preference.category}.description`, {
+              defaultValue: CATEGORY_DESCRIPTIONS[preference.category],
+            })}
           </p>
         </div>
         {allDisabled && (
           <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-            Off
+            {t('settings.notifications.advanced.off')}
           </span>
         )}
         {allEnabled && (
           <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-            All On
+            {t('settings.notifications.advanced.allOn')}
           </span>
         )}
       </div>
@@ -109,7 +113,10 @@ export function CategoryPreferenceCard({
               key={channel}
               type="button"
               aria-pressed={enabled}
-              aria-label={`${CHANNEL_LABELS[channel]} notifications for ${CATEGORY_LABELS[preference.category]}`}
+              aria-label={t('settings.notifications.advanced.channelAria', {
+                channel: channelLabel(channel),
+                category: categoryLabel,
+              })}
               onClick={() => onToggleChannel(channel, !enabled)}
               disabled={loading}
               className={`
@@ -122,12 +129,20 @@ export function CategoryPreferenceCard({
                 }
                 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
-              title={`${enabled ? 'Disable' : 'Enable'} ${CHANNEL_LABELS[channel]} for ${CATEGORY_LABELS[preference.category]}`}
+              title={t(
+                enabled
+                  ? 'settings.notifications.advanced.disableChannelTitle'
+                  : 'settings.notifications.advanced.enableChannelTitle',
+                {
+                  channel: channelLabel(channel),
+                  category: categoryLabel,
+                }
+              )}
             >
               <span className={enabled ? 'text-blue-600' : 'text-gray-400'}>
                 {CHANNEL_ICONS[channel]}
               </span>
-              {CHANNEL_LABELS[channel]}
+              {channelLabel(channel)}
             </button>
           );
         })}

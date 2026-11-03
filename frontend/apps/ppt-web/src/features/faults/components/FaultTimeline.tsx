@@ -3,6 +3,8 @@
  * Epic 4: Fault Reporting & Resolution (UC-03.5, UC-03.7)
  */
 
+import { useTranslation } from 'react-i18next';
+
 export type TimelineAction =
   | 'created'
   | 'triaged'
@@ -37,22 +39,6 @@ interface FaultTimelineProps {
   isLoading?: boolean;
 }
 
-const actionLabels: Record<TimelineAction, string> = {
-  created: 'Reported fault',
-  triaged: 'Triaged fault',
-  assigned: 'Assigned fault',
-  status_changed: 'Changed status',
-  priority_changed: 'Changed priority',
-  work_note: 'Added work note',
-  comment: 'Added comment',
-  attachment_added: 'Added attachment',
-  scheduled: 'Scheduled work',
-  resolved: 'Resolved fault',
-  confirmed: 'Confirmed resolution',
-  reopened: 'Reopened fault',
-  rated: 'Rated resolution',
-};
-
 const actionIcons: Record<TimelineAction, string> = {
   created: '🆕',
   triaged: '📋',
@@ -70,6 +56,8 @@ const actionIcons: Record<TimelineAction, string> = {
 };
 
 export function FaultTimeline({ entries, isLoading }: FaultTimelineProps) {
+  const { t, i18n } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-4">
@@ -79,12 +67,12 @@ export function FaultTimeline({ entries, isLoading }: FaultTimelineProps) {
   }
 
   if (entries.length === 0) {
-    return <div className="text-center py-4 text-gray-500">No timeline entries.</div>;
+    return <div className="text-center py-4 text-gray-500">{t('faults.timeline.empty')}</div>;
   }
 
   return (
     <div className="space-y-0">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Timeline</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('faults.timeline.title')}</h3>
       <div className="relative">
         {/* Vertical line */}
         <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-gray-200" />
@@ -105,15 +93,17 @@ export function FaultTimeline({ entries, isLoading }: FaultTimelineProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-gray-900">{entry.userName}</span>
-                  <span className="text-gray-500">{actionLabels[entry.action]}</span>
+                  <span className="text-gray-500">
+                    {t(`faults.timeline.action.${entry.action}`)}
+                  </span>
                   {entry.isInternal && (
                     <span className="px-2 py-0.5 text-xs bg-yellow-200 text-yellow-800 rounded">
-                      Internal
+                      {t('faults.timeline.internal')}
                     </span>
                   )}
                 </div>
                 <span className="text-xs text-gray-400">
-                  {new Date(entry.createdAt).toLocaleString()}
+                  {new Date(entry.createdAt).toLocaleString(i18n.language)}
                 </span>
               </div>
 

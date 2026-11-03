@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { ChannelToggle, DisableAllWarningDialog } from './components';
 
 export function NotificationSettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [pendingChannel, setPendingChannel] = useState<NotificationChannel | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
@@ -178,7 +178,7 @@ export function NotificationSettingsPage() {
           {t('settings.notifications.lastUpdated', {
             when: new Date(
               Math.max(...data.preferences.map((p) => new Date(p.updatedAt).getTime()))
-            ).toLocaleString(),
+            ).toLocaleString(i18n.language),
           })}
         </p>
       )}

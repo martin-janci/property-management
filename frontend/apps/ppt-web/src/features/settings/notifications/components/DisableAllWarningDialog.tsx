@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DisableAllWarningDialogProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export function DisableAllWarningDialog({
   onConfirm,
   onCancel,
 }: DisableAllWarningDialogProps) {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   // Show/hide dialog using native dialog API
@@ -87,21 +89,20 @@ export function DisableAllWarningDialog({
           </div>
           <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
             <h3 id="dialog-title" className="text-base font-semibold leading-6 text-gray-900">
-              Disable All Notifications?
+              {t('settings.notifications.disableAll.title')}
             </h3>
             <div className="mt-2">
               <p className="text-sm text-gray-500">
-                You are about to disable all notification channels. This means you will not receive
-                any notifications about:
+                {t('settings.notifications.disableAll.intro')}
               </p>
               <ul className="mt-2 list-disc list-inside text-sm text-gray-500 space-y-1">
-                <li>Important announcements from your property manager</li>
-                <li>Updates on reported faults and maintenance</li>
-                <li>Voting deadlines and results</li>
-                <li>Direct messages from neighbors</li>
+                <li>{t('settings.notifications.disableAll.itemAnnouncements')}</li>
+                <li>{t('settings.notifications.disableAll.itemFaults')}</li>
+                <li>{t('settings.notifications.disableAll.itemVoting')}</li>
+                <li>{t('settings.notifications.disableAll.itemMessages')}</li>
               </ul>
               <p className="mt-3 text-sm text-amber-600 font-medium">
-                You may miss critical information about your property.
+                {t('settings.notifications.disableAll.warning')}
               </p>
             </div>
           </div>
@@ -114,14 +115,14 @@ export function DisableAllWarningDialog({
             onClick={onConfirm}
             className="inline-flex w-full justify-center rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-500 sm:w-auto"
           >
-            Disable All Notifications
+            {t('settings.notifications.disableAll.confirm')}
           </button>
           <button
             type="button"
             onClick={onCancel}
             className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
           >
-            Keep Notifications
+            {t('settings.notifications.disableAll.keep')}
           </button>
         </div>
       </div>

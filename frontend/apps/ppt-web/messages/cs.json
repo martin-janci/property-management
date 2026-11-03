@@ -659,7 +659,83 @@
     "reported": "Závada nahlášena",
     "reportFailed": "Nepodařilo se nahlásit závadu",
     "updated": "Závada aktualizována",
-    "updateFailed": "Nepodařilo se aktualizovat závadu"
+    "updateFailed": "Nepodařilo se aktualizovat závadu",
+    "allStatuses": "Všechny stavy",
+    "allPriorities": "Všechny priority",
+    "allCategories": "Všechny kategorie",
+    "searchPlaceholder": "Hledat závady...",
+    "noFaultsFound": "Nebyly nalezeny žádné závady.",
+    "paginationSummary": "Zobrazeno {{from}} – {{to}} z {{total}} závad",
+    "reportedDate": "Nahlášeno: {{date}}",
+    "timeline": {
+      "title": "Průběh",
+      "empty": "Zatím žádné záznamy v průběhu.",
+      "internal": "Interní",
+      "action": {
+        "created": "nahlásil(a) závadu",
+        "triaged": "roztřídil(a) závadu",
+        "assigned": "přiřadil(a) závadu",
+        "status_changed": "změnil(a) stav",
+        "priority_changed": "změnil(a) prioritu",
+        "work_note": "přidal(a) pracovní poznámku",
+        "comment": "přidal(a) komentář",
+        "attachment_added": "přidal(a) přílohu",
+        "scheduled": "naplánoval(a) práce",
+        "resolved": "vyřešil(a) závadu",
+        "confirmed": "potvrdil(a) odstranění",
+        "reopened": "znovu otevřel(a) závadu",
+        "rated": "ohodnotil(a) odstranění"
+      }
+    },
+    "edit": {
+      "backToFault": "Zpět na závadu",
+      "title": "Upravit závadu",
+      "subtitle": "Upravte údaje o závadě. Upozornění: úpravy jsou možné jen do doby, než je závada roztříděna."
+    },
+    "triageDialog": {
+      "title": "Roztřídit závadu",
+      "submit": "Roztřídit závadu",
+      "aiSuggests": "AI navrhuje: <strong>{{category}}</strong>",
+      "aiSuggestsWithPriority": "AI navrhuje: <strong>{{category}}</strong>, priorita <strong>{{priority}}</strong>",
+      "aiConfidence": "(jistota {{percent}} %)",
+      "priorityHint": {
+        "low": "Drobný problém, není naléhavý",
+        "medium": "Běžná priorita",
+        "high": "Vyžaduje rychlé řešení",
+        "urgent": "Vyžaduje okamžitý zásah"
+      },
+      "assignTo": "Přiřadit (nepovinné)",
+      "unassigned": "Nepřiřazeno"
+    },
+    "viewReports": "Zobrazit přehledy",
+    "statsTotal": "Celkem",
+    "createDescription": "Popište problém, který řešíte. Uveďte co nejvíce podrobností, abychom ho mohli rychle odstranit.",
+    "reports": {
+      "title": "Přehledy závad",
+      "subtitle": "Analýza závad podle budov a období.",
+      "forbidden": "Nemáte oprávnění zobrazit přehledy závad.",
+      "allBuildings": "Všechny budovy",
+      "building": "Budova",
+      "dateFrom": "Od",
+      "dateTo": "Do",
+      "exportCsv": "Exportovat CSV",
+      "exportPdf": "Exportovat PDF",
+      "failedToLoad": "Nepodařilo se načíst statistiky závad",
+      "empty": "Zvoleným filtrům neodpovídají žádné závady.",
+      "kpiTotal": "Závady celkem",
+      "kpiOpen": "Otevřené",
+      "kpiClosed": "Uzavřené",
+      "kpiResolution": "Prům. doba vyřešení (h)",
+      "kpiRating": "Prům. hodnocení",
+      "byStatus": "Podle stavu",
+      "byCategory": "Podle kategorie",
+      "byPriority": "Podle priority",
+      "noData": "Žádná data",
+      "viewFaultsInBucket": "{{label}}. Zobrazit tyto závady"
+    },
+    "confirmDelete": "Smazat tuto závadu? Tuto akci nelze vrátit zpět.",
+    "deleted": "Závada byla smazána",
+    "deleteFailed": "Nepodařilo se smazat závadu"
   },
   "buildings": {
     "title": "Budovy",
@@ -1069,6 +1145,110 @@
       "failedToCreate": "Nepodařilo se vytvořit nouzový kontakt",
       "failedToUpdate": "Nepodařilo se aktualizovat nouzový kontakt",
       "failedToDelete": "Nepodařilo se smazat nouzový kontakt"
+    },
+    "contactTypes": {
+      "fire_department": "Hasiči",
+      "police": "Policie",
+      "ambulance": "Záchranná služba",
+      "utility_company": "Dodavatel energií",
+      "building_manager": "Správce budovy",
+      "security": "Bezpečnostní služba",
+      "maintenance": "Údržba",
+      "medical": "Lékařská pomoc",
+      "other": "Jiné"
+    },
+    "card": {
+      "inactive": "Neaktivní",
+      "role": "Pozice:",
+      "phone": "Telefon:",
+      "phoneSecondary": "Další telefon:",
+      "email": "E-mail:",
+      "address": "Adresa:",
+      "availableHours": "Dostupnost:",
+      "notes": "Poznámky:",
+      "priority": "Pořadí:",
+      "editAria": "Upravit: {{name}}",
+      "deleteAria": "Smazat: {{name}}"
+    },
+    "list": {
+      "empty": "Nebyly nalezeny žádné nouzové kontakty.",
+      "emptyHint": "Začněte přidáním prvního nouzového kontaktu."
+    }
+  },
+  "news": {
+    "listTitle": "Novinky a oznámení",
+    "searchPlaceholder": "Hledat články...",
+    "filters": {
+      "allStatuses": "Všechny stavy",
+      "drafts": "Koncepty",
+      "pinnedOnly": "Jen připnuté"
+    },
+    "loadingArticles": "Načítají se články...",
+    "loadingArticle": "Načítá se článek...",
+    "emptyFiltered": "Vašim filtrům neodpovídají žádné články.",
+    "empty": "Zatím tu nejsou žádné články. Vytvořte první článek!",
+    "confirmDelete": "Opravdu chcete smazat tento článek?",
+    "backToNews": "Zpět na novinky",
+    "pinned": "Připnuto",
+    "views": "Zobrazení",
+    "viewCount_one": "{{count}} zobrazení",
+    "viewCount_few": "{{count}} zobrazení",
+    "viewCount_many": "{{count}} zobrazení",
+    "viewCount_other": "{{count}} zobrazení",
+    "coverAlt": "Titulní obrázek: {{title}}",
+    "statusAria": "Stav: {{status}}",
+    "publishedOn": "Zveřejněno: {{date}}",
+    "actions": {
+      "viewAria": "Zobrazit článek: {{title}}",
+      "editAria": "Upravit článek: {{title}}",
+      "publishAria": "Zveřejnit článek: {{title}}",
+      "archiveAria": "Archivovat článek: {{title}}",
+      "deleteAria": "Smazat článek: {{title}}",
+      "publish": "Zveřejnit",
+      "archive": "Archivovat",
+      "pin": "Připnout",
+      "unpin": "Odepnout",
+      "pinAria": "Připnout článek",
+      "unpinAria": "Odepnout článek"
+    },
+    "reactions": {
+      "like": "Líbí se mi",
+      "love": "Miluji",
+      "surprised": "Překvapení",
+      "sad": "Smutek",
+      "angry": "Hněv",
+      "aria": "Reakce: {{reaction}}",
+      "ariaActive": "Reakce: {{reaction}} (aktivní)",
+      "total_one": "{{count}} reakce",
+      "total_few": "{{count}} reakce",
+      "total_many": "{{count}} reakcí",
+      "total_other": "{{count}} reakcí"
+    },
+    "comments": {
+      "title": "Komentáře ({{count}})",
+      "placeholder": "Napište komentář...",
+      "replyPlaceholder": "Napište odpověď...",
+      "charCount": "{{length}}/{{max}} znaků",
+      "post": "Přidat komentář",
+      "posting": "Odesílá se...",
+      "reply": "Odpovědět",
+      "deleted": "[Tento komentář byl smazán]",
+      "empty": "Zatím žádné komentáře. Buďte první, kdo přidá komentář!",
+      "replyCount_one": "{{count}} odpověď",
+      "replyCount_few": "{{count}} odpovědi",
+      "replyCount_many": "{{count}} odpovědí",
+      "replyCount_other": "{{count}} odpovědí"
+    },
+    "errors": {
+      "loadListFailed": "Nepodařilo se načíst články",
+      "deleteFailed": "Nepodařilo se smazat článek",
+      "publishFailed": "Nepodařilo se zveřejnit článek",
+      "archiveFailed": "Nepodařilo se archivovat článek",
+      "pinFailed": "Nepodařilo se změnit připnutí",
+      "reactionFailed": "Nepodařilo se uložit reakci",
+      "commentPostFailed": "Nepodařilo se přidat komentář",
+      "commentUpdateFailed": "Nepodařilo se upravit komentář",
+      "commentDeleteFailed": "Nepodařilo se smazat komentář"
     }
   },
   "errors": {
@@ -1175,7 +1355,32 @@
         "message": "Došlo k neočekávané chybě."
       },
       "rateLimitRetry": "Před dalším pokusem prosím počkejte {{seconds}} sekund."
-    }
+    },
+    "pages": {
+      "goBack": "Zpět",
+      "tryAgain": "Zkusit znovu",
+      "backToDashboard": "Zpět na přehled",
+      "notFound": {
+        "title": "Stránka nebyla nalezena",
+        "description": "Stránka, kterou hledáte, neexistuje nebo byla přesunuta."
+      },
+      "forbidden": {
+        "title": "Přístup odepřen",
+        "description": "K zobrazení této stránky nemáte oprávnění. Pokud si myslíte, že jde o chybu, obraťte se na správce."
+      },
+      "serverError": {
+        "description": "Došlo k neočekávané chybě. Zkuste to za chvíli znovu."
+      },
+      "sessionExpired": {
+        "title": "Vaše relace vypršela",
+        "description": "Pokračujte opětovným přihlášením. Vrátíme vás tam, kde jste skončili.",
+        "signIn": "Přihlásit se"
+      },
+      "inlineError": {
+        "description": "Zkuste to znovu. Pokud problém přetrvává, kontaktujte podporu."
+      }
+    },
+    "accessDenied": "Přístup odepřen"
   },
   "notifications": {
     "title": "Oznámení",
@@ -1188,7 +1393,18 @@
     "highContrast": "Vysoký kontrast",
     "fontSize": "Velikost písma",
     "reducedMotion": "Snížený pohyb",
-    "screenReader": "Optimalizováno pro čtečky"
+    "screenReader": "Optimalizováno pro čtečky",
+    "checkingAuthentication": "Ověřuje se přihlášení"
+  },
+  "outages": {
+    "failedToStart": "Nepodařilo se zahájit odstávku",
+    "failedToResolve": "Nepodařilo se označit odstávku jako vyřešenou",
+    "failedToCancel": "Nepodařilo se zrušit odstávku",
+    "severity": {
+      "informational": "Informativní",
+      "minor": "Nízká",
+      "major": "Vysoká"
+    }
   },
   "dashboard": {
     "managerActionQueue": "Fronta úkolů",
@@ -1276,7 +1492,9 @@
       "closeFilters": "Zavřít filtry",
       "showHelp": "Zobrazit tuto nápovědu",
       "hint": "Zaměřte se na seznam úkolů pro použití těchto zkratek"
-    }
+    },
+    "refresh": "Obnovit",
+    "viewMyUnit": "Zobrazit mou jednotku"
   },
   "admin": {
     "common": {
@@ -1590,7 +1808,8 @@
     "created": "Nájemní smlouva vytvořena",
     "createFailed": "Nepodařilo se vytvořit nájemní smlouvu",
     "violationRecorded": "Porušení zaznamenáno",
-    "violationCreateFailed": "Nepodařilo se zaznamenat porušení"
+    "violationCreateFailed": "Nepodařilo se zaznamenat porušení",
+    "daysShort": "{{count}} d"
   },
   "settings": {
     "notifications": {
@@ -1600,7 +1819,190 @@
       "updateError": "Nepodařilo se aktualizovat předvolbu. Zkuste to prosím znovu.",
       "disableError": "Nepodařilo se vypnout oznámení. Zkuste to prosím znovu.",
       "dismiss": "Zavřít",
-      "lastUpdated": "Naposledy aktualizováno: {{when}}"
+      "lastUpdated": "Naposledy aktualizováno: {{when}}",
+      "disableAll": {
+        "title": "Vypnout všechna oznámení?",
+        "intro": "Chystáte se vypnout všechny kanály oznámení. Nebudete tak dostávat žádná oznámení o:",
+        "itemAnnouncements": "důležitých oznámeních od správce",
+        "itemFaults": "stavu nahlášených závad a údržby",
+        "itemVoting": "termínech a výsledcích hlasování",
+        "itemMessages": "zprávách od sousedů",
+        "warning": "Mohou vám uniknout důležité informace o vaší nemovitosti.",
+        "confirm": "Vypnout všechna oznámení",
+        "keep": "Ponechat oznámení"
+      },
+      "toggleChannel": "Přepnout: {{channel}}",
+      "channels": {
+        "push": {
+          "label": "Push oznámení",
+          "description": "Dostávejte oznámení do mobilního zařízení"
+        },
+        "email": {
+          "label": "E-mailová oznámení",
+          "description": "Dostávejte oznámení e-mailem"
+        },
+        "in_app": {
+          "label": "Oznámení v aplikaci",
+          "description": "Zobrazujte oznámení přímo v aplikaci"
+        }
+      },
+      "advanced": {
+        "title": "Rozšířené nastavení oznámení",
+        "subtitle": "Podrobně nastavte, jak a kdy dostáváte oznámení.",
+        "perEventTriggers": "Spouštěče pro jednotlivé události",
+        "categoriesIntro": "Vyberte, jaké typy oznámení chcete dostávat a jakým způsobem.",
+        "tabs": {
+          "categories": "Kategorie",
+          "schedule": "Časový plán",
+          "grouping": "Seskupování"
+        },
+        "errors": {
+          "load": "Nepodařilo se načíst nastavení oznámení. Zkuste to později.",
+          "category": "Nepodařilo se uložit nastavení kategorie. Zkuste to znovu.",
+          "quietHours": "Nepodařilo se uložit tiché hodiny. Zkuste to znovu.",
+          "digest": "Nepodařilo se uložit nastavení souhrnu. Zkuste to znovu.",
+          "grouping": "Nepodařilo se uložit nastavení seskupování. Zkuste to znovu."
+        },
+        "off": "Vypnuto",
+        "allOn": "Vše zapnuto",
+        "channelShort": {
+          "push": "Push",
+          "email": "E-mail",
+          "in_app": "V aplikaci"
+        },
+        "channelAria": "{{channel}} – oznámení: {{category}}",
+        "enableChannelTitle": "Zapnout {{channel}} pro {{category}}",
+        "disableChannelTitle": "Vypnout {{channel}} pro {{category}}",
+        "categories": {
+          "faults": {
+            "label": "Hlášení závad",
+            "description": "Novinky o nahlášených závadách, opravách a jejich odstranění"
+          },
+          "voting": {
+            "label": "Hlasování a rozhodnutí",
+            "description": "Nová hlasování, výsledky a připomínky"
+          },
+          "announcements": {
+            "label": "Oznámení",
+            "description": "Oznámení a novinky z domu"
+          },
+          "documents": {
+            "label": "Dokumenty",
+            "description": "Nové dokumenty, podpisy a změny"
+          },
+          "messages": {
+            "label": "Zprávy",
+            "description": "Zprávy od sousedů a správců"
+          },
+          "community": {
+            "label": "Komunita",
+            "description": "Příspěvky, akce a nabídky v komunitě"
+          },
+          "financial": {
+            "label": "Finance",
+            "description": "Připomínky plateb, faktury a finanční novinky"
+          },
+          "maintenance": {
+            "label": "Údržba",
+            "description": "Plánovaná údržba a pracovní příkazy"
+          },
+          "system": {
+            "label": "Systémové novinky",
+            "description": "Aktualizace aplikace, bezpečnostní upozornění a systémová oznámení"
+          }
+        },
+        "days": {
+          "monday": "pondělí",
+          "tuesday": "úterý",
+          "wednesday": "středa",
+          "thursday": "čtvrtek",
+          "friday": "pátek",
+          "saturday": "sobota",
+          "sunday": "neděle"
+        },
+        "daysShort": {
+          "monday": "Po",
+          "tuesday": "Út",
+          "wednesday": "St",
+          "thursday": "Čt",
+          "friday": "Pá",
+          "saturday": "So",
+          "sunday": "Ne"
+        },
+        "digest": {
+          "title": "Souhrn oznámení",
+          "subtitle": "Dostávejte souhrny místo jednotlivých upozornění",
+          "frequency": "Frekvence",
+          "deliveryTime": "Čas doručení",
+          "deliveryDay": "Den doručení",
+          "nextDelivery": "Nejbližší doručení",
+          "nextDisabled": "Souhrny jsou vypnuté",
+          "nextHourly": "Každou hodinu v :00",
+          "nextDaily": "Každý den v {{time}}",
+          "nextWeekly": "Každý týden – {{day}} v {{time}}",
+          "include": "Zahrnout do souhrnu",
+          "allCategories": "Zahrnuty jsou všechny kategorie (bez filtru)",
+          "categoriesSelected": "Vybrané kategorie: {{selected}} z {{total}}",
+          "frequencies": {
+            "hourly": {
+              "label": "Každou hodinu",
+              "description": "Každou hodinu dostanete souhrn všech nových oznámení"
+            },
+            "daily": {
+              "label": "Denně",
+              "description": "Denní souhrn v čase, který si zvolíte"
+            },
+            "weekly": {
+              "label": "Týdně",
+              "description": "Týdenní souhrn v den, který si zvolíte"
+            },
+            "disabled": {
+              "label": "Vypnuto",
+              "description": "Oznámení dostáváte okamžitě, ne v souhrnech"
+            }
+          }
+        },
+        "quietHours": {
+          "title": "Tiché hodiny",
+          "subtitle": "V určených hodinách ztlumte oznámení, která nejsou naléhavá",
+          "startTime": "Začátek",
+          "endTime": "Konec",
+          "timeFormatHint": "Časy jsou ve 24hodinovém formátu (HH:MM) a platí pro časové pásmo zvolené níže.",
+          "preview": "Náhled plánu",
+          "previewRange": "Klid od <strong>{{start}}</strong> do <strong>{{end}}</strong>",
+          "activeDays": "Aktivní dny",
+          "dayActive": "{{day}} – aktivní",
+          "dayInactive": "{{day}} – neaktivní",
+          "timezone": "Časové pásmo",
+          "allowEmergency": "Povolit nouzová oznámení",
+          "allowEmergencyHelp": "Kritická upozornění vám přijdou i během tichých hodin"
+        },
+        "grouping": {
+          "title": "Inteligentní seskupování",
+          "subtitle": "Seskupte podobná oznámení, abyste měli lepší přehled",
+          "byCategory": "Seskupit podle kategorie",
+          "byCategoryHelp": "Spojí oznámení stejného typu (např. „5 nových změn v závadách“)",
+          "bySource": "Seskupit podle zdroje",
+          "bySourceHelp": "Spojí oznámení ze stejné budovy nebo ke stejné věci",
+          "maxGroupSize": "Max. velikost skupiny",
+          "maxGroupSizeHelp": "Po tomto počtu se zobrazí „a dalších X“",
+          "autoExpand": "Hranice automatického rozbalení",
+          "autoExpandHelp": "Rozbalí skupiny s menším počtem položek",
+          "neverExpand": "Nikdy automaticky nerozbalovat",
+          "preview": "Náhled",
+          "clickToExpand": "Kliknutím rozbalíte a zobrazíte jednotlivé položky",
+          "expandGroup": "Rozbalit skupinu oznámení",
+          "items_one": "{{count}} položka",
+          "items_few": "{{count}} položky",
+          "items_many": "{{count}} položek",
+          "items_other": "{{count}} položek",
+          "orFewer": "{{count}} nebo méně",
+          "previewNewComments_one": "{{count}} nový komentář",
+          "previewNewComments_few": "{{count}} nové komentáře",
+          "previewNewComments_many": "{{count}} nových komentářů",
+          "previewNewComments_other": "{{count}} nových komentářů"
+        }
+      }
     },
     "portalWebhooks": {
       "title": "Webhooky portálů",
@@ -1733,6 +2135,43 @@
       "created": "Signed in",
       "unknownDevice": "Unknown device",
       "unknownIp": "Unknown"
+    },
+    "accessibilityPage": {
+      "intro": "Přizpůsobte si aplikaci svým potřebám přístupnosti.",
+      "visualTitle": "Zobrazení",
+      "colorScheme": "Barevné schéma",
+      "colorSchemeHelp": "Vyberte barevné schéma, které vám nejvíce vyhovuje. Režim vysokého kontrastu zlepšuje čitelnost textu.",
+      "colorSchemes": {
+        "light": "Světlé",
+        "dark": "Tmavé",
+        "high-contrast": "Vysoký kontrast"
+      },
+      "textSize": "Velikost textu",
+      "textSizeHelp": "Upravte velikost textu pro lepší čitelnost v celé aplikaci.",
+      "textSizes": {
+        "small": "Malá",
+        "medium": "Střední",
+        "large": "Velká",
+        "extra-large": "Velmi velká"
+      },
+      "motionTitle": "Pohyb a animace",
+      "reduceMotion": "Omezit pohyb",
+      "reduceMotionHelp": "Omezí animace a přechody, které mohou být nepříjemné nebo rušivé.",
+      "navigationTitle": "Navigace",
+      "screenReader": "Režim čtečky obrazovky",
+      "screenReaderHelp": "Přizpůsobí rozhraní uživatelům čteček obrazovky pomocí rozšířených popisů ARIA.",
+      "keyboardNav": "Rozšířená navigace klávesnicí",
+      "keyboardNavHelp": "Zobrazí výraznější zvýraznění aktivního prvku při ovládání pouze klávesnicí.",
+      "previewTitle": "Náhled",
+      "previewText": "Takto bude vypadat text s vaším aktuálním nastavením. Příliš žluťoučký kůň úpěl ďábelské ódy.",
+      "sampleButton": "Ukázkové tlačítko",
+      "helpTitle": "Další pomoc",
+      "helpText": "Pokud narazíte na problém s přístupností nebo máte návrh na zlepšení, kontaktujte naši podporu.",
+      "shortcutsTitle": "Klávesové zkratky:",
+      "shortcutTab": "přesun na další interaktivní prvek",
+      "shortcutShiftTab": "přesun na předchozí interaktivní prvek",
+      "shortcutEnter": "aktivace tlačítek a odkazů",
+      "shortcutEsc": "zavření dialogů a nabídek"
     }
   },
   "connectionStatus": {

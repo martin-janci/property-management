@@ -21,6 +21,12 @@ const statusColors: Record<ArticleStatus, string> = {
   archived: 'bg-yellow-100 text-yellow-800',
 };
 
+const statusLabelKeys: Record<ArticleStatus, string> = {
+  draft: 'news.statusDraft',
+  published: 'news.statusPublished',
+  archived: 'news.statusArchived',
+};
+
 export function NewsArticleCard({
   article,
   onView,
@@ -30,7 +36,8 @@ export function NewsArticleCard({
   onArchive,
   onPin,
 }: NewsArticleCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const statusLabel = t(statusLabelKeys[article.status]);
   const canEdit = article.status === 'draft';
   const canDelete = article.status === 'draft';
   const canPublish = article.status === 'draft';
@@ -50,7 +57,7 @@ export function NewsArticleCard({
                   aria-hidden="true"
                   role="img"
                 >
-                  <title>Pinned</title>
+                  <title>{t('news.pinned')}</title>
                   <path d="M9.828.722a.5.5 0 01.354 0l7 3A.5.5 0 0117.5 4v1.5a.5.5 0 01-.5.5h-1v4.5a.5.5 0 01-.5.5H13v5.5a.5.5 0 01-.5.5h-5a.5.5 0 01-.5-.5V11H4.5a.5.5 0 01-.5-.5V6h-1a.5.5 0 01-.5-.5V4a.5.5 0 01.328-.472l7-3z" />
                 </svg>
               </span>
@@ -65,7 +72,7 @@ export function NewsArticleCard({
           {article.coverImageUrl && (
             <img
               src={article.coverImageUrl}
-              alt={`Cover for: ${article.title}`}
+              alt={t('news.coverAlt', { title: article.title })}
               className="mt-3 w-full h-48 object-cover rounded"
             />
           )}
@@ -73,13 +80,13 @@ export function NewsArticleCard({
           <div className="mt-3 flex items-center gap-3 flex-wrap">
             <span
               className={`px-2 py-1 text-xs font-medium rounded ${statusColors[article.status]}`}
-              aria-label={`Status: ${article.status}`}
+              aria-label={t('news.statusAria', { status: statusLabel })}
             >
-              {article.status.charAt(0).toUpperCase() + article.status.slice(1)}
+              {statusLabel}
             </span>
             <span className="text-xs text-gray-500 flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Views</title>
+                <title>{t('news.views')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -97,7 +104,7 @@ export function NewsArticleCard({
             </span>
             <span className="text-xs text-gray-500 flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Reactions</title>
+                <title>{t('aria.reactions')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -109,7 +116,7 @@ export function NewsArticleCard({
             </span>
             <span className="text-xs text-gray-500 flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Comments</title>
+                <title>{t('aria.comments')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -123,7 +130,9 @@ export function NewsArticleCard({
 
           {article.publishedAt && (
             <p className="mt-2 text-xs text-gray-400">
-              Published: {new Date(article.publishedAt).toLocaleDateString()}
+              {t('news.publishedOn', {
+                date: new Date(article.publishedAt).toLocaleDateString(i18n.language),
+              })}
             </p>
           )}
         </div>
@@ -137,18 +146,18 @@ export function NewsArticleCard({
           type="button"
           onClick={() => onView?.(article.id)}
           className="text-sm text-blue-600 hover:text-blue-800"
-          aria-label={`View article: ${article.title}`}
+          aria-label={t('news.actions.viewAria', { title: article.title })}
         >
-          View
+          {t('common.view')}
         </button>
         {canEdit && onEdit && (
           <button
             type="button"
             onClick={() => onEdit(article.id)}
             className="text-sm text-gray-600 hover:text-gray-800"
-            aria-label={`Edit article: ${article.title}`}
+            aria-label={t('news.actions.editAria', { title: article.title })}
           >
-            Edit
+            {t('common.edit')}
           </button>
         )}
         {canPublish && onPublish && (
@@ -156,9 +165,9 @@ export function NewsArticleCard({
             type="button"
             onClick={() => onPublish(article.id)}
             className="text-sm text-green-600 hover:text-green-800"
-            aria-label={`Publish article: ${article.title}`}
+            aria-label={t('news.actions.publishAria', { title: article.title })}
           >
-            Publish
+            {t('news.actions.publish')}
           </button>
         )}
         {canArchive && onArchive && (
@@ -166,9 +175,9 @@ export function NewsArticleCard({
             type="button"
             onClick={() => onArchive(article.id)}
             className="text-sm text-yellow-600 hover:text-yellow-800"
-            aria-label={`Archive article: ${article.title}`}
+            aria-label={t('news.actions.archiveAria', { title: article.title })}
           >
-            Archive
+            {t('news.actions.archive')}
           </button>
         )}
         {canDelete && onDelete && (
@@ -176,9 +185,9 @@ export function NewsArticleCard({
             type="button"
             onClick={() => onDelete(article.id)}
             className="text-sm text-red-600 hover:text-red-800"
-            aria-label={`Delete article: ${article.title}`}
+            aria-label={t('news.actions.deleteAria', { title: article.title })}
           >
-            Delete
+            {t('common.delete')}
           </button>
         )}
         {onPin && (
@@ -186,9 +195,9 @@ export function NewsArticleCard({
             type="button"
             onClick={() => onPin(article.id, !article.pinned)}
             className="text-sm text-amber-600 hover:text-amber-800"
-            aria-label={article.pinned ? 'Unpin article' : 'Pin article'}
+            aria-label={article.pinned ? t('news.actions.unpinAria') : t('news.actions.pinAria')}
           >
-            {article.pinned ? 'Unpin' : 'Pin'}
+            {article.pinned ? t('news.actions.unpin') : t('news.actions.pin')}
           </button>
         )}
       </nav>

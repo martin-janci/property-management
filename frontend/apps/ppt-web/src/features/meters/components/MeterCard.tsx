@@ -30,17 +30,19 @@ const meterTypeColors: Record<MeterType, string> = {
   hot_water: 'bg-rose-100 text-rose-800',
 };
 
-function formatValue(value: number, unit: MeterUnit): string {
-  return `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
+function formatValue(value: number, unit: MeterUnit, locale: string): string {
+  return `${value.toLocaleString(locale, { maximumFractionDigits: 2 })} ${unit}`;
 }
 
 function MeterTypeIcon({ type }: { type: MeterType }) {
+  const { t } = useTranslation();
   const iconType = meterTypeIcons[type];
+  const typeLabel = t(`meters.types.${type}`);
 
   if (iconType === 'bolt') {
     return (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-        <title>Electricity</title>
+        <title>{typeLabel}</title>
         <path
           fillRule="evenodd"
           d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
@@ -53,7 +55,7 @@ function MeterTypeIcon({ type }: { type: MeterType }) {
   if (iconType === 'fire') {
     return (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-        <title>Gas</title>
+        <title>{typeLabel}</title>
         <path
           fillRule="evenodd"
           d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
@@ -66,7 +68,7 @@ function MeterTypeIcon({ type }: { type: MeterType }) {
   if (iconType === 'droplet') {
     return (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-        <title>Water</title>
+        <title>{typeLabel}</title>
         <path
           fillRule="evenodd"
           d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
@@ -79,7 +81,7 @@ function MeterTypeIcon({ type }: { type: MeterType }) {
   if (iconType === 'thermometer') {
     return (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-        <title>Heat</title>
+        <title>{typeLabel}</title>
         <path
           fillRule="evenodd"
           d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"
@@ -97,7 +99,7 @@ export function MeterCard({ meter, onView, onSubmitReading }: MeterCardProps) {
 
   const lastReadingFormatted =
     meter.lastReadingValue !== undefined
-      ? formatValue(meter.lastReadingValue, meter.unit)
+      ? formatValue(meter.lastReadingValue, meter.unit, i18n.language)
       : t('meters.noReadings');
 
   const lastReadingDate = meter.lastReadingDate

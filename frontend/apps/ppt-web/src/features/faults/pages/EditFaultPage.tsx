@@ -3,6 +3,7 @@
  * Epic 4: Fault Reporting & Resolution (UC-03.1)
  */
 
+import { useTranslation } from 'react-i18next';
 import { FaultForm, type FaultFormData } from '../components/FaultForm';
 
 interface EditFaultPageProps {
@@ -24,6 +25,8 @@ export function EditFaultPage({
   onSubmit,
   onCancel,
 }: EditFaultPageProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-6">
@@ -32,12 +35,10 @@ export function EditFaultPage({
           onClick={onCancel}
           className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4"
         >
-          ← Back to Fault
+          ← {t('faults.edit.backToFault')}
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Fault</h1>
-        <p className="text-gray-600 mt-2">
-          Update the fault details. Note: editing is only available before the fault is triaged.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('faults.edit.title')}</h1>
+        <p className="text-gray-600 mt-2">{t('faults.edit.subtitle')}</p>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">

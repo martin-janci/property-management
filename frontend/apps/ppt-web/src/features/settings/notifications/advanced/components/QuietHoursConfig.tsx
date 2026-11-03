@@ -6,7 +6,7 @@
 
 import type { DayOfWeek, QuietHoursConfig as QuietHoursConfigType } from '@ppt/api-client';
 import { ALL_DAYS, DAY_LABELS } from '@ppt/api-client';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 interface QuietHoursConfigProps {
   config: QuietHoursConfigType;
@@ -16,6 +16,8 @@ interface QuietHoursConfigProps {
 
 export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfigProps) {
   const { t } = useTranslation();
+  const dayShort = (day: DayOfWeek) =>
+    t(`settings.notifications.advanced.daysShort.${day}`, { defaultValue: DAY_LABELS[day] });
   const handleDayToggle = (day: DayOfWeek) => {
     const newDays = config.daysOfWeek.includes(day)
       ? config.daysOfWeek.filter((d) => d !== day)
@@ -27,9 +29,11 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Quiet Hours</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t('settings.notifications.advanced.quietHours.title')}
+          </h3>
           <p className="text-sm text-gray-500 mt-0.5">
-            Silence non-emergency notifications during specific hours
+            {t('settings.notifications.advanced.quietHours.subtitle')}
           </p>
         </div>
 
@@ -65,7 +69,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="start-time" className="block text-sm font-medium text-gray-700 mb-1">
-                Start Time
+                {t('settings.notifications.advanced.quietHours.startTime')}
               </label>
               <input
                 type="time"
@@ -79,7 +83,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
             </div>
             <div>
               <label htmlFor="end-time" className="block text-sm font-medium text-gray-700 mb-1">
-                End Time
+                {t('settings.notifications.advanced.quietHours.endTime')}
               </label>
               <input
                 type="time"
@@ -93,23 +97,31 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
             </div>
           </div>
           <p id="time-format-hint" className="text-xs text-gray-500 mt-1">
-            Times are in 24-hour format (HH:MM) and use the timezone selected below.
+            {t('settings.notifications.advanced.quietHours.timeFormatHint')}
           </p>
 
           {/* Visual schedule preview */}
           <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-xs text-gray-500 mb-2">Schedule Preview</p>
+            <p className="text-xs text-gray-500 mb-2">
+              {t('settings.notifications.advanced.quietHours.preview')}
+            </p>
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-gray-700">🌙</span>
               <span className="text-sm text-gray-600">
-                Quiet from <strong>{config.startTime}</strong> to <strong>{config.endTime}</strong>
+                <Trans
+                  i18nKey="settings.notifications.advanced.quietHours.previewRange"
+                  values={{ start: config.startTime, end: config.endTime }}
+                  components={{ strong: <strong /> }}
+                />
               </span>
             </div>
           </div>
 
           {/* Days of week */}
           <fieldset className="border-0 p-0 m-0">
-            <legend className="block text-sm font-medium text-gray-700 mb-2">Active Days</legend>
+            <legend className="block text-sm font-medium text-gray-700 mb-2">
+              {t('settings.notifications.advanced.quietHours.activeDays')}
+            </legend>
             <div className="flex flex-wrap gap-2">
               {ALL_DAYS.map((day) => {
                 const isSelected = config.daysOfWeek.includes(day);
@@ -118,7 +130,14 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
                     key={day}
                     type="button"
                     aria-pressed={isSelected}
-                    aria-label={`${DAY_LABELS[day]} - ${isSelected ? 'active' : 'inactive'}`}
+                    aria-label={t(
+                      isSelected
+                        ? 'settings.notifications.advanced.quietHours.dayActive'
+                        : 'settings.notifications.advanced.quietHours.dayInactive',
+                      {
+                        day: dayShort(day),
+                      }
+                    )}
                     onClick={() => handleDayToggle(day)}
                     disabled={loading}
                     className={`
@@ -131,7 +150,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
                       ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     `}
                   >
-                    {DAY_LABELS[day]}
+                    {dayShort(day)}
                   </button>
                 );
               })}
@@ -141,7 +160,7 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
           {/* Timezone */}
           <div>
             <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-1">
-              Timezone
+              {t('settings.notifications.advanced.quietHours.timezone')}
             </label>
             <select
               id="timezone"
@@ -162,9 +181,11 @@ export function QuietHoursConfig({ config, loading, onUpdate }: QuietHoursConfig
           {/* Emergency override */}
           <div className="flex items-center justify-between pt-2">
             <div>
-              <p className="text-sm font-medium text-gray-700">Allow Emergency Notifications</p>
+              <p className="text-sm font-medium text-gray-700">
+                {t('settings.notifications.advanced.quietHours.allowEmergency')}
+              </p>
               <p className="text-xs text-gray-500">
-                Critical alerts will still come through during quiet hours
+                {t('settings.notifications.advanced.quietHours.allowEmergencyHelp')}
               </p>
             </div>
             <button
