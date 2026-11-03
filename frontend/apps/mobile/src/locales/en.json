@@ -196,7 +196,12 @@
     "submit": "Submit ballot",
     "moveUp": "Move up",
     "moveDown": "Move down",
-    "rankHint": "Order the options by preference (1 = most preferred)."
+    "rankHint": "Order the options by preference (1 = most preferred).",
+    "eligibilityReason": {
+      "voteNotAcceptingBallots": "Voting is not currently accepting ballots.",
+      "notEligibleInBuilding": "You are not eligible to vote in this building.",
+      "allUnitsVoted": "All of your eligible units have already voted."
+    }
   },
   "documents": {
     "title": "Documents",

@@ -407,6 +407,31 @@ export function VoteDetailScreen({ voteId, onBack }: VoteDetailScreenProps) {
   );
 }
 
+/**
+ * Known server-provided eligibility reasons (repositories/vote.rs) mapped to
+ * stable i18n key suffixes. The backend returns English free-text — not a reason
+ * code — so we anchor the known sentences to short codes and fall back to a slug
+ * of the raw text for any future/unknown reason. The raw string is always passed
+ * as `t(..., { defaultValue })` so an untranslated locale (or a reason we don't
+ * yet map) still shows readable text instead of a bare key, mirroring how the
+ * rest of this screen renders server-adjacent strings.
+ */
+const ELIGIBILITY_REASON_KEYS: Record<string, string> = {
+  'Vote is not currently accepting ballots': 'voteNotAcceptingBallots',
+  'User is not eligible to vote in this building': 'notEligibleInBuilding',
+  'All eligible units have already voted': 'allUnitsVoted',
+};
+
+function eligibilityReasonKey(reason: string): string {
+  const code =
+    ELIGIBILITY_REASON_KEYS[reason] ??
+    reason
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  return `voting.eligibilityReason.${code}`;
+}
+
 interface StatusBannerProps {
   status: string | undefined;
   alreadyVoted: boolean;
@@ -438,7 +463,9 @@ function StatusBanner({ status, alreadyVoted, canVote, eligibilityReason }: Stat
   if (!canVote && eligibilityReason) {
     return (
       <View style={[styles.banner, styles.bannerWarning]}>
-        <Text style={styles.bannerText}>{eligibilityReason}</Text>
+        <Text style={styles.bannerText}>
+          {t(eligibilityReasonKey(eligibilityReason), { defaultValue: eligibilityReason })}
+        </Text>
       </View>
     );
   }
