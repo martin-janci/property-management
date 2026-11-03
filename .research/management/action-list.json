@@ -357,7 +357,19 @@
         "score": 1,
         "vector": "i18n"
       }
+    },
+    {
+      "id": "pm-qa-unwrap-or-default-sweep-2026-11-03",
+      "action": "Lint sweep: deny clippy::unwrap_or_default across backend/servers/*/src/routes crates (3 fresh instances surfaced this run — suspend_cascade, templates list, listing photos). Add CI gate.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03",
+      "first_open_at": "2026-11-03T14:44:03Z"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-03T14:44:03Z"
 }

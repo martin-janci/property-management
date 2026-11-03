@@ -1,47 +1,48 @@
-# pm-scrum-master — 2026-10-19
+# pm-scrum-master — 2026-11-03
 
-_Always-on synthesis run. 3-day lag since 2026-10-16 — on schedule._
+## Executive summary
 
-## Summary
-
-Mild delivery window: **2 PRs merged** (both dispatcher-authored code-review follow-ups on existing surfaces), **1 draft PR open** (#3123 api-core TOTP RNG), **1 critical new issue** (#3124 cargo-deny RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter). The merge gate is now doubly locked: #2966 (swagger-ui egress) still blocks builds, #3124 blocks merges even on green builds.
-
-## Shipped since last run (2 PRs)
-
-- **#3121** reality-web auth-context transient-logout cushion — SSO consumer side; resolves `code-review-reality-web-auth-ctx-transient-logout` (+159/-2 with tests).
-- **#3122** ppt-web-core useAmlDashboard AML flags — compliance view; resolves `code-review-ppt-web-core-aml-checks-hardcoded-false` + `code-review-ppt-web-core-aml-risk-factors-unguarded-map` (+117/-6 with tests).
+Sprint "Epic 6, 7A, 8A & 10A" remains `done` on paper (4/4 epics, 49/49 coverage stories). The run surfaced five new routine signals, two of which are score-2 api-handlers error-swallowing bugs. **The sustained delivery drag is the merge-pipeline deadlock on issue #3215 — 8 approved assignments still blocked on merge because the dispatcher bot cannot grant GitHub `APPROVED` reviews to its own PRs.** The dispatcher is still producing (2 draft PRs opened today: #3221, #3222), but nothing has merged since 2026-11-02T12:36Z.
 
 ## Sprint progress
 
-- **Sprint:** _Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth_
-- **Epics done:** 3/5 at sprint level (8A done, 10A done, cross-cutting unknowns ignored); coverage-level all 13 epics complete at 49/49 done.
-
-## Next actions (top 3)
-
-| # | Priority | Dependency | Action | Definition of done |
-|---|---|---|---|---|
-| 1 | high | none | Resolve #3124 cargo-deny advisories (RUSTSEC-2026-0368/0369 on zip 8.6.0 via rust_xlsxwriter) — unblock every backend PR merge | cargo-deny passes on dev HEAD |
-| 2 | high | none | Carry on #2966 utoipa-swagger-ui egress unblock — gates backend cloud builds; now compounded by #3124 blocking merges on green builds | backend.yml green end-to-end in cloud runner |
-| 3 | high | #2966 + #3124 | Land the 3 open IDOR retries (#2946/#2944/#2945) once the twin merge-gate clears | three merged PRs with cross-tenant repro tests |
-
-## Risks
-
-| Risk | P | I | Mitigation |
+| Epic | Sprint status | Coverage status | Shipped since last run |
 |---|---|---|---|
-| **#3124 cargo-deny RUSTSEC-2026-0368/0369:** every backend PR merge is now gated on the advisory check; compounds with #2966 which already blocks builds. Builds green PRs cannot merge. | high | high | Either bump rust_xlsxwriter to a version with safe zip transitive dep, OR add a bounded cargo-deny exception for RUSTSEC-2026-0368/0369 with a deadline captured in dispatcher backlog and surfaced in CI gate description. |
+| 6 — Announcements & Communication | done (6/6) | 6/6 done | — |
+| 7A — Basic Document Management | done (5/5) | 5/5 done | — |
+| 8A — Basic Notification Preferences | done (3/3) | 3/3 done | — |
+| 10A — OAuth Provider Foundation | done (3/3) | 3/3 done | — |
+| 10B / 80 / 79 / 81 / 82-85 (extended) | done | all done | #3220 (community i18n), #3217 (edit/_number refactor), #3219 (price_map LIKE escape) |
 
-(All other risks carried from 2026-10-16 roster — see `risks.md`.)
+Epic cursor advanced to idx 1 (epic-10a last_checked bumped to 2026-11-03 for all 3 stories; no status flips).
+
+## Shipped since last run (5 PRs)
+
+- **#3216** screen-map-drift reconcile — docs/screens/reality/account-listing-edit.md back-filled after #3212 drift.
+- **#3217** repeated-churn edit/page.tsx — _number helper + tests extracted; followup to the 2026-11-02 repeated-churn signal.
+- **#3218** code-review EvidenceUploader i18n (sk/cs/de/en/hu/pl) — validate() errors + drop-zone translated.
+- **#3219** churn-hotspot price_map LIKE metacharacter escape — small SQL-injection-adjacent fix (user-controlled `city` was interpolated into LIKE pattern).
+- **#3220** code-review community-feature i18n backfill — 17 files touched (16 .tsx + 6 locale JSONs + 1 test). This PR dominates this run's churn hotspot picture; the hotspots are planned, not instability.
+
+## Next actions (top 5)
+
+1. **Unblock the merge pipeline on #3215** — pm-tech-lead decision; blocks 8 approved assignments. priority: high.
+2. **Backfill cross-tenant regression tests for the 3 new api-handlers findings** (suspend_cascade / templates list / listing photos). owner: pm-qa. priority: medium.
+3. **#2652 KMP cloud build egress** — still unresolved; realtor Create Listing (score 5 ready plan) remains unlandable. owner: pm-devops. priority: high.
+4. **Lint sweep for `unwrap_or_default()` on `Result<_, E>` in routes/** — clippy deny gate. owner: pm-backend. priority: medium.
+5. **Stalled PR fortnightly walk** — 10 PRs >7d idle (2 accounting UC-ACC pair at 96d, 6 dependabot, 2 docs/i18n at ~15-25d). owner: pm-scrum-master. priority: low.
 
 ## Blockers
 
-- **all backend PR merges** → #3124 cargo-deny FAILED (RUSTSEC-2026-0368/0369 zip 8.6.0 via rust_xlsxwriter) — owner: pm-security.
-- **backend cloud builds** → #2966 utoipa-swagger-ui egress 403 — owner: pm-devops.
-- **KMP cloud builds** → #2652 — owner: pm-devops.
-
-## Open questions
-
-(none this run — the merge-gate is unambiguous and the fix path is a known pattern.)
+- **#3215 — merge pipeline wedge (approved PRs cannot be merged)**: 8 assignments in `review` state, all with `verdict=approve`, waiting on a GitHub `APPROVED` review the bot cannot grant to itself.
+- **#2652 — KMP cloud build egress** (AGP download blocked): structurally blocks every mobile-native-kmp task from landing in the cloud routine.
+- **Buffer at 11/13 claimable** per dispatcher (dep-blocked=2); still above the 1/3 half-empty threshold but trending down because nothing is draining via merges.
 
 ## Decisions needed
 
-- Pin `rust_xlsxwriter` at a version with safe zip transitive dep, OR exempt RUSTSEC-2026-0368/0369 in `cargo-deny.toml` with a deadline captured in dispatcher — owner: pm-security.
+- Resolution path for #3215 (bot-identity split vs. human-review sweep vs. GitHub ruleset tweak). Owner: pm-tech-lead.
+- Whether a dispatcher `verdict=approve` + CI green should auto-merge after a cooldown window (and if so, how long). Owner: pm-tech-lead + pm-security.
+
+## Role focus today
+
+pm-qa (rotation idx 3 → 4). Last pm-qa run was 2026-08-25 (70 days ago). Full pm-qa output in `roles/pm-qa.md`.

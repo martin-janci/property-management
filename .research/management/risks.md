@@ -1,8 +1,8 @@
 # PPT Risks
 
-_Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
+_Generated: 2026-11-03T14:44:33Z (routine Phase 1.6)_
 
-**Open: 26** · Total: 26
+**Open: 28** · Total: 28
 
 | ID | Owner | Prob | Impact | Risk | Mitigation |
 |---|---|---|---|---|---|
@@ -32,3 +32,5 @@ _Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
 | `pm-backend-rustsec-advisories-gating-backend-merges-2026-10-26` | pm-security | high | high | Issue #3168 — 3 new RUSTSEC advisories on dev gate every backend PR merge; this is the second cargo-deny gate in a month | Resolve #3168 (bump offending crate(s) or bounded exception); schedule a quarterly cargo-tree review |
 | `pm-frontend-mobile-rn-fake-submit-pattern-cluster-2026-10-28` | pm-frontend | high | high | Three independent frontend code-review findings in 7 days reveal mobile-rn / reality-web have 'wire-the-button-but-not-t | Add a per-screen e2e-smoke gate: for every form with a Submit button, a MSW/Mirage mock asserts the  |
 | `pm-frontend-rotation-stale-83-days-2026-10-28` | pm-scrum-master | medium | medium | pm-frontend rotation has been stale 83 days (last run 2026-08-06) while the backlog accumulated 12 frontend/mobile code- | Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the curr |
+| `pm-qa-unwrap-or-default-sprawl-2026-11-03` | pm-qa | high | medium | unwrap_or_default() on Result<_, E> is spreading in route handlers (3 fresh instances in merged code: suspend_cascade, t | clippy::unwrap_or_default = deny in routes/ crates; CI gate; one-shot audit for existing sites. |
+| `pm-scrum-master-pipeline-wedge-normalisation-2026-11-03` | pm-tech-lead | high | high | Pipeline wedge #3215 (8 approved assignments blocked on bot self-approval) is turning into background noise; teams may s | Force a merge-pipeline decision inside the next sprint — bot-identity split, human review sweep cade |

@@ -1,8 +1,8 @@
 # PPT Action List
 
-_Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
+_Generated: 2026-11-03T14:44:03Z (routine Phase 1.6)_
 
-**Open: 24** · Total: 24
+**Open: 22** · Total: 22
 
 | ID | Owner | Priority | Status | Action |
 |---|---|---|---|---|
@@ -17,16 +17,14 @@ _Generated: 2026-10-28T11:00:00Z (routine Phase 1.6)_
 | `code-review-mobile-native-kmp-my-listings-pagination-cap` | pm-backend | low | open | Reality mobile MyListings + portfolio analytics silently cap at 100 listings (no pagination) |
 | `gh-issue-3164` | pm-tech-lead | medium | open | Follow-up: violations add_evidence left ungated while delete_evidence is manager-gated (PR #3072) (Closes #3164) |
 | `pm-backend-violations-add-evidence-authz-gap-3164` | pm-backend | high | open | Gate violations add_evidence sub-resource with authz check — currently ungated allowing any authenticated user to attach |
-| `churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs` | pm-qa | low | open | Churn hotspot: backend/servers/api-server/tests/suites/violations_role_authz_tests.rs — merged PR touched this file heav |
-| `code-review-ppt-web-core-neighbors-stale-token-usememo` | pm-backend | low | open | useNeighbors + usePrivacySettings bake mount-time token into api (useMemo [] deps) — stale Bearer after refresh |
-| `code-review-ppt-web-core-iot-ws-hasgivenup-dropped` | pm-devops | low | open | useIotWebSocket.hasGivenUp exposed but IotDashboardPageRoute drops it — give-up state has no UI path |
-| `gh-issue-3187` | pm-security | high | open | Failing test on dev blocks backend CI: cross_org_assign_violation_is_not_found (assign returns 403, expects 404) (Closes |
-| `code-review-mobile-rn-vote-detail-ranked-no-order` | pm-frontend | low | open | VoteDetailScreen renders `ranked` questions with the same unordered checkbox UI as multiple_choice (isMulti groups both  |
-| `code-review-mobile-rn-vote-detail-dead-i18n-fb` | pm-frontend | low | open | VoteDetailScreen uses `t('key') ?? 'English'` throughout (L180-354) — i18next t() never returns nullish (returns the key |
-| `pm-frontend-mobile-rn-report-fault-fake-submit-2026-10-28` | pm-frontend | high | open | Wire ReportFaultScreen.tsx handleSubmit to real /api/v1/faults POST — currently fakes with setTimeout(1500), fault repor |
-| `pm-frontend-reality-web-sell-wizard-no-persist-2026-10-28` | pm-frontend | high | open | reality-web /sell wizard Publish button never POSTs to reality-server — every seller submission silently discarded; wire |
-| `pm-frontend-ppt-web-authed-roots-session-leak-2026-10-28` | pm-frontend | high | open | ppt-web logout() AUTHED_QUERY_KEY_ROOTS allow-list missing mounted route groups — TanStack caches leak across users on a |
 | `pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28` | pm-frontend | medium | open | Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) |
-| `pm-frontend-reality-web-share-comparison-404-2026-10-28` | pm-frontend | medium | open | reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s; map to canoni |
-| `pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28` | pm-frontend | medium | open | reality-web listing detail SSR crashes on partial 200 body — JSON-LD build dereferences undefined fields; add defensive  |
 | `pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28` | pm-scrum-master | high | open | Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still retur |
+| `code-review-api-handlers-moderation-report-flood` | pm-backend | low | open | api-handlers /moderation/report open-to-all + no dedup/rate-limit → unbounded case rows per content |
+| `repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx` | pm-tech-lead | low | open | Repeated churn: mobile-rn VoteDetailScreen.test.tsx — runs_seen 1→2 (PR #3189 then #3209) |
+| `code-review-mobile-rn-vote-list-invalid-start-date` | pm-backend | low | open | mobile VotingScreen renders "Invalid Date" as every vote card's start date |
+| `code-review-mobile-rn-vote-quorum-nan-width` | pm-backend | low | open | mobile VotingScreen quorum bar width becomes NaN% when eligible_count is null/0 |
+| `code-review-mobile-rn-vote-eligibility-reason-i18n` | pm-backend | low | open | mobile VoteDetailScreen renders server eligibility.reason string raw, bypassing i18n |
+| `code-review-reality-web-agent-profile-mock-data` | pm-backend | low | open | reality-web agent public profile (/realtor/[id]) renders hardcoded MOCK_AGENT for every id and its contact form fakes su |
+| `code-review-reality-web-feed-sync-silent-fail` | pm-backend | low | open | reality-web FeedImport 'Sync now' fires useSyncFeedSource mutation with no error handling — sync failures are silent |
+| `code-review-reality-web-inquiry-type-untranslated` | pm-tech-lead | low | open | reality-web inquiries page renders raw inquiry.type enum via .replace('_',' ') — untranslated for sk/cs/de users |
+| `pm-qa-unwrap-or-default-sweep-2026-11-03` | pm-qa | medium | open | Lint sweep: deny clippy::unwrap_or_default across backend/servers/*/src/routes crates (3 fresh instances surfaced this r |

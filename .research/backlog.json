@@ -9884,11 +9884,12 @@
       "title": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "vector": "bug",
       "confidence": "high",
-      "score": 3,
+      "score": 5,
       "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "rotating-expert-review 2026-11-03 (dispatcher Tier-1d mobile-native-kmp)"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9896,7 +9897,8 @@
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
         "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
         "decayed 2026-09-20: no new signals in 14d (routine-lag: 19d) (score 4 → 3)",
-        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207"
+        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207",
+        "corroborated 2026-11-03 by dispatcher Tier-1d mobile-native-kmp review (signal id code-review-mobile-native-kmp-create-listing-stub, confidence=high, +2): Navigation.kt:493 wires onSubmit = NotImplementedError stub; realtor Create Listing is dead on Android. Full reachable path traced. Fix path unchanged (add PortalListingsRepository.createListing + wire). Still unlandable in cloud runner (AGP egress blocked, #2652)."
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9905,7 +9907,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-11-03",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -14040,17 +14042,19 @@
       "status": "done",
       "sources": [
         "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
-        "PR #3212 (extract _status helper)"
+        "PR #3212 (extract _status helper)",
+        "PR #3217"
       ],
       "evidence": [
         "PR #3212 (merged 2026-11-01) extracted the status mapping into a tested _status.ts helper + unit tests on the same page — hotspot runs_seen 1→2.",
-        "The prior-run churn (PR #3197 price-zero reject + PR #3203 i18n sk) is the same file; the extraction was the correct refactor response. Flagging the repeated-churn so the next touch triggers a review before another cycle lands."
+        "The prior-run churn (PR #3197 price-zero reject + PR #3203 i18n sk) is the same file; the extraction was the correct refactor response. Flagging the repeated-churn so the next touch triggers a review before another cycle lands.",
+        "cumulative re-emit 2026-11-03: PR #3217 extracted _number helper (10 lines changed on page.tsx); hotspot_history runs_seen 2→3; score unchanged (cumulative-type carve-out)."
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
       ],
       "created_at": "2026-11-02",
-      "updated_at": "2026-11-02",
+      "updated_at": "2026-11-03",
       "plan": null,
       "reconciled": {
         "at": "2026-11-02T12:38:59Z",
@@ -14325,6 +14329,168 @@
       "score_delta": 1,
       "candidate_vector": "i18n",
       "expert": "frontend"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+      "title": "Churn hotspot: ppt-web community/ItemForm.tsx — 127 lines in PR #3220 i18n backfill (planned, not instability)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3220"
+      ],
+      "evidence": [
+        "127 line churn in PR #3220 (code-review-ppt-web-ui-community-feature-no-i18n: internationalize ppt-web community feature). Planned i18n backfill — direct response to the prior backlog finding; not an instability signal. Expected to decay in 14d if no further churn."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx",
+      "title": "Churn hotspot: ppt-web community/MarketplacePage.tsx — 104 lines in PR #3220 i18n backfill (planned, not instability)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3220"
+      ],
+      "evidence": [
+        "104 line churn in PR #3220 i18n backfill. Planned refactor response to the prior community-feature-no-i18n finding. Not instability — expected to decay."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/communityI18n.test.ts",
+      "title": "Churn hotspot: ppt-web community i18n test — 94 lines added in PR #3220",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3220"
+      ],
+      "evidence": [
+        "94 line test file introduced by PR #3220 to lock in community i18n keys. Not a gap — a plus. Hotspot classification is mechanical; expected to decay."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/i18n/communityI18n.test.ts"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "title": "Screen-map drift: PR #3217 reality-web listing-edit refactor without same-PR screen-doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3217"
+      ],
+      "evidence": [
+        "PR #3217 (repeated-churn-...-edit/page.tsx: extract listing-edit numeric coercion into tested _number helper) touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without touching docs/screens/reality/*.md in the same PR. Context: internal refactor only (10 lines in page.tsx), extracting a helper. Prior-run PR #3216 already reconciled the same screen-map following the earlier #3212 drift. Low practical risk — surfaced to keep the drift signal honest."
+      ],
+      "files": [
+        "docs/screens/reality/account-listing-edit.md",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-suspend-cascade-silent-skip",
+      "title": "api-handlers suspend_organization logs then swallows cascade errors — children remain active on partial failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 (dispatcher Tier-1d api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/agencies.rs:185-189 (suspend_organization handler) — after the org is suspended, cascade suspension of child entities is attempted but errors are logged and swallowed. Operators observe a successful suspend_organization response while children remain active. See full Tier-1d signal evidence."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin/agencies.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-templates-list-swallows-db-error",
+      "title": "api-handlers GET /api/v1/templates list_templates uses unwrap_or_default on repo errors — empty list masks DB failure",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 (dispatcher Tier-1d api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/templates.rs:280-297 (list_templates handler, GET /api/v1/templates) — both repo calls (list_system + list_custom) use unwrap_or_default() on the Result, converting a repository/DB error into an empty Vec. Caller cannot distinguish 0 templates from DB unreachable; frontend renders an empty state. Fix: propagate the error with ? + map_err into ApiError."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/templates.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
+      "title": "api-handlers get_listing silently drops photos on repo error — detail page renders without photo gallery",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 (dispatcher Tier-1d api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338-343 (get_listing detail handler) — after fetching the listing, photos are fetched via a secondary repo call wrapped in unwrap_or_default(). On DB error the listing detail renders with an empty photo array; caller sees listing without photos rather than a 5xx. Fix: propagate the error and let the frontend surface a retry affordance."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
+      "title": "KMP SsoService error body read without content-length guard across four methods",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 (dispatcher Tier-1d mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 — four methods call bodyAsText() on error responses without a content-length guard; large/absent bodies can hang or throw. Fix: read with explicit receive<String>() and null-safe fallback."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
     }
-  ]
+  ],
+  "generated": "2026-11-03"
 }

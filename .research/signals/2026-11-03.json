@@ -1,0 +1,312 @@
+{
+  "run_date": "2026-11-03",
+  "run_iso": "2026-11-03T14:42:16Z",
+  "trigger": "normal incremental (payload: buffer-low=11/72 note; informational, not a dispatcher command)",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+      "type": "churn-hotspot",
+      "source": "merged-PR-churn-aggregation",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "127 line churn in PR #3220 (code-review-ppt-web-ui-community-feature-no-i18n: internationalize ppt-web community feature). Planned i18n backfill — direct response to the prior backlog finding; not an instability signal. Expected to decay in 14d if no further churn."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/pages/MarketplacePage.tsx",
+      "type": "churn-hotspot",
+      "source": "merged-PR-churn-aggregation",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "104 line churn in PR #3220 i18n backfill. Planned refactor response to the prior community-feature-no-i18n finding. Not instability — expected to decay."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/i18n/communityI18n.test.ts",
+      "type": "churn-hotspot",
+      "source": "merged-PR-churn-aggregation",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "94 line test file introduced by PR #3220 to lock in community i18n keys. Not a gap — a plus. Hotspot classification is mechanical; expected to decay."
+      ]
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 2→3",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "cumulative re-emit 2026-11-03: PR #3217 extracted _number helper (10 lines changed on page.tsx); hotspot_history runs_seen 2→3; score unchanged (cumulative-type carve-out per G4)."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3217",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3217 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx without touching docs/screens/reality/*.md in the same PR. Internal refactor (10 lines) — prior-run PR #3216 already reconciled the same screen-map. Low practical risk; emitted to keep the drift signal honest."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-suspend-cascade-silent-skip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-03 (dispatcher Tier-1d api-handlers; adopted by routine Phase 1.5)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/agencies.rs:185-189 (suspend_organization handler) — after the org is suspended, cascade suspension of child entities is attempted but errors are logged and swallowed. Operators observe a successful suspend_organization response while children remain active. See 2026-11-03-api-handlers-tier1d.json for full evidence."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-templates-list-swallows-db-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-03 (dispatcher Tier-1d api-handlers; adopted by routine Phase 1.5)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/templates.rs:280-297 (list_templates handler, GET /api/v1/templates) — both repo calls (list_system + list_custom) use unwrap_or_default() on the Result, converting a repository/DB error into an empty Vec. Caller cannot distinguish 0 templates from DB unreachable; frontend renders an empty state. Fix: propagate the error with ? + map_err into ApiError."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-03 (dispatcher Tier-1d api-handlers; adopted by routine Phase 1.5)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338-343 (get_listing detail handler) — after fetching the listing, photos are fetched via a secondary repo call wrapped in unwrap_or_default(). On DB error the listing detail renders with an empty photo array; caller sees listing without photos rather than a 5xx."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-03 (dispatcher Tier-1d mobile-native-kmp; adopted by routine Phase 1.5)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": [
+        "Duplicate of existing backlog item code-review-mobile-native-kmp-create-listing-not-wired (status=ready). Phase 2 routed this finding as evidence/source onto that existing row and bumped its score (3→5). Realtor Create Listing on Android remains dead — Navigation.kt:493 onSubmit=NotImplementedError stub. Fix path unchanged: add PortalListingsRepository.createListing + wire. Still unlandable in cloud runner (AGP egress blocked, #2652)."
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-03 (dispatcher Tier-1d mobile-native-kmp; adopted by routine Phase 1.5)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49, :77, :104, :129 — four methods call bodyAsText() on error responses without a content-length guard; large/absent bodies can hang or throw. Fix: receive<String>() with null-safe fallback."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3194",
+      "type": "dep-update-noise",
+      "source": "PR #3194",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Open dependabot PR #3194 (gradle-minor-patch, 7 updates). Logged, not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3195",
+      "type": "dep-update-noise",
+      "source": "PR #3195",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Open dependabot PR #3195 (npm-minor-patch, 30 updates). Logged, not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3196",
+      "type": "dep-update-noise",
+      "source": "PR #3196",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Open dependabot PR #3196 (kotlin group, 5 updates). Logged, not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3173",
+      "type": "dep-update-noise",
+      "source": "PR #3173",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Open dependabot PR #3173 (tokio-util 0.7.19→0.7.20). Previously missed from seen_signals; adding now."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3176",
+      "type": "dep-update-noise",
+      "source": "PR #3176",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Open dependabot PR #3176 (cargo-minor-patch, 19 updates). Logged, not scored."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-2866",
+      "type": "dep-update-noise",
+      "source": "PR #2866",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "Open dependabot PR #2866 (actions/setup-java 5→6). Previously missed from seen_signals as dep-update-noise; adding now."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — screen-map-drift confidence=medium (requires high for Phase 5); no high-confidence allowlisted signal met the certainty bar this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head -1 == # YYYY-MM-DD",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD cursors/signals/stats",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signals double-count check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq cap 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuous",
+      "observed": "0 new plans",
+      "expected": "0 or every new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached A plans/ count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached names outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs rendered",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed — vacuous",
+      "observed": "all phases ok",
+      "expected": "no cursor mismatch"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present",
+      "observed": "all accounted for",
+      "expected": "all accounted for"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count: now>=head",
+      "observed": "22>=22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs rendered",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "0 actions",
+      "expected": "<=1 pr <=1 issue <=1 comment, no replay"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management valid + GC7 (pm_cursor advanced AND epics>1 → coverage_cursor also advanced)",
+      "observed": "PM 3→4, CC 0→1, EPICS=13",
+      "expected": "valid + GC7"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached Telegram token pattern grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "notes": "Phase 1.5 adopted dispatcher Tier-1d signal files 2026-11-03-{api-handlers,mobile-native-kmp}-tier1d.json; review_cursor advanced for both segments. Phase 1.6 ran rotating pm-qa (idx 3→4) + Scrum Master (synthesized inline due to subagent nesting limit). Phase 5 no-op. Payload note 'pipeline wedged on approval deadlock #3215' is already tracked (issue #3215 in seen_signals from 2026-11-02 run; 8 PRs still awaiting merge-approval unblock)."
+}
