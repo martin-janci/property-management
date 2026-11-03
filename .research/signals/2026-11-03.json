@@ -1,0 +1,201 @@
+{
+  "date": "2026-11-03",
+  "trigger_text": "buffer-low: claimable=10/72 — refill planner",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3217",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #3217 modified frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + added _number.ts helper + tests but did not touch docs/screens/reality/*.md"
+    },
+    {
+      "id": "stalled-review-pr-3171",
+      "type": "stalled-review",
+      "source": "PR #3171",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "PR #3171 (fix(api-server): gate violations add_evidence on manager role) open since 2026-10-26 (8 days) with no reviewDecision; needs-human-review label attached"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "PRs #3218,#3220",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "re-emit: 2 touches this run via EvidenceUploader i18n (#3218) + community i18n (#3220); cumulative — no new score"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "repeated-churn",
+      "source": "PR #3213",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "re-emit: ranked-ballot test stabilization in #3213; cumulative. Backlog item resolved to done by #3213."
+    },
+    {
+      "id": "repeated-churn-frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+      "type": "repeated-churn",
+      "source": "PR #3217",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "re-emit: PR #3217 extracted _number.ts helper. Prior repeated-churn backlog item was done 2026-11-02."
+    },
+    {
+      "id": "dep-update-noise-pr-3194",
+      "type": "dep-update-noise",
+      "source": "PR #3194",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: gradle-minor-patch across 1 directory with 7 updates"
+    },
+    {
+      "id": "dep-update-noise-pr-3195",
+      "type": "dep-update-noise",
+      "source": "PR #3195",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: npm-minor-patch across 1 directory with 30 updates"
+    },
+    {
+      "id": "dep-update-noise-pr-3196",
+      "type": "dep-update-noise",
+      "source": "PR #3196",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "dependabot: kotlin group across 1 directory with 5 updates"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "brief exists with H1 = # 2026-11-03",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "state advanced vs HEAD (last_pr_seen 3214→3220, last_commit_sha, seen_signals, hotspot_history, last_run_iso)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "backlog ids unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "no non-cumulative signal double-scored (all cumulative re-emits have score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "no score > 8; no open items older than 14 days needed decay",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "no new plans this run (vacuous)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "0 new plans (≤2); vacuous",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "staged diff only touches .research/",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "no secret/host leak",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md matches regeneration",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no failed phases (Phase 1.5 + 1.6 skipped, not failed; cursors not advanced)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "all prior-run plan slugs still present",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive count 22 == 22 (unchanged, not shrunk)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md matches regeneration",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "no auto-fix actions this run (no eligible candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "Phase 1.6 skipped; pm_cursor unchanged → gate is no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "no Telegram token value in staged diff",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "notes": {
+    "phase_1_5": "skipped — token budget; cursor not advanced",
+    "phase_1_6": "skipped — token budget; pm_cursor + coverage_cursor not advanced",
+    "merged_prs_this_run": [
+      3216,
+      3217,
+      3218,
+      3219,
+      3220
+    ],
+    "merged_pr_range": "#3216–#3220",
+    "churn_top3": [
+      "frontend/apps/ppt-web/messages/en.json (6 locales × 2 touches, picked as representative)",
+      "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx"
+    ]
+  }
+}
