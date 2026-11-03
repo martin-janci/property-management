@@ -14068,17 +14068,19 @@
       "sources": [
         "hotspot_history runs_seen 1 -> 2 (2026-11-01 + 2026-11-02)",
         "PR #3189",
-        "PR #3209"
+        "PR #3209",
+        "PR #3213"
       ],
       "evidence": [
         "PR #3189 (ranked-ballot ordering) and PR #3209 (ranked-ballot a11y labels/hint fix for issue #3206) both edit the same test file within 48h — hotspot runs_seen 1→2.",
-        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path."
+        "Open PR #3213 (draft) is actively iterating on the same test file for stabilizing ranked-ballot rendering tests. A third-strike repeated-churn is likely if #3213 lands separately rather than consolidating onto the existing path.",
+        "cumulative re-emit 2026-11-03: PR #3213 (stabilize VoteDetailScreen ranked-ballot rendering tests, UC-04) landed this run — hotspot_history runs_seen 2→3. Three-strike pattern confirmed (PRs #3189/#3209/#3213 within 7d). No score add (cumulative allowlist)."
       ],
       "files": [
         "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
       ],
       "created_at": "2026-11-02",
-      "updated_at": "2026-11-02",
+      "updated_at": "2026-11-03",
       "plan": null
     },
     {
@@ -14159,6 +14161,157 @@
         "assignment_status": "merged",
         "pr_number": 3218
       }
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+      "title": "Churn hotspot: ppt-web community ItemForm.tsx (first-time, 127 lines in PR #3220)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3220"
+      ],
+      "evidence": [
+        "First-time hotspot: PR #3220 (code-review-ppt-web-ui-community-feature-no-i18n) touched this file heavily (127 lines) as part of a one-shot i18n migration across the entire community feature.",
+        "Not an instability pattern — single-PR landing. Will decay unless a second PR touches it within the next few runs."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "title": "Repeated churn: violations_role_authz_tests.rs — runs_seen 1→2 (PR #3171 then #3184)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen 1 -> 2 (2026-10-26 + 2026-11-03)",
+        "PR #3171",
+        "PR #3184"
+      ],
+      "evidence": [
+        "First-time repeated-churn fire: PR #3171 (fix(api-server): gate violations add_evidence on manager role) seeded this regression test file on 2026-10-26. PR #3184 (expand role-authz regression coverage for the violations mutation surface) added 285 lines this run.",
+        "The file is a regression test suite — its churn reflects the violations mutation surface churning, not test instability. Both touches were explicit coverage expansions on top of merged security fixes. Signal is informational; refactor to shared fixtures would reduce future churn but not urgent."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/violations_role_authz_tests.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "title": "Screen-map drift: PR #3217 extracted _number helper on reality-web account/listing-edit without updating docs/screens/reality",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3217"
+      ],
+      "evidence": [
+        "PR #3217 (repeated-churn-frontend/apps/reality-web/.../edit/page.tsx: extract listing-edit numeric coercion into tested _number helper) touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/{page.tsx,_number.ts,_number.test.ts} with no docs/screens/reality/*.md update in the same PR.",
+        "Sibling PR #3216 reconciled docs/screens/reality/account-listing-edit.md for PR #3212's _status helper refactor on 2026-11-02; the follow-up #3217 _number extraction (same page, same screen) is not reflected in the doc's Agent Log.",
+        "Low real-world cost (same file, same screen, same wizard) — heuristic drift candidate. Agent-log appendix line would close it."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/_number.ts",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-ann-status-pill-i18n",
+      "title": "mobile-rn AnnouncementDetailScreen renders raw backend status enum on status pill (English-only; recurs anti-pattern from PR #3106)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-11-03"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 — status pill renders raw backend enum via `announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)`; in an app shipping sk/cs/de/en/hu/pl, non-English users always see raw English ('Draft'/'Published'/'Archived') on a primary visual badge.",
+        "Same anti-pattern as the already-landed fix `code-review-mobile-rn-outage-status-untranslated` (PR #3106 for OutagesScreen) — the omission recurred on AnnouncementDetailScreen. Fix: `t('announcements.status.' + announcement.status)` + 3 locale keys per language."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-vote-notactive-i18n",
+      "title": "mobile-rn VoteDetailScreen notActive defaultValue interpolates raw status enum into English-only template",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-11-03"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx:433 — `t('voting.notActive', { defaultValue: \"Voting is ${status}.\" })` interpolates the raw backend status enum into an English-only `defaultValue` template literal; the key `voting.notActive` is absent from frontend/apps/mobile/src/locales/*.json (grep confirms — none of the six locales define it under `voting`), so sk/cs/de/hu/pl users always hit the English fallback with the untranslated raw enum ('closed'/'draft'/'cancelled').",
+        "Correct form: `t('voting.notActive', { status: t(`voting.status.${status}`), defaultValue: 'Voting is {{status}}.' })` + locale keys for voting.notActive + voting.status.*."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-votedetail-ballot-untested",
+      "title": "mobile-rn VoteDetailScreen ballot logic (buildAnswers, RankedQuestionCard.move, isAnswerComplete, castMutation shape) has zero behavioural tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [mobile-rn] 2026-11-03"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx:1-100 — the only VoteDetailScreen test covers the Rules-of-Hooks early-return regression (missing-id vs rendered).",
+        "buildAnswers()'s ranked default-ordering (VoteDetailScreen.tsx:221-229), the swap in RankedQuestionCard.move() (:596-602), isAnswerComplete across yes_no/single/multi/ranked (:204-213), the answerRequired Alert branch (:233-238), the castMutation payload shape (unit_id + delegation_id + answers), and the already-voted/can-vote banner states all ship with zero behavioural tests — a logic regression in the ballot would land silently.",
+        "Pairs with the three-strike `repeated-churn` on the same test file: the churn is on edge-case rendering tests, not on behavioural coverage of the ballot logic."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx",
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "candidate_vector": "test-gap",
+      "expert": "frontend"
     }
   ]
 }

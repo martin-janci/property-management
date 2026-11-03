@@ -1,0 +1,245 @@
+{
+  "generated": "2026-11-03T03:10:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "type": "churn-hotspot",
+      "source": "merged dev commits 2026-11-02→2026-11-03 (PR #3184 land + hotspot_history)",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: PR #3184 (expand role-authz regression coverage for the violations mutation surface) landed in this window with 285 lines of churn in this test file — hotspot runs_seen 1→2.",
+        "churn-hotspot is in the cumulative allowlist; the paired first-time repeated-churn signal below carries the +1."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "merged dev commits 2026-11-02→2026-11-03 (PR #3213)",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: PR #3213 (stabilize VoteDetailScreen ranked-ballot rendering tests, UC-04) touched this file again — hotspot runs_seen 2→3.",
+        "Corresponding backlog repeated-churn row is open score=1; cumulative tracking only, no re-score."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+      "type": "churn-hotspot",
+      "source": "merged dev commits 2026-11-02→2026-11-03 (PR #3220)",
+      "score_delta": 1,
+      "evidence": [
+        "First-time hotspot: PR #3220 (code-review-ppt-web-ui-community-feature-no-i18n: internationalize ppt-web community feature) touched this file heavily (127 lines) — hotspot runs_seen 0→1.",
+        "This is a single-PR landing (one-shot i18n migration), not an instability pattern. Will decay unless a second PR touches the file within the next few runs."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/tests/suites/violations_role_authz_tests.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 1 -> 2 across 2026-10-26 and 2026-11-03",
+      "score_delta": 1,
+      "evidence": [
+        "First-time repeated-churn fire: violations_role_authz_tests.rs has crossed runs_seen ≥ 2. First seen 2026-10-26 (PR #3171 add_evidence manager-role gate, which spawned the regression tests). Second touch is PR #3184 (expand role-authz regression coverage for the violations mutation surface) landing this run with 285 lines of churn.",
+        "The file is a regression test suite; its churn pattern reflects the violations mutation surface churning (not the test itself being unstable). Both touches were explicit test-coverage additions on top of merged security fixes."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen 2 -> 3 across 2026-11-01, 2026-11-02, 2026-11-03",
+      "score_delta": 0,
+      "evidence": [
+        "cumulative re-emit: repeated-churn already fired for this file on 2026-11-02 with +1 (existing backlog row open, score=1). This run adds new evidence (PR #3213 stabilize ranked-ballot rendering tests landed) without re-scoring.",
+        "Three-strike pattern now confirmed: PRs #3189, #3209, #3213 all iterate on the same test file within 7 days. Suggests the component-under-test (VoteDetailScreen.tsx) or its test setup needs a stability pass — pairs well with the new code-review-finding `code-review-mobile-rn-votedetail-ballot-untested` below (no behavioural tests on the ballot logic itself)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3217 (repeated-churn-frontend/apps/reality-web/.../edit/page.tsx: extract listing-edit numeric coercion into tested _number helper)",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3217 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx + two sibling _number helper files (test + impl) with no docs/screens/reality/*.md update in the same PR.",
+        "Mechanical drift signal — the sibling screen-map doc (docs/screens/reality/account-listing-edit.md) was already reconciled by PR #3216 for PR #3212's refactor, but the follow-up #3217 _number extraction is not reflected in the doc's Agent Log. Low real-world cost (same file, same screen) — surface as a heuristic candidate."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-mobile-rn-ann-status-pill-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementDetailScreen.tsx:176 — status pill renders raw backend enum via `announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)`; in an app shipping sk/cs/de/en/hu/pl, non-English users always see raw English ('Draft'/'Published'/'Archived') on a primary visual badge. Same anti-pattern as the already-landed fix `code-review-mobile-rn-outage-status-untranslated` (PR #3106 for OutagesScreen) — the omission recurred on AnnouncementDetailScreen. Fix: `t('announcements.status.' + announcement.status)` + 3 locale keys per language."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-vote-notactive-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.tsx:433 — `t('voting.notActive', { defaultValue: `Voting is ${status}.` })` interpolates the raw backend status enum into an English-only `defaultValue` template literal; the key `voting.notActive` is absent from `frontend/apps/mobile/src/locales/*.json` (grep confirms — only `title/activePolls/completedPolls/vote/voted/results/deadline/noPolls/submit/moveUp/moveDown/rankHint` exist under `voting`), so sk/cs/de/hu/pl users always hit the English fallback with the untranslated raw enum ('closed'/'draft'/'cancelled'). Correct form: `t('voting.notActive', { status: t(`voting.status.${status}`), defaultValue: 'Voting is {{status}}.' })` + locale keys."
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-votedetail-ballot-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx:1-100 — the only VoteDetailScreen test covers the Rules-of-Hooks early-return regression (missing-id vs rendered). `buildAnswers()`'s ranked default-ordering (VoteDetailScreen.tsx:221-229), the swap in `RankedQuestionCard.move()` (:596-602), `isAnswerComplete` across yes_no/single/multi/ranked (:204-213), the `answerRequired` Alert branch (:233-238), the castMutation payload shape (unit_id + delegation_id + answers), and the already-voted/can-vote banner states all ship with zero behavioural tests — a logic regression in the ballot would land silently. Pairs with the three-strike `repeated-churn` on the same test file."
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md and head -1 == # <today>",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emits with score_delta>0 == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score>8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "open items with updated_at<=today-14 decayed",
+      "observed": "true (no decay-eligible rows)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation per new plan",
+      "observed": "vacuous: 0 new plans",
+      "expected": "vacuous or pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans ≤2 and each meets gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-.research files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen(backlog.json)",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "brief declares no failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "all accounted",
+      "expected": "all accounted"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD",
+      "observed": "22 ≥ 22",
+      "expected": "≥ HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline",
+      "observed": "empty (no action met certainty bar)",
+      "expected": "≤1 PR + ≤1 issue + ≤1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors advanced",
+      "observed": "all OK (EPICS=13, CC 0→1, PM 3→4)",
+      "expected": "all OK"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}
