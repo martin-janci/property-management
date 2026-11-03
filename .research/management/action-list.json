@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -111,7 +111,7 @@
     },
     {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
-      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
+      "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) \u2014 closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "pm-qa",
@@ -125,7 +125,7 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
@@ -190,7 +190,7 @@
     },
     {
       "id": "code-review-reality-web-feed-sync-silent-fail",
-      "action": "reality-web FeedImport 'Sync now' fires useSyncFeedSource mutation with no error handling — sync failures are silent",
+      "action": "reality-web FeedImport 'Sync now' fires useSyncFeedSource mutation with no error handling \u2014 sync failures are silent",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -207,7 +207,7 @@
     },
     {
       "id": "code-review-reality-web-inquiry-type-untranslated",
-      "action": "reality-web inquiries page renders raw inquiry.type enum via .replace('_',' ') — untranslated for sk/cs/de users",
+      "action": "reality-web inquiries page renders raw inquiry.type enum via .replace('_',' ') \u2014 untranslated for sk/cs/de users",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -221,7 +221,128 @@
         "score": 1,
         "vector": "i18n"
       }
+    },
+    {
+      "id": "pm-scrum-master-decide-the-stable-reason-code-contract-for-backend-2026-11-03",
+      "action": "Decide the stable reason-code contract for backend vote.rs eligibility reasons (issue #3223) \u2014 English-free-text vs enum/code; interim is a cross-boundary test, long-term is a breaking DTO change",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-scrum-master-drive-drafts-3224-3227-through-review-to-merge-the-2026-11-03",
+      "action": "Drive drafts #3224-#3227 through review to merge \u2014 they already sit as dispatcher assignments and address high-value code-review items (reality-web mock profile, feed silent-fail, inquiry i18n, violations add_evidence gating)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-scrum-master-resolve-or-close-3187-cross-tenant-assign-404-cont-2026-11-03",
+      "action": "Resolve or close #3187 cross-tenant assign-404 contract failure (still carried, blocks backend CI) \u2014 either backend fix or test shape adjustment",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-scrum-master-refill-the-planner-buffer-coverage-is-at-49-49-don-2026-11-03",
+      "action": "Refill the planner buffer \u2014 coverage is at 49/49 done so ranked-from-coverage yields zero candidates. Add follow-ups + role next_actions this run, and consider sourcing more candidates from post-merge review findings",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-scrum-master-verify-pr-3220-community-i18n-coverage-17-files-35-2026-11-03",
+      "action": "Verify PR #3220 community i18n coverage \u2014 17 files / 3563 LOC with only one i18n-key test; spot-check representative keys render in a locale-switch test (CreateGroupPage / MarketplacePage / EventCard)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-qa-add-a-cross-boundary-test-pinning-the-three-rust-r-2026-11-03",
+      "action": "Add a cross-boundary test pinning the three Rust `repositories/vote.rs` eligibility-reason literals against the mobile `ELIGIBILITY_REASON_KEYS` map so a backend copy-edit fails CI (issue #3223 interim mitigation)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-qa-resolve-backend-ci-3187-either-backend-fix-or-test-2026-11-03",
+      "action": "Resolve backend CI #3187 \u2014 either backend fix or test shape adjustment \u2014 so backend.yml goes green on dev and unblocks every backend PR",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-qa-extend-pr-3222-s-votedetailscreen-test-tsx-eligibi-2026-11-03",
+      "action": "Extend PR #3222's VoteDetailScreen.test.tsx eligibility-reason branch to cover all three mapped reasons (today only `voteNotAcceptingBallots` is covered)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-qa-add-at-least-one-locale-switching-smoke-test-for-t-2026-11-03",
+      "action": "Add at least one locale-switching smoke test for the community pages (ppt-web EventCard or MarketplacePage) \u2014 PR #3220 ships 3563 LOC with only one i18n-key test; a locale switch can regress silently via hard-coded strings reintroduced",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-qa-resolve-2951-jest-expo-version-rot-to-unlock-mobil-2026-11-03",
+      "action": "Resolve #2951 jest-expo version rot to unlock mobile RN test harness upgrades (carried)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
+    },
+    {
+      "id": "pm-qa-audit-the-four-open-draft-prs-3224-3227-for-regres-2026-11-03",
+      "action": "Audit the four open draft PRs (#3224-#3227) for regression tests on the fix path before merge \u2014 three of them target silent-UX-failure bugs where tests would otherwise never catch regressions",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-03"
     }
   ],
-  "generated": "2026-10-28T11:00:00Z"
+  "generated": "2026-11-03T20:36:04Z"
 }

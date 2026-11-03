@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-02T03:16:48Z",
-  "last_run_ms": 3200,
-  "last_pr_seen": 3214,
-  "last_issue_seen": 3215,
-  "last_commit_sha": "aa67b1d7",
+  "last_run_iso": "2026-11-03T20:43:00Z",
+  "last_run_ms": 1500000,
+  "last_pr_seen": 3222,
+  "last_issue_seen": 3223,
+  "last_commit_sha": "120f56df",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -348,9 +348,9 @@
       "recent_churn": 151
     },
     "frontend/apps/ppt-web/messages/en.json": {
-      "runs_seen": 1,
-      "last_seen": "2026-07-16",
-      "recent_churn": 3926
+      "runs_seen": 2,
+      "last_seen": "2026-11-03",
+      "recent_churn": 432
     },
     "frontend/packages/sitemap/src/json/sitemap.json": {
       "runs_seen": 1,
@@ -663,9 +663,14 @@
       "recent_churn": 48
     },
     "frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx": {
-      "runs_seen": 2,
-      "last_seen": "2026-11-02",
-      "recent_churn": 24
+      "runs_seen": 3,
+      "last_seen": "2026-11-03",
+      "recent_churn": 177
+    },
+    "frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-03",
+      "recent_churn": 127
     }
   },
   "seen_signals": [
@@ -1317,13 +1322,19 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-11-03",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+    "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+    "screen-map-drift-pr-3217-reality",
+    "code-review-reality-server-articles-like-metachar-escape",
+    "code-review-reality-server-imports-limit-unclamped"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-10-26",
     "api-core": "2026-10-27",
-    "reality-server": "2026-10-28",
+    "reality-server": "2026-11-03",
     "ppt-web-ui": "2026-11-02",
     "ppt-web-core": "2026-10-27",
     "reality-web": "2026-11-03",
@@ -1331,8 +1342,8 @@
     "mobile-native-kmp": "2026-10-25"
   },
   "stats": {
-    "runs": 110,
-    "vectors_created": 490,
+    "runs": 111,
+    "vectors_created": 495,
     "plans_created": 35,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1348,12 +1359,12 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 4,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
-      "pm-qa": "2026-08-25",
+      "pm-qa": "2026-11-03",
       "pm-devops": "2026-08-31",
       "pm-security": "2026-10-01",
       "pm-data": "2026-10-16",
@@ -1361,6 +1372,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }

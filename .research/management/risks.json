@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-28T11:00:00Z",
+  "generated": "2026-11-03T20:36:04Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -282,6 +282,66 @@
       "mitigation": "Add a staleness-bias to pm_cursor rotation: when any role is >60 days stale, prefer it over the current index. Alternately, run full-rotation sweeps on 10-day cadence instead of relying on daily rotation only",
       "owner_role": "pm-scrum-master",
       "trigger": "Any pm-* role crosses 90 days stale",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-buffer-drained-coverage-pattern-will-keep-recurrin-2026-11-03",
+      "risk": "Buffer drained-coverage pattern will keep recurring now that all 13 epics are done \u2014 refill depends on dispatcher continuously surfacing new review findings, which is not contractually guaranteed",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Add a staleness alert: if open_count < 18 for 3 consecutive runs, surface in brief under `Goal violations` as a planning health signal",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-pm-qa-rotation-70-days-stale-the-active-sprint-qa--2026-11-03",
+      "risk": "pm-qa rotation 70 days stale \u2014 the active-sprint QA slice has not been reviewed since 2026-08-25 even though backend CI has had a failing test (#3187) for ~6 days",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Mandatory pm-qa run today \u2014 add staleness trigger in routine prompt (`last_run > 30d` forces rotation)",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-backend-ci-red-on-dev-means-test-gate-has-been-de--2026-11-03",
+      "risk": "Backend CI red on dev means test gate has been de facto bypassed on recent merges (merges happen on green frontend but backend red) \u2014 regression coverage asymmetric between stacks",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Confirm no backend merges have landed since 2026-10-28 while CI is red; if any have, open a post-merge review issue per PR",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-mobile-rn-jest-expo-rot-means-mobile-regression-is-2026-11-03",
+      "risk": "Mobile RN jest-expo rot means mobile regression is detected only by snapshot/branch tests \u2014 subtle behavior regressions slip through",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Pin jest-expo to the compatible Expo 55 version and re-run full RN suite as a smoke pass",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-pm-qa-rotation-at-70-days-stale-let-the-test-gap-c-2026-11-03",
+      "risk": "pm-qa rotation at 70 days stale let the test-gap cluster grow unseen \u2014 if the same pattern recurs (rotation idle while shipping continues), we accumulate uncovered defects faster than we find them",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Mandatory per-30-day rotation floor in routine Phase 1.6",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-reality-web-open-drafts-3225-mock-agent-profile-an-2026-11-03",
+      "risk": "Reality-web open drafts #3225 (mock agent profile) and #3226 (feed silent-fail) address user-visible bugs with no regression tests in backlog \u2014 merging them without tests leaves the bug class open",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Block merge pending at least one regression test per draft; or file a parallel test-gap follow-up",
+      "owner_role": "pm-qa",
+      "trigger": null,
       "status": "open"
     }
   ]

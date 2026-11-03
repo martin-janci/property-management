@@ -1,0 +1,244 @@
+{
+  "generated": "2026-11-03T20:43:00Z",
+  "since_iso": "2026-11-02T03:16:48Z",
+  "last_pr_seen_in": 3214,
+  "last_pr_seen_out": 3222,
+  "last_issue_seen_in": 3215,
+  "last_issue_seen_out": 3223,
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-03",
+      "type": "lag_warning",
+      "source": "cron 2026-11-03",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-11-02T03:16:48Z \u2014 41h ago (>36h threshold); 1 run skipped"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/messages/en.json",
+      "type": "churn-hotspot",
+      "source": "churn 2026-11-03 PRs=[3218,3220]",
+      "score_delta": 0,
+      "evidence": [
+        "+432 lines across PR #3218 + #3220 (community + disputes i18n rollout); runs_seen 1\u21922"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-11-03 PRs=[3221,3222]",
+      "score_delta": 0,
+      "evidence": [
+        "+177 lines across PR #3221 (snapshot decouple) + PR #3222 (eligibility i18n); runs_seen 2\u21923"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/community/components/ItemForm.tsx",
+      "type": "churn-hotspot",
+      "source": "churn 2026-11-03 PR=3220",
+      "score_delta": 1,
+      "evidence": [
+        "+127 lines in PR #3220 (community-feature i18n) \u2014 Marketplace ItemForm rewrite; runs_seen 0\u21921"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/messages/en.json",
+      "type": "repeated-churn",
+      "source": "churn 2026-11-03 PRs=[3218,3220]",
+      "score_delta": 1,
+      "evidence": [
+        "second hotspot run (runs_seen=2) \u2014 this is the master locale bundle; new keys are being added fast as the frontend i18n rollout progresses"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend/apps/mobile/src/screens/voting/VoteDetailScreen.test.tsx",
+      "type": "repeated-churn",
+      "source": "churn 2026-11-03 PRs=[3221,3222]",
+      "score_delta": 0,
+      "evidence": [
+        "third hotspot run (runs_seen=3); PR #3221 decoupled snapshots to curb churn, then PR #3222 added the eligibility-reason test suite"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3217",
+      "score_delta": 2,
+      "evidence": [
+        "PR #3217 modified reality-web route `frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx` (extracted _number helper) with no update to `docs/screens/reality/account-listing-edit.md`"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-reality-server-articles-like-metachar-escape",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-03 segment=reality-server",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/articles.rs:158 \u2014 `let search_pattern = query.search.as_ref().map(|s| format!(\"%{}%\", s));` wraps raw user input into an ILIKE pattern. `?search=100%` becomes `%100%%`, matching every article; `?search=a_b` matches `axb`. Same class as the `city_like_pattern` escape just applied to price_map.rs in PR #3219.",
+        "Public, unauthenticated endpoint (`/api/v1/articles` via `acquire_public_conn`).",
+        "No regression tests for `search` behavior in `backend/servers/reality-server/tests/suites/articles_tests.rs` \u2014 the ILIKE path is uncovered."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-reality-server-imports-limit-unclamped",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review 2026-11-03 segment=reality-server",
+      "segment": "reality-server",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/reality-server/src/routes/imports.rs:125 \u2014 `query.limit.unwrap_or(20)` passed to `reality_portal_repo.list_import_jobs` with NO clamp.",
+        "Every other list endpoint in reality-server clamps `limit`/`per_page` to `[1, 100]` or `[1, 200]` (agencies.rs:127, articles.rs:155, inquiries.rs:597/649, realtors.rs:204, agent_reviews.rs:113, reports.rs:362, portal_listings.rs:452). This is the lone outlier.",
+        "Attacker-controlled `?limit=1000000` would trigger an over-fetch unless `list_import_jobs` clamps internally \u2014 resource-exhaustion vector on an authenticated user endpoint."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-11-03.md && head -1 matches '# 2026-11-03'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals re-emit with score_delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap (>8 == 0) and decay (0 items needed decay this run)",
+      "observed": "cap=0 need=0",
+      "expected": "cap=0 need>=passed"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plans/<slug>.md has adversarial-pass annotation",
+      "observed": "no new plans",
+      "expected": "n/a (0 new plans)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count + metadata + headings + Mode + files-exist",
+      "observed": "0 new plans",
+      "expected": "<=2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep on staged diff (baseline 4 docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen from backlog.json",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief has 'Phases that failed: none' and no cursors held",
+      "observed": "no failed phases",
+      "expected": "no failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs all present in plans/ or plans/_archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls-files _archive/ (now=22) >= ls-tree HEAD _archive/ (head=22)",
+      "observed": "22 >= 22",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions count caps (0 PR, 0 issue, 0 comment)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor 3->4, coverage_cursor 0->1 (epics=13)",
+      "observed": "all pass",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token value in staged diff (added lines only)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the certainty bar (screen-map-drift-pr-3217-reality is medium-confidence; code-review-finding and churn signals are not in the Phase 5 allowlist)",
+  "notes": [
+    "lag_warning emitted (41h since last run); state.last_run_iso advances normally",
+    "Phase 1.5 picked `reality-server` (churn-aligned via price_map.rs repeated-churn + 0 open code-review findings; reality-web skipped at saturation 3/3)",
+    "Phase 1.6 ran pm-qa (70d stale) + always-on scrum-master; pm_cursor 3\u21924, coverage_cursor 0\u21921; coverage drained 49/49 so refill engine now depends on code-review + role next_actions",
+    "Issue #3223 is a human-filed follow-up with labels (not an untriaged-issue signal); narrated in brief's `Watch` section, not routed to a backlog row this run \u2014 it already carries a proposed contract-level fix and will be handled by pm-backend in the role action list"
+  ]
+}
