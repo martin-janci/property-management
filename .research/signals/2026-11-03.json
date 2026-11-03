@@ -1,0 +1,329 @@
+{
+  "date": "2026-11-03",
+  "trigger_text": "buffer-low: claimable=11/72 — refill planner",
+  "notes": [
+    "buffer-low trigger from the dispatcher — the planner's job is to add actionable rows to backlog.json; the dispatcher's backlog-refill.sh will promote them to action-list.json on its next run.",
+    "Phase 1.5: Code-review slice ADOPTED from accumulated dispatcher Tier-1d signal files (api-handlers 2026-11-02, mobile-native-kmp 2026-11-02 + 2026-11-03, ppt-web-core 2026-11-02, reality-web 2026-11-02). No fresh skill invocation this run — honoring the dispatcher's 'Tier 1d generator HELD' guidance (14 unconsumed tier1d files already accumulated).",
+    "Phase 1.6: SKIPPED. The real blocker is operational (issue #3215 self-approval wedge + mobile-native-kmp cloud-build gap), not planner-driven. A pm-role analysis changes neither. pm_cursor NOT advanced.",
+    "Phase 5 Auto-fix: no candidate. All adopted signals are confidence=medium (below the high bar) and code-review-finding is not in the Phase 5 allowlist anyway."
+  ],
+  "signals": [
+    {
+      "id": "code-review-api-handlers-install-webhook-example-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:1675-1687 — API_BASE_URL unwrap_or_else fallback is `https://api.ppt.example.com`; portal webhook_url returned to external providers can land on an unowned domain if API_BASE_URL unset"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-redirect-fallback",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/voice.rs:189-197 (exchange_voice_oauth_tokens) — ALEXA_REDIRECT_URI / GOOGLE_VOICE_REDIRECT_URI unwrap_or_else fallback to hardcoded `https://ppt.three-two-bit.com/...` — misconfigured deploys silently redirect OAuth to a hard-coded host, breaking token exchange"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-notimpl",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 0,
+      "evidence": [
+        "Navigation.kt:493 — Screen.CreateListing composable wires onSubmit = { _ -> Result.failure(NotImplementedError(...)) } (dup of existing finding, re-confirms the create-listing stub)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "seen_only": false
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nearby-dead-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt:118 — getListingsNearby() has ZERO call sites in the repo; dead code shipped untested"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-ppt-web-core-route-auth-guard-gap",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 2,
+      "evidence": [
+        "7 of 21 ppt-web feature route-group fragments composed into AppRoutes.tsx render routes with NO route-level auth gate (accounting, financial, messaging, faults, etc.) — unauthenticated viewers can hit the SPA shell for authed pages"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-101 — buildWebSocketUrl() appends raw JWT to the handshake URL as a query parameter (`?token=<jwt>`); JWTs land in access logs / referrer / CDN logs despite the file documenting this as 'intentional'"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-ppt-web-ui-community-feature-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 0,
+      "evidence": [
+        "already shipped — resolved by PR #3220"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": true
+    },
+    {
+      "id": "code-review-ppt-web-ui-evidence-uploader-no-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-ui)",
+      "segment": "ppt-web-ui",
+      "score_delta": 0,
+      "evidence": [
+        "already shipped — resolved by PR #3218"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": true
+    },
+    {
+      "id": "code-review-reality-web-pricealerts-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98,108 — handleMarkRead/handleMarkAllRead log raw mutation errors via console.error (incl. structured server rejection body), bypassing toSafeLogMessage() sanitizer"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-reality-web-comparison-unchecked-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — shared-comparison loader casts response.json() to Promise<ListingSummary> without validation; untrusted-shape network data crosses an API boundary unchecked"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-reality-web-comparison-raw-err-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-02 reality-web)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:64,80 — console.error logs raw rejection objects for shared-listing load failures, bypassing the toSafeLogMessage() primitive"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    },
+    {
+      "id": "code-review-mobile-native-kmp-create-listing-stub",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 0,
+      "evidence": [
+        "Navigation.kt:493 — 2026-11-03 re-confirms CreateListingScreen's onSubmit is a hard-coded NotImplementedError stub (same finding as -notimpl / -not-wired)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": "code-review-mobile-native-kmp-create-listing-not-wired",
+      "seen_only": false
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 mobile-native-kmp)",
+      "segment": "mobile-native-kmp",
+      "score_delta": 1,
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49,:77,:104,:129 — four methods call response.body<SsoError>() on the error branch unguarded; a non-JSON gateway/proxy error body throws SerializationException and crashes the auth flow"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "adopted_from": "accumulated dispatcher Tier-1d signal files (not previously in state.seen_signals)",
+      "dedup_target": null,
+      "seen_only": false
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today.md && head -1 matches YYYY-MM-DD",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compares staged state vs HEAD state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative-type carve-out verified; dedup signals report score_delta=0",
+      "observed": "no non-cumulative double-count with score_delta>0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap: no score > 8; decay: oldest open updated_at 2026-10-25 (9d) < 14d so no decay owed",
+      "observed": "no cap or decay violations",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run → vacuous",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans (≤ cap of 2)",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged files all under .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff (baseline doc files excluded)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md matches staged byte-for-byte",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no placeholder rot in brief + plans this run",
+      "observed": "no matches",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or plans/_archive/",
+      "observed": "all accounted for",
+      "expected": "all"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD archive count",
+      "observed": "22 == 22",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md matches staged byte-for-byte",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty; no auto-fix branch pushed",
+      "observed": "empty []",
+      "expected": "no action"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — pm_cursor unchanged; coverage artifacts unchanged. Gate is a no-op this run.",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

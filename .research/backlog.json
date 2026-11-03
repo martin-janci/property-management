@@ -9888,7 +9888,9 @@
       "status": "ready",
       "sources": [
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)",
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-03 mobile-native-kmp)"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9896,7 +9898,9 @@
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
         "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
         "decayed 2026-09-20: no new signals in 14d (routine-lag: 19d) (score 4 → 3)",
-        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207"
+        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207",
+        "[code-review-mobile-native-kmp-create-listing-notimpl] Navigation.kt:493 — Screen.CreateListing composable wires onSubmit = { _ -> Result.failure(NotImplementedError(...)) } (dup of existing finding, re-confirms the create-listing stub)",
+        "[code-review-mobile-native-kmp-create-listing-stub] Navigation.kt:493 — 2026-11-03 re-confirms CreateListingScreen's onSubmit is a hard-coded NotImplementedError stub (same finding as -notimpl / -not-wired)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9905,7 +9909,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-11-03",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -14325,6 +14329,186 @@
       "score_delta": 1,
       "candidate_vector": "i18n",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-handlers-install-webhook-example-url",
+      "title": "api-server portal install: API_BASE_URL falls back to api.ppt.example.com — portal webhook_url leaks to unowned domain if env unset",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:1675-1687 — API_BASE_URL unwrap_or_else fallback is `https://api.ppt.example.com`; portal webhook_url returned to external providers can land on an unowned domain if API_BASE_URL unset"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/install.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-redirect-fallback",
+      "title": "api-server voice OAuth: ALEXA/GOOGLE_VOICE_REDIRECT_URI fallback to hard-coded ppt.three-two-bit.com host",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 api-handlers)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai/voice.rs:189-197 (exchange_voice_oauth_tokens) — ALEXA_REDIRECT_URI / GOOGLE_VOICE_REDIRECT_URI unwrap_or_else fallback to hardcoded `https://ppt.three-two-bit.com/...` — misconfigured deploys silently redirect OAuth to a hard-coded host, breaking token exchange"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/voice.rs"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-nearby-dead-untested",
+      "title": "mobile-native-kmp ListingRepository.getListingsNearby is dead (zero call sites) and untested",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt:118 — getListingsNearby() has ZERO call sites in the repo; dead code shipped untested"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/listing/ListingRepository.kt"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-route-auth-guard-gap",
+      "title": "ppt-web-core: 7 feature route groups miss route-level auth guard — authed SPA pages reachable unauthenticated",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)"
+      ],
+      "evidence": [
+        "7 of 21 ppt-web feature route-group fragments composed into AppRoutes.tsx render routes with NO route-level auth gate (accounting, financial, messaging, faults, etc.) — unauthenticated viewers can hit the SPA shell for authed pages"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "title": "ppt-web websocket handshake carries raw JWT as a URL query param — token leaks to access/referrer logs",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 ppt-web-core)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts:94-101 — buildWebSocketUrl() appends raw JWT to the handshake URL as a query parameter (`?token=<jwt>`); JWTs land in access logs / referrer / CDN logs despite the file documenting this as 'intentional'"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/lib/websocket.ts"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-pricealerts-raw-err-log",
+      "title": "reality-web PriceAlerts logs raw mutation errors via console.error — leaks structured server errors to browser console",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx:98,108 — handleMarkRead/handleMarkAllRead log raw mutation errors via console.error (incl. structured server rejection body), bypassing toSafeLogMessage() sanitizer"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/favorites/PriceAlerts.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-unchecked-cast",
+      "title": "reality-web ComparisonUrlHandler: unchecked cast of /api/v1/listings/{id} JSON to ListingSummary",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:43-47 — shared-comparison loader casts response.json() to Promise<ListingSummary> without validation; untrusted-shape network data crosses an API boundary unchecked"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-reality-web-comparison-raw-err-log",
+      "title": "reality-web ComparisonUrlHandler: raw error logging via console.error bypasses toSafeLogMessage",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-02 reality-web)"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:64,80 — console.error logs raw rejection objects for shared-listing load failures, bypassing the toSafeLogMessage() primitive"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
+      "title": "mobile-native-kmp SsoService: response.body<SsoError>() unguarded — non-JSON error body throws SerializationException",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-11-03 mobile-native-kmp)"
+      ],
+      "evidence": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt:49,:77,:104,:129 — four methods call response.body<SsoError>() on the error branch unguarded; a non-JSON gateway/proxy error body throws SerializationException and crashes the auth flow"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/auth/SsoService.kt"
+      ],
+      "created_at": "2026-11-03",
+      "updated_at": "2026-11-03",
+      "plan": null
     }
   ]
 }
