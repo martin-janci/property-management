@@ -847,6 +847,12 @@
         "completed": "Zakończone",
         "cancelled": "Anulowane"
       },
+      "type": {
+        "general": "Zapytanie ogólne",
+        "viewing_request": "Prośba o oglądanie",
+        "price_negotiation": "Negocjacja ceny",
+        "availability": "Dostępność"
+      },
       "viewingScheduled": "Oglądanie zaplanowane: {date} o {time}",
       "agentResponse": "Odpowiedź agenta:",
       "cancelConfirm": "Anulować to zapytanie?",

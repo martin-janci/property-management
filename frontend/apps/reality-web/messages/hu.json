@@ -847,6 +847,12 @@
         "completed": "Befejezve",
         "cancelled": "Törölve"
       },
+      "type": {
+        "general": "Általános érdeklődés",
+        "viewing_request": "Megtekintési kérelem",
+        "price_negotiation": "Ártárgyalás",
+        "availability": "Elérhetőség"
+      },
       "viewingScheduled": "Megtekintés ütemezve: {date} {time}",
       "agentResponse": "Ügynök válasza:",
       "cancelConfirm": "Törli ezt az érdeklődést?",

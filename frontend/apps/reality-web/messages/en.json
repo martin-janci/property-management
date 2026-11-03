@@ -854,6 +854,12 @@
         "completed": "Completed",
         "cancelled": "Cancelled"
       },
+      "type": {
+        "general": "General inquiry",
+        "viewing_request": "Viewing request",
+        "price_negotiation": "Price negotiation",
+        "availability": "Availability"
+      },
       "viewingScheduled": "Viewing scheduled: {date} at {time}",
       "agentResponse": "Agent response:",
       "cancelConfirm": "Cancel this inquiry?",
