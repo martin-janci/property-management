@@ -17,10 +17,18 @@
  *   - Re-rendering from a missing `voteId` to a real one does not throw a
  *     hook-order error.
  *   - The missing-id error state still renders.
- *   - Snapshots of the two branches that ran a *reduced* hook set on the buggy
- *     code — the missing-id (empty) branch and the loading branch — so a future
- *     regression that reintroduces the pre-hook early return fails both the
- *     render (crash) and the snapshot (structure) here.
+ *   - The two branches that ran a *reduced* hook set on the buggy code — the
+ *     missing-id (empty) branch and the loading branch — render their reduced
+ *     UI (empty state / spinner) and NOT the full ballot, so a regression that
+ *     reintroduces the pre-hook early return fails here on both the render
+ *     (crash) and the branch structure.
+ *
+ * These branch checks assert the component's stable surface (the empty-state
+ * copy, the loading-title fallback, and the *absence* of the ballot controls)
+ * rather than a full-tree `toMatchSnapshot()`. The old snapshots embedded the
+ * shared `screenStyles` values, so an unrelated edit to that shared module
+ * regenerated them with no change to this screen's logic — the same
+ * styling-churn trap the ranked-ballot suite below already avoids.
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -100,38 +108,47 @@ describe('VoteDetailScreen — hook ordering', () => {
   });
 });
 
-describe('VoteDetailScreen — branch render snapshots', () => {
+describe('VoteDetailScreen — reduced-hook branch render', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApiMutation.mockReturnValue(IDLE_MUTATION);
   });
 
   // The missing-id branch is the exact path whose pre-hook early return caused
-  // the Rules-of-Hooks crash. Snapshotting it pins the "no vote selected"
-  // structure and proves the branch renders without running the full ballot UI.
-  it('renders a stable snapshot for the missing-id (empty) branch', () => {
+  // the Rules-of-Hooks crash. Assert it renders the "no vote selected" empty
+  // state and NOT the ballot surface — the structural guarantee the fix must
+  // keep — without pinning the shared-style tree in a snapshot.
+  it('renders the missing-id (empty) branch: the empty state, not the ballot', () => {
     mockUseApiQuery.mockReturnValue(IDLE_QUERY);
 
-    const { toJSON } = renderScreen({ voteId: undefined });
+    renderScreen({ voteId: undefined });
 
-    expect(screen.getByText('No vote selected')).toBeTruthy();
-    expect(toJSON()).toMatchSnapshot();
+    expect(screen.getByText('No vote selected')).toBeOnTheScreen();
+    // None of the ballot surface renders on this reduced branch.
+    expect(screen.queryByText('Submit ballot')).toBeNull();
+    expect(screen.queryByLabelText('Move up')).toBeNull();
   });
 
   // The loading branch runs the *full* hook set (voteId present) and then the
   // spinner render path — the render that the buggy code could never reach
-  // consistently once the missing-id render had skipped hooks. Pinning it
-  // guards the loading UI structure too.
-  it('renders a stable snapshot for the loading branch', () => {
+  // consistently once the missing-id render had skipped hooks. Assert the full
+  // hook set ran, the loading-title fallback shows, and the ballot does not.
+  it('renders the loading branch: the full hook set and loading title, not the ballot', () => {
     mockUseApiQuery.mockReturnValue(LOADING_QUERY);
 
-    const { toJSON } = renderScreen({ voteId: 'vote-1' });
+    renderScreen({ voteId: 'vote-1' });
 
     // All three data queries plus the cast mutation still run — the hook set is
     // complete even while the screen shows only the spinner.
     expect(mockUseApiQuery).toHaveBeenCalledTimes(3);
     expect(mockUseApiMutation).toHaveBeenCalledTimes(1);
-    expect(toJSON()).toMatchSnapshot();
+
+    // The title falls back to the loading copy while `detail` is still fetching
+    // (`detail?.title ?? t('common.loading', { defaultValue: 'Loading…' })`),
+    // and the ballot is not rendered mid-load.
+    expect(screen.getByText('Loading…')).toBeOnTheScreen();
+    expect(screen.queryByText('Submit ballot')).toBeNull();
+    expect(screen.queryByLabelText('Move up')).toBeNull();
   });
 });
 
