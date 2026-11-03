@@ -41,6 +41,21 @@ jest.mock('../../hooks/useApi', () => ({
   useApiMutation: jest.fn(),
 }));
 
+// Override the global `react-i18next` mock (src/test/setup.ts) with a *spyable*
+// `t` so the eligibility-reason i18n regression test below can assert the
+// server string is routed THROUGH `t(key, { defaultValue })`. The behavior is
+// identical to the global mock (`defaultValue ?? key`), so every other test in
+// this file — which only asserts the resolved defaultValue text — stays green.
+// `mock`-prefixed names are allowed inside a hoisted jest.mock factory.
+const mockT = jest.fn((key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key);
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mockT,
+    i18n: { language: 'en', changeLanguage: jest.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: jest.fn() },
+}));
+
 const useApiMock = jest.requireMock('../../hooks/useApi');
 const mockUseApiQuery = useApiMock.useApiQuery as jest.Mock;
 const mockUseApiMutation = useApiMock.useApiMutation as jest.Mock;
@@ -315,5 +330,118 @@ describe('VoteDetailScreen — ranked ballot', () => {
     castBallot();
 
     expect(castAnswers()).toEqual({ 'q-ranked': ['opt-b', 'opt-a', 'opt-c'] });
+  });
+});
+
+/**
+ * Eligibility-reason i18n regression guard
+ * (code-review-mobile-rn-vote-eligibility-reason-i18n).
+ *
+ * The StatusBanner used to render the server-provided `eligibility.reason`
+ * string RAW — `<Text>{eligibilityReason}</Text>` — bypassing the i18n layer
+ * entirely, so a non-English voter saw the backend's English sentence
+ * ("Vote is not currently accepting ballots", repositories/vote.rs) regardless
+ * of their locale. The fix routes it through `t(key, { defaultValue })` where
+ * the key is derived from the reason, mirroring how the rest of this screen
+ * (submit button, move controls, empty states) resolves strings.
+ *
+ * Proof that this fails before the fix: the global `t` mock resolves
+ * `{ defaultValue }` to the raw string, so the *rendered text* is identical
+ * before and after — the only observable difference is whether `t` is invoked
+ * at all for the reason. The pre-fix code renders the raw string directly and
+ * never calls `t` with the reason key, so the `toHaveBeenCalledWith` assertion
+ * fails; the fixed code calls `t('voting.eligibilityReason.<code>', …)` and
+ * passes. The raw string is still shown (via the defaultValue fallback) so an
+ * unmapped reason or untranslated locale degrades gracefully.
+ */
+describe('VoteDetailScreen — eligibility reason i18n', () => {
+  const VOTE_ID = 'vote-1';
+
+  const DETAIL = {
+    id: VOTE_ID,
+    title: 'Budget priorities',
+    description: null,
+    status: 'active',
+    start_at: null,
+    end_at: '2026-12-31T00:00:00Z',
+    quorum_type: 'simple',
+    quorum_percentage: null,
+    participation_count: null,
+    eligible_count: null,
+    building_name: 'Maple Court',
+    created_by_name: 'Manager',
+    question_count: 0,
+  };
+
+  // can_vote=false with a reason is exactly the branch that rendered the raw
+  // server string. One not-yet-voted unit keeps `alreadyVoted` false so the
+  // reason branch (not the "you have voted" branch) is the one exercised.
+  function eligibility(reason: string | null) {
+    return {
+      vote_id: VOTE_ID,
+      user_id: 'user-1',
+      eligible_units: [
+        {
+          unit_id: 'unit-1',
+          unit_designation: '1A',
+          ownership_share: '1/1',
+          is_owner: true,
+          is_delegated: false,
+          delegation_id: null,
+          already_voted: false,
+        },
+      ],
+      can_vote: false,
+      reason,
+    };
+  }
+
+  function mockQueries(reason: string | null) {
+    mockUseApiQuery.mockImplementation((_key: unknown, url: string) => {
+      if (url.endsWith('/questions')) {
+        return { data: [], isLoading: false, error: null };
+      }
+      if (url.endsWith('/eligibility')) {
+        return { data: eligibility(reason), isLoading: false, error: null };
+      }
+      return { data: DETAIL, isLoading: false, error: null };
+    });
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockT.mockImplementation(
+      (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key
+    );
+    mockUseApiMutation.mockReturnValue(IDLE_MUTATION);
+  });
+
+  it('routes a known server reason through t() with a derived key and the raw string as defaultValue', () => {
+    mockQueries('Vote is not currently accepting ballots');
+
+    renderScreen({ voteId: VOTE_ID });
+
+    // The load-bearing assertion: the reason must go through the i18n layer.
+    // Pre-fix (`<Text>{eligibilityReason}</Text>`) never calls t with this key.
+    expect(mockT).toHaveBeenCalledWith(
+      'voting.eligibilityReason.voteNotAcceptingBallots',
+      expect.objectContaining({ defaultValue: 'Vote is not currently accepting ballots' })
+    );
+
+    // And the raw sentence is NOT the only thing rendered by its own — it is the
+    // defaultValue fallback, so it still shows (graceful degradation) but now via t.
+    expect(screen.getByText('Vote is not currently accepting ballots')).toBeTruthy();
+  });
+
+  it('derives a slug key for an unmapped reason, still falling back to the raw string', () => {
+    mockQueries('Some brand new backend reason');
+
+    renderScreen({ voteId: VOTE_ID });
+
+    expect(mockT).toHaveBeenCalledWith(
+      'voting.eligibilityReason.some-brand-new-backend-reason',
+      expect.objectContaining({ defaultValue: 'Some brand new backend reason' })
+    );
+    expect(screen.getByText('Some brand new backend reason')).toBeTruthy();
   });
 });
