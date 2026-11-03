@@ -1,0 +1,52 @@
+{
+  "generator": "dev-review",
+  "generated_at": "2026-11-03",
+  "segment_reviewed": "api-handlers",
+  "selection_reason": "oldest-unreviewed (dispatcher Tier-1d demand-driven; claimable buffer starved 11 < floor 36). review_cursor sorted ascending with hard constraints applied: mobile-native-kmp (2026-10-25) SKIPPED (AGP egress-blocked / unlandable in cloud, already ≥3 open findings, and a 2026-11-03 tier1d file was already generated for it today); reality-web (2026-11-03) and mobile-rn (2026-11-03) SKIPPED (cursor == today, already reviewed today). Remaining landable segments by cursor: api-handlers 2026-10-26 (oldest), then api-core/ppt-web-core 2026-10-27, reality-server 2026-10-28, ppt-web-ui 2026-11-02. Saturation check: api-handlers has 2 open code-review-finding rows in backlog.json and 2 open code-review-api-handlers-* rows in action-list.json, both < 3 floor => NOT saturated. api-handlers selected as oldest landable non-saturated segment. Rust expert primary + Security secondary per Step 2. Scope: backend/servers/api-server/src/routes/ (static analysis only, no compile/test). Grep hit-lists triaged: unwrap()/expect() non-test (signatures.rs:47 LazyLock + market_pricing.rs:1797/1803 and_hms_opt + portal_webhooks.rs:1057 test helper all justified / startup-validated, not flagged); todo!()/unimplemented!() (none in routes); unclamped ?limit pagination (templates/outages/announcements/voting all pass query.limit raw to repo BUT every repo clamps internally via `.unwrap_or(N).min(100)` — defended, NOT flagged, pagination.rs clamp_limit convention holds). Surviving findings are silent error-swallow (unwrap_or_default / unwrap_or on fallible repo calls on handler success paths).",
+  "experts_used": [
+    "rust",
+    "security"
+  ],
+  "findings_count": 3,
+  "signals": [
+    {
+      "id": "code-review-api-handlers-suspend-cascade-silent-skip",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/agencies.rs:185-189 (suspend_organization handler) — after the org is suspended, the code fetches org member user IDs to revoke their sessions: `let user_ids = state.platform_admin_repo.get_org_member_user_ids(id).await.unwrap_or_default();` then loops revoking each user's tokens. The inline comment at :182-184 claims 'Failures here are logged but do not fail the request', but `unwrap_or_default()` silently swallows a DB error on get_org_member_user_ids with NO log line — only the per-user revoke_all_user_tokens failures inside the loop are logged (:197). If the member-fetch query fails, user_ids is empty, the loop body never runs, and NO member sessions are revoked, with zero trace in logs. Net effect: a just-suspended org's members retain live access tokens until natural expiry (the refresh path drops suspended-org memberships, but outstanding access tokens are not short-circuited), and operators have no signal that the immediate-revocation cascade was skipped. Fix: match the stated contract — `match ...get_org_member_user_ids(id).await { Ok(ids) => ids, Err(e) => { tracing::error!(org_id=%id, error=%e, \"failed to enumerate members for suspension session-revocation cascade\"); vec![] } }` (or propagate), so the skipped cascade is at least observable."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-templates-list-swallows-db-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/templates.rs:280-297 (list_templates handler, GET /api/v1/templates) — both repo calls swallow DB errors: `let templates = state.document_template_repo.list(org_id, list_query.clone()).await.unwrap_or_default();` and `let total = state.document_template_repo.count(org_id, list_query).await.unwrap_or(0);`. On any DB error (connection drop, query failure) the handler returns HTTP 200 with `{templates: [], count: 0, total: 0}` — indistinguishable to the client from a genuinely empty template list, with no error logged. A manager whose templates fail to load sees an empty library and may re-create or assume data loss. The handler's return type is already `Result<_, (StatusCode, Json<ErrorResponse>)>`, so the correct shape is to `.map_err(...)` into a 500 INTERNAL_SERVER_ERROR (as sibling handlers like get_listing in listings.rs:325 do) rather than masking the failure as an empty success."
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-03 api-handlers)",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/listings.rs:338-343 (get_listing detail handler) — after fetching the listing (which correctly `.map_err`s DB errors into 500 at :325), the associated photos and syndications are fetched with `let photos = state.listing_repo.get_photos(id).await.unwrap_or_default();` and `.get_syndications(id).await.unwrap_or_default();`. A DB error on either call is silently swallowed: the handler returns 200 with the listing but an empty photos/syndications array, no log. The caller cannot tell a listing that genuinely has no photos from one whose photo query failed — on a listing-detail view this renders a photoless listing as if intentional. Lower severity than a list-wide swallow (single-row detail, partial payload), but inconsistent with the same handler's fail-loud treatment of the primary fetch three lines above; should at minimum log the error before degrading to an empty vec."
+      ]
+    }
+  ]
+}
