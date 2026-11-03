@@ -54,7 +54,7 @@ function EarlyFetcher({ seen }: { seen: Array<{ auth: string | null; org: string
   const { user } = useAuth();
   useEffect(() => {
     if (user) seen.push({ auth: bearerAuthorization() ?? null, org: getOrg() ?? null });
-  }, [user]);
+  }, [user, seen]);
   return null;
 }
 
