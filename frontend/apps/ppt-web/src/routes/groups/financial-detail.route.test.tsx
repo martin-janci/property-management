@@ -8,8 +8,10 @@
  * "New invoice" / invoice-row / "Record payment" click landed on not-found.
  * These tests mount the production `financialDetailRoutes()` table and check
  * each path renders its real component against mocked api-client calls and is
- * gated to manager roles. They also lock in that the budgets page no longer
- * offers create / detail buttons, which have no route behind them.
+ * gated to manager roles. They also lock in that the budgets page hides its
+ * create buttons when rendered without navigation handlers (read-only use).
+ * The budget create / detail routes are covered in
+ * `financial-budgets.route.test.tsx`.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -260,7 +262,7 @@ describe('/financial/payments/new', () => {
 });
 
 describe('BudgetManagementPage without create/detail handlers', () => {
-  it('hides the create buttons (budget create/detail screens are not routed)', () => {
+  it('hides the create buttons when no create handler is passed', () => {
     render(
       <BudgetManagementPage
         budgets={[]}

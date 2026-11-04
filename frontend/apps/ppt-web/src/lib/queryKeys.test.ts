@@ -33,6 +33,7 @@
 
 import {
   announcementKeys,
+  budgetKeys,
   communityKeys,
   complianceKeys,
   disputeKeys,
@@ -232,6 +233,7 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
       // Resident dashboard RecentActivity reads `/announcements/published`
       // through `announcementKeys.published()`.
       announcementKeys,
+      budgetKeys,
     };
 
     it.each(
@@ -256,7 +258,7 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
         .sort();
       expect(
         unlisted,
-        `api-client key factories imported by ppt-web production code but missing from ` +
+        'api-client key factories imported by ppt-web production code but missing from ' +
           `consumedApiClientFactories (logout-purge coverage unenforced): ${unlisted.join(', ')}`
       ).toEqual([]);
     });

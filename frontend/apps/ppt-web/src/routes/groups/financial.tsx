@@ -8,19 +8,23 @@ import type { InvoiceStatus, ReportExportFormat, ReportType } from '@ppt/api-cli
 import {
   allocatePayment,
   autoMatchPayments,
+  budgetKeys,
   downloadInvoicePdf,
   exportReport,
   getARAgingReport,
   getBalanceSheet,
+  getBudgetSummary,
   getCashFlowReport,
   getIncomeStatement,
   getOverdueInvoices,
+  listBudgets,
   listInvoices,
   listPayments,
   listUnallocatedPayments,
   sendInvoice,
+  useBuildings,
 } from '@ppt/api-client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate } from 'react-router-dom';
@@ -350,20 +354,79 @@ function PaymentManagementPageRoute() {
 }
 
 /**
- * Budget overview. No budgets api-client exists yet (the api-server exposes
- * `/api/v1/budgets`, but nothing in `@ppt/api-client` wraps it), so the page
- * renders its empty state and the create / detail navigation is omitted —
- * those screens are not routed, and a button to them would land on not-found.
+ * Budget overview (Epic 24 / Story 52.4).
+ *
+ *   listBudgets({ organizationId, fiscalYear, buildingId }) — GET /api/v1/budgets
+ *   getBudgetSummary(id) per budget                         — GET /api/v1/budgets/{id}/summary
+ *
+ * The list endpoint only returns each budget's `total_amount`, so actual spend
+ * comes from one summary query per listed budget (the list is capped at the
+ * server's default page of 50). "Remaining" is budgeted minus actual, so a
+ * positive value is under budget (green) and a negative one overspent (red).
  */
 function BudgetManagementPageRoute() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? '';
+  const currentYear = new Date().getFullYear();
+  const [fiscalYear, setFiscalYear] = useState(currentYear);
+  const [buildingId, setBuildingId] = useState<string>();
+
+  const { data: buildingsData } = useBuildings({ pageSize: 100 });
+  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
+  const buildingNames = new Map(buildings.map((b) => [b.id, b.name]));
+
+  const params = { organizationId: orgId, fiscalYear, buildingId };
+  const budgetsQuery = useQuery({
+    queryKey: budgetKeys.list(params),
+    queryFn: () => listBudgets(params),
+    enabled: !!orgId,
+  });
+  const budgetList = budgetsQuery.data ?? [];
+
+  const summaryQueries = useQueries({
+    queries: budgetList.map((budget) => ({
+      queryKey: budgetKeys.summary(budget.id),
+      queryFn: () => getBudgetSummary(budget.id),
+    })),
+  });
+
+  const budgets = budgetList.map((budget, i) => {
+    const totalBudget = budget.totalAmount;
+    const totalActual = summaryQueries[i]?.data?.totalActual ?? 0;
+    return {
+      id: budget.id,
+      name: budget.name,
+      year: budget.fiscalYear,
+      buildingName: budget.buildingId ? buildingNames.get(budget.buildingId) : undefined,
+      totalBudget,
+      totalActual,
+      totalVariance: totalBudget - totalActual,
+      currency: 'EUR',
+      status: budget.status,
+    };
+  });
+  const totalBudget = budgets.reduce((sum, b) => sum + b.totalBudget, 0);
+  const totalActual = budgets.reduce((sum, b) => sum + b.totalActual, 0);
+
   return (
     <BudgetManagementPage
-      budgets={[]}
-      currentYear={new Date().getFullYear()}
-      summary={{ totalBudget: 0, totalActual: 0, overallVariance: 0, currency: 'EUR' }}
-      buildings={[]}
-      onYearChange={() => {}}
-      onBuildingChange={() => {}}
+      budgets={budgets}
+      currentYear={currentYear}
+      summary={{
+        totalBudget,
+        totalActual,
+        overallVariance: totalBudget - totalActual,
+        currency: 'EUR',
+      }}
+      buildings={buildings}
+      isLoading={budgetsQuery.isLoading}
+      error={budgetsQuery.error instanceof Error ? budgetsQuery.error.message : null}
+      onRetry={() => budgetsQuery.refetch()}
+      onNavigateToCreate={() => navigate('/financial/budgets/new')}
+      onNavigateToDetail={(id) => navigate(`/financial/budgets/${id}`)}
+      onYearChange={setFiscalYear}
+      onBuildingChange={setBuildingId}
     />
   );
 }

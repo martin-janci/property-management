@@ -13,7 +13,12 @@
  *   GET  /api/v1/financial/invoices/{id}/pdf — downloadInvoicePdf
  *   POST /api/v1/financial/payments          — recordPayment
  *
- * All three are manager actions, so every route is wrapped in
+ * plus the budget create / detail screens (`/financial/budgets/new`,
+ * `/financial/budgets/:budgetId`) on the `/api/v1/budgets` endpoints wrapped by
+ * the `@ppt/api-client` budgets module (create, get, items, categories,
+ * summary, submit / approve / activate / close, delete, record actuals).
+ *
+ * All of these are manager actions, so every route is wrapped in
  * `<ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>`.
  *
  * Kept in its own module (registered from `AppRoutes`) so it doesn't touch the
@@ -21,15 +26,30 @@
  */
 import type { CreateInvoice, RecordPayment } from '@ppt/api-client';
 import {
+  activateBudget,
+  addBudgetItem,
+  approveBudget,
+  budgetKeys,
+  closeBudget,
+  createBudget,
+  createBudgetCategory,
   createBuildingsApi,
   createInvoice,
+  deleteBudget,
+  deleteBudgetItem,
   downloadInvoicePdf,
+  getBudget,
+  getBudgetSummary,
   getInvoice,
   getOrg,
   getToken,
+  listBudgetCategories,
+  listBudgetItems,
   listInvoices,
+  recordBudgetActual,
   recordPayment,
   sendInvoice,
+  submitBudget,
   useBuildings,
 } from '@ppt/api-client';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -38,6 +58,12 @@ import { useTranslation } from 'react-i18next';
 import { Link, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
+import type {
+  BudgetActualValues,
+  BudgetDetailAction,
+  BudgetFormValues,
+  NewBudgetItemValues,
+} from '../../features/financial';
 import { MANAGER_ROLES } from '../shared';
 
 const InvoiceForm = lazy(() =>
@@ -48,6 +74,12 @@ const InvoiceDetail = lazy(() =>
 );
 const PaymentForm = lazy(() =>
   import('../../features/financial').then((m) => ({ default: m.PaymentForm }))
+);
+const BudgetForm = lazy(() =>
+  import('../../features/financial').then((m) => ({ default: m.BudgetForm }))
+);
+const BudgetDetail = lazy(() =>
+  import('../../features/financial').then((m) => ({ default: m.BudgetDetail }))
 );
 
 /** Units list limit — the api-server clamps `/buildings/{id}/units` to 100. */
@@ -327,6 +359,236 @@ function NewPaymentPageRoute() {
   );
 }
 
+/** `/financial/budgets/new` — create a budget, then open its detail to add lines. */
+function NewBudgetPageRoute() {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  const orgId = user?.organizationId ?? '';
+  const { data: buildingsData, isLoading } = useBuildings({ pageSize: 100 });
+  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
+
+  const createMutation = useMutation({
+    mutationFn: (values: BudgetFormValues) =>
+      createBudget({
+        organizationId: orgId,
+        name: values.name,
+        fiscalYear: values.fiscalYear,
+        buildingId: values.buildingId,
+        notes: values.notes,
+      }),
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: budgetKeys.all });
+      showToast({ type: 'success', title: t('financial.budgetPages.toast.created'), message: '' });
+      navigate(`/financial/budgets/${created.id}`);
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('financial.budgetPages.toast.createFailed'),
+        message: err instanceof Error ? err.message : '',
+      });
+    },
+  });
+
+  return (
+    <FormPageShell
+      title={t('financial.budgetPages.newTitle')}
+      subtitle={t('financial.budgetPages.newSubtitle')}
+      backTo="/financial/budgets"
+      backLabel={t('financial.budgetPages.backToBudgets')}
+    >
+      {isLoading ? (
+        <Spinner />
+      ) : (
+        <BudgetForm
+          year={new Date().getFullYear()}
+          buildings={buildings}
+          onSubmit={(values) => createMutation.mutate(values)}
+          onCancel={() => navigate('/financial/budgets')}
+          isSubmitting={createMutation.isPending || !orgId}
+        />
+      )}
+    </FormPageShell>
+  );
+}
+
+/** Lifecycle transition call for a detail-page action (resolved at call time). */
+function budgetTransition(action: Exclude<BudgetDetailAction, 'delete'>) {
+  switch (action) {
+    case 'submit':
+      return submitBudget;
+    case 'approve':
+      return approveBudget;
+    case 'activate':
+      return activateBudget;
+    case 'close':
+      return closeBudget;
+  }
+}
+
+/** `/financial/budgets/:budgetId` — budget detail: lines, totals and lifecycle actions. */
+function BudgetDetailPageRoute() {
+  const { budgetId = '' } = useParams<{ budgetId: string }>();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  const orgId = user?.organizationId ?? '';
+
+  const budgetQuery = useQuery({
+    queryKey: budgetKeys.detail(budgetId),
+    queryFn: () => getBudget(orgId, budgetId),
+    enabled: !!orgId && !!budgetId,
+  });
+  const itemsQuery = useQuery({
+    queryKey: budgetKeys.items(budgetId),
+    queryFn: () => listBudgetItems(budgetId),
+    enabled: !!budgetId && budgetQuery.isSuccess,
+  });
+  const summaryQuery = useQuery({
+    queryKey: budgetKeys.summary(budgetId),
+    queryFn: () => getBudgetSummary(budgetId),
+    enabled: !!budgetId && budgetQuery.isSuccess,
+  });
+  const categoriesQuery = useQuery({
+    queryKey: budgetKeys.categories(orgId),
+    queryFn: () => listBudgetCategories(orgId),
+    enabled: !!orgId && budgetQuery.isSuccess,
+  });
+  const { data: buildingsData } = useBuildings({ pageSize: 100 });
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: budgetKeys.all });
+  const fail = (titleKey: string) => (err: unknown) =>
+    showToast({
+      type: 'error',
+      title: t(titleKey),
+      message: err instanceof Error ? err.message : '',
+    });
+
+  const actionMutation = useMutation({
+    mutationFn: async (action: BudgetDetailAction) => {
+      if (action === 'delete') {
+        await deleteBudget(orgId, budgetId);
+        return action;
+      }
+      await budgetTransition(action)(orgId, budgetId);
+      return action;
+    },
+    onSuccess: (action) => {
+      showToast({
+        type: 'success',
+        title: t(`financial.budgetPages.toast.${action}Done`),
+        message: '',
+      });
+      if (action === 'delete') {
+        queryClient.removeQueries({ queryKey: budgetKeys.detail(budgetId) });
+        queryClient.invalidateQueries({ queryKey: budgetKeys.lists() });
+        navigate('/financial/budgets');
+        return;
+      }
+      refresh();
+    },
+    onError: fail('financial.budgetPages.toast.actionFailed'),
+  });
+
+  const addItemMutation = useMutation({
+    mutationFn: async (values: NewBudgetItemValues) => {
+      let categoryId = values.categoryId;
+      if (!categoryId) {
+        const category = await createBudgetCategory({
+          organizationId: orgId,
+          name: values.newCategoryName ?? '',
+        });
+        categoryId = category.id;
+      }
+      return addBudgetItem(budgetId, {
+        categoryId,
+        name: values.name,
+        budgetedAmount: values.budgetedAmount,
+        description: values.description,
+      });
+    },
+    onSuccess: () => {
+      showToast({
+        type: 'success',
+        title: t('financial.budgetPages.toast.itemAdded'),
+        message: '',
+      });
+      refresh();
+    },
+    onError: (err) => {
+      // A category may have been created before the item failed — refresh either way.
+      refresh();
+      fail('financial.budgetPages.toast.itemAddFailed')(err);
+    },
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (itemId: string) => deleteBudgetItem(itemId),
+    onSuccess: refresh,
+    onError: fail('financial.budgetPages.toast.itemRemoveFailed'),
+  });
+
+  const actualMutation = useMutation({
+    mutationFn: ({ itemId, values }: { itemId: string; values: BudgetActualValues }) =>
+      recordBudgetActual(itemId, values),
+    onSuccess: () => {
+      showToast({
+        type: 'success',
+        title: t('financial.budgetPages.toast.actualRecorded'),
+        message: '',
+      });
+      refresh();
+    },
+    onError: fail('financial.budgetPages.toast.actualFailed'),
+  });
+
+  if (budgetQuery.isLoading || (!orgId && !budgetQuery.error)) return <Spinner />;
+
+  const budget = budgetQuery.data;
+  if (budgetQuery.error || !budget) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center">
+        <p className="text-gray-700">{t('financial.budgetPages.notFound')}</p>
+        <Link
+          to="/financial/budgets"
+          className="mt-4 inline-block text-sm text-blue-600 hover:text-blue-800"
+        >
+          &larr; {t('financial.budgetPages.backToBudgets')}
+        </Link>
+      </div>
+    );
+  }
+
+  if (itemsQuery.isLoading || categoriesQuery.isLoading) return <Spinner />;
+
+  const buildingName = budget.buildingId
+    ? buildingsData?.items?.find((b) => b.id === budget.buildingId)?.name
+    : undefined;
+
+  return (
+    <BudgetDetail
+      budget={budget}
+      buildingName={buildingName}
+      items={itemsQuery.data ?? []}
+      categories={categoriesQuery.data ?? []}
+      summary={summaryQuery.data}
+      pendingAction={actionMutation.isPending ? actionMutation.variables : null}
+      onAction={(action) => actionMutation.mutate(action)}
+      onAddItem={(values) => addItemMutation.mutate(values)}
+      isAddingItem={addItemMutation.isPending}
+      onDeleteItem={(itemId) => deleteItemMutation.mutate(itemId)}
+      onRecordActual={(itemId, values) => actualMutation.mutate({ itemId, values })}
+      isRecordingActual={actualMutation.isPending}
+      onBack={() => navigate('/financial/budgets')}
+    />
+  );
+}
+
 /** Financial create / detail routes (manager-only). */
 export function financialDetailRoutes() {
   return (
@@ -352,6 +614,22 @@ export function financialDetailRoutes() {
         element={
           <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <NewPaymentPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/financial/budgets/new"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <NewBudgetPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/financial/budgets/:budgetId"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <BudgetDetailPageRoute />
           </ProtectedRoute>
         }
       />

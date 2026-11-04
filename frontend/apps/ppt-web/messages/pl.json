@@ -2331,6 +2331,108 @@
       "pdfFailed": "Nie udało się pobrać PDF",
       "invoiceNotFound": "Nie znaleziono faktury",
       "noUnits": "Brak dostępnych lokali. Najpierw dodaj lokale do budynku."
+    },
+    "budgetPages": {
+      "loading": "Ładowanie…",
+      "retry": "Spróbuj ponownie",
+      "cancel": "Anuluj",
+      "saving": "Zapisywanie…",
+      "budgeted": "Zaplanowano",
+      "actual": "Wykonanie",
+      "remaining": "Pozostało",
+      "wholeOrganization": "Cała organizacja",
+      "backToBudgets": "Powrót do budżetów",
+      "newTitle": "Nowy budżet",
+      "newSubtitle": "Utwórz budżet roczny, a następnie dodaj do niego pozycje",
+      "notFound": "Nie znaleziono budżetu",
+      "status": {
+        "draft": "Szkic",
+        "pending_approval": "Oczekuje na zatwierdzenie",
+        "approved": "Zatwierdzony",
+        "active": "Aktywny",
+        "closed": "Zamknięty"
+      },
+      "list": {
+        "title": "Zarządzanie budżetami",
+        "subtitle": "Planuj budżety i porównuj je z rzeczywistymi wydatkami",
+        "createNew": "Utwórz budżet",
+        "createFirst": "Utwórz pierwszy budżet",
+        "budgetsList": "Budżety",
+        "noBudgets": "Brak budżetów na rok {{year}}",
+        "loadFailed": "Nie udało się wczytać budżetów",
+        "totalBudget": "Zaplanowano łącznie",
+        "totalActual": "Wykonanie łącznie",
+        "remaining": "Pozostało",
+        "yearFilter": "Rok budżetowy"
+      },
+      "form": {
+        "name": "Nazwa budżetu",
+        "namePlaceholder": "np. Budżet operacyjny 2027",
+        "nameRequired": "Podaj nazwę budżetu",
+        "fiscalYear": "Rok budżetowy",
+        "building": "Budynek",
+        "wholeOrganization": "Cała organizacja (wszystkie budynki)",
+        "notes": "Uwagi",
+        "itemsHint": "Po zapisaniu możesz dodać pozycje budżetu według kategorii.",
+        "submit": "Utwórz budżet"
+      },
+      "detail": {
+        "fiscalYear": "Rok budżetowy {{year}}",
+        "approvedOn": "Zatwierdzono {{date}}",
+        "itemsOverBudget": "Pozycje ponad budżet"
+      },
+      "items": {
+        "title": "Pozycje budżetu",
+        "empty": "Ten budżet nie ma pozycji.",
+        "emptyDraft": "Brak pozycji. Dodaj pierwszą pozycję poniżej.",
+        "addTitle": "Dodaj pozycję",
+        "add": "Dodaj pozycję",
+        "category": "Kategoria",
+        "newCategory": "+ Nowa kategoria",
+        "newCategoryName": "Nazwa nowej kategorii",
+        "noCategories": "Brak kategorii — podaj nazwę nowej.",
+        "name": "Pozycja",
+        "amount": "Zaplanowana kwota",
+        "description": "Opis",
+        "actions": "Akcje",
+        "remove": "Usuń",
+        "removeNamed": "Usuń {{name}}",
+        "categoryRequired": "Podaj nazwę kategorii",
+        "nameRequired": "Podaj nazwę pozycji",
+        "amountInvalid": "Podaj prawidłową kwotę"
+      },
+      "actuals": {
+        "record": "Zapisz wydatek",
+        "recordNamed": "Zapisz rzeczywisty wydatek dla {{name}}",
+        "title": "Zapisz rzeczywisty wydatek dla {{item}}",
+        "amount": "Wydana kwota",
+        "date": "Data",
+        "save": "Zapisz",
+        "dateRequired": "Podaj datę"
+      },
+      "actions": {
+        "submit": "Wyślij do zatwierdzenia",
+        "approve": "Zatwierdź",
+        "activate": "Aktywuj",
+        "close": "Zamknij budżet",
+        "delete": "Usuń",
+        "confirmDelete": "Potwierdź usunięcie"
+      },
+      "toast": {
+        "created": "Budżet został utworzony",
+        "createFailed": "Nie udało się utworzyć budżetu",
+        "submitDone": "Budżet wysłano do zatwierdzenia",
+        "approveDone": "Budżet został zatwierdzony",
+        "activateDone": "Budżet został aktywowany",
+        "closeDone": "Budżet został zamknięty",
+        "deleteDone": "Budżet został usunięty",
+        "actionFailed": "Operacja nie powiodła się",
+        "itemAdded": "Pozycja została dodana",
+        "itemAddFailed": "Nie udało się dodać pozycji",
+        "itemRemoveFailed": "Nie udało się usunąć pozycji",
+        "actualRecorded": "Wydatek został zapisany",
+        "actualFailed": "Nie udało się zapisać wydatku"
+      }
     }
   },
   "announcements": {

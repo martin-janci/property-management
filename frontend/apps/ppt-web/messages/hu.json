@@ -237,6 +237,108 @@
       "pdfFailed": "A PDF letöltése sikertelen",
       "invoiceNotFound": "A számla nem található",
       "noUnits": "Nincsenek elérhető egységek. Először adjon hozzá egységeket egy épülethez."
+    },
+    "budgetPages": {
+      "loading": "Betöltés…",
+      "retry": "Újrapróbálás",
+      "cancel": "Mégse",
+      "saving": "Mentés…",
+      "budgeted": "Tervezett",
+      "actual": "Tényleges",
+      "remaining": "Fennmaradó",
+      "wholeOrganization": "Teljes szervezet",
+      "backToBudgets": "Vissza a költségvetésekhez",
+      "newTitle": "Új költségvetés",
+      "newSubtitle": "Hozzon létre egy éves költségvetést, majd adja hozzá a tételeit",
+      "notFound": "A költségvetés nem található",
+      "status": {
+        "draft": "Piszkozat",
+        "pending_approval": "Jóváhagyásra vár",
+        "approved": "Jóváhagyva",
+        "active": "Aktív",
+        "closed": "Lezárva"
+      },
+      "list": {
+        "title": "Költségvetés-kezelés",
+        "subtitle": "Költségvetések tervezése és összevetése a tényleges kiadásokkal",
+        "createNew": "Költségvetés létrehozása",
+        "createFirst": "Hozza létre az első költségvetést",
+        "budgetsList": "Költségvetések",
+        "noBudgets": "Nincs költségvetés a(z) {{year}}. évre",
+        "loadFailed": "A költségvetéseket nem sikerült betölteni",
+        "totalBudget": "Tervezett összesen",
+        "totalActual": "Tényleges összesen",
+        "remaining": "Fennmaradó",
+        "yearFilter": "Pénzügyi év"
+      },
+      "form": {
+        "name": "Költségvetés neve",
+        "namePlaceholder": "pl. Üzemeltetési költségvetés 2027",
+        "nameRequired": "Adja meg a költségvetés nevét",
+        "fiscalYear": "Pénzügyi év",
+        "building": "Épület",
+        "wholeOrganization": "Teljes szervezet (minden épület)",
+        "notes": "Megjegyzések",
+        "itemsHint": "Mentés után kategóriánként adhat hozzá költségvetési tételeket.",
+        "submit": "Költségvetés létrehozása"
+      },
+      "detail": {
+        "fiscalYear": "{{year}}. pénzügyi év",
+        "approvedOn": "Jóváhagyva: {{date}}",
+        "itemsOverBudget": "Keretet túllépő tételek"
+      },
+      "items": {
+        "title": "Költségvetési tételek",
+        "empty": "Ennek a költségvetésnek nincsenek tételei.",
+        "emptyDraft": "Még nincsenek tételek. Adja hozzá az elsőt alább.",
+        "addTitle": "Tétel hozzáadása",
+        "add": "Tétel hozzáadása",
+        "category": "Kategória",
+        "newCategory": "+ Új kategória",
+        "newCategoryName": "Új kategória neve",
+        "noCategories": "Még nincsenek kategóriák — adjon meg egy újat.",
+        "name": "Tétel",
+        "amount": "Tervezett összeg",
+        "description": "Leírás",
+        "actions": "Műveletek",
+        "remove": "Eltávolítás",
+        "removeNamed": "{{name}} eltávolítása",
+        "categoryRequired": "Adja meg a kategória nevét",
+        "nameRequired": "Adja meg a tétel nevét",
+        "amountInvalid": "Adjon meg érvényes összeget"
+      },
+      "actuals": {
+        "record": "Kiadás rögzítése",
+        "recordNamed": "Tényleges kiadás rögzítése: {{name}}",
+        "title": "Tényleges kiadás rögzítése: {{item}}",
+        "amount": "Elköltött összeg",
+        "date": "Dátum",
+        "save": "Mentés",
+        "dateRequired": "Adja meg a dátumot"
+      },
+      "actions": {
+        "submit": "Beküldés jóváhagyásra",
+        "approve": "Jóváhagyás",
+        "activate": "Aktiválás",
+        "close": "Költségvetés lezárása",
+        "delete": "Törlés",
+        "confirmDelete": "Törlés megerősítése"
+      },
+      "toast": {
+        "created": "A költségvetés létrejött",
+        "createFailed": "A költségvetést nem sikerült létrehozni",
+        "submitDone": "A költségvetés jóváhagyásra beküldve",
+        "approveDone": "A költségvetés jóváhagyva",
+        "activateDone": "A költségvetés aktiválva",
+        "closeDone": "A költségvetés lezárva",
+        "deleteDone": "A költségvetés törölve",
+        "actionFailed": "A művelet sikertelen",
+        "itemAdded": "Tétel hozzáadva",
+        "itemAddFailed": "A tételt nem sikerült hozzáadni",
+        "itemRemoveFailed": "A tételt nem sikerült eltávolítani",
+        "actualRecorded": "Kiadás rögzítve",
+        "actualFailed": "A kiadást nem sikerült rögzíteni"
+      }
     }
   }
 }

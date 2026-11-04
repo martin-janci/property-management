@@ -677,6 +677,108 @@
       "budgetsList": "Rozpočty",
       "noBudgets": "Nenašli sa žiadne rozpočty",
       "createFirst": "Vytvorte svoj prvý rozpočet"
+    },
+    "budgetPages": {
+      "loading": "Načítava sa…",
+      "retry": "Skúsiť znova",
+      "cancel": "Zrušiť",
+      "saving": "Ukladá sa…",
+      "budgeted": "Rozpočtované",
+      "actual": "Skutočnosť",
+      "remaining": "Zostatok",
+      "wholeOrganization": "Celá organizácia",
+      "backToBudgets": "Späť na rozpočty",
+      "newTitle": "Nový rozpočet",
+      "newSubtitle": "Vytvorte ročný rozpočet a potom doň pridajte položky",
+      "notFound": "Rozpočet sa nenašiel",
+      "status": {
+        "draft": "Koncept",
+        "pending_approval": "Čaká na schválenie",
+        "approved": "Schválený",
+        "active": "Aktívny",
+        "closed": "Uzavretý"
+      },
+      "list": {
+        "title": "Správa rozpočtov",
+        "subtitle": "Plánujte rozpočty a porovnávajte ich so skutočnými výdavkami",
+        "createNew": "Vytvoriť rozpočet",
+        "createFirst": "Vytvorte prvý rozpočet",
+        "budgetsList": "Rozpočty",
+        "noBudgets": "Pre rok {{year}} nie sú žiadne rozpočty",
+        "loadFailed": "Rozpočty sa nepodarilo načítať",
+        "totalBudget": "Rozpočtované spolu",
+        "totalActual": "Skutočnosť spolu",
+        "remaining": "Zostatok",
+        "yearFilter": "Rozpočtový rok"
+      },
+      "form": {
+        "name": "Názov rozpočtu",
+        "namePlaceholder": "napr. Prevádzkový rozpočet 2027",
+        "nameRequired": "Zadajte názov rozpočtu",
+        "fiscalYear": "Rozpočtový rok",
+        "building": "Budova",
+        "wholeOrganization": "Celá organizácia (všetky budovy)",
+        "notes": "Poznámky",
+        "itemsHint": "Po uložení môžete pridať položky rozpočtu podľa kategórií.",
+        "submit": "Vytvoriť rozpočet"
+      },
+      "detail": {
+        "fiscalYear": "Rozpočtový rok {{year}}",
+        "approvedOn": "Schválené {{date}}",
+        "itemsOverBudget": "Položky nad rozpočet"
+      },
+      "items": {
+        "title": "Položky rozpočtu",
+        "empty": "Tento rozpočet nemá žiadne položky.",
+        "emptyDraft": "Zatiaľ žiadne položky. Pridajte prvú položku nižšie.",
+        "addTitle": "Pridať položku",
+        "add": "Pridať položku",
+        "category": "Kategória",
+        "newCategory": "+ Nová kategória",
+        "newCategoryName": "Názov novej kategórie",
+        "noCategories": "Zatiaľ žiadne kategórie — zadajte názov novej.",
+        "name": "Položka",
+        "amount": "Rozpočtovaná suma",
+        "description": "Popis",
+        "actions": "Akcie",
+        "remove": "Odstrániť",
+        "removeNamed": "Odstrániť {{name}}",
+        "categoryRequired": "Zadajte názov kategórie",
+        "nameRequired": "Zadajte názov položky",
+        "amountInvalid": "Zadajte platnú sumu"
+      },
+      "actuals": {
+        "record": "Zapísať čerpanie",
+        "recordNamed": "Zapísať skutočné čerpanie pre {{name}}",
+        "title": "Zapísať skutočné čerpanie pre {{item}}",
+        "amount": "Čerpaná suma",
+        "date": "Dátum",
+        "save": "Uložiť",
+        "dateRequired": "Zadajte dátum"
+      },
+      "actions": {
+        "submit": "Odoslať na schválenie",
+        "approve": "Schváliť",
+        "activate": "Aktivovať",
+        "close": "Uzavrieť rozpočet",
+        "delete": "Odstrániť",
+        "confirmDelete": "Potvrdiť odstránenie"
+      },
+      "toast": {
+        "created": "Rozpočet bol vytvorený",
+        "createFailed": "Rozpočet sa nepodarilo vytvoriť",
+        "submitDone": "Rozpočet bol odoslaný na schválenie",
+        "approveDone": "Rozpočet bol schválený",
+        "activateDone": "Rozpočet bol aktivovaný",
+        "closeDone": "Rozpočet bol uzavretý",
+        "deleteDone": "Rozpočet bol odstránený",
+        "actionFailed": "Akcia zlyhala",
+        "itemAdded": "Položka bola pridaná",
+        "itemAddFailed": "Položku sa nepodarilo pridať",
+        "itemRemoveFailed": "Položku sa nepodarilo odstrániť",
+        "actualRecorded": "Čerpanie bolo zapísané",
+        "actualFailed": "Čerpanie sa nepodarilo zapísať"
+      }
     }
   },
   "announcements": {

@@ -2283,6 +2283,108 @@
       "pdfFailed": "PDF konnte nicht heruntergeladen werden",
       "invoiceNotFound": "Rechnung nicht gefunden",
       "noUnits": "Keine Einheiten verfügbar. Fügen Sie zuerst Einheiten zu einem Gebäude hinzu."
+    },
+    "budgetPages": {
+      "loading": "Wird geladen…",
+      "retry": "Erneut versuchen",
+      "cancel": "Abbrechen",
+      "saving": "Wird gespeichert…",
+      "budgeted": "Budgetiert",
+      "actual": "Ist",
+      "remaining": "Verbleibend",
+      "wholeOrganization": "Gesamte Organisation",
+      "backToBudgets": "Zurück zu den Budgets",
+      "newTitle": "Neues Budget",
+      "newSubtitle": "Legen Sie ein Jahresbudget an und fügen Sie anschließend Positionen hinzu",
+      "notFound": "Budget nicht gefunden",
+      "status": {
+        "draft": "Entwurf",
+        "pending_approval": "Wartet auf Genehmigung",
+        "approved": "Genehmigt",
+        "active": "Aktiv",
+        "closed": "Abgeschlossen"
+      },
+      "list": {
+        "title": "Budgetverwaltung",
+        "subtitle": "Budgets planen und mit den tatsächlichen Ausgaben vergleichen",
+        "createNew": "Budget erstellen",
+        "createFirst": "Erstes Budget erstellen",
+        "budgetsList": "Budgets",
+        "noBudgets": "Keine Budgets für {{year}}",
+        "loadFailed": "Budgets konnten nicht geladen werden",
+        "totalBudget": "Budgetiert gesamt",
+        "totalActual": "Ist gesamt",
+        "remaining": "Verbleibend",
+        "yearFilter": "Geschäftsjahr"
+      },
+      "form": {
+        "name": "Budgetname",
+        "namePlaceholder": "z. B. Betriebsbudget 2027",
+        "nameRequired": "Geben Sie einen Budgetnamen ein",
+        "fiscalYear": "Geschäftsjahr",
+        "building": "Gebäude",
+        "wholeOrganization": "Gesamte Organisation (alle Gebäude)",
+        "notes": "Notizen",
+        "itemsHint": "Nach dem Speichern können Sie Budgetpositionen nach Kategorie hinzufügen.",
+        "submit": "Budget erstellen"
+      },
+      "detail": {
+        "fiscalYear": "Geschäftsjahr {{year}}",
+        "approvedOn": "Genehmigt am {{date}}",
+        "itemsOverBudget": "Positionen über Budget"
+      },
+      "items": {
+        "title": "Budgetpositionen",
+        "empty": "Dieses Budget hat keine Positionen.",
+        "emptyDraft": "Noch keine Positionen. Fügen Sie unten die erste Position hinzu.",
+        "addTitle": "Position hinzufügen",
+        "add": "Position hinzufügen",
+        "category": "Kategorie",
+        "newCategory": "+ Neue Kategorie",
+        "newCategoryName": "Name der neuen Kategorie",
+        "noCategories": "Noch keine Kategorien — benennen Sie eine neue.",
+        "name": "Position",
+        "amount": "Budgetierter Betrag",
+        "description": "Beschreibung",
+        "actions": "Aktionen",
+        "remove": "Entfernen",
+        "removeNamed": "{{name}} entfernen",
+        "categoryRequired": "Geben Sie einen Kategorienamen ein",
+        "nameRequired": "Geben Sie einen Positionsnamen ein",
+        "amountInvalid": "Geben Sie einen gültigen Betrag ein"
+      },
+      "actuals": {
+        "record": "Ist-Ausgabe erfassen",
+        "recordNamed": "Ist-Ausgabe für {{name}} erfassen",
+        "title": "Ist-Ausgabe für {{item}} erfassen",
+        "amount": "Ausgegebener Betrag",
+        "date": "Datum",
+        "save": "Speichern",
+        "dateRequired": "Geben Sie ein Datum ein"
+      },
+      "actions": {
+        "submit": "Zur Genehmigung einreichen",
+        "approve": "Genehmigen",
+        "activate": "Aktivieren",
+        "close": "Budget abschließen",
+        "delete": "Löschen",
+        "confirmDelete": "Löschen bestätigen"
+      },
+      "toast": {
+        "created": "Budget erstellt",
+        "createFailed": "Budget konnte nicht erstellt werden",
+        "submitDone": "Budget zur Genehmigung eingereicht",
+        "approveDone": "Budget genehmigt",
+        "activateDone": "Budget aktiviert",
+        "closeDone": "Budget abgeschlossen",
+        "deleteDone": "Budget gelöscht",
+        "actionFailed": "Aktion fehlgeschlagen",
+        "itemAdded": "Position hinzugefügt",
+        "itemAddFailed": "Position konnte nicht hinzugefügt werden",
+        "itemRemoveFailed": "Position konnte nicht entfernt werden",
+        "actualRecorded": "Ist-Ausgabe erfasst",
+        "actualFailed": "Ist-Ausgabe konnte nicht erfasst werden"
+      }
     }
   },
   "announcements": {

@@ -677,6 +677,108 @@
       "budgetsList": "Rozpočty",
       "noBudgets": "Nebyly nalezeny žádné rozpočty",
       "createFirst": "Vytvořte svůj první rozpočet"
+    },
+    "budgetPages": {
+      "loading": "Načítání…",
+      "retry": "Zkusit znovu",
+      "cancel": "Zrušit",
+      "saving": "Ukládání…",
+      "budgeted": "Rozpočtováno",
+      "actual": "Skutečnost",
+      "remaining": "Zůstatek",
+      "wholeOrganization": "Celá organizace",
+      "backToBudgets": "Zpět na rozpočty",
+      "newTitle": "Nový rozpočet",
+      "newSubtitle": "Vytvořte roční rozpočet a poté do něj přidejte položky",
+      "notFound": "Rozpočet nebyl nalezen",
+      "status": {
+        "draft": "Koncept",
+        "pending_approval": "Čeká na schválení",
+        "approved": "Schválený",
+        "active": "Aktivní",
+        "closed": "Uzavřený"
+      },
+      "list": {
+        "title": "Správa rozpočtů",
+        "subtitle": "Plánujte rozpočty a porovnávejte je se skutečnými výdaji",
+        "createNew": "Vytvořit rozpočet",
+        "createFirst": "Vytvořte první rozpočet",
+        "budgetsList": "Rozpočty",
+        "noBudgets": "Pro rok {{year}} nejsou žádné rozpočty",
+        "loadFailed": "Rozpočty se nepodařilo načíst",
+        "totalBudget": "Rozpočtováno celkem",
+        "totalActual": "Skutečnost celkem",
+        "remaining": "Zůstatek",
+        "yearFilter": "Rozpočtový rok"
+      },
+      "form": {
+        "name": "Název rozpočtu",
+        "namePlaceholder": "např. Provozní rozpočet 2027",
+        "nameRequired": "Zadejte název rozpočtu",
+        "fiscalYear": "Rozpočtový rok",
+        "building": "Budova",
+        "wholeOrganization": "Celá organizace (všechny budovy)",
+        "notes": "Poznámky",
+        "itemsHint": "Po uložení můžete přidat položky rozpočtu podle kategorií.",
+        "submit": "Vytvořit rozpočet"
+      },
+      "detail": {
+        "fiscalYear": "Rozpočtový rok {{year}}",
+        "approvedOn": "Schváleno {{date}}",
+        "itemsOverBudget": "Položky nad rozpočet"
+      },
+      "items": {
+        "title": "Položky rozpočtu",
+        "empty": "Tento rozpočet nemá žádné položky.",
+        "emptyDraft": "Zatím žádné položky. Přidejte první položku níže.",
+        "addTitle": "Přidat položku",
+        "add": "Přidat položku",
+        "category": "Kategorie",
+        "newCategory": "+ Nová kategorie",
+        "newCategoryName": "Název nové kategorie",
+        "noCategories": "Zatím žádné kategorie — zadejte název nové.",
+        "name": "Položka",
+        "amount": "Rozpočtovaná částka",
+        "description": "Popis",
+        "actions": "Akce",
+        "remove": "Odebrat",
+        "removeNamed": "Odebrat {{name}}",
+        "categoryRequired": "Zadejte název kategorie",
+        "nameRequired": "Zadejte název položky",
+        "amountInvalid": "Zadejte platnou částku"
+      },
+      "actuals": {
+        "record": "Zapsat čerpání",
+        "recordNamed": "Zapsat skutečné čerpání pro {{name}}",
+        "title": "Zapsat skutečné čerpání pro {{item}}",
+        "amount": "Čerpaná částka",
+        "date": "Datum",
+        "save": "Uložit",
+        "dateRequired": "Zadejte datum"
+      },
+      "actions": {
+        "submit": "Odeslat ke schválení",
+        "approve": "Schválit",
+        "activate": "Aktivovat",
+        "close": "Uzavřít rozpočet",
+        "delete": "Smazat",
+        "confirmDelete": "Potvrdit smazání"
+      },
+      "toast": {
+        "created": "Rozpočet byl vytvořen",
+        "createFailed": "Rozpočet se nepodařilo vytvořit",
+        "submitDone": "Rozpočet byl odeslán ke schválení",
+        "approveDone": "Rozpočet byl schválen",
+        "activateDone": "Rozpočet byl aktivován",
+        "closeDone": "Rozpočet byl uzavřen",
+        "deleteDone": "Rozpočet byl smazán",
+        "actionFailed": "Akce selhala",
+        "itemAdded": "Položka byla přidána",
+        "itemAddFailed": "Položku se nepodařilo přidat",
+        "itemRemoveFailed": "Položku se nepodařilo odebrat",
+        "actualRecorded": "Čerpání bylo zapsáno",
+        "actualFailed": "Čerpání se nepodařilo zapsat"
+      }
     }
   },
   "announcements": {

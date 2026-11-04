@@ -1,192 +1,139 @@
 /**
- * BudgetForm component for creating and editing budgets.
+ * BudgetForm — create a budget (Epic 24 / Story 52.4).
+ *
+ * Collects exactly what `POST /api/v1/budgets` accepts: a name, the fiscal year,
+ * an optional building (omitted = organisation-wide budget) and notes. Budget
+ * lines are added on the budget detail page, because each line needs a budget
+ * category and is created with its own `POST /budgets/{id}/items` call.
  */
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatCurrency } from '../utils/formatting';
 
-interface BudgetCategory {
+export interface BudgetFormValues {
   name: string;
-  amount: number;
+  fiscalYear: number;
+  buildingId: string | null;
+  notes: string | null;
+}
+
+interface BudgetFormBuilding {
+  id: string;
+  name: string;
 }
 
 interface BudgetFormProps {
-  initialCategories?: BudgetCategory[];
+  /** Default fiscal year (typically the current year). */
   year: number;
-  currency?: string;
-  onSubmit: (categories: BudgetCategory[], year: number) => void;
+  buildings: BudgetFormBuilding[];
+  onSubmit: (values: BudgetFormValues) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-/** Default category name keys (`financial.budgetForm.defaultCategories.<key>`). */
-const DEFAULT_CATEGORY_KEYS = [
-  'maintenance',
-  'utilities',
-  'insurance',
-  'managementFees',
-  'repairs',
-  'cleaning',
-  'security',
-  'landscaping',
-  'reserveFund',
-  'other',
-] as const;
-
-interface FormErrors {
-  categories?: string;
-}
-
-export function BudgetForm({
-  initialCategories,
-  year,
-  currency = 'EUR',
-  onSubmit,
-  onCancel,
-  isSubmitting,
-}: BudgetFormProps) {
+export function BudgetForm({ year, buildings, onSubmit, onCancel, isSubmitting }: BudgetFormProps) {
   const { t } = useTranslation();
-  const [budgetYear, setBudgetYear] = useState(year);
-  const [categories, setCategories] = useState<BudgetCategory[]>(
-    () =>
-      initialCategories ||
-      DEFAULT_CATEGORY_KEYS.map((key) => ({
-        name: t(`financial.budgetForm.defaultCategories.${key}`),
-        amount: 0,
-      }))
-  );
-  const [errors, setErrors] = useState<FormErrors>({});
-
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    const hasValidCategory = categories.some((cat) => cat.name.trim() && cat.amount > 0);
-    if (!hasValidCategory) {
-      newErrors.categories = t('financial.budgetForm.categoriesRequired');
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [name, setName] = useState('');
+  const [fiscalYear, setFiscalYear] = useState(year);
+  const [buildingId, setBuildingId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validate()) {
+    if (!name.trim()) {
+      setNameError(t('financial.budgetPages.form.nameRequired'));
       return;
     }
-
-    const validCategories = categories.filter((cat) => cat.name.trim() && cat.amount > 0);
-    onSubmit(validCategories, budgetYear);
+    setNameError(null);
+    onSubmit({
+      name: name.trim(),
+      fiscalYear,
+      buildingId: buildingId || null,
+      notes: notes.trim() ? notes.trim() : null,
+    });
   };
 
-  const updateCategory = (index: number, field: 'name' | 'amount', value: string | number) => {
-    const newCategories = [...categories];
-    newCategories[index] = { ...newCategories[index], [field]: value };
-    setCategories(newCategories);
-  };
-
-  const addCategory = () => {
-    setCategories([...categories, { name: '', amount: 0 }]);
-  };
-
-  const removeCategory = (index: number) => {
-    setCategories(categories.filter((_, i) => i !== index));
-  };
-
-  const totalBudget = categories.reduce((sum, cat) => sum + (cat.amount || 0), 0);
+  const inputClass =
+    'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Year Selection */}
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       <div>
-        <label htmlFor="budget-year" className="block text-sm font-medium text-gray-700">
-          {t('financial.budgetForm.year')}
+        <label htmlFor="budget-name" className="block text-sm font-medium text-gray-700">
+          {t('financial.budgetPages.form.name')} *
         </label>
-        <select
-          id="budget-year"
-          value={budgetYear}
-          onChange={(e) => setBudgetYear(Number.parseInt(e.target.value, 10))}
-          className="mt-1 block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        >
-          {[year - 1, year, year + 1, year + 2].map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+        <input
+          id="budget-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t('financial.budgetPages.form.namePlaceholder')}
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? 'budget-name-error' : undefined}
+          className={inputClass}
+        />
+        {nameError && (
+          <p id="budget-name-error" className="mt-1 text-sm text-red-600">
+            {nameError}
+          </p>
+        )}
       </div>
 
-      {/* Budget Categories */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <span className="block text-sm font-medium text-gray-700">
-            {t('financial.budgetForm.categories')}
-          </span>
-          <button
-            type="button"
-            onClick={addCategory}
-            className="text-sm text-blue-600 hover:text-blue-800"
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="budget-year" className="block text-sm font-medium text-gray-700">
+            {t('financial.budgetPages.form.fiscalYear')} *
+          </label>
+          <select
+            id="budget-year"
+            value={fiscalYear}
+            onChange={(e) => setFiscalYear(Number.parseInt(e.target.value, 10))}
+            className={inputClass}
           >
-            + {t('financial.budgetForm.addCategory')}
-          </button>
-        </div>
-        {errors.categories && <p className="mb-2 text-sm text-red-600">{errors.categories}</p>}
-
-        <div className="space-y-2">
-          {categories.map((category, index) => (
-            <div key={index} className="flex items-center gap-3">
-              <input
-                type="text"
-                value={category.name}
-                onChange={(e) => updateCategory(index, 'name', e.target.value)}
-                placeholder={t('financial.budgetForm.categoryNamePlaceholder')}
-                aria-label={t('financial.budgetForm.categoryNamePlaceholder')}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-              <div className="relative w-40">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  {currency}
-                </span>
-                <input
-                  type="number"
-                  value={category.amount || ''}
-                  onChange={(e) =>
-                    updateCategory(index, 'amount', Number.parseFloat(e.target.value) || 0)
-                  }
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  aria-label={t('financial.amount')}
-                  className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => removeCategory(index)}
-                className="text-red-600 hover:text-red-800 px-2"
-                aria-label={t('financial.form.removeRow')}
-                title={t('financial.form.removeRow')}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+            {[year - 1, year, year + 1, year + 2].map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Total */}
-        <div className="mt-4 pt-4 border-t flex justify-end">
-          <div className="text-right">
-            <p className="text-sm text-gray-500">{t('financial.budget.totalBudget')}</p>
-            <p className="text-xl font-bold text-gray-900">
-              {formatCurrency(totalBudget, currency)}
-            </p>
-          </div>
+        <div>
+          <label htmlFor="budget-building" className="block text-sm font-medium text-gray-700">
+            {t('financial.budgetPages.form.building')}
+          </label>
+          <select
+            id="budget-building"
+            value={buildingId}
+            onChange={(e) => setBuildingId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">{t('financial.budgetPages.form.wholeOrganization')}</option>
+            {buildings.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Actions */}
+      <div>
+        <label htmlFor="budget-notes" className="block text-sm font-medium text-gray-700">
+          {t('financial.budgetPages.form.notes')}
+        </label>
+        <textarea
+          id="budget-notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          className={inputClass}
+        />
+      </div>
+
+      <p className="text-sm text-gray-500">{t('financial.budgetPages.form.itemsHint')}</p>
+
       <div className="flex justify-end gap-3 pt-4 border-t">
         <button
           type="button"
@@ -194,14 +141,16 @@ export function BudgetForm({
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          {t('common.cancel')}
+          {t('financial.budgetPages.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {isSubmitting ? t('financial.form.saving') : t('financial.budgetForm.save')}
+          {isSubmitting
+            ? t('financial.budgetPages.saving')
+            : t('financial.budgetPages.form.submit')}
         </button>
       </div>
     </form>
