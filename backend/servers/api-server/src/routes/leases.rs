@@ -58,7 +58,10 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/amendments", post(create_amendment))
         .route("/{id}/amendments", get(list_amendments))
         // Lease Payments
-        .route("/{id}/payments", post(record_payment))
+        // DEPRECATED: `{id}` here is the *payment* id. Kept for backward
+        // compatibility; use `/{id}/payments/{payment_id}` instead.
+        .route("/{id}/payments", post(record_payment_legacy))
+        .route("/{id}/payments/{payment_id}", post(record_lease_payment))
         .route("/{id}/payments", get(list_payments))
         .route("/{id}/payments/summary", get(get_payment_summary))
         // Lease Reminders (Story 19.5)
@@ -120,6 +123,280 @@ pub struct ExpiringQuery {
 
 fn default_days() -> i32 {
     90
+}
+
+// ==================== Authorization Guards ====================
+//
+// The `*_rls` repository queries scope only by id and rely on the table RLS
+// policies + the connection's `app.current_org_id` GUC for org isolation. That
+// fails open on a BYPASSRLS/superuser pool (e.g. the integration-test pool), so
+// every handler taking an id re-checks ownership here: a foreign-org id is
+// indistinguishable from a missing one (404). Mutations that are staff
+// operations are additionally gated on manager role (403), mirroring
+// `review_application` (#806).
+
+type ApiError = (StatusCode, Json<ErrorResponse>);
+
+fn not_found(msg: &str) -> ApiError {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    )
+}
+
+fn db_error(msg: &str) -> ApiError {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DB_ERROR", msg)),
+    )
+}
+
+/// Release the RLS connection and return `err` when a guard fails.
+macro_rules! guard {
+    ($rls:ident, $check:expr) => {
+        if let Err(err) = $check {
+            $rls.release().await;
+            return Err(err);
+        }
+    };
+}
+
+/// Manager-or-higher (incl. super-admins), the same gate `review_application`
+/// and `send_lease_for_signature` use.
+fn is_lease_manager(rls: &RlsConnection) -> bool {
+    rls.is_super_admin() || rls.has_role(TenantRole::Manager)
+}
+
+/// 403 unless the caller is a manager.
+fn require_lease_manager(rls: &RlsConnection, msg: &str) -> Result<(), ApiError> {
+    if is_lease_manager(rls) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", msg)),
+        ))
+    }
+}
+
+/// 404 unless the lease exists in the caller's organization.
+async fn ensure_lease_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    lease_id: Uuid,
+) -> Result<(), ApiError> {
+    let org_id = rls.tenant_id();
+    match state
+        .lease_repo
+        .lease_org_rls(&mut **rls.conn(), lease_id)
+        .await
+    {
+        Ok(Some(org)) if org == org_id => Ok(()),
+        Ok(_) => Err(not_found("Lease not found")),
+        Err(e) => {
+            tracing::error!("Failed to resolve lease org: {:?}", e);
+            Err(db_error("Failed to load lease"))
+        }
+    }
+}
+
+/// Load a lease, 404 unless it exists in the caller's organization.
+async fn load_lease_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    lease_id: Uuid,
+) -> Result<db::models::Lease, ApiError> {
+    let org_id = rls.tenant_id();
+    match state
+        .lease_repo
+        .find_lease_by_id_rls(&mut **rls.conn(), lease_id)
+        .await
+    {
+        Ok(Some(lease)) if lease.organization_id == org_id => Ok(lease),
+        Ok(_) => Err(not_found("Lease not found")),
+        Err(e) => {
+            tracing::error!("Failed to load lease: {:?}", e);
+            Err(db_error("Failed to load lease"))
+        }
+    }
+}
+
+fn bad_request(msg: &str) -> ApiError {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(ErrorResponse::new("VALIDATION_ERROR", msg)),
+    )
+}
+
+/// Map a lease write error to HTTP: a vanished row (`RowNotFound`) is 404;
+/// invalid input rejected by Postgres (SQLSTATE class 22 — data exception,
+/// e.g. an unknown enum value — or class 23 — integrity constraint
+/// violation) is 400; anything else is a genuine 500.
+fn map_lease_write_err(e: sqlx::Error, not_found_msg: &str, ctx: &str) -> ApiError {
+    match &e {
+        sqlx::Error::RowNotFound => not_found(not_found_msg),
+        sqlx::Error::Database(db)
+            if db
+                .code()
+                .is_some_and(|c| c.starts_with("22") || c.starts_with("23")) =>
+        {
+            tracing::warn!("{ctx}: rejected input: {:?}", e);
+            bad_request(&format!("{ctx}: invalid input"))
+        }
+        _ => {
+            tracing::error!("{ctx}: {:?}", e);
+            db_error(ctx)
+        }
+    }
+}
+
+/// Valid `termination_reason` enum values (migration 00052).
+const TERMINATION_REASONS: &[&str] = &[
+    "end_of_term",
+    "mutual_agreement",
+    "tenant_breach",
+    "landlord_breach",
+    "property_sale",
+    "renovation",
+    "other",
+];
+
+/// Lease statuses from which no further lifecycle transition is allowed.
+const CLOSED_LEASE_STATUSES: &[&str] = &["terminated", "renewed", "expired", "cancelled"];
+
+/// 404 unless the lease template exists in the caller's organization.
+async fn ensure_template_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    template_id: Uuid,
+) -> Result<(), ApiError> {
+    let org_id = rls.tenant_id();
+    match state
+        .lease_repo
+        .template_org_rls(&mut **rls.conn(), template_id)
+        .await
+    {
+        Ok(Some(org)) if org == org_id => Ok(()),
+        Ok(_) => Err(not_found("Template not found")),
+        Err(e) => {
+            tracing::error!("Failed to resolve template org: {:?}", e);
+            Err(db_error("Failed to load template"))
+        }
+    }
+}
+
+/// Access to a single tenant application: 404 unless it belongs to the
+/// caller's organization; then 403 unless the caller is a manager or the
+/// applicant themself (authenticated email equals `applicant_email`).
+///
+/// Applications carry no user FK, so the applicant email is the only link
+/// between an application and a platform user. Applications hold sensitive
+/// PII (national id, income, screening state), so ordinary org members who
+/// are not the applicant must not read or change them.
+async fn ensure_application_access(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    auth: &AuthUser,
+    application_id: Uuid,
+) -> Result<(), ApiError> {
+    let org_id = rls.tenant_id();
+    let applicant_email = match state
+        .lease_repo
+        .application_scope_rls(&mut **rls.conn(), application_id)
+        .await
+    {
+        Ok(Some((org, email))) if org == org_id => email,
+        Ok(_) => return Err(not_found("Application not found")),
+        Err(e) => {
+            tracing::error!("Failed to resolve application org: {:?}", e);
+            return Err(db_error("Failed to load application"));
+        }
+    };
+    if is_lease_manager(rls)
+        || applicant_email
+            .trim()
+            .eq_ignore_ascii_case(auth.email.trim())
+    {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only managers or the applicant can access this application",
+            )),
+        ))
+    }
+}
+
+/// 404 unless the application exists in the caller's organization.
+async fn ensure_application_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    application_id: Uuid,
+) -> Result<(), ApiError> {
+    let org_id = rls.tenant_id();
+    match state
+        .lease_repo
+        .application_scope_rls(&mut **rls.conn(), application_id)
+        .await
+    {
+        Ok(Some((org, _))) if org == org_id => Ok(()),
+        Ok(_) => Err(not_found("Application not found")),
+        Err(e) => {
+            tracing::error!("Failed to resolve application org: {:?}", e);
+            Err(db_error("Failed to load application"))
+        }
+    }
+}
+
+/// Resolve a screening's parent application id: 404 unless the screening
+/// exists in the caller's organization.
+async fn screening_application_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    screening_id: Uuid,
+) -> Result<Uuid, ApiError> {
+    let org_id = rls.tenant_id();
+    match state
+        .lease_repo
+        .screening_scope_rls(&mut **rls.conn(), screening_id)
+        .await
+    {
+        Ok(Some((org, application_id))) if org == org_id => Ok(application_id),
+        Ok(_) => Err(not_found("Screening not found")),
+        Err(e) => {
+            tracing::error!("Failed to resolve screening org: {:?}", e);
+            Err(db_error("Failed to load screening"))
+        }
+    }
+}
+
+/// 404 unless the payment exists in the caller's organization and — when
+/// `lease_id` is given — belongs to that lease.
+async fn ensure_payment_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    payment_id: Uuid,
+    lease_id: Option<Uuid>,
+) -> Result<(), ApiError> {
+    let org_id = rls.tenant_id();
+    match state
+        .lease_repo
+        .payment_scope_rls(&mut **rls.conn(), payment_id)
+        .await
+    {
+        Ok(Some((org, payment_lease)))
+            if org == org_id && lease_id.is_none_or(|l| l == payment_lease) =>
+        {
+            Ok(())
+        }
+        Ok(_) => Err(not_found("Payment not found")),
+        Err(e) => {
+            tracing::error!("Failed to resolve payment org: {:?}", e);
+            Err(db_error("Failed to load payment"))
+        }
+    }
 }
 
 // ==================== Application Handlers (Story 19.1) ====================
@@ -190,6 +467,10 @@ async fn list_applications(
     mut rls: RlsConnection,
     Query(query): Query<ListApplicationsQuery>,
 ) -> Result<Json<ListApplicationsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can list tenant applications")
+    );
     // Verify request org_id matches authenticated tenant
     if query.organization_id != rls.tenant_id() {
         rls.release().await;
@@ -232,9 +513,14 @@ async fn list_applications(
 
 async fn get_application(
     State(state): State<AppState>,
+    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::TenantApplication>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        ensure_application_access(&state, &mut rls, &auth, id).await
+    );
     let result = match state
         .lease_repo
         .find_application_by_id_rls(&mut **rls.conn(), id)
@@ -260,10 +546,15 @@ async fn get_application(
 
 async fn update_application(
     State(state): State<AppState>,
+    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateApplication>,
 ) -> Result<Json<db::models::TenantApplication>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        ensure_application_access(&state, &mut rls, &auth, id).await
+    );
     let result = state
         .lease_repo
         .update_application_rls(&mut **rls.conn(), id, payload)
@@ -286,10 +577,15 @@ async fn update_application(
 
 async fn submit_application(
     State(state): State<AppState>,
+    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(payload): Json<SubmitApplication>,
 ) -> Result<Json<db::models::TenantApplication>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        ensure_application_access(&state, &mut rls, &auth, id).await
+    );
     let result = state
         .lease_repo
         .submit_application_rls(&mut **rls.conn(), id, payload)
@@ -332,6 +628,8 @@ async fn review_application(
         ));
     }
 
+    guard!(rls, ensure_application_in_org(&state, &mut rls, id).await);
+
     let result = state
         .lease_repo
         .review_application_rls(&mut **rls.conn(), id, auth.user_id, payload)
@@ -371,6 +669,11 @@ async fn initiate_screening(
     Json(payload): Json<InitiateScreeningRequest>,
 ) -> Result<(StatusCode, Json<Vec<db::models::TenantScreening>>), (StatusCode, Json<ErrorResponse>)>
 {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can initiate tenant screening")
+    );
+    guard!(rls, ensure_application_in_org(&state, &mut rls, id).await);
     // Verify request org_id matches authenticated tenant
     if payload.organization_id != rls.tenant_id() {
         rls.release().await;
@@ -405,10 +708,25 @@ async fn initiate_screening(
 
 async fn record_consent(
     State(state): State<AppState>,
+    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(payload): Json<ScreeningConsent>,
 ) -> Result<Json<db::models::TenantScreening>, (StatusCode, Json<ErrorResponse>)> {
+    // `{id}` is the screening id (repository semantics). Consent may be
+    // recorded by a manager (on receipt of the signed consent document) or by
+    // the applicant themself for their own screening.
+    let application_id = match screening_application_in_org(&state, &mut rls, id).await {
+        Ok(app_id) => app_id,
+        Err(e) => {
+            rls.release().await;
+            return Err(e);
+        }
+    };
+    guard!(
+        rls,
+        ensure_application_access(&state, &mut rls, &auth, application_id).await
+    );
     let result = state
         .lease_repo
         .submit_screening_consent_rls(&mut **rls.conn(), id, payload)
@@ -428,9 +746,14 @@ async fn record_consent(
 
 async fn get_screening(
     State(state): State<AppState>,
+    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<db::models::ScreeningSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        ensure_application_access(&state, &mut rls, &auth, id).await
+    );
     let result = state
         .lease_repo
         .get_screenings_for_application_rls(&mut **rls.conn(), id)
@@ -454,6 +777,14 @@ async fn update_screening_result(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateScreeningResult>,
 ) -> Result<Json<db::models::TenantScreening>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can record screening results")
+    );
+    guard!(
+        rls,
+        screening_application_in_org(&state, &mut rls, id).await
+    );
     let result = state
         .lease_repo
         .update_screening_result_rls(&mut **rls.conn(), id, payload)
@@ -482,6 +813,10 @@ async fn create_template(
     mut rls: RlsConnection,
     Json(payload): Json<CreateTemplateRequest>,
 ) -> Result<(StatusCode, Json<db::models::LeaseTemplate>), (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can create lease templates")
+    );
     // Verify request org_id matches authenticated tenant
     if payload.organization_id != rls.tenant_id() {
         rls.release().await;
@@ -555,6 +890,7 @@ async fn get_template(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::LeaseTemplate>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(rls, ensure_template_in_org(&state, &mut rls, id).await);
     let result = match state
         .lease_repo
         .find_template_by_id_rls(&mut **rls.conn(), id)
@@ -594,6 +930,11 @@ async fn update_template(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateTemplateRequest>,
 ) -> Result<Json<db::models::LeaseTemplate>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can update lease templates")
+    );
+    guard!(rls, ensure_template_in_org(&state, &mut rls, id).await);
     // Verify request org_id matches authenticated tenant
     if payload.organization_id != rls.tenant_id() {
         rls.release().await;
@@ -631,6 +972,10 @@ async fn create_lease(
     mut rls: RlsConnection,
     Json(payload): Json<CreateLeaseRequest>,
 ) -> Result<(StatusCode, Json<db::models::Lease>), (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can create leases")
+    );
     // Verify request org_id matches authenticated tenant
     if payload.organization_id != rls.tenant_id() {
         rls.release().await;
@@ -742,6 +1087,7 @@ async fn get_lease(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::LeaseWithDetails>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, id).await);
     let result = match state
         .lease_repo
         .get_lease_with_details_rls(&mut **rls.conn(), id)
@@ -771,18 +1117,17 @@ async fn update_lease(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateLease>,
 ) -> Result<Json<db::models::Lease>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can update leases")
+    );
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, id).await);
     let result = state
         .lease_repo
         .update_lease_rls(&mut **rls.conn(), id, payload)
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to update lease: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to update lease")),
-            )
-        });
+        .map_err(|e| map_lease_write_err(e, "Lease not found", "Failed to update lease"));
 
     rls.release().await;
     result
@@ -795,18 +1140,37 @@ async fn terminate_lease(
     Path(id): Path<Uuid>,
     Json(payload): Json<TerminateLease>,
 ) -> Result<Json<db::models::Lease>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can terminate leases")
+    );
+    let lease = match load_lease_in_org(&state, &mut rls, id).await {
+        Ok(l) => l,
+        Err(e) => {
+            rls.release().await;
+            return Err(e);
+        }
+    };
+    if !TERMINATION_REASONS.contains(&payload.termination_reason.as_str()) {
+        rls.release().await;
+        return Err(bad_request(&format!(
+            "Invalid termination_reason; expected one of: {}",
+            TERMINATION_REASONS.join(", ")
+        )));
+    }
+    if CLOSED_LEASE_STATUSES.contains(&lease.status.as_str()) {
+        rls.release().await;
+        return Err(bad_request(&format!(
+            "Lease cannot be terminated from status '{}'",
+            lease.status
+        )));
+    }
     let result = state
         .lease_repo
         .terminate_lease_rls(&mut **rls.conn(), id, auth.user_id, payload)
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to terminate lease: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to terminate lease")),
-            )
-        });
+        .map_err(|e| map_lease_write_err(e, "Lease not found", "Failed to terminate lease"));
 
     rls.release().await;
     result
@@ -870,13 +1234,11 @@ async fn send_lease_for_signature(
         .find_lease_by_id_rls(&mut **rls.conn(), id)
         .await
     {
-        Ok(Some(l)) => l,
-        Ok(None) => {
+        // Explicit org guard: RLS alone fails open on a BYPASSRLS pool.
+        Ok(Some(l)) if l.organization_id == rls.tenant_id() => l,
+        Ok(_) => {
             rls.release().await;
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Lease not found")),
-            ));
+            return Err(not_found("Lease not found"));
         }
         Err(e) => {
             tracing::error!("Failed to load lease for signature: {:?}", e);
@@ -990,18 +1352,43 @@ async fn renew_lease(
     Path(id): Path<Uuid>,
     Json(payload): Json<RenewLease>,
 ) -> Result<(StatusCode, Json<db::models::Lease>), (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can renew leases")
+    );
+    let lease = match load_lease_in_org(&state, &mut rls, id).await {
+        Ok(l) => l,
+        Err(e) => {
+            rls.release().await;
+            return Err(e);
+        }
+    };
+    // The renewal starts the day after the current end date, so the new end
+    // date must be strictly after the current one.
+    if payload.new_end_date <= lease.end_date {
+        rls.release().await;
+        return Err(bad_request(&format!(
+            "new_end_date must be after the current end date ({})",
+            lease.end_date
+        )));
+    }
+    if payload.term_months <= 0 {
+        rls.release().await;
+        return Err(bad_request("term_months must be positive"));
+    }
+    if CLOSED_LEASE_STATUSES.contains(&lease.status.as_str()) {
+        rls.release().await;
+        return Err(bad_request(&format!(
+            "Lease cannot be renewed from status '{}'",
+            lease.status
+        )));
+    }
     let result = state
         .lease_repo
         .renew_lease_rls(&mut **rls.conn(), id, auth.user_id, payload)
         .await
         .map(|l| (StatusCode::CREATED, Json(l)))
-        .map_err(|e| {
-            tracing::error!("Failed to renew lease: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to renew lease")),
-            )
-        });
+        .map_err(|e| map_lease_write_err(e, "Lease not found", "Failed to renew lease"));
 
     rls.release().await;
     result
@@ -1016,18 +1403,21 @@ async fn create_amendment(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateAmendment>,
 ) -> Result<(StatusCode, Json<db::models::LeaseAmendment>), (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can amend leases")
+    );
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, id).await);
+    if payload.title.trim().is_empty() {
+        rls.release().await;
+        return Err(bad_request("title must not be empty"));
+    }
     let result = state
         .lease_repo
         .create_amendment_rls(&mut **rls.conn(), id, auth.user_id, payload)
         .await
         .map(|a| (StatusCode::CREATED, Json(a)))
-        .map_err(|e| {
-            tracing::error!("Failed to create amendment: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to create amendment")),
-            )
-        });
+        .map_err(|e| map_lease_write_err(e, "Lease not found", "Failed to create amendment"));
 
     rls.release().await;
     result
@@ -1038,6 +1428,7 @@ async fn list_amendments(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::LeaseWithDetails>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, id).await);
     // For now, use get_lease_with_details which includes amendments
     let result = match state
         .lease_repo
@@ -1064,36 +1455,81 @@ async fn list_amendments(
 
 // ==================== Payment Handlers ====================
 
-/// Payment ID path parameter.
+/// Lease + payment path parameters for
+/// `POST /leases/{id}/payments/{payment_id}`.
 #[derive(Debug, Deserialize)]
 pub struct PaymentPath {
-    /// Lease ID (unused, but required for route matching)
+    /// Lease ID
     pub id: Uuid,
-    /// Payment ID
+    /// Payment ID (must belong to the lease)
     pub payment_id: Uuid,
 }
 
-async fn record_payment(
+/// Record a payment against a scheduled lease payment:
+/// `POST /leases/{id}/payments/{payment_id}`.
+///
+/// Manager-only (403). 404 unless the lease belongs to the caller's
+/// organization and the payment belongs to that lease.
+async fn record_lease_payment(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(path): Path<PaymentPath>,
+    Json(payload): Json<RecordPayment>,
+) -> Result<Json<db::models::LeasePayment>, ApiError> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can record lease payments")
+    );
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, path.id).await);
+    guard!(
+        rls,
+        ensure_payment_in_org(&state, &mut rls, path.payment_id, Some(path.id)).await
+    );
+    let result = persist_payment(&state, &mut rls, path.payment_id, payload).await;
+    rls.release().await;
+    result
+}
+
+/// DEPRECATED legacy route `POST /leases/{id}/payments`, where `{id}` is the
+/// **payment** id (not the lease id). Kept for backward compatibility with
+/// existing clients; new callers should use
+/// `POST /leases/{id}/payments/{payment_id}` ([`record_lease_payment`]).
+///
+/// Manager-only (403); 404 unless the payment belongs to the caller's org.
+async fn record_payment_legacy(
     State(state): State<AppState>,
     mut rls: RlsConnection,
     Path(payment_id): Path<Uuid>,
     Json(payload): Json<RecordPayment>,
-) -> Result<Json<db::models::LeasePayment>, (StatusCode, Json<ErrorResponse>)> {
-    let result = state
+) -> Result<Json<db::models::LeasePayment>, ApiError> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can record lease payments")
+    );
+    guard!(
+        rls,
+        ensure_payment_in_org(&state, &mut rls, payment_id, None).await
+    );
+    let result = persist_payment(&state, &mut rls, payment_id, payload).await;
+    rls.release().await;
+    result
+}
+
+async fn persist_payment(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    payment_id: Uuid,
+    payload: RecordPayment,
+) -> Result<Json<db::models::LeasePayment>, ApiError> {
+    state
         .lease_repo
         .record_payment_rls(&mut **rls.conn(), payment_id, payload)
         .await
         .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to record payment: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to record payment")),
-            )
-        });
-
-    rls.release().await;
-    result
+            db_error("Failed to record payment")
+        })
 }
 
 async fn list_payments(
@@ -1101,6 +1537,7 @@ async fn list_payments(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::LeaseWithDetails>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, id).await);
     // Use get_lease_with_details which includes upcoming_payments
     let result = match state
         .lease_repo
@@ -1170,6 +1607,11 @@ async fn create_reminder(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateReminder>,
 ) -> Result<(StatusCode, Json<db::models::LeaseReminder>), (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can create lease reminders")
+    );
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, id).await);
     let result = state
         .lease_repo
         .create_reminder_rls(&mut **rls.conn(), id, payload)
@@ -1192,6 +1634,7 @@ async fn list_reminders(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::LeaseWithDetails>, (StatusCode, Json<ErrorResponse>)> {
+    guard!(rls, ensure_lease_in_org(&state, &mut rls, id).await);
     // Use get_lease_with_details which includes reminders
     let result = match state
         .lease_repo

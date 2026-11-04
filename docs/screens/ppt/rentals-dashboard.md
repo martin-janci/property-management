@@ -46,17 +46,62 @@ owns these routes, all rendered by pages under
 - `/rentals/guests` — `GuestRegistrationPage` (UC-29.5 + UC-30 guest registration)
 - `/rentals/reports` — `TaxReportPage` (UC-29.13/29.14/29.15 statistics + tax export)
 
-Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`):
-- `rentalsApiListReservations` — reservation list (dashboard + bookings)
-- `rentalsApiGetReservation` — single reservation (booking detail)
-- `rentalsApiListConnections` / `rentalsApiCreateConnection` — platform connections
-- `rentalsApiSyncPlatforms` — trigger a channel sync
-- `rentalsApiListGuests` — guest registrations
-- `rentalsApiCheckIn` / `rentalsApiCheckOut` — guest check-in / check-out
+Rentals calls go through the hand-written `@ppt/api-client` rentals module
+(`frontend/packages/api-client/src/rentals/`) against the real
+`/api/v1/rentals` routes (the TypeSpec `rentalsApi*` SDK targets routes the
+server never implemented):
+- `listRentalBookings`, `getRentalBookingWithGuests`, `createRentalBooking`, `updateRentalBooking`, `updateRentalBookingStatus` — bookings
+- `listRentalGuests`, `createRentalGuest`, `updateRentalGuest`, `registerRentalGuest`, `deleteRentalGuest` — guests
+- `listRentalConnections`, `createRentalConnection`, `getRentalConnection`, `updateRentalConnection`, `deleteRentalConnection` — platform connections; `syncAirbnb` / `syncBooking` — org-wide channel sync; `getRentalStatistics` — dashboard
+- `getRentalCalendar`, `checkRentalAvailability`, `createRentalCalendarBlock`, `deleteRentalCalendarBlock` — calendar
+- `listRentalReports`, `previewRentalReport`, `createRentalReport`, `submitRentalReport` — daňový výkaz
+- `listRentalBuildings` + `listRentalBuildingUnits` (`GET /buildings?organization_id=…`,
+  `GET /buildings/{id}/units`) — building/unit pickers on calendar, bookings, connections, reports
 
 ## Notes
 
 ### Specific (recent)
+- 2026-11-04 — **connections actions, booking create/edit, full rentals i18n.**
+  `/rentals/connections`: Disconnect asks in the app `ConfirmationDialog`, then
+  `PUT /rentals/connections/{id}` `{is_active:false}` (connection + settings
+  kept); a disconnected card offers Reconnect (`is_active:true`); a pending
+  (never synced) card's "Connect" goes to `/settings/integrations` (OAuth /
+  Booking.com mapping live there). The gear opens `ConnectionSettingsDialog`:
+  `GET /rentals/connections/{id}` → listing id, listing URL, calendar sync,
+  sync interval, block other platforms → `PUT`; "Remove connection" →
+  confirm → `DELETE`. The server COALESCEs every field, so a text field can be
+  cleared only to `""`, never back to null. `/rentals/bookings` "New booking"
+  opens `BookingFormDialog` (`POST /rentals/bookings`, 409 → "unit not
+  available"); the list's edit goes to `/rentals/bookings/{id}?edit=1`, where
+  the same dialog edits via `PUT /rentals/bookings/{id}`. Cancel booking and
+  delete guest now confirm first; add / edit guest open `GuestForm` in a dialog
+  on the detail page (was a redirect to `/rentals/guests`, which never lists a
+  booking without pending guests). Detail shows unit/building from the picker
+  model and guest vs internal notes separately. Whole `rentals` namespace
+  translated in sk/cs/de/pl/hu with real plurals (`_one/_few/_many/_other`);
+  dates/currency/percent/"last sync" use the UI language. Tests:
+  `routes/groups/rentals.connections.test.tsx`, `features/rentals/formMappers.test.ts`,
+  `pages/BookingsPage.test.tsx`, `pages/BookingDetailPage.test.tsx`,
+  `i18n/rentalsI18n.test.ts` (parity, plural forms, placeholders, used keys).
+- 2026-11-05 — **calendar + daňový výkaz wired to real data.** `/rentals/calendar`
+  loads `GET /rentals/calendar/{unit_id}` for the visible Monday-first month grid
+  (unit picker from real buildings/units, `?unit=` in the URL, Intl month/day
+  names). Events are half-open (`end_date` = check-out / first free day); blocks
+  are created inclusive in the UI and sent with `block_end = last day + 1` after
+  an availability check. Clicking a reservation resolves the booking via
+  `GET /rentals/bookings?unit_id&from_date&to_date` (calendar events carry the
+  block id, not the booking id); clicking a manual block offers removal.
+  `/rentals/reports` is now the authority guest report ("Daňový výkaz"): building
+  + authority + month/quarter/year → `POST /rentals/reports/preview` (guests,
+  reservations, nationality breakdown), save via `POST /rentals/reports`, stored
+  list via `GET /rentals/reports`, "mark as submitted" via
+  `POST /rentals/reports/{id}/submit`. Income/expense/income-tax figures and file
+  export are hidden — the server computes neither and never sets
+  `report_file_url` (a Download link appears only if it does). Calendar + tax keys
+  translated in all six locales; the rest of the `rentals` namespace is still
+  en-only. Tests: `features/rentals/mappers.test.ts`,
+  `pages/CalendarPage.test.tsx`, `pages/TaxReportPage.test.tsx`,
+  `routes/groups/rentals.properties.test.ts`, `i18n/rentalsCalendarTaxI18n.test.ts`.
 - 2026-08-04 — **rentals mutations now guard auth (session-expiry UX), PR #2648.**
   The rentals route group (`groups/rentals.tsx`) no longer dereferences `auth!`
   on the request path. All 10 rentals request sites route through
@@ -82,15 +127,26 @@ Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`
   `/rentals` and its sibling routes had no screen-map at all.
 - `endpoints` left empty: the rentals endpoints are not (yet) in the
   `@ppt/sitemap` endpoint catalogue (same situation as `ppt/settings-integrations`).
-- `apiStatus: partial` — reservations / connections / guests / check-in-out are
-  live, but the calendar and tax-report routes still render with empty data
-  (no calendar or tax-report endpoint exists yet; see the route wrappers in
-  `groups/rentals.tsx`).
+- `apiStatus: partial` — bookings, guests, connections, statistics, calendar and
+  the authority guest report are live. Still missing server-side: rental
+  income / expense / income-tax computation and report file rendering. iCal
+  feeds (`/rentals/ical*`) have server routes but no UI yet.
 - No `sitemapRefs`: the `/rentals*` routes are not present in `@ppt/sitemap`
   (only `/settings/integrations` is). The rest of the rentals routes remain
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-11-04 — agent: wired connection disconnect/reconnect/settings/remove
+  (`GET|PUT|DELETE /rentals/connections/{id}`) with confirm dialogs, booking
+  create/edit dialogs (`POST|PUT /rentals/bookings`), guest add/edit dialogs and
+  cancel/delete confirmations on the detail page; translated the full `rentals`
+  namespace into sk/cs/de/pl/hu; localized dates, currency and relative sync
+  times. `apiStatus` stays `partial` (income/tax + iCal UI).
+- 2026-11-05 — agent: wired `/rentals/calendar` (calendar events, blocks,
+  availability, booking lookup) and `/rentals/reports` (daňový výkaz preview /
+  save / submit / list) to the real rentals API; real building/unit pickers on
+  calendar, bookings, connections and reports; Calls list updated to the
+  hand-written rentals client. `apiStatus` stays `partial` (see Notes).
 - 2026-08-18 — agent: screen-map-drift-pr-2647-ppt-retry2 — noted i18n update in
   PR #2647: `BookingDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/rentals.tsx`
   now renders its missing-param fallback via

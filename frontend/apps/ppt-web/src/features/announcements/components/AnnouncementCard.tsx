@@ -10,6 +10,12 @@ interface AnnouncementCardProps {
   onPublish?: (id: string) => void;
   onArchive?: (id: string) => void;
   onPin?: (id: string, pinned: boolean) => void;
+  /**
+   * Whether the viewer may manage announcements (edit / publish / archive /
+   * pin / delete). Residents (owners, tenants) get a read-only card.
+   * Defaults to `true` for backwards compatibility with manager-only callers.
+   */
+  canManage?: boolean;
 }
 
 const statusPillClass: Record<AnnouncementStatus, string> = {
@@ -34,12 +40,15 @@ export function AnnouncementCard({
   onPublish,
   onArchive,
   onPin,
+  canManage = true,
 }: AnnouncementCardProps) {
   const { t, i18n } = useTranslation();
-  const canEdit = announcement.status === 'draft' || announcement.status === 'scheduled';
-  const canDelete = announcement.status === 'draft';
-  const canPublish = announcement.status === 'draft' || announcement.status === 'scheduled';
-  const canArchive = announcement.status === 'published';
+  const canEdit =
+    canManage && (announcement.status === 'draft' || announcement.status === 'scheduled');
+  const canDelete = canManage && announcement.status === 'draft';
+  const canPublish =
+    canManage && (announcement.status === 'draft' || announcement.status === 'scheduled');
+  const canArchive = canManage && announcement.status === 'published';
 
   return (
     <div className="announcement-card">
@@ -124,13 +133,17 @@ export function AnnouncementCard({
             {t('announcements.actions.archive')}
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => onPin?.(announcement.id, !announcement.pinned)}
-          className="announcement-card__action announcement-card__action--pin"
-        >
-          {announcement.pinned ? t('announcements.actions.unpin') : t('announcements.actions.pin')}
-        </button>
+        {canManage && (
+          <button
+            type="button"
+            onClick={() => onPin?.(announcement.id, !announcement.pinned)}
+            className="announcement-card__action announcement-card__action--pin"
+          >
+            {announcement.pinned
+              ? t('announcements.actions.unpin')
+              : t('announcements.actions.pin')}
+          </button>
+        )}
         {canDelete && (
           <button
             type="button"

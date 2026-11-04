@@ -159,6 +159,23 @@ async fn ensure_unit_in_org(
     }
 }
 
+/// Map an authority-report repo error. `RowNotFound` means the requested
+/// building does not exist in the caller's org (the repo scopes the building
+/// lookup by `organization_id`), so it is 404 rather than a 500 that would
+/// distinguish foreign buildings from missing ones.
+fn report_err(e: sqlx::Error, ctx: &str) -> (axum::http::StatusCode, String) {
+    match e {
+        sqlx::Error::RowNotFound => (
+            axum::http::StatusCode::NOT_FOUND,
+            "Building not found".to_string(),
+        ),
+        e => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("{ctx}: {e}"),
+        ),
+    }
+}
+
 // ============================================
 // Statistics & Dashboard
 // ============================================
@@ -268,6 +285,10 @@ pub async fn create_connection(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreatePlatformConnection>,
 ) -> Result<Json<RentalPlatformConnection>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     let connection = state
         .rental_repo
         .create_connection(tenant.tenant_id, data)
@@ -506,6 +527,10 @@ pub async fn create_booking(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     // Check availability first
     let available = state
         .rental_repo
@@ -832,6 +857,10 @@ pub async fn create_calendar_block(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateCalendarBlock>,
 ) -> Result<Json<CalendarBlock>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     let block = state
         .rental_repo
         .create_calendar_block(tenant.tenant_id, data)
@@ -1684,12 +1713,7 @@ pub async fn generate_report_preview(
             data.period_end,
         )
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to generate preview: {}", e),
-            )
-        })?;
+        .map_err(|e| report_err(e, "Failed to generate preview"))?;
 
     Ok(Json(preview))
 }
@@ -1714,12 +1738,7 @@ pub async fn create_report(
         .rental_repo
         .create_report(tenant.tenant_id, data, tenant.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create report: {}", e),
-            )
-        })?;
+        .map_err(|e| report_err(e, "Failed to create report"))?;
 
     Ok(Json(report))
 }
@@ -1821,6 +1840,10 @@ pub async fn create_ical_feed(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
+    // SECURITY: the unit comes from the request body; it must belong to the
+    // caller's org (404 otherwise) before anything is written against it.
+    ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
+
     let feed = state
         .rental_repo
         .create_ical_feed(tenant.tenant_id, data)

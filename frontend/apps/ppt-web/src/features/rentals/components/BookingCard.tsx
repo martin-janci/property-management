@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { parseIsoDate } from '../mappers';
 import type { BookingSource, BookingStatus, RentalBooking } from '../types';
 
 interface BookingCardProps {
@@ -40,27 +41,23 @@ const sourceColors: Record<BookingSource, string> = {
   other: 'bg-gray-500 text-white',
 };
 
-function formatDateRange(checkIn: string, checkOut: string): string {
-  const start = new Date(checkIn);
-  const end = new Date(checkOut);
-  const options: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-  };
-
-  return `${start.toLocaleDateString(undefined, options)} - ${end.toLocaleDateString(undefined, options)}`;
+function formatDateRange(checkIn: string, checkOut: string, language: string): string {
+  const fmt = new Intl.DateTimeFormat(language, { month: 'short', day: 'numeric' });
+  return `${fmt.format(parseIsoDate(checkIn))} – ${fmt.format(parseIsoDate(checkOut))}`;
 }
 
 function getNights(checkIn: string, checkOut: string): number {
-  const start = new Date(checkIn);
-  const end = new Date(checkOut);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffTime = Math.abs(parseIsoDate(checkOut).getTime() - parseIsoDate(checkIn).getTime());
+  return Math.round(diffTime / (1000 * 60 * 60 * 24));
 }
 
-function formatCurrency(amount: number | undefined, currency: string | undefined): string {
+function formatCurrency(
+  amount: number | undefined,
+  currency: string | undefined,
+  language: string
+): string {
   if (amount === undefined) return '-';
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(language, {
     style: 'currency',
     currency: currency || 'EUR',
   }).format(amount);
@@ -74,7 +71,7 @@ export function BookingCard({
   onCheckIn,
   onCheckOut,
 }: BookingCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const nights = getNights(booking.checkIn, booking.checkOut);
   const isPast = new Date(booking.checkOut) < new Date();
   const isActive = booking.status === 'checked_in';
@@ -112,11 +109,9 @@ export function BookingCard({
           </div>
           <div className="text-right">
             <p className="text-lg font-bold text-gray-900">
-              {formatCurrency(booking.totalPrice, booking.currency)}
+              {formatCurrency(booking.totalPrice, booking.currency, i18n.language)}
             </p>
-            <p className="text-xs text-gray-500">
-              {nights} {nights === 1 ? t('rentals.night') : t('rentals.nights')}
-            </p>
+            <p className="text-xs text-gray-500">{t('rentals.nightsCount', { count: nights })}</p>
           </div>
         </div>
 
@@ -137,7 +132,7 @@ export function BookingCard({
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <span>{formatDateRange(booking.checkIn, booking.checkOut)}</span>
+            <span>{formatDateRange(booking.checkIn, booking.checkOut, i18n.language)}</span>
           </div>
           <div className="flex items-center gap-1">
             <svg
@@ -154,10 +149,7 @@ export function BookingCard({
                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            <span>
-              {booking.guestCount}{' '}
-              {booking.guestCount === 1 ? t('rentals.guestSingular') : t('rentals.guestPlural')}
-            </span>
+            <span>{t('rentals.guestsCount', { count: booking.guestCount })}</span>
           </div>
         </div>
 

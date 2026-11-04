@@ -7,6 +7,43 @@ use crate::DbPool;
 use sqlx::{Error as SqlxError, Row};
 use uuid::Uuid;
 
+// Explicit column lists (compile-time `&str` constants spliced with
+// `format!`, never user input — hence `AssertSqlSafe`). `group_type`, `visibility`, `post_type`,
+// `event_type`, RSVP `status`, `category` and `condition` are Postgres enum
+// columns, but the models carry them as `String`; sqlx refuses to decode an
+// enum OID into `String` (`mismatched types`), so every read casts them
+// `::text`. Writes cast the bound text params to the enum type (`$n::type`),
+// since a `TEXT`-typed parameter is not implicitly assignable to an enum.
+
+/// `community_groups` columns for [`CommunityGroup`].
+const GROUP_COLUMNS: &str = "id, building_id, name, slug, description, \
+    group_type::text AS group_type, visibility::text AS visibility, cover_image_url, icon, \
+    color, rules, max_members, auto_join_new_residents, requires_approval, is_official, \
+    member_count, post_count, created_by, created_at, updated_at";
+
+/// `community_posts` columns for [`CommunityPost`].
+const POST_COLUMNS: &str = "id, group_id, author_id, post_type::text AS post_type, title, \
+    content, media_urls, poll_options, poll_ends_at, poll_multiple_choice, is_pinned, \
+    is_locked, is_anonymous, view_count, like_count, comment_count, share_count, created_at, \
+    updated_at, edited_at";
+
+/// `community_events` columns for [`CommunityEvent`].
+const EVENT_COLUMNS: &str = "id, group_id, building_id, organizer_id, title, description, \
+    event_type::text AS event_type, location, location_details, is_virtual, virtual_link, \
+    start_time, end_time, all_day, recurring_rule, cover_image_url, max_attendees, \
+    requires_rsvp, rsvp_deadline, cost_per_person, cost_currency, is_public, status, \
+    attendee_count, created_at, updated_at";
+
+/// `community_event_rsvps` columns for [`CommunityEventRsvp`].
+const RSVP_COLUMNS: &str = "id, event_id, user_id, status::text AS status, guests, note, \
+    reminder_sent, created_at, updated_at";
+
+/// `marketplace_items` columns for [`MarketplaceItem`].
+const ITEM_COLUMNS: &str = "id, building_id, seller_id, title, description, \
+    category::text AS category, condition::text AS condition, price, currency, is_free, \
+    is_negotiable, is_trade_accepted, photo_urls, location, pickup_details, view_count, \
+    inquiry_count, status, sold_to, sold_at, expires_at, created_at, updated_at";
+
 /// Repository for community operations.
 #[derive(Clone)]
 pub struct CommunityRepository {
@@ -40,7 +77,7 @@ impl CommunityRepository {
             .collect();
 
         // Use a CTE to generate unique slug and atomically insert group + add creator as owner
-        let group = sqlx::query_as::<_, CommunityGroup>(
+        let id = sqlx::query_scalar::<_, Uuid>(
             r#"
             WITH unique_slug AS (
                 SELECT CASE
@@ -63,43 +100,162 @@ impl CommunityRepository {
                     icon, color, rules, max_members, auto_join_new_residents,
                     requires_approval, created_by
                 )
-                SELECT $1, $2, unique_slug.slug, $4, COALESCE($5, 'interest'), COALESCE($6, 'public'),
+                SELECT $1, $2, unique_slug.slug, $4,
+                       COALESCE($5::community_group_type, 'interest'),
+                       COALESCE($6::community_group_visibility, 'public'),
                        $7, $8, $9, $10, COALESCE($11, false), COALESCE($12, false), $13
                 FROM unique_slug
-                RETURNING *
+                RETURNING id
             ),
             add_owner AS (
                 INSERT INTO community_group_members (group_id, user_id, role)
                 SELECT id, $13, 'owner' FROM new_group
             )
-            SELECT * FROM new_group
+            SELECT id FROM new_group
             "#,
         )
-        .bind(building_id)
-        .bind(&data.name)
-        .bind(&base_slug)
-        .bind(&data.description)
-        .bind(&data.group_type)
-        .bind(&data.visibility)
-        .bind(&data.icon)
-        .bind(&data.color)
-        .bind(&data.rules)
-        .bind(data.max_members)
-        .bind(data.auto_join_new_residents)
-        .bind(data.requires_approval)
-        .bind(created_by)
-        .fetch_one(&self.pool)
-        .await?;
+            .bind(building_id)
+            .bind(&data.name)
+            .bind(&base_slug)
+            .bind(&data.description)
+            .bind(&data.group_type)
+            .bind(&data.visibility)
+            .bind(&data.icon)
+            .bind(&data.color)
+            .bind(&data.rules)
+            .bind(data.max_members)
+            .bind(data.auto_join_new_residents)
+            .bind(data.requires_approval)
+            .bind(created_by)
+            .fetch_one(&self.pool)
+            .await?;
 
-        Ok(group)
+        // Re-read after the statement so the response reflects the owner
+        // membership counted by `trg_group_member_count` (a data-modifying
+        // CTE cannot see the trigger's update within the same statement).
+        self.get_group(id).await?.ok_or(SqlxError::RowNotFound)
     }
 
     /// Get community group by ID.
     pub async fn get_group(&self, id: Uuid) -> Result<Option<CommunityGroup>, SqlxError> {
-        sqlx::query_as::<_, CommunityGroup>("SELECT * FROM community_groups WHERE id = $1")
+        let sql = format!("SELECT {GROUP_COLUMNS} FROM community_groups WHERE id = $1");
+        sqlx::query_as::<_, CommunityGroup>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    /// Get a group plus `user_id`'s membership. Returns `None` when the group
+    /// is absent, or when it is `secret` and `user_id` is not a member (secret
+    /// groups are not discoverable by non-members). Tenant scoping is the
+    /// caller's responsibility (`group_exists_for_org`).
+    pub async fn get_group_detail(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Option<CommunityGroupDetail>, SqlxError> {
+        let Some(group) = self.get_group(id).await? else {
+            return Ok(None);
+        };
+        let my_role = sqlx::query_scalar::<_, String>(
+            "SELECT role::text FROM community_group_members WHERE group_id = $1 AND user_id = $2",
+        )
+        .bind(id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+        if group.visibility == "secret" && my_role.is_none() {
+            return Ok(None);
+        }
+        Ok(Some(CommunityGroupDetail {
+            group,
+            is_member: my_role.is_some(),
+            my_role,
+        }))
+    }
+
+    /// `true` unless the group is `secret` and `user_id` is not a member.
+    /// Absent groups return `true` here; existence/tenancy is checked
+    /// separately by `group_exists_for_org`.
+    pub async fn group_visible_to_user(
+        &self,
+        group_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT NOT EXISTS(
+                SELECT 1 FROM community_groups g
+                 WHERE g.id = $1
+                   AND g.visibility = 'secret'
+                   AND NOT EXISTS (
+                       SELECT 1 FROM community_group_members m
+                        WHERE m.group_id = g.id AND m.user_id = $2
+                   )
+            )
+            "#,
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// `true` unless the post belongs to a `secret` group `user_id` is not a
+    /// member of.
+    pub async fn post_visible_to_user(
+        &self,
+        post_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT NOT EXISTS(
+                SELECT 1 FROM community_posts p
+                  JOIN community_groups g ON g.id = p.group_id
+                 WHERE p.id = $1
+                   AND g.visibility = 'secret'
+                   AND NOT EXISTS (
+                       SELECT 1 FROM community_group_members m
+                        WHERE m.group_id = g.id AND m.user_id = $2
+                   )
+            )
+            "#,
+        )
+        .bind(post_id)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// `true` when `group_id` belongs to `building_id`.
+    pub async fn group_in_building(
+        &self,
+        group_id: Uuid,
+        building_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM community_groups WHERE id = $1 AND building_id = $2)",
+        )
+        .bind(group_id)
+        .bind(building_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// `true` when comment `comment_id` belongs to post `post_id`.
+    pub async fn comment_in_post(
+        &self,
+        comment_id: Uuid,
+        post_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM community_comments WHERE id = $1 AND post_id = $2)",
+        )
+        .bind(comment_id)
+        .bind(post_id)
+        .fetch_one(&self.pool)
+        .await
     }
 
     /// Tenant-safe group existence check: `true` only when the group belongs
@@ -135,9 +291,13 @@ impl CommunityRepository {
     ) -> Result<Vec<CommunityGroupWithMembership>, SqlxError> {
         let rows = sqlx::query(
             r#"
-            SELECT g.*,
+            SELECT g.id, g.building_id, g.name, g.slug, g.description,
+                g.group_type::text AS group_type, g.visibility::text AS visibility,
+                g.cover_image_url, g.icon, g.color, g.rules, g.max_members,
+                g.auto_join_new_residents, g.requires_approval, g.is_official,
+                g.member_count, g.post_count, g.created_by, g.created_at, g.updated_at,
                 m.user_id IS NOT NULL as is_member,
-                m.role as member_role,
+                m.role::text as member_role,
                 m.joined_at
             FROM community_groups g
             LEFT JOIN community_group_members m ON m.group_id = g.id AND m.user_id = $2
@@ -201,14 +361,54 @@ impl CommunityRepository {
         Ok(())
     }
 
-    /// Leave a group.
-    pub async fn leave_group(&self, group_id: Uuid, user_id: Uuid) -> Result<(), SqlxError> {
+    /// Leave a group. Refuses (`LastOwner`) when the caller is the group's
+    /// only `owner`, so a group can never be left without an owner. The group
+    /// row is locked `FOR UPDATE` so two owners leaving concurrently cannot
+    /// both pass the "another owner remains" check.
+    pub async fn leave_group(
+        &self,
+        group_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<LeaveGroupOutcome, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT 1 FROM community_groups WHERE id = $1 FOR UPDATE")
+            .bind(group_id)
+            .fetch_optional(&mut *tx)
+            .await?;
+        let role = sqlx::query_scalar::<_, String>(
+            "SELECT role::text FROM community_group_members WHERE group_id = $1 AND user_id = $2",
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        let Some(role) = role else {
+            return Ok(LeaveGroupOutcome::NotMember);
+        };
+        if role == "owner" {
+            let other_owner = sqlx::query_scalar::<_, bool>(
+                r#"
+                SELECT EXISTS(
+                    SELECT 1 FROM community_group_members
+                     WHERE group_id = $1 AND role = 'owner' AND user_id <> $2
+                )
+                "#,
+            )
+            .bind(group_id)
+            .bind(user_id)
+            .fetch_one(&mut *tx)
+            .await?;
+            if !other_owner {
+                return Ok(LeaveGroupOutcome::LastOwner);
+            }
+        }
         sqlx::query("DELETE FROM community_group_members WHERE group_id = $1 AND user_id = $2")
             .bind(group_id)
             .bind(user_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
-        Ok(())
+        tx.commit().await?;
+        Ok(LeaveGroupOutcome::Left)
     }
 
     /// `true` when `user_id` owns `group_id` — either they created it
@@ -292,28 +492,30 @@ impl CommunityRepository {
             .unwrap_or_default()
         });
 
-        sqlx::query_as::<_, CommunityPost>(
+        let sql = format!(
             r#"
             INSERT INTO community_posts (
                 group_id, author_id, post_type, title, content, media_urls,
                 poll_options, poll_ends_at, poll_multiple_choice, is_anonymous
             )
-            VALUES ($1, $2, COALESCE($3, 'text'), $4, $5, $6, $7, $8, $9, COALESCE($10, false))
-            RETURNING *
-            "#,
-        )
-        .bind(group_id)
-        .bind(author_id)
-        .bind(&data.post_type)
-        .bind(&data.title)
-        .bind(&data.content)
-        .bind(&data.media_urls)
-        .bind(&poll_options_json)
-        .bind(data.poll_ends_at)
-        .bind(data.poll_multiple_choice)
-        .bind(data.is_anonymous)
-        .fetch_one(&self.pool)
-        .await
+            VALUES ($1, $2, COALESCE($3::community_post_type, 'text'), $4, $5, $6, $7, $8, $9,
+                    COALESCE($10, false))
+            RETURNING {POST_COLUMNS}
+            "#
+        );
+        sqlx::query_as::<_, CommunityPost>(sqlx::AssertSqlSafe(sql))
+            .bind(group_id)
+            .bind(author_id)
+            .bind(&data.post_type)
+            .bind(&data.title)
+            .bind(&data.content)
+            .bind(&data.media_urls)
+            .bind(&poll_options_json)
+            .bind(data.poll_ends_at)
+            .bind(data.poll_multiple_choice)
+            .bind(data.is_anonymous)
+            .fetch_one(&self.pool)
+            .await
     }
 
     /// Get posts for a group.
@@ -323,19 +525,20 @@ impl CommunityRepository {
         limit: i32,
         offset: i32,
     ) -> Result<Vec<CommunityPost>, SqlxError> {
-        sqlx::query_as::<_, CommunityPost>(
+        let sql = format!(
             r#"
-            SELECT * FROM community_posts
+            SELECT {POST_COLUMNS} FROM community_posts
             WHERE group_id = $1
             ORDER BY is_pinned DESC, created_at DESC
             LIMIT $2 OFFSET $3
-            "#,
-        )
-        .bind(group_id)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await
+            "#
+        );
+        sqlx::query_as::<_, CommunityPost>(sqlx::AssertSqlSafe(sql))
+            .bind(group_id)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
     }
 
     /// Tenant-safe post existence check: `true` only when the post's group's
@@ -367,7 +570,11 @@ impl CommunityRepository {
         user_id: Uuid,
         reaction_type: &str,
     ) -> Result<(), SqlxError> {
-        // Use CTE for atomic insert and count update to prevent race conditions
+        // Insert + counter bump in one statement. The counter is incremented
+        // rather than recounted: a `COUNT(*)` subquery runs on the statement's
+        // snapshot, which cannot see the row the CTE just inserted, so a
+        // recount always lagged one reaction behind (first like -> 0). The
+        // row-locking `like_count + 1` is also safe under concurrent inserts.
         sqlx::query(
             r#"
             WITH inserted AS (
@@ -377,7 +584,7 @@ impl CommunityRepository {
                 RETURNING post_id
             )
             UPDATE community_posts
-            SET like_count = (SELECT COUNT(*) FROM community_post_reactions WHERE post_id = $1)
+            SET like_count = like_count + 1
             WHERE id = $1 AND EXISTS (SELECT 1 FROM inserted)
             "#,
         )
@@ -424,38 +631,40 @@ impl CommunityRepository {
         organizer_id: Uuid,
         data: CreateCommunityEvent,
     ) -> Result<CommunityEvent, SqlxError> {
-        sqlx::query_as::<_, CommunityEvent>(
+        let sql = format!(
             r#"
             INSERT INTO community_events (
                 group_id, building_id, organizer_id, title, description, event_type,
                 location, location_details, is_virtual, virtual_link, start_time, end_time,
                 all_day, max_attendees, requires_rsvp, rsvp_deadline, cost_per_person, is_public
             )
-            VALUES ($1, $2, $3, $4, $5, COALESCE($6, 'social'), $7, $8, COALESCE($9, false),
-                    $10, $11, $12, COALESCE($13, false), $14, COALESCE($15, true), $16, $17, COALESCE($18, true))
-            RETURNING *
-            "#,
-        )
-        .bind(data.group_id)
-        .bind(building_id)
-        .bind(organizer_id)
-        .bind(&data.title)
-        .bind(&data.description)
-        .bind(&data.event_type)
-        .bind(&data.location)
-        .bind(&data.location_details)
-        .bind(data.is_virtual)
-        .bind(&data.virtual_link)
-        .bind(data.start_time)
-        .bind(data.end_time)
-        .bind(data.all_day)
-        .bind(data.max_attendees)
-        .bind(data.requires_rsvp)
-        .bind(data.rsvp_deadline)
-        .bind(data.cost_per_person)
-        .bind(data.is_public)
-        .fetch_one(&self.pool)
-        .await
+            VALUES ($1, $2, $3, $4, $5, COALESCE($6::community_event_type, 'social'), $7, $8,
+                    COALESCE($9, false), $10, $11, $12, COALESCE($13, false), $14,
+                    COALESCE($15, true), $16, $17, COALESCE($18, true))
+            RETURNING {EVENT_COLUMNS}
+            "#
+        );
+        sqlx::query_as::<_, CommunityEvent>(sqlx::AssertSqlSafe(sql))
+            .bind(data.group_id)
+            .bind(building_id)
+            .bind(organizer_id)
+            .bind(&data.title)
+            .bind(&data.description)
+            .bind(&data.event_type)
+            .bind(&data.location)
+            .bind(&data.location_details)
+            .bind(data.is_virtual)
+            .bind(&data.virtual_link)
+            .bind(data.start_time)
+            .bind(data.end_time)
+            .bind(data.all_day)
+            .bind(data.max_attendees)
+            .bind(data.requires_rsvp)
+            .bind(data.rsvp_deadline)
+            .bind(data.cost_per_person)
+            .bind(data.is_public)
+            .fetch_one(&self.pool)
+            .await
     }
 
     /// Get upcoming events for a building.
@@ -463,19 +672,22 @@ impl CommunityRepository {
         &self,
         building_id: Uuid,
         limit: i32,
+        offset: i32,
     ) -> Result<Vec<CommunityEvent>, SqlxError> {
-        sqlx::query_as::<_, CommunityEvent>(
+        let sql = format!(
             r#"
-            SELECT * FROM community_events
+            SELECT {EVENT_COLUMNS} FROM community_events
             WHERE building_id = $1 AND start_time > NOW() AND status = 'scheduled'
             ORDER BY start_time ASC
-            LIMIT $2
-            "#,
-        )
-        .bind(building_id)
-        .bind(limit)
-        .fetch_all(&self.pool)
-        .await
+            LIMIT $2 OFFSET $3
+            "#
+        );
+        sqlx::query_as::<_, CommunityEvent>(sqlx::AssertSqlSafe(sql))
+            .bind(building_id)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
     }
 
     /// Tenant-safe event existence check: `true` only when the event's
@@ -506,25 +718,26 @@ impl CommunityRepository {
         user_id: Uuid,
         data: EventRsvpRequest,
     ) -> Result<CommunityEventRsvp, SqlxError> {
-        sqlx::query_as::<_, CommunityEventRsvp>(
+        let sql = format!(
             r#"
             INSERT INTO community_event_rsvps (event_id, user_id, status, guests, note)
-            VALUES ($1, $2, $3, COALESCE($4, 0), $5)
+            VALUES ($1, $2, $3::event_rsvp_status, COALESCE($4, 0), $5)
             ON CONFLICT (event_id, user_id) DO UPDATE SET
-                status = $3,
-                guests = COALESCE($4, 0),
-                note = $5,
+                status = EXCLUDED.status,
+                guests = EXCLUDED.guests,
+                note = EXCLUDED.note,
                 updated_at = NOW()
-            RETURNING *
-            "#,
-        )
-        .bind(event_id)
-        .bind(user_id)
-        .bind(&data.status)
-        .bind(data.guests)
-        .bind(&data.note)
-        .fetch_one(&self.pool)
-        .await
+            RETURNING {RSVP_COLUMNS}
+            "#
+        );
+        sqlx::query_as::<_, CommunityEventRsvp>(sqlx::AssertSqlSafe(sql))
+            .bind(event_id)
+            .bind(user_id)
+            .bind(&data.status)
+            .bind(data.guests)
+            .bind(&data.note)
+            .fetch_one(&self.pool)
+            .await
     }
 
     // ========================================================================
@@ -538,33 +751,34 @@ impl CommunityRepository {
         seller_id: Uuid,
         data: CreateMarketplaceItem,
     ) -> Result<MarketplaceItem, SqlxError> {
-        sqlx::query_as::<_, MarketplaceItem>(
+        let sql = format!(
             r#"
             INSERT INTO marketplace_items (
                 building_id, seller_id, title, description, category, condition,
                 price, is_free, is_negotiable, is_trade_accepted, photo_urls,
                 location, pickup_details
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, false),
-                    COALESCE($9, true), COALESCE($10, false), $11, $12, $13)
-            RETURNING *
-            "#,
-        )
-        .bind(building_id)
-        .bind(seller_id)
-        .bind(&data.title)
-        .bind(&data.description)
-        .bind(&data.category)
-        .bind(&data.condition)
-        .bind(data.price)
-        .bind(data.is_free)
-        .bind(data.is_negotiable)
-        .bind(data.is_trade_accepted)
-        .bind(&data.photo_urls)
-        .bind(&data.location)
-        .bind(&data.pickup_details)
-        .fetch_one(&self.pool)
-        .await
+            VALUES ($1, $2, $3, $4, $5::marketplace_category, $6::item_condition, $7,
+                    COALESCE($8, false), COALESCE($9, true), COALESCE($10, false), $11, $12, $13)
+            RETURNING {ITEM_COLUMNS}
+            "#
+        );
+        sqlx::query_as::<_, MarketplaceItem>(sqlx::AssertSqlSafe(sql))
+            .bind(building_id)
+            .bind(seller_id)
+            .bind(&data.title)
+            .bind(&data.description)
+            .bind(&data.category)
+            .bind(&data.condition)
+            .bind(data.price)
+            .bind(data.is_free)
+            .bind(data.is_negotiable)
+            .bind(data.is_trade_accepted)
+            .bind(&data.photo_urls)
+            .bind(&data.location)
+            .bind(&data.pickup_details)
+            .fetch_one(&self.pool)
+            .await
     }
 
     /// List active marketplace items.
@@ -575,27 +789,29 @@ impl CommunityRepository {
         limit: i32,
         offset: i32,
     ) -> Result<Vec<MarketplaceItem>, SqlxError> {
-        sqlx::query_as::<_, MarketplaceItem>(
+        let sql = format!(
             r#"
-            SELECT * FROM marketplace_items
+            SELECT {ITEM_COLUMNS} FROM marketplace_items
             WHERE building_id = $1
               AND status = 'active'
-              AND ($2::text IS NULL OR category = $2)
+              AND ($2::marketplace_category IS NULL OR category = $2::marketplace_category)
             ORDER BY created_at DESC
             LIMIT $3 OFFSET $4
-            "#,
-        )
-        .bind(building_id)
-        .bind(&category)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await
+            "#
+        );
+        sqlx::query_as::<_, MarketplaceItem>(sqlx::AssertSqlSafe(sql))
+            .bind(building_id)
+            .bind(&category)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
     }
 
     /// Get item by ID.
     pub async fn get_item(&self, id: Uuid) -> Result<Option<MarketplaceItem>, SqlxError> {
-        sqlx::query_as::<_, MarketplaceItem>("SELECT * FROM marketplace_items WHERE id = $1")
+        let sql = format!("SELECT {ITEM_COLUMNS} FROM marketplace_items WHERE id = $1");
+        sqlx::query_as::<_, MarketplaceItem>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .fetch_optional(&self.pool)
             .await

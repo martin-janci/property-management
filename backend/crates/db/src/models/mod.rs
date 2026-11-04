@@ -507,11 +507,12 @@ pub mod community;
 
 pub use community::{
     CommunityComment, CommunityEvent, CommunityEventRsvp, CommunityEventWithRsvp, CommunityGroup,
-    CommunityGroupMember, CommunityGroupWithMembership, CommunityPost, CommunityPostWithAuthor,
-    CreateCommunityComment, CreateCommunityEvent, CreateCommunityGroup, CreateCommunityPost,
-    CreateMarketplaceInquiry, CreateMarketplaceItem, EventRsvpRequest, JoinGroupRequest,
-    MarketplaceInquiry, MarketplaceItem, MarketplaceItemWithSeller, PollOption,
-    UpdateCommunityEvent, UpdateCommunityGroup, UpdateCommunityPost, UpdateMarketplaceItem,
+    CommunityGroupDetail, CommunityGroupMember, CommunityGroupWithMembership, CommunityPost,
+    CommunityPostWithAuthor, CreateCommunityComment, CreateCommunityEvent, CreateCommunityGroup,
+    CreateCommunityPost, CreateMarketplaceInquiry, CreateMarketplaceItem, EventRsvpRequest,
+    JoinGroupRequest, LeaveGroupOutcome, MarketplaceInquiry, MarketplaceItem,
+    MarketplaceItemWithSeller, PollOption, UpdateCommunityEvent, UpdateCommunityGroup,
+    UpdateCommunityPost, UpdateMarketplaceItem,
 };
 
 // Epic 38: Workflow Automation

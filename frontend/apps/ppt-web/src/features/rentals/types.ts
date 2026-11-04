@@ -39,6 +39,8 @@ export interface RentalBooking {
   currency?: string;
   guestCount: number;
   notes?: string;
+  guestNotes?: string;
+  internalNotes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +79,8 @@ export interface CalendarEvent {
   status?: BookingStatus;
   color?: string;
   notes?: string;
+  /** Manual blocks only. */
+  blockReason?: CalendarBlockReason;
 }
 
 export interface PlatformConnection {
@@ -160,6 +164,31 @@ export interface CreatePlatformConnectionRequest {
   isAutoSyncEnabled: boolean;
 }
 
+/** Editable sync settings of one platform connection (`PUT /rentals/connections/{id}`). */
+export interface ConnectionSettings {
+  externalPropertyId: string;
+  externalListingUrl: string;
+  syncCalendar: boolean;
+  syncIntervalMinutes: number;
+  blockOtherPlatforms: boolean;
+}
+
+/** Create / edit booking form values (`POST` / `PUT /rentals/bookings`). */
+export interface BookingFormValues {
+  unitId: string;
+  source: BookingSource;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  guestCount: number;
+  checkIn: string;
+  checkOut: string;
+  totalPrice: string;
+  currency: string;
+  guestNotes: string;
+  internalNotes: string;
+}
+
 export interface CalendarBlockRequest {
   unitId: string;
   startDate: string;
@@ -179,86 +208,82 @@ export interface BookingListParams {
 }
 
 /**
- * Tax Report Types - UC-29 Tax Export Functionality
+ * Calendar + property pickers (Story 18.2).
  */
 
-export type TaxReportType = 'annual_summary' | 'monthly_breakdown' | 'per_booking';
-
-export type TaxExportFormat = 'pdf' | 'csv' | 'excel';
-
-export type TaxJurisdictionCountry = 'SK' | 'CZ' | 'DE' | 'AT' | 'HU' | 'PL';
-
-export interface TaxJurisdiction {
-  country: TaxJurisdictionCountry;
+/** Building option for the rentals pickers. */
+export interface RentalBuildingOption {
+  id: string;
   name: string;
-  defaultTaxRate: number;
-  requiresGuestRegistration: boolean;
-  localTaxPerNight?: number;
-  localTaxCurrency?: string;
 }
 
-export interface TaxReportParams {
-  year: number;
-  reportType: TaxReportType;
-  jurisdiction: TaxJurisdictionCountry;
-  unitIds?: string[];
-  buildingIds?: string[];
-  includeAllProperties: boolean;
+/** Unit option for the rentals pickers (unit designation + its building). */
+export interface RentalUnitOption {
+  id: string;
+  name: string;
+  buildingId: string;
+  buildingName: string;
 }
 
-export interface MonthlyTaxBreakdown {
-  month: number;
-  monthName: string;
-  income: number;
-  bookingsCount: number;
-  nightsOccupied: number;
-  occupancyRate: number;
-  expenses: number;
-  netProfit: number;
+/** Reason for a manual calendar block (`block_reason`). */
+export type CalendarBlockReason = 'maintenance' | 'owner_use' | 'blocked';
+
+/**
+ * Daňový výkaz / authority guest report (Story 18.4, UC-29).
+ *
+ * The api-server reports guest counts by nationality per building and period
+ * (the basis for the local accommodation tax and the authority filing). It does
+ * not compute rental income, expenses or income tax.
+ */
+
+export type GuestReportPeriodType = 'monthly' | 'quarterly' | 'annual';
+
+export type GuestReportAuthority = 'SK_UHUL' | 'CZ_CIZPOL' | 'AT_ZMR' | 'DE_MELDEWESEN';
+
+export type GuestReportStatus = 'draft' | 'generated' | 'submitted' | 'confirmed';
+
+export interface GuestReportParams {
+  buildingId: string;
+  authorityCode: GuestReportAuthority;
+  periodType: GuestReportPeriodType;
+  /** ISO date, first day of the period. */
+  periodStart: string;
+  /** ISO date, last day of the period. */
+  periodEnd: string;
 }
 
-export interface BookingTaxDetail {
-  bookingId: string;
-  guestName: string;
-  unitName: string;
-  checkIn: string;
-  checkOut: string;
-  nights: number;
-  income: number;
-  source: BookingSource;
-}
-
-export interface ExpenseCategory {
-  category: string;
-  amount: number;
+export interface GuestReportNationalityRow {
+  /** ISO country code, `UNK` when unknown. */
+  nationality: string;
+  countryName: string;
+  count: number;
+  /** 0–100. */
   percentage: number;
 }
 
-export interface TaxReportData {
-  year: number;
-  jurisdiction: TaxJurisdiction;
-  reportType: TaxReportType;
-  generatedAt: string;
-  currency: string;
-  summary: {
-    totalIncome: number;
-    totalBookings: number;
-    totalNightsOccupied: number;
-    averageOccupancyRate: number;
-    totalExpenses: number;
-    netProfit: number;
-    estimatedTax: number;
-    effectiveTaxRate: number;
-  };
-  monthlyBreakdown?: MonthlyTaxBreakdown[];
-  bookingDetails?: BookingTaxDetail[];
-  expensesByCategory: ExpenseCategory[];
-  propertiesCovered: {
-    buildingId: string;
-    buildingName: string;
-    unitId: string;
-    unitName: string;
-  }[];
+export interface GuestReportPreviewData {
+  buildingId: string;
+  buildingName: string;
+  periodStart: string;
+  periodEnd: string;
+  totalGuests: number;
+  bookingsCount: number;
+  byNationality: GuestReportNationalityRow[];
+}
+
+export interface GuestReportSummaryItem {
+  id: string;
+  buildingId: string;
+  buildingName: string;
+  periodType: string;
+  periodStart: string;
+  periodEnd: string;
+  authorityCode: string;
+  authorityName: string;
+  totalGuests: number;
+  status: GuestReportStatus | string;
+  fileUrl?: string;
+  submittedAt?: string;
 }
 
 export interface TaxSummary {

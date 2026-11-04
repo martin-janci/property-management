@@ -201,8 +201,11 @@ export interface UpdateDigestRequest {
   includeCategories?: NotificationCategory[];
 }
 
-/** All digest options (including disabled) in display order */
-export const DIGEST_OPTIONS: DigestFrequency[] = ['disabled', 'hourly', 'daily', 'weekly'];
+/**
+ * Digest options (including disabled) offered in the UI, in display order.
+ * The backend schedule supports daily and weekly digests only.
+ */
+export const DIGEST_OPTIONS: DigestFrequency[] = ['disabled', 'daily', 'weekly'];
 
 /**
  * @deprecated Use DIGEST_OPTIONS instead. This constant includes 'disabled',
