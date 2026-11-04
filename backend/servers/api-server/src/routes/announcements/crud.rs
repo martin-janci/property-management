@@ -3,7 +3,7 @@
 use super::shared::*;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -11,7 +11,9 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
-use db::models::{target_type, AnnouncementListQuery, CreateAnnouncement, UpdateAnnouncement};
+use db::models::{
+    announcement_status, target_type, AnnouncementListQuery, CreateAnnouncement, UpdateAnnouncement,
+};
 use uuid::Uuid;
 
 /// CRUD sub-router (create, list, published list, get, update, delete).
@@ -44,7 +46,7 @@ pub(super) fn router() -> Router<AppState> {
 pub(super) async fn create_announcement(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Json(req): Json<CreateAnnouncementRequest>,
 ) -> Result<(StatusCode, Json<CreateAnnouncementResponse>), (StatusCode, Json<ErrorResponse>)> {
@@ -191,7 +193,7 @@ pub(super) async fn create_announcement(
 pub(super) async fn list_announcements(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Query(query): Query<ListAnnouncementsQuery>,
 ) -> Result<Json<AnnouncementListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -281,7 +283,7 @@ pub(super) async fn list_announcements(
 pub(super) async fn list_published_announcements(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Query(query): Query<ListAnnouncementsQuery>,
 ) -> Result<Json<AnnouncementListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -339,10 +341,26 @@ pub(super) async fn list_published_announcements(
 pub(super) async fn get_announcement(
     State(state): State<AppState>,
     _auth: AuthUser,
-    _tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AnnouncementDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Org scope first (404 for other orgs), then hide unpublished drafts /
+    // scheduled items from non-managers.
+    let existing = load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
+    if !tenant.role.is_manager()
+        && !matches!(
+            existing.status.as_str(),
+            announcement_status::PUBLISHED | announcement_status::ARCHIVED
+        )
+    {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Announcement not found")),
+        ));
+    }
+
     let announcement = match state
         .announcement_repo
         .find_by_id_with_details_rls(&mut **rls.conn(), id)
@@ -404,7 +422,7 @@ pub(super) async fn get_announcement(
 pub(super) async fn update_announcement(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAnnouncementRequest>,
@@ -453,31 +471,7 @@ pub(super) async fn update_announcement(
         }
     }
     // Check announcement exists and can be edited
-    let existing = match state
-        .announcement_repo
-        .find_by_id_rls(&mut **rls.conn(), id)
-        .await
-    {
-        Ok(Some(a)) => a,
-        Ok(None) => {
-            rls.release().await;
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Announcement not found")),
-            ));
-        }
-        Err(e) => {
-            rls.release().await;
-            tracing::error!("Failed to find announcement: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to find announcement",
-                )),
-            ));
-        }
-    };
+    let existing = load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
 
     if !existing.can_edit() {
         rls.release().await;
@@ -498,6 +492,35 @@ pub(super) async fn update_announcement(
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse::new("BAD_REQUEST", "Invalid target_type")),
             ));
+        }
+    }
+
+    // Security: when the targeting changes, the effective target ids must
+    // belong to this organization — same check as create (Critical 1.3).
+    if req.target_type.is_some() || req.target_ids.is_some() {
+        let effective_type = req
+            .target_type
+            .clone()
+            .unwrap_or_else(|| existing.target_type.clone());
+        let effective_ids: Vec<Uuid> = match req.target_ids {
+            Some(ref ids) => ids.clone(),
+            None => serde_json::from_value(existing.target_ids.clone()).unwrap_or_default(),
+        };
+        if effective_type != target_type::ALL {
+            if let Err(err_msg) = validate_target_ids(
+                rls.conn(),
+                tenant.tenant_id,
+                &effective_type,
+                &effective_ids,
+            )
+            .await
+            {
+                rls.release().await;
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new("INVALID_TARGET_IDS", err_msg)),
+                ));
+            }
         }
     }
 
@@ -561,7 +584,7 @@ pub(super) async fn update_announcement(
 pub(super) async fn delete_announcement(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
@@ -577,31 +600,7 @@ pub(super) async fn delete_announcement(
         ));
     }
     // Check if draft
-    let existing = match state
-        .announcement_repo
-        .find_by_id_rls(&mut **rls.conn(), id)
-        .await
-    {
-        Ok(Some(a)) => a,
-        Ok(None) => {
-            rls.release().await;
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Announcement not found")),
-            ));
-        }
-        Err(e) => {
-            rls.release().await;
-            tracing::error!("Failed to find announcement: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to find announcement",
-                )),
-            ));
-        }
-    };
+    let existing = load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
 
     if !existing.is_draft() {
         rls.release().await;

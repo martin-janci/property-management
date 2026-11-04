@@ -180,7 +180,7 @@ async fn create_package(
 )]
 async fn get_package(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PackageDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let package = state
@@ -226,7 +226,7 @@ async fn get_package(
 )]
 async fn list_packages(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Query(query): Query<PackageQuery>,
 ) -> Result<Json<PackageListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (packages, total) = state
@@ -262,7 +262,7 @@ async fn list_packages(
 )]
 async fn update_package(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePackage>,
 ) -> Result<Json<PackageActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -419,7 +419,7 @@ async fn pickup_package(
 )]
 async fn delete_package(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let deleted = state
@@ -463,7 +463,7 @@ async fn delete_package(
 )]
 async fn get_package_statistics(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<PackageStatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let statistics = state
@@ -548,7 +548,7 @@ async fn create_visitor(
 )]
 async fn get_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VisitorDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let visitor = state
@@ -595,7 +595,7 @@ async fn get_visitor(
 )]
 async fn list_visitors(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Query(query): Query<VisitorQuery>,
 ) -> Result<Json<VisitorListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let (visitors, total) = state
@@ -631,7 +631,7 @@ async fn list_visitors(
 )]
 async fn update_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVisitor>,
 ) -> Result<Json<VisitorActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -794,7 +794,7 @@ async fn check_out_visitor(
 )]
 async fn cancel_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VisitorActionResponse>, (StatusCode, Json<ErrorResponse>)> {
     let visitor = state
@@ -841,7 +841,7 @@ async fn cancel_visitor(
 )]
 async fn verify_access_code(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Json(data): Json<VerifyAccessCode>,
 ) -> Result<Json<AccessCodeVerification>, (StatusCode, Json<ErrorResponse>)> {
     let verification = state
@@ -879,7 +879,7 @@ async fn verify_access_code(
 )]
 async fn delete_visitor(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let deleted = state
@@ -923,7 +923,7 @@ async fn delete_visitor(
 )]
 async fn get_visitor_statistics(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<VisitorStatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let statistics = state
@@ -965,7 +965,7 @@ async fn get_visitor_statistics(
 )]
 async fn get_package_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<PackageSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let settings = state
@@ -1012,7 +1012,7 @@ async fn get_package_settings(
 )]
 async fn update_package_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
     Json(data): Json<UpdateBuildingPackageSettings>,
 ) -> Result<Json<PackageSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1051,7 +1051,7 @@ async fn update_package_settings(
 )]
 async fn get_visitor_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
 ) -> Result<Json<VisitorSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
     let settings = state
@@ -1098,7 +1098,7 @@ async fn get_visitor_settings(
 )]
 async fn update_visitor_settings(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    tenant: api_core::ValidatedTenantExtractor,
     Path(building_id): Path<Uuid>,
     Json(data): Json<UpdateBuildingVisitorSettings>,
 ) -> Result<Json<VisitorSettingsResponse>, (StatusCode, Json<ErrorResponse>)> {
