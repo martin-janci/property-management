@@ -220,6 +220,11 @@ const buildHeaders = (config: ApiConfig): HeadersInit => ({
   ...(config.tenantId && { 'X-Tenant-ID': config.tenantId }),
 });
 
+/** Page size for unit pagination (the backend caps `limit` at 100). */
+const UNIT_PAGE_SIZE = 100;
+/** Safety cap on unit pages fetched when deriving floors (10 000 units). */
+const MAX_UNIT_PAGES = 100;
+
 const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -305,8 +310,30 @@ export const createBuildingsApi = (config: ApiConfig) => {
      * List floors in a building.
      */
     listFloors: async (buildingId: string): Promise<Floor[]> => {
-      const response = await fetch(`${baseUrl}/${buildingId}/floors`, { headers });
-      return handleResponse(response);
+      // The backend has no floors table: a floor is the `floor` column of the
+      // building's units, so derive the list from every (non-archived) unit.
+      const counts = new Map<number, number>();
+      let offset = 0;
+      for (let page = 0; page < MAX_UNIT_PAGES; page++) {
+        const response = await fetch(
+          `${baseUrl}/${buildingId}/units?offset=${offset}&limit=${UNIT_PAGE_SIZE}`,
+          { headers }
+        );
+        const body = await handleResponse<UnitsListResponse>(response);
+        for (const unit of body.units) {
+          counts.set(unit.floor, (counts.get(unit.floor) ?? 0) + 1);
+        }
+        offset += body.units.length;
+        if (body.units.length === 0 || offset >= body.total) break;
+      }
+      return [...counts.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([number, unitCount]) => ({
+          id: `${buildingId}:floor:${number}`,
+          buildingId,
+          number,
+          unitCount,
+        }));
     },
 
     /**
@@ -324,8 +351,12 @@ export const createBuildingsApi = (config: ApiConfig) => {
     /**
      * List common areas in a building.
      */
-    listCommonAreas: async (buildingId: string): Promise<CommonArea[]> => {
+    listCommonAreas: async (buildingId: string): Promise<CommonArea[] | null> => {
       const response = await fetch(`${baseUrl}/${buildingId}/common-areas`, { headers });
+      // The backend does not implement common areas yet: a 404 means the
+      // feature is unavailable (resolve `null`, so the query neither errors
+      // nor retries), not that the request failed.
+      if (response.status === 404) return null;
       return handleResponse(response);
     },
 

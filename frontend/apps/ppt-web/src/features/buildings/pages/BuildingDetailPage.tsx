@@ -24,6 +24,13 @@ const STATUS_COLORS: Record<BuildingStatus, string> = {
   inactive: 'bg-gray-100 text-gray-800',
 };
 
+/**
+ * The backend has no GET /buildings/{id}/common-areas yet, so every detail
+ * load logged a 404. Until it exists the page neither requests nor shows
+ * common areas; flip this when the endpoint ships.
+ */
+const COMMON_AREAS_API_AVAILABLE = false;
+
 export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
   const { t } = useTranslation();
   const {
@@ -34,7 +41,7 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
   const { data: floors, isLoading: floorsLoading } = useBuildingFloors(buildingId, !!building);
   const { data: commonAreas, isLoading: areasLoading } = useBuildingCommonAreas(
     buildingId,
-    !!building
+    COMMON_AREAS_API_AVAILABLE && !!building
   );
 
   if (buildingLoading) {
@@ -211,36 +218,39 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
       {/* Units Section */}
       <UnitsSection buildingId={buildingId} />
 
-      {/* Common Areas Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {t('buildings.detail.commonAreas')}
-        </h2>
-        {areasLoading ? (
-          <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
-          </div>
-        ) : commonAreas && commonAreas.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {commonAreas.map((area) => (
-              <div key={area.id} className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900">{area.name}</h3>
-                <p className="text-sm text-gray-500 capitalize">
-                  {t(`buildings.commonAreaType.${area.type}`, {
-                    defaultValue: area.type.replace('_', ' '),
-                  })}
-                </p>
-                {area.description && (
-                  <p className="text-sm text-gray-600 mt-1">{area.description}</p>
-                )}
-                {area.areaM2 && <p className="text-sm text-gray-500 mt-1">{area.areaM2} m²</p>}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-sm">{t('buildings.detail.noCommonAreas')}</p>
-        )}
-      </div>
+      {/* Common Areas Section — hidden while the endpoint does not exist, or
+          when the backend reports it unavailable (`null`). */}
+      {COMMON_AREAS_API_AVAILABLE && commonAreas !== null && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {t('buildings.detail.commonAreas')}
+          </h2>
+          {areasLoading ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+            </div>
+          ) : commonAreas && commonAreas.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {commonAreas.map((area) => (
+                <div key={area.id} className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium text-gray-900">{area.name}</h3>
+                  <p className="text-sm text-gray-500 capitalize">
+                    {t(`buildings.commonAreaType.${area.type}`, {
+                      defaultValue: area.type.replace('_', ' '),
+                    })}
+                  </p>
+                  {area.description && (
+                    <p className="text-sm text-gray-600 mt-1">{area.description}</p>
+                  )}
+                  {area.areaM2 && <p className="text-sm text-gray-500 mt-1">{area.areaM2} m²</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">{t('buildings.detail.noCommonAreas')}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
