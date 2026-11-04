@@ -42,11 +42,10 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
-export function yesNoOptions() {
+function yesNoOptions() {
   return [
-    // The server parses option ids as UUIDs (422 otherwise).
-    { id: newId(), text: 'Yes' },
-    { id: newId(), text: 'No' },
+    { id: 'yes', text: 'Yes' },
+    { id: 'no', text: 'No' },
   ];
 }
 
@@ -60,9 +59,13 @@ function blankQuestion(): DraftQuestion {
   };
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
- * Build the `POST /voting/{id}/questions` body for a draft question. Every
- * option id must be a UUID — the server rejects anything else with 422.
+ * Build the `POST /voting/{id}/questions` body for a draft question. The
+ * server parses every option id as a UUID and rejects anything else with 422
+ * (the yes/no options carry the local ids "yes"/"no"), so non-UUID ids are
+ * replaced with fresh UUIDs here.
  */
 export function toQuestionPayload(q: DraftQuestion, index: number): AddQuestionRequest {
   return {
@@ -70,7 +73,11 @@ export function toQuestionPayload(q: DraftQuestion, index: number): AddQuestionR
     question_type: q.question_type,
     options: q.options
       .filter((o) => o.text.trim() || q.question_type === 'yes_no')
-      .map((o, idx) => ({ id: o.id, text: o.text.trim(), order: idx })),
+      .map((o, idx) => ({
+        id: UUID_PATTERN.test(o.id) ? o.id : newId(),
+        text: o.text.trim(),
+        order: idx,
+      })),
     display_order: index,
     is_required: q.is_required,
   };

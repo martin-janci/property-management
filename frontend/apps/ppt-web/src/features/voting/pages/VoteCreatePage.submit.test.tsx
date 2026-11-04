@@ -9,7 +9,7 @@
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ToastProvider } from '../../../components';
-import { toQuestionPayload, VoteCreatePage, yesNoOptions } from './VoteCreatePage';
+import { toQuestionPayload, VoteCreatePage } from './VoteCreatePage';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -54,29 +54,45 @@ beforeEach(() => {
   h.publishVote.mockResolvedValue({});
 });
 
-describe('yes/no option ids', () => {
-  it('are UUIDs', () => {
-    for (const option of yesNoOptions()) {
-      expect(option.id).toMatch(UUID_RE);
-    }
-  });
-
-  it('go out as UUIDs in the question payload', () => {
+describe('toQuestionPayload', () => {
+  it('replaces the local yes/no option ids with UUIDs', () => {
     const payload = toQuestionPayload(
       {
         key: 'k',
         question_text: '  Approve?  ',
         question_type: 'yes_no',
-        options: yesNoOptions(),
+        options: [
+          { id: 'yes', text: 'Yes' },
+          { id: 'no', text: 'No' },
+        ],
         is_required: true,
       },
       0
     );
     expect(payload.question_text).toBe('Approve?');
-    expect(payload.options).toHaveLength(2);
+    expect(payload.options.map((o) => o.text)).toEqual(['Yes', 'No']);
     for (const option of payload.options) {
       expect(option.id).toMatch(UUID_RE);
     }
+  });
+
+  it('keeps ids that are already UUIDs', () => {
+    const id = '0b7c6f3e-8f5a-4c1e-9d2b-3a4f5e6d7c8b';
+    const payload = toQuestionPayload(
+      {
+        key: 'k',
+        question_text: 'Pick one',
+        question_type: 'single_choice',
+        options: [
+          { id, text: 'A' },
+          { id: '1f0e2d3c-4b5a-4968-8776-655443322110', text: 'B' },
+        ],
+        is_required: false,
+      },
+      2
+    );
+    expect(payload.options[0].id).toBe(id);
+    expect(payload.display_order).toBe(2);
   });
 });
 
