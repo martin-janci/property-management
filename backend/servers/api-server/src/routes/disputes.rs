@@ -122,6 +122,30 @@ fn require_org(user: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>
     })
 }
 
+/// Resolve the organization for an org-scoped collection call.
+///
+/// The organization always comes from the caller's verified JWT tenant. A
+/// client-supplied `organization_id` (query or body) is accepted only for
+/// backwards compatibility and must match that tenant; a mismatch is rejected
+/// with 403 so one org's members can never list, count or file disputes in
+/// another org by swapping the id.
+fn scoped_org(
+    user: &AuthUser,
+    requested: Option<Uuid>,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    let org = require_org(user)?;
+    match requested {
+        Some(id) if id != org => Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the caller's organization",
+            )),
+        )),
+        _ => Ok(org),
+    }
+}
+
 /// Map a repository error from an org-scoped sub-resource call to an HTTP
 /// response. `NotFound` (dispute absent or owned by another org) becomes 404 so
 /// the response is not a cross-tenant existence oracle; everything else is 500.
@@ -148,10 +172,11 @@ fn map_dispute_err(
 // Request/Response Types
 // =============================================================================
 
-/// Organization query parameter.
+/// Organization query parameter. Optional: the organization is taken from the
+/// JWT tenant; when supplied it must match it (see [`scoped_org`]).
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct OrgQuery {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
 }
 
 /// Dispute KPI reporting window (`[window_start, window_end)`), keyed on filing
@@ -163,17 +188,30 @@ pub struct KpisQuery {
 }
 
 /// File dispute request.
+///
+/// `organization_id` is optional (the JWT tenant is authoritative and a
+/// mismatching id is rejected) and `filed_by` is always the caller, so neither
+/// is required in the body. This previously flattened `FileDispute`, whose own
+/// required `organization_id` / `filed_by` fields made every request fail
+/// deserialization with 422.
 #[derive(Debug, Deserialize)]
 pub struct FileDisputeRequest {
-    pub organization_id: Uuid,
-    #[serde(flatten)]
-    pub data: FileDispute,
+    pub organization_id: Option<Uuid>,
+    pub building_id: Option<Uuid>,
+    pub unit_id: Option<Uuid>,
+    pub category: String,
+    pub title: String,
+    pub description: String,
+    pub desired_resolution: Option<String>,
+    #[serde(default)]
+    pub respondent_ids: Vec<Uuid>,
 }
 
 /// List disputes query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListDisputesQuery {
-    pub organization_id: Uuid,
+    /// Optional; must match the JWT tenant when supplied (see [`scoped_org`]).
+    pub organization_id: Option<Uuid>,
     pub building_id: Option<Uuid>,
     pub category: Option<String>,
     pub status: Option<String>,
@@ -346,12 +384,22 @@ async fn file_dispute(
     user: AuthUser,
     Json(payload): Json<FileDisputeRequest>,
 ) -> Result<(StatusCode, Json<Dispute>), (StatusCode, Json<ErrorResponse>)> {
-    let mut data = payload.data;
-    data.filed_by = user.user_id;
+    let organization_id = scoped_org(&user, payload.organization_id)?;
+    let data = FileDispute {
+        organization_id,
+        building_id: payload.building_id,
+        unit_id: payload.unit_id,
+        category: payload.category,
+        title: payload.title,
+        description: payload.description,
+        desired_resolution: payload.desired_resolution,
+        respondent_ids: payload.respondent_ids,
+        filed_by: user.user_id,
+    };
 
     state
         .dispute_repo
-        .file_dispute(payload.organization_id, data)
+        .file_dispute(organization_id, data)
         .await
         .map(|d| (StatusCode::CREATED, Json(d)))
         .map_err(|e| {
@@ -366,12 +414,13 @@ async fn file_dispute(
 /// List disputes for an organization.
 async fn list_disputes(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListDisputesQuery>,
 ) -> Result<Json<Vec<DisputeSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .list(query.organization_id, (&query).into())
+        .list(organization_id, (&query).into())
         .await
         .map(Json)
         .map_err(|e| {
@@ -386,12 +435,13 @@ async fn list_disputes(
 /// Get dispute statistics.
 async fn get_statistics(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<DisputeStatistics>, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .get_statistics(query.organization_id)
+        .get_statistics(organization_id)
         .await
         .map(Json)
         .map_err(|e| {
@@ -1639,9 +1689,10 @@ async fn get_my_actions(
     user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<PartyActionsDashboard>, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .get_party_actions(query.organization_id, user.user_id)
+        .get_party_actions(organization_id, user.user_id)
         .await
         .map(Json)
         .map_err(|e| {
@@ -1656,12 +1707,13 @@ async fn get_my_actions(
 /// List overdue action items.
 async fn list_overdue_actions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<ActionItem>>, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = scoped_org(&user, query.organization_id)?;
     state
         .dispute_repo
-        .list_overdue_actions(query.organization_id)
+        .list_overdue_actions(organization_id)
         .await
         .map(Json)
         .map_err(|e| {
