@@ -67,3 +67,5 @@ mod meters_energy_cross_org_idor_tests;
 mod mfa_brute_force_rate_limit_tests;
 #[path = "suites/mfa_disable_rls_scope_tests.rs"]
 mod mfa_disable_rls_scope_tests;
+#[path = "suites/round3_payload_tests.rs"]
+mod round3_payload_tests;

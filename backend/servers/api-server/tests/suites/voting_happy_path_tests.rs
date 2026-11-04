@@ -604,6 +604,386 @@ async fn list_active_by_building_succeeds(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
 }
 
+// ---------------------------------------------------------------------------
+// Round-3 audit #5 / #6: ballot payload contract
+// ---------------------------------------------------------------------------
+
+impl Ctx {
+    async fn post_question(
+        &self,
+        vote_id: Uuid,
+        body: serde_json::Value,
+    ) -> crate::common::TestResponse {
+        self.app
+            .execute(
+                self.app
+                    .post(&format!("/api/v1/voting/{vote_id}/questions"))
+                    .bearer(&self.token)
+                    .header("X-Tenant-ID", &self.tenant())
+                    .json(body)
+                    .build(),
+            )
+            .await
+    }
+}
+
+/// #5: `GET /voting/{id}` must carry `questions` (with options) so the ballot
+/// page can render and residents can vote.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_vote_includes_questions_with_options(pool: PgPool) {
+    let ctx = setup(pool, "getq").await;
+    let vote_id = ctx.create_vote().await;
+    let question_id = ctx.add_question(vote_id).await;
+
+    let resp = ctx
+        .app
+        .execute(
+            ctx.app
+                .get(&format!("/api/v1/voting/{vote_id}"))
+                .bearer(&ctx.token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body = resp.json_value();
+    let questions = body["questions"].as_array().expect("questions array");
+    assert_eq!(questions.len(), 1);
+    assert_eq!(body["question_count"], 1);
+    assert_eq!(questions[0]["id"], question_id.to_string());
+    assert_eq!(questions[0]["options"].as_array().map(Vec::len), Some(2));
+}
+
+/// #6: options may omit `id` / `order`; the server generates ids and uses the
+/// list position as the order.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_question_generates_missing_option_ids(pool: PgPool) {
+    let ctx = setup(pool, "optids").await;
+    let vote_id = ctx.create_vote().await;
+
+    let resp = ctx
+        .post_question(
+            vote_id,
+            json!({
+                "question_text": "Which contractor?",
+                "question_type": "single_choice",
+                "options": [{"text": "Alpha"}, {"text": "Beta"}]
+            }),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let options = resp.json_value()["options"]
+        .as_array()
+        .cloned()
+        .expect("options");
+    assert_eq!(options.len(), 2);
+    for (i, o) in options.iter().enumerate() {
+        let id = o["id"].as_str().expect("generated id");
+        assert!(
+            Uuid::parse_str(id).is_ok(),
+            "option id must be a UUID: {id}"
+        );
+        assert_eq!(o["order"], i as i64);
+    }
+    assert_ne!(options[0]["id"], options[1]["id"]);
+
+    // A yes/no question with no options gets the Yes/No pair results rely on.
+    let resp = ctx
+        .post_question(
+            vote_id,
+            json!({ "question_text": "Approve?", "question_type": "yes_no" }),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let options = resp.json_value()["options"]
+        .as_array()
+        .cloned()
+        .expect("options");
+    let texts: Vec<_> = options.iter().map(|o| o["text"].clone()).collect();
+    assert_eq!(texts, [json!("Yes"), json!("No")]);
+
+    // Supplied UUIDs are kept as-is.
+    let keep = Uuid::new_v4();
+    let resp = ctx
+        .post_question(
+            vote_id,
+            json!({
+                "question_text": "Keep ids?",
+                "question_type": "single_choice",
+                "options": [{"id": keep, "text": "A", "order": 5}, {"text": "B"}]
+            }),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let options = resp.json_value()["options"]
+        .as_array()
+        .cloned()
+        .expect("options");
+    assert_eq!(options[0]["id"], keep.to_string());
+    assert_eq!(options[0]["order"], 5);
+}
+
+/// The vote list carries `question_count` (VoteCard renders it), on both the
+/// org list and the per-building active list.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_votes_includes_question_count(pool: PgPool) {
+    let ctx = setup(pool, "qcount").await;
+    let with_two = ctx.create_vote().await;
+    ctx.add_question(with_two).await;
+    ctx.add_question(with_two).await;
+    let empty = ctx.create_vote().await;
+
+    let resp = ctx
+        .app
+        .execute(
+            ctx.app
+                .get("/api/v1/voting")
+                .bearer(&ctx.token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body = resp.json_value();
+    let list = body
+        .as_array()
+        .or_else(|| body["votes"].as_array())
+        .or_else(|| body["items"].as_array())
+        .unwrap_or_else(|| panic!("unexpected list shape: {body}"));
+    let count_of = |id: Uuid| {
+        list.iter()
+            .find(|v| v["id"] == id.to_string())
+            .map(|v| v["question_count"].clone())
+            .unwrap_or_else(|| panic!("vote {id} missing from list"))
+    };
+    assert_eq!(count_of(with_two), 2);
+    assert_eq!(count_of(empty), 0);
+
+    ctx.publish_now(with_two).await;
+    let resp = ctx
+        .app
+        .execute(
+            ctx.app
+                .get(&format!(
+                    "/api/v1/voting/building/{}/active",
+                    ctx.building_id
+                ))
+                .bearer(&ctx.token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let active = resp.json_value();
+    let active = active.as_array().expect("active list");
+    assert_eq!(active.len(), 1);
+    assert_eq!(active[0]["question_count"], 2);
+}
+
+// ---------------------------------------------------------------------------
+// Cross-org isolation of every `/voting/{id}/*` sub-route
+// ---------------------------------------------------------------------------
+
+/// A caller from org B must get 404 on every sub-route of org A's vote (the
+/// vote tables only ENABLE RLS, so the handlers check the org explicitly).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn vote_sub_routes_are_404_for_another_org(pool: PgPool) {
+    let a = setup(pool.clone(), "xorg-a").await;
+    let b = setup(pool, "xorg-b").await;
+    let vote = a.create_vote().await;
+    let question = a.add_question(vote).await;
+    let comment = a.add_comment(vote).await;
+    let unit = Uuid::new_v4();
+
+    use axum::http::Method;
+    let cases: Vec<(Method, String, Option<serde_json::Value>)> = vec![
+        (Method::GET, format!("/api/v1/voting/{vote}"), None),
+        (
+            Method::PUT,
+            format!("/api/v1/voting/{vote}"),
+            Some(json!({})),
+        ),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/questions"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/questions"),
+            Some(json!({ "question_text": "x", "question_type": "yes_no" })),
+        ),
+        (
+            Method::PUT,
+            format!("/api/v1/voting/{vote}/questions/{question}"),
+            Some(json!({ "question_text": "hijacked" })),
+        ),
+        (
+            Method::DELETE,
+            format!("/api/v1/voting/{vote}/questions/{question}"),
+            None,
+        ),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/eligibility"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/cast"),
+            Some(json!({ "unit_id": unit, "answers": {} })),
+        ),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/my-response?unit_id={unit}"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/comments"),
+            Some(json!({ "content": "spam", "ai_consent": false })),
+        ),
+        (Method::GET, format!("/api/v1/voting/{vote}/comments"), None),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/comments/{comment}/replies"),
+            None,
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/comments/{comment}/hide"),
+            Some(json!({ "reason": "x" })),
+        ),
+        (Method::GET, format!("/api/v1/voting/{vote}/results"), None),
+        (Method::GET, format!("/api/v1/voting/{vote}/report"), None),
+        (
+            Method::GET,
+            format!("/api/v1/voting/{vote}/report.pdf"),
+            None,
+        ),
+        (Method::GET, format!("/api/v1/voting/{vote}/audit"), None),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/publish"),
+            Some(json!({})),
+        ),
+        (
+            Method::POST,
+            format!("/api/v1/voting/{vote}/cancel"),
+            Some(json!({ "reason": "x" })),
+        ),
+        (Method::POST, format!("/api/v1/voting/{vote}/close"), None),
+        (Method::DELETE, format!("/api/v1/voting/{vote}"), None),
+    ];
+
+    for (method, uri, body) in cases {
+        let builder = match method {
+            Method::GET => b.app.get(&uri),
+            Method::POST => b.app.post(&uri),
+            Method::PUT => b.app.put(&uri),
+            Method::DELETE => b.app.delete(&uri),
+            _ => unreachable!(),
+        }
+        .bearer(&b.token)
+        .header("X-Tenant-ID", &b.tenant());
+        let builder = match body {
+            Some(j) => builder.json(j),
+            None => builder,
+        };
+        let resp = b.app.execute(builder.build()).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::NOT_FOUND,
+            "{method} {uri} from another org: {}",
+            resp.text()
+        );
+    }
+
+    // Org A's data is untouched and still visible to org A.
+    let resp = a
+        .app
+        .execute(
+            a.app
+                .get(&format!("/api/v1/voting/{vote}"))
+                .bearer(&a.token)
+                .header("X-Tenant-ID", &a.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body = resp.json_value();
+    assert_eq!(body["status"], "draft");
+    assert_eq!(
+        body["questions"][0]["question_text"],
+        "Do you approve the budget?"
+    );
+    assert_eq!(body["comment_count"], 1);
+
+    // The building's active list from org B never includes org A's votes.
+    a.publish_now(vote).await;
+    let resp = b
+        .app
+        .execute(
+            b.app
+                .get(&format!("/api/v1/voting/building/{}/active", a.building_id))
+                .bearer(&b.token)
+                .header("X-Tenant-ID", &b.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    assert_eq!(resp.json_value().as_array().map(Vec::len), Some(0));
+}
+
+/// A question or comment id from a different vote (same org) is a 404, not a
+/// write against the other vote.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn question_and_comment_ids_must_belong_to_the_vote(pool: PgPool) {
+    let ctx = setup(pool, "child").await;
+    let vote = ctx.create_vote().await;
+    let other = ctx.create_vote().await;
+    let other_question = ctx.add_question(other).await;
+    let other_comment = ctx.add_comment(other).await;
+
+    let send = |b: crate::common::RequestBuilder| {
+        b.bearer(&ctx.token).header("X-Tenant-ID", &ctx.tenant())
+    };
+    let resp = ctx
+        .app
+        .execute(
+            send(
+                ctx.app
+                    .put(&format!("/api/v1/voting/{vote}/questions/{other_question}")),
+            )
+            .json(json!({ "question_text": "moved" }))
+            .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+    let resp = ctx
+        .app
+        .execute(
+            send(
+                ctx.app
+                    .delete(&format!("/api/v1/voting/{vote}/questions/{other_question}")),
+            )
+            .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+    let resp = ctx
+        .app
+        .execute(
+            send(ctx.app.post(&format!(
+                "/api/v1/voting/{vote}/comments/{other_comment}/hide"
+            )))
+            .json(json!({ "reason": "x" }))
+            .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+}
+
 /// A resident (here: a tenant member) may read and cast, but must not manage
 /// votes. Before the role check any org member could create and publish one.
 #[sqlx::test(migrator = "db::MIGRATOR")]

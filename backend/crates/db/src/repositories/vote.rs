@@ -213,6 +213,61 @@ impl VoteRepository {
         Ok(vote)
     }
 
+    /// Find a vote by id, scoped to `organization_id` (explicit org check, not
+    /// reliant on RLS). A vote from another org resolves to `None` (route 404).
+    ///
+    /// `organization_id` comes before the executor so callers can pass
+    /// `rls.tenant_id()` and `&mut **rls.conn()` in one call.
+    pub async fn find_poll_by_id_for_org<'e, E>(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+        executor: E,
+    ) -> Result<Option<Vote>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, Vote>(
+            r#"
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes WHERE id = $1 AND organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(organization_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Whether question `question_id` belongs to vote `vote_id`.
+    pub async fn question_belongs_to_vote(
+        &self,
+        question_id: Uuid,
+        vote_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM vote_questions WHERE id = $1 AND vote_id = $2)",
+        )
+        .bind(question_id)
+        .bind(vote_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether comment `comment_id` belongs to vote `vote_id`.
+    pub async fn comment_belongs_to_vote(
+        &self,
+        comment_id: Uuid,
+        vote_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM vote_comments WHERE id = $1 AND vote_id = $2)",
+        )
+        .bind(comment_id)
+        .bind(vote_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Cast a vote with RLS context (Story 5.3).
     ///
     /// Use this method with an `RlsConnection` to ensure RLS policies are enforced.
@@ -374,6 +429,7 @@ impl VoteRepository {
         &self,
         executor: E,
         building_id: Uuid,
+        organization_id: Uuid,
     ) -> Result<Vec<VoteSummary>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -381,13 +437,15 @@ impl VoteRepository {
         let votes = sqlx::query_as::<_, VoteSummary>(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
-            WHERE building_id = $1
+            WHERE building_id = $1 AND organization_id = $2
             ORDER BY created_at DESC
             "#,
         )
         .bind(building_id)
+        .bind(organization_id)
         .fetch_all(executor)
         .await?;
 
@@ -519,7 +577,7 @@ impl VoteRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
+        let result = result.map(|row| {
             let vote = Vote {
                 id: row.id,
                 organization_id: row.organization_id,
@@ -554,8 +612,11 @@ impl VoteRepository {
                 question_count: row.question_count,
                 response_count: row.response_count,
                 comment_count: row.comment_count,
+                questions: Vec::new(),
             }
-        }))
+        });
+
+        self.attach_questions(result).await
     }
 
     /// Find vote with full details, scoped to a single organization.
@@ -595,7 +656,7 @@ impl VoteRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
+        let result = result.map(|row| {
             let vote = Vote {
                 id: row.id,
                 organization_id: row.organization_id,
@@ -630,8 +691,25 @@ impl VoteRepository {
                 question_count: row.question_count,
                 response_count: row.response_count,
                 comment_count: row.comment_count,
+                questions: Vec::new(),
             }
-        }))
+        });
+
+        self.attach_questions(result).await
+    }
+
+    /// Fill `questions` on a fetched vote detail (no-op for `None`).
+    async fn attach_questions(
+        &self,
+        details: Option<VoteWithDetails>,
+    ) -> Result<Option<VoteWithDetails>, SqlxError> {
+        match details {
+            Some(mut d) => {
+                d.questions = self.get_questions(d.vote.id).await?;
+                Ok(Some(d))
+            }
+            None => Ok(None),
+        }
     }
 
     /// List votes with filters.
@@ -672,7 +750,8 @@ impl VoteRepository {
         let sql = format!(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
             WHERE {}
             ORDER BY created_at DESC
@@ -720,7 +799,8 @@ impl VoteRepository {
         let votes = sqlx::query_as::<_, VoteSummary>(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
             WHERE building_id = $1 AND status = 'active'
             ORDER BY end_at ASC

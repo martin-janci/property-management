@@ -703,7 +703,8 @@ impl<'a> SeedFactories<'a> {
                 start_at, end_at,
                 status, quorum_type,
                 allow_delegation, anonymous_voting,
-                created_by, published_by, published_at
+                created_by, published_by, published_at,
+                eligible_count
             )
             VALUES (
                 $1, $2,
@@ -711,7 +712,18 @@ impl<'a> SeedFactories<'a> {
                 $5, $6,
                 $7::vote_status, $8::quorum_type,
                 TRUE, FALSE,
-                $9, $10, $11
+                $9, $10, $11,
+                -- Snapshot eligible voters the way VoteRepository::publish does
+                -- (count_eligible_units): units with a current owner. Drafts
+                -- stay 0 until published. Residents are seeded before votes.
+                CASE WHEN $11::timestamptz IS NULL THEN 0 ELSE (
+                    SELECT COUNT(DISTINCT u.id)::int
+                    FROM units u
+                    JOIN unit_residents ur ON u.id = ur.unit_id
+                    WHERE u.building_id = $2
+                      AND ur.resident_type = 'owner'
+                      AND ur.end_date IS NULL
+                ) END
             )
             RETURNING id
             "#,
@@ -735,9 +747,11 @@ impl<'a> SeedFactories<'a> {
 
     /// Create a question for a vote.
     ///
-    /// For "yes_no" questions, options are empty (yes/no is implied).
     /// Options for "single_choice" questions are passed in from the seed data.
-    /// For "yes_no" questions pass an empty slice.
+    /// For "yes_no" questions pass an empty slice: they get the Yes/No pair
+    /// ("Áno"/"Nie", in that order), because results tallying maps a `true`
+    /// answer to option 0 and `false` to option 1. With no options the
+    /// results of a seeded yes/no question showed no counts at all.
     ///
     /// Returns the question's UUID.
     pub async fn create_vote_question(
@@ -748,6 +762,11 @@ impl<'a> SeedFactories<'a> {
         display_order: i32,
         option_texts: &[&str],
     ) -> Result<Uuid, sqlx::Error> {
+        let option_texts: &[&str] = if question_type == "yes_no" && option_texts.is_empty() {
+            &["Áno", "Nie"]
+        } else {
+            option_texts
+        };
         let options = serde_json::Value::Array(
             option_texts
                 .iter()

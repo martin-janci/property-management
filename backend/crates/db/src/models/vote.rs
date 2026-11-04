@@ -133,6 +133,8 @@ pub struct VoteSummary {
     pub participation_count: Option<i32>,
     pub eligible_count: Option<i32>,
     pub quorum_met: Option<bool>,
+    /// Number of ballot questions (counted in SQL; VoteCard shows it).
+    pub question_count: i64,
 }
 
 /// Vote with additional details.
@@ -145,6 +147,11 @@ pub struct VoteWithDetails {
     pub question_count: i64,
     pub response_count: i64,
     pub comment_count: i64,
+    /// The vote's questions (with their options), ordered by `display_order`.
+    /// The ballot UI renders straight from the detail response, so it must
+    /// not need a second round-trip to `GET /voting/{id}/questions`.
+    #[serde(default)]
+    pub questions: Vec<VoteQuestion>,
 }
 
 /// Data for creating a vote.
