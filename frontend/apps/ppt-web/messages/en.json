@@ -3443,7 +3443,10 @@
       "overlay": "Overlay",
       "sideBySide": "Side by Side",
       "selectToCompare": "Select meters and click Compare to view data",
-      "exportData": "Export Data"
+      "exportData": "Export Data",
+      "noData": "No consumption data for the selected meters in this period",
+      "loadFailedTitle": "Comparison failed",
+      "loadFailed": "Could not load consumption for one or more meters"
     },
     "tips": {
       "title": "Tips for Accurate Readings",
@@ -4683,7 +4686,25 @@
         "overdue": "Overdue",
         "partial": "Partial",
         "waived": "Waived"
-      }
+      },
+      "recordModal": {
+        "title": "Record payment",
+        "dueOn": "Scheduled payment due on {{date}}",
+        "amount": "Amount paid",
+        "amountInvalid": "Enter an amount greater than zero",
+        "method": "Payment method",
+        "referencePlaceholder": "e.g. variable symbol or transaction ID"
+      },
+      "methods": {
+        "bank_transfer": "Bank transfer",
+        "cash": "Cash",
+        "credit_card": "Credit card",
+        "debit_card": "Debit card",
+        "check": "Cheque",
+        "other": "Other"
+      },
+      "recorded": "Payment recorded",
+      "recordFailed": "Could not record payment"
     },
     "applications": {
       "title": "Tenant Applications",
@@ -4758,7 +4779,12 @@
         "pending": "Pending Review",
         "approved": "Approved",
         "rejected": "Rejected"
-      }
+      },
+      "screeningStarted": "Tenant screening requested",
+      "screeningFailed": "Could not start tenant screening",
+      "approved": "Application approved",
+      "rejected": "Application rejected",
+      "reviewFailed": "Could not save the review"
     },
     "templates": {
       "title": "Lease Templates",
@@ -4791,7 +4817,13 @@
       "errors": {
         "nameRequired": "Template name is required",
         "contentRequired": "Lease content is required"
-      }
+      },
+      "created": "Template created",
+      "createFailed": "Could not create template",
+      "updated": "Template updated",
+      "updateFailed": "Could not update template",
+      "activated": "Template activated",
+      "deactivated": "Template deactivated"
     },
     "violations": {
       "title": "Lease Violations",
@@ -4897,7 +4929,14 @@
           "dateRequired": "Please provide the date of the violation",
           "dateInFuture": "Violation date cannot be in the future"
         }
-      }
+      },
+      "resolved": "Violation resolved",
+      "resolveFailed": "Could not resolve violation",
+      "disputed": "Dispute submitted",
+      "disputeFailed": "Could not submit dispute",
+      "evidenceUploaded": "Evidence uploaded",
+      "evidenceUploadFailed": "Could not upload evidence",
+      "uploadingEvidence": "Uploading…"
     },
     "esign": {
       "requestSignature": "Request Signature",

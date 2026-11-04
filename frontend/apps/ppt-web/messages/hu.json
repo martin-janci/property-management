@@ -340,5 +340,69 @@
         "actualFailed": "A kiadást nem sikerült rögzíteni"
       }
     }
+  },
+  "leases": {
+    "created": "Bérleti szerződés létrehozva",
+    "createFailed": "Nem sikerült létrehozni a bérleti szerződést",
+    "violationRecorded": "Szabálysértés rögzítve",
+    "violationCreateFailed": "Nem sikerült rögzíteni a szabálysértést",
+    "payments": {
+      "recordModal": {
+        "title": "Befizetés rögzítése",
+        "dueOn": "Esedékes ütemezett befizetés: {{date}}",
+        "amount": "Befizetett összeg",
+        "amountInvalid": "Adjon meg nullánál nagyobb összeget",
+        "method": "Fizetési mód",
+        "referencePlaceholder": "pl. közlemény vagy tranzakcióazonosító"
+      },
+      "methods": {
+        "bank_transfer": "Banki átutalás",
+        "cash": "Készpénz",
+        "credit_card": "Hitelkártya",
+        "debit_card": "Bankkártya",
+        "check": "Csekk",
+        "other": "Egyéb"
+      },
+      "recorded": "A befizetés rögzítve",
+      "recordFailed": "A befizetést nem sikerült rögzíteni"
+    },
+    "templates": {
+      "created": "Sablon létrehozva",
+      "createFailed": "A sablont nem sikerült létrehozni",
+      "updated": "Sablon frissítve",
+      "updateFailed": "A sablont nem sikerült frissíteni",
+      "activated": "Sablon aktiválva",
+      "deactivated": "Sablon inaktiválva"
+    },
+    "applications": {
+      "screeningStarted": "Bérlőellenőrzés elindítva",
+      "screeningFailed": "A bérlőellenőrzést nem sikerült elindítani",
+      "approved": "Jelentkezés jóváhagyva",
+      "rejected": "Jelentkezés elutasítva",
+      "reviewFailed": "Az elbírálást nem sikerült menteni"
+    },
+    "violations": {
+      "resolved": "Szabálysértés lezárva",
+      "resolveFailed": "A szabálysértést nem sikerült lezárni",
+      "disputed": "Kifogás benyújtva",
+      "disputeFailed": "A kifogást nem sikerült benyújtani",
+      "evidenceUploaded": "Bizonyítékok feltöltve",
+      "evidenceUploadFailed": "A bizonyítékokat nem sikerült feltölteni",
+      "uploadingEvidence": "Feltöltés…"
+    }
+  },
+  "meters": {
+    "readingSubmitted": "Leolvasás elküldve",
+    "submitFailed": "Nem sikerült elküldeni a leolvasást",
+    "correctionSubmitted": "Leolvasás-javítás elküldve",
+    "updateFailed": "Nem sikerült frissíteni a leolvasást",
+    "readingValidated": "Leolvasás jóváhagyva",
+    "validationFailedTitle": "A jóváhagyás sikertelen",
+    "validationFailed": "Nem sikerült jóváhagyni a leolvasást",
+    "comparison": {
+      "noData": "A kiválasztott mérőkhöz nincs fogyasztási adat ebben az időszakban",
+      "loadFailedTitle": "Az összehasonlítás sikertelen",
+      "loadFailed": "Egy vagy több mérő fogyasztását nem sikerült betölteni"
+    }
   }
 }

@@ -16,6 +16,8 @@ interface ViolationDetailPageProps {
   onResolve: (id: string, notes: string) => void;
   onDispute: (id: string, reason: string) => void;
   onUploadEvidence: (id: string, files: FileList) => void;
+  /** True while evidence files are uploading — disables the upload control. */
+  isUploadingEvidence?: boolean;
 }
 
 type TabType = 'details' | 'evidence' | 'timeline';
@@ -43,6 +45,7 @@ export function ViolationDetailPage({
   onResolve,
   onDispute,
   onUploadEvidence,
+  isUploadingEvidence,
 }: ViolationDetailPageProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('details');
@@ -369,7 +372,12 @@ export function ViolationDetailPage({
                 <h3 className="text-lg font-medium text-gray-900">
                   {t('leases.violations.evidenceDocumentation')}
                 </h3>
-                <label className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md cursor-pointer">
+                <label
+                  className={`px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md ${
+                    isUploadingEvidence ? 'opacity-50 cursor-wait' : 'cursor-pointer'
+                  }`}
+                  aria-busy={isUploadingEvidence || undefined}
+                >
                   <span className="flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -379,10 +387,13 @@ export function ViolationDetailPage({
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                       />
                     </svg>
-                    {t('leases.violations.uploadEvidence')}
+                    {isUploadingEvidence
+                      ? t('leases.violations.uploadingEvidence')
+                      : t('leases.violations.uploadEvidence')}
                   </span>
                   <input
                     type="file"
+                    disabled={isUploadingEvidence}
                     multiple
                     accept="image/*,.pdf,.doc,.docx"
                     onChange={handleFileChange}
@@ -437,26 +448,28 @@ export function ViolationDetailPage({
                             </p>
                           </div>
                         </div>
-                        <a
-                          href={evidence.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        {evidence.fileUrl && (
+                          <a
+                            href={evidence.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                            />
-                          </svg>
-                        </a>
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                          </a>
+                        )}
                       </div>
                       {evidence.description && (
                         <p className="text-sm text-gray-600 mt-2">{evidence.description}</p>

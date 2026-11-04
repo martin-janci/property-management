@@ -13,8 +13,15 @@ interface TemplatesPageProps {
   isSubmitting?: boolean;
   onCreateTemplate: (data: CreateTemplateData) => void;
   onUpdateTemplate: (id: string, data: Partial<CreateTemplateData>) => void;
-  onDeleteTemplate: (id: string) => void;
+  /** Omit to hide the Delete control (the API has no template delete endpoint). */
+  onDeleteTemplate?: (id: string) => void;
   onToggleActive: (id: string, isActive: boolean) => void;
+  /**
+   * Show the default rent / currency inputs. The lease template API does not
+   * persist these, so the live route hides them rather than silently dropping
+   * what the user typed.
+   */
+  showRentDefaults?: boolean;
 }
 
 interface TemplateFormData {
@@ -38,6 +45,7 @@ export function TemplatesPage({
   onUpdateTemplate,
   onDeleteTemplate,
   onToggleActive,
+  showRentDefaults = true,
 }: TemplatesPageProps) {
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
@@ -248,45 +256,49 @@ export function TemplatesPage({
 
             {/* Defaults Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label
-                  htmlFor="defaultRentAmount"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {t('leases.templates.form.defaultRent')}
-                </label>
-                <input
-                  type="number"
-                  id="defaultRentAmount"
-                  name="defaultRentAmount"
-                  value={formData.defaultRentAmount}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="defaultCurrency"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {t('leases.templates.form.currency')}
-                </label>
-                <select
-                  id="defaultCurrency"
-                  name="defaultCurrency"
-                  value={formData.defaultCurrency}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {CURRENCIES.map((currency) => (
-                    <option key={currency} value={currency}>
-                      {currency}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {showRentDefaults && (
+                <>
+                  <div>
+                    <label
+                      htmlFor="defaultRentAmount"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      {t('leases.templates.form.defaultRent')}
+                    </label>
+                    <input
+                      type="number"
+                      id="defaultRentAmount"
+                      name="defaultRentAmount"
+                      value={formData.defaultRentAmount}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="defaultCurrency"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      {t('leases.templates.form.currency')}
+                    </label>
+                    <select
+                      id="defaultCurrency"
+                      name="defaultCurrency"
+                      value={formData.defaultCurrency}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {CURRENCIES.map((currency) => (
+                        <option key={currency} value={currency}>
+                          {currency}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
               <div>
                 <label
                   htmlFor="defaultDepositMonths"
@@ -448,13 +460,15 @@ export function TemplatesPage({
                   >
                     {t('common.edit')}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteTemplate(template.id)}
-                    className="text-sm text-red-600 hover:text-red-800"
-                  >
-                    {t('common.delete')}
-                  </button>
+                  {onDeleteTemplate && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteTemplate(template.id)}
+                      className="text-sm text-red-600 hover:text-red-800"
+                    >
+                      {t('common.delete')}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

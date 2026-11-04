@@ -1349,7 +1349,25 @@
         "overdue": "Po splatnosti",
         "partial": "Částečná",
         "waived": "Prominutá"
-      }
+      },
+      "recordModal": {
+        "title": "Zaznamenat platbu",
+        "dueOn": "Plánovaná platba splatná {{date}}",
+        "amount": "Zaplacená částka",
+        "amountInvalid": "Zadejte částku větší než nula",
+        "method": "Způsob platby",
+        "referencePlaceholder": "např. variabilní symbol nebo ID transakce"
+      },
+      "methods": {
+        "bank_transfer": "Bankovní převod",
+        "cash": "Hotovost",
+        "credit_card": "Kreditní karta",
+        "debit_card": "Debetní karta",
+        "check": "Šek",
+        "other": "Jiné"
+      },
+      "recorded": "Platba byla zaznamenána",
+      "recordFailed": "Platbu se nepodařilo zaznamenat"
     },
     "applications": {
       "title": "Žádosti nájemníků",
@@ -1424,7 +1442,12 @@
         "pending": "Čekají na posouzení",
         "approved": "Schválené",
         "rejected": "Zamítnuté"
-      }
+      },
+      "screeningStarted": "Prověření nájemce bylo vyžádáno",
+      "screeningFailed": "Prověření nájemce se nepodařilo spustit",
+      "approved": "Žádost byla schválena",
+      "rejected": "Žádost byla zamítnuta",
+      "reviewFailed": "Posouzení žádosti se nepodařilo uložit"
     },
     "templates": {
       "title": "Šablony nájemních smluv",
@@ -1457,7 +1480,13 @@
       "errors": {
         "nameRequired": "Název šablony je povinný",
         "contentRequired": "Obsah smlouvy je povinný"
-      }
+      },
+      "created": "Šablona byla vytvořena",
+      "createFailed": "Šablonu se nepodařilo vytvořit",
+      "updated": "Šablona byla aktualizována",
+      "updateFailed": "Šablonu se nepodařilo aktualizovat",
+      "activated": "Šablona byla aktivována",
+      "deactivated": "Šablona byla deaktivována"
     },
     "violations": {
       "title": "Porušení nájemních smluv",
@@ -1563,7 +1592,14 @@
           "dateRequired": "Zadejte datum porušení",
           "dateInFuture": "Datum porušení nemůže být v budoucnosti"
         }
-      }
+      },
+      "resolved": "Porušení bylo vyřešeno",
+      "resolveFailed": "Porušení se nepodařilo vyřešit",
+      "disputed": "Námitka byla podána",
+      "disputeFailed": "Námitku se nepodařilo podat",
+      "evidenceUploaded": "Důkazy byly nahrány",
+      "evidenceUploadFailed": "Důkazy se nepodařilo nahrát",
+      "uploadingEvidence": "Nahrává se…"
     }
   },
   "iot": {
@@ -1898,7 +1934,10 @@
       "overlay": "Překrytí",
       "sideBySide": "Vedle sebe",
       "selectToCompare": "Vyberte měřiče a kliknutím na Porovnat zobrazte údaje",
-      "exportData": "Exportovat údaje"
+      "exportData": "Exportovat údaje",
+      "noData": "Pro vybrané měřiče nejsou v tomto období žádné údaje o spotřebě",
+      "loadFailedTitle": "Porovnání selhalo",
+      "loadFailed": "Spotřebu jednoho nebo více měřičů se nepodařilo načíst"
     },
     "tips": {
       "title": "Tipy pro přesný odečet",

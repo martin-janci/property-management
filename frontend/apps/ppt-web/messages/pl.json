@@ -5288,7 +5288,51 @@
     "createFailed": "Nie udało się utworzyć umowy najmu",
     "violationRecorded": "Naruszenie zarejestrowane",
     "violationCreateFailed": "Nie udało się zarejestrować naruszenia",
-    "daysShort": "{{count}} d."
+    "daysShort": "{{count}} d.",
+    "payments": {
+      "recordModal": {
+        "title": "Zarejestruj płatność",
+        "dueOn": "Zaplanowana płatność z terminem {{date}}",
+        "amount": "Zapłacona kwota",
+        "amountInvalid": "Wpisz kwotę większą od zera",
+        "method": "Metoda płatności",
+        "referencePlaceholder": "np. tytuł przelewu lub ID transakcji"
+      },
+      "methods": {
+        "bank_transfer": "Przelew bankowy",
+        "cash": "Gotówka",
+        "credit_card": "Karta kredytowa",
+        "debit_card": "Karta debetowa",
+        "check": "Czek",
+        "other": "Inne"
+      },
+      "recorded": "Płatność została zarejestrowana",
+      "recordFailed": "Nie udało się zarejestrować płatności"
+    },
+    "templates": {
+      "created": "Szablon został utworzony",
+      "createFailed": "Nie udało się utworzyć szablonu",
+      "updated": "Szablon został zaktualizowany",
+      "updateFailed": "Nie udało się zaktualizować szablonu",
+      "activated": "Szablon został aktywowany",
+      "deactivated": "Szablon został dezaktywowany"
+    },
+    "applications": {
+      "screeningStarted": "Zlecono weryfikację najemcy",
+      "screeningFailed": "Nie udało się rozpocząć weryfikacji najemcy",
+      "approved": "Wniosek został zatwierdzony",
+      "rejected": "Wniosek został odrzucony",
+      "reviewFailed": "Nie udało się zapisać oceny wniosku"
+    },
+    "violations": {
+      "resolved": "Naruszenie zostało rozwiązane",
+      "resolveFailed": "Nie udało się rozwiązać naruszenia",
+      "disputed": "Sprzeciw został złożony",
+      "disputeFailed": "Nie udało się złożyć sprzeciwu",
+      "evidenceUploaded": "Dowody zostały przesłane",
+      "evidenceUploadFailed": "Nie udało się przesłać dowodów",
+      "uploadingEvidence": "Przesyłanie…"
+    }
   },
   "meters": {
     "readingSubmitted": "Odczyt przesłany",
@@ -5297,7 +5341,12 @@
     "updateFailed": "Nie udało się zaktualizować odczytu",
     "readingValidated": "Odczyt zweryfikowany",
     "validationFailedTitle": "Weryfikacja nie powiodła się",
-    "validationFailed": "Nie udało się zweryfikować odczytu"
+    "validationFailed": "Nie udało się zweryfikować odczytu",
+    "comparison": {
+      "noData": "Brak danych o zużyciu dla wybranych liczników w tym okresie",
+      "loadFailedTitle": "Porównanie nie powiodło się",
+      "loadFailed": "Nie udało się wczytać zużycia dla co najmniej jednego licznika"
+    }
   },
   "personMonths": {
     "unitsUpdated": "Zaktualizowano jednostki: {{count}}",

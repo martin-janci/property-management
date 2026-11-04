@@ -1349,7 +1349,25 @@
         "overdue": "Po splatnosti",
         "partial": "Čiastočná",
         "waived": "Odpustená"
-      }
+      },
+      "recordModal": {
+        "title": "Zaznamenať platbu",
+        "dueOn": "Plánovaná platba splatná {{date}}",
+        "amount": "Zaplatená suma",
+        "amountInvalid": "Zadajte sumu väčšiu ako nula",
+        "method": "Spôsob platby",
+        "referencePlaceholder": "napr. variabilný symbol alebo ID transakcie"
+      },
+      "methods": {
+        "bank_transfer": "Bankový prevod",
+        "cash": "Hotovosť",
+        "credit_card": "Kreditná karta",
+        "debit_card": "Debetná karta",
+        "check": "Šek",
+        "other": "Iné"
+      },
+      "recorded": "Platba bola zaznamenaná",
+      "recordFailed": "Platbu sa nepodarilo zaznamenať"
     },
     "applications": {
       "title": "Žiadosti nájomníkov",
@@ -1424,7 +1442,12 @@
         "pending": "Čakajú na posúdenie",
         "approved": "Schválené",
         "rejected": "Zamietnuté"
-      }
+      },
+      "screeningStarted": "Preverenie nájomníka bolo vyžiadané",
+      "screeningFailed": "Preverenie nájomníka sa nepodarilo spustiť",
+      "approved": "Žiadosť bola schválená",
+      "rejected": "Žiadosť bola zamietnutá",
+      "reviewFailed": "Posúdenie žiadosti sa nepodarilo uložiť"
     },
     "templates": {
       "title": "Šablóny nájomných zmlúv",
@@ -1457,7 +1480,13 @@
       "errors": {
         "nameRequired": "Názov šablóny je povinný",
         "contentRequired": "Obsah zmluvy je povinný"
-      }
+      },
+      "created": "Šablóna bola vytvorená",
+      "createFailed": "Šablónu sa nepodarilo vytvoriť",
+      "updated": "Šablóna bola aktualizovaná",
+      "updateFailed": "Šablónu sa nepodarilo aktualizovať",
+      "activated": "Šablóna bola aktivovaná",
+      "deactivated": "Šablóna bola deaktivovaná"
     },
     "violations": {
       "title": "Porušenia nájomných zmlúv",
@@ -1563,7 +1592,14 @@
           "dateRequired": "Zadajte dátum porušenia",
           "dateInFuture": "Dátum porušenia nemôže byť v budúcnosti"
         }
-      }
+      },
+      "resolved": "Porušenie bolo vyriešené",
+      "resolveFailed": "Porušenie sa nepodarilo vyriešiť",
+      "disputed": "Námietka bola podaná",
+      "disputeFailed": "Námietku sa nepodarilo podať",
+      "evidenceUploaded": "Dôkazy boli nahrané",
+      "evidenceUploadFailed": "Dôkazy sa nepodarilo nahrať",
+      "uploadingEvidence": "Nahráva sa…"
     }
   },
   "iot": {
@@ -1898,7 +1934,10 @@
       "overlay": "Prekrytie",
       "sideBySide": "Vedľa seba",
       "selectToCompare": "Vyberte merače a kliknutím na Porovnať zobrazte údaje",
-      "exportData": "Exportovať údaje"
+      "exportData": "Exportovať údaje",
+      "noData": "Pre vybrané merače nie sú v tomto období žiadne údaje o spotrebe",
+      "loadFailedTitle": "Porovnanie zlyhalo",
+      "loadFailed": "Spotrebu jedného alebo viacerých meračov sa nepodarilo načítať"
     },
     "tips": {
       "title": "Tipy na presný odpočet",
