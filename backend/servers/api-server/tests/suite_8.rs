@@ -65,5 +65,7 @@ mod voting_tests;
 mod work_order_cross_org_idor_tests;
 #[path = "suites/work_orders_happy_path_tests.rs"]
 mod work_orders_happy_path_tests;
+#[path = "suites/work_orders_round4_role_tests.rs"]
+mod work_orders_round4_role_tests;
 #[path = "suites/workflow_cross_tenant_idor_tests.rs"]
 mod workflow_cross_tenant_idor_tests;
