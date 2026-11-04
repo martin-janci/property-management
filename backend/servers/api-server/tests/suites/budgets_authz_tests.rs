@@ -9,7 +9,8 @@
 //!   role is a superuser, so RLS does not apply here — these assertions
 //!   exercise the explicit handler checks;
 //! * budget lines change only in `draft`, actuals only in `active` (400);
-//! * the creator cannot approve their own budget (403);
+//! * the creator cannot approve their own budget (403) unless they are the
+//!   org's only active manager-level member;
 //! * an unknown / foreign `category_id` is a 400, not a 500.
 
 use axum::http::StatusCode;
@@ -479,7 +480,7 @@ async fn status_machine_and_self_approval_are_enforced(pool: PgPool) {
     .await;
     assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
 
-    // Creator cannot approve their own budget.
+    // Creator cannot approve their own budget while another manager exists.
     let resp = post_empty(
         &app,
         &author,
@@ -564,4 +565,47 @@ async fn status_machine_and_self_approval_are_enforced(pool: PgPool) {
             .await
             .expect("count actuals");
     assert_eq!(actuals, 1);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn sole_manager_can_approve_own_budget(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&app.pool, "budauthz-sole").await;
+    let author = member(&app, org_id, "manager").await;
+    // Non-manager members and inactive managers do not count as approvers.
+    let _resident = member(&app, org_id, "resident").await;
+    let former = member(&app, org_id, "org_admin").await;
+    sqlx::query(
+        "UPDATE organization_members SET status = 'suspended' \
+         WHERE organization_id = $1 AND user_id = $2",
+    )
+    .bind(org_id)
+    .bind(former.id)
+    .execute(&app.pool)
+    .await
+    .expect("suspend former manager");
+    // A manager of another org does not count either.
+    let other_org = seed_org(&app.pool, "budauthz-sole-other").await;
+    let _outsider = member(&app, other_org, "manager").await;
+    let q = format!("organization_id={org_id}");
+
+    let budget_id = create_budget(&app, &author, org_id, 2026).await;
+    let resp = post_empty(
+        &app,
+        &author,
+        org_id,
+        &format!("/api/v1/budgets/{budget_id}/submit?{q}"),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let resp = post_empty(
+        &app,
+        &author,
+        org_id,
+        &format!("/api/v1/budgets/{budget_id}/approve?{q}"),
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    assert_eq!(resp.json_value()["approved_by"], json!(author.id));
+    assert_eq!(resp.json_value()["status"], json!("approved"));
 }

@@ -637,14 +637,34 @@ async fn approve_budget(
 ) -> impl IntoResponse {
     guard!(rls, require_manager_in_org(&rls, query.organization_id));
     let budget = guard!(rls, load_budget(&state, &mut rls, id).await);
-    // Separation of duties: the author of a budget cannot be its approver.
+    // Separation of duties: the author of a budget cannot be its approver,
+    // unless they are the organization's only active manager-level member
+    // (otherwise a single-manager org could never approve a budget).
     if budget.created_by == auth.user_id {
-        rls.release().await;
-        return error_response(
-            StatusCode::FORBIDDEN,
-            "FORBIDDEN",
-            "A budget cannot be approved by the user who created it",
-        );
+        match state
+            .org_member_repo
+            .count_other_active_managers(budget.organization_id, auth.user_id)
+            .await
+        {
+            Ok(0) => {}
+            Ok(_) => {
+                rls.release().await;
+                return error_response(
+                    StatusCode::FORBIDDEN,
+                    "FORBIDDEN",
+                    "A budget cannot be approved by the user who created it",
+                );
+            }
+            Err(e) => {
+                tracing::error!("Failed to count organization managers: {:?}", e);
+                rls.release().await;
+                return error_response(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "DB_ERROR",
+                    "Database error",
+                );
+            }
+        }
     }
     match state
         .budget_repo
