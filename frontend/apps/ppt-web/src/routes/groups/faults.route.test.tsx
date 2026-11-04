@@ -24,11 +24,8 @@ import { MemoryRouter, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── i18n ──
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key,
-  }),
-}));
+// react-i18next is NOT mocked: the global test setup initialises i18next with
+// the full English bundle, so components render their real English copy.
 
 // ── toast ──
 const mockShowToast = vi.fn();
@@ -229,9 +226,8 @@ describe('FaultsPageRoute API wiring (gap-79-1)', () => {
     renderFaultsRoute();
 
     // The stats bar is rendered as a div whose aria-label reads from i18n
-    // (t('aria.faultStatistics')). This suite mocks react-i18next so t()
-    // echoes the key, so locate the container by that resolved key.
-    const statsBar = await screen.findByLabelText('aria.faultStatistics', {}, { timeout: 5000 });
+    // (t('aria.faultStatistics')), resolved from the English test bundle.
+    const statsBar = await screen.findByLabelText('Fault statistics', {}, { timeout: 5000 });
     expect(statsBar).toBeInTheDocument();
     expect(statsBar).toHaveTextContent('42');
     expect(statsBar).toHaveTextContent('30');

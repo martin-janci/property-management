@@ -772,7 +772,83 @@
     "reported": "Fault reported",
     "reportFailed": "Failed to report fault",
     "updated": "Fault updated",
-    "updateFailed": "Failed to update fault"
+    "updateFailed": "Failed to update fault",
+    "allStatuses": "All statuses",
+    "allPriorities": "All priorities",
+    "allCategories": "All categories",
+    "searchPlaceholder": "Search faults...",
+    "noFaultsFound": "No faults found.",
+    "paginationSummary": "Showing {{from}} to {{to}} of {{total}} faults",
+    "reportedDate": "Reported: {{date}}",
+    "timeline": {
+      "title": "Timeline",
+      "empty": "No timeline entries.",
+      "internal": "Internal",
+      "action": {
+        "created": "Reported fault",
+        "triaged": "Triaged fault",
+        "assigned": "Assigned fault",
+        "status_changed": "Changed status",
+        "priority_changed": "Changed priority",
+        "work_note": "Added work note",
+        "comment": "Added comment",
+        "attachment_added": "Added attachment",
+        "scheduled": "Scheduled work",
+        "resolved": "Resolved fault",
+        "confirmed": "Confirmed resolution",
+        "reopened": "Reopened fault",
+        "rated": "Rated resolution"
+      }
+    },
+    "edit": {
+      "backToFault": "Back to Fault",
+      "title": "Edit Fault",
+      "subtitle": "Update the fault details. Note: editing is only available before the fault is triaged."
+    },
+    "triageDialog": {
+      "title": "Triage Fault",
+      "submit": "Triage Fault",
+      "aiSuggests": "AI suggests: <strong>{{category}}</strong>",
+      "aiSuggestsWithPriority": "AI suggests: <strong>{{category}}</strong> with <strong>{{priority}}</strong> priority",
+      "aiConfidence": "({{percent}}% confidence)",
+      "priorityHint": {
+        "low": "Minor issue, no urgency",
+        "medium": "Standard priority",
+        "high": "Needs prompt attention",
+        "urgent": "Immediate action required"
+      },
+      "assignTo": "Assign to (optional)",
+      "unassigned": "Unassigned"
+    },
+    "viewReports": "View reports",
+    "statsTotal": "Total",
+    "createDescription": "Describe the issue you're experiencing. Include as much detail as possible to help us resolve it quickly.",
+    "reports": {
+      "title": "Fault Reports",
+      "subtitle": "Fault analytics across buildings and time.",
+      "forbidden": "You do not have permission to view fault reports.",
+      "allBuildings": "All buildings",
+      "building": "Building",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "exportCsv": "Export CSV",
+      "exportPdf": "Export PDF",
+      "failedToLoad": "Failed to load fault statistics",
+      "empty": "No faults match the selected filters.",
+      "kpiTotal": "Total faults",
+      "kpiOpen": "Open",
+      "kpiClosed": "Closed",
+      "kpiResolution": "Avg resolution (h)",
+      "kpiRating": "Avg rating",
+      "byStatus": "By status",
+      "byCategory": "By category",
+      "byPriority": "By priority",
+      "noData": "No data available",
+      "viewFaultsInBucket": "{{label}}. View these faults"
+    },
+    "confirmDelete": "Delete this fault? This action cannot be undone.",
+    "deleted": "Fault deleted",
+    "deleteFailed": "Failed to delete fault"
   },
   "buildings": {
     "title": "Buildings",
@@ -1777,6 +1853,34 @@
       "failedToCreate": "Failed to create emergency contact",
       "failedToUpdate": "Failed to update emergency contact",
       "failedToDelete": "Failed to delete emergency contact"
+    },
+    "contactTypes": {
+      "fire_department": "Fire Department",
+      "police": "Police",
+      "ambulance": "Ambulance",
+      "utility_company": "Utility Company",
+      "building_manager": "Building Manager",
+      "security": "Security",
+      "maintenance": "Maintenance",
+      "medical": "Medical",
+      "other": "Other"
+    },
+    "card": {
+      "inactive": "Inactive",
+      "role": "Role:",
+      "phone": "Phone:",
+      "phoneSecondary": "Secondary Phone:",
+      "email": "Email:",
+      "address": "Address:",
+      "availableHours": "Available Hours:",
+      "notes": "Notes:",
+      "priority": "Priority:",
+      "editAria": "Edit {{name}}",
+      "deleteAria": "Delete {{name}}"
+    },
+    "list": {
+      "empty": "No emergency contacts found.",
+      "emptyHint": "Add your first emergency contact to get started."
     }
   },
   "news": {
@@ -1801,7 +1905,73 @@
       "contentRequired": "Content is required",
       "createFailed": "Failed to create article",
       "updateFailed": "Failed to update article",
-      "loadFailed": "Failed to load article"
+      "loadFailed": "Failed to load article",
+      "loadListFailed": "Failed to load articles",
+      "deleteFailed": "Failed to delete article",
+      "publishFailed": "Failed to publish article",
+      "archiveFailed": "Failed to archive article",
+      "pinFailed": "Failed to update pin status",
+      "reactionFailed": "Failed to update reaction",
+      "commentPostFailed": "Failed to post comment",
+      "commentUpdateFailed": "Failed to update comment",
+      "commentDeleteFailed": "Failed to delete comment"
+    },
+    "listTitle": "News & Announcements",
+    "searchPlaceholder": "Search articles...",
+    "filters": {
+      "allStatuses": "All statuses",
+      "drafts": "Drafts",
+      "pinnedOnly": "Pinned only"
+    },
+    "loadingArticles": "Loading articles...",
+    "loadingArticle": "Loading article...",
+    "emptyFiltered": "No articles match your filters.",
+    "empty": "No articles yet. Create your first article!",
+    "confirmDelete": "Are you sure you want to delete this article?",
+    "backToNews": "Back to News",
+    "pinned": "Pinned",
+    "views": "Views",
+    "viewCount_one": "{{count}} view",
+    "viewCount_other": "{{count}} views",
+    "coverAlt": "Cover for: {{title}}",
+    "statusAria": "Status: {{status}}",
+    "publishedOn": "Published: {{date}}",
+    "actions": {
+      "viewAria": "View article: {{title}}",
+      "editAria": "Edit article: {{title}}",
+      "publishAria": "Publish article: {{title}}",
+      "archiveAria": "Archive article: {{title}}",
+      "deleteAria": "Delete article: {{title}}",
+      "publish": "Publish",
+      "archive": "Archive",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinAria": "Pin article",
+      "unpinAria": "Unpin article"
+    },
+    "reactions": {
+      "like": "Like",
+      "love": "Love",
+      "surprised": "Surprised",
+      "sad": "Sad",
+      "angry": "Angry",
+      "aria": "{{reaction}} reaction",
+      "ariaActive": "{{reaction}} reaction (active)",
+      "total_one": "{{count}} reaction",
+      "total_other": "{{count}} reactions"
+    },
+    "comments": {
+      "title": "Comments ({{count}})",
+      "placeholder": "Write a comment...",
+      "replyPlaceholder": "Write a reply...",
+      "charCount": "{{length}}/{{max}} characters",
+      "post": "Post Comment",
+      "posting": "Posting...",
+      "reply": "Reply",
+      "deleted": "[This comment has been deleted]",
+      "empty": "No comments yet. Be the first to comment!",
+      "replyCount_one": "{{count}} reply",
+      "replyCount_other": "{{count}} replies"
     }
   },
   "errors": {
@@ -1909,6 +2079,30 @@
       },
       "rateLimitRetry": "Please wait {{seconds}} seconds before trying again."
     },
+    "pages": {
+      "goBack": "Go back",
+      "tryAgain": "Try again",
+      "backToDashboard": "Back to dashboard",
+      "notFound": {
+        "title": "Page not found",
+        "description": "The page you're looking for doesn't exist or has moved."
+      },
+      "forbidden": {
+        "title": "Access denied",
+        "description": "You don't have permission to view this page. Contact your manager if you think this is a mistake."
+      },
+      "serverError": {
+        "description": "An unexpected error occurred. Please try again in a moment."
+      },
+      "sessionExpired": {
+        "title": "Your session has expired",
+        "description": "Sign in again to continue. We'll bring you back to where you were.",
+        "signIn": "Sign in"
+      },
+      "inlineError": {
+        "description": "Please try again. If the issue persists, contact support."
+      }
+    },
     "accessDenied": "Access Denied",
     "backToDashboard": "Back to dashboard"
   },
@@ -1923,7 +2117,8 @@
     "highContrast": "High Contrast",
     "fontSize": "Font Size",
     "reducedMotion": "Reduced Motion",
-    "screenReader": "Screen Reader Optimized"
+    "screenReader": "Screen Reader Optimized",
+    "checkingAuthentication": "Checking authentication"
   },
   "outages": {
     "title": "Outages",
@@ -1981,7 +2176,10 @@
       "low": "Low",
       "medium": "Medium",
       "high": "High",
-      "critical": "Critical"
+      "critical": "Critical",
+      "informational": "Informational",
+      "minor": "Minor",
+      "major": "Major"
     },
     "form": {
       "title": "Title",
@@ -2003,7 +2201,10 @@
       "startRequired": "Scheduled start time is required",
       "outageNotFound": "Outage not found",
       "outageNotFoundDesc": "The outage you're looking for does not exist."
-    }
+    },
+    "failedToStart": "Failed to start outage",
+    "failedToResolve": "Failed to resolve outage",
+    "failedToCancel": "Failed to cancel outage"
   },
   "criticalNotifications": {
     "title": "Critical Notifications",
@@ -2113,7 +2314,9 @@
       "closeFilters": "Close filters",
       "showHelp": "Show this help",
       "hint": "Focus the action list to use these shortcuts"
-    }
+    },
+    "refresh": "Refresh",
+    "viewMyUnit": "View my unit"
   },
   "neighbors": {
     "title": "Building Neighbors",
@@ -3935,7 +4138,8 @@
     "created": "Lease created",
     "createFailed": "Could not create lease",
     "violationRecorded": "Violation recorded",
-    "violationCreateFailed": "Could not record violation"
+    "violationCreateFailed": "Could not record violation",
+    "daysShort": "{{count}}d"
   },
   "help": {
     "title": "Help Center",
@@ -4490,7 +4694,186 @@
       "updateError": "Failed to update preference. Please try again.",
       "disableError": "Failed to disable notifications. Please try again.",
       "dismiss": "Dismiss",
-      "lastUpdated": "Last updated: {{when}}"
+      "lastUpdated": "Last updated: {{when}}",
+      "disableAll": {
+        "title": "Disable All Notifications?",
+        "intro": "You are about to disable all notification channels. This means you will not receive any notifications about:",
+        "itemAnnouncements": "Important announcements from your property manager",
+        "itemFaults": "Updates on reported faults and maintenance",
+        "itemVoting": "Voting deadlines and results",
+        "itemMessages": "Direct messages from neighbors",
+        "warning": "You may miss critical information about your property.",
+        "confirm": "Disable All Notifications",
+        "keep": "Keep Notifications"
+      },
+      "toggleChannel": "Toggle {{channel}}",
+      "channels": {
+        "push": {
+          "label": "Push Notifications",
+          "description": "Receive notifications on your mobile device"
+        },
+        "email": {
+          "label": "Email Notifications",
+          "description": "Receive notifications via email"
+        },
+        "in_app": {
+          "label": "In-App Notifications",
+          "description": "See notifications within the application"
+        }
+      },
+      "advanced": {
+        "title": "Advanced Notification Settings",
+        "subtitle": "Fine-tune how and when you receive notifications.",
+        "perEventTriggers": "Per-event triggers",
+        "categoriesIntro": "Choose which types of notifications you want to receive and how.",
+        "tabs": {
+          "categories": "Categories",
+          "schedule": "Schedule",
+          "grouping": "Grouping"
+        },
+        "errors": {
+          "load": "Failed to load notification preferences. Please try again later.",
+          "category": "Failed to update category preference. Please try again.",
+          "quietHours": "Failed to update quiet hours. Please try again.",
+          "digest": "Failed to update digest preferences. Please try again.",
+          "grouping": "Failed to update grouping settings. Please try again."
+        },
+        "off": "Off",
+        "allOn": "All On",
+        "channelShort": {
+          "push": "Push",
+          "email": "Email",
+          "in_app": "In-App"
+        },
+        "channelAria": "{{channel}} notifications for {{category}}",
+        "enableChannelTitle": "Enable {{channel}} for {{category}}",
+        "disableChannelTitle": "Disable {{channel}} for {{category}}",
+        "categories": {
+          "faults": {
+            "label": "Fault Reports",
+            "description": "Updates on fault reports, repairs, and resolutions"
+          },
+          "voting": {
+            "label": "Voting & Decisions",
+            "description": "New votes, results, and voting reminders"
+          },
+          "announcements": {
+            "label": "Announcements",
+            "description": "Building announcements and news"
+          },
+          "documents": {
+            "label": "Documents",
+            "description": "New documents, signatures, and updates"
+          },
+          "messages": {
+            "label": "Messages",
+            "description": "Direct messages from neighbors and managers"
+          },
+          "community": {
+            "label": "Community",
+            "description": "Community posts, events, and marketplace activity"
+          },
+          "financial": {
+            "label": "Financial",
+            "description": "Payment reminders, invoices, and financial updates"
+          },
+          "maintenance": {
+            "label": "Maintenance",
+            "description": "Scheduled maintenance and work orders"
+          },
+          "system": {
+            "label": "System Updates",
+            "description": "App updates, security alerts, and system notifications"
+          }
+        },
+        "days": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "daysShort": {
+          "monday": "Mon",
+          "tuesday": "Tue",
+          "wednesday": "Wed",
+          "thursday": "Thu",
+          "friday": "Fri",
+          "saturday": "Sat",
+          "sunday": "Sun"
+        },
+        "digest": {
+          "title": "Notification Digest",
+          "subtitle": "Receive notification summaries instead of individual alerts",
+          "frequency": "Frequency",
+          "deliveryTime": "Delivery Time",
+          "deliveryDay": "Delivery Day",
+          "nextDelivery": "Next Delivery",
+          "nextDisabled": "Digests are disabled",
+          "nextHourly": "Every hour at :00",
+          "nextDaily": "Every day at {{time}}",
+          "nextWeekly": "Every {{day}} at {{time}}",
+          "include": "Include in Digest",
+          "allCategories": "All categories included (no filter applied)",
+          "categoriesSelected": "{{selected}} of {{total}} categories selected",
+          "frequencies": {
+            "hourly": {
+              "label": "Every Hour",
+              "description": "Receive a summary every hour with all new notifications"
+            },
+            "daily": {
+              "label": "Daily",
+              "description": "Receive a daily summary at your preferred time"
+            },
+            "weekly": {
+              "label": "Weekly",
+              "description": "Receive a weekly summary on your chosen day"
+            },
+            "disabled": {
+              "label": "Disabled",
+              "description": "Receive notifications immediately instead of in digests"
+            }
+          }
+        },
+        "quietHours": {
+          "title": "Quiet Hours",
+          "subtitle": "Silence non-emergency notifications during specific hours",
+          "startTime": "Start Time",
+          "endTime": "End Time",
+          "timeFormatHint": "Times are in 24-hour format (HH:MM) and use the timezone selected below.",
+          "preview": "Schedule Preview",
+          "previewRange": "Quiet from <strong>{{start}}</strong> to <strong>{{end}}</strong>",
+          "activeDays": "Active Days",
+          "dayActive": "{{day}} - active",
+          "dayInactive": "{{day}} - inactive",
+          "timezone": "Timezone",
+          "allowEmergency": "Allow Emergency Notifications",
+          "allowEmergencyHelp": "Critical alerts will still come through during quiet hours"
+        },
+        "grouping": {
+          "title": "Smart Grouping",
+          "subtitle": "Group similar notifications together to reduce clutter",
+          "byCategory": "Group by Category",
+          "byCategoryHelp": "Combine notifications of the same type (e.g., \"5 new fault updates\")",
+          "bySource": "Group by Source",
+          "bySourceHelp": "Combine notifications from the same building or issue",
+          "maxGroupSize": "Max Group Size",
+          "maxGroupSizeHelp": "Show \"and X more\" after this many",
+          "autoExpand": "Auto-Expand Threshold",
+          "autoExpandHelp": "Expand groups with fewer items",
+          "neverExpand": "Never auto-expand",
+          "preview": "Preview",
+          "clickToExpand": "Click to expand and see individual items",
+          "expandGroup": "Expand notification group",
+          "items_one": "{{count}} item",
+          "items_other": "{{count}} items",
+          "orFewer": "{{count}} or fewer",
+          "previewNewComments_one": "{{count}} new comment",
+          "previewNewComments_other": "{{count}} new comments"
+        }
+      }
     },
     "portalWebhooks": {
       "title": "Portal Webhooks",
@@ -4623,6 +5006,43 @@
       "created": "Signed in",
       "unknownDevice": "Unknown device",
       "unknownIp": "Unknown"
+    },
+    "accessibilityPage": {
+      "intro": "Customize the application to meet your accessibility needs.",
+      "visualTitle": "Visual Preferences",
+      "colorScheme": "Color Scheme",
+      "colorSchemeHelp": "Choose a color scheme that works best for you. High contrast mode improves text readability.",
+      "colorSchemes": {
+        "light": "Light",
+        "dark": "Dark",
+        "high-contrast": "High Contrast"
+      },
+      "textSize": "Text Size",
+      "textSizeHelp": "Adjust the text size for better readability across the application.",
+      "textSizes": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "extra-large": "Extra Large"
+      },
+      "motionTitle": "Motion Preferences",
+      "reduceMotion": "Reduce Motion",
+      "reduceMotionHelp": "Minimize animations and transitions that may cause discomfort or distraction.",
+      "navigationTitle": "Navigation Preferences",
+      "screenReader": "Screen Reader Mode",
+      "screenReaderHelp": "Optimize the interface for screen reader users with enhanced ARIA labels and descriptions.",
+      "keyboardNav": "Enhanced Keyboard Navigation",
+      "keyboardNavHelp": "Display enhanced focus indicators for keyboard-only navigation.",
+      "previewTitle": "Preview",
+      "previewText": "This is a preview of how text will appear with your current settings. The quick brown fox jumps over the lazy dog.",
+      "sampleButton": "Sample Button",
+      "helpTitle": "Additional Help",
+      "helpText": "If you experience any accessibility issues or have suggestions for improvement, please contact our support team.",
+      "shortcutsTitle": "Keyboard Shortcuts:",
+      "shortcutTab": "Navigate forward through interactive elements",
+      "shortcutShiftTab": "Navigate backward through interactive elements",
+      "shortcutEnter": "Activate buttons and links",
+      "shortcutEsc": "Close dialogs and menus"
     }
   },
   "connectionStatus": {
@@ -4756,13 +5176,6 @@
     "fieldLocation": "Location",
     "fieldLocationDescription": "Location description",
     "fieldConnectionType": "Connection type",
-    "connectionTypeNone": "Not specified",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Polling"
-    },
     "fieldUnit": "Unit of measurement",
     "fieldInterval": "Reporting interval (s)",
     "fieldManufacturer": "Manufacturer",
@@ -4875,7 +5288,14 @@
     "sensorRegistered": "Sensor registered",
     "sensorRegisterFailed": "Failed to register sensor",
     "sensorUpdated": "Sensor updated",
-    "sensorUpdateFailed": "Failed to update sensor"
+    "sensorUpdateFailed": "Failed to update sensor",
+    "connectionTypeNone": "Not specified",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Polling"
+    }
   },
   "commandPalette": {
     "commands": {

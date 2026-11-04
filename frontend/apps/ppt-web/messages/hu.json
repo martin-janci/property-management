@@ -714,7 +714,83 @@
     "reported": "Hiba bejelentve",
     "reportFailed": "A hiba bejelentése sikertelen",
     "updated": "Hiba frissítve",
-    "updateFailed": "A hiba frissítése sikertelen"
+    "updateFailed": "A hiba frissítése sikertelen",
+    "allStatuses": "Minden állapot",
+    "allPriorities": "Minden prioritás",
+    "allCategories": "Minden kategória",
+    "searchPlaceholder": "Hibák keresése...",
+    "noFaultsFound": "Nem található hiba.",
+    "paginationSummary": "{{from}}–{{to}} / {{total}} hiba",
+    "reportedDate": "Bejelentve: {{date}}",
+    "timeline": {
+      "title": "Előzmények",
+      "empty": "Még nincsenek bejegyzések.",
+      "internal": "Belső",
+      "action": {
+        "created": "bejelentette a hibát",
+        "triaged": "besorolta a hibát",
+        "assigned": "kiosztotta a hibát",
+        "status_changed": "módosította az állapotot",
+        "priority_changed": "módosította a prioritást",
+        "work_note": "munkajegyzetet adott hozzá",
+        "comment": "megjegyzést fűzött hozzá",
+        "attachment_added": "mellékletet csatolt",
+        "scheduled": "ütemezte a munkát",
+        "resolved": "megoldotta a hibát",
+        "confirmed": "megerősítette a javítást",
+        "reopened": "újranyitotta a hibát",
+        "rated": "értékelte a javítást"
+      }
+    },
+    "edit": {
+      "backToFault": "Vissza a hibához",
+      "title": "Hiba szerkesztése",
+      "subtitle": "Frissítse a hiba adatait. Megjegyzés: a szerkesztés csak a hiba besorolása előtt lehetséges."
+    },
+    "triageDialog": {
+      "title": "Hiba besorolása",
+      "submit": "Hiba besorolása",
+      "aiSuggests": "AI javaslata: <strong>{{category}}</strong>",
+      "aiSuggestsWithPriority": "AI javaslata: <strong>{{category}}</strong>, <strong>{{priority}}</strong> prioritás",
+      "aiConfidence": "({{percent}}% bizonyosság)",
+      "priorityHint": {
+        "low": "Kisebb probléma, nem sürgős",
+        "medium": "Normál prioritás",
+        "high": "Gyors intézkedést igényel",
+        "urgent": "Azonnali beavatkozás szükséges"
+      },
+      "assignTo": "Hozzárendelés (nem kötelező)",
+      "unassigned": "Nincs hozzárendelve"
+    },
+    "viewReports": "Jelentések megtekintése",
+    "statsTotal": "Összesen",
+    "createDescription": "Írja le a problémát. Minél több részletet ad meg, annál gyorsabban tudjuk megoldani.",
+    "reports": {
+      "title": "Hibajelentések",
+      "subtitle": "Hibaelemzés épületek és időszak szerint.",
+      "forbidden": "Nincs jogosultsága a hibajelentések megtekintéséhez.",
+      "allBuildings": "Minden épület",
+      "building": "Épület",
+      "dateFrom": "Ettől",
+      "dateTo": "Eddig",
+      "exportCsv": "CSV exportálása",
+      "exportPdf": "PDF exportálása",
+      "failedToLoad": "Nem sikerült betölteni a hibastatisztikát",
+      "empty": "Nincs a szűrőknek megfelelő hiba.",
+      "kpiTotal": "Összes hiba",
+      "kpiOpen": "Nyitott",
+      "kpiClosed": "Lezárt",
+      "kpiResolution": "Átl. megoldási idő (óra)",
+      "kpiRating": "Átl. értékelés",
+      "byStatus": "Állapot szerint",
+      "byCategory": "Kategória szerint",
+      "byPriority": "Prioritás szerint",
+      "noData": "Nincs elérhető adat",
+      "viewFaultsInBucket": "{{label}}. Ezen hibák megtekintése"
+    },
+    "confirmDelete": "Törli ezt a hibát? Ez a művelet nem vonható vissza.",
+    "deleted": "Hiba törölve",
+    "deleteFailed": "Nem sikerült törölni a hibát"
   },
   "buildings": {
     "title": "Épületek",
@@ -1700,6 +1776,104 @@
       "failedToCreate": "Nem sikerült létrehozni a vészhelyzeti kapcsolatot",
       "failedToUpdate": "Nem sikerült frissíteni a vészhelyzeti kapcsolatot",
       "failedToDelete": "Nem sikerült törölni a vészhelyzeti kapcsolatot"
+    },
+    "contactTypes": {
+      "fire_department": "Tűzoltóság",
+      "police": "Rendőrség",
+      "ambulance": "Mentők",
+      "utility_company": "Közműszolgáltató",
+      "building_manager": "Épületkezelő",
+      "security": "Biztonsági szolgálat",
+      "maintenance": "Karbantartás",
+      "medical": "Orvosi segítség",
+      "other": "Egyéb"
+    },
+    "card": {
+      "inactive": "Inaktív",
+      "role": "Szerepkör:",
+      "phone": "Telefon:",
+      "phoneSecondary": "Másodlagos telefon:",
+      "email": "E-mail:",
+      "address": "Cím:",
+      "availableHours": "Elérhetőség:",
+      "notes": "Megjegyzések:",
+      "priority": "Prioritás:",
+      "editAria": "{{name}} szerkesztése",
+      "deleteAria": "{{name}} törlése"
+    },
+    "list": {
+      "empty": "Nem található vészhelyzeti kontakt.",
+      "emptyHint": "Kezdésként adja hozzá az első vészhelyzeti kontaktot."
+    }
+  },
+  "news": {
+    "listTitle": "Hírek és közlemények",
+    "searchPlaceholder": "Cikkek keresése...",
+    "filters": {
+      "allStatuses": "Minden állapot",
+      "drafts": "Piszkozatok",
+      "pinnedOnly": "Csak a kitűzöttek"
+    },
+    "loadingArticles": "Cikkek betöltése...",
+    "loadingArticle": "Cikk betöltése...",
+    "emptyFiltered": "Nincs a szűrőknek megfelelő cikk.",
+    "empty": "Még nincsenek cikkek. Hozza létre az első cikket!",
+    "confirmDelete": "Biztosan törli ezt a cikket?",
+    "backToNews": "Vissza a hírekhez",
+    "pinned": "Kitűzve",
+    "views": "Megtekintések",
+    "viewCount_one": "{{count}} megtekintés",
+    "viewCount_other": "{{count}} megtekintés",
+    "coverAlt": "Borítókép: {{title}}",
+    "statusAria": "Állapot: {{status}}",
+    "publishedOn": "Közzétéve: {{date}}",
+    "actions": {
+      "viewAria": "Cikk megtekintése: {{title}}",
+      "editAria": "Cikk szerkesztése: {{title}}",
+      "publishAria": "Cikk közzététele: {{title}}",
+      "archiveAria": "Cikk archiválása: {{title}}",
+      "deleteAria": "Cikk törlése: {{title}}",
+      "publish": "Közzététel",
+      "archive": "Archiválás",
+      "pin": "Kitűzés",
+      "unpin": "Kitűzés megszüntetése",
+      "pinAria": "Cikk kitűzése",
+      "unpinAria": "Cikk kitűzésének megszüntetése"
+    },
+    "reactions": {
+      "like": "Tetszik",
+      "love": "Imádom",
+      "surprised": "Meglepődött",
+      "sad": "Szomorú",
+      "angry": "Mérges",
+      "aria": "Reakció: {{reaction}}",
+      "ariaActive": "Reakció: {{reaction}} (aktív)",
+      "total_one": "{{count}} reakció",
+      "total_other": "{{count}} reakció"
+    },
+    "comments": {
+      "title": "Hozzászólások ({{count}})",
+      "placeholder": "Írjon hozzászólást...",
+      "replyPlaceholder": "Írjon választ...",
+      "charCount": "{{length}}/{{max}} karakter",
+      "post": "Hozzászólás küldése",
+      "posting": "Küldés...",
+      "reply": "Válasz",
+      "deleted": "[Ezt a hozzászólást törölték]",
+      "empty": "Még nincs hozzászólás. Legyen Ön az első!",
+      "replyCount_one": "{{count}} válasz",
+      "replyCount_other": "{{count}} válasz"
+    },
+    "errors": {
+      "loadListFailed": "Nem sikerült betölteni a cikkeket",
+      "deleteFailed": "Nem sikerült törölni a cikket",
+      "publishFailed": "Nem sikerült közzétenni a cikket",
+      "archiveFailed": "Nem sikerült archiválni a cikket",
+      "pinFailed": "Nem sikerült módosítani a kitűzést",
+      "reactionFailed": "Nem sikerült menteni a reakciót",
+      "commentPostFailed": "Nem sikerült elküldeni a hozzászólást",
+      "commentUpdateFailed": "Nem sikerült módosítani a hozzászólást",
+      "commentDeleteFailed": "Nem sikerült törölni a hozzászólást"
     }
   },
   "errors": {
@@ -1807,6 +1981,30 @@
       },
       "rateLimitRetry": "Kérjük, várjon {{seconds}} másodpercet, mielőtt újra próbálkozik."
     },
+    "pages": {
+      "goBack": "Vissza",
+      "tryAgain": "Próbálja újra",
+      "backToDashboard": "Vissza az áttekintéshez",
+      "notFound": {
+        "title": "Az oldal nem található",
+        "description": "A keresett oldal nem létezik, vagy áthelyezték."
+      },
+      "forbidden": {
+        "title": "Hozzáférés megtagadva",
+        "description": "Nincs jogosultsága az oldal megtekintéséhez. Ha úgy gondolja, hogy ez hiba, forduljon a kezelőhöz."
+      },
+      "serverError": {
+        "description": "Váratlan hiba történt. Kérjük, próbálja újra egy kis idő múlva."
+      },
+      "sessionExpired": {
+        "title": "A munkamenete lejárt",
+        "description": "A folytatáshoz jelentkezzen be újra. Visszavisszük oda, ahol abbahagyta.",
+        "signIn": "Bejelentkezés"
+      },
+      "inlineError": {
+        "description": "Kérjük, próbálja újra. Ha a probléma továbbra is fennáll, forduljon az ügyfélszolgálathoz."
+      }
+    },
     "accessDenied": "Hozzáférés megtagadva",
     "backToDashboard": "Vissza az áttekintéshez"
   },
@@ -1821,7 +2019,18 @@
     "highContrast": "Magas kontraszt",
     "fontSize": "Betűméret",
     "reducedMotion": "Csökkentett mozgás",
-    "screenReader": "Képernyőolvasóra optimalizálva"
+    "screenReader": "Képernyőolvasóra optimalizálva",
+    "checkingAuthentication": "Hitelesítés ellenőrzése"
+  },
+  "outages": {
+    "failedToStart": "Nem sikerült elindítani a szolgáltatáskiesést",
+    "failedToResolve": "Nem sikerült megoldottnak jelölni a szolgáltatáskiesést",
+    "failedToCancel": "Nem sikerült lemondani a szolgáltatáskiesést",
+    "severity": {
+      "informational": "Tájékoztató",
+      "minor": "Kisebb",
+      "major": "Jelentős"
+    }
   },
   "dashboard": {
     "managerActionQueue": "Feladatsor",
@@ -1905,7 +2114,9 @@
       "closeFilters": "Szűrők bezárása",
       "showHelp": "Súgó megjelenítése",
       "hint": "Fókuszáljon a feladatlistára a billentyűparancsok használatához"
-    }
+    },
+    "refresh": "Frissítés",
+    "viewMyUnit": "Saját egység megtekintése"
   },
   "admin": {
     "common": {
@@ -2201,7 +2412,186 @@
       "updateError": "Nem sikerült frissíteni a beállítást. Kérjük, próbálja újra.",
       "disableError": "Nem sikerült kikapcsolni az értesítéseket. Kérjük, próbálja újra.",
       "dismiss": "Bezárás",
-      "lastUpdated": "Utoljára frissítve: {{when}}"
+      "lastUpdated": "Utoljára frissítve: {{when}}",
+      "disableAll": {
+        "title": "Kikapcsolja az összes értesítést?",
+        "intro": "Az összes értesítési csatornát készül kikapcsolni. Így nem kap értesítést a következőkről:",
+        "itemAnnouncements": "a kezelő fontos közleményei",
+        "itemFaults": "a bejelentett hibák és karbantartások alakulása",
+        "itemVoting": "szavazási határidők és eredmények",
+        "itemMessages": "a szomszédok közvetlen üzenetei",
+        "warning": "Lemaradhat az ingatlanával kapcsolatos fontos információkról.",
+        "confirm": "Összes értesítés kikapcsolása",
+        "keep": "Értesítések megtartása"
+      },
+      "toggleChannel": "{{channel}} be-/kikapcsolása",
+      "channels": {
+        "push": {
+          "label": "Push-értesítések",
+          "description": "Értesítések fogadása mobileszközön"
+        },
+        "email": {
+          "label": "E-mail-értesítések",
+          "description": "Értesítések fogadása e-mailben"
+        },
+        "in_app": {
+          "label": "Alkalmazáson belüli értesítések",
+          "description": "Értesítések megjelenítése az alkalmazásban"
+        }
+      },
+      "advanced": {
+        "title": "Speciális értesítési beállítások",
+        "subtitle": "Állítsa be pontosan, hogyan és mikor kap értesítéseket.",
+        "perEventTriggers": "Eseményenkénti triggerek",
+        "categoriesIntro": "Válassza ki, milyen értesítéseket és milyen módon szeretne kapni.",
+        "tabs": {
+          "categories": "Kategóriák",
+          "schedule": "Ütemezés",
+          "grouping": "Csoportosítás"
+        },
+        "errors": {
+          "load": "Nem sikerült betölteni az értesítési beállításokat. Kérjük, próbálja újra később.",
+          "category": "Nem sikerült menteni a kategória beállítását. Kérjük, próbálja újra.",
+          "quietHours": "Nem sikerült menteni a csendes órákat. Kérjük, próbálja újra.",
+          "digest": "Nem sikerült menteni az összesítő beállításait. Kérjük, próbálja újra.",
+          "grouping": "Nem sikerült menteni a csoportosítási beállításokat. Kérjük, próbálja újra."
+        },
+        "off": "Ki",
+        "allOn": "Mind be",
+        "channelShort": {
+          "push": "Push",
+          "email": "E-mail",
+          "in_app": "Alkalmazásban"
+        },
+        "channelAria": "{{channel}} értesítések: {{category}}",
+        "enableChannelTitle": "{{channel}} bekapcsolása: {{category}}",
+        "disableChannelTitle": "{{channel}} kikapcsolása: {{category}}",
+        "categories": {
+          "faults": {
+            "label": "Hibabejelentések",
+            "description": "Hibabejelentések, javítások és megoldások frissítései"
+          },
+          "voting": {
+            "label": "Szavazások és döntések",
+            "description": "Új szavazások, eredmények és emlékeztetők"
+          },
+          "announcements": {
+            "label": "Közlemények",
+            "description": "Az épület közleményei és hírei"
+          },
+          "documents": {
+            "label": "Dokumentumok",
+            "description": "Új dokumentumok, aláírások és változások"
+          },
+          "messages": {
+            "label": "Üzenetek",
+            "description": "Közvetlen üzenetek szomszédoktól és kezelőktől"
+          },
+          "community": {
+            "label": "Közösség",
+            "description": "Közösségi bejegyzések, események és piactér"
+          },
+          "financial": {
+            "label": "Pénzügyek",
+            "description": "Fizetési emlékeztetők, számlák és pénzügyi hírek"
+          },
+          "maintenance": {
+            "label": "Karbantartás",
+            "description": "Tervezett karbantartások és munkautasítások"
+          },
+          "system": {
+            "label": "Rendszerfrissítések",
+            "description": "Alkalmazásfrissítések, biztonsági riasztások és rendszerértesítések"
+          }
+        },
+        "days": {
+          "monday": "hétfő",
+          "tuesday": "kedd",
+          "wednesday": "szerda",
+          "thursday": "csütörtök",
+          "friday": "péntek",
+          "saturday": "szombat",
+          "sunday": "vasárnap"
+        },
+        "daysShort": {
+          "monday": "H",
+          "tuesday": "K",
+          "wednesday": "Sze",
+          "thursday": "Cs",
+          "friday": "P",
+          "saturday": "Szo",
+          "sunday": "V"
+        },
+        "digest": {
+          "title": "Értesítési összesítő",
+          "subtitle": "Összesítők fogadása egyedi értesítések helyett",
+          "frequency": "Gyakoriság",
+          "deliveryTime": "Kézbesítés ideje",
+          "deliveryDay": "Kézbesítés napja",
+          "nextDelivery": "Következő kézbesítés",
+          "nextDisabled": "Az összesítők ki vannak kapcsolva",
+          "nextHourly": "Óránként, egész órakor",
+          "nextDaily": "Naponta {{time}}-kor",
+          "nextWeekly": "Hetente – {{day}} {{time}}-kor",
+          "include": "Az összesítő tartalma",
+          "allCategories": "Minden kategória szerepel (nincs szűrés)",
+          "categoriesSelected": "{{selected}} / {{total}} kategória kiválasztva",
+          "frequencies": {
+            "hourly": {
+              "label": "Óránként",
+              "description": "Óránként összesítőt kap az összes új értesítésről"
+            },
+            "daily": {
+              "label": "Naponta",
+              "description": "Napi összesítő a választott időpontban"
+            },
+            "weekly": {
+              "label": "Hetente",
+              "description": "Heti összesítő a választott napon"
+            },
+            "disabled": {
+              "label": "Kikapcsolva",
+              "description": "Az értesítések azonnal érkeznek, nem összesítve"
+            }
+          }
+        },
+        "quietHours": {
+          "title": "Csendes órák",
+          "subtitle": "A nem sürgős értesítések némítása meghatározott időszakokban",
+          "startTime": "Kezdés",
+          "endTime": "Befejezés",
+          "timeFormatHint": "Az időpontok 24 órás formátumban (ÓÓ:PP), az alább kiválasztott időzóna szerint.",
+          "preview": "Ütemezés előnézete",
+          "previewRange": "Csend <strong>{{start}}</strong> és <strong>{{end}}</strong> között",
+          "activeDays": "Aktív napok",
+          "dayActive": "{{day}} – aktív",
+          "dayInactive": "{{day}} – inaktív",
+          "timezone": "Időzóna",
+          "allowEmergency": "Vészhelyzeti értesítések engedélyezése",
+          "allowEmergencyHelp": "A kritikus riasztások a csendes órákban is megérkeznek"
+        },
+        "grouping": {
+          "title": "Intelligens csoportosítás",
+          "subtitle": "Hasonló értesítések csoportosítása az átláthatóság érdekében",
+          "byCategory": "Csoportosítás kategória szerint",
+          "byCategoryHelp": "Az azonos típusú értesítések összevonása (pl. „5 új hibafrissítés”)",
+          "bySource": "Csoportosítás forrás szerint",
+          "bySourceHelp": "Az azonos épületből vagy ügyből származó értesítések összevonása",
+          "maxGroupSize": "Max. csoportméret",
+          "maxGroupSizeHelp": "Ennyi után „és még X” jelenik meg",
+          "autoExpand": "Automatikus kibontás küszöbe",
+          "autoExpandHelp": "A kevesebb elemet tartalmazó csoportok kibontása",
+          "neverExpand": "Soha ne bontsa ki automatikusan",
+          "preview": "Előnézet",
+          "clickToExpand": "Kattintson a kibontáshoz és az egyes elemek megtekintéséhez",
+          "expandGroup": "Értesítéscsoport kibontása",
+          "items_one": "{{count}} elem",
+          "items_other": "{{count}} elem",
+          "orFewer": "{{count}} vagy kevesebb",
+          "previewNewComments_one": "{{count}} új hozzászólás",
+          "previewNewComments_other": "{{count}} új hozzászólás"
+        }
+      }
     },
     "portalWebhooks": {
       "title": "Portál webhookok",
@@ -2334,6 +2724,43 @@
       "created": "Signed in",
       "unknownDevice": "Unknown device",
       "unknownIp": "Unknown"
+    },
+    "accessibilityPage": {
+      "intro": "Szabja az alkalmazást akadálymentességi igényeihez.",
+      "visualTitle": "Megjelenés",
+      "colorScheme": "Színséma",
+      "colorSchemeHelp": "Válassza ki az Önnek legmegfelelőbb színsémát. A nagy kontrasztú mód javítja a szöveg olvashatóságát.",
+      "colorSchemes": {
+        "light": "Világos",
+        "dark": "Sötét",
+        "high-contrast": "Nagy kontraszt"
+      },
+      "textSize": "Szövegméret",
+      "textSizeHelp": "Állítsa be a szövegméretet a jobb olvashatóság érdekében.",
+      "textSizes": {
+        "small": "Kicsi",
+        "medium": "Közepes",
+        "large": "Nagy",
+        "extra-large": "Nagyon nagy"
+      },
+      "motionTitle": "Mozgás és animációk",
+      "reduceMotion": "Mozgás csökkentése",
+      "reduceMotionHelp": "Minimalizálja a kellemetlenséget vagy figyelemelterelést okozó animációkat és átmeneteket.",
+      "navigationTitle": "Navigáció",
+      "screenReader": "Képernyőolvasó mód",
+      "screenReaderHelp": "Optimalizálja a felületet képernyőolvasó-használók számára bővített ARIA-címkékkel és -leírásokkal.",
+      "keyboardNav": "Bővített billentyűzetes navigáció",
+      "keyboardNavHelp": "Jobban látható fókuszjelzőket jelenít meg csak billentyűzetes navigációhoz.",
+      "previewTitle": "Előnézet",
+      "previewText": "Így jelenik meg a szöveg a jelenlegi beállításokkal. Árvíztűrő tükörfúrógép.",
+      "sampleButton": "Mintagomb",
+      "helpTitle": "További segítség",
+      "helpText": "Ha akadálymentességi problémát tapasztal, vagy javaslata van, forduljon ügyfélszolgálatunkhoz.",
+      "shortcutsTitle": "Billentyűparancsok:",
+      "shortcutTab": "ugrás a következő interaktív elemre",
+      "shortcutShiftTab": "ugrás az előző interaktív elemre",
+      "shortcutEnter": "gombok és hivatkozások aktiválása",
+      "shortcutEsc": "párbeszédablakok és menük bezárása"
     }
   },
   "connectionStatus": {
@@ -2467,13 +2894,6 @@
     "fieldLocation": "Hely",
     "fieldLocationDescription": "Helyleírás",
     "fieldConnectionType": "Kapcsolat típusa",
-    "connectionTypeNone": "Nincs megadva",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Időszakos lekérdezés"
-    },
     "fieldUnit": "Mértékegység",
     "fieldInterval": "Jelentési időköz (mp)",
     "fieldManufacturer": "Gyártó",
@@ -2586,7 +3006,14 @@
     "sensorRegistered": "Érzékelő regisztrálva",
     "sensorRegisterFailed": "Az érzékelő regisztrálása sikertelen",
     "sensorUpdated": "Érzékelő frissítve",
-    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen"
+    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen",
+    "connectionTypeNone": "Nincs megadva",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Időszakos lekérdezés"
+    }
   },
   "commandPalette": {
     "commands": {
@@ -3899,7 +4326,8 @@
     "created": "Bérleti szerződés létrehozva",
     "createFailed": "Nem sikerült létrehozni a bérleti szerződést",
     "violationRecorded": "Szabálysértés rögzítve",
-    "violationCreateFailed": "Nem sikerült rögzíteni a szabálysértést"
+    "violationCreateFailed": "Nem sikerült rögzíteni a szabálysértést",
+    "daysShort": "{{count}} nap"
   },
   "meters": {
     "readingSubmitted": "Leolvasás elküldve",

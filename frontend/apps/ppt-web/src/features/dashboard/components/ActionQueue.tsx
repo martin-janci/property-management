@@ -167,7 +167,7 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
       <div className="action-queue__error">
         <h3 className="action-queue__error-title">{t('dashboard.errorLoadingQueue')}</h3>
         <p className="action-queue__error-message">
-          {error instanceof Error ? error.message : t('errors.unknown')}
+          {error instanceof Error ? error.message : t('common.unknownError')}
         </p>
         <button type="button" onClick={() => refetch()} className="action-queue__retry-btn">
           {t('common.tryAgain')}
@@ -214,7 +214,7 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
             onClick={() => refetch()}
             disabled={isLoading}
             className="action-queue__btn"
-            aria-label={t('common.refresh')}
+            aria-label={t('dashboard.refresh')}
           >
             <span className={isLoading ? 'action-queue__spin' : ''} aria-hidden="true">
               🔄

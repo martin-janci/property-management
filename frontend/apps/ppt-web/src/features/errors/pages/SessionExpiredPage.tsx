@@ -7,10 +7,12 @@
  */
 
 import { setReturnUrl } from '@ppt/shared';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { StateView } from '../components/StateView';
 
 export function SessionExpiredPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleSignIn = () => {
@@ -24,11 +26,11 @@ export function SessionExpiredPage() {
   return (
     <StateView
       icon="⏳"
-      title="Your session has expired"
-      description="Sign in again to continue. We'll bring you back to where you were."
+      title={t('errors.pages.sessionExpired.title')}
+      description={t('errors.pages.sessionExpired.description')}
     >
       <button type="button" className="state-action state-action--primary" onClick={handleSignIn}>
-        Sign in
+        {t('errors.pages.sessionExpired.signIn')}
       </button>
     </StateView>
   );

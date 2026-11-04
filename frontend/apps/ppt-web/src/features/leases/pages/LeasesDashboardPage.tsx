@@ -269,6 +269,7 @@ function ExpirationBucket({
   onRenewLease,
   urgencyLevel,
 }: ExpirationBucketProps) {
+  const { t } = useTranslation();
   const urgencyColors = {
     high: 'border-red-500',
     medium: 'border-orange-500',
@@ -300,14 +301,16 @@ function ExpirationBucket({
                 </div>
                 <div className="flex items-center gap-2">
                   {lease.daysUntilExpiry !== undefined && (
-                    <span className="text-sm text-gray-500">{lease.daysUntilExpiry}d</span>
+                    <span className="text-sm text-gray-500">
+                      {t('leases.daysShort', { count: lease.daysUntilExpiry })}
+                    </span>
                   )}
                   <button
                     type="button"
                     onClick={() => onNavigateToLease(lease.id)}
                     className="text-sm text-blue-600 hover:text-blue-800"
                   >
-                    View
+                    {t('common.view')}
                   </button>
                   {onRenewLease && (
                     <button
@@ -315,7 +318,7 @@ function ExpirationBucket({
                       onClick={() => onRenewLease(lease.id)}
                       className="text-sm text-green-600 hover:text-green-800"
                     >
-                      Renew
+                      {t('leases.renew')}
                     </button>
                   )}
                 </div>

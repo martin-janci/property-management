@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../styles/errorPages.css';
 
 export interface ErrorStateProps {
@@ -16,24 +17,26 @@ export interface ErrorStateProps {
 
 export function ErrorState({
   icon = '⚠️',
-  title = 'Something went wrong',
-  description = 'Please try again. If the issue persists, contact support.',
+  title,
+  description,
   onRetry,
-  retryLabel = 'Try again',
+  retryLabel,
   children,
 }: ErrorStateProps) {
+  const { t } = useTranslation();
+  const resolvedDescription = description ?? t('errors.pages.inlineError.description');
   return (
     <div className="state-inline" role="alert">
       <span className="state-icon" aria-hidden="true">
         {icon}
       </span>
-      <h2 className="state-title">{title}</h2>
-      {description && <p className="state-text">{description}</p>}
+      <h2 className="state-title">{title ?? t('errors.somethingWentWrong')}</h2>
+      {resolvedDescription && <p className="state-text">{resolvedDescription}</p>}
       {(onRetry || children) && (
         <div className="state-actions">
           {onRetry && (
             <button type="button" className="state-action state-action--primary" onClick={onRetry}>
-              {retryLabel}
+              {retryLabel ?? t('errors.pages.tryAgain')}
             </button>
           )}
           {children}

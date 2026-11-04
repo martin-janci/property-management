@@ -89,9 +89,7 @@ export function CreateFaultPage({
         </button>
         <h1 className="text-2xl font-bold text-gray-900">{t('faults.reportFault')}</h1>
         <p className="text-gray-600 mt-2">
-          {enablePhotoFirst
-            ? t('faults.photo.sectionDescription')
-            : "Describe the issue you're experiencing. Include as much detail as possible to help us resolve it quickly."}
+          {enablePhotoFirst ? t('faults.photo.sectionDescription') : t('faults.createDescription')}
         </p>
       </div>
 

@@ -46,10 +46,12 @@ export function NewsListPage() {
 
       const response = await getApiClient().get('/news', { params });
 
+      // The API returns `{ articles, count, total }`; tolerate a bare array too.
       const data = response.data;
+      const items = Array.isArray(data) ? data : (data?.articles ?? []);
       // Convert snake_case to camelCase
       setArticles(
-        data.map((a: Record<string, unknown>) => ({
+        items.map((a: Record<string, unknown>) => ({
           id: a.id,
           title: a.title,
           excerpt: a.excerpt,
@@ -65,11 +67,11 @@ export function NewsListPage() {
         }))
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load articles');
+      setError(err instanceof Error ? err.message : t('news.errors.loadListFailed'));
     } finally {
       setLoading(false);
     }
-  }, [organizationId, statusFilter, showPinnedOnly]);
+  }, [organizationId, statusFilter, showPinnedOnly, t]);
 
   useEffect(() => {
     loadArticles();
@@ -78,7 +80,7 @@ export function NewsListPage() {
   const handleDelete = useCallback(
     async (id: string) => {
       if (!organizationId) return;
-      if (!confirm('Are you sure you want to delete this article?')) return;
+      if (!confirm(t('news.confirmDelete'))) return;
 
       try {
         await getApiClient().delete(`/news/${id}`, {
@@ -87,10 +89,10 @@ export function NewsListPage() {
 
         setArticles((prev) => prev.filter((a) => a.id !== id));
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete article');
+        setError(err instanceof Error ? err.message : t('news.errors.deleteFailed'));
       }
     },
-    [organizationId]
+    [organizationId, t]
   );
 
   const handlePublish = useCallback(
@@ -104,10 +106,10 @@ export function NewsListPage() {
 
         loadArticles();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to publish article');
+        setError(err instanceof Error ? err.message : t('news.errors.publishFailed'));
       }
     },
-    [organizationId, loadArticles]
+    [organizationId, loadArticles, t]
   );
 
   const handleArchive = useCallback(
@@ -121,10 +123,10 @@ export function NewsListPage() {
 
         loadArticles();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to archive article');
+        setError(err instanceof Error ? err.message : t('news.errors.archiveFailed'));
       }
     },
-    [organizationId, loadArticles]
+    [organizationId, loadArticles, t]
   );
 
   const handlePin = useCallback(
@@ -139,10 +141,10 @@ export function NewsListPage() {
 
         loadArticles();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update pin status');
+        setError(err instanceof Error ? err.message : t('news.errors.pinFailed'));
       }
     },
-    [organizationId, loadArticles]
+    [organizationId, loadArticles, t]
   );
 
   // Filter articles by search query
@@ -163,16 +165,16 @@ export function NewsListPage() {
   });
 
   if (!organizationId) {
-    return <div className="news-page-error">Please select an organization</div>;
+    return <div className="news-page-error">{t('common.selectOrganization')}</div>;
   }
 
   return (
     <div className="news-list-page">
       <header className="news-header">
-        <h1>News & Announcements</h1>
+        <h1>{t('news.listTitle')}</h1>
         {isManager && (
           <Link to="/news/new" className="btn btn-primary">
-            Create Article
+            {t('news.createArticle')}
           </Link>
         )}
       </header>
@@ -181,7 +183,7 @@ export function NewsListPage() {
         <div className="news-error" role="alert">
           {error}
           <button type="button" onClick={() => setError(null)}>
-            Dismiss
+            {t('common.dismiss')}
           </button>
         </div>
       )}
@@ -189,7 +191,7 @@ export function NewsListPage() {
       <div className="news-filters">
         <input
           type="search"
-          placeholder="Search articles..."
+          placeholder={t('news.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="search-input"
@@ -202,10 +204,10 @@ export function NewsListPage() {
           className="status-filter"
           aria-label={t('aria.filterByStatus')}
         >
-          <option value="">All Statuses</option>
-          <option value="draft">Drafts</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
+          <option value="">{t('news.filters.allStatuses')}</option>
+          <option value="draft">{t('news.filters.drafts')}</option>
+          <option value="published">{t('news.statusPublished')}</option>
+          <option value="archived">{t('news.statusArchived')}</option>
         </select>
 
         <label className="pinned-filter">
@@ -214,17 +216,17 @@ export function NewsListPage() {
             checked={showPinnedOnly}
             onChange={(e) => setShowPinnedOnly(e.target.checked)}
           />
-          Pinned only
+          {t('news.filters.pinnedOnly')}
         </label>
       </div>
 
       {loading ? (
-        <div className="news-loading">Loading articles...</div>
+        <div className="news-loading">{t('news.loadingArticles')}</div>
       ) : sortedArticles.length === 0 ? (
         <div className="news-empty">
           {searchQuery || statusFilter || showPinnedOnly
-            ? 'No articles match your filters.'
-            : 'No articles yet. Create your first article!'}
+            ? t('news.emptyFiltered')
+            : t('news.empty')}
         </div>
       ) : (
         <div className="news-grid">

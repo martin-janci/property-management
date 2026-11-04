@@ -38,9 +38,13 @@ vi.mock('../../../contexts', () => ({
 }));
 
 // Translations: return the key (or a trivial value) so the pages render.
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+vi.mock('react-i18next', () => {
+  // Stable `t` identity (like the real hook) so callbacks that list `t` as a
+  // dependency do not re-run every render.
+  const t = (key: string) => key;
+  const i18n = { language: 'en' };
+  return { useTranslation: () => ({ t, i18n }) };
+});
 
 interface RecordedRequest {
   auth: string | undefined;

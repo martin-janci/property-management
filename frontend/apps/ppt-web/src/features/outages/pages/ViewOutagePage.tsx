@@ -71,7 +71,7 @@ export function ViewOutagePage({
   onCancel,
   onBack,
 }: ViewOutagePageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const canEdit = outage.status === 'planned';
   const canStart = outage.status === 'planned';
@@ -115,7 +115,7 @@ export function ViewOutagePage({
                     {t('outages.createdBy')} {outage.createdByName}
                   </span>
                   <span>•</span>
-                  <span>{new Date(outage.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(outage.createdAt).toLocaleDateString(i18n.language)}</span>
                 </div>
               </div>
             </div>
@@ -149,14 +149,14 @@ export function ViewOutagePage({
             <div>
               <span className="text-gray-500">{t('outages.scheduledStart')}:</span>
               <span className="ml-2 text-gray-900">
-                {new Date(outage.scheduledStart).toLocaleString()}
+                {new Date(outage.scheduledStart).toLocaleString(i18n.language)}
               </span>
             </div>
             {outage.scheduledEnd && (
               <div>
                 <span className="text-gray-500">{t('outages.scheduledEnd')}:</span>
                 <span className="ml-2 text-gray-900">
-                  {new Date(outage.scheduledEnd).toLocaleString()}
+                  {new Date(outage.scheduledEnd).toLocaleString(i18n.language)}
                 </span>
               </div>
             )}
@@ -164,7 +164,7 @@ export function ViewOutagePage({
               <div>
                 <span className="text-gray-500">{t('outages.actualStart')}:</span>
                 <span className="ml-2 text-gray-900">
-                  {new Date(outage.actualStart).toLocaleString()}
+                  {new Date(outage.actualStart).toLocaleString(i18n.language)}
                 </span>
               </div>
             )}
@@ -172,7 +172,7 @@ export function ViewOutagePage({
               <div>
                 <span className="text-gray-500">{t('outages.actualEnd')}:</span>
                 <span className="ml-2 text-gray-900">
-                  {new Date(outage.actualEnd).toLocaleString()}
+                  {new Date(outage.actualEnd).toLocaleString(i18n.language)}
                 </span>
               </div>
             )}

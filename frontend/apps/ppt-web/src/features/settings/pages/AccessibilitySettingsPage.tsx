@@ -37,20 +37,19 @@ export const AccessibilitySettingsPage: React.FC = () => {
 
   return (
     <div className="accessibility-settings-container">
-      <h1>Accessibility Settings</h1>
-      <p>Customize the application to meet your accessibility needs.</p>
+      <h1>{t('accessibility.title')}</h1>
+      <p>{t('settings.accessibilityPage.intro')}</p>
 
       {/* Color Scheme Section */}
       <section className="accessibility-settings-section">
-        <h2>Visual Preferences</h2>
+        <h2>{t('settings.accessibilityPage.visualTitle')}</h2>
 
         <div className="accessibility-settings-field">
           <label htmlFor="color-scheme" className="accessibility-settings-label">
-            Color Scheme
+            {t('settings.accessibilityPage.colorScheme')}
           </label>
           <span className="accessibility-settings-description">
-            Choose a color scheme that works best for you. High contrast mode improves text
-            readability.
+            {t('settings.accessibilityPage.colorSchemeHelp')}
           </span>
           <select
             id="color-scheme"
@@ -61,7 +60,9 @@ export const AccessibilitySettingsPage: React.FC = () => {
           >
             {COLOR_SCHEME_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(`settings.accessibilityPage.colorSchemes.${option.value}`, {
+                  defaultValue: option.label,
+                })}
               </option>
             ))}
           </select>
@@ -69,10 +70,10 @@ export const AccessibilitySettingsPage: React.FC = () => {
 
         <div className="accessibility-settings-field">
           <label htmlFor="text-size" className="accessibility-settings-label">
-            Text Size
+            {t('settings.accessibilityPage.textSize')}
           </label>
           <span className="accessibility-settings-description">
-            Adjust the text size for better readability across the application.
+            {t('settings.accessibilityPage.textSizeHelp')}
           </span>
           <select
             id="text-size"
@@ -83,7 +84,9 @@ export const AccessibilitySettingsPage: React.FC = () => {
           >
             {TEXT_SIZE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(`settings.accessibilityPage.textSizes.${option.value}`, {
+                  defaultValue: option.label,
+                })}
               </option>
             ))}
           </select>
@@ -92,7 +95,7 @@ export const AccessibilitySettingsPage: React.FC = () => {
 
       {/* Motion Preferences Section */}
       <section className="accessibility-settings-section">
-        <h2>Motion Preferences</h2>
+        <h2>{t('settings.accessibilityPage.motionTitle')}</h2>
 
         <div className="accessibility-settings-field">
           <div className="accessibility-settings-control">
@@ -106,10 +109,10 @@ export const AccessibilitySettingsPage: React.FC = () => {
             />
             <div>
               <label htmlFor="reduce-motion" className="accessibility-settings-label">
-                Reduce Motion
+                {t('settings.accessibilityPage.reduceMotion')}
               </label>
               <span id="reduce-motion-description" className="accessibility-settings-description">
-                Minimize animations and transitions that may cause discomfort or distraction.
+                {t('settings.accessibilityPage.reduceMotionHelp')}
               </span>
             </div>
           </div>
@@ -118,7 +121,7 @@ export const AccessibilitySettingsPage: React.FC = () => {
 
       {/* Navigation Preferences Section */}
       <section className="accessibility-settings-section">
-        <h2>Navigation Preferences</h2>
+        <h2>{t('settings.accessibilityPage.navigationTitle')}</h2>
 
         <div className="accessibility-settings-field">
           <div className="accessibility-settings-control">
@@ -132,11 +135,10 @@ export const AccessibilitySettingsPage: React.FC = () => {
             />
             <div>
               <label htmlFor="screen-reader" className="accessibility-settings-label">
-                Screen Reader Mode
+                {t('settings.accessibilityPage.screenReader')}
               </label>
               <span id="screen-reader-description" className="accessibility-settings-description">
-                Optimize the interface for screen reader users with enhanced ARIA labels and
-                descriptions.
+                {t('settings.accessibilityPage.screenReaderHelp')}
               </span>
             </div>
           </div>
@@ -154,10 +156,10 @@ export const AccessibilitySettingsPage: React.FC = () => {
             />
             <div>
               <label htmlFor="keyboard-nav" className="accessibility-settings-label">
-                Enhanced Keyboard Navigation
+                {t('settings.accessibilityPage.keyboardNav')}
               </label>
               <span id="keyboard-nav-description" className="accessibility-settings-description">
-                Display enhanced focus indicators for keyboard-only navigation.
+                {t('settings.accessibilityPage.keyboardNavHelp')}
               </span>
             </div>
           </div>
@@ -166,11 +168,8 @@ export const AccessibilitySettingsPage: React.FC = () => {
 
       {/* Preview Section */}
       <section className="accessibility-preview" aria-label={t('aria.settingsPreview')}>
-        <h3>Preview</h3>
-        <p>
-          This is a preview of how text will appear with your current settings. The quick brown fox
-          jumps over the lazy dog.
-        </p>
+        <h3>{t('settings.accessibilityPage.previewTitle')}</h3>
+        <p>{t('settings.accessibilityPage.previewText')}</p>
         <button
           type="button"
           style={{
@@ -183,7 +182,7 @@ export const AccessibilitySettingsPage: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          Sample Button
+          {t('settings.accessibilityPage.sampleButton')}
         </button>
       </section>
 
@@ -192,26 +191,23 @@ export const AccessibilitySettingsPage: React.FC = () => {
         className="accessibility-settings-section"
         aria-label={t('aria.additionalInformation')}
       >
-        <h2>Additional Help</h2>
+        <h2>{t('settings.accessibilityPage.helpTitle')}</h2>
+        <p>{t('settings.accessibilityPage.helpText')}</p>
         <p>
-          If you experience any accessibility issues or have suggestions for improvement, please
-          contact our support team.
-        </p>
-        <p>
-          <strong>Keyboard Shortcuts:</strong>
+          <strong>{t('settings.accessibilityPage.shortcutsTitle')}</strong>
         </p>
         <ul>
           <li>
-            <kbd>Tab</kbd> - Navigate forward through interactive elements
+            <kbd>Tab</kbd> – {t('settings.accessibilityPage.shortcutTab')}
           </li>
           <li>
-            <kbd>Shift + Tab</kbd> - Navigate backward through interactive elements
+            <kbd>Shift + Tab</kbd> – {t('settings.accessibilityPage.shortcutShiftTab')}
           </li>
           <li>
-            <kbd>Enter</kbd> or <kbd>Space</kbd> - Activate buttons and links
+            <kbd>Enter</kbd> / <kbd>Space</kbd> – {t('settings.accessibilityPage.shortcutEnter')}
           </li>
           <li>
-            <kbd>Esc</kbd> - Close dialogs and menus
+            <kbd>Esc</kbd> – {t('settings.accessibilityPage.shortcutEsc')}
           </li>
         </ul>
       </section>

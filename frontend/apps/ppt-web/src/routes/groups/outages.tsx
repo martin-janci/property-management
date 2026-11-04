@@ -160,8 +160,8 @@ function ViewOutagePageRoute() {
   if (!outageId) {
     return (
       <div className="error-page">
-        <h1>{t('errors.outageNotFound')}</h1>
-        <p>{t('errors.outageNotFoundDesc')}</p>
+        <h1>{t('outages.errors.outageNotFound')}</h1>
+        <p>{t('outages.errors.outageNotFoundDesc')}</p>
         <Link to="/outages">{t('common.backToOutages')}</Link>
       </div>
     );
@@ -237,7 +237,7 @@ function ViewOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? t('common.unknown'),
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 
@@ -272,8 +272,8 @@ function EditOutagePageRoute() {
   if (!outageId) {
     return (
       <div className="error-page">
-        <h1>{t('errors.outageNotFound')}</h1>
-        <p>{t('errors.outageNotFoundDesc')}</p>
+        <h1>{t('outages.errors.outageNotFound')}</h1>
+        <p>{t('outages.errors.outageNotFoundDesc')}</p>
         <Link to="/outages">{t('common.backToOutages')}</Link>
       </div>
     );
@@ -348,7 +348,7 @@ function EditOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? t('common.unknown'),
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 

@@ -714,7 +714,83 @@
     "reported": "Störung gemeldet",
     "reportFailed": "Störung konnte nicht gemeldet werden",
     "updated": "Störung aktualisiert",
-    "updateFailed": "Störung konnte nicht aktualisiert werden"
+    "updateFailed": "Störung konnte nicht aktualisiert werden",
+    "allStatuses": "Alle Status",
+    "allPriorities": "Alle Prioritäten",
+    "allCategories": "Alle Kategorien",
+    "searchPlaceholder": "Störungen suchen...",
+    "noFaultsFound": "Keine Störungen gefunden.",
+    "paginationSummary": "{{from}} bis {{to}} von {{total}} Störungen",
+    "reportedDate": "Gemeldet: {{date}}",
+    "timeline": {
+      "title": "Verlauf",
+      "empty": "Noch keine Einträge im Verlauf.",
+      "internal": "Intern",
+      "action": {
+        "created": "hat die Störung gemeldet",
+        "triaged": "hat die Störung eingestuft",
+        "assigned": "hat die Störung zugewiesen",
+        "status_changed": "hat den Status geändert",
+        "priority_changed": "hat die Priorität geändert",
+        "work_note": "hat eine Arbeitsnotiz hinzugefügt",
+        "comment": "hat einen Kommentar hinzugefügt",
+        "attachment_added": "hat einen Anhang hinzugefügt",
+        "scheduled": "hat die Arbeiten geplant",
+        "resolved": "hat die Störung behoben",
+        "confirmed": "hat die Behebung bestätigt",
+        "reopened": "hat die Störung wieder geöffnet",
+        "rated": "hat die Behebung bewertet"
+      }
+    },
+    "edit": {
+      "backToFault": "Zurück zur Störung",
+      "title": "Störung bearbeiten",
+      "subtitle": "Aktualisieren Sie die Angaben zur Störung. Hinweis: Eine Bearbeitung ist nur vor der Einstufung möglich."
+    },
+    "triageDialog": {
+      "title": "Störung einstufen",
+      "submit": "Störung einstufen",
+      "aiSuggests": "KI-Vorschlag: <strong>{{category}}</strong>",
+      "aiSuggestsWithPriority": "KI-Vorschlag: <strong>{{category}}</strong> mit Priorität <strong>{{priority}}</strong>",
+      "aiConfidence": "({{percent}} % Konfidenz)",
+      "priorityHint": {
+        "low": "Kleines Problem, nicht dringend",
+        "medium": "Normale Priorität",
+        "high": "Erfordert zeitnahe Bearbeitung",
+        "urgent": "Sofortiges Handeln erforderlich"
+      },
+      "assignTo": "Zuweisen an (optional)",
+      "unassigned": "Nicht zugewiesen"
+    },
+    "viewReports": "Berichte anzeigen",
+    "statsTotal": "Gesamt",
+    "createDescription": "Beschreiben Sie das Problem. Je mehr Details Sie angeben, desto schneller können wir es beheben.",
+    "reports": {
+      "title": "Störungsberichte",
+      "subtitle": "Störungsanalyse nach Gebäuden und Zeitraum.",
+      "forbidden": "Sie haben keine Berechtigung, Störungsberichte anzuzeigen.",
+      "allBuildings": "Alle Gebäude",
+      "building": "Gebäude",
+      "dateFrom": "Von",
+      "dateTo": "Bis",
+      "exportCsv": "CSV exportieren",
+      "exportPdf": "PDF exportieren",
+      "failedToLoad": "Störungsstatistiken konnten nicht geladen werden",
+      "empty": "Keine Störungen entsprechen den gewählten Filtern.",
+      "kpiTotal": "Störungen gesamt",
+      "kpiOpen": "Offen",
+      "kpiClosed": "Geschlossen",
+      "kpiResolution": "Ø Behebungsdauer (h)",
+      "kpiRating": "Ø Bewertung",
+      "byStatus": "Nach Status",
+      "byCategory": "Nach Kategorie",
+      "byPriority": "Nach Priorität",
+      "noData": "Keine Daten verfügbar",
+      "viewFaultsInBucket": "{{label}}. Diese Störungen anzeigen"
+    },
+    "confirmDelete": "Diese Störung löschen? Dies kann nicht rückgängig gemacht werden.",
+    "deleted": "Störung gelöscht",
+    "deleteFailed": "Störung konnte nicht gelöscht werden"
   },
   "buildings": {
     "title": "Gebäude",
@@ -1700,6 +1776,104 @@
       "failedToCreate": "Notfallkontakt konnte nicht erstellt werden",
       "failedToUpdate": "Notfallkontakt konnte nicht aktualisiert werden",
       "failedToDelete": "Notfallkontakt konnte nicht gelöscht werden"
+    },
+    "contactTypes": {
+      "fire_department": "Feuerwehr",
+      "police": "Polizei",
+      "ambulance": "Rettungsdienst",
+      "utility_company": "Versorgungsunternehmen",
+      "building_manager": "Hausverwaltung",
+      "security": "Sicherheitsdienst",
+      "maintenance": "Hausmeisterdienst",
+      "medical": "Ärztliche Hilfe",
+      "other": "Sonstige"
+    },
+    "card": {
+      "inactive": "Inaktiv",
+      "role": "Funktion:",
+      "phone": "Telefon:",
+      "phoneSecondary": "Weitere Telefonnummer:",
+      "email": "E-Mail:",
+      "address": "Adresse:",
+      "availableHours": "Erreichbarkeit:",
+      "notes": "Notizen:",
+      "priority": "Priorität:",
+      "editAria": "{{name}} bearbeiten",
+      "deleteAria": "{{name}} löschen"
+    },
+    "list": {
+      "empty": "Keine Notfallkontakte gefunden.",
+      "emptyHint": "Fügen Sie zunächst Ihren ersten Notfallkontakt hinzu."
+    }
+  },
+  "news": {
+    "listTitle": "Neuigkeiten & Mitteilungen",
+    "searchPlaceholder": "Artikel suchen...",
+    "filters": {
+      "allStatuses": "Alle Status",
+      "drafts": "Entwürfe",
+      "pinnedOnly": "Nur angeheftete"
+    },
+    "loadingArticles": "Artikel werden geladen...",
+    "loadingArticle": "Artikel wird geladen...",
+    "emptyFiltered": "Keine Artikel entsprechen Ihren Filtern.",
+    "empty": "Noch keine Artikel. Erstellen Sie Ihren ersten Artikel!",
+    "confirmDelete": "Möchten Sie diesen Artikel wirklich löschen?",
+    "backToNews": "Zurück zu den Neuigkeiten",
+    "pinned": "Angeheftet",
+    "views": "Aufrufe",
+    "viewCount_one": "{{count}} Aufruf",
+    "viewCount_other": "{{count}} Aufrufe",
+    "coverAlt": "Titelbild: {{title}}",
+    "statusAria": "Status: {{status}}",
+    "publishedOn": "Veröffentlicht: {{date}}",
+    "actions": {
+      "viewAria": "Artikel anzeigen: {{title}}",
+      "editAria": "Artikel bearbeiten: {{title}}",
+      "publishAria": "Artikel veröffentlichen: {{title}}",
+      "archiveAria": "Artikel archivieren: {{title}}",
+      "deleteAria": "Artikel löschen: {{title}}",
+      "publish": "Veröffentlichen",
+      "archive": "Archivieren",
+      "pin": "Anheften",
+      "unpin": "Lösen",
+      "pinAria": "Artikel anheften",
+      "unpinAria": "Artikel lösen"
+    },
+    "reactions": {
+      "like": "Gefällt mir",
+      "love": "Liebe",
+      "surprised": "Überrascht",
+      "sad": "Traurig",
+      "angry": "Verärgert",
+      "aria": "Reaktion: {{reaction}}",
+      "ariaActive": "Reaktion: {{reaction}} (aktiv)",
+      "total_one": "{{count}} Reaktion",
+      "total_other": "{{count}} Reaktionen"
+    },
+    "comments": {
+      "title": "Kommentare ({{count}})",
+      "placeholder": "Kommentar schreiben...",
+      "replyPlaceholder": "Antwort schreiben...",
+      "charCount": "{{length}}/{{max}} Zeichen",
+      "post": "Kommentar senden",
+      "posting": "Wird gesendet...",
+      "reply": "Antworten",
+      "deleted": "[Dieser Kommentar wurde gelöscht]",
+      "empty": "Noch keine Kommentare. Schreiben Sie den ersten!",
+      "replyCount_one": "{{count}} Antwort",
+      "replyCount_other": "{{count}} Antworten"
+    },
+    "errors": {
+      "loadListFailed": "Artikel konnten nicht geladen werden",
+      "deleteFailed": "Artikel konnte nicht gelöscht werden",
+      "publishFailed": "Artikel konnte nicht veröffentlicht werden",
+      "archiveFailed": "Artikel konnte nicht archiviert werden",
+      "pinFailed": "Anheftstatus konnte nicht geändert werden",
+      "reactionFailed": "Reaktion konnte nicht gespeichert werden",
+      "commentPostFailed": "Kommentar konnte nicht gesendet werden",
+      "commentUpdateFailed": "Kommentar konnte nicht aktualisiert werden",
+      "commentDeleteFailed": "Kommentar konnte nicht gelöscht werden"
     }
   },
   "errors": {
@@ -1807,6 +1981,30 @@
       },
       "rateLimitRetry": "Bitte warten Sie {{seconds}} Sekunden, bevor Sie es erneut versuchen."
     },
+    "pages": {
+      "goBack": "Zurück",
+      "tryAgain": "Erneut versuchen",
+      "backToDashboard": "Zurück zur Übersicht",
+      "notFound": {
+        "title": "Seite nicht gefunden",
+        "description": "Die gesuchte Seite existiert nicht oder wurde verschoben."
+      },
+      "forbidden": {
+        "title": "Zugriff verweigert",
+        "description": "Sie haben keine Berechtigung, diese Seite anzuzeigen. Wenden Sie sich an Ihre Hausverwaltung, wenn Sie dies für einen Fehler halten."
+      },
+      "serverError": {
+        "description": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es gleich noch einmal."
+      },
+      "sessionExpired": {
+        "title": "Ihre Sitzung ist abgelaufen",
+        "description": "Melden Sie sich erneut an, um fortzufahren. Wir bringen Sie dorthin zurück, wo Sie waren.",
+        "signIn": "Anmelden"
+      },
+      "inlineError": {
+        "description": "Bitte versuchen Sie es erneut. Wenn das Problem weiterhin besteht, wenden Sie sich an den Support."
+      }
+    },
     "accessDenied": "Zugriff verweigert",
     "backToDashboard": "Zurück zur Übersicht"
   },
@@ -1821,7 +2019,18 @@
     "highContrast": "Hoher Kontrast",
     "fontSize": "Schriftgröße",
     "reducedMotion": "Reduzierte Bewegung",
-    "screenReader": "Für Screenreader optimiert"
+    "screenReader": "Für Screenreader optimiert",
+    "checkingAuthentication": "Anmeldung wird überprüft"
+  },
+  "outages": {
+    "failedToStart": "Ausfall konnte nicht gestartet werden",
+    "failedToResolve": "Ausfall konnte nicht als behoben markiert werden",
+    "failedToCancel": "Ausfall konnte nicht abgesagt werden",
+    "severity": {
+      "informational": "Information",
+      "minor": "Gering",
+      "major": "Schwer"
+    }
   },
   "dashboard": {
     "managerActionQueue": "Aufgabenwarteschlange",
@@ -1905,7 +2114,9 @@
       "closeFilters": "Filter schließen",
       "showHelp": "Diese Hilfe anzeigen",
       "hint": "Fokussieren Sie die Aufgabenliste, um diese Tastenkombinationen zu verwenden"
-    }
+    },
+    "refresh": "Aktualisieren",
+    "viewMyUnit": "Meine Einheit anzeigen"
   },
   "admin": {
     "common": {
@@ -2222,7 +2433,8 @@
     "created": "Mietvertrag erstellt",
     "createFailed": "Mietvertrag konnte nicht erstellt werden",
     "violationRecorded": "Verstoß erfasst",
-    "violationCreateFailed": "Verstoß konnte nicht erfasst werden"
+    "violationCreateFailed": "Verstoß konnte nicht erfasst werden",
+    "daysShort": "{{count}} T."
   },
   "settings": {
     "notifications": {
@@ -2232,7 +2444,186 @@
       "updateError": "Einstellung konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
       "disableError": "Benachrichtigungen konnten nicht deaktiviert werden. Bitte versuchen Sie es erneut.",
       "dismiss": "Schließen",
-      "lastUpdated": "Zuletzt aktualisiert: {{when}}"
+      "lastUpdated": "Zuletzt aktualisiert: {{when}}",
+      "disableAll": {
+        "title": "Alle Benachrichtigungen deaktivieren?",
+        "intro": "Sie sind dabei, alle Benachrichtigungskanäle zu deaktivieren. Sie erhalten dann keine Benachrichtigungen mehr über:",
+        "itemAnnouncements": "wichtige Mitteilungen Ihrer Hausverwaltung",
+        "itemFaults": "Neuigkeiten zu gemeldeten Störungen und Wartungen",
+        "itemVoting": "Abstimmungsfristen und -ergebnisse",
+        "itemMessages": "Direktnachrichten von Nachbarn",
+        "warning": "Ihnen könnten wichtige Informationen zu Ihrer Immobilie entgehen.",
+        "confirm": "Alle Benachrichtigungen deaktivieren",
+        "keep": "Benachrichtigungen beibehalten"
+      },
+      "toggleChannel": "{{channel}} umschalten",
+      "channels": {
+        "push": {
+          "label": "Push-Benachrichtigungen",
+          "description": "Benachrichtigungen auf Ihrem Mobilgerät erhalten"
+        },
+        "email": {
+          "label": "E-Mail-Benachrichtigungen",
+          "description": "Benachrichtigungen per E-Mail erhalten"
+        },
+        "in_app": {
+          "label": "In-App-Benachrichtigungen",
+          "description": "Benachrichtigungen in der Anwendung anzeigen"
+        }
+      },
+      "advanced": {
+        "title": "Erweiterte Benachrichtigungseinstellungen",
+        "subtitle": "Legen Sie genau fest, wie und wann Sie Benachrichtigungen erhalten.",
+        "perEventTriggers": "Auslöser pro Ereignis",
+        "categoriesIntro": "Wählen Sie, welche Benachrichtigungen Sie auf welchem Weg erhalten möchten.",
+        "tabs": {
+          "categories": "Kategorien",
+          "schedule": "Zeitplan",
+          "grouping": "Gruppierung"
+        },
+        "errors": {
+          "load": "Benachrichtigungseinstellungen konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+          "category": "Kategorieeinstellung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+          "quietHours": "Ruhezeiten konnten nicht gespeichert werden. Bitte erneut versuchen.",
+          "digest": "Zusammenfassungseinstellungen konnten nicht gespeichert werden. Bitte erneut versuchen.",
+          "grouping": "Gruppierungseinstellungen konnten nicht gespeichert werden. Bitte erneut versuchen."
+        },
+        "off": "Aus",
+        "allOn": "Alle an",
+        "channelShort": {
+          "push": "Push",
+          "email": "E-Mail",
+          "in_app": "In-App"
+        },
+        "channelAria": "{{channel}}-Benachrichtigungen für {{category}}",
+        "enableChannelTitle": "{{channel}} für {{category}} aktivieren",
+        "disableChannelTitle": "{{channel}} für {{category}} deaktivieren",
+        "categories": {
+          "faults": {
+            "label": "Störungsmeldungen",
+            "description": "Neuigkeiten zu Störungsmeldungen, Reparaturen und Behebungen"
+          },
+          "voting": {
+            "label": "Abstimmungen & Beschlüsse",
+            "description": "Neue Abstimmungen, Ergebnisse und Erinnerungen"
+          },
+          "announcements": {
+            "label": "Mitteilungen",
+            "description": "Mitteilungen und Neuigkeiten zum Gebäude"
+          },
+          "documents": {
+            "label": "Dokumente",
+            "description": "Neue Dokumente, Unterschriften und Änderungen"
+          },
+          "messages": {
+            "label": "Nachrichten",
+            "description": "Direktnachrichten von Nachbarn und Verwaltung"
+          },
+          "community": {
+            "label": "Gemeinschaft",
+            "description": "Beiträge, Veranstaltungen und Marktplatz-Aktivitäten"
+          },
+          "financial": {
+            "label": "Finanzen",
+            "description": "Zahlungserinnerungen, Rechnungen und Finanzneuigkeiten"
+          },
+          "maintenance": {
+            "label": "Wartung",
+            "description": "Geplante Wartungen und Arbeitsaufträge"
+          },
+          "system": {
+            "label": "Systemmeldungen",
+            "description": "App-Updates, Sicherheitshinweise und Systembenachrichtigungen"
+          }
+        },
+        "days": {
+          "monday": "Montag",
+          "tuesday": "Dienstag",
+          "wednesday": "Mittwoch",
+          "thursday": "Donnerstag",
+          "friday": "Freitag",
+          "saturday": "Samstag",
+          "sunday": "Sonntag"
+        },
+        "daysShort": {
+          "monday": "Mo",
+          "tuesday": "Di",
+          "wednesday": "Mi",
+          "thursday": "Do",
+          "friday": "Fr",
+          "saturday": "Sa",
+          "sunday": "So"
+        },
+        "digest": {
+          "title": "Benachrichtigungszusammenfassung",
+          "subtitle": "Zusammenfassungen statt einzelner Hinweise erhalten",
+          "frequency": "Häufigkeit",
+          "deliveryTime": "Zustellzeit",
+          "deliveryDay": "Zustelltag",
+          "nextDelivery": "Nächste Zustellung",
+          "nextDisabled": "Zusammenfassungen sind deaktiviert",
+          "nextHourly": "Jede Stunde zur vollen Stunde",
+          "nextDaily": "Täglich um {{time}}",
+          "nextWeekly": "Jeden {{day}} um {{time}}",
+          "include": "In Zusammenfassung aufnehmen",
+          "allCategories": "Alle Kategorien enthalten (kein Filter)",
+          "categoriesSelected": "{{selected}} von {{total}} Kategorien ausgewählt",
+          "frequencies": {
+            "hourly": {
+              "label": "Stündlich",
+              "description": "Jede Stunde eine Zusammenfassung aller neuen Benachrichtigungen erhalten"
+            },
+            "daily": {
+              "label": "Täglich",
+              "description": "Tägliche Zusammenfassung zu Ihrer Wunschzeit"
+            },
+            "weekly": {
+              "label": "Wöchentlich",
+              "description": "Wöchentliche Zusammenfassung an Ihrem Wunschtag"
+            },
+            "disabled": {
+              "label": "Deaktiviert",
+              "description": "Benachrichtigungen sofort statt gesammelt erhalten"
+            }
+          }
+        },
+        "quietHours": {
+          "title": "Ruhezeiten",
+          "subtitle": "Nicht dringende Benachrichtigungen zu bestimmten Zeiten stummschalten",
+          "startTime": "Beginn",
+          "endTime": "Ende",
+          "timeFormatHint": "Zeiten im 24-Stunden-Format (HH:MM) in der unten gewählten Zeitzone.",
+          "preview": "Zeitplan-Vorschau",
+          "previewRange": "Ruhe von <strong>{{start}}</strong> bis <strong>{{end}}</strong>",
+          "activeDays": "Aktive Tage",
+          "dayActive": "{{day}} – aktiv",
+          "dayInactive": "{{day}} – inaktiv",
+          "timezone": "Zeitzone",
+          "allowEmergency": "Notfallbenachrichtigungen zulassen",
+          "allowEmergencyHelp": "Kritische Warnungen werden auch während der Ruhezeiten zugestellt"
+        },
+        "grouping": {
+          "title": "Intelligente Gruppierung",
+          "subtitle": "Ähnliche Benachrichtigungen bündeln, um für Übersicht zu sorgen",
+          "byCategory": "Nach Kategorie gruppieren",
+          "byCategoryHelp": "Benachrichtigungen gleichen Typs zusammenfassen (z. B. „5 neue Störungsmeldungen“)",
+          "bySource": "Nach Quelle gruppieren",
+          "bySourceHelp": "Benachrichtigungen zum selben Gebäude oder Vorgang zusammenfassen",
+          "maxGroupSize": "Max. Gruppengröße",
+          "maxGroupSizeHelp": "Danach „und X weitere“ anzeigen",
+          "autoExpand": "Schwelle für automatisches Aufklappen",
+          "autoExpandHelp": "Gruppen mit weniger Einträgen aufklappen",
+          "neverExpand": "Nie automatisch aufklappen",
+          "preview": "Vorschau",
+          "clickToExpand": "Zum Aufklappen klicken und einzelne Einträge anzeigen",
+          "expandGroup": "Benachrichtigungsgruppe aufklappen",
+          "items_one": "{{count}} Eintrag",
+          "items_other": "{{count}} Einträge",
+          "orFewer": "{{count}} oder weniger",
+          "previewNewComments_one": "{{count}} neuer Kommentar",
+          "previewNewComments_other": "{{count}} neue Kommentare"
+        }
+      }
     },
     "portalWebhooks": {
       "title": "Portal-Webhooks",
@@ -2365,6 +2756,43 @@
       "created": "Signed in",
       "unknownDevice": "Unknown device",
       "unknownIp": "Unknown"
+    },
+    "accessibilityPage": {
+      "intro": "Passen Sie die Anwendung an Ihre Barrierefreiheitsbedürfnisse an.",
+      "visualTitle": "Darstellung",
+      "colorScheme": "Farbschema",
+      "colorSchemeHelp": "Wählen Sie das für Sie am besten geeignete Farbschema. Der Hochkontrastmodus verbessert die Lesbarkeit.",
+      "colorSchemes": {
+        "light": "Hell",
+        "dark": "Dunkel",
+        "high-contrast": "Hoher Kontrast"
+      },
+      "textSize": "Textgröße",
+      "textSizeHelp": "Passen Sie die Textgröße für bessere Lesbarkeit in der gesamten Anwendung an.",
+      "textSizes": {
+        "small": "Klein",
+        "medium": "Mittel",
+        "large": "Groß",
+        "extra-large": "Sehr groß"
+      },
+      "motionTitle": "Bewegung",
+      "reduceMotion": "Bewegung reduzieren",
+      "reduceMotionHelp": "Minimiert Animationen und Übergänge, die Unbehagen verursachen oder ablenken können.",
+      "navigationTitle": "Navigation",
+      "screenReader": "Screenreader-Modus",
+      "screenReaderHelp": "Optimiert die Oberfläche für Screenreader mit erweiterten ARIA-Beschriftungen und -Beschreibungen.",
+      "keyboardNav": "Erweiterte Tastaturnavigation",
+      "keyboardNavHelp": "Zeigt deutlichere Fokusmarkierungen für die reine Tastaturbedienung an.",
+      "previewTitle": "Vorschau",
+      "previewText": "So wird Text mit Ihren aktuellen Einstellungen angezeigt. Victor jagt zwölf Boxkämpfer quer über den großen Sylter Deich.",
+      "sampleButton": "Beispielschaltfläche",
+      "helpTitle": "Weitere Hilfe",
+      "helpText": "Wenn Sie Probleme mit der Barrierefreiheit haben oder Verbesserungsvorschläge, wenden Sie sich bitte an unseren Support.",
+      "shortcutsTitle": "Tastenkombinationen:",
+      "shortcutTab": "Vorwärts durch interaktive Elemente navigieren",
+      "shortcutShiftTab": "Rückwärts durch interaktive Elemente navigieren",
+      "shortcutEnter": "Schaltflächen und Links aktivieren",
+      "shortcutEsc": "Dialoge und Menüs schließen"
     }
   },
   "connectionStatus": {
@@ -2498,13 +2926,6 @@
     "fieldLocation": "Standort",
     "fieldLocationDescription": "Standortbeschreibung",
     "fieldConnectionType": "Verbindungstyp",
-    "connectionTypeNone": "Nicht angegeben",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Periodische Abfrage"
-    },
     "fieldUnit": "Maßeinheit",
     "fieldInterval": "Meldeintervall (s)",
     "fieldManufacturer": "Hersteller",
@@ -2617,7 +3038,14 @@
     "sensorRegistered": "Sensor registriert",
     "sensorRegisterFailed": "Sensor konnte nicht registriert werden",
     "sensorUpdated": "Sensor aktualisiert",
-    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden"
+    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden",
+    "connectionTypeNone": "Nicht angegeben",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Periodische Abfrage"
+    }
   },
   "commandPalette": {
     "commands": {

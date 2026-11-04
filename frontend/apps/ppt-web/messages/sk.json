@@ -774,7 +774,83 @@
       "security": "Bezpečnosť",
       "cleaning": "Upratovanie",
       "other": "Iné"
-    }
+    },
+    "allStatuses": "Všetky stavy",
+    "allPriorities": "Všetky priority",
+    "allCategories": "Všetky kategórie",
+    "searchPlaceholder": "Hľadať poruchy...",
+    "noFaultsFound": "Nenašli sa žiadne poruchy.",
+    "paginationSummary": "Zobrazené {{from}} – {{to}} z {{total}} porúch",
+    "reportedDate": "Nahlásené: {{date}}",
+    "timeline": {
+      "title": "Priebeh",
+      "empty": "Zatiaľ žiadne záznamy v priebehu.",
+      "internal": "Interné",
+      "action": {
+        "created": "nahlásil(a) poruchu",
+        "triaged": "roztriedil(a) poruchu",
+        "assigned": "priradil(a) poruchu",
+        "status_changed": "zmenil(a) stav",
+        "priority_changed": "zmenil(a) prioritu",
+        "work_note": "pridal(a) pracovnú poznámku",
+        "comment": "pridal(a) komentár",
+        "attachment_added": "pridal(a) prílohu",
+        "scheduled": "naplánoval(a) práce",
+        "resolved": "vyriešil(a) poruchu",
+        "confirmed": "potvrdil(a) odstránenie",
+        "reopened": "znovu otvoril(a) poruchu",
+        "rated": "ohodnotil(a) odstránenie"
+      }
+    },
+    "edit": {
+      "backToFault": "Späť na poruchu",
+      "title": "Upraviť poruchu",
+      "subtitle": "Upravte údaje o poruche. Upozornenie: úpravy sú možné len dovtedy, kým porucha nie je roztriedená."
+    },
+    "triageDialog": {
+      "title": "Triediť poruchu",
+      "submit": "Triediť poruchu",
+      "aiSuggests": "AI navrhuje: <strong>{{category}}</strong>",
+      "aiSuggestsWithPriority": "AI navrhuje: <strong>{{category}}</strong>, priorita <strong>{{priority}}</strong>",
+      "aiConfidence": "(istota {{percent}} %)",
+      "priorityHint": {
+        "low": "Drobný problém, nie je naliehavý",
+        "medium": "Bežná priorita",
+        "high": "Vyžaduje rýchle riešenie",
+        "urgent": "Vyžaduje okamžitý zásah"
+      },
+      "assignTo": "Priradiť (nepovinné)",
+      "unassigned": "Nepriradené"
+    },
+    "viewReports": "Zobraziť prehľady",
+    "statsTotal": "Spolu",
+    "createDescription": "Popíšte problém, ktorý riešite. Uveďte čo najviac podrobností, aby sme ho mohli rýchlo odstrániť.",
+    "reports": {
+      "title": "Prehľady porúch",
+      "subtitle": "Analýza porúch podľa budov a obdobia.",
+      "forbidden": "Nemáte oprávnenie zobraziť prehľady porúch.",
+      "allBuildings": "Všetky budovy",
+      "building": "Budova",
+      "dateFrom": "Od",
+      "dateTo": "Do",
+      "exportCsv": "Exportovať CSV",
+      "exportPdf": "Exportovať PDF",
+      "failedToLoad": "Nepodarilo sa načítať štatistiky porúch",
+      "empty": "Zvoleným filtrom nezodpovedajú žiadne poruchy.",
+      "kpiTotal": "Poruchy spolu",
+      "kpiOpen": "Otvorené",
+      "kpiClosed": "Uzavreté",
+      "kpiResolution": "Priem. doba vyriešenia (h)",
+      "kpiRating": "Priem. hodnotenie",
+      "byStatus": "Podľa stavu",
+      "byCategory": "Podľa kategórie",
+      "byPriority": "Podľa priority",
+      "noData": "Žiadne údaje",
+      "viewFaultsInBucket": "{{label}}. Zobraziť tieto poruchy"
+    },
+    "confirmDelete": "Vymazať túto poruchu? Túto akciu nie je možné vrátiť späť.",
+    "deleted": "Porucha bola vymazaná",
+    "deleteFailed": "Nepodarilo sa vymazať poruchu"
   },
   "buildings": {
     "title": "Budovy",
@@ -1824,6 +1900,34 @@
       "failedToCreate": "Nepodarilo sa vytvoriť núdzový kontakt",
       "failedToUpdate": "Nepodarilo sa aktualizovať núdzový kontakt",
       "failedToDelete": "Nepodarilo sa vymazať núdzový kontakt"
+    },
+    "contactTypes": {
+      "fire_department": "Hasiči",
+      "police": "Polícia",
+      "ambulance": "Záchranná služba",
+      "utility_company": "Dodávateľ energií",
+      "building_manager": "Správca budovy",
+      "security": "Bezpečnostná služba",
+      "maintenance": "Údržba",
+      "medical": "Lekárska pomoc",
+      "other": "Iné"
+    },
+    "card": {
+      "inactive": "Neaktívny",
+      "role": "Pozícia:",
+      "phone": "Telefón:",
+      "phoneSecondary": "Ďalší telefón:",
+      "email": "E-mail:",
+      "address": "Adresa:",
+      "availableHours": "Dostupnosť:",
+      "notes": "Poznámky:",
+      "priority": "Poradie:",
+      "editAria": "Upraviť: {{name}}",
+      "deleteAria": "Vymazať: {{name}}"
+    },
+    "list": {
+      "empty": "Nenašli sa žiadne núdzové kontakty.",
+      "emptyHint": "Začnite pridaním prvého núdzového kontaktu."
     }
   },
   "errors": {
@@ -1932,7 +2036,31 @@
       "rateLimitRetry": "Pred ďalším pokusom prosím počkajte {{seconds}} sekúnd."
     },
     "accessDenied": "Prístup zamietnutý",
-    "backToDashboard": "Späť na prehľad"
+    "backToDashboard": "Späť na prehľad",
+    "pages": {
+      "goBack": "Späť",
+      "tryAgain": "Skúsiť znova",
+      "backToDashboard": "Späť na prehľad",
+      "notFound": {
+        "title": "Stránka sa nenašla",
+        "description": "Stránka, ktorú hľadáte, neexistuje alebo bola presunutá."
+      },
+      "forbidden": {
+        "title": "Prístup zamietnutý",
+        "description": "Na zobrazenie tejto stránky nemáte oprávnenie. Ak si myslíte, že ide o chybu, obráťte sa na správcu."
+      },
+      "serverError": {
+        "description": "Vyskytla sa neočakávaná chyba. Skúste to o chvíľu znova."
+      },
+      "sessionExpired": {
+        "title": "Vaša relácia vypršala",
+        "description": "Pokračujte opätovným prihlásením. Vrátime vás tam, kde ste skončili.",
+        "signIn": "Prihlásiť sa"
+      },
+      "inlineError": {
+        "description": "Skúste to znova. Ak problém pretrváva, kontaktujte podporu."
+      }
+    }
   },
   "notifications": {
     "title": "Oznámenia",
@@ -1945,7 +2073,8 @@
     "highContrast": "Vysoký kontrast",
     "fontSize": "Veľkosť písma",
     "reducedMotion": "Znížený pohyb",
-    "screenReader": "Optimalizované pre čítačky"
+    "screenReader": "Optimalizované pre čítačky",
+    "checkingAuthentication": "Overuje sa prihlásenie"
   },
   "dashboard": {
     "managerActionQueue": "Fronta úloh",
@@ -2037,7 +2166,9 @@
     "itemsNeedingAttention_many": "{{count}} položiek vyžaduje pozornosť",
     "minutesAgo_many": "pred {{count}} minútami",
     "hoursAgo_many": "pred {{count}} hodinami",
-    "daysAgo_many": "pred {{count}} dňami"
+    "daysAgo_many": "pred {{count}} dňami",
+    "refresh": "Obnoviť",
+    "viewMyUnit": "Zobraziť moju jednotku"
   },
   "admin": {
     "common": {
@@ -2713,7 +2844,8 @@
           "dateInFuture": "Dátum porušenia nemôže byť v budúcnosti"
         }
       }
-    }
+    },
+    "daysShort": "{{count}} d"
   },
   "settings": {
     "notifications": {
@@ -2723,7 +2855,190 @@
       "updateError": "Nepodarilo sa aktualizovať predvoľbu. Skúste to znova.",
       "disableError": "Nepodarilo sa vypnúť upozornenia. Skúste to znova.",
       "dismiss": "Zavrieť",
-      "lastUpdated": "Naposledy aktualizované: {{when}}"
+      "lastUpdated": "Naposledy aktualizované: {{when}}",
+      "disableAll": {
+        "title": "Vypnúť všetky oznámenia?",
+        "intro": "Chystáte sa vypnúť všetky kanály oznámení. Nebudete tak dostávať žiadne oznámenia o:",
+        "itemAnnouncements": "dôležitých oznámeniach od správcu",
+        "itemFaults": "stave nahlásených porúch a údržby",
+        "itemVoting": "termínoch a výsledkoch hlasovaní",
+        "itemMessages": "správach od susedov",
+        "warning": "Môžu vám ujsť dôležité informácie o vašej nehnuteľnosti.",
+        "confirm": "Vypnúť všetky oznámenia",
+        "keep": "Ponechať oznámenia"
+      },
+      "toggleChannel": "Prepnúť: {{channel}}",
+      "channels": {
+        "push": {
+          "label": "Push oznámenia",
+          "description": "Dostávajte oznámenia do mobilného zariadenia"
+        },
+        "email": {
+          "label": "E-mailové oznámenia",
+          "description": "Dostávajte oznámenia e-mailom"
+        },
+        "in_app": {
+          "label": "Oznámenia v aplikácii",
+          "description": "Zobrazujte oznámenia priamo v aplikácii"
+        }
+      },
+      "advanced": {
+        "title": "Rozšírené nastavenia oznámení",
+        "subtitle": "Podrobne nastavte, ako a kedy dostávate oznámenia.",
+        "perEventTriggers": "Spúšťače pre jednotlivé udalosti",
+        "categoriesIntro": "Vyberte, aké typy oznámení chcete dostávať a akým spôsobom.",
+        "tabs": {
+          "categories": "Kategórie",
+          "schedule": "Časový plán",
+          "grouping": "Zoskupovanie"
+        },
+        "errors": {
+          "load": "Nepodarilo sa načítať nastavenia oznámení. Skúste to neskôr.",
+          "category": "Nepodarilo sa uložiť nastavenie kategórie. Skúste to znova.",
+          "quietHours": "Nepodarilo sa uložiť tiché hodiny. Skúste to znova.",
+          "digest": "Nepodarilo sa uložiť nastavenia súhrnu. Skúste to znova.",
+          "grouping": "Nepodarilo sa uložiť nastavenia zoskupovania. Skúste to znova."
+        },
+        "off": "Vypnuté",
+        "allOn": "Všetko zapnuté",
+        "channelShort": {
+          "push": "Push",
+          "email": "E-mail",
+          "in_app": "V aplikácii"
+        },
+        "channelAria": "{{channel}} – oznámenia: {{category}}",
+        "enableChannelTitle": "Zapnúť {{channel}} pre {{category}}",
+        "disableChannelTitle": "Vypnúť {{channel}} pre {{category}}",
+        "categories": {
+          "faults": {
+            "label": "Hlásenia porúch",
+            "description": "Novinky o nahlásených poruchách, opravách a ich odstránení"
+          },
+          "voting": {
+            "label": "Hlasovania a rozhodnutia",
+            "description": "Nové hlasovania, výsledky a pripomienky"
+          },
+          "announcements": {
+            "label": "Oznámenia",
+            "description": "Oznámenia a novinky z budovy"
+          },
+          "documents": {
+            "label": "Dokumenty",
+            "description": "Nové dokumenty, podpisy a zmeny"
+          },
+          "messages": {
+            "label": "Správy",
+            "description": "Správy od susedov a správcov"
+          },
+          "community": {
+            "label": "Komunita",
+            "description": "Príspevky, podujatia a ponuky v komunite"
+          },
+          "financial": {
+            "label": "Financie",
+            "description": "Pripomienky platieb, faktúry a finančné novinky"
+          },
+          "maintenance": {
+            "label": "Údržba",
+            "description": "Plánovaná údržba a pracovné príkazy"
+          },
+          "system": {
+            "label": "Systémové novinky",
+            "description": "Aktualizácie aplikácie, bezpečnostné upozornenia a systémové oznámenia"
+          }
+        },
+        "days": {
+          "monday": "pondelok",
+          "tuesday": "utorok",
+          "wednesday": "streda",
+          "thursday": "štvrtok",
+          "friday": "piatok",
+          "saturday": "sobota",
+          "sunday": "nedeľa"
+        },
+        "daysShort": {
+          "monday": "Po",
+          "tuesday": "Ut",
+          "wednesday": "St",
+          "thursday": "Št",
+          "friday": "Pi",
+          "saturday": "So",
+          "sunday": "Ne"
+        },
+        "digest": {
+          "title": "Súhrn oznámení",
+          "subtitle": "Dostávajte súhrny namiesto jednotlivých upozornení",
+          "frequency": "Frekvencia",
+          "deliveryTime": "Čas doručenia",
+          "deliveryDay": "Deň doručenia",
+          "nextDelivery": "Najbližšie doručenie",
+          "nextDisabled": "Súhrny sú vypnuté",
+          "nextHourly": "Každú hodinu o :00",
+          "nextDaily": "Každý deň o {{time}}",
+          "nextWeekly": "Každý týždeň – {{day}} o {{time}}",
+          "include": "Zahrnúť do súhrnu",
+          "allCategories": "Zahrnuté sú všetky kategórie (bez filtra)",
+          "categoriesSelected": "Vybrané kategórie: {{selected}} z {{total}}",
+          "frequencies": {
+            "hourly": {
+              "label": "Každú hodinu",
+              "description": "Každú hodinu dostanete súhrn všetkých nových oznámení"
+            },
+            "daily": {
+              "label": "Denne",
+              "description": "Denný súhrn v čase, ktorý si zvolíte"
+            },
+            "weekly": {
+              "label": "Týždenne",
+              "description": "Týždenný súhrn v deň, ktorý si zvolíte"
+            },
+            "disabled": {
+              "label": "Vypnuté",
+              "description": "Oznámenia dostávate okamžite, nie v súhrnoch"
+            }
+          }
+        },
+        "quietHours": {
+          "title": "Tiché hodiny",
+          "subtitle": "V určených hodinách stlmte oznámenia, ktoré nie sú naliehavé",
+          "startTime": "Začiatok",
+          "endTime": "Koniec",
+          "timeFormatHint": "Časy sú v 24-hodinovom formáte (HH:MM) a platia pre časové pásmo zvolené nižšie.",
+          "preview": "Ukážka plánu",
+          "previewRange": "Ticho od <strong>{{start}}</strong> do <strong>{{end}}</strong>",
+          "activeDays": "Aktívne dni",
+          "dayActive": "{{day}} – aktívny",
+          "dayInactive": "{{day}} – neaktívny",
+          "timezone": "Časové pásmo",
+          "allowEmergency": "Povoliť núdzové oznámenia",
+          "allowEmergencyHelp": "Kritické upozornenia vám prídu aj počas tichých hodín"
+        },
+        "grouping": {
+          "title": "Inteligentné zoskupovanie",
+          "subtitle": "Zoskupte podobné oznámenia, aby ste mali lepší prehľad",
+          "byCategory": "Zoskupiť podľa kategórie",
+          "byCategoryHelp": "Spojí oznámenia rovnakého typu (napr. „5 nových zmien v poruchách“)",
+          "bySource": "Zoskupiť podľa zdroja",
+          "bySourceHelp": "Spojí oznámenia z rovnakej budovy alebo k rovnakej veci",
+          "maxGroupSize": "Max. veľkosť skupiny",
+          "maxGroupSizeHelp": "Po tomto počte sa zobrazí „a ďalšie X“",
+          "autoExpand": "Hranica automatického rozbalenia",
+          "autoExpandHelp": "Rozbalí skupiny s menším počtom položiek",
+          "neverExpand": "Nikdy automaticky nerozbaľovať",
+          "preview": "Ukážka",
+          "clickToExpand": "Kliknutím rozbalíte a zobrazíte jednotlivé položky",
+          "expandGroup": "Rozbaliť skupinu oznámení",
+          "items_one": "{{count}} položka",
+          "items_few": "{{count}} položky",
+          "items_many": "{{count}} položiek",
+          "items_other": "{{count}} položiek",
+          "orFewer": "{{count}} alebo menej",
+          "previewNewComments_one": "{{count}} nový komentár",
+          "previewNewComments_few": "{{count}} nové komentáre",
+          "previewNewComments_many": "{{count}} nových komentárov",
+          "previewNewComments_other": "{{count}} nových komentárov"
+        }
+      }
     },
     "portalWebhooks": {
       "title": "Webhooky portálov",
@@ -2856,6 +3171,43 @@
       "created": "Prihlásenie",
       "unknownDevice": "Neznáme zariadenie",
       "unknownIp": "Neznáma"
+    },
+    "accessibilityPage": {
+      "intro": "Prispôsobte si aplikáciu svojim potrebám prístupnosti.",
+      "visualTitle": "Zobrazenie",
+      "colorScheme": "Farebná schéma",
+      "colorSchemeHelp": "Vyberte farebnú schému, ktorá vám najviac vyhovuje. Režim vysokého kontrastu zlepšuje čitateľnosť textu.",
+      "colorSchemes": {
+        "light": "Svetlá",
+        "dark": "Tmavá",
+        "high-contrast": "Vysoký kontrast"
+      },
+      "textSize": "Veľkosť textu",
+      "textSizeHelp": "Upravte veľkosť textu pre lepšiu čitateľnosť v celej aplikácii.",
+      "textSizes": {
+        "small": "Malá",
+        "medium": "Stredná",
+        "large": "Veľká",
+        "extra-large": "Veľmi veľká"
+      },
+      "motionTitle": "Pohyb a animácie",
+      "reduceMotion": "Obmedziť pohyb",
+      "reduceMotionHelp": "Obmedzí animácie a prechody, ktoré môžu byť nepríjemné alebo rušivé.",
+      "navigationTitle": "Navigácia",
+      "screenReader": "Režim čítačky obrazovky",
+      "screenReaderHelp": "Prispôsobí rozhranie používateľom čítačiek obrazovky pomocou rozšírených popisov ARIA.",
+      "keyboardNav": "Rozšírená navigácia klávesnicou",
+      "keyboardNavHelp": "Zobrazí výraznejšie zvýraznenie aktívneho prvku pri ovládaní len klávesnicou.",
+      "previewTitle": "Ukážka",
+      "previewText": "Takto bude vyzerať text s vašimi aktuálnymi nastaveniami. Kŕdeľ šťastných ďatľov učí pri ústí Váhu mĺkveho koňa obhrýzať kôru.",
+      "sampleButton": "Ukážkové tlačidlo",
+      "helpTitle": "Ďalšia pomoc",
+      "helpText": "Ak narazíte na problém s prístupnosťou alebo máte návrh na zlepšenie, kontaktujte našu podporu.",
+      "shortcutsTitle": "Klávesové skratky:",
+      "shortcutTab": "presun na ďalší interaktívny prvok",
+      "shortcutShiftTab": "presun na predchádzajúci interaktívny prvok",
+      "shortcutEnter": "aktivácia tlačidiel a odkazov",
+      "shortcutEsc": "zatvorenie dialógov a ponúk"
     }
   },
   "connectionStatus": {
@@ -4926,7 +5278,79 @@
       "contentRequired": "Obsah je povinný",
       "createFailed": "Článok sa nepodarilo vytvoriť",
       "updateFailed": "Článok sa nepodarilo aktualizovať",
-      "loadFailed": "Článok sa nepodarilo načítať"
+      "loadFailed": "Článok sa nepodarilo načítať",
+      "loadListFailed": "Nepodarilo sa načítať články",
+      "deleteFailed": "Nepodarilo sa vymazať článok",
+      "publishFailed": "Nepodarilo sa zverejniť článok",
+      "archiveFailed": "Nepodarilo sa archivovať článok",
+      "pinFailed": "Nepodarilo sa zmeniť pripnutie",
+      "reactionFailed": "Nepodarilo sa uložiť reakciu",
+      "commentPostFailed": "Nepodarilo sa pridať komentár",
+      "commentUpdateFailed": "Nepodarilo sa upraviť komentár",
+      "commentDeleteFailed": "Nepodarilo sa vymazať komentár"
+    },
+    "listTitle": "Novinky a oznámenia",
+    "searchPlaceholder": "Hľadať články...",
+    "filters": {
+      "allStatuses": "Všetky stavy",
+      "drafts": "Koncepty",
+      "pinnedOnly": "Len pripnuté"
+    },
+    "loadingArticles": "Načítavajú sa články...",
+    "loadingArticle": "Načítava sa článok...",
+    "emptyFiltered": "Vašim filtrom nezodpovedajú žiadne články.",
+    "empty": "Zatiaľ tu nie sú žiadne články. Vytvorte prvý článok!",
+    "confirmDelete": "Naozaj chcete vymazať tento článok?",
+    "backToNews": "Späť na novinky",
+    "pinned": "Pripnuté",
+    "views": "Zobrazenia",
+    "viewCount_one": "{{count}} zobrazenie",
+    "viewCount_few": "{{count}} zobrazenia",
+    "viewCount_many": "{{count}} zobrazení",
+    "viewCount_other": "{{count}} zobrazení",
+    "coverAlt": "Titulný obrázok: {{title}}",
+    "statusAria": "Stav: {{status}}",
+    "publishedOn": "Zverejnené: {{date}}",
+    "actions": {
+      "viewAria": "Zobraziť článok: {{title}}",
+      "editAria": "Upraviť článok: {{title}}",
+      "publishAria": "Zverejniť článok: {{title}}",
+      "archiveAria": "Archivovať článok: {{title}}",
+      "deleteAria": "Vymazať článok: {{title}}",
+      "publish": "Zverejniť",
+      "archive": "Archivovať",
+      "pin": "Pripnúť",
+      "unpin": "Odopnúť",
+      "pinAria": "Pripnúť článok",
+      "unpinAria": "Odopnúť článok"
+    },
+    "reactions": {
+      "like": "Páči sa mi",
+      "love": "Milujem",
+      "surprised": "Prekvapenie",
+      "sad": "Smútok",
+      "angry": "Hnev",
+      "aria": "Reakcia: {{reaction}}",
+      "ariaActive": "Reakcia: {{reaction}} (aktívna)",
+      "total_one": "{{count}} reakcia",
+      "total_few": "{{count}} reakcie",
+      "total_many": "{{count}} reakcií",
+      "total_other": "{{count}} reakcií"
+    },
+    "comments": {
+      "title": "Komentáre ({{count}})",
+      "placeholder": "Napíšte komentár...",
+      "replyPlaceholder": "Napíšte odpoveď...",
+      "charCount": "{{length}}/{{max}} znakov",
+      "post": "Pridať komentár",
+      "posting": "Odosiela sa...",
+      "reply": "Odpovedať",
+      "deleted": "[Tento komentár bol vymazaný]",
+      "empty": "Zatiaľ žiadne komentáre. Buďte prvý, kto pridá komentár!",
+      "replyCount_one": "{{count}} odpoveď",
+      "replyCount_few": "{{count}} odpovede",
+      "replyCount_many": "{{count}} odpovedí",
+      "replyCount_other": "{{count}} odpovedí"
     }
   },
   "outages": {
@@ -4985,7 +5409,10 @@
       "low": "Nízka",
       "medium": "Stredná",
       "high": "Vysoká",
-      "critical": "Kritická"
+      "critical": "Kritická",
+      "informational": "Informatívna",
+      "minor": "Nízka",
+      "major": "Vysoká"
     },
     "form": {
       "title": "Názov",
@@ -5007,7 +5434,10 @@
       "startRequired": "Plánovaný čas začiatku je povinný",
       "outageNotFound": "Odstávka sa nenašla",
       "outageNotFoundDesc": "Odstávka, ktorú hľadáte, neexistuje."
-    }
+    },
+    "failedToStart": "Nepodarilo sa spustiť odstávku",
+    "failedToResolve": "Nepodarilo sa označiť odstávku ako vyriešenú",
+    "failedToCancel": "Nepodarilo sa zrušiť odstávku"
   },
   "criticalNotifications": {
     "title": "Kritické upozornenia",

@@ -17,7 +17,8 @@ interface ResidentDashboardPageProps {
 }
 
 export function ResidentDashboardPage({ onItemAction }: ResidentDashboardPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const relativeTime = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' });
 
   return (
     <div className="resident-page">
@@ -50,10 +51,18 @@ export function ResidentDashboardPage({ onItemAction }: ResidentDashboardPagePro
           <ActivityItem
             icon="✅"
             text={t('dashboard.activity.meterReadingSubmitted')}
-            time="2 hours ago"
+            time={relativeTime.format(-2, 'hour')}
           />
-          <ActivityItem icon="🗳️" text={t('dashboard.activity.voteSubmitted')} time="Yesterday" />
-          <ActivityItem icon="🔧" text={t('dashboard.activity.faultReported')} time="3 days ago" />
+          <ActivityItem
+            icon="🗳️"
+            text={t('dashboard.activity.voteSubmitted')}
+            time={relativeTime.format(-1, 'day')}
+          />
+          <ActivityItem
+            icon="🔧"
+            text={t('dashboard.activity.faultReported')}
+            time={relativeTime.format(-3, 'day')}
+          />
         </div>
       </section>
     </div>
