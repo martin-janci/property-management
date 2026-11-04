@@ -103,11 +103,10 @@ export function AccountingInvoiceManagementPage() {
         <AccountingInvoiceList
           invoices={invoices?.data || []}
           isLoading={isLoading}
-          onViewInvoice={() => {
-            // TODO(#1522): wire invoice-detail navigation once the detail route
-            // exists. Intentionally a no-op (not console.log) so nothing logs in
-            // production.
-          }}
+          // No onViewInvoice: these are accounting-server invoices (a separate
+          // entity from /financial invoices) and no accounting invoice detail
+          // view exists yet (#1522), so rows are not clickable rather than a
+          // silent no-op.
           onDeleteInvoice={(id) => setDeleteTargetId(id)}
         />
       )}

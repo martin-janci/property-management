@@ -25,7 +25,8 @@ const INVOICE_STATUS_STYLES: Record<AccountingInvoiceStatus, string> = {
 interface AccountingInvoiceListProps {
   invoices: AccountingInvoice[];
   isLoading?: boolean;
-  onViewInvoice: (id: string) => void;
+  /** Omit when there is no detail view: rows then render non-interactive. */
+  onViewInvoice?: (id: string) => void;
   onEditInvoice?: (id: string) => void;
   onDeleteInvoice?: (id: string) => void;
 }
@@ -72,8 +73,8 @@ export function AccountingInvoiceList({
         {invoices.map((invoice) => (
           <li key={invoice.id}>
             <div
-              className="px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors cursor-pointer"
-              onClick={() => onViewInvoice(invoice.id)}
+              className={`px-4 py-4 sm:px-6 transition-colors${onViewInvoice ? ' hover:bg-gray-50 cursor-pointer' : ''}`}
+              onClick={onViewInvoice ? () => onViewInvoice(invoice.id) : undefined}
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
