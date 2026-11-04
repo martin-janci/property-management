@@ -5,19 +5,25 @@
  * the `<Route>` table fragment. Extracted from App.tsx so dispute work no longer
  * collides with other features on the central aggregator.
  */
-import type {
-  DisputeStatus as ApiDisputeStatus,
-  DisputeType as ApiDisputeType,
-  TimelineEventType,
-} from '@ppt/api-client';
 import {
+  useAcceptResolution,
+  useCompleteActionItem,
+  useCreateActionItem,
+  useDeleteEvidence,
   useDispute,
+  useDisputeActionItems,
   useDisputeEvidence,
+  useDisputeResolutions,
   useDisputes,
   useDisputeTimeline,
+  useEscalateDispute,
+  useImplementResolution,
+  useProposeResolution,
+  useSendActionReminder,
   useUpdateDisputeStatus,
+  useVoteOnResolution,
 } from '@ppt/api-client';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Route, useNavigate, useParams } from 'react-router-dom';
 import { AuthRequiredGate, useToast } from '../../components';
@@ -28,76 +34,11 @@ import type {
   DisputeSummary,
   DisputeStatus as UiDisputeStatus,
 } from '../../features/disputes/components/DisputeCard';
-import type { ActivityType } from '../../features/disputes/components/DisputeTimeline';
 import type { DisputeDetail as UiDisputeDetail } from '../../features/disputes/pages/DisputeDetailPage';
 import { FileDisputePageRoute } from '../../features/disputes/pages/FileDisputePageRoute';
+import { mapDisputeDetailForUi } from '../../features/disputes/utils/mapDisputeDetail';
 import { DisputeDetailPage, DisputesPage, MediationWorkspacePage } from '../lazyRoutes';
 import { isManagerRole } from '../shared';
-
-// ============================================
-// Dispute type mappers (API <-> UI)
-// ============================================
-
-/** Map API DisputeType to UI DisputeCategory */
-function mapTypeToCategory(type: ApiDisputeType): DisputeCategory {
-  const mapping: Record<ApiDisputeType, DisputeCategory> = {
-    noise: 'noise',
-    damage: 'damage',
-    payment: 'payment',
-    lease: 'lease_terms',
-    maintenance: 'maintenance',
-    other: 'other',
-  };
-  return mapping[type];
-}
-
-/** Map API DisputeStatus to UI DisputeStatus */
-function mapApiStatusToUiStatus(status: ApiDisputeStatus): UiDisputeStatus {
-  const mapping: Record<ApiDisputeStatus, UiDisputeStatus> = {
-    filed: 'filed',
-    under_review: 'under_review',
-    mediation: 'mediation',
-    escalated: 'escalated',
-    resolved: 'resolved',
-    closed: 'closed',
-  };
-  return mapping[status];
-}
-
-/** Map UI DisputeStatus to API DisputeStatus (for filtering) */
-function mapUiStatusToApiStatus(status: UiDisputeStatus): ApiDisputeStatus | undefined {
-  const mapping: Record<UiDisputeStatus, ApiDisputeStatus | undefined> = {
-    filed: 'filed',
-    under_review: 'under_review',
-    mediation: 'mediation',
-    awaiting_response: 'under_review', // No direct mapping, use under_review
-    resolved: 'resolved',
-    escalated: 'escalated',
-    withdrawn: 'closed', // No direct mapping, use closed
-    closed: 'closed',
-  };
-  return mapping[status];
-}
-
-/**
- * Map API TimelineEventType to UI ActivityType (story 80-3).
- * Most event names overlap; the few that differ are approximated.
- */
-function mapTimelineEventType(eventType: TimelineEventType): ActivityType {
-  const mapping: Record<TimelineEventType, ActivityType> = {
-    dispute_filed: 'dispute_filed',
-    status_changed: 'status_changed',
-    mediator_assigned: 'party_added',
-    evidence_added: 'evidence_added',
-    note_added: 'comment_added',
-    meeting_scheduled: 'session_scheduled',
-    resolution_proposed: 'resolution_proposed',
-    resolution_accepted: 'resolution_accepted',
-    escalated: 'escalated',
-    closed: 'closed',
-  };
-  return mapping[eventType] ?? 'status_changed';
-}
 
 // ============================================
 // Route wrappers
@@ -197,30 +138,43 @@ function DisputesPageRoute() {
 /**
  * Route wrapper for dispute detail page (Epic 77, Story 80-3).
  *
- * Replaces the inline JSX stub with the full DisputeDetailPage component.
- * Wires useDispute, useDisputeTimeline, useDisputeEvidence, and
- * useUpdateDisputeStatus from @ppt/api-client.
+ * Wires the detail page to the real api-server routes:
+ *   - GET  /disputes/{id}                 dispute + parties (names/emails)
+ *   - GET  /disputes/{id}/activities      timeline (actor names from parties)
+ *   - GET  /disputes/{id}/evidence        evidence (uploader names from parties)
+ *   - GET  /disputes/{id}/resolutions[/{rid}]  resolutions with votes
+ *   - GET  /disputes/{id}/actions         action items
+ *   - PATCH /disputes/{id}                status change (manager only)
+ *   - DELETE evidence, propose/vote/accept/implement resolution,
+ *     create/complete/remind action items, escalate an action item.
  *
- * API DisputeWithDetails → UI DisputeDetail mapping:
- *   - subject           → title
- *   - type              → category (via mapTypeToCategory)
- *   - status            → status (via mapApiStatusToUiStatus)
- *   - filedBy           → filedBy + filedByName
- *   - assignedMediator  → assignedToName
- *   - referenceNumber   synthesised as DSP-{id.toUpperCase()}
- *   - priority          UI-only, hardcoded 'medium' until API exposes it
+ * Not offered because the backend has no route for it: uploading evidence
+ * files (the evidence route only records metadata of an already-stored file)
+ * and ticking off individual resolution terms.
  */
 function DisputeDetailRoute() {
   const { t } = useTranslation();
-  const { disputeId } = useParams<{ disputeId: string }>();
+  const { disputeId = '' } = useParams<{ disputeId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const { data: dispute, isLoading, error } = useDispute(disputeId ?? '');
-  const { data: timelineData, isLoading: timelineLoading } = useDisputeTimeline(disputeId ?? '');
-  const { data: evidenceData, isLoading: evidenceLoading } = useDisputeEvidence(disputeId ?? '');
+  const { data: dispute, isLoading, error } = useDispute(disputeId);
+  const { data: timelineData, isLoading: timelineLoading } = useDisputeTimeline(disputeId);
+  const { data: evidenceData, isLoading: evidenceLoading } = useDisputeEvidence(disputeId);
+  const { data: resolutionData } = useDisputeResolutions(disputeId);
+  const { data: actionData } = useDisputeActionItems(disputeId);
+
   const updateStatus = useUpdateDisputeStatus(user?.organizationId ?? '');
+  const deleteEvidence = useDeleteEvidence(disputeId);
+  const proposeResolution = useProposeResolution(disputeId);
+  const voteOnResolution = useVoteOnResolution(disputeId);
+  const acceptResolution = useAcceptResolution(disputeId);
+  const implementResolution = useImplementResolution(disputeId);
+  const createAction = useCreateActionItem(disputeId);
+  const completeAction = useCompleteActionItem(disputeId);
+  const sendReminder = useSendActionReminder(disputeId);
+  const escalate = useEscalateDispute(user?.organizationId ?? '');
 
   useEffect(() => {
     if (error) {
@@ -254,87 +208,25 @@ function DisputeDetailRoute() {
     );
   }
 
-  // Map API DisputeWithDetails → UI DisputeDetail
-  const uiDispute: UiDisputeDetail | undefined = dispute
-    ? {
-        id: dispute.id,
-        organizationId: dispute.organizationId,
-        unitId: dispute.unitId,
-        referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
-        category: mapTypeToCategory(dispute.type),
-        title: dispute.subject,
-        description: dispute.description,
-        status: mapApiStatusToUiStatus(dispute.status),
-        // priority is UI-only; API does not expose it yet
-        priority: 'medium' as DisputePriority,
-        filedBy: dispute.filedBy,
-        filedByName: dispute.filerDetails?.name ?? dispute.filedBy,
-        assignedTo: dispute.assignedMediatorId,
-        assignedToName: dispute.assignedMediator,
-        createdAt: dispute.createdAt,
-        updatedAt: dispute.updatedAt,
-      }
-    : undefined;
+  const ui = mapDisputeDetailForUi({
+    dispute,
+    timeline: timelineData,
+    evidence: evidenceData,
+    resolutions: resolutionData,
+    actions: actionData,
+    currentUserId: user?.id,
+    unknownName: t('disputes.detail.unknownUser'),
+  });
 
-  // Map API TimelineEvent[] → UI TimelineEntry[]
-  const timeline = (timelineData ?? []).map((ev) => ({
-    id: ev.id,
-    actorId: ev.actorId,
-    actorName: ev.actorName,
-    activityType: mapTimelineEventType(ev.eventType),
-    description: ev.description,
-    metadata: ev.metadata,
-    createdAt: ev.createdAt,
-  }));
-
-  // Map API DisputeEvidence[] → UI DisputeEvidence[]
-  const evidence = (evidenceData ?? []).map((ev) => ({
-    id: ev.id,
-    uploadedBy: ev.uploadedBy,
-    uploaderName: ev.uploadedBy,
-    filename: ev.fileName,
-    originalFilename: ev.fileName,
-    contentType: ev.fileType,
-    sizeBytes: ev.fileSize,
-    storageUrl: ev.fileUrl,
-    description: ev.description,
-    createdAt: ev.createdAt,
-  }));
-
-  const isManager = isManagerRole(user?.role);
-
-  // #516 — these dispute actions are not yet wired to a backend mutation.
-  // Render-time `() => {}` no-ops silently swallowed clicks (user clicks,
-  // nothing happens). Until the API surface lands, surface a toast so the
-  // user knows the action exists but is pending implementation.
-  const notImplemented = useCallback(
-    (label: string) => () => {
-      showToast({
-        type: 'info',
-        title: t('common.notImplemented', { defaultValue: 'Not yet available' }),
-        message: t('disputes.actionPendingImpl', {
-          defaultValue: '{{action}} will be available in a future release.',
-          action: label,
-        }),
-      });
-    },
-    [showToast, t]
-  );
-
-  const handleUpdateStatus = async (status: UiDisputeStatus, reason?: string) => {
-    const apiStatus = mapUiStatusToApiStatus(status);
-    if (!apiStatus || !disputeId) return;
+  /** Run a mutation and toast its outcome. */
+  const run = async (action: () => Promise<unknown>, successTitle: string) => {
     try {
-      await updateStatus.mutateAsync({ disputeId, data: { status: apiStatus, reason } });
-      showToast({
-        type: 'success',
-        title: t('disputes.statusUpdated', 'Status updated'),
-        message: '',
-      });
+      await action();
+      showToast({ type: 'success', title: successTitle, message: '' });
     } catch (err) {
       showToast({
         type: 'error',
-        title: t('disputes.statusUpdateFailed', 'Failed to update status'),
+        title: t('disputes.detail.actionFailed'),
         message: err instanceof Error ? err.message : t('auth.unexpectedError'),
       });
     }
@@ -342,28 +234,72 @@ function DisputeDetailRoute() {
 
   return (
     <DisputeDetailPage
-      dispute={uiDispute!}
-      parties={[]}
-      evidence={evidence}
-      timeline={timeline}
-      resolutions={[]}
-      actionItems={[]}
-      isManager={isManager}
-      isLoading={isLoading || timelineLoading || evidenceLoading}
+      // The page shows a spinner until the dispute has loaded.
+      dispute={ui.dispute as UiDisputeDetail}
+      parties={ui.parties}
+      evidence={ui.evidence}
+      timeline={ui.timeline}
+      resolutions={ui.resolutions}
+      actionItems={ui.actionItems}
+      isManager={isManagerRole(user?.role)}
+      isParty={ui.isParty}
+      isMediator={ui.isMediator}
+      isLoading={!ui.dispute || isLoading || timelineLoading || evidenceLoading}
       currentUserId={user?.id}
       onBack={() => navigate('/disputes')}
-      onUpdateStatus={handleUpdateStatus}
-      onAddEvidence={notImplemented('Add evidence')}
-      onDeleteEvidence={notImplemented('Delete evidence')}
-      onProposeResolution={notImplemented('Propose resolution')}
-      onVoteResolution={notImplemented('Vote on resolution')}
-      onAcceptResolution={notImplemented('Accept resolution')}
-      onImplementResolution={notImplemented('Implement resolution')}
-      onCompleteResolutionTerm={notImplemented('Complete resolution term')}
-      onCreateAction={notImplemented('Create action')}
-      onCompleteAction={notImplemented('Complete action')}
-      onSendReminder={notImplemented('Send reminder')}
-      onEscalate={notImplemented('Escalate')}
+      onUpdateStatus={(status, reason) =>
+        run(
+          () => updateStatus.mutateAsync({ disputeId, data: { status, reason } }),
+          t('disputes.statusUpdated')
+        )
+      }
+      onDeleteEvidence={(id) =>
+        run(() => deleteEvidence.mutateAsync(id), t('disputes.detail.evidenceDeleted'))
+      }
+      onProposeResolution={(resolutionText, terms) =>
+        run(
+          () => proposeResolution.mutateAsync({ resolutionText, terms }),
+          t('disputes.detail.resolutionProposed')
+        )
+      }
+      onVoteResolution={(resolutionId, accepted, comments) =>
+        run(
+          () => voteOnResolution.mutateAsync({ resolutionId, data: { accepted, comments } }),
+          t('disputes.detail.voteRecorded')
+        )
+      }
+      onAcceptResolution={(id) =>
+        run(() => acceptResolution.mutateAsync(id), t('disputes.detail.resolutionAccepted'))
+      }
+      onImplementResolution={(id) =>
+        run(() => implementResolution.mutateAsync(id), t('disputes.detail.resolutionImplemented'))
+      }
+      onCreateAction={(data) =>
+        run(() => createAction.mutateAsync(data), t('disputes.detail.actionCreated'))
+      }
+      onCompleteAction={(actionId, notes) =>
+        run(
+          () => completeAction.mutateAsync({ actionId, notes }),
+          t('disputes.detail.actionCompleted')
+        )
+      }
+      onSendReminder={(actionId) =>
+        run(() => sendReminder.mutateAsync(actionId), t('disputes.detail.reminderSent'))
+      }
+      onEscalate={(actionId) =>
+        run(
+          () =>
+            escalate.mutateAsync({
+              disputeId,
+              data: {
+                reason: t('disputes.detail.actionEscalationReason'),
+                severity: 'formal_notice',
+                actionItemId: actionId,
+              },
+            }),
+          t('disputes.detail.actionEscalated')
+        )
+      }
       onNavigateToMediation={() => navigate(`/disputes/${disputeId}/mediation`)}
     />
   );
@@ -418,9 +354,6 @@ function DisputeMediationRoute() {
     <MediationWorkspacePage
       disputeId={disputeId}
       currentUserId={user?.id}
-      currentUserName={
-        user ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email : undefined
-      }
       organizationId={organizationId}
       isManager={isManager}
       onBack={() => navigate(`/disputes/${disputeId}`)}

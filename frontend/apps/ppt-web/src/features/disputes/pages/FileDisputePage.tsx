@@ -4,9 +4,12 @@
  * Provides:
  *  - Dispute type / reason selector (radio-card grid)
  *  - Subject + description fields (zod-validated via react-hook-form)
- *  - Evidence uploader (EvidenceUploader component — AC-2)
- *  - API wiring delegated to the route wrapper in App.tsx (useCreateDispute +
- *    useUploadEvidence); this component is a pure presentational form.
+ *  - Unit selector (required only when the caller has units)
+ *  - API wiring delegated to FileDisputePageRoute (useCreateDispute →
+ *    `POST /api/v1/disputes`); this component is a pure presentational form.
+ *
+ * Evidence upload is not offered: the backend evidence route only records
+ * metadata of an already-stored file and there is no evidence upload route.
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { DraftSavedIndicator } from '../components/DraftSavedIndicator';
-import { EvidenceUploader, type PendingEvidence } from '../components/EvidenceUploader';
 import { useDraftStorage } from '../hooks/useDraftStorage';
 
 /** localStorage key for the in-progress dispute-filing draft (AC-4). */
@@ -39,8 +41,14 @@ const disputeSchema = z.object({
     .string()
     .min(30, 'Description must be at least 30 characters.')
     .max(5000, 'Description must be at most 5000 characters.'),
-  unitId: z.string().min(1, 'Please select a unit.'),
+  // Optional on the backend; required by the form only when units are offered.
+  unitId: z.string().optional(),
   respondentId: z.string().optional(),
+});
+
+/** Same schema, but a unit must be chosen (used when the caller has units). */
+const disputeSchemaWithUnit = disputeSchema.extend({
+  unitId: z.string().min(1, 'Please select a unit.'),
 });
 
 export type DisputeFormValues = z.infer<typeof disputeSchema>;
@@ -88,11 +96,13 @@ const TYPE_META: Record<DisputeTypeValue, { label: string; description: string; 
 
 export interface FileDisputeSubmitPayload {
   values: DisputeFormValues;
-  evidence: PendingEvidence[];
 }
 
 interface FileDisputePageProps {
-  /** Available units for the selector (fetched by the route wrapper) */
+  /**
+   * Units for the selector (fetched by the route wrapper). When non-empty a
+   * unit is required; when empty the location section is hidden.
+   */
   units?: Array<{ id: string; label: string }>;
   /** Available respondents / other residents */
   respondents?: Array<{ id: string; name: string }>;
@@ -118,10 +128,16 @@ export function FileDisputePage({
   // AC-4: draft auto-save. Restore any previously-typed draft synchronously so
   // it can seed the form's default values, and persist edits (debounced) so an
   // accidental tab close / navigation doesn't lose a long dispute description.
-  // Evidence files are intentionally NOT persisted (File objects aren't
-  // serialisable and re-attaching them is the user's call on restore).
   const { restored, savedAt, save, clear } =
     useDraftStorage<Partial<DisputeFormValues>>(DISPUTE_DRAFT_KEY);
+
+  // The route wrapper renders this page only once units have loaded, so the
+  // schema choice is stable for the life of the form.
+  const hasUnits = units.length > 0;
+  const schema = React.useMemo(
+    () => (hasUnits ? disputeSchemaWithUnit : disputeSchema),
+    [hasUnits]
+  );
 
   const {
     register,
@@ -130,7 +146,7 @@ export function FileDisputePage({
     watch,
     formState: { errors },
   } = useForm<DisputeFormValues>({
-    resolver: zodResolver(disputeSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       type: restored?.type ?? undefined,
       subject: restored?.subject ?? '',
@@ -139,10 +155,6 @@ export function FileDisputePage({
       respondentId: restored?.respondentId ?? '',
     },
   });
-
-  // Evidence state is managed outside react-hook-form (files are not
-  // serialisable by zod; they are passed alongside the validated values).
-  const [evidence, setEvidence] = React.useState<PendingEvidence[]>([]);
 
   // Keep isSubmitting in a ref so the watch subscription closure doesn't
   // re-register every time the flag toggles.
@@ -165,7 +177,7 @@ export function FileDisputePage({
 
   const handleFormSubmit = handleSubmit(async (values) => {
     try {
-      await onSubmit({ values, evidence });
+      await onSubmit({ values });
     } catch {
       // The route wrapper already surfaces the error toast. Swallow here so a
       // failed filing keeps the auto-saved draft (we deliberately skip clear())
@@ -277,63 +289,67 @@ export function FileDisputePage({
           )}
         </section>
 
-        {/* ── Section 2: Location (unit) ── */}
-        <section aria-labelledby="location-heading">
-          <h2 id="location-heading" className="text-base font-semibold text-gray-800 mb-3">
-            Location <span className="text-red-500">*</span>
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="unitId" className="block text-sm font-medium text-gray-700 mb-1">
-                Unit <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="unitId"
-                {...register('unitId')}
-                className={[
-                  'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                  errors.unitId ? 'border-red-400' : 'border-gray-300',
-                ].join(' ')}
-              >
-                <option value="">Select unit…</option>
-                {units.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.label}
-                  </option>
-                ))}
-              </select>
-              {errors.unitId && (
-                <p className="mt-1 text-xs text-red-600" role="alert">
-                  {errors.unitId.message}
-                </p>
+        {/* ── Section 2: Location (unit) — only when there is something to pick ── */}
+        {(hasUnits || respondents.length > 0) && (
+          <section aria-labelledby="location-heading">
+            <h2 id="location-heading" className="text-base font-semibold text-gray-800 mb-3">
+              Location {hasUnits && <span className="text-red-500">*</span>}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {hasUnits && (
+                <div>
+                  <label htmlFor="unitId" className="block text-sm font-medium text-gray-700 mb-1">
+                    Unit <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="unitId"
+                    {...register('unitId')}
+                    className={[
+                      'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                      errors.unitId ? 'border-red-400' : 'border-gray-300',
+                    ].join(' ')}
+                  >
+                    <option value="">Select unit…</option>
+                    {units.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.unitId && (
+                    <p className="mt-1 text-xs text-red-600" role="alert">
+                      {errors.unitId.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Other party (optional) */}
+              {respondents.length > 0 && (
+                <div>
+                  <label
+                    htmlFor="respondentId"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Other party (optional)
+                  </label>
+                  <select
+                    id="respondentId"
+                    {...register('respondentId')}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Not specified</option>
+                    {respondents.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
             </div>
-
-            {/* Other party (optional) */}
-            {respondents.length > 0 && (
-              <div>
-                <label
-                  htmlFor="respondentId"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Other party (optional)
-                </label>
-                <select
-                  id="respondentId"
-                  {...register('respondentId')}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Not specified</option>
-                  {respondents.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ── Section 3: Details ── */}
         <section aria-labelledby="details-heading">
@@ -399,18 +415,6 @@ export function FileDisputePage({
               </div>
             </div>
           </div>
-        </section>
-
-        {/* ── Section 4: Evidence ── */}
-        <section aria-labelledby="evidence-heading">
-          <h2 id="evidence-heading" className="text-base font-semibold text-gray-800 mb-1">
-            Evidence (optional)
-          </h2>
-          <p className="text-sm text-gray-500 mb-3">
-            Attach photos, documents, or recordings to support your dispute. Files are uploaded
-            after the dispute is created.
-          </p>
-          <EvidenceUploader files={evidence} onChange={setEvidence} disabled={isSubmitting} />
         </section>
 
         {/* ── Info box ── */}

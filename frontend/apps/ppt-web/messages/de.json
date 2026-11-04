@@ -882,7 +882,12 @@
           "resolutionProposed": "Lösung vorgeschlagen",
           "resolutionAccepted": "Lösung akzeptiert",
           "escalated": "Eskaliert",
-          "closed": "Geschlossen"
+          "closed": "Geschlossen",
+          "partyAdded": "Partei hinzugefügt",
+          "sessionCompleted": "Sitzung abgeschlossen",
+          "resolutionVoted": "Abstimmung über Lösung",
+          "actionCreated": "Maßnahme erstellt",
+          "actionCompleted": "Maßnahme abgeschlossen"
         }
       },
       "errors": {
@@ -925,6 +930,29 @@
       "descriptionPlaceholder": "Kurze Beschreibung (optional)",
       "descriptionLabel": "Beschreibung für {{name}}",
       "removeLabel": "{{name}} entfernen"
+    },
+    "statusUpdated": "Status aktualisiert",
+    "partyRole": {
+      "complainant": "Beschwerdeführer",
+      "respondent": "Gegenpartei",
+      "witness": "Zeuge",
+      "mediator": "Mediator"
+    },
+    "detail": {
+      "changeStatus": "Status ändern…",
+      "applyStatus": "Übernehmen",
+      "unknownUser": "Unbekannter Benutzer",
+      "actionFailed": "Aktion fehlgeschlagen",
+      "evidenceDeleted": "Beweismittel gelöscht",
+      "resolutionProposed": "Lösung vorgeschlagen",
+      "voteRecorded": "Stimme erfasst",
+      "resolutionAccepted": "Lösung angenommen",
+      "resolutionImplemented": "Lösung als umgesetzt markiert",
+      "actionCreated": "Maßnahme erstellt",
+      "actionCompleted": "Maßnahme abgeschlossen",
+      "reminderSent": "Erinnerung gesendet",
+      "actionEscalationReason": "Maßnahme nicht wie vereinbart erledigt",
+      "actionEscalated": "Maßnahme eskaliert"
     }
   },
   "financial": {

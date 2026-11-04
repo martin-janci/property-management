@@ -929,7 +929,12 @@
           "resolutionProposed": "Řešení navrženo",
           "resolutionAccepted": "Řešení přijato",
           "escalated": "Eskalováno",
-          "closed": "Uzavřeno"
+          "closed": "Uzavřeno",
+          "partyAdded": "Přidána strana",
+          "sessionCompleted": "Schůzka ukončena",
+          "resolutionVoted": "Hlasování o řešení",
+          "actionCreated": "Vytvořen úkol",
+          "actionCompleted": "Dokončen úkol"
         }
       },
       "errors": {
@@ -972,6 +977,29 @@
       "descriptionPlaceholder": "Krátký popis (nepovinné)",
       "descriptionLabel": "Popis pro {{name}}",
       "removeLabel": "Odstranit {{name}}"
+    },
+    "statusUpdated": "Stav byl aktualizován",
+    "partyRole": {
+      "complainant": "Stěžovatel",
+      "respondent": "Odpůrce",
+      "witness": "Svědek",
+      "mediator": "Mediátor"
+    },
+    "detail": {
+      "changeStatus": "Změnit stav…",
+      "applyStatus": "Použít",
+      "unknownUser": "Neznámý uživatel",
+      "actionFailed": "Akce se nezdařila",
+      "evidenceDeleted": "Důkaz byl odstraněn",
+      "resolutionProposed": "Řešení bylo navrženo",
+      "voteRecorded": "Hlas byl zaznamenán",
+      "resolutionAccepted": "Řešení bylo přijato",
+      "resolutionImplemented": "Řešení bylo označeno jako realizované",
+      "actionCreated": "Úkol byl vytvořen",
+      "actionCompleted": "Úkol byl dokončen",
+      "reminderSent": "Připomínka byla odeslána",
+      "actionEscalationReason": "Úkol nebyl splněn podle dohody",
+      "actionEscalated": "Úkol byl eskalován"
     }
   },
   "financial": {

@@ -72,7 +72,6 @@ interface DisputeDetailPageProps {
   isLoading?: boolean;
   onBack: () => void;
   onUpdateStatus: (status: DisputeStatus, reason?: string) => void;
-  onAddEvidence: (file: File, description?: string) => void;
   onDeleteEvidence: (id: string) => void;
   onProposeResolution: (
     text: string,
@@ -81,7 +80,8 @@ interface DisputeDetailPageProps {
   onVoteResolution: (resolutionId: string, accepted: boolean, comments?: string) => void;
   onAcceptResolution: (resolutionId: string) => void;
   onImplementResolution: (resolutionId: string) => void;
-  onCompleteResolutionTerm: (resolutionId: string, termId: string) => void;
+  /** Omit to render resolution terms read-only (no backend route completes a term). */
+  onCompleteResolutionTerm?: (resolutionId: string, termId: string) => void;
   onCreateAction: (data: {
     title: string;
     description: string;
@@ -93,6 +93,22 @@ interface DisputeDetailPageProps {
   onEscalate: (actionId: string) => void;
   onNavigateToMediation: () => void;
 }
+
+/**
+ * Next statuses a manager may move a dispute to. Mirrors the backend
+ * `dispute_state_machine::allowed_transitions`; `PATCH /disputes/{id}` rejects
+ * anything else with 422.
+ */
+export const allowedStatusTransitions: Record<DisputeStatus, DisputeStatus[]> = {
+  filed: ['under_review', 'awaiting_response', 'withdrawn'],
+  under_review: ['mediation', 'awaiting_response', 'resolved', 'escalated'],
+  awaiting_response: ['under_review', 'mediation', 'resolved', 'withdrawn'],
+  mediation: ['under_review', 'resolved', 'escalated'],
+  escalated: ['under_review', 'resolved', 'closed'],
+  resolved: ['closed'],
+  withdrawn: [],
+  closed: [],
+};
 
 const statusColors: Record<DisputeStatus, string> = {
   filed: 'bg-blue-100 text-blue-800',
@@ -133,7 +149,6 @@ export function DisputeDetailPage({
   isLoading,
   onBack,
   onUpdateStatus,
-  onAddEvidence,
   onDeleteEvidence,
   onProposeResolution,
   onVoteResolution,
@@ -154,19 +169,19 @@ export function DisputeDetailPage({
   const [newActionDescription, setNewActionDescription] = useState('');
   const [newActionAssignee, setNewActionAssignee] = useState('');
   const [newActionDueDate, setNewActionDueDate] = useState('');
+  const [nextStatus, setNextStatus] = useState<DisputeStatus | ''>('');
 
   const canManage = isManager || isMediator;
   const canPropose = canManage || isParty;
-  const activeStatus = ['filed', 'under_review', 'mediation', 'awaiting_response'].includes(
-    dispute.status
-  );
+  const activeStatus = !['resolved', 'withdrawn', 'closed'].includes(dispute.status);
+  const nextStatuses = allowedStatusTransitions[dispute.status] ?? [];
   const pendingActions = actionItems.filter((a) => a.status !== 'completed');
   const overdueActions = actionItems.filter((a) => a.status === 'overdue');
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onAddEvidence(file);
+  const handleApplyStatus = () => {
+    if (nextStatus) {
+      onUpdateStatus(nextStatus);
+      setNextStatus('');
     }
   };
 
@@ -231,25 +246,43 @@ export function DisputeDetailPage({
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
-            {activeStatus && canManage && (
+          <div className="flex flex-wrap items-center gap-2">
+            {activeStatus && (canManage || isParty) && (
+              <button
+                type="button"
+                onClick={onNavigateToMediation}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Mediation
+              </button>
+            )}
+            {/* Status changes are manager-only on the backend (PATCH /disputes/{id}). */}
+            {isManager && nextStatuses.length > 0 && (
               <>
+                <label htmlFor="dispute-next-status" className="sr-only">
+                  {t('disputes.detail.changeStatus')}
+                </label>
+                <select
+                  id="dispute-next-status"
+                  value={nextStatus}
+                  onChange={(e) => setNextStatus(e.target.value as DisputeStatus | '')}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg"
+                >
+                  <option value="">{t('disputes.detail.changeStatus')}</option>
+                  {nextStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {statusLabels[status]}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
-                  onClick={onNavigateToMediation}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                  onClick={handleApplyStatus}
+                  disabled={!nextStatus}
+                  className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Mediation
+                  {t('disputes.detail.applyStatus')}
                 </button>
-                {dispute.status !== 'resolved' && (
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus('resolved')}
-                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    Resolve
-                  </button>
-                )}
               </>
             )}
           </div>
@@ -290,12 +323,6 @@ export function DisputeDetailPage({
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Evidence ({evidence.length})</h2>
-              {(isParty || canManage) && (
-                <label className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  Add Evidence
-                  <input type="file" className="hidden" onChange={handleFileUpload} />
-                </label>
-              )}
             </div>
             {evidence.length === 0 ? (
               <p className="text-gray-500">No evidence submitted.</p>
@@ -317,14 +344,16 @@ export function DisputeDetailPage({
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <a
-                        href={item.storageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        View
-                      </a>
+                      {/^https?:\/\//.test(item.storageUrl) && (
+                        <a
+                          href={item.storageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          View
+                        </a>
+                      )}
                       {canManage && (
                         <button
                           type="button"

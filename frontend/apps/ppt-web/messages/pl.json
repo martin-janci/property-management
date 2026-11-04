@@ -884,7 +884,12 @@
           "resolutionProposed": "Rozwiązanie zaproponowane",
           "resolutionAccepted": "Rozwiązanie zaakceptowane",
           "escalated": "Eskalowany",
-          "closed": "Zamknięty"
+          "closed": "Zamknięty",
+          "partyAdded": "Dodano stronę",
+          "sessionCompleted": "Spotkanie zakończone",
+          "resolutionVoted": "Głosowanie nad rozwiązaniem",
+          "actionCreated": "Utworzono zadanie",
+          "actionCompleted": "Ukończono zadanie"
         }
       },
       "errors": {
@@ -927,6 +932,29 @@
       "descriptionPlaceholder": "Krótki opis (opcjonalnie)",
       "descriptionLabel": "Opis dla {{name}}",
       "removeLabel": "Usuń {{name}}"
+    },
+    "statusUpdated": "Status zaktualizowany",
+    "partyRole": {
+      "complainant": "Skarżący",
+      "respondent": "Strona przeciwna",
+      "witness": "Świadek",
+      "mediator": "Mediator"
+    },
+    "detail": {
+      "changeStatus": "Zmień status…",
+      "applyStatus": "Zastosuj",
+      "unknownUser": "Nieznany użytkownik",
+      "actionFailed": "Akcja nie powiodła się",
+      "evidenceDeleted": "Dowód usunięty",
+      "resolutionProposed": "Zaproponowano rozwiązanie",
+      "voteRecorded": "Głos zapisany",
+      "resolutionAccepted": "Rozwiązanie przyjęte",
+      "resolutionImplemented": "Rozwiązanie oznaczone jako wdrożone",
+      "actionCreated": "Zadanie utworzone",
+      "actionCompleted": "Zadanie ukończone",
+      "reminderSent": "Przypomnienie wysłane",
+      "actionEscalationReason": "Zadanie nie zostało wykonane zgodnie z ustaleniami",
+      "actionEscalated": "Zadanie eskalowane"
     }
   },
   "financial": {

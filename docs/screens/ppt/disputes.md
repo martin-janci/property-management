@@ -101,6 +101,7 @@ UC-38 dispute management hub. Manager-side CRUD; resident-side filtered to "my d
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: list unchanged; `getDisputeStatistics` now calls `GET /disputes/statistics` and maps the backend count rows (hook currently unused by pages). Detail/filing alignment logged on ppt/dispute-detail and ppt/file-dispute.
 - 2026-11-03 — agent: fixed disputes list 404 (client path + backend summary
   shape) and closed cross-org `organization_id` trust on list/statistics/
   actions/filing.

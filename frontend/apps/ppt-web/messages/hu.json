@@ -882,7 +882,12 @@
           "resolutionProposed": "Megoldás javasolt",
           "resolutionAccepted": "Megoldás elfogadva",
           "escalated": "Eszkalálva",
-          "closed": "Lezárva"
+          "closed": "Lezárva",
+          "partyAdded": "Fél hozzáadva",
+          "sessionCompleted": "Ülés lezárva",
+          "resolutionVoted": "Szavazás a megoldásról",
+          "actionCreated": "Feladat létrehozva",
+          "actionCompleted": "Feladat teljesítve"
         }
       },
       "errors": {
@@ -925,6 +930,29 @@
       "descriptionPlaceholder": "Rövid leírás (nem kötelező)",
       "descriptionLabel": "{{name}} leírása",
       "removeLabel": "{{name}} eltávolítása"
+    },
+    "statusUpdated": "Állapot frissítve",
+    "partyRole": {
+      "complainant": "Panaszos",
+      "respondent": "Ellenérdekű fél",
+      "witness": "Tanú",
+      "mediator": "Mediátor"
+    },
+    "detail": {
+      "changeStatus": "Állapot módosítása…",
+      "applyStatus": "Alkalmaz",
+      "unknownUser": "Ismeretlen felhasználó",
+      "actionFailed": "A művelet sikertelen",
+      "evidenceDeleted": "Bizonyíték törölve",
+      "resolutionProposed": "Megoldás javasolva",
+      "voteRecorded": "Szavazat rögzítve",
+      "resolutionAccepted": "Megoldás elfogadva",
+      "resolutionImplemented": "Megoldás végrehajtottként megjelölve",
+      "actionCreated": "Feladat létrehozva",
+      "actionCompleted": "Feladat teljesítve",
+      "reminderSent": "Emlékeztető elküldve",
+      "actionEscalationReason": "A feladat nem a megállapodás szerint teljesült",
+      "actionEscalated": "Feladat eszkalálva"
     }
   },
   "financial": {

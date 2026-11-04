@@ -11,7 +11,6 @@ export { DraftSavedIndicator } from './DraftSavedIndicator';
 export type { PendingEvidence } from './EvidenceUploader';
 export { EvidenceUploader } from './EvidenceUploader';
 export { FileDisputeDialog } from './FileDisputeDialog';
-export { MediationChatThread } from './MediationChatThread';
 export { MediationResolutionForm } from './MediationResolutionForm';
 export { MediationSessionDialog } from './MediationSessionDialog';
 export { MediationSessionsPanel } from './MediationSessionsPanel';

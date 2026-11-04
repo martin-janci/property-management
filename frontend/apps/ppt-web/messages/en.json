@@ -991,7 +991,12 @@
           "resolutionProposed": "Resolution proposed",
           "resolutionAccepted": "Resolution accepted",
           "escalated": "Escalated",
-          "closed": "Closed"
+          "closed": "Closed",
+          "partyAdded": "Party added",
+          "sessionCompleted": "Session completed",
+          "resolutionVoted": "Vote on resolution",
+          "actionCreated": "Action item created",
+          "actionCompleted": "Action item completed"
         }
       },
       "errors": {
@@ -1034,6 +1039,29 @@
       "descriptionPlaceholder": "Short description (optional)",
       "descriptionLabel": "Description for {{name}}",
       "removeLabel": "Remove {{name}}"
+    },
+    "statusUpdated": "Status updated",
+    "partyRole": {
+      "complainant": "Complainant",
+      "respondent": "Respondent",
+      "witness": "Witness",
+      "mediator": "Mediator"
+    },
+    "detail": {
+      "changeStatus": "Change status…",
+      "applyStatus": "Apply",
+      "unknownUser": "Unknown user",
+      "actionFailed": "Action failed",
+      "evidenceDeleted": "Evidence deleted",
+      "resolutionProposed": "Resolution proposed",
+      "voteRecorded": "Vote recorded",
+      "resolutionAccepted": "Resolution accepted",
+      "resolutionImplemented": "Resolution marked as implemented",
+      "actionCreated": "Action item created",
+      "actionCompleted": "Action item completed",
+      "reminderSent": "Reminder sent",
+      "actionEscalationReason": "Action item not completed as agreed",
+      "actionEscalated": "Action item escalated"
     }
   },
   "financial": {
