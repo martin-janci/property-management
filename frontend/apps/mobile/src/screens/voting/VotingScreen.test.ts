@@ -1,5 +1,11 @@
 import type { ApiVoteSummary } from './VotingScreen';
-import { formatVoteDate, parseVoteSummaries, toUiStatus, toUiVote } from './VotingScreen';
+import {
+  formatVoteDate,
+  parseVoteSummaries,
+  quorumProgressPercent,
+  toUiStatus,
+  toUiVote,
+} from './VotingScreen';
 
 const validSummary = {
   id: 'vote-1',
@@ -178,5 +184,64 @@ describe('toUiVote', () => {
     expect(toUiVote({ ...base, end_at: '2030-01-02T03:04:05Z' }).endsAt).toBe(
       '2030-01-02T03:04:05Z'
     );
+  });
+});
+
+describe('quorumProgressPercent', () => {
+  // Regression: the screen computed `(current / required) * 100` inline, so a
+  // vote with eligible_count null/0 (requiredQuorum === 0) produced
+  // `0 / 0 = NaN` (or `n / 0 = Infinity`) → a `width: "NaN%"` style string.
+  // The guarded helper must always return a finite number in [0, 100].
+  it.each([
+    ['zero required, zero current', 0, 0],
+    ['zero required, positive current', 5, 0],
+    ['negative required', 3, -2],
+    ['NaN required', 3, Number.NaN],
+    ['NaN current', Number.NaN, 40],
+    ['Infinity required', 3, Number.POSITIVE_INFINITY],
+    ['Infinity current', Number.POSITIVE_INFINITY, 40],
+  ])('never returns NaN/Infinity (%s)', (_label, current, required) => {
+    const pct = quorumProgressPercent(current, required);
+    expect(Number.isFinite(pct)).toBe(true);
+    expect(pct).toBeGreaterThanOrEqual(0);
+    expect(pct).toBeLessThanOrEqual(100);
+  });
+
+  it('returns 0 when there is no eligible population (required <= 0)', () => {
+    expect(quorumProgressPercent(0, 0)).toBe(0);
+    expect(quorumProgressPercent(12, 0)).toBe(0);
+  });
+
+  it('returns 0 for a non-positive current count', () => {
+    expect(quorumProgressPercent(0, 40)).toBe(0);
+    expect(quorumProgressPercent(-5, 40)).toBe(0);
+  });
+
+  it('computes the ratio as a percentage for a normal case', () => {
+    expect(quorumProgressPercent(10, 40)).toBe(25);
+    expect(quorumProgressPercent(20, 40)).toBe(50);
+  });
+
+  it('clamps to 100 when current meets or exceeds required', () => {
+    expect(quorumProgressPercent(40, 40)).toBe(100);
+    expect(quorumProgressPercent(80, 40)).toBe(100);
+  });
+
+  // End-to-end with the mapper: a summary with a null eligible_count must not
+  // feed NaN into the width math.
+  it('stays finite when fed a toUiVote result with null eligible_count', () => {
+    const ui = toUiVote({
+      id: 'v',
+      building_id: 'b',
+      title: 't',
+      status: 'open',
+      end_at: '2026-07-01T00:00:00Z',
+      quorum_type: 'simple',
+      participation_count: 5,
+      eligible_count: null,
+    });
+    const pct = quorumProgressPercent(ui.currentQuorum, ui.requiredQuorum);
+    expect(Number.isFinite(pct)).toBe(true);
+    expect(pct).toBe(0);
   });
 });
