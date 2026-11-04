@@ -1,9 +1,10 @@
 /// <reference types="vitest/globals" />
 /**
  * The rentals calendar and daňový výkaz pages must be translated in all six
- * shipped locales (the rest of the `rentals` namespace is still en-only).
+ * shipped locales (now together with the rest of the `rentals` namespace).
  * Every key these pages read must be a non-empty string in each bundle,
- * including every CLDR plural form the locale uses.
+ * including every CLDR plural form the locale uses. (The whole namespace is
+ * covered by rentalsI18n.test.ts; this file pins the calendar/tax keys.)
  */
 import cs from '../../messages/cs.json';
 import de from '../../messages/de.json';
