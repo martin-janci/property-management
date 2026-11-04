@@ -89,5 +89,6 @@ UC-13 long-form publishing. Distinct from `ppt/announcements` — articles are e
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: r3-nav-roles — Create Article and card write actions (edit/publish/archive/delete/pin) only for `isManagerRole` users (audit r3 #14).
 - 2026-05-09 — agent: integrated Batch D (pages/ppt-news.html — 4 artboards: loaded-grid / empty / loading / error); flipped redesignStatus → in-progress; attached designSource; populated 6 sections + 4 states + 3 notes; declared 5 sharedComponents
 - 2026-05-08 — init: created from scan (source: sitemap)

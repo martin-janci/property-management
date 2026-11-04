@@ -130,10 +130,13 @@ export const NAV_SECTIONS: NavSection[] = [
         defaultLabel: 'Automations',
         audience: 'manager',
       },
+      // No /notifications/analytics link: its API is platform-admin only
+      // (GET /admin/notifications/analytics → 403 for org managers); the
+      // analytics live in admin-web.
       {
-        to: '/notifications/analytics',
-        labelKey: 'nav.notificationAnalytics',
-        defaultLabel: 'Notification analytics',
+        to: '/notifications/triggers',
+        labelKey: 'nav.notificationTriggers',
+        defaultLabel: 'Notification triggers',
         audience: 'manager',
       },
     ],
@@ -157,7 +160,13 @@ export const ACCOUNT_ITEMS: NavItem[] = [
   },
   { to: '/settings/privacy', labelKey: 'nav.privacy', defaultLabel: 'Privacy' },
   { to: '/settings/accessibility', labelKey: 'nav.accessibility', defaultLabel: 'Accessibility' },
-  { to: '/settings/integrations', labelKey: 'nav.integrations', defaultLabel: 'Integrations' },
+  {
+    to: '/settings/integrations',
+    labelKey: 'nav.integrations',
+    defaultLabel: 'Integrations',
+    // Airbnb / Booking.com channel sync is an operator tool.
+    audience: 'manager',
+  },
   {
     to: '/settings/portal-webhooks',
     labelKey: 'nav.portalWebhooks',

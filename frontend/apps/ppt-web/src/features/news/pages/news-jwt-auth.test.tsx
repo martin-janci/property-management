@@ -32,6 +32,11 @@ import { NewsListPage } from './NewsListPage';
 const ACCESS_TOKEN = 'news-access-token-123';
 const ORG_ID = 'org-1';
 
+// NewsListPage reads the role to decide whether to offer write actions.
+vi.mock('../../../contexts', () => ({
+  useAuth: () => ({ user: { role: 'manager' } }),
+}));
+
 // Translations: return the key (or a trivial value) so the pages render.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),

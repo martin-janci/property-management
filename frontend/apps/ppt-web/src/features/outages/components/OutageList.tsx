@@ -24,8 +24,9 @@ interface OutageListProps {
   onCommodityFilter: (commodity?: OutageCommodity) => void;
   onSeverityFilter: (severity?: OutageSeverity) => void;
   onView: (id: string) => void;
-  onEdit: (id: string) => void;
-  onCreate: () => void;
+  onEdit?: (id: string) => void;
+  /** Omitted for residents: the create button is hidden. */
+  onCreate?: () => void;
 }
 
 const statusOptions: OutageStatus[] = ['planned', 'ongoing', 'resolved', 'cancelled'];
@@ -80,13 +81,15 @@ export function OutageList({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">{t('outages.title')}</h1>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
-        >
-          {t('outages.createNew')}
-        </button>
+        {onCreate && (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+          >
+            {t('outages.createNew')}
+          </button>
+        )}
       </div>
 
       {/* Filters */}

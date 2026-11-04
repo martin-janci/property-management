@@ -86,4 +86,5 @@ notification delivery-tracking persistence layer.
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: r3-nav-roles — removed from the app-shell nav: its API is platform-admin only (403 `not_platform_principal` for org managers) (audit r3 #22). Route still exists.
 - 2026-06-22 — agent: BIT-214 (FrontendEngineer) — created from scratch for Story 2B-C.3. New `/notifications/analytics` route + `NotificationAnalyticsPage` + `useNotificationAnalytics` (direct REST, `admin/audit` precedent) + `routes/groups/notifications.tsx` + operator-only nav link. Per-channel table, totals KPIs, firing >5% failure-rate alert banner, channel + time-window filters. ppt-web buildStatus shipped / apiStatus complete; mobile n/a. Page tests added (6 cases); typecheck (own files) + biome + vitest green.

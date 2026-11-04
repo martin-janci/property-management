@@ -8,15 +8,20 @@
  */
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
+import { useAuth } from '../../contexts';
 import { VoteCreatePage, VoteDetailPage, VotingPage } from '../lazyRoutes';
+import { isManagerRole } from '../shared';
 
 /** Route wrapper: voting list (`/voting`). */
 function VotingPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   return (
     <VotingPage
       onOpenVote={(voteId) => navigate(`/voting/${voteId}`)}
-      onCreateVote={() => navigate('/voting/new')}
+      // Creating a vote is manager-only (POST /votes → 403 otherwise), so the
+      // "New vote" actions are only offered to managers.
+      onCreateVote={isManagerRole(user?.role) ? () => navigate('/voting/new') : undefined}
     />
   );
 }

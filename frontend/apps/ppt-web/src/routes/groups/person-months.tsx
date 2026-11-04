@@ -34,6 +34,7 @@ import { lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
+import { useAuth } from '../../contexts';
 import type { PersonMonth as UiPersonMonth } from '../../features/person-months/components/PersonMonthCard';
 import type { YearlySummary as UiYearlySummary } from '../../features/person-months/components/YearlySummaryChart';
 import type {
@@ -46,6 +47,7 @@ import type {
   BulkEntryUnit,
 } from '../../features/person-months/types';
 import { getApiClient } from '../../lib/api';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 // Person-months feature pages (Epic 3) — lazy-loaded for code splitting.
 const PersonMonthsPage = lazy(() =>
@@ -149,6 +151,9 @@ function buildBuildingSummary(
 /** Building-level person-months summary (`/buildings/:buildingId/person-months`). */
 function PersonMonthsPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // Person-month entry is building-wide data entry: managers only.
+  const isManager = isManagerRole(user?.role);
   const { buildingId = '' } = useParams<{ buildingId: string }>();
   const [year, setYear] = useState(currentYear);
   const [month, setMonth] = useState(currentMonth);
@@ -177,10 +182,15 @@ function PersonMonthsPageRoute() {
       onNavigateToUnit={(unitId) =>
         navigate(`/buildings/${buildingId}/units/${unitId}/person-months`)
       }
-      onNavigateToEdit={(unitId, y, m) =>
-        navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+      onNavigateToEdit={
+        isManager
+          ? (unitId, y, m) =>
+              navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+          : undefined
       }
-      onNavigateToBulkEntry={() => navigate(`/buildings/${buildingId}/person-months/bulk`)}
+      onNavigateToBulkEntry={
+        isManager ? () => navigate(`/buildings/${buildingId}/person-months/bulk`) : undefined
+      }
       onBack={() => navigate(`/buildings/${buildingId}`)}
     />
   );
@@ -272,6 +282,8 @@ function BulkEntryPageRoute() {
 /** Unit history + yearly summary (`/buildings/:buildingId/units/:unitId/person-months`). */
 function UnitPersonMonthsPageRoute() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { buildingId = '', unitId = '' } = useParams<{ buildingId: string; unitId: string }>();
@@ -301,28 +313,35 @@ function UnitPersonMonthsPageRoute() {
       isDeleting={deleteEntry.isPending}
       selectedYear={year}
       onYearChange={setYear}
-      onNavigateToEdit={(y, m) =>
-        navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+      onNavigateToEdit={
+        isManager
+          ? (y, m) =>
+              navigate(`/buildings/${buildingId}/units/${unitId}/person-months/edit/${y}/${m}`)
+          : undefined
       }
-      onDelete={async (pm) => {
-        try {
-          await deleteEntry.mutateAsync(pm.id);
-          showToast({
-            type: 'success',
-            title: t('common.deleted', { defaultValue: 'Deleted' }),
-            message: t('personMonths.entryRemoved', { defaultValue: 'Entry removed' }),
-          });
-        } catch (err) {
-          showToast({
-            type: 'error',
-            title: t('common.deleteFailed', { defaultValue: 'Delete failed' }),
-            message:
-              err instanceof Error
-                ? err.message
-                : t('personMonths.deleteFailed', { defaultValue: 'Could not delete entry' }),
-          });
-        }
-      }}
+      onDelete={
+        isManager
+          ? async (pm) => {
+              try {
+                await deleteEntry.mutateAsync(pm.id);
+                showToast({
+                  type: 'success',
+                  title: t('common.deleted', { defaultValue: 'Deleted' }),
+                  message: t('personMonths.entryRemoved', { defaultValue: 'Entry removed' }),
+                });
+              } catch (err) {
+                showToast({
+                  type: 'error',
+                  title: t('common.deleteFailed', { defaultValue: 'Delete failed' }),
+                  message:
+                    err instanceof Error
+                      ? err.message
+                      : t('personMonths.deleteFailed', { defaultValue: 'Could not delete entry' }),
+                });
+              }
+            }
+          : undefined
+      }
       onBack={() => navigate(`/buildings/${buildingId}/person-months`)}
     />
   );
@@ -427,7 +446,7 @@ export function personMonthRoutes() {
       <Route
         path="/buildings/:buildingId/person-months/bulk"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <BulkEntryPageRoute />
           </ProtectedRoute>
         }
@@ -443,7 +462,7 @@ export function personMonthRoutes() {
       <Route
         path="/buildings/:buildingId/units/:unitId/person-months/edit/:year/:month"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <EditPersonMonthPageRoute />
           </ProtectedRoute>
         }

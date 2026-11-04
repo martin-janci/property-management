@@ -13,7 +13,8 @@ import { VOTE_STATUS_LABELS } from '../types';
 
 interface VotingPageProps {
   onOpenVote: (voteId: string) => void;
-  onCreateVote: () => void;
+  /** Managers only; omitted for residents so the create actions are hidden. */
+  onCreateVote?: () => void;
 }
 
 const STATUS_FILTERS: Array<VoteStatus | 'all'> = [
@@ -57,13 +58,15 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
             {counts.closed} closed
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onCreateVote}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + New vote
-        </button>
+        {onCreateVote && (
+          <button
+            type="button"
+            onClick={onCreateVote}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + New vote
+          </button>
+        )}
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -97,13 +100,15 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
         ) : !votes || votes.length === 0 ? (
           <div className="rounded-lg bg-white p-12 text-center shadow">
             <p className="text-gray-500">No votes yet.</p>
-            <button
-              type="button"
-              onClick={onCreateVote}
-              className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              Create the first vote
-            </button>
+            {onCreateVote && (
+              <button
+                type="button"
+                onClick={onCreateVote}
+                className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                Create the first vote
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
