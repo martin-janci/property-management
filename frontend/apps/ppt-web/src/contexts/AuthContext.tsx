@@ -31,6 +31,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -408,8 +409,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Set up the token provider for all API modules.
    * This ensures that all API calls automatically include the auth token.
+   *
+   * A *layout* effect on purpose: React runs passive effects child-first, and
+   * TanStack Query starts a mounted query's fetch from a passive effect. With
+   * `useEffect` here, a hard reload / deep link fired the page's first request
+   * before the provider existed — it went out without `Authorization` (401)
+   * and only the query retry recovered. Layout effects all run before any
+   * passive effect, so the provider is in place for the first request.
    */
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Register the token provider with the generated @ppt/api-client modules.
     setTokenProvider(getAccessToken);
 
@@ -442,8 +450,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Register the active-org provider so the api-client's auth interceptor can
   // send X-Tenant-ID (#1522). Re-registered when the user/org changes so the
-  // provider always reports the current organization.
-  useEffect(() => {
+  // provider always reports the current organization. Layout effect for the
+  // same reason as the token provider above: the pages mounted by the render
+  // that restores `user` fetch from passive effects, which would otherwise
+  // run before this registration and go out without X-Tenant-ID.
+  useLayoutEffect(() => {
     setOrgProvider(() => user?.organizationId ?? null);
     return () => {
       clearOrgProvider();
