@@ -21,7 +21,7 @@ use db::models::{
     ScheduleSession, SessionAttendance, SubmitResponse, UpdateDisputeStatus, UpdateMediationNotes,
     VoteOnResolution,
 };
-use db::repositories::{UpdateAttendanceData, UpdateSessionData};
+use db::repositories::{DisputeChild, UpdateAttendanceData, UpdateSessionData};
 use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
@@ -142,6 +142,71 @@ fn map_dispute_err(
             )
         }
     }
+}
+
+/// Require a manager or admin role (same policy as `resolve_dispute`).
+fn require_manager(user: &AuthUser) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if user
+        .role
+        .as_ref()
+        .is_some_and(|r| r.is_manager() || r.is_admin())
+    {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
+        ))
+    }
+}
+
+/// Verify the dispute in the path belongs to the caller's JWT tenant and
+/// return that organization. A dispute owned by another org is 404.
+async fn guard_dispute(
+    state: &AppState,
+    user: &AuthUser,
+    dispute_id: Uuid,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = require_org(user)?;
+    state
+        .dispute_repo
+        .ensure_dispute_in_org(dispute_id, organization_id)
+        .await
+        .map_err(|e| map_dispute_err(e, "Failed to verify dispute"))?;
+    Ok(organization_id)
+}
+
+/// Verify a dispute sub-resource (resolution, action item, escalation,
+/// session) belongs to the dispute in the path, and that dispute to the
+/// caller's JWT tenant. Any mismatch is 404 so foreign ids are not an oracle.
+async fn guard_child(
+    state: &AppState,
+    user: &AuthUser,
+    kind: DisputeChild,
+    child_id: Uuid,
+    dispute_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let organization_id = require_org(user)?;
+    state
+        .dispute_repo
+        .ensure_child_in_dispute_in_org(kind, child_id, dispute_id, organization_id)
+        .await
+        .map_err(|e| match e {
+            common::errors::AppError::NotFound(msg) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", msg)),
+            ),
+            e => {
+                tracing::error!("Failed to verify dispute sub-resource: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DB_ERROR",
+                        "Failed to verify dispute sub-resource",
+                    )),
+                )
+            }
+        })
 }
 
 // =============================================================================
@@ -943,9 +1008,10 @@ async fn list_activities(
 /// List mediation sessions for a dispute.
 async fn list_sessions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<MediationSession>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_sessions(id)
@@ -967,6 +1033,7 @@ async fn schedule_session(
     Path(id): Path<Uuid>,
     Json(data): Json<ScheduleSessionRequest>,
 ) -> Result<(StatusCode, Json<MediationSession>), (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     let mut session_data = data.data;
     session_data.dispute_id = id;
     session_data.mediator_id = user.user_id;
@@ -988,9 +1055,10 @@ async fn schedule_session(
 /// Get a specific mediation session.
 async fn get_session(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((id, session_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
     state
         .dispute_repo
         .find_session_by_id(id, session_id)
@@ -1014,10 +1082,11 @@ async fn get_session(
 /// Update a mediation session.
 async fn update_session(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<UpdateSessionRequest>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
     let update_data = UpdateSessionData {
         scheduled_at: data.scheduled_at,
         duration_minutes: data.duration_minutes,
@@ -1042,9 +1111,10 @@ async fn update_session(
 /// Cancel a mediation session.
 async fn cancel_session(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
     state
         .dispute_repo
         .cancel_session(session_id)
@@ -1062,9 +1132,10 @@ async fn cancel_session(
 /// Get attendance for a session.
 async fn get_attendance(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Vec<SessionAttendance>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
     state
         .dispute_repo
         .list_attendance(session_id)
@@ -1082,10 +1153,11 @@ async fn get_attendance(
 /// Update attendance for a party.
 async fn update_attendance(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id, party_id)): Path<(Uuid, Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, session_id, party_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(data): Json<UpdateAttendanceRequest>,
 ) -> Result<Json<SessionAttendance>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
     let update_data = UpdateAttendanceData {
         confirmed: data.confirmed,
         attended: data.attended,
@@ -1111,10 +1183,11 @@ async fn update_attendance(
 /// Record notes for a session.
 async fn record_notes(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, session_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<RecordNotesRequest>,
 ) -> Result<Json<MediationSession>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Session, session_id, id).await?;
     state
         .dispute_repo
         .record_session_notes(RecordSessionNotes {
@@ -1136,9 +1209,10 @@ async fn record_notes(
 /// List submissions for a dispute.
 async fn list_submissions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<PartySubmission>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_submissions(id)
@@ -1160,6 +1234,7 @@ async fn submit_response(
     Path(id): Path<Uuid>,
     Json(data): Json<SubmitResponseRequest>,
 ) -> Result<(StatusCode, Json<PartySubmission>), (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     // Get user's party ID for this dispute
     let party = state
         .dispute_repo
@@ -1205,9 +1280,10 @@ async fn submit_response(
 /// Get mediation case with all sessions and submissions.
 async fn get_mediation_case(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MediationCase>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     match state.dispute_repo.get_mediation_case(id).await {
         Ok(Some(case)) => Ok(Json(case)),
         Ok(None) => Err((
@@ -1234,9 +1310,10 @@ async fn get_mediation_case(
 /// List resolutions for a dispute.
 async fn list_resolutions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<DisputeResolution>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_resolutions(id)
@@ -1258,6 +1335,7 @@ async fn propose_resolution(
     Path(id): Path<Uuid>,
     Json(data): Json<ProposeResolutionRequest>,
 ) -> Result<(StatusCode, Json<DisputeResolution>), (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     let mut proposal = data.data;
     proposal.dispute_id = id;
     proposal.proposed_by = user.user_id;
@@ -1282,9 +1360,10 @@ async fn propose_resolution(
 /// Get a resolution with votes.
 async fn get_resolution(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, resolution_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ResolutionWithVotes>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     match state
         .dispute_repo
         .get_resolution_with_votes(resolution_id)
@@ -1312,6 +1391,7 @@ async fn vote_on_resolution(
     Path((id, resolution_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<VoteRequest>,
 ) -> Result<Json<ResolutionVote>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     // Get user's party ID for this dispute
     let party = state
         .dispute_repo
@@ -1356,12 +1436,14 @@ async fn vote_on_resolution(
         })
 }
 
-/// Accept a resolution (all parties agreed).
+/// Accept a resolution (all parties agreed). Manager/admin only.
 async fn accept_resolution(
     State(state): State<AppState>,
     user: AuthUser,
-    Path((_id, resolution_id)): Path<(Uuid, Uuid)>,
+    Path((id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DisputeResolution>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&user)?;
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     state
         .dispute_repo
         .accept_resolution(resolution_id, user.user_id)
@@ -1379,12 +1461,14 @@ async fn accept_resolution(
         })
 }
 
-/// Mark a resolution as implemented.
+/// Mark a resolution as implemented. Manager/admin only.
 async fn implement_resolution(
     State(state): State<AppState>,
     user: AuthUser,
-    Path((_id, resolution_id)): Path<(Uuid, Uuid)>,
+    Path((id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DisputeResolution>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager(&user)?;
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
     state
         .dispute_repo
         .implement_resolution(resolution_id, user.user_id)
@@ -1409,9 +1493,10 @@ async fn implement_resolution(
 /// List action items for a dispute.
 async fn list_action_items(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ActionItem>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_action_items(id)
@@ -1432,12 +1517,17 @@ async fn list_action_items(
 /// Create an action item.
 async fn create_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateActionRequest>,
 ) -> Result<(StatusCode, Json<ActionItem>), (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     let mut action = data.data;
     action.dispute_id = id;
+    // A linked resolution must belong to this same dispute.
+    if let Some(resolution_id) = action.resolution_id {
+        guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
+    }
 
     state
         .dispute_repo
@@ -1459,9 +1549,10 @@ async fn create_action_item(
 /// Get an action item.
 async fn get_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ActionItem>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
     match state.dispute_repo.find_action_item(action_id).await {
         Ok(Some(item)) => Ok(Json(item)),
         Ok(None) => Err((
@@ -1481,10 +1572,11 @@ async fn get_action_item(
 /// Update an action item.
 async fn update_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<UpdateActionRequest>,
 ) -> Result<Json<ActionItem>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
     state
         .dispute_repo
         .update_action_item(
@@ -1511,10 +1603,11 @@ async fn update_action_item(
 /// Complete an action item.
 async fn complete_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<CompleteActionRequest>,
 ) -> Result<Json<ActionItem>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
     state
         .dispute_repo
         .complete_action_item(CompleteActionItem {
@@ -1538,9 +1631,10 @@ async fn complete_action_item(
 /// Send a reminder for an action item.
 async fn send_action_reminder(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, action_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, action_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::ActionItem, action_id, id).await?;
     state
         .dispute_repo
         .send_action_reminder(action_id)
@@ -1558,9 +1652,10 @@ async fn send_action_reminder(
 /// List escalations for a dispute.
 async fn list_escalations(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<Escalation>>, (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
     state
         .dispute_repo
         .list_escalations(id)
@@ -1582,6 +1677,12 @@ async fn create_escalation(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateEscalationRequest>,
 ) -> Result<(StatusCode, Json<Escalation>), (StatusCode, Json<ErrorResponse>)> {
+    guard_dispute(&state, &user, id).await?;
+    // A linked action item must belong to this same dispute (the repo also
+    // flips that action item's status to `escalated`).
+    if let Some(action_item_id) = data.action_item_id {
+        guard_child(&state, &user, DisputeChild::ActionItem, action_item_id, id).await?;
+    }
     state
         .dispute_repo
         .create_escalation(CreateEscalation {
@@ -1609,10 +1710,11 @@ async fn create_escalation(
 /// Resolve an escalation.
 async fn resolve_escalation(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Path((_id, escalation_id)): Path<(Uuid, Uuid)>,
+    user: AuthUser,
+    Path((id, escalation_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<ResolveEscalationRequest>,
 ) -> Result<Json<Escalation>, (StatusCode, Json<ErrorResponse>)> {
+    guard_child(&state, &user, DisputeChild::Escalation, escalation_id, id).await?;
     state
         .dispute_repo
         .resolve_escalation(ResolveEscalation {

@@ -294,7 +294,7 @@ pub use owner_analytics::OwnerAnalyticsRepository;
 // Epic 77: Dispute Resolution
 pub mod dispute;
 
-pub use dispute::{DisputeRepository, UpdateAttendanceData, UpdateSessionData};
+pub use dispute::{DisputeChild, DisputeRepository, UpdateAttendanceData, UpdateSessionData};
 
 // Epic 71: Background Jobs Infrastructure (Phase 1.3)
 pub mod background_jobs;
