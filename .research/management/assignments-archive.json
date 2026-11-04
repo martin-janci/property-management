@@ -4452,6 +4452,28 @@
       "merge_attempted_at": "2026-08-30T06:33:32Z"
     },
     {
+      "task_id": "code-review-api-handlers-refresh-rotation-nonatomic",
+      "branch": "auto-impl/code-review-api-handlers-refresh-rotatio-fdd62aff",
+      "status": "failed",
+      "claimed_at": "2026-11-04T08:35:28Z",
+      "last_updated": "2026-11-04T18:25:01Z",
+      "status_changed_at": "2026-11-04T18:25:01Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": " sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-registration-token-discard",
       "branch": "auto-impl/code-review-api-handlers-registration-to-bff7a4da",
       "status": "merged",
@@ -22526,5 +22548,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-04T14:33:06Z"
+  "archived_at": "2026-11-04T18:30:46Z"
 }
