@@ -98,8 +98,8 @@ async fn catalog_conn(
 /// developer-portal tables' policies are `USING (user_id = app.current_user_id
 /// OR is_super_admin())`. Under `FORCE ROW LEVEL SECURITY` the owner role is no
 /// longer exempt, so those policies now require the connection to carry the
-/// caller's identity. This helper sets it: platform admins
-/// ([`AuthUser::is_platform_admin`]) map to the super-admin RLS bypass — the
+/// caller's identity. This helper sets it: platform operators
+/// (`rls_authz::is_platform_operator`, from `users.principal_kind`) map to the super-admin RLS bypass — the
 /// same boundary the in-handler `is_platform_admin()` gate enforces — and every
 /// other caller is scoped to their own `user_id`. The developer-portal policies
 /// key on `user_id`, not org, so the tenant slot is filled with
@@ -113,11 +113,12 @@ async fn rls_conn(
     state: &AppState,
     auth: &AuthUser,
 ) -> Result<db::RlsGuard, (StatusCode, Json<ErrorResponse>)> {
+    let is_platform = crate::routes::rls_authz::is_platform_operator(state, auth).await?;
     RlsPool::new(state.db.clone())
         .acquire_with_rls(
             auth.tenant_id.unwrap_or_else(Uuid::nil),
             auth.user_id,
-            auth.is_platform_admin(),
+            is_platform,
         )
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
@@ -390,7 +391,7 @@ async fn create_marketplace_integration(
     Json(request): Json<CreateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
     // Admin only - require platform admin privileges
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -456,7 +457,7 @@ async fn update_marketplace_integration(
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<UpdateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -494,7 +495,7 @@ async fn delete_marketplace_integration(
     auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -659,6 +660,7 @@ async fn install_integration(
     Path(_path): Path<OrgIdPath>,
     Json(request): Json<InstallIntegration>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -698,6 +700,7 @@ async fn update_organization_integration(
     Path(path): Path<OrgIntegrationPath>,
     Json(request): Json<UpdateOrganizationIntegration>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .api_ecosystem_repo
@@ -718,6 +721,7 @@ async fn uninstall_integration(
     mut rls: RlsConnection,
     Path(path): Path<OrgIntegrationPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .api_ecosystem_repo
@@ -741,6 +745,7 @@ async fn sync_integration(
     mut rls: RlsConnection,
     Path(path): Path<OrgIntegrationPath>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         // Verify the integration exists (RLS scopes the read to the caller's org)
@@ -799,7 +804,7 @@ async fn create_connector(
     Json(request): Json<CreateConnector>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
     // Require platform admin for creating connectors
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -844,7 +849,7 @@ async fn update_connector(
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<UpdateConnector>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -873,7 +878,7 @@ async fn delete_connector(
     auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -925,7 +930,7 @@ async fn create_connector_action(
     // PAP-171 FORCE-RLS backstop denies non-admins, but gate explicitly so the
     // caller gets a clean 403 rather than an opaque RLS denial. (This sibling of
     // `create_connector` was previously missing the gate — see PAP-171.)
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -990,6 +995,7 @@ async fn create_enhanced_webhook(
     Path(_path): Path<OrgIdPath>,
     Json(request): Json<CreateEnhancedWebhookSubscription>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -1028,6 +1034,7 @@ async fn update_enhanced_webhook(
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<UpdateEnhancedWebhookSubscription>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = state
         .api_ecosystem_repo
         .update_enhanced_webhook(&mut **rls.conn(), path.id, &request)
@@ -1044,6 +1051,7 @@ async fn delete_enhanced_webhook(
     mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = state
         .api_ecosystem_repo
         .delete_enhanced_webhook(&mut **rls.conn(), path.id)
@@ -1066,6 +1074,7 @@ async fn test_enhanced_webhook(
     mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let out = async {
         // Get the webhook to verify it exists and get the URL
         let webhook = state
@@ -1194,6 +1203,7 @@ async fn create_prebuilt_connection(
     Path(_path): Path<OrgIdPath>,
     Json(request): Json<CreatePreBuiltIntegrationConnection>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -1233,6 +1243,7 @@ async fn update_prebuilt_connection(
     Path(path): Path<PrebuiltTypePath>,
     Json(request): Json<UpdatePreBuiltIntegrationConnection>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .api_ecosystem_repo
@@ -1253,6 +1264,7 @@ async fn delete_prebuilt_connection(
     mut rls: RlsConnection,
     Path(path): Path<PrebuiltTypePath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .api_ecosystem_repo
@@ -1277,6 +1289,7 @@ async fn sync_prebuilt_connection(
     Path(path): Path<PrebuiltTypePath>,
     Json(request): Json<SyncPreBuiltIntegrationRequest>,
 ) -> Result<Json<PreBuiltIntegrationSyncResult>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         // Verify the connection exists
@@ -1426,6 +1439,7 @@ async fn handle_prebuilt_oauth_callback(
     Path(path): Path<PrebuiltTypePath>,
     Json(request): Json<OAuthCallbackRequest>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
+    crate::routes::rls_authz::require_manager_rls(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = async {
         // Verify the connection exists (should have been created when OAuth flow started)
@@ -1518,7 +1532,7 @@ async fn review_developer_registration(
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<ReviewDeveloperRegistration>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1548,7 +1562,7 @@ async fn list_developer_api_keys(
 ) -> Result<Json<Vec<DeveloperApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
     let mut conn = rls_conn(&state, &auth).await?;
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1602,7 +1616,7 @@ async fn create_developer_api_key(
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Verify the caller owns this developer account or is platform admin
     let mut conn = rls_conn(&state, &auth).await?;
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1746,7 +1760,7 @@ async fn get_developer_usage_stats(
 ) -> Result<Json<DeveloperUsageStats>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
     let mut conn = rls_conn(&state, &auth).await?;
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1783,7 +1797,7 @@ async fn create_sandbox_environment(
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
     let mut conn = rls_conn(&state, &auth).await?;
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1823,7 +1837,7 @@ async fn get_sandbox_environment(
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
     let mut conn = rls_conn(&state, &auth).await?;
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1861,7 +1875,7 @@ async fn test_sandbox_request(
 ) -> Result<Json<SandboxTestResponsePayload>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
     let mut conn = rls_conn(&state, &auth).await?;
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1975,7 +1989,7 @@ async fn create_api_documentation(
     auth: AuthUser,
     Json(request): Json<CreateApiDocumentation>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -2020,7 +2034,7 @@ async fn update_api_documentation(
     Path(path): Path<DocSlugPath>,
     Json(request): Json<UpdateApiDocumentation>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -2049,7 +2063,7 @@ async fn delete_api_documentation(
     auth: AuthUser,
     Path(path): Path<DocSlugPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -2098,7 +2112,7 @@ async fn create_code_sample(
     Path(_path): Path<DocSlugPath>,
     Json(request): Json<CreateApiCodeSample>,
 ) -> Result<Json<ApiCodeSample>, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -2125,7 +2139,7 @@ async fn get_developer_portal_stats(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<DeveloperPortalStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    if !auth.is_platform_admin() {
+    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
