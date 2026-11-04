@@ -12,6 +12,7 @@ export * from './announcements';
 export type { AuthUser } from './auth';
 // Export auth token provider for secure token management
 export * from './auth';
+export * from './budgets';
 export * from './buildings';
 export * from './community';
 export * from './compliance';
