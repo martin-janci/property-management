@@ -86,9 +86,31 @@ export function parseVoteSummaries(data: unknown): ApiVoteSummary[] {
  *  the user's selected language. Pass `i18n.language` (the react-i18next active
  *  language, e.g. `'sk'`, `'cs'`, `'de'`, `'en'`) so the rendered date matches
  *  the rest of the UI. Exported so the formatting can be unit-tested without
- *  rendering the screen. */
+ *  rendering the screen.
+ *
+ *  The list endpoint's `VoteSummary` carries no start date, so `toUiVote` sets
+ *  `startsAt: ''`. Feeding that empty string straight to `new Date('')` yields
+ *  an `Invalid Date`, which `toLocaleDateString` renders as the literal string
+ *  "Invalid Date" on every card. Guard empty/unparseable input here and return
+ *  an empty string so callers can omit the date entirely rather than printing
+ *  garbage. */
 export function formatVoteDate(dateString: string, locale: string): string {
-  return formatLocaleDate(dateString, { month: 'short', day: 'numeric', year: 'numeric' }, locale);
+  if (!dateString) return '';
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return formatLocaleDate(parsed, { month: 'short', day: 'numeric', year: 'numeric' }, locale);
+}
+
+/** Render the vote's footer date line. Shows `start - end` when both dates are
+ *  present and valid, but collapses to a single date when one side is missing
+ *  or unparseable. The list endpoint never carries a start date, so in practice
+ *  this renders just the end date there — never the old `Invalid Date - <end>`.
+ *  Exported so the range logic can be unit-tested without rendering the screen. */
+export function formatVoteDateRange(startsAt: string, endsAt: string, locale: string): string {
+  const start = formatVoteDate(startsAt, locale);
+  const end = formatVoteDate(endsAt, locale);
+  if (start && end) return `${start} - ${end}`;
+  return end || start;
 }
 
 /** Map the api-server's status string onto the UI's narrowed enum.
@@ -191,7 +213,8 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
     }
   };
 
-  const formatDate = (dateString: string): string => formatVoteDate(dateString, i18n.language);
+  const formatDateRange = (startsAt: string, endsAt: string): string =>
+    formatVoteDateRange(startsAt, endsAt, i18n.language);
 
   const getTimeRemaining = (endsAt: string): string => {
     const end = new Date(endsAt);
@@ -340,9 +363,7 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
                 <Text style={styles.createdBy}>
                   {t('voting.createdBy', { name: vote.createdBy })}
                 </Text>
-                <Text style={styles.dateRange}>
-                  {formatDate(vote.startsAt)} - {formatDate(vote.endsAt)}
-                </Text>
+                <Text style={styles.dateRange}>{formatDateRange(vote.startsAt, vote.endsAt)}</Text>
               </View>
             </Pressable>
           ))
