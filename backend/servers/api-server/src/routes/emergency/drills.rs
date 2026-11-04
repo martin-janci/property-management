@@ -15,7 +15,10 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
-use super::shared::{CreateDrillRequest, DrillListQuery, OrgQuery, UpdateDrillRequest};
+use super::shared::{
+    is_emergency_manager, manager_required_response, CreateDrillRequest, DrillListQuery, OrgQuery,
+    UpdateDrillRequest,
+};
 use crate::state::AppState;
 
 /// Drill sub-router.
@@ -37,6 +40,11 @@ async fn create_drill(
     mut rls: RlsConnection,
     Json(req): Json<CreateDrillRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let user = rls.user_id();
     let result = state
@@ -147,6 +155,11 @@ async fn update_drill(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDrillRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -177,6 +190,11 @@ async fn start_drill(
     Path(id): Path<Uuid>,
     Query(_): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -218,6 +236,11 @@ async fn complete_drill(
     Path(id): Path<Uuid>,
     Json(req): Json<CompleteDrillRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -251,6 +274,11 @@ async fn cancel_drill(
     Path(id): Path<Uuid>,
     Query(_): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -284,6 +312,11 @@ async fn delete_drill(
     Path(id): Path<Uuid>,
     Query(_): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo

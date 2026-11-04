@@ -22,6 +22,11 @@ pub(super) async fn list_risk_models(
     State(s): State<AppState>,
     mut rls: RlsConnection,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -41,6 +46,11 @@ pub(super) async fn create_risk_model(
     mut rls: RlsConnection,
     Json(req): Json<CreateAiRiskScoringModel>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let result = s
@@ -61,6 +71,11 @@ pub(super) async fn get_risk_model(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -81,9 +96,15 @@ pub(super) async fn delete_risk_model(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
+    let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
-        .delete_risk_model(&mut **rls.conn(), id)
+        .delete_risk_model(&mut **rls.conn(), org_id, id)
         .await;
     rls.release().await;
 
@@ -100,6 +121,11 @@ pub(super) async fn activate_risk_model(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
