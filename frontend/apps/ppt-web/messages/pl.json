@@ -4135,6 +4135,10 @@
     "zoomOut": "Pomniejsz"
   },
   "voting": {
+    "buildingSelect": {
+      "label": "Budynek",
+      "mine": "{{building}} (mój budynek)"
+    },
     "detail": {
       "backToVoting": "Powrót do głosowania",
       "unavailableTitle": "Głosowanie niedostępne",

@@ -1,1 +1,137 @@
-{}
+{
+  "voting": {
+    "buildingSelect": {
+      "label": "Budova",
+      "mine": "{{building}} (moja budova)"
+    },
+    "detail": {
+      "backToVoting": "Späť na hlasovanie",
+      "unavailableTitle": "Hlasovanie nie je dostupné",
+      "unavailableBody": "Toto hlasovanie sa nepodarilo načítať.",
+      "closes": "Uzávierka {{date}}",
+      "publishNow": "Zverejniť teraz",
+      "closeNow": "Ukončiť teraz",
+      "cancelVote": "Zrušiť hlasovanie",
+      "quorumLabel": "Kvórum:",
+      "description": "Popis",
+      "castBallot": "Odovzdajte svoj hlas",
+      "noEligibleUnits": "Nemáte žiadne oprávnené jednotky pre toto hlasovanie.",
+      "votingAsUnit": "Hlasovanie za jednotku",
+      "alreadyVoted": "už hlasované",
+      "submitting": "Odosiela sa…",
+      "submitBallot": "Odoslať hlas",
+      "results": "Výsledky",
+      "turnout": "{{percent}}% účasť",
+      "quorumMet": "kvórum splnené",
+      "quorumNotMet": "kvórum nesplnené",
+      "discussion": "Diskusia",
+      "noComments": "Zatiaľ žiadne komentáre.",
+      "addCommentPlaceholder": "Pridať komentár",
+      "post": "Odoslať",
+      "selectUnitError": "Vyberte jednotku, za ktorú chcete hlasovať",
+      "answerRequiredError": "Odpovedzte na všetky povinné otázky",
+      "ballotSubmittedTitle": "Hlas odoslaný",
+      "ballotSubmittedBody": "Váš hlas bol zaznamenaný.",
+      "ballotFailedTitle": "Nepodarilo sa odoslať hlas",
+      "unexpectedError": "Neočakávaná chyba",
+      "cancelReasonPrompt": "Dôvod zrušenia tohto hlasovania?",
+      "commentFailedTitle": "Nepodarilo sa pridať komentár",
+      "publishDone": "Hlasovanie zverejnené",
+      "publishFailed": "Nepodarilo sa zverejniť hlasovanie",
+      "closeDone": "Hlasovanie ukončené",
+      "closeFailed": "Nepodarilo sa ukončiť hlasovanie",
+      "cancelDone": "Hlasovanie zrušené",
+      "cancelFailed": "Nepodarilo sa zrušiť hlasovanie"
+    },
+    "title": "Hlasovanie",
+    "status": {
+      "draft": "Koncept",
+      "scheduled": "Naplánované",
+      "active": "Prebieha",
+      "closed": "Ukončené",
+      "cancelled": "Zrušené"
+    },
+    "questionType": {
+      "yes_no": "Áno / Nie",
+      "single_choice": "Jedna možnosť",
+      "multiple_choice": "Viac možností",
+      "ranked": "Poradie preferencií"
+    },
+    "quorumType": {
+      "simple_majority": "Jednoduchá väčšina (50 % + 1)",
+      "two_thirds": "Dvojtretinová väčšina (2/3)",
+      "weighted": "Vážené podľa spoluvlastníckeho podielu"
+    },
+    "quorum": {
+      "met": "Kvórum splnené",
+      "participation": "Hlasovalo {{participation}} z {{eligible}} oprávnených"
+    },
+    "card": {
+      "questionCount_one": "{{count}} otázka",
+      "questionCount_few": "{{count}} otázky",
+      "questionCount_many": "{{count}} otázok",
+      "questionCount_other": "{{count}} otázok"
+    },
+    "results": {
+      "responseCount_one": "{{count}} odpoveď",
+      "responseCount_few": "{{count}} odpovede",
+      "responseCount_many": "{{count}} odpovedí",
+      "responseCount_other": "{{count}} odpovedí"
+    },
+    "list": {
+      "voteCount_one": "{{count}} hlasovanie",
+      "voteCount_few": "{{count}} hlasovania",
+      "voteCount_many": "{{count}} hlasovaní",
+      "voteCount_other": "{{count}} hlasovaní",
+      "openCount_one": "{{count}} prebieha",
+      "openCount_few": "{{count}} prebiehajú",
+      "openCount_many": "{{count}} prebieha",
+      "openCount_other": "{{count}} prebieha",
+      "closedCount_one": "{{count}} ukončené",
+      "closedCount_few": "{{count}} ukončené",
+      "closedCount_many": "{{count}} ukončených",
+      "closedCount_other": "{{count}} ukončených",
+      "newVote": "Nové hlasovanie",
+      "loadFailed": "Hlasovania sa nepodarilo načítať: {{error}}",
+      "empty": "Zatiaľ žiadne hlasovania.",
+      "createFirst": "Vytvoriť prvé hlasovanie"
+    },
+    "create": {
+      "title": "Vytvoriť hlasovanie",
+      "topic": "Predmet hlasovania",
+      "titleLabel": "Názov",
+      "titlePlaceholder": "napr. Schválenie rozpočtu na obnovu fasády",
+      "descriptionPlaceholder": "Informácie, ktoré vlastníci potrebujú na zodpovedné rozhodnutie",
+      "questions": "Otázky",
+      "addQuestion": "Pridať otázku",
+      "questionNumber": "Otázka {{number}}",
+      "remove": "Odstrániť",
+      "questionTextPlaceholder": "Znenie otázky",
+      "optionTextPlaceholder": "Text možnosti",
+      "addOption": "Pridať možnosť",
+      "yesNoOptions": "Možnosti: Áno / Nie",
+      "required": "Povinná",
+      "quorumAndSchedule": "Kvórum a termín",
+      "quorumRule": "Pravidlo kvóra",
+      "quorumPercentage": "Kvórum v percentách (voliteľné)",
+      "quorumPercentagePlaceholder": "napr. 50",
+      "closesAt": "Koniec hlasovania",
+      "saveDraft": "Uložiť koncept",
+      "saving": "Ukladá sa…",
+      "publishVote": "Zverejniť hlasovanie",
+      "checkForm": "Skontrolujte formulár",
+      "draftSaved": "Koncept bol uložený",
+      "draftSavedBody": "Zverejniť ho môžete neskôr.",
+      "publishedBody": "Oprávnení vlastníci môžu teraz hlasovať.",
+      "createFailed": "Hlasovanie sa nepodarilo vytvoriť",
+      "errors": {
+        "noBuilding": "Pre tento účet nie je dostupná žiadna budova.",
+        "titleRequired": "Názov je povinný.",
+        "endAtRequired": "Dátum ukončenia je povinný.",
+        "noQuestions": "Pridajte aspoň jednu otázku.",
+        "questionTextRequired": "Každá otázka musí mať znenie.",
+        "minOptions": "Otázka „{{question}}“ musí mať aspoň 2 možnosti."
+      }
+    }
+  }
+}

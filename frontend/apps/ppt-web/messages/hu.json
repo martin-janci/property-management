@@ -1,1 +1,127 @@
-{}
+{
+  "voting": {
+    "buildingSelect": {
+      "label": "Épület",
+      "mine": "{{building}} (saját épületem)"
+    },
+    "detail": {
+      "backToVoting": "Vissza a szavazáshoz",
+      "unavailableTitle": "A szavazás nem érhető el",
+      "unavailableBody": "Ezt a szavazást nem sikerült betölteni.",
+      "closes": "Lezárás: {{date}}",
+      "publishNow": "Közzététel most",
+      "closeNow": "Lezárás most",
+      "cancelVote": "Szavazás visszavonása",
+      "quorumLabel": "Határozatképesség:",
+      "description": "Leírás",
+      "castBallot": "Adja le szavazatát",
+      "noEligibleUnits": "Nincs jogosult egysége ehhez a szavazáshoz.",
+      "votingAsUnit": "Szavazás egységként",
+      "alreadyVoted": "már szavazott",
+      "submitting": "Küldés…",
+      "submitBallot": "Szavazat leadása",
+      "results": "Eredmények",
+      "turnout": "{{percent}}% részvétel",
+      "quorumMet": "határozatképes",
+      "quorumNotMet": "nem határozatképes",
+      "discussion": "Hozzászólások",
+      "noComments": "Még nincsenek hozzászólások.",
+      "addCommentPlaceholder": "Hozzászólás írása",
+      "post": "Küldés",
+      "selectUnitError": "Válasszon egységet a szavazáshoz",
+      "answerRequiredError": "Válaszoljon minden kötelező kérdésre",
+      "ballotSubmittedTitle": "Szavazat elküldve",
+      "ballotSubmittedBody": "Szavazatát rögzítettük.",
+      "ballotFailedTitle": "A szavazat elküldése sikertelen",
+      "unexpectedError": "Váratlan hiba",
+      "cancelReasonPrompt": "A szavazás visszavonásának oka?",
+      "commentFailedTitle": "A hozzászólás elküldése sikertelen",
+      "publishDone": "Szavazás közzétéve",
+      "publishFailed": "A szavazás közzététele sikertelen",
+      "closeDone": "Szavazás lezárva",
+      "closeFailed": "A szavazás lezárása sikertelen",
+      "cancelDone": "Szavazás visszavonva",
+      "cancelFailed": "A szavazás visszavonása sikertelen"
+    },
+    "title": "Szavazások",
+    "status": {
+      "draft": "Piszkozat",
+      "scheduled": "Ütemezett",
+      "active": "Folyamatban",
+      "closed": "Lezárt",
+      "cancelled": "Visszavonva"
+    },
+    "questionType": {
+      "yes_no": "Igen / Nem",
+      "single_choice": "Egy választás",
+      "multiple_choice": "Több választás",
+      "ranked": "Rangsorolás"
+    },
+    "quorumType": {
+      "simple_majority": "Egyszerű többség (50% + 1)",
+      "two_thirds": "Kétharmados többség (2/3)",
+      "weighted": "Tulajdoni hányad szerint súlyozva"
+    },
+    "quorum": {
+      "met": "Határozatképes",
+      "participation": "{{eligible}} jogosultból {{participation}} szavazott"
+    },
+    "card": {
+      "questionCount_one": "{{count}} kérdés",
+      "questionCount_other": "{{count}} kérdés"
+    },
+    "results": {
+      "responseCount_one": "{{count}} válasz",
+      "responseCount_other": "{{count}} válasz"
+    },
+    "list": {
+      "voteCount_one": "{{count}} szavazás",
+      "voteCount_other": "{{count}} szavazás",
+      "openCount_one": "{{count}} folyamatban",
+      "openCount_other": "{{count}} folyamatban",
+      "closedCount_one": "{{count}} lezárt",
+      "closedCount_other": "{{count}} lezárt",
+      "newVote": "Új szavazás",
+      "loadFailed": "Nem sikerült betölteni a szavazásokat: {{error}}",
+      "empty": "Még nincs szavazás.",
+      "createFirst": "Első szavazás létrehozása"
+    },
+    "create": {
+      "title": "Szavazás létrehozása",
+      "topic": "Téma",
+      "titleLabel": "Cím",
+      "titlePlaceholder": "pl. A homlokzatfelújítás költségvetésének jóváhagyása",
+      "descriptionPlaceholder": "Háttérinformáció, amely a tulajdonosok megalapozott döntéséhez szükséges",
+      "questions": "Kérdések",
+      "addQuestion": "Kérdés hozzáadása",
+      "questionNumber": "{{number}}. kérdés",
+      "remove": "Eltávolítás",
+      "questionTextPlaceholder": "A kérdés szövege",
+      "optionTextPlaceholder": "A válaszlehetőség szövege",
+      "addOption": "Lehetőség hozzáadása",
+      "yesNoOptions": "Lehetőségek: Igen / Nem",
+      "required": "Kötelező",
+      "quorumAndSchedule": "Határozatképesség és ütemezés",
+      "quorumRule": "Határozatképességi szabály",
+      "quorumPercentage": "Határozatképesség százalékban (nem kötelező)",
+      "quorumPercentagePlaceholder": "pl. 50",
+      "closesAt": "Lezárás időpontja",
+      "saveDraft": "Piszkozat mentése",
+      "saving": "Mentés…",
+      "publishVote": "Szavazás közzététele",
+      "checkForm": "Ellenőrizze az űrlapot",
+      "draftSaved": "Piszkozat mentve",
+      "draftSavedBody": "Később is közzéteheti.",
+      "publishedBody": "A jogosult tulajdonosok most már szavazhatnak.",
+      "createFailed": "Nem sikerült létrehozni a szavazást",
+      "errors": {
+        "noBuilding": "Ehhez a fiókhoz nem tartozik épület.",
+        "titleRequired": "A cím megadása kötelező.",
+        "endAtRequired": "A lezárás dátumának megadása kötelező.",
+        "noQuestions": "Adjon hozzá legalább egy kérdést.",
+        "questionTextRequired": "Minden kérdésnek szöveget kell tartalmaznia.",
+        "minOptions": "A(z) „{{question}}” kérdéshez legalább 2 lehetőség szükséges."
+      }
+    }
+  }
+}

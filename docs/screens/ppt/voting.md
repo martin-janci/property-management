@@ -110,6 +110,8 @@ UC-04 voting list. Quorum tile pattern matches `ui_kits/ppt-web/manager-dashboar
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: ppt-web `VotingPage` no longer hard-wires `buildings[0]`: new `features/voting/hooks/useVotingBuilding` + `VotingBuildingSelect` scope the list to `?building=` (validated against org buildings + caller's own buildings from `useMyUnits`, residents default to their own building, marked "(my building)"); `/voting/new` link carries the param. i18n `voting.buildingSelect.*` in en/sk/cs/de/pl/hu. Frontmatter unchanged.
+
 - 2026-11-04 — agent: r3-nav-roles follow-up — VoteCard hides the question-count label when the list API omits `question_count` (it rendered the raw `voting.card.questionCount` key; audit r3 #30). Backend VoteSummary still lacks the field.
 - 2026-11-04 — agent: r3-nav-roles — "+ New vote" / "Create the first vote" only rendered when the route passes `onCreateVote` (managers) (audit r3 #14).
 - 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=votes` now invalidates the `votes` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
