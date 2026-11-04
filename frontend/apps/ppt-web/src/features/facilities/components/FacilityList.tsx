@@ -8,6 +8,7 @@ import type { FacilitySummary, FacilityType } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FacilityCard } from './FacilityCard';
+import { FACILITY_TYPES } from './facilityTypes';
 
 interface FacilityListProps {
   facilities: FacilitySummary[];
@@ -24,27 +25,12 @@ interface FacilityListProps {
   onRetry?: () => void;
   onTypeFilter: (type?: FacilityType) => void;
   onBookableFilter: (bookable?: boolean) => void;
-  onView: (id: string) => void;
+  /** Optional — the detail button is hidden when no handler is passed. */
+  onView?: (id: string) => void;
   onBook: (id: string) => void;
   onEdit?: (id: string) => void;
   onCreate?: () => void;
 }
-
-const facilityTypes: { value: FacilityType; label: string }[] = [
-  { value: 'gym', label: 'Gym' },
-  { value: 'laundry', label: 'Laundry' },
-  { value: 'meeting_room', label: 'Meeting Room' },
-  { value: 'party_room', label: 'Party Room' },
-  { value: 'sauna', label: 'Sauna' },
-  { value: 'pool', label: 'Pool' },
-  { value: 'playground', label: 'Playground' },
-  { value: 'parking', label: 'Parking' },
-  { value: 'storage', label: 'Storage' },
-  { value: 'garden', label: 'Garden' },
-  { value: 'bbq', label: 'BBQ Area' },
-  { value: 'bike_storage', label: 'Bike Storage' },
-  { value: 'other', label: 'Other' },
-];
 
 export function FacilityList({
   facilities,
@@ -87,14 +73,14 @@ export function FacilityList({
     <div>
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Facilities</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('facilities.title')}</h1>
         {isManager && onCreate && (
           <button
             type="button"
             onClick={onCreate}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
-            Add Facility
+            {t('facilities.addFacility')}
           </button>
         )}
       </div>
@@ -102,26 +88,28 @@ export function FacilityList({
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-4">
         <select
+          aria-label={t('facilities.filters.typeLabel')}
           value={typeFilter}
           onChange={(e) => handleTypeChange(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Types</option>
-          {facilityTypes.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
+          <option value="">{t('facilities.filters.allTypes')}</option>
+          {FACILITY_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {t(`facilities.types.${type}`)}
             </option>
           ))}
         </select>
 
         <select
+          aria-label={t('facilities.filters.bookableLabel')}
           value={bookableFilter}
           onChange={(e) => handleBookableChange(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Facilities</option>
-          <option value="true">Bookable Only</option>
-          <option value="false">Non-Bookable</option>
+          <option value="">{t('facilities.filters.allFacilities')}</option>
+          <option value="true">{t('facilities.filters.bookableOnly')}</option>
+          <option value="false">{t('facilities.filters.nonBookable')}</option>
         </select>
       </div>
 
@@ -176,14 +164,14 @@ export function FacilityList({
               d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
             />
           </svg>
-          <p className="mt-4">No facilities found.</p>
+          <p className="mt-4">{t('facilities.empty')}</p>
           {isManager && onCreate && (
             <button
               type="button"
               onClick={onCreate}
               className="mt-4 text-blue-600 hover:text-blue-800"
             >
-              Add the first facility
+              {t('facilities.addFirstFacility')}
             </button>
           )}
         </div>
@@ -206,7 +194,11 @@ export function FacilityList({
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+            {t('facilities.pagination.showing', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -215,10 +207,10 @@ export function FacilityList({
               disabled={page === 1}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('facilities.pagination.previous')}
             </button>
             <span className="px-3 py-1">
-              Page {page} of {totalPages}
+              {t('facilities.pagination.page', { page, totalPages })}
             </span>
             <button
               type="button"
@@ -226,7 +218,7 @@ export function FacilityList({
               disabled={page === totalPages}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('facilities.pagination.next')}
             </button>
           </div>
         </div>

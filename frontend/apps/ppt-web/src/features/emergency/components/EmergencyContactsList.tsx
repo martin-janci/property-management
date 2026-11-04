@@ -7,6 +7,7 @@
 import type { EmergencyContact } from '@ppt/api-client';
 import { CONTACT_TYPE_LABELS } from '@ppt/api-client';
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 import { EmergencyContactCard } from './EmergencyContactCard';
 
 export interface EmergencyContactsListProps {
@@ -24,11 +25,17 @@ export const EmergencyContactsList: React.FC<EmergencyContactsListProps> = ({
   showActions = true,
   groupByType = true,
 }) => {
+  const { t } = useTranslation();
+  const typeLabelOf = (type: string) => {
+    const english = CONTACT_TYPE_LABELS[type as keyof typeof CONTACT_TYPE_LABELS];
+    return english ? t(`emergency.contactTypes.${type}`, { defaultValue: english }) : type;
+  };
+
   if (contacts.length === 0) {
     return (
       <div className="emergency-contacts-empty">
-        <p>No emergency contacts found.</p>
-        <p>Add your first emergency contact to get started.</p>
+        <p>{t('emergency.list.empty')}</p>
+        <p>{t('emergency.list.emptyHint')}</p>
       </div>
     );
   }
@@ -70,15 +77,13 @@ export const EmergencyContactsList: React.FC<EmergencyContactsListProps> = ({
 
   // Sort groups by the label
   const sortedTypes = Object.keys(groupedContacts).sort((a, b) => {
-    const labelA = CONTACT_TYPE_LABELS[a as keyof typeof CONTACT_TYPE_LABELS] || a;
-    const labelB = CONTACT_TYPE_LABELS[b as keyof typeof CONTACT_TYPE_LABELS] || b;
-    return labelA.localeCompare(labelB);
+    return typeLabelOf(a).localeCompare(typeLabelOf(b));
   });
 
   return (
     <div className="emergency-contacts-list grouped">
       {sortedTypes.map((type) => {
-        const typeLabel = CONTACT_TYPE_LABELS[type as keyof typeof CONTACT_TYPE_LABELS] || type;
+        const typeLabel = typeLabelOf(type);
         const typeContacts = groupedContacts[type];
 
         return (

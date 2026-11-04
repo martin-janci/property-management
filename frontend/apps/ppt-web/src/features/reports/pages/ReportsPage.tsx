@@ -18,6 +18,7 @@ import type {
   TrendLine,
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AnalyticsChart,
   BuildingMetricsCard,
@@ -89,6 +90,7 @@ export function ReportsPage({
   onRetryExecution,
   onFetchExecutions,
 }: ReportsPageProps) {
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [showReportBuilder, setShowReportBuilder] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
@@ -154,9 +156,9 @@ export function ReportsPage({
   }, []);
 
   const tabs = [
-    { id: 'dashboard' as Tab, label: 'Dashboard', icon: '📊' },
-    { id: 'reports' as Tab, label: 'Reports', icon: '📋' },
-    { id: 'schedules' as Tab, label: 'Schedules', icon: '⏰' },
+    { id: 'dashboard' as Tab, label: t('reports.page.tabs.dashboard'), icon: '📊' },
+    { id: 'reports' as Tab, label: t('reports.page.tabs.reports'), icon: '📋' },
+    { id: 'schedules' as Tab, label: t('reports.page.tabs.schedules'), icon: '⏰' },
   ];
 
   return (
@@ -165,7 +167,7 @@ export function ReportsPage({
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('reports.page.title')}</h1>
             <div className="flex gap-3">
               {activeTab === 'reports' && (
                 <button
@@ -173,7 +175,7 @@ export function ReportsPage({
                   onClick={() => setShowReportBuilder(true)}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                 >
-                  + New Report
+                  {t('reports.page.newReport')}
                 </button>
               )}
               {activeTab === 'schedules' && (
@@ -182,7 +184,7 @@ export function ReportsPage({
                   onClick={() => setShowScheduleForm(true)}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                 >
-                  + New Schedule
+                  {t('reports.page.newSchedule')}
                 </button>
               )}
             </div>
@@ -218,7 +220,9 @@ export function ReportsPage({
           <div className="space-y-8">
             {/* KPIs */}
             <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Key Metrics</h2>
+              <h2 className="text-lg font-medium text-gray-900 mb-4">
+                {t('reports.page.keyMetrics')}
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {kpis.map((kpi) => (
                   <KPICard key={kpi.id} metric={kpi} />
@@ -228,10 +232,10 @@ export function ReportsPage({
 
             {/* Trend Analysis */}
             <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Trends</h2>
+              <h2 className="text-lg font-medium text-gray-900 mb-4">{t('reports.page.trends')}</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <TrendChart
-                  title="Revenue Trend"
+                  title={t('reports.page.revenueTrend')}
                   analysis={trendAnalysis}
                   trendLines={trendLines}
                   selectedPeriod={selectedPeriod}
@@ -244,9 +248,11 @@ export function ReportsPage({
 
             {/* Charts */}
             <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Analytics</h2>
+              <h2 className="text-lg font-medium text-gray-900 mb-4">
+                {t('reports.page.analytics')}
+              </h2>
               <AnalyticsChart
-                title="Monthly Performance"
+                title={t('reports.page.monthlyPerformance')}
                 data={trendLines}
                 chartType="area"
                 isLoading={isLoading}
@@ -255,7 +261,9 @@ export function ReportsPage({
 
             {/* Building Metrics */}
             <section>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Building Performance</h2>
+              <h2 className="text-lg font-medium text-gray-900 mb-4">
+                {t('reports.page.buildingPerformance')}
+              </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {buildings.map((building) => (
                   <BuildingMetricsCard key={building.building_id} analytics={building} />
@@ -290,7 +298,9 @@ export function ReportsPage({
             ) : (
               <div className="bg-white rounded-lg shadow">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-medium text-gray-900">Saved Reports</h2>
+                  <h2 className="text-lg font-medium text-gray-900">
+                    {t('reports.page.savedReports')}
+                  </h2>
                 </div>
                 {reports.length === 0 ? (
                   <div className="p-12 text-center">
@@ -308,13 +318,13 @@ export function ReportsPage({
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    <p className="text-gray-500">No reports created yet</p>
+                    <p className="text-gray-500">{t('reports.page.noReports')}</p>
                     <button
                       type="button"
                       onClick={() => setShowReportBuilder(true)}
                       className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
                     >
-                      Create your first report
+                      {t('reports.page.createFirstReport')}
                     </button>
                   </div>
                 ) : (
@@ -330,18 +340,19 @@ export function ReportsPage({
                             <p className="text-sm text-gray-500 mt-1">{report.description}</p>
                           )}
                           <p className="text-xs text-gray-400 mt-1">
-                            Created{' '}
-                            {new Date(report.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
+                            {t('reports.page.createdOn', {
+                              date: new Date(report.created_at).toLocaleDateString(i18n.language, {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              }),
                             })}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           {report.is_public && (
                             <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
-                              Public
+                              {t('reports.page.public')}
                             </span>
                           )}
                           <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full">
@@ -362,7 +373,9 @@ export function ReportsPage({
           <div>
             {showScheduleForm ? (
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-6">Create Schedule</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-6">
+                  {t('reports.page.createSchedule')}
+                </h2>
                 <ScheduleForm
                   onSubmit={async (data) => {
                     await onCreateSchedule?.(data);

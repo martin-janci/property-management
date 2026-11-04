@@ -285,6 +285,7 @@ pub async fn create_connection(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreatePlatformConnection>,
 ) -> Result<Json<RentalPlatformConnection>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY: the unit comes from the request body; it must belong to the
     // caller's org (404 otherwise) before anything is written against it.
     ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
@@ -362,6 +363,7 @@ pub async fn update_connection(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePlatformConnection>,
 ) -> Result<Json<PlatformConnectionDetail>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#887 / #804): org-scoped update — cross-tenant ids return 404.
     let connection = state
         .rental_repo
@@ -400,6 +402,7 @@ pub async fn delete_connection(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#887 / #804): org-scoped delete — cross-tenant ids return 404.
     let deleted = state
         .rental_repo
@@ -527,6 +530,7 @@ pub async fn create_booking(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY: the unit comes from the request body; it must belong to the
     // caller's org (404 otherwise) before anything is written against it.
     ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
@@ -628,6 +632,7 @@ pub async fn update_booking(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped update — cross-tenant ids return 404.
     let booking = state
         .rental_repo
@@ -668,6 +673,7 @@ pub async fn update_booking_status(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateBookingStatus>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped status update — cross-tenant ids return 404.
     let booking = state
         .rental_repo
@@ -857,6 +863,7 @@ pub async fn create_calendar_block(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateCalendarBlock>,
 ) -> Result<Json<CalendarBlock>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY: the unit comes from the request body; it must belong to the
     // caller's org (404 otherwise) before anything is written against it.
     ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
@@ -892,6 +899,7 @@ pub async fn delete_calendar_block(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped delete — cross-tenant ids return 404.
     let deleted = state
         .rental_repo
@@ -992,6 +1000,7 @@ pub async fn create_guest(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateGuest>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     let guest = state
         .rental_repo
         .create_guest(tenant.tenant_id, data)
@@ -1117,6 +1126,7 @@ pub async fn delete_guest(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped delete — cross-tenant ids return 404.
     let deleted = state
         .rental_repo
@@ -1142,6 +1152,18 @@ pub async fn delete_guest(
 // ============================================================================
 // Guest ID-document upload + OCR extract (Story 18.2, #1687)
 // ============================================================================
+
+/// Manager gate for rental mutations and guest / authority-report reads
+/// (audit4). Same DB-resolved role check as [`require_manager_in_org`],
+/// adapted to this module's `(StatusCode, String)` error shape.
+async fn require_rental_manager(
+    state: &AppState,
+    tenant: &common::TenantContext,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    require_manager_in_org(state, tenant.tenant_id, tenant.user_id)
+        .await
+        .map_err(|(status, body)| (status, body.0.message))
+}
 
 /// Manager-role gate for guest ID-document endpoints (#1687).
 ///
@@ -1569,6 +1591,7 @@ pub async fn register_guest(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped register — cross-tenant ids return 404.
     let guest = state
         .rental_repo
@@ -1617,6 +1640,7 @@ pub async fn get_checkin_reminders(
     TenantExtractor(tenant): TenantExtractor,
     Query(query): Query<CheckInRemindersQuery>,
 ) -> Result<Json<Vec<db::models::CheckInReminder>>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     let reminders = state
         .rental_repo
         .get_upcoming_checkins_needing_registration(tenant.tenant_id, query.days_ahead)
@@ -1666,6 +1690,7 @@ pub async fn list_reports(
     TenantExtractor(tenant): TenantExtractor,
     Query(query): Query<ListReportsQuery>,
 ) -> Result<Json<Vec<ReportSummary>>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     let reports = state
         .rental_repo
         .list_reports(tenant.tenant_id, query.building_id, query.limit)
@@ -1704,6 +1729,7 @@ pub async fn generate_report_preview(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<ReportPreviewRequest>,
 ) -> Result<Json<ReportPreview>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     let preview = state
         .rental_repo
         .generate_report_preview(
@@ -1734,6 +1760,7 @@ pub async fn create_report(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<GenerateReport>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     let report = state
         .rental_repo
         .create_report(tenant.tenant_id, data, tenant.user_id)
@@ -1760,6 +1787,7 @@ pub async fn get_report(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): scope to the authenticated tenant so a caller cannot
     // read another org's authority report by guessing a UUID.
     let report = state
@@ -1799,6 +1827,7 @@ pub async fn submit_report(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped submit — cross-tenant ids return 404.
     let report = state
         .rental_repo
@@ -1840,6 +1869,7 @@ pub async fn create_ical_feed(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY: the unit comes from the request body; it must belong to the
     // caller's org (404 otherwise) before anything is written against it.
     ensure_unit_in_org(&state, tenant.tenant_id, data.unit_id).await?;
@@ -1877,6 +1907,7 @@ pub async fn update_ical_feed(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped update — cross-tenant ids return 404.
     let feed = state
         .rental_repo
@@ -1915,6 +1946,7 @@ pub async fn delete_ical_feed(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    require_rental_manager(&state, &tenant).await?;
     // SECURITY (#804): org-scoped delete — cross-tenant ids return 404.
     let deleted = state
         .rental_repo

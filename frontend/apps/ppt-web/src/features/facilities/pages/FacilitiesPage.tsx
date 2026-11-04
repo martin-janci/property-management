@@ -94,10 +94,6 @@ export function FacilitiesPage() {
     setPage(1); // Reset to first page when filter changes
   };
 
-  const handleView = (id: string) => {
-    navigate(`/buildings/${buildingId}/facilities/${id}`);
-  };
-
   const handleBook = (id: string) => {
     navigate(`/buildings/${buildingId}/facilities/${id}/book`);
   };
@@ -128,7 +124,6 @@ export function FacilitiesPage() {
         onRetry={fetchFacilities}
         onTypeFilter={handleTypeFilter}
         onBookableFilter={handleBookableFilter}
-        onView={handleView}
         onBook={handleBook}
         onEdit={handleEdit}
         onCreate={handleCreate}

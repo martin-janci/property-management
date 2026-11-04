@@ -1,7 +1,7 @@
 //! Document template routes (Epic 7B: Story 7B.2 - Document Templates & Generation).
 
 use crate::state::AppState;
-use api_core::{AuthUser, RlsConnection, TenantExtractor};
+use api_core::{AuthUser, RlsConnection, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -129,7 +129,7 @@ pub fn router() -> Router<AppState> {
 async fn create_template(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Json(req): Json<CreateTemplateRequest>,
 ) -> Result<(StatusCode, Json<CreateTemplateResponse>), (StatusCode, Json<ErrorResponse>)> {
     let user_id = auth.user_id;
@@ -266,7 +266,7 @@ async fn create_template(
 async fn list_templates(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Query(query): Query<ListTemplatesQuery>,
 ) -> Result<Json<TemplateListResponse>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = tenant.tenant_id;
@@ -335,7 +335,7 @@ async fn load_template_list(
 async fn get_template(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<TemplateDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     match state
@@ -390,7 +390,7 @@ async fn get_template(
 async fn update_template(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTemplateRequest>,
 ) -> Result<Json<TemplateActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -520,7 +520,7 @@ async fn update_template(
 async fn delete_template(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // Only managers can delete templates
@@ -597,7 +597,7 @@ async fn delete_template(
 async fn generate_document(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<GenerateDocumentRequest>,

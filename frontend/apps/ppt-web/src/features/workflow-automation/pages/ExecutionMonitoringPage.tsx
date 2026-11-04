@@ -6,30 +6,32 @@
  */
 
 import type { ExecutionLog, ExecutionStatus } from '@ppt/api-client';
-import { useExecutionLogs, useExecutionStats, useRetryExecution } from '@ppt/api-client';
+import { useExecutionLogs, useExecutionStats } from '@ppt/api-client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useToast } from '../../../components';
 import { ExecutionDetailsModal } from '../components/ExecutionDetailsModal';
 import { ExecutionLogItem } from '../components/ExecutionLogItem';
 import { ExecutionStats } from '../components/ExecutionStats';
 
 type DateRange = 'today' | 'week' | 'month' | 'all';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const skeletonKeys = ['skeleton-1', 'skeleton-2', 'skeleton-3', 'skeleton-4', 'skeleton-5'];
 
 export function ExecutionMonitoringPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
   const [statusFilter, setStatusFilter] = useState<ExecutionStatus | 'all'>('all');
   const [dateRange, setDateRange] = useState<DateRange>('week');
   const [ruleFilter, setRuleFilter] = useState<string>('');
   const [selectedLog, setSelectedLog] = useState<ExecutionLog | null>(null);
 
-  const getDateFilter = () => {
+  // Memoised on the selected range: recomputing `new Date()` on every render
+  // would change the query key each render and refetch in a loop.
+  const since = useMemo(() => {
     const now = new Date();
     switch (dateRange) {
       case 'today': {
@@ -50,7 +52,12 @@ export function ExecutionMonitoringPage() {
       default:
         return undefined;
     }
-  };
+  }, [dateRange]);
+
+  // The backend filters by exact rule UUID; ignore partial input instead of
+  // sending a value the API would reject.
+  const trimmedRuleFilter = ruleFilter.trim();
+  const ruleId = UUID_PATTERN.test(trimmedRuleFilter) ? trimmedRuleFilter : undefined;
 
   const {
     data: logsData,
@@ -60,37 +67,17 @@ export function ExecutionMonitoringPage() {
     page: 1,
     pageSize: 50,
     ...(statusFilter !== 'all' && { status: statusFilter }),
-    ...(getDateFilter() && { since: getDateFilter() }),
-    ...(ruleFilter && { ruleId: ruleFilter }),
+    ...(since && { since }),
+    ...(ruleId && { ruleId }),
   });
 
   const { data: statsData, isLoading: statsLoading } = useExecutionStats({
-    since: getDateFilter(),
-    ...(ruleFilter && { ruleId: ruleFilter }),
+    since,
+    ...(ruleId && { ruleId }),
   });
-
-  const retryExecution = useRetryExecution();
 
   const handleViewDetails = (log: ExecutionLog) => {
     setSelectedLog(log);
-  };
-
-  const handleRetry = async (log: ExecutionLog) => {
-    try {
-      await retryExecution.mutateAsync(log.id);
-      showToast({
-        type: 'success',
-        title: t('automation.execution.retrySuccessTitle'),
-        message: t('automation.execution.retrySuccessMessage'),
-      });
-      setSelectedLog(null);
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: t('automation.execution.retryErrorTitle'),
-        message: err instanceof Error ? err.message : t('automation.execution.retryErrorMessage'),
-      });
-    }
   };
 
   const logs = logsData?.data ?? [];
@@ -176,8 +163,8 @@ export function ExecutionMonitoringPage() {
           <button
             type="button"
             onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ['executionLogs'] });
-              queryClient.invalidateQueries({ queryKey: ['executionStats'] });
+              queryClient.invalidateQueries({ queryKey: ['execution-logs'] });
+              queryClient.invalidateQueries({ queryKey: ['execution-stats'] });
             }}
             className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
           >
@@ -279,40 +266,7 @@ export function ExecutionMonitoringPage() {
 
       {/* Details Modal */}
       {selectedLog && (
-        <ExecutionDetailsModal
-          log={selectedLog}
-          onClose={() => setSelectedLog(null)}
-          onRetry={handleRetry}
-        />
-      )}
-
-      {/* Retry Loading Overlay */}
-      {retryExecution.isPending && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 flex items-center gap-3">
-            <svg
-              className="animate-spin h-5 w-5 text-blue-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            <span className="text-gray-700">{t('automation.execution.retrying')}</span>
-          </div>
-        </div>
+        <ExecutionDetailsModal log={selectedLog} onClose={() => setSelectedLog(null)} />
       )}
     </div>
   );

@@ -23,6 +23,88 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
+/// Error type shared by person-month handlers.
+type PersonMonthApiError = (StatusCode, Json<ErrorResponse>);
+
+/// Authorize access to a building's (and optionally a unit's) person months.
+///
+/// The building must belong to the caller's tenant and the unit, if given, to
+/// the building — 404 otherwise. `person_months` RLS is not FORCE'd, so these
+/// predicates are explicit. When `require_manager` is set the caller's DB
+/// membership role must be manager-level (403 otherwise).
+async fn authorize_building(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    user_id: Uuid,
+    building_id: Uuid,
+    unit_id: Option<Uuid>,
+    require_manager: bool,
+) -> Result<(), PersonMonthApiError> {
+    let db_err = |e: sqlx::Error| {
+        tracing::error!(error = %e, "Failed to authorize person-month access");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Database error")),
+        )
+    };
+    let building = state
+        .building_repo
+        .find_by_id_rls(&mut **rls.conn(), building_id)
+        .await
+        .map_err(db_err)?
+        .filter(|b| b.organization_id == rls.tenant_id())
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+            )
+        })?;
+
+    let is_member = state
+        .org_member_repo
+        .is_member(building.organization_id, user_id)
+        .await
+        .map_err(db_err)?;
+    if !is_member {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_AUTHORIZED",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+
+    if let Some(unit_id) = unit_id {
+        let belongs = state
+            .unit_repo
+            .belongs_to_building(unit_id, building_id)
+            .await
+            .map_err(db_err)?;
+        if !belongs {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Unit not found in this building",
+                )),
+            ));
+        }
+    }
+
+    if require_manager && !rls.role().is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to modify person months",
+            )),
+        ));
+    }
+
+    Ok(())
+}
+
 /// Create person months router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -233,46 +315,17 @@ pub async fn get_unit_person_months(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Query(query): Query<GetPersonMonthsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(
+        &state,
+        &mut rls,
+        auth.user_id,
+        building_id,
+        Some(unit_id),
+        false,
+    )
+    .await?;
 
     // Verify unit belongs to building
     let belongs = state
@@ -358,46 +411,17 @@ pub async fn upsert_person_month(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpsertPersonMonthRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(
+        &state,
+        &mut rls,
+        auth.user_id,
+        building_id,
+        Some(unit_id),
+        true,
+    )
+    .await?;
 
     // Verify unit belongs to building
     let belongs = state
@@ -520,46 +544,17 @@ pub async fn get_person_month(
     mut rls: RlsConnection,
     Path((building_id, unit_id, id)): Path<(Uuid, Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(
+        &state,
+        &mut rls,
+        auth.user_id,
+        building_id,
+        Some(unit_id),
+        false,
+    )
+    .await?;
 
     let entry = state
         .person_month_repo
@@ -620,46 +615,17 @@ pub async fn update_person_month(
     Path((building_id, unit_id, id)): Path<(Uuid, Uuid, Uuid)>,
     Json(req): Json<UpdatePersonMonthRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(
+        &state,
+        &mut rls,
+        auth.user_id,
+        building_id,
+        Some(unit_id),
+        true,
+    )
+    .await?;
 
     // Verify entry exists and belongs to unit
     let existing = state
@@ -781,46 +747,17 @@ pub async fn delete_person_month(
     mut rls: RlsConnection,
     Path((building_id, unit_id, id)): Path<(Uuid, Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(
+        &state,
+        &mut rls,
+        auth.user_id,
+        building_id,
+        Some(unit_id),
+        true,
+    )
+    .await?;
 
     // Verify entry exists and belongs to unit
     let existing = state.person_month_repo.find_by_id(id).await.map_err(|e| {
@@ -894,46 +831,17 @@ pub async fn get_yearly_summary(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Query(query): Query<GetPersonMonthsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(
+        &state,
+        &mut rls,
+        auth.user_id,
+        building_id,
+        Some(unit_id),
+        false,
+    )
+    .await?;
 
     // Verify unit belongs to building
     let belongs = state
@@ -998,46 +906,17 @@ pub async fn calculate_from_residents(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<GetPersonMonthsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(
+        &state,
+        &mut rls,
+        auth.user_id,
+        building_id,
+        Some(unit_id),
+        false,
+    )
+    .await?;
 
     // Verify unit belongs to building
     let belongs = state
@@ -1105,46 +984,9 @@ pub async fn list_building_person_months(
     Path(building_id): Path<Uuid>,
     Query(query): Query<BuildingPersonMonthsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(&state, &mut rls, auth.user_id, building_id, None, false).await?;
 
     let entries = state
         .person_month_repo
@@ -1186,46 +1028,9 @@ pub async fn bulk_upsert_person_months(
     Path(building_id): Path<Uuid>,
     Json(req): Json<BulkUpsertRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(&state, &mut rls, auth.user_id, building_id, None, true).await?;
 
     // Validate month
     if req.month < 1 || req.month > 12 {
@@ -1236,6 +1041,31 @@ pub async fn bulk_upsert_person_months(
                 "Month must be between 1 and 12",
             )),
         ));
+    }
+
+    // Every entry's unit must belong to the path building; otherwise a caller
+    // could write person months for units of another building/organization.
+    for entry in &req.entries {
+        let belongs = state
+            .unit_repo
+            .belongs_to_building(entry.unit_id, building_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Failed to check unit building");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                )
+            })?;
+        if !belongs {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_UNIT",
+                    "Unit does not belong to this building",
+                )),
+            ));
+        }
     }
 
     let entries: Vec<BulkPersonMonthEntry> = req
@@ -1311,46 +1141,9 @@ pub async fn get_building_summary(
     Path(building_id): Path<Uuid>,
     Query(query): Query<BuildingPersonMonthsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Verify building exists and user has access
-    let building = state
-        .building_repo
-        .find_by_id_rls(&mut **rls.conn(), building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-            )
-        })?;
-
-    let is_member = state
-        .org_member_repo
-        .is_member(building.organization_id, auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check org membership");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !is_member {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "You are not a member of this organization",
-            )),
-        ));
-    }
+    // Verify the building (and unit) are in the caller's organization and,
+    // for mutations, that the caller is a manager.
+    authorize_building(&state, &mut rls, auth.user_id, building_id, None, false).await?;
 
     let summary = state
         .person_month_repo

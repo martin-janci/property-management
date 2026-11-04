@@ -19,9 +19,11 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Smart Grouping</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t('settings.notifications.advanced.grouping.title')}
+          </h3>
           <p className="text-sm text-gray-500 mt-0.5">
-            Group similar notifications together to reduce clutter
+            {t('settings.notifications.advanced.grouping.subtitle')}
           </p>
         </div>
 
@@ -58,9 +60,11 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
             {/* Group by category */}
             <div className="flex items-center justify-between py-2">
               <div>
-                <p className="text-sm font-medium text-gray-700">Group by Category</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {t('settings.notifications.advanced.grouping.byCategory')}
+                </p>
                 <p className="text-xs text-gray-500">
-                  Combine notifications of the same type (e.g., "5 new fault updates")
+                  {t('settings.notifications.advanced.grouping.byCategoryHelp')}
                 </p>
               </div>
               <button
@@ -91,9 +95,11 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
             {/* Group by source */}
             <div className="flex items-center justify-between py-2">
               <div>
-                <p className="text-sm font-medium text-gray-700">Group by Source</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {t('settings.notifications.advanced.grouping.bySource')}
+                </p>
                 <p className="text-xs text-gray-500">
-                  Combine notifications from the same building or issue
+                  {t('settings.notifications.advanced.grouping.bySourceHelp')}
                 </p>
               </div>
               <button
@@ -129,7 +135,7 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
                 htmlFor="max-group-size"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Max Group Size
+                {t('settings.notifications.advanced.grouping.maxGroupSize')}
               </label>
               <select
                 id="max-group-size"
@@ -138,17 +144,27 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
                 disabled={loading}
                 className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm disabled:opacity-50"
               >
-                <option value={3}>3 items</option>
-                <option value={5}>5 items</option>
-                <option value={10}>10 items</option>
-                <option value={20}>20 items</option>
+                <option value={3}>
+                  {t('settings.notifications.advanced.grouping.items', { count: 3 })}
+                </option>
+                <option value={5}>
+                  {t('settings.notifications.advanced.grouping.items', { count: 5 })}
+                </option>
+                <option value={10}>
+                  {t('settings.notifications.advanced.grouping.items', { count: 10 })}
+                </option>
+                <option value={20}>
+                  {t('settings.notifications.advanced.grouping.items', { count: 20 })}
+                </option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">Show "and X more" after this many</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {t('settings.notifications.advanced.grouping.maxGroupSizeHelp')}
+              </p>
             </div>
 
             <div>
               <label htmlFor="auto-expand" className="block text-sm font-medium text-gray-700 mb-1">
-                Auto-Expand Threshold
+                {t('settings.notifications.advanced.grouping.autoExpand')}
               </label>
               <select
                 id="auto-expand"
@@ -159,28 +175,50 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
                 disabled={loading}
                 className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm disabled:opacity-50"
               >
-                <option value={0}>Never auto-expand</option>
-                {config.maxGroupSize >= 2 && <option value={2}>2 or fewer</option>}
-                {config.maxGroupSize >= 3 && <option value={3}>3 or fewer</option>}
-                {config.maxGroupSize >= 5 && <option value={5}>5 or fewer</option>}
+                <option value={0}>
+                  {t('settings.notifications.advanced.grouping.neverExpand')}
+                </option>
+                {config.maxGroupSize >= 2 && (
+                  <option value={2}>
+                    {t('settings.notifications.advanced.grouping.orFewer', { count: 2 })}
+                  </option>
+                )}
+                {config.maxGroupSize >= 3 && (
+                  <option value={3}>
+                    {t('settings.notifications.advanced.grouping.orFewer', { count: 3 })}
+                  </option>
+                )}
+                {config.maxGroupSize >= 5 && (
+                  <option value={5}>
+                    {t('settings.notifications.advanced.grouping.orFewer', { count: 5 })}
+                  </option>
+                )}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Expand groups with fewer items</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {t('settings.notifications.advanced.grouping.autoExpandHelp')}
+              </p>
             </div>
           </div>
 
           {/* Preview */}
           <div className="bg-gray-50 rounded-lg p-4 mt-4">
-            <p className="text-xs text-gray-500 mb-3 font-medium">Preview</p>
+            <p className="text-xs text-gray-500 mb-3 font-medium">
+              {t('settings.notifications.advanced.grouping.preview')}
+            </p>
             <div className="space-y-2">
               <div className="bg-white rounded-md border border-gray-200 p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full" />
                     <span className="text-sm font-medium text-gray-900">
-                      {config.maxGroupSize} new comments
+                      {t('settings.notifications.advanced.grouping.previewNewComments', {
+                        count: config.maxGroupSize,
+                      })}
                     </span>
                   </div>
-                  <span className="sr-only">Expand notification group</span>
+                  <span className="sr-only">
+                    {t('settings.notifications.advanced.grouping.expandGroup')}
+                  </span>
                   <svg
                     className="h-4 w-4 text-gray-400"
                     fill="none"
@@ -198,7 +236,7 @@ export function GroupingSettings({ config, loading, onUpdate }: GroupingSettings
                 </div>
               </div>
               <p className="text-xs text-gray-400 text-center">
-                Click to expand and see individual items
+                {t('settings.notifications.advanced.grouping.clickToExpand')}
               </p>
             </div>
           </div>

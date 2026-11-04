@@ -304,6 +304,20 @@ pub async fn get_fault_statistics_report(
     mut rls: RlsConnection,
     Query(query): Query<FaultStatisticsQuery>,
 ) -> Result<Json<FaultStatisticsReportResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: reports expose org-wide / per-unit data (occupancy, consumption)
+    // and export jobs; restrict to manager-tier roles (DB-derived via
+    // `RlsConnection`), matching the schedule handlers.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to generate reports",
+            )),
+        ));
+    }
+
     // Get date range (default to last 30 days if not specified)
     let to_date = query
         .to_date
@@ -402,6 +416,20 @@ pub async fn get_voting_participation_report(
     mut rls: RlsConnection,
     Query(query): Query<VotingParticipationQuery>,
 ) -> Result<Json<VotingParticipationReportResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: reports expose org-wide / per-unit data (occupancy, consumption)
+    // and export jobs; restrict to manager-tier roles (DB-derived via
+    // `RlsConnection`), matching the schedule handlers.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to generate reports",
+            )),
+        ));
+    }
+
     // Get date range (default to last 12 months if not specified)
     let to_date = query
         .to_date
@@ -494,6 +522,20 @@ pub async fn get_occupancy_report(
     mut rls: RlsConnection,
     Query(query): Query<OccupancyReportQuery>,
 ) -> Result<Json<OccupancyReportResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: reports expose org-wide / per-unit data (occupancy, consumption)
+    // and export jobs; restrict to manager-tier roles (DB-derived via
+    // `RlsConnection`), matching the schedule handlers.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to generate reports",
+            )),
+        ));
+    }
+
     // Validate month if provided
     if let Some(month) = query.month {
         if !(1..=12).contains(&month) {
@@ -624,6 +666,20 @@ pub async fn get_consumption_report(
     mut rls: RlsConnection,
     Query(query): Query<ConsumptionReportQuery>,
 ) -> Result<Json<ConsumptionReportResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: reports expose org-wide / per-unit data (occupancy, consumption)
+    // and export jobs; restrict to manager-tier roles (DB-derived via
+    // `RlsConnection`), matching the schedule handlers.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to generate reports",
+            )),
+        ));
+    }
+
     // Validate date range
     validate_date_range(query.from_date, query.to_date)?;
 
@@ -758,6 +814,20 @@ pub async fn export_report(
     mut rls: RlsConnection,
     Json(req): Json<ExportReportRequest>,
 ) -> Result<(StatusCode, Json<ExportReportResponseUnion>), (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: reports expose org-wide / per-unit data (occupancy, consumption)
+    // and export jobs; restrict to manager-tier roles (DB-derived via
+    // `RlsConnection`), matching the schedule handlers.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to generate reports",
+            )),
+        ));
+    }
+
     // Validate format
     let format = req.format.to_lowercase();
     if !["pdf", "excel", "csv"].contains(&format.as_str()) {

@@ -22,14 +22,6 @@ const reactionEmojis: Record<ReactionType, string> = {
   angry: '😠',
 };
 
-const reactionLabels: Record<ReactionType, string> = {
-  like: 'Like',
-  love: 'Love',
-  surprised: 'Surprised',
-  sad: 'Sad',
-  angry: 'Angry',
-};
-
 export function ArticleReactions({
   reactionCounts,
   userReaction,
@@ -72,7 +64,9 @@ export function ArticleReactions({
               }
               ${disabled || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}
-            aria-label={`${reactionLabels[reaction]} reaction${isActive ? ' (active)' : ''}`}
+            aria-label={t(isActive ? 'news.reactions.ariaActive' : 'news.reactions.aria', {
+              reaction: t(`news.reactions.${reaction}`),
+            })}
             aria-pressed={isActive}
           >
             <span className="text-lg" aria-hidden="true">
@@ -87,7 +81,7 @@ export function ArticleReactions({
 
       {reactionCounts.total > 0 && (
         <span className="text-sm text-gray-500 ml-2" aria-live="polite">
-          {reactionCounts.total} {reactionCounts.total === 1 ? 'reaction' : 'reactions'}
+          {t('news.reactions.total', { count: reactionCounts.total })}
         </span>
       )}
     </div>

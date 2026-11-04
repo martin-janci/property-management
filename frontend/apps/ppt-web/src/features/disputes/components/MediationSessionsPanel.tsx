@@ -66,10 +66,10 @@ export function MediationSessionsPanel({
   onReschedule,
   onCancel,
 }: MediationSessionsPanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const formatDateTime = (iso: string) =>
-    new Date(iso).toLocaleString(undefined, {
+    new Date(iso).toLocaleString(i18n.language, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',

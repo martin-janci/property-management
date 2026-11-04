@@ -118,6 +118,24 @@ fn not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
+/// Require a manager-tier role (membership-validated, from [`RlsConnection`])
+/// for legal / compliance mutations. Releases the connection on rejection.
+async fn require_legal_manager(
+    rls: &mut RlsConnection,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if rls.role().is_manager() {
+        return Ok(());
+    }
+    rls.release().await;
+    Err((
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::new(
+            "FORBIDDEN",
+            "Manager role required for this action",
+        )),
+    ))
+}
+
 // ==================== Request/Response Types ====================
 
 /// Create legal document request wrapper.
@@ -281,6 +299,8 @@ async fn create_document(
     mut rls: RlsConnection,
     Json(payload): Json<CreateDocumentRequest>,
 ) -> Result<(StatusCode, Json<LegalDocument>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -347,6 +367,8 @@ async fn update_document(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateLegalDocument>,
 ) -> Result<Json<LegalDocument>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -363,6 +385,8 @@ async fn delete_document(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -388,6 +412,8 @@ async fn add_version(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateLegalDocumentVersion>,
 ) -> Result<(StatusCode, Json<LegalDocumentVersion>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -442,6 +468,8 @@ async fn create_requirement(
     mut rls: RlsConnection,
     Json(payload): Json<CreateRequirementRequest>,
 ) -> Result<(StatusCode, Json<ComplianceRequirement>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -525,6 +553,8 @@ async fn update_requirement(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateComplianceRequirement>,
 ) -> Result<Json<ComplianceRequirement>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -544,6 +574,8 @@ async fn delete_requirement(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -569,6 +601,8 @@ async fn create_verification(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateComplianceVerification>,
 ) -> Result<(StatusCode, Json<ComplianceVerification>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -610,6 +644,8 @@ async fn create_notice(
     mut rls: RlsConnection,
     Json(payload): Json<CreateNoticeRequest>,
 ) -> Result<(StatusCode, Json<LegalNotice>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -691,6 +727,8 @@ async fn update_notice(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateLegalNotice>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -707,6 +745,8 @@ async fn delete_notice(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -729,6 +769,8 @@ async fn send_notice(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -764,6 +806,18 @@ async fn acknowledge_notice(
     Path((notice_id, recipient_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<AcknowledgeNotice>,
 ) -> Result<Json<LegalNoticeRecipient>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): a member may only acknowledge on their own behalf
+    // (recipient_type = 'user'); managers may record any acknowledgment.
+    if !rls.role().is_manager() && recipient_id != rls.user_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Cannot acknowledge a notice on behalf of another recipient",
+            )),
+        ));
+    }
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -785,6 +839,8 @@ async fn create_template(
     mut rls: RlsConnection,
     Json(payload): Json<CreateTemplateRequest>,
 ) -> Result<(StatusCode, Json<ComplianceTemplate>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     // Authoritative org is the caller's tenant; a tenant cannot create a global
     // (NULL-org) system template through this endpoint.
     let org_id = rls.tenant_id();
@@ -836,6 +892,8 @@ async fn update_template(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateComplianceTemplate>,
 ) -> Result<Json<ComplianceTemplate>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -855,6 +913,8 @@ async fn delete_template(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -877,6 +937,8 @@ async fn apply_template(
     mut rls: RlsConnection,
     Json(payload): Json<ApplyTemplateRequest>,
 ) -> Result<(StatusCode, Json<Vec<ComplianceRequirement>>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
@@ -919,6 +981,8 @@ async fn create_audit_entry(
     mut rls: RlsConnection,
     Json(payload): Json<CreateAuditRequest>,
 ) -> Result<(StatusCode, Json<ComplianceAuditTrail>), (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (audit4): manager-only mutation.
+    require_legal_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state

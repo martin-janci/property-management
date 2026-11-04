@@ -3,7 +3,7 @@
 use super::shared::*;
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -47,7 +47,7 @@ pub(super) fn router() -> Router<AppState> {
 pub(super) async fn publish_announcement(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AnnouncementActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -62,6 +62,9 @@ pub(super) async fn publish_announcement(
             )),
         ));
     }
+
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
 
     match state
         .announcement_repo
@@ -197,7 +200,7 @@ pub(super) async fn publish_announcement(
 pub(super) async fn schedule_announcement(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleAnnouncementRequest>,
@@ -213,6 +216,9 @@ pub(super) async fn schedule_announcement(
             )),
         ));
     }
+
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
     // Validate scheduled_at is in the future
     if req.scheduled_at <= Utc::now() {
         rls.release().await;
@@ -278,7 +284,7 @@ pub(super) async fn schedule_announcement(
 pub(super) async fn archive_announcement(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AnnouncementActionResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -293,6 +299,9 @@ pub(super) async fn archive_announcement(
             )),
         ));
     }
+
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
     match state
         .announcement_repo
         .archive_rls(&mut **rls.conn(), id)
@@ -352,7 +361,7 @@ pub(super) async fn archive_announcement(
 pub(super) async fn pin_announcement(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<PinAnnouncementRequest>,
@@ -368,6 +377,9 @@ pub(super) async fn pin_announcement(
             )),
         ));
     }
+
+    // Org scope: 404 unless the announcement belongs to the caller's org.
+    load_announcement_in_org(&state, &mut rls, tenant.tenant_id, id).await?;
 
     let user_id = auth.user_id;
 

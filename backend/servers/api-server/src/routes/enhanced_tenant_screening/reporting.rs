@@ -25,6 +25,11 @@ pub(super) async fn get_reports(
     mut rls: RlsConnection,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -44,6 +49,15 @@ pub(super) async fn create_report(
     mut rls: RlsConnection,
     Json(req): Json<CreateScreeningReport>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
+    if let Some(denied) = super::reject_foreign_refs(&s, &mut rls, req.screening_id, None).await {
+        rls.release().await;
+        return denied;
+    }
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let result = s
@@ -67,6 +81,11 @@ pub(super) async fn get_statistics(
     State(s): State<AppState>,
     mut rls: RlsConnection,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo
@@ -85,6 +104,11 @@ pub(super) async fn get_risk_distribution(
     State(s): State<AppState>,
     mut rls: RlsConnection,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only; membership alone is not enough.
+    if !super::is_screening_manager(&rls) {
+        rls.release().await;
+        return super::manager_required();
+    }
     let org_id = rls.tenant_id();
     let result = s
         .enhanced_tenant_screening_repo

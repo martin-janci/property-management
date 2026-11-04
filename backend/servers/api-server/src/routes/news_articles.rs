@@ -1085,6 +1085,17 @@ async fn create_comment(
     let repo = NewsArticleRepository::new(state.db.clone());
     ensure_article_in_org(&repo, id, tenant.tenant_id).await?;
 
+    // Nested id: a reply's parent must be a comment on this same article.
+    if let Some(parent_id) = req.parent_id {
+        let same_article = repo
+            .comment_belongs_to_article(parent_id, id)
+            .await
+            .map_err(|e| internal_error(&format!("Failed to verify parent comment: {}", e)))?;
+        if !same_article {
+            return Err(not_found("Parent comment"));
+        }
+    }
+
     let data = CreateArticleComment {
         content: req.content,
         parent_id: req.parent_id,

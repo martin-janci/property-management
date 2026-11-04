@@ -25,6 +25,8 @@ use axum::{
 };
 
 use crate::state::AppState;
+use api_core::extractors::RlsConnection;
+use axum::{http::StatusCode, response::IntoResponse, response::Response};
 
 mod models;
 mod providers;
@@ -105,4 +107,46 @@ pub fn router() -> Router<AppState> {
         // Statistics
         .route("/statistics", get(reporting::get_statistics))
         .route("/distribution", get(reporting::get_risk_distribution))
+}
+
+/// Tenant-screening data (credit / background / eviction results, AI risk
+/// scores, provider credentials, queue, reports) is manager-only. The role is
+/// the membership-validated one carried by [`RlsConnection`], never the JWT.
+pub(super) fn is_screening_manager(rls: &RlsConnection) -> bool {
+    rls.role().is_manager()
+}
+
+/// Standard `403` for a non-manager caller.
+pub(super) fn manager_required() -> Response {
+    (
+        StatusCode::FORBIDDEN,
+        "Manager role required for tenant screening",
+    )
+        .into_response()
+}
+
+/// Standard `404` for a payload that references a screening or provider
+/// config outside the caller's organization.
+pub(super) fn screening_not_found() -> Response {
+    (StatusCode::NOT_FOUND, "Screening not found").into_response()
+}
+
+/// Reject a create payload whose `screening_id` / `provider_config_id` belongs
+/// to another organization (`404`). The caller releases the connection.
+pub(super) async fn reject_foreign_refs(
+    s: &AppState,
+    rls: &mut RlsConnection,
+    screening_id: uuid::Uuid,
+    provider_config_id: Option<uuid::Uuid>,
+) -> Option<Response> {
+    let org_id = rls.tenant_id();
+    let owned = s
+        .enhanced_tenant_screening_repo
+        .screening_refs_in_org(&mut **rls.conn(), org_id, screening_id, provider_config_id)
+        .await;
+    match owned {
+        Ok(true) => None,
+        Ok(false) => Some(screening_not_found()),
+        Err(e) => Some((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
+    }
 }

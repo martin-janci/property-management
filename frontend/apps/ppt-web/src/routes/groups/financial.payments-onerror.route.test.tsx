@@ -21,8 +21,9 @@ import { Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
 import { financialRoutes } from './financial';
 
-// ── i18n: resolve keys to their defaultValue so labels render (keep the rest of
-//    the real module so the components barrel's i18n init still works) ──
+// ── i18n: resolve keys to their defaultValue (or the bare key) so labels are
+//    stable regardless of locale (keep the rest of the real module so the
+//    components barrel's i18n init still works) ──
 vi.mock('react-i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-i18next')>()),
   useTranslation: () => ({
@@ -71,6 +72,7 @@ vi.mock('@ppt/api-client', () => ({
   getOverdueInvoices: vi.fn(),
   downloadInvoicePdf: vi.fn(),
   exportReport: vi.fn(),
+  getInvoice: vi.fn(),
   sendInvoice: vi.fn(),
 }));
 
@@ -101,7 +103,7 @@ describe('PaymentManagementPageRoute money-movement onError wiring', () => {
 
     const autoMatchBtn = await screen.findByRole(
       'button',
-      { name: /auto-match all/i },
+      { name: 'financial.reconciliation.autoMatchAll' },
       { timeout: 5000 }
     );
     await userEvent.click(autoMatchBtn);

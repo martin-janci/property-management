@@ -1,277 +1,125 @@
 /**
- * CreatePostForm Component
+ * CreatePostForm — composer for a new post in one of the caller's groups.
  *
- * Form for creating new community posts.
- * Part of Story 42.2: Community Feed.
+ * Posts always belong to a group (`POST /groups/{group_id}/posts`). On the
+ * feed the author picks one of the groups they are a member of; on a group's
+ * detail page the group is fixed.
  */
 
-import type { CreatePostRequest, PostType, PostVisibility } from '@ppt/api-client';
-import type * as React from 'react';
-import { useState } from 'react';
+import type { CommunityPostType, CreateCommunityPostRequest } from '@ppt/api-client';
+import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+const POST_TYPES: CommunityPostType[] = ['text', 'question', 'announcement'];
+
 interface CreatePostFormProps {
-  groupId?: string;
-  userAvatar?: string;
-  userName: string;
+  /** Groups the author may post to. With exactly one, no picker is shown. */
+  groups: { id: string; name: string }[];
   isSubmitting?: boolean;
-  onSubmit: (data: CreatePostRequest) => void;
-  onCancel?: () => void;
+  /** Resolves on success (the form then clears); rejects to keep the draft. */
+  onSubmit: (groupId: string, data: CreateCommunityPostRequest) => Promise<unknown>;
 }
 
-const postTypes: { value: PostType; labelKey: string; icon: React.JSX.Element }[] = [
-  {
-    value: 'text',
-    labelKey: 'community.createPost.types.text',
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4 6h16M4 12h16M4 18h7"
-        />
-      </svg>
-    ),
-  },
-  {
-    value: 'image',
-    labelKey: 'community.createPost.types.photo',
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-        />
-      </svg>
-    ),
-  },
-  {
-    value: 'poll',
-    labelKey: 'community.createPost.types.poll',
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-        />
-      </svg>
-    ),
-  },
-];
-
-const visibilityOptions: { value: PostVisibility; labelKey: string }[] = [
-  { value: 'group', labelKey: 'community.createPost.visibility.group' },
-  { value: 'building', labelKey: 'community.createPost.visibility.building' },
-  { value: 'public', labelKey: 'community.createPost.visibility.public' },
-];
-
-export function CreatePostForm({
-  groupId,
-  userAvatar,
-  userName,
-  isSubmitting,
-  onSubmit,
-  onCancel,
-}: CreatePostFormProps) {
+export function CreatePostForm({ groups, isSubmitting, onSubmit }: CreatePostFormProps) {
   const { t } = useTranslation();
+  const [groupId, setGroupId] = useState(groups[0]?.id ?? '');
+  const [postType, setPostType] = useState<CommunityPostType>('text');
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [postType, setPostType] = useState<PostType>('text');
-  const [visibility, setVisibility] = useState<PostVisibility>('group');
-  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [mediaInput, setMediaInput] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const effectiveGroupId = groups.some((g) => g.id === groupId) ? groupId : (groups[0]?.id ?? '');
+  const canSubmit = !!effectiveGroupId && content.trim().length > 0 && !isSubmitting;
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (content.trim() && groupId) {
-      onSubmit({
-        groupId,
-        content: content.trim(),
-        type: postType,
-        visibility,
-        mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
-      });
-      // Reset form
-      setContent('');
-      setMediaUrls([]);
-      setMediaInput('');
-      setIsExpanded(false);
-    }
-  };
-
-  const addMediaUrl = () => {
-    if (mediaInput.trim() && isValidUrl(mediaInput)) {
-      setMediaUrls([...mediaUrls, mediaInput.trim()]);
-      setMediaInput('');
-    }
-  };
-
-  const removeMediaUrl = (index: number) => {
-    setMediaUrls(mediaUrls.filter((_, i) => i !== index));
-  };
-
-  const isValidUrl = (url: string): boolean => {
+    if (!canSubmit) return;
     try {
-      new URL(url);
-      return true;
+      await onSubmit(effectiveGroupId, {
+        content: content.trim(),
+        postType,
+        title: title.trim() || undefined,
+        isAnonymous: isAnonymous || undefined,
+      });
+      setTitle('');
+      setContent('');
+      setIsAnonymous(false);
+      setPostType('text');
     } catch {
-      return false;
+      // The caller surfaces the error; keep the draft so nothing is lost.
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <form onSubmit={handleSubmit}>
-        {/* Compact Header */}
-        <div className="p-4 flex items-start gap-3">
-          {userAvatar ? (
-            <img src={userAvatar} alt={userName} className="w-10 h-10 rounded-full object-cover" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-gray-600 font-medium">{userName.charAt(0).toUpperCase()}</span>
-            </div>
-          )}
-          <div className="flex-1">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onFocus={() => setIsExpanded(true)}
-              placeholder={t('community.createPost.contentPlaceholder')}
-              rows={isExpanded ? 3 : 1}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none"
-            />
-          </div>
-        </div>
-
-        {/* Expanded Options */}
-        {isExpanded && (
-          <>
-            {/* Media URLs */}
-            {postType === 'image' && (
-              <div className="px-4 pb-4">
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="url"
-                    value={mediaInput}
-                    onChange={(e) => setMediaInput(e.target.value)}
-                    placeholder={t('community.createPost.imageUrlPlaceholder')}
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={addMediaUrl}
-                    disabled={!mediaInput.trim() || !isValidUrl(mediaInput)}
-                    className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
-                  >
-                    {t('community.common.add')}
-                  </button>
-                </div>
-                {mediaUrls.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {mediaUrls.map((url, index) => (
-                      <div key={url} className="relative group">
-                        <img
-                          src={url}
-                          alt={t('community.createPost.previewAlt', { index: index + 1 })}
-                          className="h-16 w-16 object-cover rounded"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeMediaUrl(index)}
-                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Post Type Selector */}
-            <div className="px-4 pb-3 flex items-center gap-2 border-t pt-3">
-              {postTypes.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => setPostType(type.value)}
-                  className={`flex items-center gap-1 px-3 py-1 text-sm rounded-full transition-colors ${
-                    postType === type.value
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {type.icon}
-                  {t(type.labelKey)}
-                </button>
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-4 space-y-3">
+      <div className="flex flex-wrap gap-3">
+        {groups.length > 1 && (
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <span>{t('community.hub.postTo')}</span>
+            <select
+              value={effectiveGroupId}
+              onChange={(e) => setGroupId(e.target.value)}
+              className="px-2 py-1 text-sm border border-gray-300 rounded-md"
+            >
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
               ))}
-            </div>
-
-            {/* Visibility & Actions */}
-            <div className="px-4 pb-4 flex items-center justify-between border-t pt-3">
-              <select
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value as PostVisibility)}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              >
-                {visibilityOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {t(opt.labelKey)}
-                  </option>
-                ))}
-              </select>
-
-              <div className="flex items-center gap-2">
-                {onCancel && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsExpanded(false);
-                      onCancel();
-                    }}
-                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    {t('community.common.cancel')}
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={!content.trim() || isSubmitting}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting
-                    ? t('community.createPost.posting')
-                    : t('community.createPost.submit')}
-                </button>
-              </div>
-            </div>
-          </>
+            </select>
+          </label>
         )}
-      </form>
-    </div>
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          <span>{t('community.hub.postType')}</span>
+          <select
+            value={postType}
+            onChange={(e) => setPostType(e.target.value as CommunityPostType)}
+            className="px-2 py-1 text-sm border border-gray-300 rounded-md"
+          >
+            {POST_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {t(`community.postTypes.${type}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        maxLength={200}
+        placeholder={t('community.hub.postTitlePlaceholder')}
+        aria-label={t('community.hub.postTitlePlaceholder')}
+        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+      />
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        rows={3}
+        maxLength={5000}
+        placeholder={t('community.createPost.contentPlaceholder')}
+        aria-label={t('community.createPost.contentPlaceholder')}
+        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+      />
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          <input
+            type="checkbox"
+            checked={isAnonymous}
+            onChange={(e) => setIsAnonymous(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          {t('community.hub.postAnonymously')}
+        </label>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isSubmitting ? t('community.createPost.posting') : t('community.createPost.submit')}
+        </button>
+      </div>
+    </form>
   );
 }

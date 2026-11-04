@@ -187,7 +187,7 @@ async fn award_badge_returns_201(pool: PgPool) {
     seed_membership(&pool, org_id, user_id, "manager").await;
     let provider_id = seed_provider(&app, org_id, user_id, "ab").await;
 
-    let admin_id = seed_user(&pool, "ab-admin@test.local").await;
+    let admin_id = crate::common::seed_platform_user(&pool, "ab-admin@test.local").await;
     let admin_token = mint_super_admin_token(admin_id, "ab-admin@test.local");
 
     let resp = app

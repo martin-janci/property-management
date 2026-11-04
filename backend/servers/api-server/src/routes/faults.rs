@@ -163,8 +163,17 @@ async fn require_fault_in_org(
     id: Uuid,
     tenant_id: Uuid,
 ) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    load_fault_in_org(state, id, tenant_id).await.map(|_| ())
+}
+
+/// Like [`require_fault_in_org`] but returns the org-scoped fault row.
+async fn load_fault_in_org(
+    state: &AppState,
+    id: Uuid,
+    tenant_id: Uuid,
+) -> Result<Fault, (StatusCode, Json<ErrorResponse>)> {
     match state.fault_repo.find_by_id_for_org(id, tenant_id).await {
-        Ok(Some(_)) => Ok(()),
+        Ok(Some(f)) => Ok(f),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Fault not found")),
@@ -764,8 +773,10 @@ async fn update_fault(
 
     // Check fault exists and can be edited
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
-        Ok(Some(f)) => f,
-        Ok(None) => {
+        // SECURITY: `find_by_id_rls` filters on `id` only and the faults RLS
+        // policy is not FORCEd, so a foreign org's fault is collapsed to 404 here.
+        Ok(Some(f)) if f.organization_id == tenant_id => f,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,
@@ -862,8 +873,10 @@ async fn triage_fault(
 
     // Check fault exists
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
-        Ok(Some(f)) => f,
-        Ok(None) => {
+        // SECURITY: `find_by_id_rls` filters on `id` only and the faults RLS
+        // policy is not FORCEd, so a foreign org's fault is collapsed to 404 here.
+        Ok(Some(f)) if f.organization_id == tenant_id => f,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,
@@ -1056,8 +1069,10 @@ async fn update_status(
 
     // Get current fault to obtain current status
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
-        Ok(Some(f)) => f,
-        Ok(None) => {
+        // SECURITY: `find_by_id_rls` filters on `id` only and the faults RLS
+        // policy is not FORCEd, so a foreign org's fault is collapsed to 404 here.
+        Ok(Some(f)) if f.organization_id == tenant_id => f,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,
@@ -1237,7 +1252,12 @@ async fn confirm_fault(
     Json(req): Json<ConfirmFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = require_tenant_id(&principal)?;
-    require_fault_in_org(&state, id, tenant_id).await?;
+    // SECURITY: only the reporter (or a manager) may confirm / reopen a
+    // fault — the repo UPDATE has no reporter predicate.
+    let fault = load_fault_in_org(&state, id, tenant_id).await?;
+    if fault.reporter_id != principal.user_id {
+        require_manager(&state, principal.user_id, tenant_id).await?;
+    }
 
     let data = ConfirmFault {
         rating: req.rating,
@@ -1330,7 +1350,12 @@ async fn reopen_fault(
     Json(req): Json<ReopenFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = require_tenant_id(&principal)?;
-    require_fault_in_org(&state, id, tenant_id).await?;
+    // SECURITY: only the reporter (or a manager) may confirm / reopen a
+    // fault — the repo UPDATE has no reporter predicate.
+    let fault = load_fault_in_org(&state, id, tenant_id).await?;
+    if fault.reporter_id != principal.user_id {
+        require_manager(&state, principal.user_id, tenant_id).await?;
+    }
 
     let data = ReopenFault { reason: req.reason };
 
@@ -1517,7 +1542,12 @@ async fn add_work_note(
     Json(req): Json<AddWorkNoteRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = require_tenant_id(&principal)?;
-    require_fault_in_org(&state, id, tenant_id).await?;
+    // SECURITY: work notes are a staff workflow action — only the assigned
+    // technician or a manager may add one.
+    let fault = load_fault_in_org(&state, id, tenant_id).await?;
+    if fault.assigned_to != Some(principal.user_id) {
+        require_manager(&state, principal.user_id, tenant_id).await?;
+    }
 
     let data = AddWorkNote { note: req.note };
 
@@ -1653,7 +1683,45 @@ async fn delete_attachment(
     let tenant_id = require_tenant_id(&principal)?;
     require_fault_in_org(&state, id, tenant_id).await?;
 
-    match state.fault_repo.delete_attachment(attachment_id).await {
+    // SECURITY: the attachment must belong to the parent fault (otherwise a
+    // caller passes their own fault id with a foreign attachment id), and
+    // only its uploader or a manager may delete it.
+    let attachment = match state
+        .fault_repo
+        .find_attachment_for_fault(id, attachment_id)
+        .await
+    {
+        Ok(Some(a)) => a,
+        Ok(None) => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Attachment not found")),
+            ))
+        }
+        Err(e) => {
+            tracing::error!("Failed to load attachment: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to delete attachment",
+                )),
+            ));
+        }
+    };
+    if attachment.uploaded_by != principal.user_id {
+        require_manager(&state, principal.user_id, tenant_id).await?;
+    }
+
+    match state
+        .fault_repo
+        .delete_attachment_for_fault(id, attachment_id)
+        .await
+    {
+        Ok(0) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Attachment not found")),
+        )),
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(e) => {
             tracing::error!("Failed to delete attachment: {}", e);
@@ -1693,8 +1761,10 @@ async fn get_ai_suggestion(
 
     // Get fault to analyze
     let fault = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
-        Ok(Some(f)) => f,
-        Ok(None) => {
+        // SECURITY: `find_by_id_rls` filters on `id` only and the faults RLS
+        // policy is not FORCEd, so a foreign org's fault is collapsed to 404 here.
+        Ok(Some(f)) if f.organization_id == tenant_id => f,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,

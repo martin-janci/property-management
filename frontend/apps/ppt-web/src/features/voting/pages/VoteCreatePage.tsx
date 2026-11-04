@@ -12,13 +12,14 @@ import {
   publishVote,
   type QuestionType,
   type QuorumType,
-  useBuildings,
   useCreateVote,
   useDeleteVote,
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components';
+import { VotingBuildingSelect } from '../components';
+import { useVotingBuilding } from '../hooks';
 import { QUESTION_TYPE_LABEL_KEYS, QUORUM_TYPE_LABEL_KEYS } from '../types';
 
 interface VoteCreatePageProps {
@@ -88,8 +89,7 @@ export function toQuestionPayload(q: DraftQuestion, index: number): AddQuestionR
 export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const { data: buildingsData } = useBuildings();
-  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const { buildingId, options: buildingOptions, setBuildingId } = useVotingBuilding();
   const createVote = useCreateVote();
   const discardDraft = useDeleteVote();
 
@@ -226,6 +226,16 @@ export function VoteCreatePage({ onCreated, onCancel }: VoteCreatePageProps) {
         ← {t('voting.detail.backToVoting')}
       </button>
       <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('voting.create.title')}</h1>
+
+      {buildingOptions.length > 0 && (
+        <section className="mt-6 rounded-lg bg-white p-5 shadow">
+          <VotingBuildingSelect
+            options={buildingOptions}
+            value={buildingId}
+            onChange={setBuildingId}
+          />
+        </section>
+      )}
 
       {/* Topic */}
       <section className="mt-6 rounded-lg bg-white p-5 shadow">

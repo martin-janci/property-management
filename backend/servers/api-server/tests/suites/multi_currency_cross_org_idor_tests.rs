@@ -14,9 +14,9 @@
 //! A foreign-org row therefore surfaces as `None` → HTTP 404, never a
 //! cross-tenant read.
 //!
-//! Tenancy comes from the JWT `tenant_id` claim validated against an active
-//! `organization_members` row (`TenantAuthUser`), so each caller is seeded as a
-//! member of their own org:
+//! Tenancy is resolved by `ValidatedTenantExtractor`: the `X-Tenant-ID` header
+//! plus an active `organization_members` row (role read from the DB). The
+//! tests seed a membership per org and drive the handler end-to-end:
 //!   - Org A's token reading Org A's property config -> 200 (same-org succeeds).
 //!   - Org B's token reading Org A's property config -> 404 (cross-org blocked).
 
@@ -27,6 +27,8 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+use serde_json::json;
 
 use crate::common::{seed_membership, TestApp, TestConfig};
 
@@ -144,13 +146,13 @@ async fn get_property_currency_config_same_org_succeeds(pool: PgPool) {
     let org_a = seed_org(&pool, "same-a").await;
     let building_id = seed_building(&pool, org_a, "same-a").await;
     seed_property_currency_config(&pool, org_a, building_id).await;
-
     seed_membership(&pool, org_a, user, "manager").await;
 
     let token = access_token(user, org_a);
     let req = app
         .get(&format!("/api/v1/multi-currency/properties/{building_id}"))
         .bearer(&token)
+        .tenant(org_a)
         .build();
     let resp = app.execute(req).await;
 
@@ -180,12 +182,14 @@ async fn get_property_currency_config_cross_org_is_not_found(pool: PgPool) {
     let building_id = seed_building(&pool, org_a, "x-a").await;
     seed_property_currency_config(&pool, org_a, building_id).await;
 
-    // Org B token targeting Org A's building.
     seed_membership(&pool, org_b, user_b, "manager").await;
+
+    // Org B token targeting Org A's building.
     let token = access_token(user_b, org_b);
     let req = app
         .get(&format!("/api/v1/multi-currency/properties/{building_id}"))
         .bearer(&token)
+        .tenant(org_b)
         .build();
     let resp = app.execute(req).await;
 
@@ -196,4 +200,139 @@ async fn get_property_currency_config_cross_org_is_not_found(pool: PgPool) {
         resp.status,
         resp.text()
     );
+}
+
+// ---------------------------------------------------------------------------
+// Round-4 authz: role gates, body-id scoping, global exchange rates
+// ---------------------------------------------------------------------------
+
+fn property_config_body(building_id: Uuid) -> serde_json::Value {
+    json!({
+        "building_id": building_id,
+        "default_currency": "EUR",
+        "country": "SK"
+    })
+}
+
+/// A manager cannot create a property currency config for another org's
+/// building: the body `building_id` is checked against the caller's org.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_property_config_for_foreign_building_is_not_found(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user_b = seed_user(&pool, "r4-attacker@mc-idor.test").await;
+    let org_a = seed_org(&pool, "r4-a").await;
+    let org_b = seed_org(&pool, "r4-b").await;
+    let foreign_building = seed_building(&pool, org_a, "r4-a").await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
+
+    let resp = app
+        .execute(
+            app.post("/api/v1/multi-currency/properties")
+                .bearer(&access_token(user_b, org_b))
+                .tenant(org_b)
+                .json(property_config_body(foreign_building))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+    let rows: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM property_currency_config WHERE building_id = $1")
+            .bind(foreign_building)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(rows, 0, "no config may be written for a foreign building");
+}
+
+/// A tenant member (DB role `tenant`) cannot mutate org currency settings,
+/// even with a JWT that claims `manager`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn tenant_member_cannot_create_property_config(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = seed_user(&pool, "r4-tenant@mc-idor.test").await;
+    let org = seed_org(&pool, "r4-t").await;
+    let building = seed_building(&pool, org, "r4-t").await;
+    seed_membership(&pool, org, user, "tenant").await;
+
+    let resp = app
+        .execute(
+            app.post("/api/v1/multi-currency/properties")
+                .bearer(&access_token(user, org))
+                .tenant(org)
+                .json(property_config_body(building))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+}
+
+/// The owning org's manager can create the config for its own building.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn manager_creates_property_config_for_own_building(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = seed_user(&pool, "r4-manager@mc-idor.test").await;
+    let org = seed_org(&pool, "r4-m").await;
+    let building = seed_building(&pool, org, "r4-m").await;
+    seed_membership(&pool, org, user, "manager").await;
+
+    let resp = app
+        .execute(
+            app.post("/api/v1/multi-currency/properties")
+                .bearer(&access_token(user, org))
+                .tenant(org)
+                .json(property_config_body(building))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+}
+
+/// Exchange rates are global: an org admin (not a platform principal in
+/// `users.principal_kind`) cannot write or override them.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn org_manager_cannot_write_global_exchange_rates(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = seed_user(&pool, "r4-rates@mc-idor.test").await;
+    let org = seed_org(&pool, "r4-r").await;
+    seed_membership(&pool, org, user, "org_admin").await;
+    let token = access_token(user, org);
+
+    let resp = app
+        .execute(
+            app.post("/api/v1/multi-currency/rates")
+                .bearer(&token)
+                .json(json!({
+                    "from_currency": "EUR",
+                    "to_currency": "USD",
+                    "rate": "1.10",
+                    "rate_date": "2026-01-15",
+                    "source": "ecb"
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+
+    let resp = app
+        .execute(
+            app.post("/api/v1/multi-currency/rates/override")
+                .bearer(&token)
+                .json(json!({
+                    "from_currency": "EUR",
+                    "to_currency": "USD",
+                    "rate": "9.99",
+                    "rate_date": "2026-01-15",
+                    "reason": "attack"
+                }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+
+    let rates: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM exchange_rates WHERE rate_date = '2026-01-15'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(rates, 0, "no global rate may be written by an org manager");
 }

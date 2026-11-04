@@ -12,7 +12,10 @@ use common::ErrorResponse;
 use db::models::EmergencyProtocolQuery;
 use uuid::Uuid;
 
-use super::shared::{CreateProtocolRequest, OrgQuery, ProtocolListQuery, UpdateProtocolRequest};
+use super::shared::{
+    is_emergency_manager, manager_required_response, CreateProtocolRequest, OrgQuery,
+    ProtocolListQuery, UpdateProtocolRequest,
+};
 use crate::state::AppState;
 
 /// Protocol sub-router.
@@ -30,6 +33,11 @@ async fn create_protocol(
     mut rls: RlsConnection,
     Json(req): Json<CreateProtocolRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let user = rls.user_id();
     let result = state
@@ -110,6 +118,11 @@ async fn update_protocol(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProtocolRequest>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo
@@ -140,6 +153,11 @@ async fn delete_protocol(
     Path(id): Path<Uuid>,
     Query(_): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    // SECURITY (audit4): manager-only action; membership alone is not enough.
+    if !is_emergency_manager(rls.role()) {
+        rls.release().await;
+        return manager_required_response();
+    }
     let org = rls.tenant_id();
     let result = state
         .emergency_repo

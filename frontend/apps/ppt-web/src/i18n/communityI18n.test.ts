@@ -55,7 +55,8 @@ describe('community.* i18n keys', () => {
     expect(COMMUNITY_PATHS).toEqual(
       expect.arrayContaining([
         'community.post.like',
-        'community.comments.empty',
+        'community.hub.loadError',
+        'community.groupTypes.interest',
         'community.feed.title',
         'community.groupList.title',
         'community.groupForm.create',

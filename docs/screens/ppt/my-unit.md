@@ -73,3 +73,9 @@ leaks; ended residencies excluded; 401 when unauthenticated).
 
 ## Agent Log
 - 2026-06-22 — FrontendEngineer: added screen-map for the new `/my-unit` resident surface (BIT-192).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: added Book a facility (→ /buildings/:id/facilities) and My bookings (→ /facilities/bookings/my) links in the building section

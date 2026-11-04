@@ -3,7 +3,7 @@
 
 use crate::services::SyndicationService;
 use crate::state::AppState;
-use api_core::extractors::{RlsConnection, TenantExtractor};
+use api_core::extractors::{RlsConnection, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -23,6 +23,27 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use utoipa::ToSchema;
 use uuid::Uuid;
+
+/// Listing mutations require at least a real-estate-agent tier role in the
+/// tenant (managers, owners, property managers, agents). Plain tenants /
+/// residents / guests are read-only. The role is the membership-validated one
+/// from [`ValidatedTenantExtractor`], never the JWT claim.
+///
+/// SECURITY (audit4): listings previously used the non-validating
+/// `TenantExtractor` (no membership check, role always Guest) and had no role
+/// gate on mutations.
+fn require_listing_editor(
+    tenant: &common::TenantContext,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    if tenant.has_role(TenantRole::RealEstateAgent) {
+        Ok(())
+    } else {
+        Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "Insufficient role to modify listings".to_string(),
+        ))
+    }
+}
 
 /// Create listings router.
 pub fn router() -> Router<AppState> {
@@ -105,9 +126,10 @@ pub struct UnitListingData {
 )]
 pub async fn create_listing(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<CreateListing>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     let listing = state
         .listing_repo
         .create(data, tenant.tenant_id, tenant.user_id)
@@ -137,10 +159,14 @@ pub async fn create_listing(
 )]
 pub async fn create_from_unit(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Json(data): Json<CreateListingFromUnit>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+    if let Err(e) = require_listing_editor(&tenant) {
+        rls.release().await;
+        return Err(e);
+    }
     // Fetch unit data
     let unit = match state
         .unit_repo
@@ -170,12 +196,15 @@ pub async fn create_from_unit(
         .find_by_id_rls(&mut **rls.conn(), unit.building_id)
         .await
     {
-        Ok(Some(b)) => b,
-        Ok(None) => {
+        // SECURITY (audit4): `find_by_id_rls` filters on id only and the
+        // tables' RLS is not FORCEd, so a foreign org's unit/building would be
+        // copied into this org's listing. Collapse it to 404.
+        Ok(Some(b)) if b.organization_id == tenant.tenant_id => b,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 axum::http::StatusCode::NOT_FOUND,
-                "Building not found".to_string(),
+                "Unit not found".to_string(),
             ));
         }
         Err(e) => {
@@ -268,7 +297,7 @@ pub async fn create_from_unit(
 )]
 pub async fn list_listings(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<ListingListQuery>,
 ) -> Result<Json<ListingsResponse>, (axum::http::StatusCode, String)> {
     let listings = state
@@ -334,7 +363,7 @@ fn photos_or_error<E: std::fmt::Display>(
 )]
 pub async fn get_listing(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ListingWithDetails>, (axum::http::StatusCode, String)> {
     let listing = state
@@ -384,10 +413,11 @@ pub async fn get_listing(
 )]
 pub async fn update_listing(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateListing>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     // Check listing exists and can be edited
     let existing = state
         .listing_repo
@@ -442,9 +472,10 @@ pub async fn update_listing(
 )]
 pub async fn delete_listing(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     // Check listing exists
     let existing = state
         .listing_repo
@@ -501,10 +532,11 @@ pub async fn delete_listing(
 )]
 pub async fn update_status(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateListingStatus>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     // Validate status value
     let valid_statuses = [
         listing_status::DRAFT,
@@ -600,10 +632,11 @@ pub async fn update_status(
 )]
 pub async fn publish_listing(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateSyndication>,
 ) -> Result<Json<PublishListingResponse>, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     // Check listing exists and can be published
     let existing = state
         .listing_repo
@@ -708,7 +741,7 @@ pub async fn publish_listing(
 )]
 pub async fn get_statistics(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
 ) -> Result<Json<ListingStatistics>, (axum::http::StatusCode, String)> {
     let stats = state
         .listing_repo
@@ -742,7 +775,7 @@ pub async fn get_statistics(
 )]
 pub async fn get_photos(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ListingPhoto>>, (axum::http::StatusCode, String)> {
     // Verify listing exists and belongs to org
@@ -789,10 +822,11 @@ pub async fn get_photos(
 )]
 pub async fn add_photo(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateListingPhoto>,
 ) -> Result<Json<ListingPhoto>, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     // Verify listing exists and can be edited
     let listing = state
         .listing_repo
@@ -843,10 +877,11 @@ pub async fn add_photo(
 )]
 pub async fn reorder_photos(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<ReorderPhotos>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     // Verify listing exists
     state
         .listing_repo
@@ -896,9 +931,10 @@ pub async fn reorder_photos(
 )]
 pub async fn delete_photo(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path((id, photo_id)): Path<(Uuid, Uuid)>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    require_listing_editor(&tenant)?;
     // Verify listing exists
     state
         .listing_repo
@@ -952,7 +988,7 @@ pub async fn delete_photo(
 )]
 pub async fn get_syndications(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ListingSyndication>>, (axum::http::StatusCode, String)> {
     // Verify listing exists
@@ -1001,7 +1037,7 @@ pub async fn get_syndications(
 )]
 pub async fn get_listing_syndication_status(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SyndicationStatusDashboard>, (axum::http::StatusCode, String)> {
     let dashboard = state
@@ -1037,7 +1073,7 @@ pub async fn get_listing_syndication_status(
 )]
 pub async fn get_syndication_dashboard(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<SyndicationDashboardQuery>,
 ) -> Result<Json<SyndicationDashboardResponse>, (axum::http::StatusCode, String)> {
     let (listings, total) = state
@@ -1083,7 +1119,7 @@ pub async fn get_syndication_dashboard(
 )]
 pub async fn get_organization_syndication_stats(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
 ) -> Result<Json<OrganizationSyndicationStats>, (axum::http::StatusCode, String)> {
     let stats = state
         .listing_repo
@@ -1135,7 +1171,7 @@ pub async fn get_organization_syndication_stats(
 )]
 pub async fn global_publish(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
     // Authz (closes #809): publishing to the cross-org global portal is a
@@ -1237,7 +1273,7 @@ pub async fn global_publish(
 )]
 pub async fn global_unpublish(
     State(state): State<AppState>,
-    TenantExtractor(tenant): TenantExtractor,
+    ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
     // Authz (closes #809): withdrawing from the global portal is the inverse

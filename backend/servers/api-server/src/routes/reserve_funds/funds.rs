@@ -11,7 +11,9 @@ use db::models::reserve_funds::{
 };
 use uuid::Uuid;
 
-use super::shared::{internal_error, not_found_error, repo_error, ApiResult, FundListQuery};
+use super::shared::{
+    internal_error, not_found_error, repo_error, require_manager, ApiResult, FundListQuery,
+};
 use crate::state::AppState;
 
 /// Fund CRUD / dashboard / health sub-router.
@@ -52,6 +54,7 @@ async fn create_fund(
     mut rls: RlsConnection,
     Json(req): Json<CreateReserveFund>,
 ) -> ApiResult<Json<ReserveFund>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let user_id = rls.user_id();
     let out = state
@@ -88,6 +91,7 @@ async fn update_fund(
     Path(fund_id): Path<Uuid>,
     Json(req): Json<UpdateReserveFund>,
 ) -> ApiResult<Json<ReserveFund>> {
+    require_manager(&mut rls).await?;
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo

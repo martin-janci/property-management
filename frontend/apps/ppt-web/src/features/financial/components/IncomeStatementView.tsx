@@ -6,6 +6,7 @@
  */
 
 import type { IncomeStatement } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate } from '../utils/formatting';
 
 interface IncomeStatementViewProps {
@@ -15,11 +16,12 @@ interface IncomeStatementViewProps {
 }
 
 function SectionRows({ lines, currency }: { lines: IncomeStatement['revenue']; currency: string }) {
+  const { t } = useTranslation();
   if (lines.length === 0) {
     return (
       <tr>
         <td colSpan={2} className="px-6 py-4 text-sm text-gray-400 text-center">
-          No entries
+          {t('financial.reports.noEntries')}
         </td>
       </tr>
     );
@@ -43,6 +45,8 @@ export function IncomeStatementView({
   isLoading,
   currency = 'EUR',
 }: IncomeStatementViewProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6 animate-pulse space-y-3">
@@ -57,7 +61,7 @@ export function IncomeStatementView({
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-gray-500 text-center py-8">
-          Select a date range to view the income statement.
+          {t('financial.reports.incomeStatementEmpty')}
         </p>
       </div>
     );
@@ -66,7 +70,9 @@ export function IncomeStatementView({
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Income Statement</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          {t('financial.reports.tabs.incomeStatement')}
+        </h3>
         <p className="mt-1 text-sm text-gray-500">
           {formatDate(data.from_date)} – {formatDate(data.to_date)}
         </p>
@@ -80,18 +86,20 @@ export function IncomeStatementView({
                 scope="col"
                 className="px-6 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Revenue
+                {t('financial.reports.incomeStatement.revenue')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Amount
+                {t('financial.amount')}
               </th>
             </tr>
             <SectionRows lines={data.revenue} currency={currency} />
             <tr className="bg-gray-50/60">
-              <td className="px-6 py-3 text-sm font-medium text-gray-900">Total Revenue</td>
+              <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                {t('financial.reports.incomeStatement.totalRevenue')}
+              </td>
               <td className="px-6 py-3 text-sm text-right font-medium text-gray-900 tabular-nums">
                 {formatCurrency(data.total_revenue, currency)}
               </td>
@@ -102,18 +110,20 @@ export function IncomeStatementView({
                 scope="col"
                 className="px-6 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Expenses
+                {t('financial.reports.incomeStatement.expenses')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"
               >
-                Amount
+                {t('financial.amount')}
               </th>
             </tr>
             <SectionRows lines={data.expenses} currency={currency} />
             <tr className="bg-gray-50/60">
-              <td className="px-6 py-3 text-sm font-medium text-gray-900">Total Expenses</td>
+              <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                {t('financial.reports.incomeStatement.totalExpenses')}
+              </td>
               <td className="px-6 py-3 text-sm text-right font-medium text-gray-900 tabular-nums">
                 {formatCurrency(data.total_expenses, currency)}
               </td>
@@ -121,7 +131,9 @@ export function IncomeStatementView({
           </tbody>
           <tfoot className="bg-gray-100">
             <tr>
-              <td className="px-6 py-4 text-sm font-bold text-gray-900">Net Income</td>
+              <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                {t('financial.reports.incomeStatement.netIncome')}
+              </td>
               <td
                 className={`px-6 py-4 text-sm text-right font-bold tabular-nums ${
                   data.net_income < 0 ? 'text-red-600' : 'text-green-700'

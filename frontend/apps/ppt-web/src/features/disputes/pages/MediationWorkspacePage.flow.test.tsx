@@ -5,8 +5,10 @@
  * Coverage 80-3: deeper coverage of the dispute lifecycle as seen by the
  * mediation workspace — the open -> mediation -> resolved state transitions
  * (the `isActive` gate around the Resolve tab) and the role-based permission
- * matrix (manager / mediator / party / outsider) that decides who can manage,
- * chat, and record a resolution.
+ * matrix (manager / mediator / party / outsider) that decides who can manage
+ * and record a resolution. Resolving and assigning a mediator are manager-only
+ * on the backend (`PATCH /disputes/{id}/resolve`), so a mediator can escalate
+ * and run sessions but cannot resolve.
  *
  * These complement MediationWorkspacePage.test.tsx, which only exercises the
  * load-error / loading states. Additive only — no behaviour change.
@@ -37,12 +39,9 @@ vi.mock('react-i18next', () => ({
 }));
 
 // Stub the heavy children so the page renders in isolation and so we can detect
-// whether the chat thread mounted (canChat gate) and resolution form mounted.
+// whether the resolution form mounted.
 vi.mock('../components/MediationTimelineView', () => ({
   MediationTimelineView: () => null,
-}));
-vi.mock('../components/MediationChatThread', () => ({
-  MediationChatThread: () => <div data-testid="chat-thread" />,
 }));
 vi.mock('../components/MediationSessionsPanel', () => ({ MediationSessionsPanel: () => null }));
 vi.mock('../components/MediationResolutionForm', () => ({
@@ -64,18 +63,24 @@ const OUTSIDER_ID = 'user-outsider';
 
 type DisputeOverrides = Record<string, unknown>;
 
+function party(id: string, userId: string, role: string, userName: string) {
+  return { id, userId, role, userName, userEmail: `${userId}@example.com` };
+}
+
 /** Build a dispute object with sane defaults for the workspace page. */
 function makeDispute(status: string, overrides: DisputeOverrides = {}) {
   return {
     id: 'dsp-0001-abcd',
-    subject: 'Leaky tap dispute',
+    referenceNumber: 'DSP-2026-00042',
+    title: 'Leaky tap dispute',
     status,
     filedBy: FILER_ID,
-    respondentId: RESPONDENT_ID,
-    assignedMediatorId: MEDIATOR_ID,
-    filedAt: '2026-01-01T00:00:00.000Z',
-    filerDetails: { name: 'Filer Fred', email: 'fred@example.com' },
-    respondentDetails: { name: 'Respondent Rita', email: 'rita@example.com' },
+    createdAt: '2026-01-01T00:00:00.000Z',
+    parties: [
+      party('p1', FILER_ID, 'complainant', 'Filer Fred'),
+      party('p2', RESPONDENT_ID, 'respondent', 'Respondent Rita'),
+      party('p3', MEDIATOR_ID, 'mediator', 'Mediator Mia'),
+    ],
     ...overrides,
   };
 }
@@ -183,17 +188,21 @@ describe('MediationWorkspacePage — permission matrix', () => {
     expect(screen.getByTestId('resolution-form')).toBeInTheDocument();
   });
 
-  it('assigned mediator can manage and resolve even without the manager flag', () => {
+  it('the mediator party can escalate but not resolve or assign (manager-only routes)', () => {
     mockDispute('mediation');
     renderPage({ isManager: false, currentUserId: MEDIATOR_ID });
+    expect(screen.getByRole('button', { name: 'disputes.mediation.escalate' })).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'disputes.mediation.resolveDispute' })
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: 'disputes.mediation.resolveDispute' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'disputes.mediation.assignMediator' })
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'disputes.mediation.tabResolution' }));
-    expect(screen.getByTestId('resolution-form')).toBeInTheDocument();
+    expect(screen.getByText('disputes.mediation.onlyManagersCanResolve')).toBeInTheDocument();
   });
 
-  it('a party (filer) cannot manage or resolve but can use chat', () => {
+  it('a party (filer) cannot manage or resolve', () => {
     mockDispute('mediation');
     renderPage({ isManager: false, currentUserId: FILER_ID });
     // No manage actions.
@@ -204,29 +213,34 @@ describe('MediationWorkspacePage — permission matrix', () => {
     fireEvent.click(screen.getByRole('button', { name: 'disputes.mediation.tabResolution' }));
     expect(screen.getByText('disputes.mediation.onlyManagersCanResolve')).toBeInTheDocument();
     expect(screen.queryByTestId('resolution-form')).not.toBeInTheDocument();
-    // But chat is available to a party.
-    fireEvent.click(screen.getByRole('button', { name: 'disputes.mediation.tabDiscussion' }));
-    expect(screen.getByTestId('chat-thread')).toBeInTheDocument();
   });
 
-  it('the respondent party can also access chat', () => {
+  it('has no discussion tab (the backend has no mediation chat/notes list route)', () => {
     mockDispute('mediation');
     renderPage({ isManager: false, currentUserId: RESPONDENT_ID });
-    fireEvent.click(screen.getByRole('button', { name: 'disputes.mediation.tabDiscussion' }));
-    expect(screen.getByTestId('chat-thread')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'disputes.mediation.tabDiscussion' })
+    ).not.toBeInTheDocument();
   });
 
-  it('an outsider (not manager / mediator / party) cannot chat or resolve', () => {
+  it('lists the parties from the dispute detail with their role', () => {
+    mockDispute('mediation');
+    renderPage({ isManager: true });
+    expect(screen.getByText('Respondent Rita')).toBeInTheDocument();
+    expect(screen.getByText('Mediator Mia')).toBeInTheDocument();
+    expect(screen.getByText('disputes.partyRole.mediator')).toBeInTheDocument();
+  });
+
+  it('an outsider (not manager / mediator / party) cannot manage or resolve', () => {
     mockDispute('mediation');
     renderPage({ isManager: false, currentUserId: OUTSIDER_ID });
     // No manage actions.
     expect(
       screen.queryByRole('button', { name: 'disputes.mediation.resolveDispute' })
     ).not.toBeInTheDocument();
-    // Chat gated.
-    fireEvent.click(screen.getByRole('button', { name: 'disputes.mediation.tabDiscussion' }));
-    expect(screen.queryByTestId('chat-thread')).not.toBeInTheDocument();
-    expect(screen.getByText('disputes.mediation.mustBeParty')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'disputes.mediation.escalate' })
+    ).not.toBeInTheDocument();
     // Resolve gated.
     fireEvent.click(screen.getByRole('button', { name: 'disputes.mediation.tabResolution' }));
     expect(screen.getByText('disputes.mediation.onlyManagersCanResolve')).toBeInTheDocument();
@@ -248,9 +262,8 @@ describe('MediationWorkspacePage — header rendering', () => {
     renderPage({ isManager: true });
     const heading = screen.getByRole('heading', { name: 'disputes.mediation.title' });
     expect(heading).toBeInTheDocument();
-    // Reference derived from the dispute id via formatDisputeReference:
-    // 'dsp-0001-abcd' -> strip hyphens -> 'dsp0001abcd' -> first 8 -> 'DSP0001A'.
-    expect(screen.getByText('DSP-DSP0001A')).toBeInTheDocument();
+    // The backend reference number is shown as-is.
+    expect(screen.getByText('DSP-2026-00042')).toBeInTheDocument();
     expect(screen.getByText('Leaky tap dispute')).toBeInTheDocument();
   });
 

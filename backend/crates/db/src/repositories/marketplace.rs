@@ -1092,6 +1092,33 @@ impl MarketplaceRepository {
         .await
     }
 
+    /// True when `provider_id` holds a live (not declined) invitation for
+    /// `rfq_id` and the RFQ is still open for quotes. Quotes are
+    /// invitation-only, so `submit_quote` must reject anything else.
+    pub async fn provider_can_quote(
+        &self,
+        rfq_id: Uuid,
+        provider_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                  FROM rfq_invitations i
+                  JOIN rfqs r ON r.id = i.rfq_id
+                 WHERE i.rfq_id = $1
+                   AND i.provider_id = $2
+                   AND COALESCE(i.declined, FALSE) = FALSE
+                   AND r.status NOT IN ('awarded', 'cancelled', 'expired')
+            )
+            "#,
+        )
+        .bind(rfq_id)
+        .bind(provider_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Decline an invitation.
     ///
     /// Keyed on `provider_id` as well as `id` (PAP-140) so a provider can only
