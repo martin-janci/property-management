@@ -1,41 +1,40 @@
 /**
  * Regression tests for the rentals API↔UI mapper functions.
  *
- * `rentals.tsx` describes itself as owning "the rentals API↔UI mappers", yet
- * until now only the mutation auth-guard seam had coverage (see
- * `rentals.auth-guard.test.tsx`). This churn-hotspot file's mappers translate
- * the generated `@ppt/api-client` payloads into the page-level feature types,
- * and they carry a few *lossy, non-obvious* folds that a future refactor could
- * silently break:
+ * The mappers translate the real api-server `/api/v1/rentals` payloads
+ * (snake_case, decimal amounts as strings) into the page-level feature types.
+ * They carry a few lossy, non-obvious folds a future refactor could break:
  *
- *   - `RentalsRentalPlatform` has five variants ('airbnb' | 'booking' | 'vrbo' |
- *     'direct' | 'other') but the page `BookingSource` lacks 'vrbo', so 'vrbo'
- *     must collapse to 'other'.
- *   - The page `PlatformType` only has 'airbnb' | 'booking', so every non-'booking'
- *     platform (including 'vrbo' and 'direct') must collapse to 'airbnb'.
- *   - A platform connection reports 'disconnected' whenever it is inactive,
- *     regardless of the underlying `syncStatus`.
- *   - A guest's registration status is derived purely from
- *     `submittedToAuthorities`, and a guest with no `reservationId` groups under
- *     an empty booking id.
- *
- * These tests pin that behaviour so the folds cannot regress unnoticed.
+ *   - The backend `rental_platform` has 'vrbo', which the page `BookingSource`
+ *     lacks, so 'vrbo' (and anything unknown) collapses to 'other'.
+ *   - The page `PlatformType` only has 'airbnb' | 'booking', so every
+ *     non-'booking' platform collapses to 'airbnb'.
+ *   - Connection status is derived from `is_active`, `sync_error` and
+ *     `last_sync_at` (the summary row has no explicit sync status).
+ *   - Guest 'registered' and 'reported' both read as registered; 'expired'
+ *     reads as failed.
+ *   - Occupancy arrives as a percentage but the page formats a fraction.
+ *   - The guest-registration page only lists bookings with a pending guest.
  */
 import type {
-  RentalsGuestRegistration,
-  RentalsPlatformConnection,
-  RentalsRentalPlatform,
-  RentalsReservation,
-  RentalsSyncStatus,
+  RentalBookingRecord,
+  RentalBookingSummary,
+  RentalConnectionSummary,
+  RentalGuestListItem,
 } from '@ppt/api-client';
 import { describe, expect, it } from 'vitest';
 import {
-  mapApiConnectionToUi,
-  mapApiGuestToUi,
+  groupGuestsByBooking,
+  mapBookingRecordToUi,
+  mapBookingSummaryToUi,
+  mapConnectionSummaryToUi,
+  mapGuestFormToApi,
+  mapGuestRecordToUi,
+  mapGuestStatusToUi,
   mapRentalPlatformToSource,
   mapRentalPlatformToType,
-  mapReservationToBooking,
-  mapSyncStatusToConnectionStatus,
+  mapStatisticsToUi,
+  parseRentalAmount,
 } from './rentals';
 
 describe('mapRentalPlatformToSource', () => {
@@ -45,12 +44,9 @@ describe('mapRentalPlatformToSource', () => {
     expect(mapRentalPlatformToSource('direct')).toBe('direct');
   });
 
-  it("folds 'vrbo' (absent from BookingSource) to 'other'", () => {
+  it("folds 'vrbo' and unknown values to 'other'", () => {
     expect(mapRentalPlatformToSource('vrbo')).toBe('other');
-  });
-
-  it("folds the generated 'other' platform to 'other'", () => {
-    expect(mapRentalPlatformToSource('other')).toBe('other');
+    expect(mapRentalPlatformToSource('something')).toBe('other');
   });
 });
 
@@ -59,169 +55,251 @@ describe('mapRentalPlatformToType', () => {
     expect(mapRentalPlatformToType('booking')).toBe('booking');
   });
 
-  it.each<RentalsRentalPlatform>(['airbnb', 'vrbo', 'direct', 'other'])(
-    "collapses non-booking platform '%s' to 'airbnb' (PlatformType has only airbnb|booking)",
-    (platform) => {
-      expect(mapRentalPlatformToType(platform)).toBe('airbnb');
-    }
-  );
-});
-
-describe('mapSyncStatusToConnectionStatus', () => {
-  it("reports 'disconnected' whenever the connection is inactive, regardless of syncStatus", () => {
-    for (const status of ['synced', 'pending', 'error', 'disabled'] as RentalsSyncStatus[]) {
-      expect(mapSyncStatusToConnectionStatus(status, false)).toBe('disconnected');
-    }
-  });
-
-  it('maps active connections by their syncStatus', () => {
-    expect(mapSyncStatusToConnectionStatus('synced', true)).toBe('connected');
-    expect(mapSyncStatusToConnectionStatus('pending', true)).toBe('pending');
-    expect(mapSyncStatusToConnectionStatus('error', true)).toBe('error');
-  });
-
-  it("falls an active-but-'disabled' connection back to 'disconnected'", () => {
-    expect(mapSyncStatusToConnectionStatus('disabled', true)).toBe('disconnected');
+  it.each(['airbnb', 'vrbo', 'direct'])("collapses '%s' to 'airbnb'", (platform) => {
+    expect(mapRentalPlatformToType(platform)).toBe('airbnb');
   });
 });
 
-describe('mapReservationToBooking', () => {
-  const base: RentalsReservation = {
-    id: 'res-1',
-    unitId: 'unit-1',
-    platform: 'airbnb',
-    externalId: 'ext-42',
-    guestName: 'Jane Doe',
-    guestEmail: 'jane@example.com',
-    guestPhone: '+421900000000',
-    guestCount: 2,
-    checkIn: '2026-09-01T14:00:00Z',
-    checkOut: '2026-09-05T10:00:00Z',
-    status: 'confirmed',
-    totalPrice: { amount: 12000, currency: 'EUR' },
-    notes: 'late arrival',
-    createdAt: '2026-08-01T00:00:00Z',
-    updatedAt: '2026-08-02T00:00:00Z',
-  };
+describe('parseRentalAmount', () => {
+  it('parses decimal strings and drops empty/invalid values', () => {
+    expect(parseRentalAmount('120.50')).toBe(120.5);
+    expect(parseRentalAmount(null)).toBeUndefined();
+    expect(parseRentalAmount(undefined)).toBeUndefined();
+    expect(parseRentalAmount('')).toBeUndefined();
+    expect(parseRentalAmount('abc')).toBeUndefined();
+  });
+});
 
-  it('maps the reservation payload onto the page RentalBooking shape', () => {
-    expect(mapReservationToBooking(base)).toEqual({
-      id: 'res-1',
-      unitId: 'unit-1',
+const summary: RentalBookingSummary = {
+  id: 'b-1',
+  unit_id: 'u-1',
+  unit_name: 'A-12',
+  building_name: 'Main St 1',
+  platform: 'airbnb',
+  external_booking_id: 'ext-42',
+  guest_name: 'Jane Doe',
+  guest_count: 2,
+  check_in: '2026-09-01',
+  check_out: '2026-09-05',
+  nights: 4,
+  total_amount: '480.00',
+  currency: 'EUR',
+  status: 'confirmed',
+  guest_registration_status: 'pending',
+};
+
+describe('mapBookingSummaryToUi', () => {
+  it('maps a bookings-list row onto the page RentalBooking', () => {
+    expect(mapBookingSummaryToUi(summary)).toEqual({
+      id: 'b-1',
+      unitId: 'u-1',
+      unitName: 'A-12',
       buildingId: '',
+      buildingName: 'Main St 1',
       guestName: 'Jane Doe',
-      guestEmail: 'jane@example.com',
-      guestPhone: '+421900000000',
-      checkIn: '2026-09-01T14:00:00Z',
-      checkOut: '2026-09-05T10:00:00Z',
+      checkIn: '2026-09-01',
+      checkOut: '2026-09-05',
       status: 'confirmed',
       source: 'airbnb',
       platformBookingId: 'ext-42',
-      totalPrice: 12000,
+      totalPrice: 480,
       currency: 'EUR',
       guestCount: 2,
-      notes: 'late arrival',
-      createdAt: '2026-08-01T00:00:00Z',
-      updatedAt: '2026-08-02T00:00:00Z',
+      createdAt: '',
+      updatedAt: '',
     });
   });
 
-  it("routes the platform through the source fold ('vrbo' → 'other')", () => {
-    expect(mapReservationToBooking({ ...base, platform: 'vrbo' }).source).toBe('other');
-  });
-
-  it('leaves buildingId blank — the reservation payload carries no building context', () => {
-    expect(mapReservationToBooking(base).buildingId).toBe('');
-  });
-
-  it('carries the external id through as the platform booking id', () => {
-    expect(mapReservationToBooking(base).platformBookingId).toBe('ext-42');
+  it("routes 'vrbo' through the source fold", () => {
+    expect(mapBookingSummaryToUi({ ...summary, platform: 'vrbo' }).source).toBe('other');
   });
 });
 
-describe('mapApiConnectionToUi', () => {
-  const base: RentalsPlatformConnection = {
-    id: 'conn-1',
-    unitId: 'unit-1',
+describe('mapBookingRecordToUi', () => {
+  const record: RentalBookingRecord = {
+    id: 'b-1',
+    organization_id: 'o-1',
+    unit_id: 'u-1',
     platform: 'booking',
-    externalListingId: 'listing-9',
-    isActive: true,
-    lastSyncAt: '2026-08-10T00:00:00Z',
-    syncStatus: 'synced',
-    createdAt: '2026-08-01T00:00:00Z',
-    updatedAt: '2026-08-02T00:00:00Z',
+    external_booking_id: null,
+    guest_name: 'Jane Doe',
+    guest_email: 'jane@example.com',
+    guest_phone: null,
+    guest_count: 1,
+    check_in: '2026-09-01',
+    check_out: '2026-09-02',
+    total_amount: null,
+    currency: null,
+    status: 'checked_in',
+    guest_notes: 'late arrival',
+    internal_notes: null,
+    created_at: '2026-08-01T00:00:00Z',
+    updated_at: '2026-08-02T00:00:00Z',
   };
 
-  it('maps the connection payload onto the page PlatformConnection shape', () => {
-    expect(mapApiConnectionToUi(base)).toEqual({
-      id: 'conn-1',
-      unitId: 'unit-1',
+  it('maps the full record, turning nulls into undefined', () => {
+    const ui = mapBookingRecordToUi(record);
+    expect(ui.source).toBe('booking');
+    expect(ui.status).toBe('checked_in');
+    expect(ui.guestEmail).toBe('jane@example.com');
+    expect(ui.guestPhone).toBeUndefined();
+    expect(ui.totalPrice).toBeUndefined();
+    expect(ui.notes).toBe('late arrival');
+    expect(ui.createdAt).toBe('2026-08-01T00:00:00Z');
+  });
+});
+
+describe('mapConnectionSummaryToUi', () => {
+  const base: RentalConnectionSummary = {
+    id: 'c-1',
+    unit_id: 'u-1',
+    unit_name: 'A-12',
+    platform: 'booking',
+    is_active: true,
+    last_sync_at: '2026-08-10T00:00:00Z',
+    sync_error: null,
+  };
+
+  it('maps a synced active connection as connected', () => {
+    expect(mapConnectionSummaryToUi(base)).toEqual({
+      id: 'c-1',
+      unitId: 'u-1',
+      unitName: 'A-12',
       platform: 'booking',
       status: 'connected',
-      platformPropertyId: 'listing-9',
       lastSyncAt: '2026-08-10T00:00:00Z',
+      syncErrorMessage: undefined,
       isAutoSyncEnabled: true,
-      createdAt: '2026-08-01T00:00:00Z',
+      createdAt: '',
     });
   });
 
-  it('reports an inactive connection as disconnected even when synced', () => {
-    const ui = mapApiConnectionToUi({ ...base, isActive: false });
-    expect(ui.status).toBe('disconnected');
-    expect(ui.isAutoSyncEnabled).toBe(false);
-  });
-
-  it("folds a 'vrbo' connection platform to the page 'airbnb' type", () => {
-    expect(mapApiConnectionToUi({ ...base, platform: 'vrbo' }).platform).toBe('airbnb');
+  it('derives disconnected / error / pending', () => {
+    expect(mapConnectionSummaryToUi({ ...base, is_active: false }).status).toBe('disconnected');
+    expect(mapConnectionSummaryToUi({ ...base, sync_error: 'boom' }).status).toBe('error');
+    expect(mapConnectionSummaryToUi({ ...base, last_sync_at: null }).status).toBe('pending');
   });
 });
 
-describe('mapApiGuestToUi', () => {
-  const base: RentalsGuestRegistration = {
-    id: 'guest-1',
-    reservationId: 'res-1',
-    unitId: 'unit-1',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    dateOfBirth: '1990-01-01',
-    nationality: 'SK',
-    documentType: 'passport',
-    documentNumber: 'P1234567',
-    documentExpiry: '2030-01-01',
-    arrivalDate: '2026-09-01',
-    departureDate: '2026-09-05',
-    submittedToAuthorities: true,
-    submittedAt: '2026-08-11T00:00:00Z',
-    createdAt: '2026-08-01T00:00:00Z',
-    updatedAt: '2026-08-02T00:00:00Z',
-  };
+describe('mapGuestStatusToUi', () => {
+  it('folds the backend registration statuses', () => {
+    expect(mapGuestStatusToUi('pending')).toBe('pending');
+    expect(mapGuestStatusToUi('registered')).toBe('registered');
+    expect(mapGuestStatusToUi('reported')).toBe('registered');
+    expect(mapGuestStatusToUi('expired')).toBe('failed');
+  });
+});
 
-  it('maps a submitted guest to registered status with the submission timestamp', () => {
-    expect(mapApiGuestToUi(base)).toEqual({
-      id: 'guest-1',
-      bookingId: 'res-1',
-      firstName: 'Jane',
-      lastName: 'Doe',
-      dateOfBirth: '1990-01-01',
-      nationality: 'SK',
-      documentType: 'passport',
-      documentNumber: 'P1234567',
-      documentExpiry: '2030-01-01',
-      registrationStatus: 'registered',
-      registeredAt: '2026-08-11T00:00:00Z',
-      isPrimary: false,
-      createdAt: '2026-08-01T00:00:00Z',
+function guestRow(overrides: Partial<RentalGuestListItem>): RentalGuestListItem {
+  return {
+    id: 'g-1',
+    organization_id: 'o-1',
+    booking_id: 'b-1',
+    first_name: 'Jane',
+    last_name: 'Doe',
+    id_type: 'passport',
+    id_number: 'P123',
+    status: 'pending',
+    is_primary: true,
+    created_at: '2026-08-01T00:00:00Z',
+    updated_at: '2026-08-01T00:00:00Z',
+    booking_guest_name: 'Jane Doe',
+    unit_id: 'u-1',
+    unit_name: 'A-12',
+    check_in: '2026-09-01',
+    check_out: '2026-09-05',
+    booking_status: 'confirmed',
+    ...overrides,
+  };
+}
+
+describe('mapGuestRecordToUi', () => {
+  it('maps identity fields onto the page guest', () => {
+    const ui = mapGuestRecordToUi(guestRow({}));
+    expect(ui.bookingId).toBe('b-1');
+    expect(ui.documentType).toBe('passport');
+    expect(ui.documentNumber).toBe('P123');
+    expect(ui.isPrimary).toBe(true);
+    expect(ui.registrationStatus).toBe('pending');
+  });
+});
+
+describe('groupGuestsByBooking', () => {
+  it('groups by booking with booking context and drops fully registered bookings', () => {
+    const rows = [
+      guestRow({ id: 'g-1', booking_id: 'b-1' }),
+      guestRow({ id: 'g-2', booking_id: 'b-1', is_primary: false, status: 'registered' }),
+      guestRow({ id: 'g-3', booking_id: 'b-2', status: 'registered', booking_guest_name: 'X' }),
+    ];
+    const grouped = groupGuestsByBooking(rows);
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0]).toMatchObject({
+      id: 'b-1',
+      guestName: 'Jane Doe',
+      unitName: 'A-12',
+      checkIn: '2026-09-01',
+      checkOut: '2026-09-05',
+    });
+    expect(grouped[0].guests.map((g) => g.id)).toEqual(['g-1', 'g-2']);
+  });
+});
+
+describe('mapGuestFormToApi', () => {
+  it('renames page fields to the backend guest columns', () => {
+    expect(
+      mapGuestFormToApi({
+        firstName: 'Jane',
+        documentType: 'passport',
+        documentNumber: 'P1',
+        documentExpiry: '2030-01-01',
+        address: 'Main 1',
+        city: 'Bratislava',
+        country: 'SVK',
+      })
+    ).toMatchObject({
+      first_name: 'Jane',
+      id_type: 'passport',
+      id_number: 'P1',
+      id_expiry_date: '2030-01-01',
+      address_street: 'Main 1',
+      address_city: 'Bratislava',
+      address_country: 'SVK',
+    });
+  });
+});
+
+describe('mapStatisticsToUi', () => {
+  it('converts occupancy percent to a fraction and derives the average stay', () => {
+    const ui = mapStatisticsToUi(
+      {
+        total_units: 4,
+        connected_units: 2,
+        active_bookings: 1,
+        upcoming_bookings: 3,
+        pending_registrations: 5,
+        occupancy_rate: 25,
+        revenue_this_month: '1500.00',
+        revenue_last_month: '900.00',
+      },
+      [summary, { ...summary, id: 'b-2', nights: 2 }],
+      7
+    );
+    expect(ui).toEqual({
+      totalBookings: 7,
+      activeBookings: 1,
+      upcomingBookings: 3,
+      totalRevenue: 1500,
+      occupancyRate: 0.25,
+      averageStayDuration: 3,
+      pendingGuestRegistrations: 5,
+      currency: 'EUR',
     });
   });
 
-  it("marks an un-submitted guest as 'pending'", () => {
-    expect(
-      mapApiGuestToUi({ ...base, submittedToAuthorities: false, submittedAt: undefined })
-        .registrationStatus
-    ).toBe('pending');
-  });
-
-  it('falls a guest with no reservationId back to an empty booking id', () => {
-    expect(mapApiGuestToUi({ ...base, reservationId: undefined }).bookingId).toBe('');
+  it('defaults to zeros while statistics are loading', () => {
+    const ui = mapStatisticsToUi(undefined, [], 0);
+    expect(ui.occupancyRate).toBe(0);
+    expect(ui.totalRevenue).toBe(0);
+    expect(ui.currency).toBe('EUR');
   });
 });

@@ -10,11 +10,16 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use db::models::community::{
+    COMMUNITY_EVENT_TYPES, COMMUNITY_GROUP_TYPES, COMMUNITY_GROUP_VISIBILITIES,
+    COMMUNITY_POST_TYPES, COMMUNITY_REACTION_TYPES, EVENT_RSVP_STATUSES, MARKETPLACE_CATEGORIES,
+    MARKETPLACE_CONDITIONS,
+};
 use db::models::{
-    CommunityComment, CommunityEvent, CommunityEventRsvp, CommunityGroup,
+    CommunityComment, CommunityEvent, CommunityEventRsvp, CommunityGroup, CommunityGroupDetail,
     CommunityGroupWithMembership, CommunityPost, CreateCommunityComment, CreateCommunityEvent,
     CreateCommunityGroup, CreateCommunityPost, CreateMarketplaceInquiry, CreateMarketplaceItem,
-    EventRsvpRequest, MarketplaceInquiry, MarketplaceItem,
+    EventRsvpRequest, LeaveGroupOutcome, MarketplaceInquiry, MarketplaceItem,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
@@ -139,6 +144,71 @@ fn tenant_lookup_error() -> (StatusCode, Json<ErrorResponse>) {
 
 /// 404 for a resource that is absent OR owned by another tenant. Uses the same
 /// opaque body for both cases so the id space is not an existence oracle.
+/// 400 when `value` is present but not one of `allowed` (the Postgres enum's
+/// labels), instead of letting the enum cast fail as a 500.
+fn validate_enum(
+    field: &str,
+    value: Option<&str>,
+    allowed: &[&str],
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    match value {
+        Some(v) if !allowed.contains(&v) => Err(bad_request(&format!(
+            "Invalid {field} '{v}'; expected one of: {}",
+            allowed.join(", ")
+        ))),
+        _ => Ok(()),
+    }
+}
+
+fn bad_request(message: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(ErrorResponse::new("BAD_REQUEST", message)),
+    )
+}
+
+/// 404 when the group is `secret` and the caller is not a member: secret
+/// groups are invisible to non-members (same as their omission from
+/// `list_groups`). Call after `verify_group_access`.
+async fn verify_group_visible(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    group_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let visible = state
+        .community_repo
+        .group_visible_to_user(group_id, principal.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Group visibility lookup failed");
+            tenant_lookup_error()
+        })?;
+    if !visible {
+        return Err(resource_not_found("Group not found"));
+    }
+    Ok(())
+}
+
+/// Post counterpart of [`verify_group_visible`].
+async fn verify_post_visible(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    post_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let visible = state
+        .community_repo
+        .post_visible_to_user(post_id, principal.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Post visibility lookup failed");
+            tenant_lookup_error()
+        })?;
+    if !visible {
+        return Err(resource_not_found("Post not found"));
+    }
+    Ok(())
+}
+
 fn resource_not_found(what: &'static str) -> (StatusCode, Json<ErrorResponse>) {
     (
         StatusCode::NOT_FOUND,
@@ -386,6 +456,19 @@ pub async fn create_group(
     Json(data): Json<CreateCommunityGroup>,
 ) -> Result<(StatusCode, Json<CommunityGroup>), (StatusCode, Json<ErrorResponse>)> {
     verify_building_access(&state, &principal, path.building_id).await?;
+    if data.name.trim().is_empty() {
+        return Err(bad_request("Group name is required"));
+    }
+    validate_enum(
+        "group_type",
+        data.group_type.as_deref(),
+        COMMUNITY_GROUP_TYPES,
+    )?;
+    validate_enum(
+        "visibility",
+        data.visibility.as_deref(),
+        COMMUNITY_GROUP_VISIBILITIES,
+    )?;
     let group = state
         .community_repo
         .create_group(path.building_id, principal.user_id, data)
@@ -410,7 +493,7 @@ pub async fn create_group(
     path = "/api/v1/community/groups/{id}",
     params(GroupIdPath),
     responses(
-        (status = 200, description = "Group retrieved", body = CommunityGroup),
+        (status = 200, description = "Group retrieved, with the caller's membership", body = CommunityGroupDetail),
         (status = 404, description = "Group not found"),
         (status = 500, description = "Internal server error")
     ),
@@ -421,18 +504,24 @@ pub async fn get_group(
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Path(path): Path<GroupIdPath>,
-) -> Result<Json<CommunityGroup>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<CommunityGroupDetail>, (StatusCode, Json<ErrorResponse>)> {
     // SECURITY: without RequestPrincipal this read ran unauthenticated and
     // leaked any tenant's group by UUID. Require a verified principal and
     // reject a cross-tenant id with 404 (via verify_group_access).
     verify_group_access(&state, &principal, path.id).await?;
-    let group = state.community_repo.get_group(path.id).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to get group");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", "Failed to get group")),
-        )
-    })?;
+    // `None` also covers a secret group the caller is not a member of (404,
+    // same as its omission from `list_groups`).
+    let group = state
+        .community_repo
+        .get_group_detail(path.id, principal.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get group");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to get group")),
+            )
+        })?;
 
     match group {
         Some(g) => Ok(Json(g)),
@@ -547,6 +636,8 @@ pub async fn join_group(
     Path(path): Path<GroupIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     verify_group_access(&state, &principal, path.id).await?;
+    // Secret groups are invite-only and invisible to non-members.
+    verify_group_visible(&state, &principal, path.id).await?;
 
     state
         .community_repo
@@ -569,7 +660,9 @@ pub async fn join_group(
     path = "/api/v1/community/groups/{id}/leave",
     params(GroupIdPath),
     responses(
-        (status = 200, description = "Left group"),
+        (status = 200, description = "Left group (or was not a member)"),
+        (status = 404, description = "Group not found"),
+        (status = 409, description = "Caller is the group's last owner"),
         (status = 500, description = "Internal server error")
     ),
     security(("bearer_auth" = [])),
@@ -582,7 +675,7 @@ pub async fn leave_group(
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     verify_group_access(&state, &principal, path.id).await?;
 
-    state
+    let outcome = state
         .community_repo
         .leave_group(path.id, principal.user_id)
         .await
@@ -596,6 +689,15 @@ pub async fn leave_group(
                 )),
             )
         })?;
+    if outcome == LeaveGroupOutcome::LastOwner {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "LAST_OWNER",
+                "The last owner cannot leave the group; transfer ownership or delete the group",
+            )),
+        ));
+    }
 
     Ok(StatusCode::OK)
 }
@@ -625,6 +727,7 @@ pub async fn list_posts(
     // group belongs to the caller's org (404 on a cross-tenant miss) before
     // returning any of its posts.
     verify_group_access(&state, &principal, path.group_id).await?;
+    verify_group_visible(&state, &principal, path.group_id).await?;
     let posts = state
         .community_repo
         .get_group_posts(path.group_id, query.limit, query.offset)
@@ -661,6 +764,11 @@ pub async fn create_post(
     Json(data): Json<CreateCommunityPost>,
 ) -> Result<(StatusCode, Json<CommunityPost>), (StatusCode, Json<ErrorResponse>)> {
     verify_group_access(&state, &principal, path.group_id).await?;
+    verify_group_visible(&state, &principal, path.group_id).await?;
+    if data.content.trim().is_empty() {
+        return Err(bad_request("Post content is required"));
+    }
+    validate_enum("post_type", data.post_type.as_deref(), COMMUNITY_POST_TYPES)?;
     let post = state
         .community_repo
         .create_post(path.group_id, principal.user_id, data)
@@ -699,6 +807,12 @@ pub async fn add_reaction(
     Json(data): Json<AddReactionRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     verify_post_access(&state, &principal, path.id).await?;
+    verify_post_visible(&state, &principal, path.id).await?;
+    validate_enum(
+        "reaction_type",
+        Some(data.reaction_type.as_str()),
+        COMMUNITY_REACTION_TYPES,
+    )?;
     state
         .community_repo
         .add_post_reaction(path.id, principal.user_id, &data.reaction_type)
@@ -737,6 +851,23 @@ pub async fn create_comment(
     Json(data): Json<CreateCommunityComment>,
 ) -> Result<(StatusCode, Json<CommunityComment>), (StatusCode, Json<ErrorResponse>)> {
     verify_post_access(&state, &principal, path.id).await?;
+    verify_post_visible(&state, &principal, path.id).await?;
+    if data.content.trim().is_empty() {
+        return Err(bad_request("Comment content is required"));
+    }
+    if let Some(parent_id) = data.parent_id {
+        let same_post = state
+            .community_repo
+            .comment_in_post(parent_id, path.id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Parent comment lookup failed");
+                tenant_lookup_error()
+            })?;
+        if !same_post {
+            return Err(bad_request("parent_id is not a comment on this post"));
+        }
+    }
     let comment = state
         .community_repo
         .create_comment(path.id, principal.user_id, data)
@@ -778,7 +909,7 @@ pub async fn list_events(
     verify_building_access(&state, &principal, path.building_id).await?;
     let events = state
         .community_repo
-        .get_upcoming_events(path.building_id, query.limit)
+        .get_upcoming_events(path.building_id, query.limit, query.offset)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to list events");
@@ -815,6 +946,32 @@ pub async fn create_event(
     Json(data): Json<CreateCommunityEvent>,
 ) -> Result<(StatusCode, Json<CommunityEvent>), (StatusCode, Json<ErrorResponse>)> {
     verify_building_access(&state, &principal, path.building_id).await?;
+    if data.title.trim().is_empty() {
+        return Err(bad_request("Event title is required"));
+    }
+    validate_enum(
+        "event_type",
+        data.event_type.as_deref(),
+        COMMUNITY_EVENT_TYPES,
+    )?;
+    if data.end_time < data.start_time {
+        return Err(bad_request("end_time must not be before start_time"));
+    }
+    if let Some(group_id) = data.group_id {
+        // The linked group must live in the same building (and therefore the
+        // same organization) as the event.
+        let in_building = state
+            .community_repo
+            .group_in_building(group_id, path.building_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Event group lookup failed");
+                tenant_lookup_error()
+            })?;
+        if !in_building {
+            return Err(bad_request("group_id does not belong to this building"));
+        }
+    }
     let event = state
         .community_repo
         .create_event(path.building_id, principal.user_id, data)
@@ -853,6 +1010,10 @@ pub async fn rsvp_event(
     Json(data): Json<EventRsvpRequest>,
 ) -> Result<Json<CommunityEventRsvp>, (StatusCode, Json<ErrorResponse>)> {
     verify_event_access(&state, &principal, id).await?;
+    validate_enum("status", Some(data.status.as_str()), EVENT_RSVP_STATUSES)?;
+    if data.guests.is_some_and(|g| g < 0) {
+        return Err(bad_request("guests must not be negative"));
+    }
     let rsvp = state
         .community_repo
         .rsvp_event(id, principal.user_id, data)
@@ -892,6 +1053,11 @@ pub async fn list_items(
     Query(query): Query<MarketplaceQuery>,
 ) -> Result<Json<Vec<MarketplaceItem>>, (StatusCode, Json<ErrorResponse>)> {
     verify_building_access(&state, &principal, path.building_id).await?;
+    validate_enum(
+        "category",
+        query.category.as_deref(),
+        MARKETPLACE_CATEGORIES,
+    )?;
     let items = state
         .community_repo
         .list_items(path.building_id, query.category, query.limit, query.offset)
@@ -928,6 +1094,19 @@ pub async fn create_item(
     Json(data): Json<CreateMarketplaceItem>,
 ) -> Result<(StatusCode, Json<MarketplaceItem>), (StatusCode, Json<ErrorResponse>)> {
     verify_building_access(&state, &principal, path.building_id).await?;
+    if data.title.trim().is_empty() {
+        return Err(bad_request("Item title is required"));
+    }
+    validate_enum(
+        "category",
+        Some(data.category.as_str()),
+        MARKETPLACE_CATEGORIES,
+    )?;
+    validate_enum(
+        "condition",
+        Some(data.condition.as_str()),
+        MARKETPLACE_CONDITIONS,
+    )?;
     let item = state
         .community_repo
         .create_item(path.building_id, principal.user_id, data)
@@ -1006,6 +1185,9 @@ pub async fn create_inquiry(
     Json(data): Json<CreateMarketplaceInquiry>,
 ) -> Result<(StatusCode, Json<MarketplaceInquiry>), (StatusCode, Json<ErrorResponse>)> {
     verify_item_access(&state, &principal, path.id).await?;
+    if data.message.trim().is_empty() {
+        return Err(bad_request("Inquiry message is required"));
+    }
     let inquiry = state
         .community_repo
         .create_inquiry(path.id, principal.user_id, data)

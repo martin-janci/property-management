@@ -6,7 +6,6 @@
  * collides with other features on the central aggregator.
  */
 import type {
-  Dispute as ApiDispute,
   DisputeStatus as ApiDisputeStatus,
   DisputeType as ApiDisputeType,
   TimelineEventType,
@@ -50,24 +49,6 @@ function mapTypeToCategory(type: ApiDisputeType): DisputeCategory {
     other: 'other',
   };
   return mapping[type];
-}
-
-/** Map UI DisputeCategory to API DisputeType */
-function mapCategoryToType(category: DisputeCategory): ApiDisputeType {
-  const mapping: Record<DisputeCategory, ApiDisputeType> = {
-    noise: 'noise',
-    damage: 'damage',
-    payment: 'payment',
-    lease_terms: 'lease',
-    common_area: 'other',
-    parking: 'other',
-    pets: 'other',
-    maintenance: 'maintenance',
-    privacy: 'other',
-    harassment: 'other',
-    other: 'other',
-  };
-  return mapping[category];
 }
 
 /** Map API DisputeStatus to UI DisputeStatus */
@@ -118,24 +99,6 @@ function mapTimelineEventType(eventType: TimelineEventType): ActivityType {
   return mapping[eventType] ?? 'status_changed';
 }
 
-/** Transform API Dispute to UI DisputeSummary */
-function transformDisputeToSummary(dispute: ApiDispute): DisputeSummary {
-  return {
-    id: dispute.id,
-    referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
-    category: mapTypeToCategory(dispute.type),
-    title: dispute.subject,
-    status: mapApiStatusToUiStatus(dispute.status),
-    // Priority is UI-only; API does not support priority field yet
-    priority: 'medium' as DisputePriority,
-    filedByName: dispute.filedBy,
-    assignedToName: dispute.assignedMediator,
-    partyCount: dispute.respondentId || dispute.respondent ? 2 : 1,
-    createdAt: dispute.createdAt,
-    updatedAt: dispute.updatedAt,
-  };
-}
-
 // ============================================
 // Route wrappers
 // ============================================
@@ -160,25 +123,22 @@ function DisputesPageRoute() {
 
   const organizationId = user.organizationId;
 
-  // Filter state for API query (UI types)
-  // Note: priority and search are accepted from UI for future compatibility,
-  // but the current DisputeListQuery API does not support these fields.
-  // These will be ignored until backend API is extended to support them.
+  // Filter state for API query. The UI status/category/priority values are the
+  // same strings the backend `GET /api/v1/disputes` list filters on.
   const [filters, setFilters] = useState<{
     status?: UiDisputeStatus;
-    priority?: DisputePriority; // UI-only: API does not support priority filtering yet
+    priority?: DisputePriority;
     category?: DisputeCategory;
-    search?: string; // UI-only: API does not support text search yet
+    search?: string;
     page: number;
     pageSize: number;
   }>({ page: 1, pageSize: 10 });
 
-  // Map UI filters to API query parameters
-  // Note: priority and search are not passed to API as DisputeListQuery does not support them.
-  // When backend adds support, update apiQuery to include these fields.
   const apiQuery = {
-    status: filters.status ? mapUiStatusToApiStatus(filters.status) : undefined,
-    type: filters.category ? mapCategoryToType(filters.category) : undefined,
+    status: filters.status,
+    category: filters.category,
+    priority: filters.priority,
+    search: filters.search,
     limit: filters.pageSize,
     page: filters.page,
   };
@@ -198,7 +158,7 @@ function DisputesPageRoute() {
   }, [error, showToast, t]);
 
   // Transform API response to match component interface
-  const disputes: DisputeSummary[] = (data?.data ?? []).map(transformDisputeToSummary);
+  const disputes: DisputeSummary[] = data?.data ?? [];
   const total = data?.total ?? 0;
 
   const handleNavigateToCreate = () => {
@@ -348,13 +308,13 @@ function DisputeDetailRoute() {
   // nothing happens). Until the API surface lands, surface a toast so the
   // user knows the action exists but is pending implementation.
   const notImplemented = useCallback(
-    (label: string) => () => {
+    (actionKey: string) => () => {
       showToast({
         type: 'info',
-        title: t('common.notImplemented', { defaultValue: 'Not yet available' }),
+        title: t('disputes.notImplemented', { defaultValue: 'Not yet available' }),
         message: t('disputes.actionPendingImpl', {
           defaultValue: '{{action}} will be available in a future release.',
-          action: label,
+          action: t(`disputes.pendingAction.${actionKey}`),
         }),
       });
     },
@@ -393,17 +353,17 @@ function DisputeDetailRoute() {
       currentUserId={user?.id}
       onBack={() => navigate('/disputes')}
       onUpdateStatus={handleUpdateStatus}
-      onAddEvidence={notImplemented('Add evidence')}
-      onDeleteEvidence={notImplemented('Delete evidence')}
-      onProposeResolution={notImplemented('Propose resolution')}
-      onVoteResolution={notImplemented('Vote on resolution')}
-      onAcceptResolution={notImplemented('Accept resolution')}
-      onImplementResolution={notImplemented('Implement resolution')}
-      onCompleteResolutionTerm={notImplemented('Complete resolution term')}
-      onCreateAction={notImplemented('Create action')}
-      onCompleteAction={notImplemented('Complete action')}
-      onSendReminder={notImplemented('Send reminder')}
-      onEscalate={notImplemented('Escalate')}
+      onAddEvidence={notImplemented('addEvidence')}
+      onDeleteEvidence={notImplemented('deleteEvidence')}
+      onProposeResolution={notImplemented('proposeResolution')}
+      onVoteResolution={notImplemented('voteResolution')}
+      onAcceptResolution={notImplemented('acceptResolution')}
+      onImplementResolution={notImplemented('implementResolution')}
+      onCompleteResolutionTerm={notImplemented('completeResolutionTerm')}
+      onCreateAction={notImplemented('createAction')}
+      onCompleteAction={notImplemented('completeAction')}
+      onSendReminder={notImplemented('sendReminder')}
+      onEscalate={notImplemented('escalate')}
       onNavigateToMediation={() => navigate(`/disputes/${disputeId}/mediation`)}
     />
   );

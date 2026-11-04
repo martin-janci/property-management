@@ -24,7 +24,8 @@ use sqlx::Error as SqlxError;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-// ============================================================================
+// =====================================================================}
+
 // Tenant scoping helpers
 // ============================================================================
 
@@ -97,6 +98,23 @@ async fn ensure_child_of_vote(
             Err(voting_db_error(e))
         }
     }
+}
+
+/// Vote lifecycle (create / edit / publish / cancel / close / delete), ballot
+/// questions, comment moderation and the audit trail are manager operations.
+/// Owners and tenants read votes, cast ballots and comment. The role comes
+/// from the validated DB membership carried by `RlsConnection` (see the same
+/// check in `outages.rs`), not from the JWT.
+macro_rules! require_manager {
+    ($rls:ident, $msg:expr) => {
+        if !$rls.role().is_manager() {
+            $rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new("FORBIDDEN", $msg)),
+            ));
+        }
+    };
 }
 
 /// Create voting router.
@@ -307,6 +325,8 @@ async fn create_vote(
     mut rls: RlsConnection,
     Json(req): Json<CreateVoteRequest>,
 ) -> Result<(StatusCode, Json<Vote>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can create votes");
+
     let data = CreateVote {
         organization_id: rls.tenant_id(),
         building_id: req.building_id,
@@ -455,6 +475,8 @@ async fn update_vote(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateVoteRequest>,
 ) -> Result<Json<Vote>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can edit votes");
+
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
@@ -533,6 +555,8 @@ async fn delete_vote(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can delete votes");
+
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
@@ -606,6 +630,8 @@ async fn publish_vote(
     Path(id): Path<Uuid>,
     Json(req): Json<PublishVoteRequest>,
 ) -> Result<Json<Vote>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can publish votes");
+
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
@@ -734,6 +760,8 @@ async fn cancel_vote(
     Path(id): Path<Uuid>,
     Json(req): Json<CancelVoteRequest>,
 ) -> Result<Json<Vote>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can cancel votes");
+
     // Check vote exists
     let existing = state
         .vote_repo
@@ -807,6 +835,8 @@ async fn close_vote(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vote>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can close votes");
+
     let existing = state
         .vote_repo
         .find_poll_by_id_for_org(id, rls.tenant_id(), &mut **rls.conn())
@@ -879,6 +909,8 @@ async fn add_question(
     Path(id): Path<Uuid>,
     Json(req): Json<AddQuestionRequest>,
 ) -> Result<(StatusCode, Json<VoteQuestion>), (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can edit vote questions");
+
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
@@ -995,6 +1027,8 @@ async fn update_question(
     Path((id, question_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateQuestionRequest>,
 ) -> Result<Json<VoteQuestion>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can edit vote questions");
+
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
@@ -1081,6 +1115,8 @@ async fn delete_question(
     mut rls: RlsConnection,
     Path((id, question_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can edit vote questions");
+
     // Check vote exists and is in draft status
     let existing = state
         .vote_repo
@@ -1511,6 +1547,7 @@ async fn hide_comment(
     Path((id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<HideCommentRequest>,
 ) -> Result<Json<db::models::VoteComment>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can moderate vote comments");
     vote_in_org(&state, &mut rls, id).await?;
     let belongs = state
         .vote_repo
@@ -2088,6 +2125,7 @@ async fn get_audit_log(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<VoteAuditLog>>, (StatusCode, Json<ErrorResponse>)> {
+    require_manager!(rls, "Only managers can view the vote audit log");
     vote_in_org(&state, &mut rls, id).await?;
 
     // Note: get_audit_log() doesn't have an RLS version yet

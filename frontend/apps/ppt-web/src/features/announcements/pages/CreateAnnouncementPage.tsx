@@ -1,4 +1,5 @@
 import type { CreateAnnouncementRequest } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { AnnouncementForm } from '../components/AnnouncementForm';
 
 interface CreateAnnouncementPageProps {
@@ -18,11 +19,12 @@ export function CreateAnnouncementPage({
   onCancel,
   isLoading,
 }: CreateAnnouncementPageProps) {
+  const { t } = useTranslation();
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Create Announcement</h1>
-        <p className="mt-1 text-gray-600">Create a new announcement for your organization.</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('announcements.form.create')}</h1>
+        <p className="mt-1 text-gray-600">{t('announcements.createPage.subtitle')}</p>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">

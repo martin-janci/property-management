@@ -176,8 +176,31 @@ pub async fn handle_payment_webhook(
     let invoice = match state.financial_repo.get_invoice(session.invoice_id).await {
         Ok(Some(inv)) => inv,
         Ok(None) => {
-            tracing::error!(invoice_id = %session.invoice_id, "Webhook session references a missing invoice");
-            return Ok(StatusCode::OK);
+            // A real, *pending* session points at an invoice that no longer
+            // exists. Unlike an unknown session (nothing to reconcile) or an
+            // amount mismatch (deliberately rejected), this is a server-side
+            // data-integrity failure on an event that represents money Stripe
+            // has *already collected*. Acking (200) here would permanently drop
+            // a paid event with no record anywhere — the bug this guards.
+            //
+            // Fail loud instead: return 5xx so Stripe's at-least-once retry
+            // keeps redelivering (its retry queue is the dead-letter safety net
+            // of last resort) while operators reconcile the missing invoice,
+            // and emit an error-level log to alarm on. A durable in-house DLQ
+            // table is a worthwhile follow-up, but refusing to ack already
+            // stops the silent drop.
+            tracing::error!(
+                session_id = %provider_session_id,
+                invoice_id = %session.invoice_id,
+                "Stripe PAID webhook references a missing invoice — refusing to ack so Stripe retries (must not drop a collected payment)"
+            );
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INVOICE_MISSING",
+                    "Payment session references a missing invoice; event retained for retry",
+                )),
+            ));
         }
         Err(e) => {
             tracing::error!("Failed to load invoice for webhook: {:?}", e);

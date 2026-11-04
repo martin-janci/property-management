@@ -6,7 +6,8 @@ vi.mock('../auth', () => ({
 }));
 
 import { getOrg } from '../auth';
-import { layoutKeys } from './hooks';
+import { TenantLayoutError } from './api';
+import { layoutKeys, retryLayoutQuery } from './hooks';
 
 const mockGetOrg = vi.mocked(getOrg);
 
@@ -50,5 +51,21 @@ describe('layoutKeys', () => {
   it('keys remain prefixed by layoutKeys.all (so invalidating all covers both)', () => {
     expect(layoutKeys.resolved('a/b', 'web').slice(0, 1)).toEqual([...layoutKeys.all]);
     expect(layoutKeys.tenant('a/b').slice(0, 1)).toEqual([...layoutKeys.all]);
+  });
+});
+
+describe('retryLayoutQuery', () => {
+  it('does not retry a 404 (no published layout -> caller falls back)', () => {
+    expect(retryLayoutQuery(0, new TenantLayoutError(404, ['unknown screen']))).toBe(false);
+  });
+
+  it('does not retry other 4xx responses', () => {
+    expect(retryLayoutQuery(0, new TenantLayoutError(400, []))).toBe(false);
+  });
+
+  it('retries a transient failure once', () => {
+    expect(retryLayoutQuery(0, new TenantLayoutError(503, []))).toBe(true);
+    expect(retryLayoutQuery(0, new Error('network'))).toBe(true);
+    expect(retryLayoutQuery(1, new Error('network'))).toBe(false);
   });
 });

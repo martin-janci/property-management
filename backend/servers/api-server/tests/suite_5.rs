@@ -27,6 +27,8 @@ mod lease_abstraction_forms_tests;
 mod lease_review_rbac_tests;
 #[path = "suites/lease_send_for_signature_rbac_tests.rs"]
 mod lease_send_for_signature_rbac_tests;
+#[path = "suites/leases_authz_tests.rs"]
+mod leases_authz_tests;
 #[path = "suites/leases_core_backfill_batch1_tests.rs"]
 mod leases_core_backfill_batch1_tests;
 #[path = "suites/legal_cross_org_idor_tests.rs"]
