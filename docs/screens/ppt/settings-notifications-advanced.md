@@ -80,6 +80,15 @@ prose but scoped it out of the 8A.1 map, so the sitemap ID had no screen-map
 
 ### Specific (recent)
 
+- 2026-11-03: the Epic 40 hooks now adapt onto the granular API (Epic 8B)
+  because `/notification-preferences/{categories,quiet-hours,digest,grouping,advanced}`
+  never existed on the backend (GETs returned 405). Categories roll up
+  `GET /granular/events` and fan toggles out to `PUT /granular/events/{type}`;
+  quiet hours + digest map to `GET|PUT /granular/schedule`; grouping is stored
+  per browser (localStorage). Backend limits reflected in the UI: quiet hours
+  cover every weekday and the weekend only as a block, there is no emergency
+  bypass (toggle removed), digests are daily/weekly only and have no category
+  filter (section removed).
 - `apiStatus: partial` — the four advanced-preference endpoint families
   (category / quiet-hours / digest / grouping) are consumed via `@ppt/api-client`
   hooks; endpoints are left unlisted here until their sitemap `apiEndpoint` IDs
@@ -88,6 +97,10 @@ prose but scoped it out of the 8A.1 map, so the sitemap ID had no screen-map
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-11-03 — agent: rewired the advanced-notification api-client onto the
+  granular endpoints (fixes 405s on load); trimmed QuietHoursConfig /
+  DigestPreferences controls the backend cannot store.
 
 - 2026-07-04 — agent (test-gap-screen-map-drift-pr-922): created this screen-map
   to reconcile screen-map drift after ppt-web route changes. Maps the

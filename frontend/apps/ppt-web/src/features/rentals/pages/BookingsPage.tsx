@@ -5,33 +5,39 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ConfirmationDialog } from '../../../components/ConfirmationDialog';
 import { BookingCard } from '../components/BookingCard';
-import type { BookingListParams, BookingSource, BookingStatus, RentalBooking } from '../types';
+import { BookingFormDialog } from '../components/BookingFormDialog';
+import { emptyBookingForm } from '../mappers';
+import type {
+  BookingFormValues,
+  BookingListParams,
+  BookingSource,
+  BookingStatus,
+  RentalBooking,
+  RentalUnitOption,
+} from '../types';
 
 interface Building {
   id: string;
   name: string;
 }
 
-interface Unit {
-  id: string;
-  name: string;
-  buildingId: string;
-}
-
 interface BookingsPageProps {
   bookings: RentalBooking[];
   total: number;
   buildings: Building[];
-  units: Unit[];
+  units: RentalUnitOption[];
   isLoading?: boolean;
   onFilterChange: (params: BookingListParams) => void;
   onViewBooking: (id: string) => void;
   onEditBooking: (id: string) => void;
+  /** Called after the user confirmed the cancellation. */
   onCancelBooking: (id: string) => void;
   onCheckIn: (id: string) => void;
   onCheckOut: (id: string) => void;
-  onCreateBooking: () => void;
+  /** `POST /rentals/bookings`; rejects (e.g. 409 unit unavailable) keep the dialog open. */
+  onCreateBooking: (values: BookingFormValues) => Promise<void>;
   onBack: () => void;
 }
 
@@ -62,6 +68,8 @@ export function BookingsPage({
   onBack,
 }: BookingsPageProps) {
   const { t } = useTranslation();
+  const [showCreate, setShowCreate] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<RentalBooking | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(12);
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
@@ -150,7 +158,7 @@ export function BookingsPage({
             </div>
             <button
               type="button"
-              onClick={onCreateBooking}
+              onClick={() => setShowCreate(true)}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
               {t('rentals.bookings.createBooking')}
@@ -307,7 +315,7 @@ export function BookingsPage({
             <p className="mt-4 text-gray-500">{t('rentals.bookings.noBookings')}</p>
             <button
               type="button"
-              onClick={onCreateBooking}
+              onClick={() => setShowCreate(true)}
               className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
               {t('rentals.bookings.createFirstBooking')}
@@ -322,7 +330,7 @@ export function BookingsPage({
                   booking={booking}
                   onView={onViewBooking}
                   onEdit={onEditBooking}
-                  onCancel={onCancelBooking}
+                  onCancel={(id) => setCancelTarget(bookings.find((b) => b.id === id) ?? null)}
                   onCheckIn={onCheckIn}
                   onCheckOut={onCheckOut}
                 />
@@ -356,6 +364,37 @@ export function BookingsPage({
           </>
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={cancelTarget !== null}
+        title={t('rentals.bookings.cancelTitle')}
+        message={
+          cancelTarget
+            ? t('rentals.bookings.cancelMessage', {
+                guest: cancelTarget.guestName,
+                unit: cancelTarget.unitName ?? '',
+              })
+            : ''
+        }
+        confirmLabel={t('rentals.bookings.cancelConfirm')}
+        cancelLabel={t('rentals.bookings.keepBooking')}
+        variant="danger"
+        onConfirm={() => {
+          if (cancelTarget) onCancelBooking(cancelTarget.id);
+          setCancelTarget(null);
+        }}
+        onCancel={() => setCancelTarget(null)}
+      />
+
+      {showCreate && (
+        <BookingFormDialog
+          mode="create"
+          initial={emptyBookingForm(selectedUnit)}
+          units={units}
+          onSubmit={onCreateBooking}
+          onClose={() => setShowCreate(false)}
+        />
+      )}
     </div>
   );
 }
