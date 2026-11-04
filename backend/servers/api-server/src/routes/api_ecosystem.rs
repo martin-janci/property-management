@@ -22,6 +22,7 @@
 //! developer portal — not FORCE-RLS; the owner role remains exempt) pass the
 //! app pool directly, preserving public/platform-admin access semantics.
 
+use admin_core::{require_capability, Capability, RequireCapability};
 use api_core::extractors::RlsConnection;
 use api_core::{AuthUser, TenantExtractor};
 use axum::{
@@ -54,6 +55,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::routes::rls_authz::PlatformOverride;
 use crate::state::AppState;
 
 /// Acquire a connection for this router's global-catalog and developer-portal
@@ -98,10 +100,13 @@ async fn catalog_conn(
 /// developer-portal tables' policies are `USING (user_id = app.current_user_id
 /// OR is_super_admin())`. Under `FORCE ROW LEVEL SECURITY` the owner role is no
 /// longer exempt, so those policies now require the connection to carry the
-/// caller's identity. This helper sets it: platform operators
-/// (`rls_authz::is_platform_operator`, from `users.principal_kind`) map to the super-admin RLS bypass — the
-/// same boundary the in-handler `is_platform_admin()` gate enforces — and every
-/// other caller is scoped to their own `user_id`. The developer-portal policies
+/// caller's identity. This helper sets it. The super-admin RLS bypass is set
+/// only from `operator`, which the caller obtains *after* the admin-core
+/// capability check has passed — either a satisfied `RequireCapability`
+/// (admin-only routes, via `PlatformOverride::from(cap)`) or a
+/// `PlatformOverride(true)` (owner-or-operator routes). A platform principal
+/// without an active grant and recent MFA therefore never gets the bypass; it
+/// is scoped to its own `user_id` like every other caller. The developer-portal policies
 /// key on `user_id`, not org, so the tenant slot is filled with
 /// `auth.tenant_id` when present and a nil sentinel otherwise (developers need
 /// not belong to an org).
@@ -112,27 +117,52 @@ async fn catalog_conn(
 async fn rls_conn(
     state: &AppState,
     auth: &AuthUser,
+    operator: PlatformOverride,
 ) -> Result<db::RlsGuard, (StatusCode, Json<ErrorResponse>)> {
-    let is_platform = crate::routes::rls_authz::is_platform_operator(state, auth).await?;
     RlsPool::new(state.db.clone())
         .acquire_with_rls(
             auth.tenant_id.unwrap_or_else(Uuid::nil),
             auth.user_id,
-            is_platform,
+            operator.0,
         )
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
 }
 
 /// Create API ecosystem router.
+///
+/// Platform-operator routes carry an admin-core `require_capability` layer
+/// (platform kind + MFA enrollment + grant + recent MFA + audit):
+///   * global catalog writes (marketplace, connectors, connector actions,
+///     docs, code samples) → `SiteSettingsWrite`;
+///   * developer-portal administration (registration review; operator access
+///     to any developer's registration, keys, usage and sandbox) →
+///     `OauthClientWrite` — third-party API client credentials, the same
+///     surface as `/admin/oauth/clients`;
+///   * portal statistics → `AuditRead`.
+///
+/// Developer-portal routes that also serve the account owner use
+/// [`PlatformOverride`] instead of a hard gate, so owners keep access.
 pub fn router() -> Router<AppState> {
     Router::new()
         // ==================== Story 150.1: Integration Marketplace ====================
         .route("/marketplace", get(list_marketplace_integrations))
-        .route("/marketplace", post(create_marketplace_integration))
+        .route(
+            "/marketplace",
+            post(create_marketplace_integration)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         .route("/marketplace/{id}", get(get_marketplace_integration))
-        .route("/marketplace/{id}", put(update_marketplace_integration))
-        .route("/marketplace/{id}", delete(delete_marketplace_integration))
+        .route(
+            "/marketplace/{id}",
+            put(update_marketplace_integration)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/marketplace/{id}",
+            delete(delete_marketplace_integration)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         .route("/marketplace/categories", get(list_integration_categories))
         .route("/marketplace/{id}/ratings", get(list_integration_ratings))
         .route("/marketplace/{id}/ratings", post(create_integration_rating))
@@ -163,12 +193,24 @@ pub fn router() -> Router<AppState> {
         )
         // ==================== Story 150.2: Connector Framework ====================
         .route("/connectors", get(list_connectors))
-        .route("/connectors", post(create_connector))
+        .route(
+            "/connectors",
+            post(create_connector).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         .route("/connectors/{id}", get(get_connector))
-        .route("/connectors/{id}", put(update_connector))
-        .route("/connectors/{id}", delete(delete_connector))
+        .route(
+            "/connectors/{id}",
+            put(update_connector).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/connectors/{id}",
+            delete(delete_connector).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         .route("/connectors/{id}/actions", get(list_connector_actions))
-        .route("/connectors/{id}/actions", post(create_connector_action))
+        .route(
+            "/connectors/{id}/actions",
+            post(create_connector_action).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         .route(
             "/organizations/{org_id}/connector-logs",
             get(list_connector_logs),
@@ -224,35 +266,75 @@ pub fn router() -> Router<AppState> {
         )
         // ==================== Story 150.5: Developer Portal ====================
         .route("/developers/register", post(register_developer))
-        .route("/developers/{id}", get(get_developer_registration))
+        .route(
+            "/developers/{id}",
+            get(get_developer_registration).layer(require_capability(Capability::OauthClientWrite)),
+        )
         .route(
             "/developers/{id}/review",
-            post(review_developer_registration),
+            post(review_developer_registration)
+                .layer(require_capability(Capability::OauthClientWrite)),
         )
-        .route("/developers/{id}/keys", get(list_developer_api_keys))
-        .route("/developers/{id}/keys", post(create_developer_api_key))
+        .route(
+            "/developers/{id}/keys",
+            get(list_developer_api_keys).layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/developers/{id}/keys",
+            post(create_developer_api_key).layer(require_capability(Capability::OauthClientWrite)),
+        )
         .route(
             "/developers/{id}/keys/{key_id}",
-            delete(revoke_developer_api_key),
+            delete(revoke_developer_api_key)
+                .layer(require_capability(Capability::OauthClientWrite)),
         )
         .route(
             "/developers/{id}/keys/{key_id}/rotate",
-            post(rotate_developer_api_key),
+            post(rotate_developer_api_key).layer(require_capability(Capability::OauthClientWrite)),
         )
-        .route("/developers/{id}/usage", get(get_developer_usage_stats))
-        .route("/developers/{id}/sandbox", post(create_sandbox_environment))
-        .route("/developers/{id}/sandbox", get(get_sandbox_environment))
-        .route("/developers/{id}/sandbox/test", post(test_sandbox_request))
+        .route(
+            "/developers/{id}/usage",
+            get(get_developer_usage_stats).layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/developers/{id}/sandbox",
+            post(create_sandbox_environment)
+                .layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/developers/{id}/sandbox",
+            get(get_sandbox_environment).layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/developers/{id}/sandbox/test",
+            post(test_sandbox_request).layer(require_capability(Capability::OauthClientWrite)),
+        )
         // Documentation
         .route("/docs", get(list_api_documentation))
-        .route("/docs", post(create_api_documentation))
+        .route(
+            "/docs",
+            post(create_api_documentation).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         .route("/docs/{slug}", get(get_api_documentation))
-        .route("/docs/{slug}", put(update_api_documentation))
-        .route("/docs/{slug}", delete(delete_api_documentation))
+        .route(
+            "/docs/{slug}",
+            put(update_api_documentation).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/docs/{slug}",
+            delete(delete_api_documentation)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         .route("/docs/{slug}/code-samples", get(list_code_samples))
-        .route("/docs/{slug}/code-samples", post(create_code_sample))
+        .route(
+            "/docs/{slug}/code-samples",
+            post(create_code_sample).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         // Portal statistics
-        .route("/portal/stats", get(get_developer_portal_stats))
+        .route(
+            "/portal/stats",
+            get(get_developer_portal_stats).layer(require_capability(Capability::AuditRead)),
+        )
         // ==================== Dashboard ====================
         .route(
             "/organizations/{org_id}/dashboard",
@@ -386,22 +468,13 @@ async fn list_marketplace_integrations(
     tag = "API Ecosystem"
 )]
 async fn create_marketplace_integration(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Json(request): Json<CreateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
     // Admin only - require platform admin privileges
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let integration = state
         .api_ecosystem_repo
@@ -452,22 +525,13 @@ async fn get_marketplace_integration(
     tag = "API Ecosystem"
 )]
 async fn update_marketplace_integration(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<UpdateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
     let integration = state
         .api_ecosystem_repo
         .update_marketplace_integration(&mut **conn, path.id, &request)
@@ -491,21 +555,12 @@ async fn update_marketplace_integration(
     tag = "API Ecosystem"
 )]
 async fn delete_marketplace_integration(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
     let deleted = state
         .api_ecosystem_repo
         .delete_marketplace_integration(&mut **conn, path.id)
@@ -799,22 +854,13 @@ async fn list_connectors(
 
 /// Create connector.
 async fn create_connector(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Json(request): Json<CreateConnector>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
     // Require platform admin for creating connectors
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let connector = state
         .api_ecosystem_repo
@@ -844,22 +890,13 @@ async fn get_connector(
 
 /// Update connector.
 async fn update_connector(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<UpdateConnector>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let connector = state
         .api_ecosystem_repo
@@ -874,21 +911,12 @@ async fn update_connector(
 
 /// Delete connector.
 async fn delete_connector(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let deleted = state
         .api_ecosystem_repo
@@ -921,6 +949,7 @@ async fn list_connector_actions(
 
 /// Create connector action.
 async fn create_connector_action(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(_path): Path<IntegrationIdPath>,
@@ -930,17 +959,7 @@ async fn create_connector_action(
     // PAP-171 FORCE-RLS backstop denies non-admins, but gate explicitly so the
     // caller gets a clean 403 rather than an opaque RLS denial. (This sibling of
     // `create_connector` was previously missing the gate — see PAP-171.)
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
     let action = state
         .api_ecosystem_repo
         .create_connector_action(&mut **conn, &request)
@@ -1496,7 +1515,7 @@ async fn register_developer(
     auth: AuthUser,
     Json(request): Json<CreateDeveloperRegistration>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride(false)).await?;
     let registration = state
         .api_ecosystem_repo
         .register_developer(&mut **conn, auth.user_id, &request)
@@ -1509,11 +1528,12 @@ async fn register_developer(
 
 /// Get developer registration.
 async fn get_developer_registration(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, operator).await?;
     let registration = state
         .api_ecosystem_repo
         .get_developer_registration(&mut **conn, path.id)
@@ -1527,22 +1547,13 @@ async fn get_developer_registration(
 
 /// Review developer registration (admin only).
 async fn review_developer_registration(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<ReviewDeveloperRegistration>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
     let registration = state
         .api_ecosystem_repo
         .review_developer_registration(&mut **conn, path.id, auth.user_id, &request)
@@ -1556,13 +1567,14 @@ async fn review_developer_registration(
 
 /// List developer API keys.
 async fn list_developer_api_keys(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<Vec<DeveloperApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
-    let mut conn = rls_conn(&state, &auth).await?;
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
+    let mut conn = rls_conn(&state, &auth, operator).await?;
+    if !operator.0 {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1609,14 +1621,15 @@ async fn list_developer_api_keys(
 
 /// Create developer API key.
 async fn create_developer_api_key(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<CreateDeveloperApiKey>,
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Verify the caller owns this developer account or is platform admin
-    let mut conn = rls_conn(&state, &auth).await?;
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
+    let mut conn = rls_conn(&state, &auth, operator).await?;
+    if !operator.0 {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1680,11 +1693,12 @@ fn sha256_simple(input: &str) -> String {
 
 /// Revoke developer API key.
 async fn revoke_developer_api_key(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperKeyPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, operator).await?;
     let revoked = state
         .api_ecosystem_repo
         .revoke_api_key(&mut **conn, path.key_id, auth.user_id)
@@ -1701,6 +1715,7 @@ async fn revoke_developer_api_key(
 
 /// Rotate developer API key.
 async fn rotate_developer_api_key(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperKeyPath>,
@@ -1709,7 +1724,7 @@ async fn rotate_developer_api_key(
     // below is multi-statement (revoke old + insert new in one transaction) and
     // runs on this dedicated RLS-scoped connection carrying the caller's user
     // context, so the owner policy backstops the `auth.user_id` scoping below.
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, operator).await?;
 
     // Fetch existing key to determine sandbox status for the new key prefix
     let existing_keys = state
@@ -1754,13 +1769,14 @@ async fn rotate_developer_api_key(
 
 /// Get developer usage statistics.
 async fn get_developer_usage_stats(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<DeveloperUsageStats>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
-    let mut conn = rls_conn(&state, &auth).await?;
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
+    let mut conn = rls_conn(&state, &auth, operator).await?;
+    if !operator.0 {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1790,14 +1806,15 @@ async fn get_developer_usage_stats(
 
 /// Create sandbox environment.
 async fn create_sandbox_environment(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<CreateSandboxConfig>,
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
-    let mut conn = rls_conn(&state, &auth).await?;
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
+    let mut conn = rls_conn(&state, &auth, operator).await?;
+    if !operator.0 {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1831,13 +1848,14 @@ async fn create_sandbox_environment(
 
 /// Get sandbox environment.
 async fn get_sandbox_environment(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
-    let mut conn = rls_conn(&state, &auth).await?;
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
+    let mut conn = rls_conn(&state, &auth, operator).await?;
+    if !operator.0 {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1868,14 +1886,15 @@ async fn get_sandbox_environment(
 
 /// Test sandbox request.
 async fn test_sandbox_request(
+    operator: PlatformOverride,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<SandboxTestRequestPayload>,
 ) -> Result<Json<SandboxTestResponsePayload>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
-    let mut conn = rls_conn(&state, &auth).await?;
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
+    let mut conn = rls_conn(&state, &auth, operator).await?;
+    if !operator.0 {
         let dev_account = state
             .api_ecosystem_repo
             .get_developer_registration(&mut **conn, path.id)
@@ -1985,21 +2004,12 @@ async fn list_api_documentation(
 
 /// Create API documentation (admin only).
 async fn create_api_documentation(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Json(request): Json<CreateApiDocumentation>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let doc = state
         .api_ecosystem_repo
@@ -2029,22 +2039,13 @@ async fn get_api_documentation(
 
 /// Update API documentation (admin only).
 async fn update_api_documentation(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DocSlugPath>,
     Json(request): Json<UpdateApiDocumentation>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let doc = state
         .api_ecosystem_repo
@@ -2059,21 +2060,12 @@ async fn update_api_documentation(
 
 /// Delete API documentation (admin only).
 async fn delete_api_documentation(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<DocSlugPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let deleted = state
         .api_ecosystem_repo
@@ -2107,22 +2099,13 @@ async fn list_code_samples(
 
 /// Create code sample (admin only).
 async fn create_code_sample(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
     Path(_path): Path<DocSlugPath>,
     Json(request): Json<CreateApiCodeSample>,
 ) -> Result<Json<ApiCodeSample>, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let sample = state
         .api_ecosystem_repo
@@ -2136,20 +2119,11 @@ async fn create_code_sample(
 
 /// Get developer portal statistics (admin only).
 async fn get_developer_portal_stats(
+    cap: RequireCapability,
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<DeveloperPortalStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    if !crate::routes::rls_authz::is_platform_operator(&state, &auth).await? {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Platform admin privileges required",
-            )),
-        ));
-    }
-
-    let mut conn = rls_conn(&state, &auth).await?;
+    let mut conn = rls_conn(&state, &auth, PlatformOverride::from(cap)).await?;
 
     let stats = state
         .api_ecosystem_repo

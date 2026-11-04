@@ -38,30 +38,69 @@ pub async fn require_manager_rls_plain(
         .map_err(|(status, _)| (status, "Manager-level access required".to_string()))
 }
 
-/// Whether the caller is a platform operator.
+/// Optional platform-operator override for owner-or-operator routes.
 ///
-/// Login access tokens carry `roles`/`principal_kind`, not the singular
-/// `role` claim that `AuthUser::is_platform_admin()` reads, so that check
-/// alone rejects every real platform admin. The authoritative source is the
-/// `users.principal_kind` column (the same one `RequestPrincipal` uses);
-/// `AuthUser::is_platform_admin()` is kept for signed service tokens.
-pub async fn is_platform_operator(
-    state: &crate::state::AppState,
-    auth: &api_core::AuthUser,
-) -> Result<bool, (StatusCode, Json<ErrorResponse>)> {
-    if auth.is_platform_admin() {
-        return Ok(true);
+/// Some routes serve both the resource owner and platform operators (e.g. a
+/// developer reading their own API keys vs. an operator reviewing anyone's).
+/// A hard [`admin_core::RequireCapability`] gate would lock the owner out, so
+/// this extractor runs the *same* capability check — platform
+/// `principal_kind`, MFA enrollment, active grant, recent MFA, audit row — only
+/// for platform principals, and yields `PlatformOverride(true)` only when it
+/// passes. Everyone else (including a platform principal without the grant or
+/// without fresh MFA) gets `PlatformOverride(false)` and must pass the
+/// handler's own ownership check; the denied attempt is audited by
+/// `RequireCapability`.
+///
+/// The required capability comes from the route's
+/// [`admin_core::require_capability`] layer, exactly as for
+/// `RequireCapability`. A missing layer/`AdminDeps` is a wiring bug and
+/// surfaces as `500` rather than silently disabling the override.
+///
+/// JWT `role` / `roles` claims are never consulted: platform status comes
+/// from `users.principal_kind` only (the admin-core contract).
+#[derive(Debug, Clone, Copy)]
+pub struct PlatformOverride(pub bool);
+
+impl From<admin_core::RequireCapability> for PlatformOverride {
+    /// A satisfied hard capability gate is, by construction, an operator.
+    fn from(_: admin_core::RequireCapability) -> Self {
+        Self(true)
     }
-    let user = state
-        .user_repo
-        .find_by_id(auth.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to resolve principal kind");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-            )
-        })?;
-    Ok(user.is_some_and(|u| u.principal_kind_enum() == db::models::PrincipalKind::Platform))
+}
+
+impl axum::extract::FromRequestParts<crate::state::AppState> for PlatformOverride {
+    type Rejection = axum::response::Response;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &crate::state::AppState,
+    ) -> Result<Self, Self::Rejection> {
+        use axum::response::IntoResponse;
+
+        let auth = api_core::AuthUser::from_request_parts(parts, state)
+            .await
+            .map_err(IntoResponse::into_response)?;
+        let user = state
+            .user_repo
+            .find_by_id(auth.user_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Failed to resolve principal kind");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+                )
+                    .into_response()
+            })?;
+        let is_platform =
+            user.is_some_and(|u| u.principal_kind_enum() == db::models::PrincipalKind::Platform);
+        if !is_platform {
+            return Ok(Self(false));
+        }
+        match admin_core::RequireCapability::from_request_parts(parts, state).await {
+            Ok(_) => Ok(Self(true)),
+            Err(e @ admin_core::AdminError::Internal(_)) => Err(e.into_response()),
+            Err(_) => Ok(Self(false)),
+        }
+    }
 }

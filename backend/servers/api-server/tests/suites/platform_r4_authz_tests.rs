@@ -1015,3 +1015,310 @@ async fn feature_endpoints_use_db_membership(pool: PgPool) {
     .await;
     expect(&resp, StatusCode::FORBIDDEN, "resident reads feature stats");
 }
+
+// ---------------------------------------------------------------------------
+// Platform routes: admin-core capability gate
+// ---------------------------------------------------------------------------
+//
+// `/api/v1/infrastructure/*` and the operator routes of `/api/v1/ecosystem/*`
+// require platform kind + MFA enrollment + an active capability grant +
+// recent MFA (audited), exactly like `/api/v1/platform-admin/*`. A bare
+// `principal_kind = 'platform'` row is not enough.
+
+/// A `principal_kind = 'platform'` user with a login-format token (no role
+/// claims). The INSERT bypasses the BEFORE-UPDATE principal_kind guard.
+async fn platform_user(pool: &PgPool, label: &str) -> Actor {
+    let email = format!("r4-plat-{label}-{}@r4-platform.test", Uuid::new_v4());
+    let id = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+           VALUES ($1, 'hash', 'R4 Platform Operator', 'active', NOW(), 'platform')
+           RETURNING id"#,
+    )
+    .bind(&email)
+    .fetch_one(pool)
+    .await
+    .expect("seed platform user");
+    Actor {
+        id,
+        token: login_token(id, &email),
+    }
+}
+
+async fn enroll_mfa(pool: &PgPool, user: Uuid) {
+    sqlx::query(
+        r#"INSERT INTO user_2fa (user_id, secret, enabled, enabled_at, backup_codes, backup_codes_remaining)
+           VALUES ($1, 'unused-secret', true, NOW(), '[]'::jsonb, 0)
+           ON CONFLICT (user_id) DO UPDATE SET enabled = true, enabled_at = NOW()"#,
+    )
+    .bind(user)
+    .execute(pool)
+    .await
+    .expect("enroll mfa");
+}
+
+/// Grant `capability` with the default `mfa_required = TRUE`, so the gate
+/// also demands a recent MFA verification.
+async fn grant(pool: &PgPool, user: Uuid, granted_by: Uuid, capability: &str) {
+    sqlx::query(
+        r#"INSERT INTO capability_grants (user_id, capability, granted_by, note)
+           VALUES ($1, $2, $3, 'r4-platform-test')"#,
+    )
+    .bind(user)
+    .bind(capability)
+    .bind(granted_by)
+    .execute(pool)
+    .await
+    .expect("grant capability");
+}
+
+async fn verify_mfa_now(pool: &PgPool, user: Uuid) {
+    sqlx::query(
+        "INSERT INTO two_factor_auth_verifications (user_id, method, verified_at) VALUES ($1, 'totp', NOW())",
+    )
+    .bind(user)
+    .execute(pool)
+    .await
+    .expect("record mfa verification");
+}
+
+/// Capability-gate audit rows for `user` with the given outcome.
+async fn capability_audits(pool: &PgPool, user: Uuid, outcome: &str) -> i64 {
+    sqlx::query_scalar::<_, i64>(
+        r#"SELECT COUNT(*) FROM audit_logs
+           WHERE user_id = $1 AND details->>'source' = 'admin_core'
+             AND details->>'outcome' = $2"#,
+    )
+    .bind(user)
+    .bind(outcome)
+    .fetch_one(pool)
+    .await
+    .expect("count audit rows")
+}
+
+/// Request without an `X-Tenant-ID` header (platform routes are global).
+async fn call_global(
+    app: &TestApp,
+    method: &str,
+    uri: &str,
+    actor: &Actor,
+    body: Option<serde_json::Value>,
+) -> TestResponse {
+    let builder = match method {
+        "GET" => app.get(uri),
+        "POST" => app.post(uri),
+        "PUT" => app.put(uri),
+        "DELETE" => app.delete(uri),
+        other => panic!("unsupported method {other}"),
+    };
+    let mut builder = builder.bearer(&actor.token);
+    if let Some(b) = body {
+        builder = builder.json(b);
+    }
+    app.execute(builder.build()).await
+}
+
+async fn flag_count(pool: &PgPool, key: &str) -> i64 {
+    sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM infrastructure_feature_flags WHERE key = $1")
+        .bind(key)
+        .fetch_one(pool)
+        .await
+        .expect("count flags")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn infrastructure_requires_capability_grant_and_recent_mfa(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let granter = platform_user(&pool, "granter").await;
+    let op = platform_user(&pool, "op").await;
+    let key = format!("r4_flag_{}", Uuid::new_v4().simple());
+    let flag = json!({
+        "key": key,
+        "name": "R4 flag",
+        "enabled": false,
+        "default_value": false,
+        "value_type": "Boolean",
+        "environment": "production"
+    });
+    let flags = "/api/v1/infrastructure/feature-flags";
+
+    // Bare platform principal: no MFA enrollment, no grant.
+    for (method, uri, body) in [
+        ("GET", flags, None),
+        ("POST", flags, Some(flag.clone())),
+        ("GET", "/api/v1/infrastructure/dashboard", None),
+        ("GET", "/api/v1/infrastructure/traces", None),
+        ("GET", "/api/v1/infrastructure/jobs", None),
+    ] {
+        let resp = call_global(&app, method, uri, &op, body).await;
+        expect(
+            &resp,
+            StatusCode::FORBIDDEN,
+            &format!("bare {method} {uri}"),
+        );
+    }
+
+    // Enrolled, still no grant.
+    enroll_mfa(&pool, op.id).await;
+    let resp = call_global(&app, "POST", flags, &op, Some(flag.clone())).await;
+    expect(&resp, StatusCode::FORBIDDEN, "enrolled, no grant");
+    assert_eq!(resp.json_value()["error"], json!("missing_capability"));
+
+    // Granted, but no recent MFA verification.
+    grant(&pool, op.id, granter.id, "feature_flags_write").await;
+    let resp = call_global(&app, "POST", flags, &op, Some(flag.clone())).await;
+    expect(&resp, StatusCode::UNAUTHORIZED, "granted, stale MFA");
+    assert_eq!(flag_count(&pool, &key).await, 0, "no flag on any denial");
+
+    // Grant + recent MFA: allowed.
+    verify_mfa_now(&pool, op.id).await;
+    let resp = call_global(&app, "POST", flags, &op, Some(flag.clone())).await;
+    expect(&resp, StatusCode::CREATED, "granted + recent MFA");
+    assert_eq!(flag_count(&pool, &key).await, 1);
+    let resp = call_global(&app, "GET", flags, &op, None).await;
+    expect(&resp, StatusCode::OK, "list flags with grant");
+
+    // The grant is per capability: FeatureFlagsWrite does not open AuditRead
+    // routes.
+    let resp = call_global(&app, "GET", "/api/v1/infrastructure/traces", &op, None).await;
+    expect(&resp, StatusCode::FORBIDDEN, "traces without audit_read");
+    grant(&pool, op.id, granter.id, "audit_read").await;
+    let resp = call_global(&app, "GET", "/api/v1/infrastructure/traces", &op, None).await;
+    expect(&resp, StatusCode::OK, "traces with audit_read");
+
+    // Every decision is audited.
+    assert!(capability_audits(&pool, op.id, "denied").await >= 8);
+    assert!(capability_audits(&pool, op.id, "allowed").await >= 3);
+
+    // An ordinary org member is rejected as before.
+    let org = seed_org(&pool, "infra-mgr").await;
+    let mgr = member(&pool, org, "manager").await;
+    let resp = call(&app, "POST", flags, &mgr, org, Some(flag)).await;
+    expect(&resp, StatusCode::FORBIDDEN, "org manager");
+}
+
+fn marketplace_body() -> serde_json::Value {
+    json!({
+        "slug": format!("r4-int-{}", Uuid::new_v4()),
+        "name": "R4 Integration",
+        "description": "R4 capability gate",
+        "category": "other",
+        "vendor_name": "R4 Vendor",
+        "version": "1.0.0"
+    })
+}
+
+async fn developer_account(pool: &PgPool, user: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO developer_accounts (user_id, email, status)
+           VALUES ($1, $2, 'approved') RETURNING id"#,
+    )
+    .bind(user)
+    .bind(format!("dev-{}@r4-platform.test", Uuid::new_v4()))
+    .fetch_one(pool)
+    .await
+    .expect("seed developer account")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn ecosystem_operator_routes_require_capability(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let granter = platform_user(&pool, "eco-granter").await;
+    let op = platform_user(&pool, "eco-op").await;
+    let (dev_id, dev_email) = seed_user(&pool, "developer").await;
+    let dev = Actor {
+        id: dev_id,
+        token: login_token(dev_id, &dev_email),
+    };
+    let account = developer_account(&pool, dev.id).await;
+    let keys = format!("/api/v1/ecosystem/developers/{account}/keys");
+
+    // Bare platform principal: catalog writes, registration review and
+    // portal stats are refused; someone else's developer keys are not
+    // visible (the owner check applies).
+    let resp = call_global(
+        &app,
+        "POST",
+        "/api/v1/ecosystem/marketplace",
+        &op,
+        Some(marketplace_body()),
+    )
+    .await;
+    expect(&resp, StatusCode::FORBIDDEN, "bare: create marketplace");
+    let resp = call_global(&app, "GET", "/api/v1/ecosystem/portal/stats", &op, None).await;
+    expect(&resp, StatusCode::FORBIDDEN, "bare: portal stats");
+    let resp = call_global(
+        &app,
+        "POST",
+        &format!("/api/v1/ecosystem/developers/{account}/review"),
+        &op,
+        Some(json!({ "status": "suspended" })),
+    )
+    .await;
+    expect(&resp, StatusCode::FORBIDDEN, "bare: review registration");
+    let resp = call_global(&app, "GET", &keys, &op, None).await;
+    expect(&resp, StatusCode::FORBIDDEN, "bare: other developer's keys");
+
+    // The owner keeps access to their own keys.
+    let resp = call_global(&app, "GET", &keys, &dev, None).await;
+    expect(&resp, StatusCode::OK, "owner: own keys");
+
+    // Grants without a recent MFA verification are still refused.
+    enroll_mfa(&pool, op.id).await;
+    grant(&pool, op.id, granter.id, "site_settings_write").await;
+    grant(&pool, op.id, granter.id, "oauth_client_write").await;
+    let resp = call_global(
+        &app,
+        "POST",
+        "/api/v1/ecosystem/marketplace",
+        &op,
+        Some(marketplace_body()),
+    )
+    .await;
+    expect(
+        &resp,
+        StatusCode::UNAUTHORIZED,
+        "granted, stale MFA: create marketplace",
+    );
+    let resp = call_global(&app, "GET", &keys, &op, None).await;
+    expect(
+        &resp,
+        StatusCode::FORBIDDEN,
+        "granted, stale MFA: other developer's keys",
+    );
+
+    // Grant + recent MFA: allowed.
+    verify_mfa_now(&pool, op.id).await;
+    let resp = call_global(
+        &app,
+        "POST",
+        "/api/v1/ecosystem/marketplace",
+        &op,
+        Some(marketplace_body()),
+    )
+    .await;
+    expect(&resp, StatusCode::OK, "granted + MFA: create marketplace");
+    let resp = call_global(&app, "GET", &keys, &op, None).await;
+    expect(
+        &resp,
+        StatusCode::OK,
+        "granted + MFA: other developer's keys",
+    );
+    // Portal stats need audit_read, which this operator lacks.
+    let resp = call_global(&app, "GET", "/api/v1/ecosystem/portal/stats", &op, None).await;
+    expect(&resp, StatusCode::FORBIDDEN, "no audit_read: portal stats");
+
+    // A developer is never an operator.
+    let resp = call_global(
+        &app,
+        "POST",
+        "/api/v1/ecosystem/marketplace",
+        &dev,
+        Some(marketplace_body()),
+    )
+    .await;
+    expect(
+        &resp,
+        StatusCode::FORBIDDEN,
+        "developer: create marketplace",
+    );
+}
