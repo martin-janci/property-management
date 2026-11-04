@@ -666,7 +666,7 @@ impl WorkOrderRepository {
                 COUNT(*) FILTER (WHERE status = 'in_progress')::bigint as in_progress,
                 COUNT(*) FILTER (WHERE status = 'completed')::bigint as completed,
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE AND status NOT IN ('completed', 'cancelled'))::bigint as overdue,
-                AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) FILTER (WHERE completed_at IS NOT NULL) as avg_completion_days,
+                (AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400) FILTER (WHERE completed_at IS NOT NULL))::float8 as avg_completion_days,
                 SUM(actual_cost) as total_cost
             FROM work_orders
             WHERE organization_id = $1
