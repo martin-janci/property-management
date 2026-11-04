@@ -399,19 +399,6 @@
       "description": "Reality Portal to wiodąca platforma ogłoszeń nieruchomości na Słowacji, w Czechach i nie tylko.",
       "title": "O Reality Portal"
     },
-    "contact": {
-      "description": "W sprawie wsparcia lub zapytań biznesowych prosimy o kontakt pod adresem",
-      "email": "info@rlt.sk",
-      "title": "Kontakt"
-    },
-    "privacy": {
-      "description": "Zobowiązujemy się chronić Twoje dane osobowe zgodnie z RODO i obowiązującymi przepisami. Pełna polityka prywatności zostanie tutaj opublikowana.",
-      "title": "Polityka prywatności"
-    },
-    "terms": {
-      "description": "Korzystając z Reality Portal, zgadzasz się na nasze warunki i postanowienia. Pełne warunki korzystania zostaną tutaj opublikowane.",
-      "title": "Warunki korzystania"
-    },
     "agentProfile": {
       "activeListings": "Aktywne ogłoszenia",
       "contact": "Kontakt",
@@ -428,6 +415,11 @@
       },
       "title": "Kariera",
       "h1": "Let's build a real estate market that makes sense."
+    },
+    "contact": {
+      "description": "W sprawie wsparcia lub zapytań biznesowych prosimy o kontakt pod adresem",
+      "email": "info@rlt.sk",
+      "title": "Kontakt"
     },
     "cookies": {
       "reopen": "Otwórz ponownie ustawienia cookie",
@@ -572,6 +564,10 @@
       "subtitle": "Bratysława – przegląd",
       "title": "Mapa cen",
       "h1": "Price map"
+    },
+    "privacy": {
+      "description": "Zobowiązujemy się chronić Twoje dane osobowe zgodnie z RODO i obowiązującymi przepisami. Pełna polityka prywatności zostanie tutaj opublikowana.",
+      "title": "Polityka prywatności"
     },
     "profile": {
       "tabs": {
@@ -744,6 +740,10 @@
         "termsRequired": "You must agree to the terms of use to publish",
         "roomsPositive": "Number of rooms must be greater than 0"
       }
+    },
+    "terms": {
+      "description": "Korzystając z Reality Portal, zgadzasz się na nasze warunki i postanowienia. Pełne warunki korzystania zostaną tutaj opublikowane.",
+      "title": "Warunki korzystania"
     },
     "listings": {
       "title": "Wszystkie nieruchomości",
