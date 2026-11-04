@@ -366,7 +366,11 @@
     "saveFailed": "Save failed",
     "deleteFailed": "Delete failed",
     "submitFailed": "Submit failed",
-    "pleaseTryAgain": "Please try again."
+    "pleaseTryAgain": "Please try again.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "more": "More options",
+    "settings": "Settings"
   },
   "nav": {
     "home": "Home",
@@ -579,7 +583,15 @@
       "regenerating": "Regenerating…",
       "saveNewCodes": "Save these {{count}} new recovery codes — they will not be shown again.",
       "done": "Done"
-    }
+    },
+    "completingSignIn": "Completing sign-in…",
+    "redirecting": "Redirecting…",
+    "signInFailed": "Sign-in failed",
+    "backToLogin": "Back to login",
+    "callbackMissingParams": "Invalid callback URL: missing code or state parameters.",
+    "stateValidationFailed": "Authentication failed: state parameter mismatch. Please try signing in again.",
+    "ssoCallbackFailed": "SSO login failed. Please try again.",
+    "ssoProviderError": "The identity provider returned an error."
   },
   "home": {
     "title": "Property management without the paperwork",
@@ -2518,7 +2530,8 @@
       }
     },
     "accessDenied": "Access Denied",
-    "backToDashboard": "Back to dashboard"
+    "backToDashboard": "Back to dashboard",
+    "neighborNotFound": "Neighbor not found."
   },
   "notifications": {
     "title": "Notifications",
@@ -2797,7 +2810,9 @@
       "showMoveInDate": "Move-in Date",
       "showMoveInDateDescription": "When you moved into the building",
       "saveSuccess": "Privacy settings saved successfully",
-      "saveError": "Failed to save privacy settings"
+      "saveError": "Failed to save privacy settings",
+      "saved": "Privacy settings saved.",
+      "saveFailed": "Failed to save privacy settings."
     },
     "invitation": {
       "title": "Invite Neighbor",
@@ -2945,7 +2960,9 @@
       "fileTooLarge": "File \"{{name}}\" is too large. Maximum size is 25MB.",
       "invalidFileType": "File \"{{name}}\" has an unsupported file type.",
       "downloadFailed": "Failed to download attachment"
-    }
+    },
+    "messageSent": "Message sent",
+    "sendFailed": "Failed to send message"
   },
   "meters": {
     "title": "Meters",
@@ -3452,7 +3469,8 @@
         "propertySizeRequired": "Please enter a valid property size",
         "startDateRequired": "Please select a start date"
       }
-    }
+    },
+    "policyType": "Policy type"
   },
   "subscription": {
     "dashboard": {
@@ -5709,16 +5727,62 @@
       "mqtt": "MQTT",
       "webhook": "Webhook",
       "polling": "Polling"
-    }
+    },
+    "live": "Live",
+    "offline": "Offline",
+    "offlineBannerTitle": "Live updates disconnected",
+    "offlineBannerMessage": "The real-time telemetry connection was lost and could not be re-established. Readings shown may be out of date — reload the page to reconnect."
   },
   "commandPalette": {
     "commands": {
       "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Go to Integrations"
+      "goToIntegrations": "Go to Integrations",
+      "goToDashboard": "Go to dashboard",
+      "goToDocuments": "Go to documents",
+      "goToNews": "Go to news",
+      "goToEmergency": "Go to emergency contacts",
+      "goToDisputes": "Go to disputes",
+      "goToOutages": "Go to outages",
+      "goToIot": "Go to Smart Building",
+      "goToSensors": "Go to sensors",
+      "createDispute": "File a dispute",
+      "createOutage": "Report an outage",
+      "uploadDocument": "Upload document",
+      "goToAccessibility": "Accessibility settings",
+      "goToPrivacy": "Privacy settings"
     },
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Connect Airbnb & Booking.com channels and manage sync"
+      "goToIntegrations": "Connect Airbnb & Booking.com channels and manage sync",
+      "goToDashboard": "Home page",
+      "goToDocuments": "Building and organization documents",
+      "goToNews": "News and announcements",
+      "goToEmergency": "Emergency contact directory",
+      "goToDisputes": "Overview of disputes and mediations",
+      "goToOutages": "Planned and unplanned outages",
+      "goToIot": "IoT sensors, telemetry and alerts",
+      "goToSensors": "Manage registered IoT devices",
+      "createDispute": "File a new formal dispute",
+      "createOutage": "Notify residents about a service interruption",
+      "uploadDocument": "Upload a new document",
+      "goToAccessibility": "Display, motion and keyboard control",
+      "goToPrivacy": "Privacy and personal data (GDPR)"
+    },
+    "title": "Command palette",
+    "placeholder": "Type a command or search…",
+    "searchLabel": "Search commands",
+    "resultsLabel": "Results",
+    "noResults": "No commands found",
+    "navigate": "Navigate",
+    "select": "Select",
+    "shortcutHint": "Press {{shortcut}} to open the palette",
+    "categories": {
+      "recent": "Recent",
+      "navigation": "Navigation",
+      "create": "Create",
+      "settings": "Settings",
+      "action": "Actions",
+      "search": "Search"
     }
   },
   "documentTemplates": {
@@ -7167,5 +7231,30 @@
       "real_estate_agent": "Real estate agent"
     },
     "publicNavigation": "Site navigation"
+  },
+  "notificationAnalytics": {
+    "title": "Notification Analytics",
+    "subtitle": "Delivery and failure rates per notification channel.",
+    "forbidden": "You do not have permission to view notification delivery analytics.",
+    "failedToLoad": "Failed to load notification analytics",
+    "empty": "No notification activity in the selected window.",
+    "tableCaption": "Notification delivery metrics per channel",
+    "alertTitle": "Elevated notification failure rate",
+    "alertBody": "Failure rate {{rate}} exceeds the {{threshold}} threshold over {{attempted}} attempted deliveries.",
+    "allChannels": "All channels",
+    "channel": "Channel",
+    "window": "Time window",
+    "colChannel": "Channel",
+    "colSent": "Sent",
+    "colDelivered": "Delivered",
+    "colOpened": "Opened",
+    "colClicked": "Clicked",
+    "colFailed": "Failed",
+    "colSkipped": "Skipped",
+    "colFailureRate": "Failure rate",
+    "kpiAttempted": "Attempted",
+    "kpiSent": "Sent",
+    "kpiFailed": "Failed",
+    "kpiFailureRate": "Failure rate"
   }
 }

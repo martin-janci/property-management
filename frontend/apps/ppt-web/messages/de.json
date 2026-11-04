@@ -352,7 +352,11 @@
     "saveFailed": "Speichern fehlgeschlagen",
     "deleteFailed": "Löschen fehlgeschlagen",
     "submitFailed": "Übermittlung fehlgeschlagen",
-    "pleaseTryAgain": "Bitte versuchen Sie es erneut."
+    "pleaseTryAgain": "Bitte versuchen Sie es erneut.",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "more": "Weitere Optionen",
+    "settings": "Einstellungen"
   },
   "nav": {
     "home": "Startseite",
@@ -565,7 +569,15 @@
       "regenerating": "Wird neu generiert…",
       "saveNewCodes": "Speichern Sie diese {{count}} neuen Wiederherstellungscodes — sie werden nicht erneut angezeigt.",
       "done": "Fertig"
-    }
+    },
+    "completingSignIn": "Anmeldung wird abgeschlossen…",
+    "redirecting": "Weiterleitung…",
+    "signInFailed": "Anmeldung fehlgeschlagen",
+    "backToLogin": "Zurück zur Anmeldung",
+    "callbackMissingParams": "Ungültige Rückruf-URL: Parameter code oder state fehlt.",
+    "stateValidationFailed": "Authentifizierung fehlgeschlagen (state-Parameter stimmt nicht überein). Bitte melden Sie sich erneut an.",
+    "ssoCallbackFailed": "SSO-Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "ssoProviderError": "Der Identitätsanbieter hat einen Fehler zurückgegeben."
   },
   "home": {
     "title": "Hausverwaltung ohne Papierkram",
@@ -2439,7 +2451,8 @@
       }
     },
     "accessDenied": "Zugriff verweigert",
-    "backToDashboard": "Zurück zur Übersicht"
+    "backToDashboard": "Zurück zur Übersicht",
+    "neighborNotFound": "Nachbar nicht gefunden."
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -3478,16 +3491,62 @@
       "mqtt": "MQTT",
       "webhook": "Webhook",
       "polling": "Periodische Abfrage"
-    }
+    },
+    "live": "Live",
+    "offline": "Offline",
+    "offlineBannerTitle": "Live-Aktualisierungen getrennt",
+    "offlineBannerMessage": "Die Echtzeit-Telemetrieverbindung wurde unterbrochen und konnte nicht wiederhergestellt werden. Die angezeigten Werte sind möglicherweise veraltet – laden Sie die Seite neu."
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Zu Integrationen"
+      "goToIotAlerts": "Zu Sensorwarnungen",
+      "goToIntegrations": "Zu Integrationen",
+      "goToDashboard": "Zur Übersicht",
+      "goToDocuments": "Zu Dokumenten",
+      "goToNews": "Zu Neuigkeiten",
+      "goToEmergency": "Zu Notfallkontakten",
+      "goToDisputes": "Zu Streitfällen",
+      "goToOutages": "Zu Ausfällen",
+      "goToIot": "Zum Smart Building",
+      "goToSensors": "Zu Sensoren",
+      "createDispute": "Streitfall einreichen",
+      "createOutage": "Ausfall melden",
+      "uploadDocument": "Dokument hochladen",
+      "goToAccessibility": "Barrierefreiheit",
+      "goToPrivacy": "Datenschutzeinstellungen"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Airbnb- und Booking.com-Kanäle verbinden und Synchronisierung verwalten"
+      "goToIotAlerts": "IoT-Schwellenwertwarnungen: bestätigen und lösen",
+      "goToIntegrations": "Airbnb- und Booking.com-Kanäle verbinden und Synchronisierung verwalten",
+      "goToDashboard": "Startseite",
+      "goToDocuments": "Gebäude- und Organisationsdokumente",
+      "goToNews": "Neuigkeiten und Ankündigungen",
+      "goToEmergency": "Verzeichnis der Notfallkontakte",
+      "goToDisputes": "Übersicht über Streitfälle und Mediationen",
+      "goToOutages": "Geplante und ungeplante Ausfälle",
+      "goToIot": "IoT-Sensoren, Telemetrie und Warnungen",
+      "goToSensors": "Registrierte IoT-Geräte verwalten",
+      "createDispute": "Neuen formellen Streitfall einreichen",
+      "createOutage": "Bewohner über eine Dienstunterbrechung informieren",
+      "uploadDocument": "Neues Dokument hochladen",
+      "goToAccessibility": "Anzeige, Bewegung und Tastatursteuerung",
+      "goToPrivacy": "Datenschutz und personenbezogene Daten (DSGVO)"
+    },
+    "title": "Befehlspalette",
+    "placeholder": "Befehl oder Suchbegriff eingeben…",
+    "searchLabel": "Befehle durchsuchen",
+    "resultsLabel": "Ergebnisse",
+    "noResults": "Keine Befehle gefunden",
+    "navigate": "Navigieren",
+    "select": "Auswählen",
+    "shortcutHint": "Mit {{shortcut}} öffnen Sie die Palette",
+    "categories": {
+      "recent": "Zuletzt verwendet",
+      "navigation": "Navigation",
+      "create": "Erstellen",
+      "settings": "Einstellungen",
+      "action": "Aktionen",
+      "search": "Suche"
     }
   },
   "sentiment": {
@@ -3536,7 +3595,9 @@
   "messaging": {
     "errors": {
       "downloadFailed": "Anhang konnte nicht heruntergeladen werden"
-    }
+    },
+    "messageSent": "Nachricht gesendet",
+    "sendFailed": "Nachricht konnte nicht gesendet werden"
   },
   "notificationTriggers": {
     "title": "Benachrichtigungsauslöser",
@@ -5335,6 +5396,40 @@
         "AT_ZMR": "Österreich – ZMR",
         "DE_MELDEWESEN": "Deutschland – Meldebehörde"
       }
+    }
+  },
+  "notificationAnalytics": {
+    "title": "Benachrichtigungsanalyse",
+    "subtitle": "Zustell- und Fehlerquoten pro Benachrichtigungskanal.",
+    "forbidden": "Sie sind nicht berechtigt, die Zustellanalyse für Benachrichtigungen anzuzeigen.",
+    "failedToLoad": "Benachrichtigungsanalyse konnte nicht geladen werden",
+    "empty": "Im ausgewählten Zeitraum gab es keine Benachrichtigungsaktivität.",
+    "tableCaption": "Zustellkennzahlen für Benachrichtigungen pro Kanal",
+    "alertTitle": "Erhöhte Fehlerquote bei Benachrichtigungen",
+    "alertBody": "Die Fehlerquote von {{rate}} überschreitet den Schwellenwert von {{threshold}} bei {{attempted}} Zustellversuchen.",
+    "allChannels": "Alle Kanäle",
+    "channel": "Kanal",
+    "window": "Zeitraum",
+    "colChannel": "Kanal",
+    "colSent": "Gesendet",
+    "colDelivered": "Zugestellt",
+    "colOpened": "Geöffnet",
+    "colClicked": "Angeklickt",
+    "colFailed": "Fehlgeschlagen",
+    "colSkipped": "Übersprungen",
+    "colFailureRate": "Fehlerquote",
+    "kpiAttempted": "Versuche",
+    "kpiSent": "Gesendet",
+    "kpiFailed": "Fehlgeschlagen",
+    "kpiFailureRate": "Fehlerquote"
+  },
+  "insurance": {
+    "policyType": "Versicherungsart"
+  },
+  "neighbors": {
+    "privacy": {
+      "saved": "Datenschutzeinstellungen gespeichert.",
+      "saveFailed": "Datenschutzeinstellungen konnten nicht gespeichert werden."
     }
   }
 }

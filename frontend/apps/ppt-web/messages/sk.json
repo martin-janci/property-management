@@ -1,7 +1,7 @@
 {
   "aml": {
     "dashboard": {
-      "title": "Dashboard súladu AML",
+      "title": "Prehľad súladu s AML",
       "subtitle": "Sledujte hodnotenia rizika prania špinavých peňazí a stav súladu.",
       "loading": "Načítavajú sa údaje AML...",
       "loadError": "Nepodarilo sa načítať údaje AML: {{message}}",
@@ -153,7 +153,7 @@
   },
   "moderation": {
     "dashboard": {
-      "title": "Nástenka moderovania obsahu",
+      "title": "Prehľad moderovania obsahu",
       "subtitle": "Kontrolujte a moderujte používateľský obsah v súlade s DSA.",
       "loading": "Načítavanie frontu moderovania...",
       "loadError": "Nepodarilo sa načítať prípady moderovania: {{message}}",
@@ -217,7 +217,7 @@
       "review": "Recenzia",
       "comment": "Komentár",
       "message": "Správa",
-      "announcement": "Oznam",
+      "announcement": "Oznámenie",
       "document": "Dokument",
       "community_post": "Komunitný príspevok"
     },
@@ -297,13 +297,13 @@
     }
   },
   "common": {
-    "search": "Hladať",
+    "search": "Hľadať",
     "login": "Prihlásiť sa",
     "logout": "Odhlásiť sa",
     "save": "Uložiť",
     "cancel": "Zrušiť",
     "close": "Zavrieť",
-    "delete": "Vymazať",
+    "delete": "Odstrániť",
     "edit": "Upraviť",
     "create": "Vytvoriť",
     "submit": "Odoslať",
@@ -328,7 +328,7 @@
     "backToBuildings": "Späť na budovy",
     "backToFaults": "Späť na poruchy",
     "tryAgain": "Skúsiť znova",
-    "retry": "Opakovať",
+    "retry": "Skúsiť znova",
     "loadingDispute": "Načítava sa spor...",
     "pleaseWait": "Počkajte, kým načítame údaje.",
     "reloadPage": "Obnoviť stránku",
@@ -336,12 +336,12 @@
     "add": "Pridať",
     "copied": "Skopírované",
     "copyErrorMessage": "Kopírovať chybovú správu",
-    "dismissNotification": "Zavrieť oznámenie",
-    "notifications": "Oznámenia",
+    "dismissNotification": "Zavrieť upozornenie",
+    "notifications": "Upozornenia",
     "unknownError": "Nastala chyba. Prosím skúste znova.",
-    "actions": "Actions",
-    "deleting": "Deleting...",
-    "saveChanges": "Save changes",
+    "actions": "Akcie",
+    "deleting": "Odstraňuje sa...",
+    "saveChanges": "Uložiť zmeny",
     "created": "Vytvorené",
     "updated": "Aktualizované",
     "saved": "Uložené",
@@ -366,7 +366,11 @@
     "selectOrganization": "Vyberte organizáciu",
     "unknown": "Neznáme",
     "expand": "Rozbaliť",
-    "collapse": "Zbaliť"
+    "collapse": "Zbaliť",
+    "enabled": "Zapnuté",
+    "disabled": "Vypnuté",
+    "more": "Ďalšie možnosti",
+    "settings": "Nastavenia"
   },
   "nav": {
     "home": "Domov",
@@ -391,8 +395,8 @@
     "iotAlerts": "Upozornenia senzorov",
     "integrations": "Integrácie",
     "portalWebhooks": "Webhooky portálov",
-    "notificationTriggers": "Spúšťače notifikácií",
-    "notificationAnalytics": "Analytika notifikácií",
+    "notificationTriggers": "Spúšťače upozornení",
+    "notificationAnalytics": "Analytika upozornení",
     "myUnit": "Môj byt",
     "voting": "Hlasovanie",
     "reports": "Reporty",
@@ -581,7 +585,15 @@
       "saveNewCodes": "Uložte si týchto {{count}} nových obnovovacích kódov — viac sa nezobrazia.",
       "done": "Hotovo",
       "codesLow_many": "Zostáva už len {{count}} obnovovacích kódov. Zvážte vygenerovanie novej sady, aby ste sa nezablokovali."
-    }
+    },
+    "completingSignIn": "Dokončuje sa prihlásenie…",
+    "redirecting": "Presmerúva sa…",
+    "signInFailed": "Prihlásenie zlyhalo",
+    "backToLogin": "Späť na prihlásenie",
+    "callbackMissingParams": "Neplatná návratová adresa: chýba parameter code alebo state.",
+    "stateValidationFailed": "Overenie sa nepodarilo (nezhoda parametra state). Prihláste sa znova.",
+    "ssoCallbackFailed": "Prihlásenie cez SSO zlyhalo. Skúste to znova.",
+    "ssoProviderError": "Poskytovateľ identity vrátil chybu."
   },
   "home": {
     "title": "Správa domu bez papierovania",
@@ -660,7 +672,7 @@
     "priorityLow": "Nízka",
     "priorityMedium": "Stredná",
     "priorityHigh": "Vysoká",
-    "priorityUrgent": "Urgentná",
+    "priorityUrgent": "Naliehavá",
     "statusOpen": "Otvorené",
     "statusInProgress": "Prebieha",
     "statusResolved": "Vyriešené",
@@ -696,7 +708,7 @@
     "addComment": "Pridať komentár",
     "commentPlaceholder": "Napíšte komentár...",
     "internalNote": "Interná poznámka (neviditeľná pre oznamovateľa)",
-    "aiAnalysis": "AI Analýza",
+    "aiAnalysis": "AI analýza",
     "suggestedCategory": "Navrhovaná kategória",
     "suggestedPriority": "Navrhovaná priorita",
     "confidence": "dôveryhodnosť",
@@ -711,7 +723,7 @@
       "building": "Budova",
       "selectBuilding": "Vyberte budovu",
       "unit": "Jednotka",
-      "commonAreaNotApplicable": "Spoločné priestory / Neaplikovateľné",
+      "commonAreaNotApplicable": "Spoločné priestory / netýka sa",
       "title": "Názov",
       "titlePlaceholder": "Stručný popis problému",
       "descriptionPlaceholder": "Uveďte podrobné informácie o probléme...",
@@ -2380,7 +2392,7 @@
     "unexpectedError": "Ospravedlňujeme sa za nepríjemnosti. Vyskytla sa neočakávaná chyba.",
     "copyErrorDetailsSupport": "Kopírovať podrobnosti chyby pre podporu",
     "groupNotFound": "Skupina nebola nájdená",
-    "announcementNotFound": "Oznam nebol nájdený",
+    "announcementNotFound": "Oznámenie sa nenašlo",
     "threadNotFound": "Konverzácia nebola nájdená",
     "buildingNotFound": "Budova nebola nájdená",
     "bookingNotFound": "Rezervácia nebola nájdená",
@@ -2487,13 +2499,14 @@
       "inlineError": {
         "description": "Skúste to znova. Ak problém pretrváva, kontaktujte podporu."
       }
-    }
+    },
+    "neighborNotFound": "Sused sa nenašiel."
   },
   "notifications": {
-    "title": "Oznámenia",
+    "title": "Upozornenia",
     "markAllRead": "Označiť všetko ako prečítané",
-    "noNotifications": "Žiadne oznámenia",
-    "settings": "Nastavenia oznámení"
+    "noNotifications": "Žiadne upozornenia",
+    "settings": "Nastavenia upozornení"
   },
   "accessibility": {
     "title": "Nastavenia prístupnosti",
@@ -2504,7 +2517,7 @@
     "checkingAuthentication": "Overuje sa prihlásenie"
   },
   "dashboard": {
-    "managerActionQueue": "Fronta úloh",
+    "managerActionQueue": "Front úloh",
     "residentActionQueue": "Vaše úlohy",
     "managerDashboard": "Prehľad správcu",
     "residentDashboard": "Môj prehľad",
@@ -2518,9 +2531,9 @@
     "searchPlaceholder": "Hľadať podľa názvu alebo popisu...",
     "filterByPriority": "Filtrovať podľa priority",
     "filterByType": "Filtrovať podľa typu",
-    "clearFilters": "Vymazať všetky filtre",
+    "clearFilters": "Zrušiť všetky filtre",
     "priority": {
-      "urgent": "Urgentné",
+      "urgent": "Naliehavé",
       "high": "Vysoká",
       "medium": "Stredná",
       "low": "Nízka"
@@ -2546,8 +2559,8 @@
     "confirmAction": "Ste si istí, že chcete {{action}}?",
     "allCaughtUp": "Všetko vybavené!",
     "noItemsNeedingAttention": "Práve teraz nemáte žiadne položky vyžadujúce pozornosť.",
-    "errorLoadingQueue": "Chyba pri načítaní fronty",
-    "actionQueue": "Fronta akcií",
+    "errorLoadingQueue": "Chyba pri načítaní frontu úloh",
+    "actionQueue": "Front úloh",
     "keyboardHint": "Klávesové skratky:",
     "toNavigate": "na navigáciu",
     "toOpen": "na otvorenie",
@@ -2606,7 +2619,7 @@
       "readOnly": "Iba na čítanie",
       "saveFailed": "Uloženie zlyhalo.",
       "loading": "Načítava sa…",
-      "retry": "Opakovať",
+      "retry": "Skúsiť znova",
       "noResults": "Žiadne výsledky.",
       "confirm": "Naozaj?"
     },
@@ -2633,7 +2646,7 @@
         "suspendFailedTitle": "Pozastavenie zlyhalo",
         "suspendFailedMessage": "Pozastavenie zlyhalo",
         "notWiredTitle": "Zatiaľ nezapojené",
-        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add"
+        "notWiredMessage": "Táto funkcia zatiaľ nie je k dispozícii."
       }
     },
     "users": {
@@ -2880,7 +2893,7 @@
       "status": "Stav:",
       "dateFrom": "Od:",
       "dateTo": "Do:",
-      "clearFilters": "Vymazať filtre",
+      "clearFilters": "Zrušiť filtre",
       "statusCompleted": "Dokončené",
       "statusFailed": "Zlyhalo",
       "statusRunning": "Prebieha",
@@ -2895,9 +2908,9 @@
       "modal": {
         "title": "Žiadosť o podpis",
         "selectSigners": "Vyberte podpisovateľov",
-        "subject": "Predmet (voliťeľné)",
+        "subject": "Predmet (voliteľné)",
         "subjectPlaceholder": "napr. Podpis nájomnej zmluvy",
-        "message": "Správa pre podpisovateľov (voliťeľné)",
+        "message": "Správa pre podpisovateľov (voliteľné)",
         "messagePlaceholder": "Prosím, prečítajte si a podpíšte priloženú nájomnú zmluvu.",
         "sending": "Odosiela sa…",
         "send": "Odoslať na podpis"
@@ -3679,7 +3692,7 @@
       "cancelled": "Podanie bolo zrušené."
     },
     "page": {
-      "backToDashboard": "Späť na nástenku",
+      "backToDashboard": "Späť na prehľad",
       "title": "Stav podania",
       "reference": "Referencia: {{reference}}",
       "errorDetails": "Podrobnosti chyby",
@@ -3887,16 +3900,62 @@
       "mqtt": "MQTT",
       "webhook": "Webhook",
       "polling": "Pravidelné dopytovanie"
-    }
+    },
+    "live": "Naživo",
+    "offline": "Offline",
+    "offlineBannerTitle": "Aktualizácie v reálnom čase sú odpojené",
+    "offlineBannerMessage": "Spojenie s telemetriou v reálnom čase sa prerušilo a nepodarilo sa ho obnoviť. Zobrazené hodnoty nemusia byť aktuálne – obnovte stránku."
   },
   "commandPalette": {
     "commands": {
-      "goToIotAlerts": "Go to Sensor Alerts",
-      "goToIntegrations": "Prejsť na Integrácie"
+      "goToIotAlerts": "Prejsť na upozornenia senzorov",
+      "goToIntegrations": "Prejsť na integrácie",
+      "goToDashboard": "Prejsť na úvod",
+      "goToDocuments": "Prejsť na dokumenty",
+      "goToNews": "Prejsť na novinky",
+      "goToEmergency": "Prejsť na núdzové kontakty",
+      "goToDisputes": "Prejsť na spory",
+      "goToOutages": "Prejsť na odstávky",
+      "goToIot": "Prejsť na inteligentnú budovu",
+      "goToSensors": "Prejsť na senzory",
+      "createDispute": "Podať spor",
+      "createOutage": "Nahlásiť odstávku",
+      "uploadDocument": "Nahrať dokument",
+      "goToAccessibility": "Nastavenia prístupnosti",
+      "goToPrivacy": "Nastavenia súkromia"
     },
     "descriptions": {
-      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve",
-      "goToIntegrations": "Pripojte kanály Airbnb a Booking.com a spravujte synchronizáciu"
+      "goToIotAlerts": "Prahové upozornenia IoT: potvrdenie a vyriešenie",
+      "goToIntegrations": "Pripojte kanály Airbnb a Booking.com a spravujte synchronizáciu",
+      "goToDashboard": "Úvodná stránka",
+      "goToDocuments": "Dokumenty budovy a organizácie",
+      "goToNews": "Novinky a oznámenia",
+      "goToEmergency": "Adresár núdzových kontaktov",
+      "goToDisputes": "Prehľad sporov a mediácií",
+      "goToOutages": "Plánované a neplánované odstávky",
+      "goToIot": "Senzory IoT, telemetria a upozornenia",
+      "goToSensors": "Správa registrovaných zariadení IoT",
+      "createDispute": "Podať nový formálny spor",
+      "createOutage": "Informovať obyvateľov o prerušení služieb",
+      "uploadDocument": "Nahrať nový dokument",
+      "goToAccessibility": "Zobrazenie, pohyb a ovládanie klávesnicou",
+      "goToPrivacy": "Súkromie a osobné údaje (GDPR)"
+    },
+    "title": "Paleta príkazov",
+    "placeholder": "Zadajte príkaz alebo hľadaný výraz…",
+    "searchLabel": "Hľadať príkazy",
+    "resultsLabel": "Výsledky",
+    "noResults": "Nenašli sa žiadne príkazy",
+    "navigate": "Prechádzať",
+    "select": "Vybrať",
+    "shortcutHint": "Paletu otvoríte skratkou {{shortcut}}",
+    "categories": {
+      "recent": "Nedávne",
+      "navigation": "Navigácia",
+      "create": "Vytvoriť",
+      "settings": "Nastavenia",
+      "action": "Akcie",
+      "search": "Hľadať"
     }
   },
   "documentTemplates": {
@@ -4058,18 +4117,20 @@
     "deleteSuccess": "Konverzácie boli odstránené",
     "deleteFailed": "Konverzácie sa nepodarilo odstrániť",
     "archiveSuccess": "Konverzácie boli archivované",
-    "archiveFailed": "Konverzácie sa nepodarilo archivovať"
+    "archiveFailed": "Konverzácie sa nepodarilo archivovať",
+    "messageSent": "Správa bola odoslaná",
+    "sendFailed": "Správu sa nepodarilo odoslať"
   },
   "notificationTriggers": {
-    "title": "Spúšťače notifikácií",
+    "title": "Spúšťače upozornení",
     "subtitle": "Vyberte, ktoré udalosti vás upozornia a na ktorých kanáloch (push, e-mail, v aplikácii).",
-    "forbidden": "Nemáte oprávnenie spravovať spúšťače notifikácií.",
+    "forbidden": "Nemáte oprávnenie spravovať spúšťače upozornení.",
     "resetting": "Obnovuje sa…",
     "resetDefaults": "Obnoviť predvolené",
-    "failedToLoad": "Nepodarilo sa načítať spúšťače notifikácií",
-    "empty": "Pre váš účet nie sú k dispozícii žiadne spúšťače notifikácií.",
+    "failedToLoad": "Nepodarilo sa načítať spúšťače upozornení",
+    "empty": "Pre váš účet nie sú k dispozícii žiadne spúšťače upozornení.",
     "enabledCount": "Povolené {{enabled}} z {{total}}",
-    "tableCaption": "Kanály notifikácií podľa spúšťača",
+    "tableCaption": "Kanály upozornení podľa spúšťača",
     "colTrigger": "Spúšťač",
     "channelPush": "Push",
     "channelEmail": "E-mail",
@@ -4240,8 +4301,8 @@
     "placeholderTitle": "Sekcia nedostupná",
     "placeholderBody": "Táto sekcia je dočasne nedostupná.",
     "customize": {
-      "title": "Prispôsobiť nástenku",
-      "back": "Späť na nástenku",
+      "title": "Prispôsobiť prehľad",
+      "back": "Späť na prehľad",
       "save": "Uložiť",
       "reset": "Obnoviť predvolené",
       "resetConfirm": "Obnoviť všetky úpravy na predvolené rozloženie? Zmeny budú stratené, kým ich neuložíte.",
@@ -4262,7 +4323,7 @@
     "acknowledgmentRequired": "Vyžaduje sa potvrdenie",
     "addEvidenceFiles": "Pridať súbory s dôkazmi",
     "additionalInformation": "Ďalšie informácie",
-    "allowEmergencyNotifications": "Povoliť núdzové notifikácie počas tichých hodín",
+    "allowEmergencyNotifications": "Povoliť núdzové upozornenia počas tichých hodín",
     "articleActions": "Akcie článku",
     "articleReactions": "Reakcie na článok",
     "authorizedApplications": "Autorizované aplikácie",
@@ -4285,9 +4346,9 @@
     "documentsInFolder": "Dokumenty v priečinku",
     "documentsStatus": "Stav dokumentov",
     "dropEvidenceFiles": "Presuňte súbory s dôkazmi sem alebo kliknite na prehľadávanie",
-    "enableDigest": "Povoliť súhrn notifikácií",
+    "enableDigest": "Povoliť súhrn upozornení",
     "enableExpiry": "Povoliť platnosť",
-    "enableGrouping": "Povoliť inteligentné zoskupovanie notifikácií",
+    "enableGrouping": "Povoliť inteligentné zoskupovanie upozornení",
     "enablePasswordProtection": "Povoliť ochranu heslom",
     "enableQuietHours": "Povoliť tiché hodiny",
     "evidenceFiles": "Súbory s dôkazmi",
@@ -4298,8 +4359,8 @@
     "folderLocation": "Umiestnenie priečinka",
     "folderStructure": "Štruktúra priečinkov",
     "fromDate": "Dátum od",
-    "groupByCategory": "Zoskupiť notifikácie podľa kategórie",
-    "groupBySource": "Zoskupiť notifikácie podľa zdroja",
+    "groupByCategory": "Zoskupiť upozornenia podľa kategórie",
+    "groupBySource": "Zoskupiť upozornenia podľa zdroja",
     "loading": "Načítava sa",
     "loadingComments": "Načítavajú sa komentáre",
     "loadingDocuments": "Načítavajú sa dokumenty",
@@ -4316,7 +4377,7 @@
     "nextPage": "Nasledujúca strana",
     "pdfNavigation": "Navigácia v PDF",
     "pdfPreview": "Náhľad PDF",
-    "pinnedAnnouncements": "Pripnuté oznamy",
+    "pinnedAnnouncements": "Pripnuté oznámenia",
     "pinnedArticle": "Pripnutý článok",
     "postOptionsMenu": "Menu možností príspevku",
     "previousPage": "Predchádzajúca strana",
@@ -4706,8 +4767,8 @@
       "moveUp": "Posunúť nahor",
       "moveDown": "Posunúť nadol",
       "removeAction": "Odstrániť akciu",
-      "notificationTitlePlaceholder": "Názov notifikácie",
-      "notificationMessagePlaceholder": "Text notifikácie",
+      "notificationTitlePlaceholder": "Názov upozornenia",
+      "notificationMessagePlaceholder": "Text upozornenia",
       "emailToPlaceholder": "E-mail príjemcu(ov)",
       "emailSubjectPlaceholder": "Predmet",
       "unitMinutes": "Minúty",
@@ -4715,8 +4776,8 @@
       "unitDays": "Dni",
       "webhookPlaceholder": "URL webhooku (musí začínať na https://)",
       "webhookTitle": "Zadajte platnú HTTPS URL začínajúcu na https://",
-      "typeSendNotification": "Odoslať notifikáciu",
-      "typeSendNotificationDesc": "Odoslať push alebo e-mailovú notifikáciu",
+      "typeSendNotification": "Odoslať upozornenie",
+      "typeSendNotificationDesc": "Odoslať push alebo e-mailové upozornenie",
       "typeSendEmail": "Odoslať e-mail",
       "typeSendEmailDesc": "Odoslať e-mail zadaným príjemcom",
       "typeCreateTask": "Vytvoriť úlohu",
@@ -4767,7 +4828,7 @@
       "emptyTitle": "Nenašli sa žiadne šablóny",
       "emptyBodyFiltered": "Skúste upraviť filtre alebo hľadaný výraz.",
       "emptyBody": "Šablóny sa tu zobrazia, keď budú k dispozícii.",
-      "clearFilters": "Vymazať filtre",
+      "clearFilters": "Zrušiť filtre",
       "showing": "Zobrazuje sa {{shown}} z {{total}} šablón",
       "creating": "Vytvára sa automatizácia zo šablóny...",
       "categoryAll": "Všetky šablóny",
@@ -4839,7 +4900,7 @@
       "emptyTitle": "Žiadne záznamy spustení",
       "emptyBodyFiltered": "Žiadne spustenia nezodpovedajú aktuálnym filtrom.",
       "emptyBody": "Záznamy spustení sa tu zobrazia, keď sa vaše automatizácie spustia.",
-      "clearFilters": "Vymazať filtre",
+      "clearFilters": "Zrušiť filtre",
       "showing": "Zobrazuje sa {{shown}} z {{total}} spustení",
       "retrying": "Opakuje sa spustenie...",
       "statusPending": "Čaká sa",
@@ -5586,7 +5647,7 @@
   },
   "accounting": {
     "title": "Vystavené faktúry",
-    "subtitle": "Natívne účtovníctvo MVP",
+    "subtitle": "Vystavené faktúry a evidencia platieb",
     "createInvoice": "Vytvoriť faktúru",
     "newInvoice": "Nová faktúra",
     "createFailed": "Faktúru sa nepodarilo vytvoriť",
@@ -5957,7 +6018,9 @@
       "showMoveInDate": "Dátum nasťahovania",
       "showMoveInDateDescription": "Kedy ste sa nasťahovali do budovy",
       "saveSuccess": "Nastavenia súkromia boli úspešne uložené",
-      "saveError": "Nastavenia súkromia sa nepodarilo uložiť"
+      "saveError": "Nastavenia súkromia sa nepodarilo uložiť",
+      "saved": "Nastavenia súkromia boli uložené.",
+      "saveFailed": "Nastavenia súkromia sa nepodarilo uložiť."
     },
     "invitation": {
       "title": "Pozvať suseda",
@@ -6285,7 +6348,8 @@
         "propertySizeRequired": "Zadajte platnú rozlohu nehnuteľnosti",
         "startDateRequired": "Vyberte dátum začiatku"
       }
-    }
+    },
+    "policyType": "Typ poistky"
   },
   "subscription": {
     "dashboard": {
@@ -7297,5 +7361,30 @@
     "helpful": "Označiť ako užitočné",
     "notHelpful": "Označiť ako neužitočné",
     "responseTime": "Čas odpovede: {{ms}} ms"
+  },
+  "notificationAnalytics": {
+    "title": "Analytika upozornení",
+    "subtitle": "Miera doručenia a zlyhaní podľa kanála upozornení.",
+    "forbidden": "Nemáte oprávnenie zobraziť analytiku doručovania upozornení.",
+    "failedToLoad": "Nepodarilo sa načítať analytiku upozornení",
+    "empty": "Vo zvolenom období nebola zaznamenaná žiadna aktivita upozornení.",
+    "tableCaption": "Metriky doručovania upozornení podľa kanála",
+    "alertTitle": "Zvýšená miera zlyhaní upozornení",
+    "alertBody": "Miera zlyhaní {{rate}} prekračuje prah {{threshold}} pri {{attempted}} pokusoch o doručenie.",
+    "allChannels": "Všetky kanály",
+    "channel": "Kanál",
+    "window": "Obdobie",
+    "colChannel": "Kanál",
+    "colSent": "Odoslané",
+    "colDelivered": "Doručené",
+    "colOpened": "Otvorené",
+    "colClicked": "Kliknuté",
+    "colFailed": "Zlyhané",
+    "colSkipped": "Preskočené",
+    "colFailureRate": "Miera zlyhaní",
+    "kpiAttempted": "Pokusy",
+    "kpiSent": "Odoslané",
+    "kpiFailed": "Zlyhané",
+    "kpiFailureRate": "Miera zlyhaní"
   }
 }
