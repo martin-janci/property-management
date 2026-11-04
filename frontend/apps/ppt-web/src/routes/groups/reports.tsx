@@ -8,7 +8,6 @@ import type {
   CreateReportSchedule,
   CronScheduleUpdateRequest,
   PeriodComparison,
-  ReportSchedule,
   TrendAnalysis,
 } from '@ppt/api-client';
 import {
@@ -26,6 +25,7 @@ import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import { ReportsPage, ScheduleDetailPage } from '../lazyRoutes';
+import { MANAGER_ROLES } from '../shared';
 
 /**
  * Map a backend `ErrorResponse.code` from the create-schedule endpoint to a
@@ -229,6 +229,17 @@ function ScheduleDetailPageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
+
+  // There is no GET /reports/schedules/{id}; the schedule comes from the
+  // organization's schedule list. An unknown id renders a not-found state
+  // instead of placeholder details.
+  const {
+    data: schedulesData,
+    isLoading: scheduleLoading,
+    isError: scheduleError,
+  } = useReportSchedules(user?.organizationId ?? '');
+  const schedule = schedulesData?.schedules?.find((s) => s.id === scheduleId);
 
   const EXECUTION_PAGE_SIZE = 20;
   const [executionOffset, setExecutionOffset] = useState(0);
@@ -242,7 +253,7 @@ function ScheduleDetailPageRoute() {
     {
       limit: EXECUTION_PAGE_SIZE,
       offset: executionOffset,
-      enabled: !!scheduleId,
+      enabled: !!schedule,
       refetchInterval: 10_000,
     }
   );
@@ -285,26 +296,10 @@ function ScheduleDetailPageRoute() {
     }
   };
 
-  // Stub schedule object — schedule metadata will be enriched once the
-  // GET /api/v1/reports/schedules/:id endpoint is wired in a future story.
-  const stubSchedule: ReportSchedule = {
-    id: scheduleId,
-    report_id: '',
-    organization_id: '',
-    name: `Schedule ${scheduleId}`,
-    frequency: 'monthly',
-    time: '08:00',
-    timezone: 'UTC',
-    format: 'pdf',
-    recipients: [],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
   return (
     <ScheduleDetailPage
-      schedule={stubSchedule}
+      schedule={schedule}
+      isScheduleLoading={scheduleLoading && !scheduleError}
       executions={executions}
       isLoading={executionsLoading}
       isError={executionsError}
@@ -324,7 +319,7 @@ export function reportRoutes() {
       <Route
         path="/reports"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ReportsPageRoute />
           </ProtectedRoute>
         }
@@ -332,7 +327,7 @@ export function reportRoutes() {
       <Route
         path="/reports/schedules/:scheduleId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <ScheduleDetailPageRoute />
           </ProtectedRoute>
         }

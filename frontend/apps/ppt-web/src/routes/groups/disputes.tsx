@@ -348,13 +348,13 @@ function DisputeDetailRoute() {
   // nothing happens). Until the API surface lands, surface a toast so the
   // user knows the action exists but is pending implementation.
   const notImplemented = useCallback(
-    (label: string) => () => {
+    (actionKey: string) => () => {
       showToast({
         type: 'info',
-        title: t('common.notImplemented', { defaultValue: 'Not yet available' }),
+        title: t('disputes.notImplemented', { defaultValue: 'Not yet available' }),
         message: t('disputes.actionPendingImpl', {
           defaultValue: '{{action}} will be available in a future release.',
-          action: label,
+          action: t(`disputes.pendingAction.${actionKey}`),
         }),
       });
     },
@@ -393,17 +393,17 @@ function DisputeDetailRoute() {
       currentUserId={user?.id}
       onBack={() => navigate('/disputes')}
       onUpdateStatus={handleUpdateStatus}
-      onAddEvidence={notImplemented('Add evidence')}
-      onDeleteEvidence={notImplemented('Delete evidence')}
-      onProposeResolution={notImplemented('Propose resolution')}
-      onVoteResolution={notImplemented('Vote on resolution')}
-      onAcceptResolution={notImplemented('Accept resolution')}
-      onImplementResolution={notImplemented('Implement resolution')}
-      onCompleteResolutionTerm={notImplemented('Complete resolution term')}
-      onCreateAction={notImplemented('Create action')}
-      onCompleteAction={notImplemented('Complete action')}
-      onSendReminder={notImplemented('Send reminder')}
-      onEscalate={notImplemented('Escalate')}
+      onAddEvidence={notImplemented('addEvidence')}
+      onDeleteEvidence={notImplemented('deleteEvidence')}
+      onProposeResolution={notImplemented('proposeResolution')}
+      onVoteResolution={notImplemented('voteResolution')}
+      onAcceptResolution={notImplemented('acceptResolution')}
+      onImplementResolution={notImplemented('implementResolution')}
+      onCompleteResolutionTerm={notImplemented('completeResolutionTerm')}
+      onCreateAction={notImplemented('createAction')}
+      onCompleteAction={notImplemented('completeAction')}
+      onSendReminder={notImplemented('sendReminder')}
+      onEscalate={notImplemented('escalate')}
       onNavigateToMediation={() => navigate(`/disputes/${disputeId}/mediation`)}
     />
   );

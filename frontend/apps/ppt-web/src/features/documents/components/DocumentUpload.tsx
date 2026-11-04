@@ -25,7 +25,26 @@ interface UploadFile {
   progress: number;
   status: 'pending' | 'uploading' | 'processing' | 'completed' | 'error';
   error?: string;
+  /** The upload itself failed (not file validation), so the row can be retried. */
+  uploadFailed?: boolean;
   documentId?: string;
+}
+
+/**
+ * Translated message for a failed upload. The api-client rejects with English
+ * text ("Network connection lost. Please check your internet connection and
+ * try again.", "Upload was cancelled.", server messages), which was shown
+ * verbatim in the file row.
+ */
+export function uploadErrorMessage(error: unknown, t: (key: string) => string): string {
+  const raw = error instanceof Error ? error.message.toLowerCase() : '';
+  if (error instanceof TypeError || raw.includes('network') || raw.includes('failed to fetch')) {
+    return t('documents.uploadForm.networkError');
+  }
+  if (raw.includes('cancelled') || raw.includes('canceled')) {
+    return t('documents.uploadForm.uploadCancelled');
+  }
+  return t('documents.uploadForm.uploadFailed');
 }
 
 const SUPPORTED_MIME_TYPES = [
@@ -61,15 +80,23 @@ export function DocumentUpload({
 
   // Note: Client-side validation improves UX, but server-side validation of file
   // signatures (magic bytes) is required for security. The backend validates file types.
-  const validateFile = useCallback((file: File): string | null => {
-    if (!SUPPORTED_MIME_TYPES.includes(file.type)) {
-      return `Unsupported file type: ${file.type || 'unknown'}`;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max 50MB)`;
-    }
-    return null;
-  }, []);
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      if (!SUPPORTED_MIME_TYPES.includes(file.type)) {
+        return t('documents.uploadForm.unsupportedType', {
+          type: file.type || t('documents.uploadForm.unknownType'),
+        });
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return t('documents.uploadForm.fileTooLarge', {
+          size: (file.size / 1024 / 1024).toFixed(1),
+          max: 50,
+        });
+      }
+      return null;
+    },
+    [t]
+  );
 
   const handleFiles = useCallback(
     (fileList: FileList) => {
@@ -133,6 +160,17 @@ export function DocumentUpload({
     setUploadFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  /** Put a failed upload back in the queue so "Upload" picks it up again. */
+  const retryFile = useCallback((index: number) => {
+    setUploadFiles((prev) =>
+      prev.map((f, i) =>
+        i === index
+          ? { ...f, status: 'pending' as const, error: undefined, uploadFailed: false, progress: 0 }
+          : f
+      )
+    );
+  }, []);
+
   const handleUpload = useCallback(async () => {
     const validFiles = uploadFiles.filter((f) => f.status === 'pending' && !f.error);
     if (validFiles.length === 0) return;
@@ -189,7 +227,8 @@ export function DocumentUpload({
               ? {
                   ...f,
                   status: 'error' as const,
-                  error: error instanceof Error ? error.message : 'Upload failed',
+                  error: uploadErrorMessage(error, t),
+                  uploadFailed: true,
                 }
               : f
           )
@@ -212,6 +251,7 @@ export function DocumentUpload({
     folderId,
     uploadDocument,
     onUploadComplete,
+    t,
   ]);
 
   const formatFileSize = (bytes: number): string => {
@@ -237,10 +277,8 @@ export function DocumentUpload({
   return (
     <div className="document-upload">
       <div className="upload-header">
-        <h2 className="upload-title">Upload Document</h2>
-        <p className="upload-subtitle">
-          Upload documents for automatic text extraction (OCR) and AI analysis
-        </p>
+        <h2 className="upload-title">{t('documents.upload')}</h2>
+        <p className="upload-subtitle">{t('documents.uploadForm.subtitle')}</p>
       </div>
 
       {/* Drop Zone */}
@@ -266,12 +304,10 @@ export function DocumentUpload({
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
           <p className="drop-text">
-            <span className="drop-primary">Drop files here</span>
-            <span className="drop-secondary"> or click to browse</span>
+            <span className="drop-primary">{t('documents.uploadForm.dropFiles')}</span>
+            <span className="drop-secondary"> {t('documents.uploadForm.orBrowse')}</span>
           </p>
-          <p className="drop-hint">
-            Supports PDF, images, Word documents, and text files (max 50MB)
-          </p>
+          <p className="drop-hint">{t('documents.uploadForm.supportedTypes', { max: 50 })}</p>
           <input
             type="file"
             className="file-input"
@@ -286,7 +322,9 @@ export function DocumentUpload({
       {/* File List */}
       {uploadFiles.length > 0 && (
         <div className="file-list">
-          <h3 className="file-list-title">Selected Files ({uploadFiles.length})</h3>
+          <h3 className="file-list-title">
+            {t('documents.uploadForm.selectedFiles', { count: uploadFiles.length })}
+          </h3>
           <ul className="files">
             {uploadFiles.map((uploadFile, index) => (
               <li
@@ -304,19 +342,47 @@ export function DocumentUpload({
                     </div>
                   )}
                   {uploadFile.status === 'processing' && (
-                    <span className="processing-text">Processing OCR...</span>
+                    <span className="processing-text">{t('ocrStatus.full.processing')}</span>
                   )}
                   {uploadFile.status === 'completed' && (
-                    <span className="completed-text">Uploaded successfully</span>
+                    <span className="completed-text">
+                      {t('documents.uploadForm.uploadedSuccessfully')}
+                    </span>
                   )}
                 </div>
                 <div className="file-actions">
+                  {uploadFile.status === 'error' && uploadFile.uploadFailed && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => retryFile(index)}
+                        className="retry-btn"
+                        aria-label={t('documents.uploadForm.retryFile', {
+                          name: uploadFile.file.name,
+                        })}
+                      >
+                        {t('documents.uploadForm.retry')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="remove-btn"
+                        aria-label={t('documents.uploadForm.removeFile', {
+                          name: uploadFile.file.name,
+                        })}
+                      >
+                        ×
+                      </button>
+                    </>
+                  )}
                   {uploadFile.status === 'pending' && (
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
                       className="remove-btn"
-                      aria-label={`Remove ${uploadFile.file.name}`}
+                      aria-label={t('documents.uploadForm.removeFile', {
+                        name: uploadFile.file.name,
+                      })}
                     >
                       <svg
                         width="12"
@@ -364,18 +430,18 @@ export function DocumentUpload({
       {/* Document Metadata */}
       {uploadFiles.some((f) => f.status === 'pending' && !f.error) && (
         <div className="metadata-form">
-          <h3 className="form-title">Document Details</h3>
+          <h3 className="form-title">{t('documents.uploadForm.detailsTitle')}</h3>
 
           <div className="form-field">
             <label htmlFor="doc-title" className="field-label">
-              Title <span className="required">*</span>
+              {t('documents.uploadForm.title')} <span className="required">*</span>
             </label>
             <input
               id="doc-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter document title"
+              placeholder={t('documents.uploadForm.titlePlaceholder')}
               className="text-input"
               required
             />
@@ -383,13 +449,13 @@ export function DocumentUpload({
 
           <div className="form-field">
             <label htmlFor="doc-description" className="field-label">
-              Description
+              {t('documents.uploadForm.description')}
             </label>
             <textarea
               id="doc-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description"
+              placeholder={t('documents.uploadForm.descriptionPlaceholder')}
               className="textarea-input"
               rows={3}
             />
@@ -397,7 +463,7 @@ export function DocumentUpload({
 
           <div className="form-field">
             <label htmlFor="doc-category" className="field-label">
-              Category
+              {t('documents.uploadForm.category')}
             </label>
             <select
               id="doc-category"
@@ -407,11 +473,13 @@ export function DocumentUpload({
             >
               {DOCUMENT_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {t(`documents.category.${cat}`, {
+                    defaultValue: cat.charAt(0).toUpperCase() + cat.slice(1),
+                  })}
                 </option>
               ))}
             </select>
-            <p className="field-hint">AI will suggest a category after analysis</p>
+            <p className="field-hint">{t('documents.uploadForm.categoryHint')}</p>
           </div>
         </div>
       )}
@@ -422,11 +490,8 @@ export function DocumentUpload({
           <span className="ai-badge">AI</span>
         </div>
         <div className="info-content">
-          <h4 className="info-title">Automatic Text Extraction</h4>
-          <p className="info-text">
-            After upload, OCR will automatically extract text from your documents. This enables
-            full-text search, AI classification, and summarization.
-          </p>
+          <h4 className="info-title">{t('documents.uploadForm.ocrInfoTitle')}</h4>
+          <p className="info-text">{t('documents.uploadForm.ocrInfoText')}</p>
         </div>
       </div>
 
@@ -439,7 +504,7 @@ export function DocumentUpload({
             className="btn btn-secondary"
             disabled={isUploading}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
         )}
         <button
@@ -451,7 +516,7 @@ export function DocumentUpload({
           {isUploading ? (
             <>
               <span className="spinner" />
-              Uploading...
+              {t('documents.uploadForm.uploading')}
             </>
           ) : (
             <>
@@ -468,7 +533,7 @@ export function DocumentUpload({
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              Upload & Process
+              {t('documents.uploadForm.uploadAndProcess')}
             </>
           )}
         </button>
@@ -676,6 +741,24 @@ export function DocumentUpload({
 
         .file-actions {
           flex-shrink: 0;
+          display: flex;
+          align-items: center;
+        }
+
+        .retry-btn {
+          margin-right: 0.375rem;
+          padding: 0 0.5rem;
+          height: 24px;
+          font-size: 0.75rem;
+          background: transparent;
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 0.25rem;
+          color: var(--ppt-fg-default);
+          cursor: pointer;
+        }
+
+        .retry-btn:hover {
+          background: var(--ppt-bg-subtle);
         }
 
         .remove-btn {
