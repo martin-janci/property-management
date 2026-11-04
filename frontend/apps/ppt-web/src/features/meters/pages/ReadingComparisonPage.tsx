@@ -484,7 +484,8 @@ export function ReadingComparisonPage({
                         </svg>
                       </div>
                       <div className="mt-2 text-xs text-gray-500">
-                        {meterData.dataPoints.length} {t('meters.readings')} | {meterData.unit}
+                        {t('meters.readings', { count: meterData.dataPoints.length })} |{' '}
+                        {meterData.unit}
                       </div>
                     </div>
                   );

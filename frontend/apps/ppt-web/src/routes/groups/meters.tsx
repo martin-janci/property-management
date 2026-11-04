@@ -471,19 +471,17 @@ function MeterLoadingNotice({ onBack, isLoading }: { onBack: () => void; isLoadi
   return (
     <div className="mx-auto max-w-md py-16 text-center">
       <h1 className="text-lg font-semibold text-gray-900">
-        {isLoading ? 'Loading meter…' : t('errors.meterNotFound', 'Meter not found')}
+        {isLoading ? t('meters.notice.loading') : t('meters.notice.notFound')}
       </h1>
       {!isLoading && (
-        <p className="mt-2 text-sm text-gray-500">
-          This meter could not be loaded. It may have been removed or you may not have access.
-        </p>
+        <p className="mt-2 text-sm text-gray-500">{t('meters.notice.notFoundBody')}</p>
       )}
       <button
         type="button"
         onClick={onBack}
         className="mt-6 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
       >
-        Back to meters
+        {t('meters.notice.back')}
       </button>
     </div>
   );

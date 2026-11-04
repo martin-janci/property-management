@@ -226,8 +226,7 @@ export function MetersPage({
       {/* Summary */}
       {!isLoading && meters.length > 0 && (
         <div className="mt-6 text-sm text-gray-500">
-          {t('common.showing')} {filteredMeters.length} {t('common.of')} {meters.length}{' '}
-          {t('meters.metersLabel')}
+          {t('meters.summary', { shown: filteredMeters.length, count: meters.length })}
         </div>
       )}
 
