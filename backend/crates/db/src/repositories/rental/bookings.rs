@@ -356,11 +356,11 @@ impl RentalRepository {
         }
         if query.platform.is_some() {
             param_count += 1;
-            conditions.push(format!("b.platform = ${}", param_count));
+            conditions.push(format!("b.platform::text = ${}", param_count));
         }
         if query.status.is_some() {
             param_count += 1;
-            conditions.push(format!("b.status = ${}", param_count));
+            conditions.push(format!("b.status::text = ${}", param_count));
         }
         if query.from_date.is_some() {
             param_count += 1;
@@ -416,28 +416,79 @@ impl RentalRepository {
 
         let (total,) = count_builder.fetch_one(&self.pool).await?;
 
-        // Fetch bookings (simplified - using direct query)
-        let bookings = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, Option<String>, String, i32, NaiveDate, NaiveDate, Option<Decimal>, Option<String>, String, Option<String>)>(
+        // Fetch the page. The same `where_clause` as the count query is applied
+        // (previously the page query ignored every filter, so `?status=` /
+        // `?platform=` changed `total` but not the rows). Enum columns are
+        // compared and projected as text so a `String` bind/decode works.
+        let limit_idx = param_count + 1;
+        let offset_idx = param_count + 2;
+        let page_query = format!(
             r#"
             SELECT
                 b.id, b.unit_id, u.designation, COALESCE(bld.name, ''),
                 b.platform::text, b.external_booking_id, b.guest_name, b.guest_count,
                 b.check_in, b.check_out, b.total_amount, b.currency,
                 b.status::text,
-                (SELECT status FROM rental_guests WHERE booking_id = b.id AND is_primary = true LIMIT 1)
+                (SELECT g.status::text FROM rental_guests g
+                 WHERE g.booking_id = b.id AND g.is_primary = true LIMIT 1)
             FROM rental_bookings b
             JOIN units u ON u.id = b.unit_id
             JOIN buildings bld ON bld.id = u.building_id
-            WHERE b.organization_id = $1
+            WHERE {where_clause}
             ORDER BY b.check_in DESC
-            LIMIT $2 OFFSET $3
-            "#,
-        )
-        .bind(org_id)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+            LIMIT ${limit_idx} OFFSET ${offset_idx}
+            "#
+        );
+
+        #[allow(clippy::type_complexity)]
+        let mut page_builder = sqlx::query_as::<
+            _,
+            (
+                Uuid,
+                Uuid,
+                String,
+                String,
+                String,
+                Option<String>,
+                String,
+                i32,
+                NaiveDate,
+                NaiveDate,
+                Option<Decimal>,
+                Option<String>,
+                String,
+                Option<String>,
+            ),
+        >(sqlx::AssertSqlSafe(page_query))
+        .bind(org_id);
+
+        if let Some(unit_id) = query.unit_id {
+            page_builder = page_builder.bind(unit_id);
+        }
+        if let Some(building_id) = query.building_id {
+            page_builder = page_builder.bind(building_id);
+        }
+        if let Some(ref platform) = query.platform {
+            page_builder = page_builder.bind(platform);
+        }
+        if let Some(ref status) = query.status {
+            page_builder = page_builder.bind(status);
+        }
+        if let Some(from_date) = query.from_date {
+            page_builder = page_builder.bind(from_date);
+        }
+        if let Some(to_date) = query.to_date {
+            page_builder = page_builder.bind(to_date);
+        }
+        if let Some(ref guest_name) = query.guest_name {
+            page_builder = page_builder.bind(guest_name);
+        }
+
+        let bookings = page_builder
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
 
         let summaries = bookings
             .into_iter()

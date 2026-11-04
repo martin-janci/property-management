@@ -11,6 +11,7 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
+import { describeError } from './describeError';
 
 // ============================================================================
 // Types
@@ -382,14 +383,12 @@ export function isApiError(error: unknown): error is ApiError {
 }
 
 /**
- * Extract a user-friendly message from an error.
+ * Extract a user-friendly, translated message from an error.
+ *
+ * The message is chosen by HTTP status (see `describeError`); raw server text
+ * is never returned here because it is untranslated English. Use
+ * `describeError` directly when the raw text is wanted as secondary detail.
  */
 export function getErrorMessage(error: unknown): string {
-  if (isApiError(error)) {
-    return error.message;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return 'An unexpected error occurred';
+  return describeError(error).message;
 }

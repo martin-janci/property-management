@@ -19,6 +19,30 @@ use uuid::Uuid;
 ///
 /// NOTE: This extractor does NOT validate database membership. For production routes
 /// requiring strict tenant isolation, use `ValidatedTenantExtractor` instead.
+/// Parse an `organization_members.role_type` value into a [`TenantRole`].
+///
+/// Case-insensitive; accepts the canonical snake_case form (`org_admin`), the
+/// squashed form (`orgadmin`) and legacy display names (`Organization Admin`,
+/// `Technical Manager`) written by older seeds. Returns `None` when unknown.
+pub fn parse_db_role_type(role_type: &str) -> Option<TenantRole> {
+    let normalized = role_type.trim().to_lowercase().replace([' ', '-'], "_");
+    match normalized.as_str() {
+        "super_admin" | "superadmin" => Some(TenantRole::SuperAdmin),
+        "platform_admin" | "platformadmin" => Some(TenantRole::PlatformAdmin),
+        "org_admin" | "orgadmin" | "organization_admin" => Some(TenantRole::OrgAdmin),
+        "manager" => Some(TenantRole::Manager),
+        "technical_manager" | "technicalmanager" => Some(TenantRole::TechnicalManager),
+        "owner" => Some(TenantRole::Owner),
+        "owner_delegate" | "ownerdelegate" => Some(TenantRole::OwnerDelegate),
+        "tenant" => Some(TenantRole::Tenant),
+        "resident" => Some(TenantRole::Resident),
+        "property_manager" | "propertymanager" => Some(TenantRole::PropertyManager),
+        "real_estate_agent" | "realestateagent" => Some(TenantRole::RealEstateAgent),
+        "guest" => Some(TenantRole::Guest),
+        _ => None,
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct TenantExtractor(pub TenantContext);
 
@@ -32,7 +56,7 @@ impl std::ops::Deref for TenantExtractor {
 
 impl<S> FromRequestParts<S> for TenantExtractor
 where
-    S: Send + Sync,
+    S: TenantMembershipProvider,
 {
     type Rejection = (StatusCode, &'static str);
 
@@ -62,8 +86,43 @@ where
         // User ID comes from authenticated JWT (validated above)
         let user_id = auth_user.user_id;
 
-        // Role comes from JWT claims, fall back to Guest (most restrictive)
-        let role = auth_user.role.unwrap_or(TenantRole::Guest);
+        // Role: prefer an explicit JWT claim. The production login flow mints
+        // access tokens WITHOUT a role/tenant claim (the org is chosen per
+        // request via Host / X-Tenant-ID), so falling straight back to Guest
+        // resolved every real manager to Guest and 403'd manager-only
+        // handlers (issue #2107). When the claim is absent, read the caller's
+        // active role in *this* tenant from `organization_members`; a
+        // non-member (or a lookup failure) stays Guest, the most restrictive
+        // role, so this can only ever grant what the membership row grants.
+        let role = match auth_user.role {
+            Some(role) => role,
+            None => {
+                let member_repo = OrganizationMemberRepository::new(state.db_pool().clone());
+                match member_repo.get_user_role_type(tenant_id, user_id).await {
+                    Ok(Some(role_type)) => parse_db_role_type(&role_type).unwrap_or_else(|| {
+                        tracing::warn!(
+                            user_id = %user_id,
+                            tenant_id = %tenant_id,
+                            role = %role_type,
+                            "Unknown role type in database, defaulting to Guest"
+                        );
+                        TenantRole::Guest
+                    }),
+                    Ok(None) => TenantRole::Guest,
+                    Err(e) => {
+                        tracing::error!(
+                            user_id = %user_id,
+                            tenant_id = %tenant_id,
+                            error = %e,
+                            "Failed to resolve tenant role from membership; defaulting to Guest"
+                        );
+                        TenantRole::Guest
+                    }
+                }
+            }
+        };
+        // Downstream authorization middleware reads the role from extensions.
+        parts.extensions.insert(role);
 
         Ok(TenantExtractor(TenantContext::new(
             tenant_id, user_id, role,
@@ -256,30 +315,16 @@ where
         let role = role_type
             .as_deref()
             .and_then(|r| {
-                let r_lower = r.to_lowercase();
-                match r_lower.as_str() {
-                    "super_admin" | "superadmin" => Some(TenantRole::SuperAdmin),
-                    "platform_admin" | "platformadmin" => Some(TenantRole::PlatformAdmin),
-                    "org_admin" | "orgadmin" => Some(TenantRole::OrgAdmin),
-                    "manager" => Some(TenantRole::Manager),
-                    "technical_manager" | "technicalmanager" => Some(TenantRole::TechnicalManager),
-                    "owner" => Some(TenantRole::Owner),
-                    "owner_delegate" | "ownerdelegate" => Some(TenantRole::OwnerDelegate),
-                    "tenant" => Some(TenantRole::Tenant),
-                    "resident" => Some(TenantRole::Resident),
-                    "property_manager" | "propertymanager" => Some(TenantRole::PropertyManager),
-                    "real_estate_agent" | "realestateagent" => Some(TenantRole::RealEstateAgent),
-                    "guest" => Some(TenantRole::Guest),
-                    other => {
-                        tracing::warn!(
-                            user_id = %user_id,
-                            tenant_id = %tenant_id,
-                            role = %other,
-                            "Unknown role type in database, defaulting to Guest"
-                        );
-                        None
-                    }
+                let parsed = parse_db_role_type(r);
+                if parsed.is_none() {
+                    tracing::warn!(
+                        user_id = %user_id,
+                        tenant_id = %tenant_id,
+                        role = %r,
+                        "Unknown role type in database, defaulting to Guest"
+                    );
                 }
+                parsed
             })
             .unwrap_or(TenantRole::Guest);
 
@@ -310,7 +355,7 @@ pub struct OptionalTenant(pub Option<TenantContext>);
 
 impl<S> FromRequestParts<S> for OptionalTenant
 where
-    S: Send + Sync,
+    S: TenantMembershipProvider,
 {
     type Rejection = std::convert::Infallible;
 
@@ -319,5 +364,33 @@ where
             Ok(TenantExtractor(ctx)) => Ok(OptionalTenant(Some(ctx))),
             Err(_) => Ok(OptionalTenant(None)),
         }
+    }
+}
+
+#[cfg(test)]
+mod parse_db_role_type_tests {
+    use super::parse_db_role_type;
+    use common::TenantRole;
+
+    #[test]
+    fn parses_canonical_and_legacy_forms() {
+        assert_eq!(parse_db_role_type("manager"), Some(TenantRole::Manager));
+        assert_eq!(parse_db_role_type("org_admin"), Some(TenantRole::OrgAdmin));
+        assert_eq!(parse_db_role_type("OrgAdmin"), Some(TenantRole::OrgAdmin));
+        assert_eq!(
+            parse_db_role_type("Organization Admin"),
+            Some(TenantRole::OrgAdmin)
+        );
+        assert_eq!(
+            parse_db_role_type("Technical Manager"),
+            Some(TenantRole::TechnicalManager)
+        );
+        assert_eq!(parse_db_role_type("tenant"), Some(TenantRole::Tenant));
+    }
+
+    #[test]
+    fn unknown_is_none() {
+        assert_eq!(parse_db_role_type("janitor"), None);
+        assert_eq!(parse_db_role_type(""), None);
     }
 }

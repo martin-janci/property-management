@@ -15,6 +15,7 @@
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { describeError } from '../lib/describeError';
 import './Toast.css';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -29,6 +30,15 @@ export interface Toast {
   type: ToastType;
   title: string;
   message?: string;
+  /**
+   * The thrown error. When set (and `message` is not), the toast shows a
+   * translated message chosen by HTTP status and keeps the raw server text
+   * only as a secondary detail line — instead of surfacing English server
+   * messages such as "Only managers can create articles" or "HTTP 422".
+   */
+  error?: unknown;
+  /** Secondary detail line (smaller, below the message). */
+  detail?: string;
   duration?: number; // 0 = persistent
   action?: ToastAction;
 }
@@ -182,8 +192,13 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
     };
   }, []);
 
+  const described = toast.error !== undefined ? describeError(toast.error, t) : undefined;
+  const message = toast.message || described?.message;
+  const detail = toast.detail ?? described?.detail;
+
   const handleCopy = useCallback(async () => {
-    const textToCopy = toast.message ? `${toast.title}: ${toast.message}` : toast.title;
+    const parts = [message, detail].filter(Boolean).join(' — ');
+    const textToCopy = parts ? `${toast.title}: ${parts}` : toast.title;
     const scheduleReset = () => {
       if (copiedTimeoutRef.current !== null) {
         clearTimeout(copiedTimeoutRef.current);
@@ -208,7 +223,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       setCopied(true);
       scheduleReset();
     }
-  }, [toast.title, toast.message]);
+  }, [toast.title, message, detail]);
 
   const ariaLive = toast.type === 'error' ? 'assertive' : 'polite';
   const copiedLabel = t('common.copied');
@@ -220,7 +235,8 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       <div className="toast-icon">{getIcon(toast.type)}</div>
       <div className="toast-content">
         <div className="toast-title">{toast.title}</div>
-        {toast.message && <div className="toast-message">{toast.message}</div>}
+        {message && <div className="toast-message">{message}</div>}
+        {detail && <div className="toast-detail">{detail}</div>}
       </div>
       <div className="toast-actions">
         {toast.action && (

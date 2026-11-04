@@ -19,7 +19,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Suspense } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -31,6 +31,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockShowToast = vi.fn();
 vi.mock('../../components', () => ({
   useToast: () => ({ showToast: mockShowToast }),
+  ProtectedRoute: ({ children }: { children: ReactNode }) => children,
 }));
 
 // ── auth ──

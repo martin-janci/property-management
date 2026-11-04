@@ -170,7 +170,9 @@ describe('ScheduleDetailPage — presigned download + retry path (81.2)', () => 
     // The presigned-URL endpoint is hit (GET by default).
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const [calledUrl, calledOpts] = fetchMock.mock.calls[0];
-    expect(String(calledUrl)).toBe(`/api/v1/reports/executions/${completedExecution.id}/download`);
+    expect(new URL(String(calledUrl), 'http://origin.invalid').pathname).toBe(
+      `/api/v1/reports/executions/${completedExecution.id}/download`
+    );
     expect((calledOpts as RequestInit | undefined)?.method ?? 'GET').toBe('GET');
 
     // The anchor is created with the presigned href + the server-provided filename
@@ -284,7 +286,9 @@ describe('ScheduleDetailPage — presigned download + retry path (81.2)', () => 
 
     // The retry endpoint is hit with POST.
     const [calledUrl, calledOpts] = fetchMock.mock.calls[0];
-    expect(String(calledUrl)).toBe(`/api/v1/reports/executions/${failedExecution.id}/retry`);
+    expect(new URL(String(calledUrl), 'http://origin.invalid').pathname).toBe(
+      `/api/v1/reports/executions/${failedExecution.id}/retry`
+    );
     expect((calledOpts as RequestInit | undefined)?.method).toBe('POST');
 
     // Resolve with a freshly-queued execution; the hook must invalidate the

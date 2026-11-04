@@ -6,14 +6,16 @@
  */
 import type { QuestionType, QuorumType, VoteStatus } from '@ppt/api-client';
 
-/** Human-readable status label + Tailwind pill colours per vote status. */
-export const VOTE_STATUS_LABELS: Record<VoteStatus, string> = {
-  draft: 'Draft',
-  scheduled: 'Scheduled',
-  active: 'Open',
-  closed: 'Closed',
-  cancelled: 'Cancelled',
+/** i18n keys for the human-readable status label per vote status. */
+export const VOTE_STATUS_LABEL_KEYS: Record<VoteStatus, string> = {
+  draft: 'voting.status.draft',
+  scheduled: 'voting.status.scheduled',
+  active: 'voting.status.active',
+  closed: 'voting.status.closed',
+  cancelled: 'voting.status.cancelled',
 };
+
+/** Tailwind pill colours per vote status. */
 
 export const VOTE_STATUS_COLORS: Record<VoteStatus, string> = {
   draft: 'bg-gray-100 text-gray-700',
@@ -23,19 +25,19 @@ export const VOTE_STATUS_COLORS: Record<VoteStatus, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-/** Question-type labels for the create wizard + ballot. */
-export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
-  yes_no: 'Yes / No',
-  single_choice: 'Single choice',
-  multiple_choice: 'Multiple choice',
-  ranked: 'Ranked preference',
+/** i18n keys for question-type labels in the create wizard + ballot. */
+export const QUESTION_TYPE_LABEL_KEYS: Record<QuestionType, string> = {
+  yes_no: 'voting.questionType.yes_no',
+  single_choice: 'voting.questionType.single_choice',
+  multiple_choice: 'voting.questionType.multiple_choice',
+  ranked: 'voting.questionType.ranked',
 };
 
-/** Quorum-rule labels for the create wizard + detail. */
-export const QUORUM_TYPE_LABELS: Record<QuorumType, string> = {
-  simple_majority: 'Simple majority (50% + 1)',
-  two_thirds: 'Two-thirds (2/3)',
-  weighted: 'Weighted by ownership share',
+/** i18n keys for quorum-rule labels in the create wizard + detail. */
+export const QUORUM_TYPE_LABEL_KEYS: Record<QuorumType, string> = {
+  simple_majority: 'voting.quorumType.simple_majority',
+  two_thirds: 'voting.quorumType.two_thirds',
+  weighted: 'voting.quorumType.weighted',
 };
 
 /** Participation as a 0–100 integer percentage, clamped. */

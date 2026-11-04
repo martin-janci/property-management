@@ -42,6 +42,7 @@ const BUNDLE_KEYS = [
   'accessibility.checkingAuthentication',
   'common.loading',
   'errors.accessDenied',
+  'errors.backToDashboard',
   'errors.unauthorized',
 ] as const;
 

@@ -200,7 +200,12 @@ export interface AvailableSlot {
 
 /** Availability query parameters. */
 export interface AvailabilityQuery {
+  /** Calendar day (`YYYY-MM-DD`); expanded to a local-day `from`/`to` range. */
   date: string;
+  /** Explicit RFC 3339 range start; overrides `date` together with `to`. */
+  from?: string;
+  /** Explicit RFC 3339 range end. */
+  to?: string;
 }
 
 /** List bookings query parameters. */
