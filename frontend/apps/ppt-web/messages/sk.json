@@ -1592,7 +1592,51 @@
     "created": "Nájomná zmluva vytvorená",
     "createFailed": "Nepodarilo sa vytvoriť nájomnú zmluvu",
     "violationRecorded": "Porušenie zaznamenané",
-    "violationCreateFailed": "Nepodarilo sa zaznamenať porušenie"
+    "violationCreateFailed": "Nepodarilo sa zaznamenať porušenie",
+    "payments": {
+      "recordModal": {
+        "title": "Zaznamenať platbu",
+        "dueOn": "Plánovaná platba splatná {{date}}",
+        "amount": "Zaplatená suma",
+        "amountInvalid": "Zadajte sumu väčšiu ako nula",
+        "method": "Spôsob platby",
+        "referencePlaceholder": "napr. variabilný symbol alebo ID transakcie"
+      },
+      "methods": {
+        "bank_transfer": "Bankový prevod",
+        "cash": "Hotovosť",
+        "credit_card": "Kreditná karta",
+        "debit_card": "Debetná karta",
+        "check": "Šek",
+        "other": "Iné"
+      },
+      "recorded": "Platba bola zaznamenaná",
+      "recordFailed": "Platbu sa nepodarilo zaznamenať"
+    },
+    "templates": {
+      "created": "Šablóna bola vytvorená",
+      "createFailed": "Šablónu sa nepodarilo vytvoriť",
+      "updated": "Šablóna bola aktualizovaná",
+      "updateFailed": "Šablónu sa nepodarilo aktualizovať",
+      "activated": "Šablóna bola aktivovaná",
+      "deactivated": "Šablóna bola deaktivovaná"
+    },
+    "applications": {
+      "screeningStarted": "Preverenie nájomníka bolo vyžiadané",
+      "screeningFailed": "Preverenie nájomníka sa nepodarilo spustiť",
+      "approved": "Žiadosť bola schválená",
+      "rejected": "Žiadosť bola zamietnutá",
+      "reviewFailed": "Posúdenie žiadosti sa nepodarilo uložiť"
+    },
+    "violations": {
+      "resolved": "Porušenie bolo vyriešené",
+      "resolveFailed": "Porušenie sa nepodarilo vyriešiť",
+      "disputed": "Námietka bola podaná",
+      "disputeFailed": "Námietku sa nepodarilo podať",
+      "evidenceUploaded": "Dôkazy boli nahrané",
+      "evidenceUploadFailed": "Dôkazy sa nepodarilo nahrať",
+      "uploadingEvidence": "Nahráva sa…"
+    }
   },
   "settings": {
     "notifications": {

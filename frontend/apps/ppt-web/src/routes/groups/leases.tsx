@@ -9,12 +9,21 @@
  *
  * The dashboard / list / templates / applications / violations routes render
  * live backend data. The lease/application/violation detail routes fetch their
- * single entity and map it best-effort onto the richer UI prop shapes (some
- * nested data — e.g. tenant user records, screening rows, violation evidence —
- * has no list endpoint yet, so those collections render empty). The create
- * forms' building/unit/tenant selectors reuse what the API exposes today
- * (`useBuildings`, live templates); unit/tenant pickers stay empty until those
- * endpoints land.
+ * single entity and map it best-effort onto the richer UI prop shapes.
+ *
+ * Wired actions (all with toast feedback + query invalidation):
+ *  - create lease: unit picker = units of every org building
+ *    (`GET /buildings/{id}/units`), tenant picker = org members
+ *    (`GET /organizations/{id}/members`) excluding manager roles;
+ *  - record payment (`POST /leases/{payment_id}/payments`, see api-client note);
+ *  - template create / edit / (de)activate (`POST|PUT /leases/templates…`) —
+ *    the API has no template delete, so that control is hidden;
+ *  - application screening (`POST …/applications/{id}/screening`) and review
+ *    (`POST …/applications/{id}/review`) — screening rows have no list
+ *    endpoint, so only the rows returned by this session's initiate call show;
+ *  - violation resolve (`PUT /violations/{id}`), dispute (`POST
+ *    /violations/{id}/appeals`) and evidence upload (presigned
+ *    `documents/upload-url` → `POST /violations/{id}/evidence`).
  */
 import type {
   ApplicationSummary as ApiApplicationSummary,
@@ -27,35 +36,59 @@ import type {
   LeaseSummary as ApiLeaseSummary,
   LeaseTemplate as ApiLeaseTemplate,
   TenantApplication as ApiTenantApplication,
+  TenantScreening as ApiTenantScreening,
   Violation as ApiViolation,
   ViolationCategory as ApiViolationCategory,
+  ViolationEvidence as ApiViolationEvidence,
   ViolationSeverity as ApiViolationSeverity,
   ViolationStatus as ApiViolationStatus,
   ViolationSummary as ApiViolationSummary,
   CreateViolationRequest,
+  OrganizationMember,
   SharedSupportedCurrency,
 } from '@ppt/api-client';
 import {
+  createUploadUrl,
+  listBuildingUnits,
+  uploadFileToPresignedUrl,
+  useAddViolationEvidence,
   useApplication,
   useApplications,
   useBuildings,
   useCreateLease,
+  useCreateLeaseTemplate,
   useCreateViolation,
+  useCreateViolationAppeal,
   useExpiringLeases,
+  useInitiateScreening,
   useLease,
   useLeaseStatistics,
   useLeases,
   useLeaseTemplates,
+  useOrganizationMembers,
+  useRecordLeasePayment,
+  useReviewApplication,
+  useUpdateLeaseTemplate,
+  useUpdateViolation,
   useViolation,
+  useViolationEvidence,
   useViolations,
 } from '@ppt/api-client';
-import { lazy } from 'react';
+import { useQueries } from '@tanstack/react-query';
+import { lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
+import { useAuth } from '../../contexts';
+import {
+  type RecordPaymentFormData,
+  RecordPaymentModal,
+} from '../../features/leases/components/RecordPaymentModal';
 import type {
   CreateLeaseData,
+  CreateTemplateData,
   CreateViolationData,
+  ReviewApplicationData,
   ApplicationStatus as UiApplicationStatus,
   ApplicationSummary as UiApplicationSummary,
   ExpirationOverview as UiExpirationOverview,
@@ -70,6 +103,10 @@ import type {
   LeaseTemplate as UiLeaseTemplate,
   LeaseWithDetails as UiLeaseWithDetails,
   PaymentStatus as UiPaymentStatus,
+  ScreeningStatus as UiScreeningStatus,
+  ScreeningType as UiScreeningType,
+  TenantScreening as UiTenantScreening,
+  ViolationEvidence as UiViolationEvidence,
   ViolationSeverity as UiViolationSeverity,
   ViolationStatus as UiViolationStatus,
   ViolationSummary as UiViolationSummary,
@@ -77,6 +114,8 @@ import type {
   ViolationWithDetails as UiViolationWithDetails,
 } from '../../features/leases/types';
 import { useOrganization } from '../../hooks/useOrganization';
+import { queryKeys } from '../../lib/queryKeys';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 // Leases feature pages (Epic 19) — lazy-loaded for code splitting.
 const LeasesDashboardPage = lazy(() =>
@@ -539,6 +578,109 @@ function mapViolationToUi(v: ApiViolation): UiViolationWithDetails {
   };
 }
 
+/** Map a backend screening status onto the UI `ScreeningStatus`. */
+function mapScreeningStatus(status: string): UiScreeningStatus {
+  switch (status) {
+    case 'in_progress':
+      return 'in_progress';
+    case 'completed':
+      return 'completed';
+    case 'failed':
+    case 'expired':
+      return 'failed';
+    default:
+      // pending_consent / consent_received
+      return 'pending';
+  }
+}
+
+/** Transform an API tenant screening → UI `TenantScreening`. */
+export function mapScreeningToUi(s: ApiTenantScreening): UiTenantScreening {
+  return {
+    id: s.id,
+    applicationId: s.application_id,
+    screeningType: s.screening_type as UiScreeningType,
+    status: mapScreeningStatus(s.status),
+    provider: s.provider ?? undefined,
+    requestedAt: s.consent_requested_at ?? s.created_at,
+    completedAt: s.completed_at ?? undefined,
+    result: s.passed == null ? undefined : s.passed ? 'pass' : 'fail',
+    score: s.risk_score ?? undefined,
+    details: s.result_summary ?? undefined,
+    consentGivenAt: s.consent_received_at ?? undefined,
+  };
+}
+
+/** Transform an API violation evidence row → UI `ViolationEvidence`. */
+export function mapEvidenceToUi(e: ApiViolationEvidence): UiViolationEvidence {
+  return {
+    id: e.id,
+    violationId: e.violation_id,
+    fileName: e.file_name,
+    // The API stores a storage key, not a downloadable URL, and exposes no
+    // download-by-key route — so no link is rendered for evidence files.
+    fileUrl: '',
+    fileType: e.file_type,
+    fileSize: e.file_size ?? 0,
+    description: e.description ?? undefined,
+    uploadedAt: e.created_at,
+    uploadedBy: e.uploaded_by ?? '',
+  };
+}
+
+/** UI template form → API template fields (rent/currency are not persisted). */
+function mapTemplateDataToApi(data: Partial<CreateTemplateData>) {
+  return {
+    name: data.name,
+    description: data.description,
+    content_html: data.content,
+    default_term_months: data.defaultLeaseDurationMonths,
+    default_security_deposit_months: data.defaultDepositMonths,
+  };
+}
+
+/**
+ * Org members eligible as lease tenants: everyone except manager-level roles
+ * (managers / admins sign as the landlord side, never as tenants).
+ */
+export function selectTenantCandidates(members: OrganizationMember[]) {
+  const managerRoles: readonly string[] = MANAGER_ROLES;
+  return members
+    .filter((m) => !managerRoles.includes(m.role_type))
+    .map((m) => ({ id: m.user_id, name: m.name, email: m.email }));
+}
+
+/**
+ * Units of every building in the organization, for the lease unit picker.
+ * There is no org-wide units endpoint, so this fans out one
+ * `GET /buildings/{id}/units` per building (max page size).
+ */
+function useOrganizationUnits() {
+  const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
+  const buildings = buildingsData?.items ?? [];
+  const results = useQueries({
+    queries: buildings.map((b) => ({
+      queryKey: [...queryKeys.buildings.units(b.id), 'lease-picker'] as const,
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        listBuildingUnits(b.id, { limit: 100 }, signal),
+    })),
+  });
+  const units = results.flatMap((r, i) =>
+    (r.data?.units ?? []).map((u) => ({
+      id: u.id,
+      number: u.designation,
+      buildingName: buildings[i]?.name ?? '',
+    }))
+  );
+  const isLoading = buildingsLoading || results.some((r) => r.isLoading);
+  return { units, isLoading };
+}
+
+/** Error message for a failed mutation, falling back to a translated default. */
+function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error && err.message ? err.message : fallback;
+}
+
 // ============================================================================
 // Route wrappers
 // ============================================================================
@@ -608,59 +750,122 @@ function LeasesListPageRoute() {
 /** Route wrapper: lease detail (`/leases/:leaseId`), live. */
 function LeaseDetailPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const { leaseId } = useParams<{ leaseId: string }>();
   const { data, isLoading } = useLease(leaseId);
+  const recordPayment = useRecordLeasePayment();
+  const [paymentId, setPaymentId] = useState<string | null>(null);
 
   if (isLoading || !data) {
     return <LeaseLoadingNotice onBack={() => navigate('/leases/list')} isLoading={isLoading} />;
   }
 
   const lease = mapLeaseWithDetailsToUi(data);
+  const payment = paymentId ? lease.upcomingPayments.find((p) => p.id === paymentId) : undefined;
+
+  const handleRecordPayment = async (form: RecordPaymentFormData) => {
+    if (!payment) return;
+    try {
+      await recordPayment.mutateAsync({
+        paymentId: payment.id,
+        leaseId: lease.id,
+        body: {
+          paid_amount: form.paidAmount,
+          payment_method: form.paymentMethod,
+          payment_reference: form.paymentReference,
+          paid_at: toDateTime(form.paidAt),
+        },
+      });
+      setPaymentId(null);
+      showToast({
+        type: 'success',
+        title: t('common.saved', { defaultValue: 'Saved' }),
+        message: t('leases.payments.recorded', { defaultValue: 'Payment recorded' }),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('common.saveFailed', { defaultValue: 'Save failed' }),
+        message: errorMessage(
+          err,
+          t('leases.payments.recordFailed', { defaultValue: 'Could not record payment' })
+        ),
+      });
+    }
+  };
+
   return (
-    <LeaseDetailPage
-      lease={lease}
-      onBack={() => navigate('/leases/list')}
-      onEdit={(id) => navigate(`/leases/${id}`)}
-      onRenew={(id) => navigate(`/leases/${id}`)}
-      onTerminate={(id) => navigate(`/leases/${id}`)}
-      onAddAmendment={(id) => navigate(`/leases/${id}`)}
-      onRecordPayment={() => {}}
-    />
+    <>
+      <LeaseDetailPage
+        lease={lease}
+        onBack={() => navigate('/leases/list')}
+        onEdit={(id) => navigate(`/leases/${id}`)}
+        onRenew={(id) => navigate(`/leases/${id}`)}
+        onTerminate={(id) => navigate(`/leases/${id}`)}
+        onAddAmendment={(id) => navigate(`/leases/${id}`)}
+        onRecordPayment={(id) => setPaymentId(id)}
+      />
+      {payment && (
+        <RecordPaymentModal
+          payment={payment}
+          isSubmitting={recordPayment.isPending}
+          onSubmit={handleRecordPayment}
+          onClose={() => setPaymentId(null)}
+        />
+      )}
+    </>
   );
 }
 
-/** Route wrapper: create lease. Templates selector is live; unit/tenant pending. */
+/**
+ * Route wrapper: create lease. Unit, tenant and template pickers are live; the
+ * tenant's name/e-mail and the landlord (organization) name are filled from the
+ * selected records so the backend gets a complete lease party block.
+ */
 function CreateLeasePageRoute() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const { organizationId } = useOrganization();
-  const { data: templatesData } = useLeaseTemplates(organizationId);
+  const { organizationId, organizationName } = useOrganization();
+  const { data: templatesData, isLoading: templatesLoading } = useLeaseTemplates(organizationId);
+  const { units, isLoading: unitsLoading } = useOrganizationUnits();
+  const { data: membersData, isLoading: membersLoading } = useOrganizationMembers(organizationId);
   const createLease = useCreateLease();
 
-  const templates = (templatesData ?? []).map(mapTemplateToUi);
+  const templates = (templatesData ?? []).map(mapTemplateToUi).filter((tpl) => tpl.isActive);
+  const tenants = selectTenantCandidates(membersData?.members ?? []);
 
   return (
     <CreateLeasePage
-      units={[]}
-      tenants={[]}
+      units={units}
+      tenants={tenants}
       templates={templates}
+      isLoading={templatesLoading || unitsLoading || membersLoading}
       isSubmitting={createLease.isPending}
       onCancel={() => navigate('/leases/list')}
       onSubmit={async (formData: CreateLeaseData) => {
+        const tenant = tenants.find((x) => x.id === formData.tenantId);
+        if (!formData.unitId || !tenant) {
+          showToast({
+            type: 'error',
+            title: t('common.createFailed', { defaultValue: 'Create failed' }),
+            message: formData.unitId
+              ? t('leases.form.errors.tenantRequired')
+              : t('leases.form.errors.unitRequired'),
+          });
+          return;
+        }
         try {
           const termMonths = monthsBetween(formData.startDate, formData.endDate);
           await createLease.mutateAsync({
             organization_id: organizationId,
             unit_id: formData.unitId,
-            template_id: formData.templateId,
-            // The unit/tenant pickers are not yet wired to an endpoint, so the
-            // landlord/tenant identity fields are submitted blank for the
-            // backend to resolve from the unit/application context.
-            landlord_name: '',
-            tenant_user_id: formData.tenantId || undefined,
-            tenant_name: '',
-            tenant_email: '',
+            template_id: formData.templateId || undefined,
+            landlord_name: organizationName ?? '',
+            tenant_user_id: tenant.id,
+            tenant_name: tenant.name,
+            tenant_email: tenant.email,
             start_date: formData.startDate,
             end_date: formData.endDate,
             term_months: termMonths,
@@ -679,10 +884,10 @@ function CreateLeasePageRoute() {
           showToast({
             type: 'error',
             title: t('common.createFailed', { defaultValue: 'Create failed' }),
-            message:
-              err instanceof Error
-                ? err.message
-                : t('leases.createFailed', { defaultValue: 'Could not create lease' }),
+            message: errorMessage(
+              err,
+              t('leases.createFailed', { defaultValue: 'Could not create lease' })
+            ),
           });
         }
       }}
@@ -690,20 +895,78 @@ function CreateLeasePageRoute() {
   );
 }
 
-/** Route wrapper: lease templates, live list. */
+/** Route wrapper: lease templates — live list with create / edit / (de)activate. */
 function TemplatesPageRoute() {
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const { organizationId } = useOrganization();
   const { data, isLoading } = useLeaseTemplates(organizationId);
+  const createTemplate = useCreateLeaseTemplate();
+  const updateTemplate = useUpdateLeaseTemplate();
 
   const templates = (data ?? []).map(mapTemplateToUi);
+
+  const failToast = (err: unknown, fallbackKey: string, fallback: string) =>
+    showToast({
+      type: 'error',
+      title: t('common.saveFailed', { defaultValue: 'Save failed' }),
+      message: errorMessage(err, t(fallbackKey, { defaultValue: fallback })),
+    });
+
+  const update = async (id: string, body: Record<string, unknown>, successKey: string) => {
+    try {
+      await updateTemplate.mutateAsync({
+        id,
+        body: { organization_id: organizationId, ...body },
+      });
+      showToast({
+        type: 'success',
+        title: t('common.updated', { defaultValue: 'Updated' }),
+        message: t(successKey),
+      });
+    } catch (err) {
+      failToast(err, 'leases.templates.updateFailed', 'Could not update template');
+    }
+  };
+
   return (
     <TemplatesPage
       templates={templates}
       isLoading={isLoading}
-      onCreateTemplate={() => {}}
-      onUpdateTemplate={() => {}}
-      onDeleteTemplate={() => {}}
-      onToggleActive={() => {}}
+      isSubmitting={createTemplate.isPending || updateTemplate.isPending}
+      showRentDefaults={false}
+      onCreateTemplate={async (formData) => {
+        try {
+          const fields = mapTemplateDataToApi(formData);
+          await createTemplate.mutateAsync({
+            organization_id: organizationId,
+            ...fields,
+            name: formData.name,
+            content_html: formData.content,
+          });
+          showToast({
+            type: 'success',
+            title: t('common.created', { defaultValue: 'Created' }),
+            message: t('leases.templates.created', { defaultValue: 'Template created' }),
+          });
+        } catch (err) {
+          failToast(err, 'leases.templates.createFailed', 'Could not create template');
+        }
+      }}
+      onUpdateTemplate={(id, formData) =>
+        update(
+          id,
+          { ...mapTemplateDataToApi(formData), is_active: formData.isActive },
+          'leases.templates.updated'
+        )
+      }
+      onToggleActive={(id, isActive) =>
+        update(
+          id,
+          { is_active: isActive },
+          isActive ? 'leases.templates.activated' : 'leases.templates.deactivated'
+        )
+      }
     />
   );
 }
@@ -731,8 +994,18 @@ function ApplicationsPageRoute() {
 /** Route wrapper: application detail (`/leases/applications/:applicationId`), live. */
 function ApplicationDetailPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const { organizationId } = useOrganization();
   const { applicationId } = useParams<{ applicationId: string }>();
   const { data, isLoading } = useApplication(applicationId);
+  // The single-application payload carries only `unit_id`; the list summary
+  // has the unit/building labels, so reuse the (usually cached) list query.
+  const { data: listData } = useApplications({ organization_id: organizationId });
+  const initiateScreening = useInitiateScreening();
+  const reviewApplication = useReviewApplication();
+  // Screening rows have no list endpoint — show the rows this session created.
+  const [screenings, setScreenings] = useState<UiTenantScreening[]>([]);
 
   if (isLoading || !data) {
     return (
@@ -745,16 +1018,77 @@ function ApplicationDetailPageRoute() {
   }
 
   const application = mapApplicationToUi(data);
+  const summary = listData?.items.find((a) => a.id === data.id);
+
+  const handleInitiateScreening = async (types: UiScreeningType[]) => {
+    try {
+      const rows = await initiateScreening.mutateAsync({
+        id: data.id,
+        body: { organization_id: organizationId, screening_types: types },
+      });
+      setScreenings((prev) => [...prev, ...rows.map(mapScreeningToUi)]);
+      showToast({
+        type: 'success',
+        title: t('common.submitted', { defaultValue: 'Submitted' }),
+        message: t('leases.applications.screeningStarted', {
+          defaultValue: 'Screening requested',
+        }),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('common.submitFailed', { defaultValue: 'Submit failed' }),
+        message: errorMessage(
+          err,
+          t('leases.applications.screeningFailed', {
+            defaultValue: 'Could not start screening',
+          })
+        ),
+      });
+    }
+  };
+
+  const handleReview = async (review: ReviewApplicationData) => {
+    try {
+      await reviewApplication.mutateAsync({
+        id: data.id,
+        body: {
+          status: review.decision === 'approve' ? 'approved' : 'rejected',
+          decision_notes: review.notes,
+        },
+      });
+      showToast({
+        type: 'success',
+        title: t('common.saved', { defaultValue: 'Saved' }),
+        message:
+          review.decision === 'approve'
+            ? t('leases.applications.approved', { defaultValue: 'Application approved' })
+            : t('leases.applications.rejected', { defaultValue: 'Application rejected' }),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('common.saveFailed', { defaultValue: 'Save failed' }),
+        message: errorMessage(
+          err,
+          t('leases.applications.reviewFailed', { defaultValue: 'Could not save the review' })
+        ),
+      });
+    }
+  };
+
   return (
     <ApplicationDetailPage
       application={application}
-      // Screening rows have no list endpoint yet; the screening section renders
-      // empty until that lands.
-      screenings={[]}
-      unitInfo={{ number: '', buildingName: '' }}
+      screenings={screenings}
+      unitInfo={{
+        number: summary?.unit_name ?? '',
+        buildingName: summary?.building_name ?? '',
+      }}
+      isSubmitting={initiateScreening.isPending || reviewApplication.isPending}
       onBack={() => navigate('/leases/applications')}
-      onInitiateScreening={() => {}}
-      onReview={() => {}}
+      onInitiateScreening={handleInitiateScreening}
+      onReview={handleReview}
       onCreateLease={() => navigate('/leases/new')}
     />
   );
@@ -833,11 +1167,24 @@ function CreateViolationPageRoute() {
   );
 }
 
-/** Route wrapper: violation detail (`/leases/violations/:violationId`), live. */
+/**
+ * Route wrapper: violation detail (`/leases/violations/:violationId`), live.
+ * Managers can resolve; other members (tenants/residents) can dispute (files an
+ * appeal); anyone can attach evidence.
+ */
 function ViolationDetailPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
   const { violationId } = useParams<{ violationId: string }>();
   const { data, isLoading } = useViolation(violationId);
+  const { data: evidenceData } = useViolationEvidence(violationId);
+  const updateViolation = useUpdateViolation();
+  const createAppeal = useCreateViolationAppeal();
+  const addEvidence = useAddViolationEvidence();
+  const [isUploading, setIsUploading] = useState(false);
 
   if (isLoading || !data) {
     return (
@@ -849,14 +1196,106 @@ function ViolationDetailPageRoute() {
     );
   }
 
-  const violation = mapViolationToUi(data);
+  const violation: UiViolationWithDetails = {
+    ...mapViolationToUi(data),
+    evidence: (evidenceData ?? []).map(mapEvidenceToUi),
+  };
+
+  const handleResolve = async (id: string, notes: string) => {
+    try {
+      await updateViolation.mutateAsync({
+        id,
+        body: { status: 'resolved', resolution_notes: notes },
+      });
+      showToast({
+        type: 'success',
+        title: t('common.updated', { defaultValue: 'Updated' }),
+        message: t('leases.violations.resolved', { defaultValue: 'Violation resolved' }),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('common.updateFailed', { defaultValue: 'Update failed' }),
+        message: errorMessage(
+          err,
+          t('leases.violations.resolveFailed', { defaultValue: 'Could not resolve violation' })
+        ),
+      });
+    }
+  };
+
+  const handleDispute = async (id: string, reason: string) => {
+    try {
+      await createAppeal.mutateAsync({ id, body: { reason } });
+      showToast({
+        type: 'success',
+        title: t('common.submitted', { defaultValue: 'Submitted' }),
+        message: t('leases.violations.disputed', { defaultValue: 'Dispute submitted' }),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('common.submitFailed', { defaultValue: 'Submit failed' }),
+        message: errorMessage(
+          err,
+          t('leases.violations.disputeFailed', { defaultValue: 'Could not submit dispute' })
+        ),
+      });
+    }
+  };
+
+  const handleUploadEvidence = async (id: string, files: FileList) => {
+    setIsUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const contentType = file.type || 'application/octet-stream';
+        const target = await createUploadUrl({
+          file_name: file.name,
+          mime_type: contentType,
+          size_bytes: file.size,
+        });
+        await uploadFileToPresignedUrl(target.url, file, target.content_type || contentType);
+        await addEvidence.mutateAsync({
+          id,
+          body: {
+            file_name: file.name,
+            file_type: contentType,
+            file_size: file.size,
+            storage_path: target.file_key,
+          },
+        });
+      }
+      showToast({
+        type: 'success',
+        title: t('common.saved', { defaultValue: 'Saved' }),
+        message: t('leases.violations.evidenceUploaded', { defaultValue: 'Evidence uploaded' }),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('common.saveFailed', { defaultValue: 'Save failed' }),
+        message: errorMessage(
+          err,
+          t('leases.violations.evidenceUploadFailed', {
+            defaultValue: 'Could not upload evidence',
+          })
+        ),
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <ViolationDetailPage
       violation={violation}
+      isManager={isManager}
+      isTenant={!isManager}
+      isUploadingEvidence={isUploading}
       onBack={() => navigate('/leases/violations')}
-      onResolve={() => {}}
-      onDispute={() => {}}
-      onUploadEvidence={() => {}}
+      onResolve={handleResolve}
+      onDispute={handleDispute}
+      onUploadEvidence={handleUploadEvidence}
     />
   );
 }

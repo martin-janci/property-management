@@ -1539,7 +1539,51 @@
     "created": "Mietvertrag erstellt",
     "createFailed": "Mietvertrag konnte nicht erstellt werden",
     "violationRecorded": "Verstoß erfasst",
-    "violationCreateFailed": "Verstoß konnte nicht erfasst werden"
+    "violationCreateFailed": "Verstoß konnte nicht erfasst werden",
+    "payments": {
+      "recordModal": {
+        "title": "Zahlung erfassen",
+        "dueOn": "Geplante Zahlung fällig am {{date}}",
+        "amount": "Gezahlter Betrag",
+        "amountInvalid": "Geben Sie einen Betrag größer als null ein",
+        "method": "Zahlungsart",
+        "referencePlaceholder": "z. B. Verwendungszweck oder Transaktions-ID"
+      },
+      "methods": {
+        "bank_transfer": "Banküberweisung",
+        "cash": "Bargeld",
+        "credit_card": "Kreditkarte",
+        "debit_card": "Debitkarte",
+        "check": "Scheck",
+        "other": "Sonstiges"
+      },
+      "recorded": "Zahlung erfasst",
+      "recordFailed": "Zahlung konnte nicht erfasst werden"
+    },
+    "templates": {
+      "created": "Vorlage erstellt",
+      "createFailed": "Vorlage konnte nicht erstellt werden",
+      "updated": "Vorlage aktualisiert",
+      "updateFailed": "Vorlage konnte nicht aktualisiert werden",
+      "activated": "Vorlage aktiviert",
+      "deactivated": "Vorlage deaktiviert"
+    },
+    "applications": {
+      "screeningStarted": "Mieterprüfung angefordert",
+      "screeningFailed": "Mieterprüfung konnte nicht gestartet werden",
+      "approved": "Bewerbung genehmigt",
+      "rejected": "Bewerbung abgelehnt",
+      "reviewFailed": "Prüfung konnte nicht gespeichert werden"
+    },
+    "violations": {
+      "resolved": "Verstoß behoben",
+      "resolveFailed": "Verstoß konnte nicht behoben werden",
+      "disputed": "Einspruch eingereicht",
+      "disputeFailed": "Einspruch konnte nicht eingereicht werden",
+      "evidenceUploaded": "Nachweise hochgeladen",
+      "evidenceUploadFailed": "Nachweise konnten nicht hochgeladen werden",
+      "uploadingEvidence": "Wird hochgeladen…"
+    }
   },
   "settings": {
     "notifications": {

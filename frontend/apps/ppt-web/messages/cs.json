@@ -1590,7 +1590,51 @@
     "created": "Nájemní smlouva vytvořena",
     "createFailed": "Nepodařilo se vytvořit nájemní smlouvu",
     "violationRecorded": "Porušení zaznamenáno",
-    "violationCreateFailed": "Nepodařilo se zaznamenat porušení"
+    "violationCreateFailed": "Nepodařilo se zaznamenat porušení",
+    "payments": {
+      "recordModal": {
+        "title": "Zaznamenat platbu",
+        "dueOn": "Plánovaná platba splatná {{date}}",
+        "amount": "Zaplacená částka",
+        "amountInvalid": "Zadejte částku větší než nula",
+        "method": "Způsob platby",
+        "referencePlaceholder": "např. variabilní symbol nebo ID transakce"
+      },
+      "methods": {
+        "bank_transfer": "Bankovní převod",
+        "cash": "Hotovost",
+        "credit_card": "Kreditní karta",
+        "debit_card": "Debetní karta",
+        "check": "Šek",
+        "other": "Jiné"
+      },
+      "recorded": "Platba byla zaznamenána",
+      "recordFailed": "Platbu se nepodařilo zaznamenat"
+    },
+    "templates": {
+      "created": "Šablona byla vytvořena",
+      "createFailed": "Šablonu se nepodařilo vytvořit",
+      "updated": "Šablona byla aktualizována",
+      "updateFailed": "Šablonu se nepodařilo aktualizovat",
+      "activated": "Šablona byla aktivována",
+      "deactivated": "Šablona byla deaktivována"
+    },
+    "applications": {
+      "screeningStarted": "Prověření nájemce bylo vyžádáno",
+      "screeningFailed": "Prověření nájemce se nepodařilo spustit",
+      "approved": "Žádost byla schválena",
+      "rejected": "Žádost byla zamítnuta",
+      "reviewFailed": "Posouzení žádosti se nepodařilo uložit"
+    },
+    "violations": {
+      "resolved": "Porušení bylo vyřešeno",
+      "resolveFailed": "Porušení se nepodařilo vyřešit",
+      "disputed": "Námitka byla podána",
+      "disputeFailed": "Námitku se nepodařilo podat",
+      "evidenceUploaded": "Důkazy byly nahrány",
+      "evidenceUploadFailed": "Důkazy se nepodařilo nahrát",
+      "uploadingEvidence": "Nahrává se…"
+    }
   },
   "settings": {
     "notifications": {
