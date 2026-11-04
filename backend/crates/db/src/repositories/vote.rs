@@ -268,6 +268,55 @@ impl VoteRepository {
         .await
     }
 
+    /// Whether `user_id` holds the voting right of unit `unit_id` for a vote on
+    /// building `building_id`: the unit must be in that building and the user
+    /// must be its current owner, or, when `allow_delegation` is set, an active
+    /// voting delegate for it. Mirrors the unit set of `check_eligibility`.
+    pub async fn user_may_vote_for_unit<'e, E>(
+        &self,
+        executor: E,
+        building_id: Uuid,
+        unit_id: Uuid,
+        user_id: Uuid,
+        allow_delegation: bool,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM units u
+                WHERE u.id = $1
+                  AND u.building_id = $2
+                  AND (
+                    EXISTS (
+                        SELECT 1 FROM unit_residents ur
+                        WHERE ur.unit_id = u.id
+                          AND ur.user_id = $3
+                          AND ur.resident_type = 'owner'
+                          AND ur.end_date IS NULL
+                    )
+                    OR ($4 AND EXISTS (
+                        SELECT 1 FROM delegations d
+                        WHERE d.unit_id = u.id
+                          AND d.delegate_user_id = $3
+                          AND d.status = 'active'
+                          AND (d.scopes && ARRAY['voting','all']::delegation_scope[])
+                          AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
+                    ))
+                  )
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(building_id)
+        .bind(user_id)
+        .bind(allow_delegation)
+        .fetch_one(executor)
+        .await
+    }
+
     /// Cast a vote with RLS context (Story 5.3).
     ///
     /// Use this method with an `RlsConnection` to ensure RLS policies are enforced.

@@ -316,6 +316,7 @@ pub struct MyResponseQuery {
     responses(
         (status = 201, description = "Vote created", body = Vote),
         (status = 400, description = "Invalid request"),
+        (status = 404, description = "Building not found in the caller's organization"),
         (status = 401, description = "Unauthorized"),
     ),
     tag = "Voting"
@@ -340,6 +341,28 @@ async fn create_vote(
         anonymous_voting: req.anonymous_voting,
         created_by: rls.user_id(),
     };
+
+    // The vote's building must belong to the caller's organization; otherwise
+    // publishing would notify (and list the vote for) another org's owners.
+    let tenant_id = rls.tenant_id();
+    let in_org = state
+        .building_repo
+        .belongs_to_organization_rls(&mut **rls.conn(), data.building_id, tenant_id)
+        .await;
+    match in_org {
+        Ok(true) => {}
+        Ok(false) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err(voting_db_error(e));
+        }
+    }
 
     let vote = state
         .vote_repo
@@ -1229,6 +1252,7 @@ async fn check_eligibility(
     responses(
         (status = 200, description = "Vote cast", body = VoteReceipt),
         (status = 400, description = "Cannot cast vote"),
+        (status = 403, description = "Caller does not hold the unit's voting right"),
         (status = 404, description = "Vote not found"),
         (status = 401, description = "Unauthorized"),
     ),
@@ -1321,6 +1345,39 @@ async fn cast_vote(
         }
     }
 
+    // The ballot must be for a unit in the vote's building that the caller
+    // owns, or (for a delegated cast on a vote that allows delegation) holds
+    // an active voting delegation for. Otherwise any member could cast or
+    // overwrite another unit's ballot.
+    let user_id = rls.user_id();
+    let may_cast = state
+        .vote_repo
+        .user_may_vote_for_unit(
+            &mut **rls.conn(),
+            existing.building_id,
+            req.unit_id,
+            user_id,
+            req.delegation_id.is_some() && existing.allow_delegation,
+        )
+        .await;
+    match may_cast {
+        Ok(true) => {}
+        Ok(false) => {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "NOT_ELIGIBLE",
+                    "You are not eligible to vote for this unit",
+                )),
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err(voting_db_error(e));
+        }
+    }
+
     let data = CastVote {
         vote_id: id,
         user_id: rls.user_id(),
@@ -1357,6 +1414,7 @@ async fn cast_vote(
     ),
     responses(
         (status = 200, description = "User's response"),
+        (status = 403, description = "Caller does not hold the unit's voting right"),
         (status = 404, description = "Vote or response not found"),
         (status = 401, description = "Unauthorized"),
     ),
@@ -1368,7 +1426,38 @@ async fn get_my_response(
     Path(id): Path<Uuid>,
     Query(params): Query<MyResponseQuery>,
 ) -> Result<Json<Option<db::models::VoteResponse>>, (StatusCode, Json<ErrorResponse>)> {
-    vote_in_org(&state, &mut rls, id).await?;
+    let vote = vote_in_org(&state, &mut rls, id).await?;
+
+    // Only a unit the caller may vote for (owner or active voting delegate)
+    // can be read; another unit's ballot stays private.
+    let user_id = rls.user_id();
+    let allowed = state
+        .vote_repo
+        .user_may_vote_for_unit(
+            &mut **rls.conn(),
+            vote.building_id,
+            params.unit_id,
+            user_id,
+            vote.allow_delegation,
+        )
+        .await;
+    match allowed {
+        Ok(true) => {}
+        Ok(false) => {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "You cannot view the ballot of this unit",
+                )),
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err(voting_db_error(e));
+        }
+    }
 
     // Note: get_user_response() doesn't have an RLS version yet
     let response = state
@@ -1403,7 +1492,7 @@ async fn get_my_response(
     request_body = AddCommentRequest,
     responses(
         (status = 201, description = "Comment added", body = db::models::VoteComment),
-        (status = 404, description = "Vote not found"),
+        (status = 404, description = "Vote or parent comment not found"),
         (status = 401, description = "Unauthorized"),
     ),
     tag = "Voting"
@@ -1415,6 +1504,10 @@ async fn add_comment(
     Json(req): Json<AddCommentRequest>,
 ) -> Result<(StatusCode, Json<db::models::VoteComment>), (StatusCode, Json<ErrorResponse>)> {
     vote_in_org(&state, &mut rls, id).await?;
+    if let Some(parent_id) = req.parent_id {
+        let belongs = state.vote_repo.comment_belongs_to_vote(parent_id, id).await;
+        ensure_child_of_vote(&mut rls, belongs, "Parent comment not found").await?;
+    }
 
     let data = CreateVoteComment {
         vote_id: id,
