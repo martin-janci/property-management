@@ -12,8 +12,10 @@ use std::sync::Arc;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 
-use admin_core::{AuditOutcome, AuditWriter, Capability};
+use admin_core::{AuditOutcome, AuditWriter};
 use api_core::extractors::principal::RequestPrincipal;
+
+use super::audit_mfa_event;
 
 use crate::state::AppState;
 
@@ -130,18 +132,15 @@ pub async fn disable_mfa(
     let code_ok = totp_ok || recovery_match.is_some();
 
     if !code_ok {
-        let _ = audit
-            .record(
-                Some(user_id),
-                Capability::UsersWrite,
-                AuditOutcome::Denied,
-                Some("mfa_disable_rejected"),
-                Some(user_id),
-                None,
-                None,
-                None,
-            )
-            .await;
+        audit_mfa_event(
+            &audit,
+            user_id,
+            AuditOutcome::Denied,
+            "mfa_disable_rejected",
+            user_id,
+            None,
+        )
+        .await;
         return Err((
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(serde_json::json!({
@@ -213,18 +212,15 @@ pub async fn disable_mfa(
     })?;
 
     // Audit.
-    let _ = audit
-        .record(
-            Some(user_id),
-            Capability::UsersWrite,
-            AuditOutcome::Allowed,
-            Some("mfa_disabled"),
-            Some(user_id),
-            None,
-            None,
-            None,
-        )
-        .await;
+    audit_mfa_event(
+        &audit,
+        user_id,
+        AuditOutcome::Allowed,
+        "mfa_disabled",
+        user_id,
+        None,
+    )
+    .await;
 
     tracing::info!(user_id = %user_id, "admin mfa disabled");
     Ok(Json(DisableResponse {
