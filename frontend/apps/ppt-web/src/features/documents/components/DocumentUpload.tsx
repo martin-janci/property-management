@@ -25,7 +25,26 @@ interface UploadFile {
   progress: number;
   status: 'pending' | 'uploading' | 'processing' | 'completed' | 'error';
   error?: string;
+  /** The upload itself failed (not file validation), so the row can be retried. */
+  uploadFailed?: boolean;
   documentId?: string;
+}
+
+/**
+ * Translated message for a failed upload. The api-client rejects with English
+ * text ("Network connection lost. Please check your internet connection and
+ * try again.", "Upload was cancelled.", server messages), which was shown
+ * verbatim in the file row.
+ */
+export function uploadErrorMessage(error: unknown, t: (key: string) => string): string {
+  const raw = error instanceof Error ? error.message.toLowerCase() : '';
+  if (error instanceof TypeError || raw.includes('network') || raw.includes('failed to fetch')) {
+    return t('documents.uploadForm.networkError');
+  }
+  if (raw.includes('cancelled') || raw.includes('canceled')) {
+    return t('documents.uploadForm.uploadCancelled');
+  }
+  return t('documents.uploadForm.uploadFailed');
 }
 
 const SUPPORTED_MIME_TYPES = [
@@ -141,6 +160,17 @@ export function DocumentUpload({
     setUploadFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  /** Put a failed upload back in the queue so "Upload" picks it up again. */
+  const retryFile = useCallback((index: number) => {
+    setUploadFiles((prev) =>
+      prev.map((f, i) =>
+        i === index
+          ? { ...f, status: 'pending' as const, error: undefined, uploadFailed: false, progress: 0 }
+          : f
+      )
+    );
+  }, []);
+
   const handleUpload = useCallback(async () => {
     const validFiles = uploadFiles.filter((f) => f.status === 'pending' && !f.error);
     if (validFiles.length === 0) return;
@@ -197,8 +227,8 @@ export function DocumentUpload({
               ? {
                   ...f,
                   status: 'error' as const,
-                  error:
-                    error instanceof Error ? error.message : t('documents.uploadForm.uploadFailed'),
+                  error: uploadErrorMessage(error, t),
+                  uploadFailed: true,
                 }
               : f
           )
@@ -321,6 +351,30 @@ export function DocumentUpload({
                   )}
                 </div>
                 <div className="file-actions">
+                  {uploadFile.status === 'error' && uploadFile.uploadFailed && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => retryFile(index)}
+                        className="retry-btn"
+                        aria-label={t('documents.uploadForm.retryFile', {
+                          name: uploadFile.file.name,
+                        })}
+                      >
+                        {t('documents.uploadForm.retry')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="remove-btn"
+                        aria-label={t('documents.uploadForm.removeFile', {
+                          name: uploadFile.file.name,
+                        })}
+                      >
+                        ×
+                      </button>
+                    </>
+                  )}
                   {uploadFile.status === 'pending' && (
                     <button
                       type="button"
@@ -687,6 +741,24 @@ export function DocumentUpload({
 
         .file-actions {
           flex-shrink: 0;
+          display: flex;
+          align-items: center;
+        }
+
+        .retry-btn {
+          margin-right: 0.375rem;
+          padding: 0 0.5rem;
+          height: 24px;
+          font-size: 0.75rem;
+          background: transparent;
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 0.25rem;
+          color: var(--ppt-fg-default);
+          cursor: pointer;
+        }
+
+        .retry-btn:hover {
+          background: var(--ppt-bg-subtle);
         }
 
         .remove-btn {

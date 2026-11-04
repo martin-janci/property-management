@@ -954,6 +954,10 @@
       "uploading": "Nahrává se...",
       "uploadAndProcess": "Nahrát a zpracovat",
       "uploadFailed": "Nahrávání se nezdařilo",
+      "networkError": "Spojení bylo přerušeno. Zkontrolujte připojení k internetu a zkuste to znovu.",
+      "uploadCancelled": "Nahrávání bylo zrušeno.",
+      "retry": "Zkusit znovu",
+      "retryFile": "Zkusit znovu nahrát {{name}}",
       "unsupportedType": "Nepodporovaný typ souboru: {{type}}",
       "unknownType": "neznámý",
       "fileTooLarge": "Soubor je příliš velký: {{size}} MB (max. {{max}} MB)"

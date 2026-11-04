@@ -941,6 +941,10 @@
       "uploading": "Feltöltés...",
       "uploadAndProcess": "Feltöltés és feldolgozás",
       "uploadFailed": "A feltöltés nem sikerült",
+      "networkError": "Megszakadt a kapcsolat. Ellenőrizze az internetkapcsolatot, és próbálja újra.",
+      "uploadCancelled": "A feltöltés megszakítva.",
+      "retry": "Újrapróbálás",
+      "retryFile": "{{name}} feltöltésének újrapróbálása",
       "unsupportedType": "Nem támogatott fájltípus: {{type}}",
       "unknownType": "ismeretlen",
       "fileTooLarge": "A fájl túl nagy: {{size}} MB (max. {{max}} MB)"

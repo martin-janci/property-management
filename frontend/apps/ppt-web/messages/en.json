@@ -1004,6 +1004,10 @@
       "uploading": "Uploading...",
       "uploadAndProcess": "Upload & Process",
       "uploadFailed": "Upload failed",
+      "networkError": "The connection was lost. Check your internet connection and try again.",
+      "uploadCancelled": "The upload was cancelled.",
+      "retry": "Retry",
+      "retryFile": "Retry uploading {{name}}",
       "unsupportedType": "Unsupported file type: {{type}}",
       "unknownType": "unknown",
       "fileTooLarge": "File too large: {{size}}MB (max {{max}}MB)"

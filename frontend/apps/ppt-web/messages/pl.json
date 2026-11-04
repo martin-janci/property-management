@@ -955,6 +955,10 @@
       "uploading": "Przesyłanie...",
       "uploadAndProcess": "Prześlij i przetwórz",
       "uploadFailed": "Przesyłanie nie powiodło się",
+      "networkError": "Połączenie zostało przerwane. Sprawdź połączenie z internetem i spróbuj ponownie.",
+      "uploadCancelled": "Przesyłanie zostało anulowane.",
+      "retry": "Spróbuj ponownie",
+      "retryFile": "Ponów przesyłanie {{name}}",
       "unsupportedType": "Nieobsługiwany typ pliku: {{type}}",
       "unknownType": "nieznany",
       "fileTooLarge": "Plik jest za duży: {{size}} MB (maks. {{max}} MB)"

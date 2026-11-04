@@ -941,6 +941,10 @@
       "uploading": "Wird hochgeladen...",
       "uploadAndProcess": "Hochladen & verarbeiten",
       "uploadFailed": "Hochladen fehlgeschlagen",
+      "networkError": "Die Verbindung wurde unterbrochen. Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+      "uploadCancelled": "Das Hochladen wurde abgebrochen.",
+      "retry": "Erneut versuchen",
+      "retryFile": "{{name}} erneut hochladen",
       "unsupportedType": "Nicht unterstützter Dateityp: {{type}}",
       "unknownType": "unbekannt",
       "fileTooLarge": "Datei zu groß: {{size}} MB (max. {{max}} MB)"
