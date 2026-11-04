@@ -9,8 +9,56 @@ use axum::{
     Json,
 };
 use common::errors::ErrorResponse;
-use db::models::{CreateSensor, SensorQuery, UpdateSensor};
+use db::models::{
+    sensor_connection_type, sensor_status, sensor_type, CreateSensor, SensorQuery, UpdateSensor,
+};
 use uuid::Uuid;
+
+/// Reject a value outside the column's CHECK constraint with a `400` naming
+/// the allowed values, instead of letting the INSERT/UPDATE fail as a `500`.
+fn check_allowed(
+    field: &str,
+    value: Option<&str>,
+    allowed: &[&str],
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    match value {
+        Some(v) if !allowed.contains(&v) => Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                format!(
+                    "Invalid {field} '{v}'; expected one of: {}",
+                    allowed.join(", ")
+                ),
+            )),
+        )),
+        _ => Ok(()),
+    }
+}
+
+/// Validate the enum-like fields of a create request (Story 14.1).
+pub(super) fn validate_create_sensor(
+    req: &CreateSensor,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    check_allowed("sensor_type", Some(&req.sensor_type), sensor_type::ALL)?;
+    check_allowed(
+        "connection_type",
+        req.connection_type.as_deref(),
+        sensor_connection_type::ALL,
+    )
+}
+
+/// Validate the enum-like fields of an update request (Story 14.1).
+pub(super) fn validate_update_sensor(
+    req: &UpdateSensor,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    check_allowed(
+        "connection_type",
+        req.connection_type.as_deref(),
+        sensor_connection_type::ALL,
+    )?;
+    check_allowed("status", req.status.as_deref(), sensor_status::ALL)
+}
 
 #[utoipa::path(
     post,
@@ -18,6 +66,7 @@ use uuid::Uuid;
     request_body = CreateSensor,
     responses(
         (status = 201, description = "Sensor created"),
+        (status = 400, description = "Invalid sensor_type or connection_type", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
     ),
     tag = "IoT Sensors"
@@ -27,6 +76,12 @@ pub(super) async fn create_sensor(
     mut rls: RlsConnection,
     Json(mut req): Json<CreateSensor>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    // Validate before touching the connection so a bad value never reaches
+    // the DB CHECK constraint (which surfaced as a 500).
+    if let Err(e) = validate_create_sensor(&req) {
+        rls.release().await;
+        return Err(e);
+    }
     // Pin the new sensor to the caller's validated org so the INSERT's
     // organization_id and the RLS WITH CHECK can never disagree.
     req.organization_id = rls.tenant_id();
@@ -90,6 +145,10 @@ pub(super) async fn update_sensor(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSensor>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    if let Err(e) = validate_update_sensor(&req) {
+        rls.release().await;
+        return Err(e);
+    }
     let out = state
         .sensor_repo
         .update(&mut **rls.conn(), id, req)

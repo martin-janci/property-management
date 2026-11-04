@@ -381,7 +381,8 @@ impl VoteRepository {
         let votes = sqlx::query_as::<_, VoteSummary>(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
             WHERE building_id = $1
             ORDER BY created_at DESC
@@ -519,7 +520,7 @@ impl VoteRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
+        let result = result.map(|row| {
             let vote = Vote {
                 id: row.id,
                 organization_id: row.organization_id,
@@ -554,8 +555,11 @@ impl VoteRepository {
                 question_count: row.question_count,
                 response_count: row.response_count,
                 comment_count: row.comment_count,
+                questions: Vec::new(),
             }
-        }))
+        });
+
+        self.attach_questions(result).await
     }
 
     /// Find vote with full details, scoped to a single organization.
@@ -595,7 +599,7 @@ impl VoteRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
+        let result = result.map(|row| {
             let vote = Vote {
                 id: row.id,
                 organization_id: row.organization_id,
@@ -630,8 +634,25 @@ impl VoteRepository {
                 question_count: row.question_count,
                 response_count: row.response_count,
                 comment_count: row.comment_count,
+                questions: Vec::new(),
             }
-        }))
+        });
+
+        self.attach_questions(result).await
+    }
+
+    /// Fill `questions` on a fetched vote detail (no-op for `None`).
+    async fn attach_questions(
+        &self,
+        details: Option<VoteWithDetails>,
+    ) -> Result<Option<VoteWithDetails>, SqlxError> {
+        match details {
+            Some(mut d) => {
+                d.questions = self.get_questions(d.vote.id).await?;
+                Ok(Some(d))
+            }
+            None => Ok(None),
+        }
     }
 
     /// List votes with filters.
@@ -672,7 +693,8 @@ impl VoteRepository {
         let sql = format!(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
             WHERE {}
             ORDER BY created_at DESC
@@ -720,7 +742,8 @@ impl VoteRepository {
         let votes = sqlx::query_as::<_, VoteSummary>(
             r#"
             SELECT id, building_id, title, status::text as status, end_at,
-                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met
+                   quorum_type::text as quorum_type, participation_count, eligible_count, quorum_met,
+                   (SELECT COUNT(*) FROM vote_questions vq WHERE vq.vote_id = votes.id) AS question_count
             FROM votes
             WHERE building_id = $1 AND status = 'active'
             ORDER BY end_at ASC

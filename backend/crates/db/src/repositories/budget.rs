@@ -1000,7 +1000,10 @@ impl BudgetRepository {
                 COALESCE(SUM(budgeted_amount), 0) as total_budgeted,
                 COALESCE(SUM(actual_amount), 0) as total_actual,
                 COALESCE(SUM(variance_amount), 0) as total_variance,
-                CASE WHEN SUM(budgeted_amount) = 0 THEN 0
+                -- COALESCE: with zero items SUM() is NULL, `NULL = 0` is not
+                -- true, and the ELSE branch would yield NULL (500 on decode
+                -- for every freshly created budget).
+                CASE WHEN COALESCE(SUM(budgeted_amount), 0) = 0 THEN 0
                      ELSE ROUND((SUM(actual_amount) - SUM(budgeted_amount)) / SUM(budgeted_amount) * 100, 2)
                 END as variance_percent,
                 COUNT(*) FILTER (WHERE variance_amount > 0) as items_over_budget,
@@ -1040,7 +1043,7 @@ impl BudgetRepository {
                 COALESCE(SUM(bi.budgeted_amount), 0) as budgeted_amount,
                 COALESCE(SUM(bi.actual_amount), 0) as actual_amount,
                 COALESCE(SUM(bi.variance_amount), 0) as variance_amount,
-                CASE WHEN SUM(bi.budgeted_amount) = 0 THEN 0
+                CASE WHEN COALESCE(SUM(bi.budgeted_amount), 0) = 0 THEN 0
                      ELSE ROUND((SUM(bi.actual_amount) - SUM(bi.budgeted_amount)) / SUM(bi.budgeted_amount) * 100, 2)
                 END as variance_percent
             FROM budget_categories bc

@@ -108,13 +108,56 @@ pub struct CancelVoteRequest {
     pub reason: String,
 }
 
+/// A question option as sent by the client.
+///
+/// Option ids are server-owned: `id` may be omitted for a new option (the
+/// server generates one) and is only sent back to keep an existing option's
+/// identity on update. `order` defaults to the option's position in the list.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct QuestionOptionInput {
+    pub id: Option<Uuid>,
+    pub text: String,
+    pub order: Option<i32>,
+}
+
+/// Turn client options into stored options: keep a supplied id, generate a
+/// missing one, and default `order` to the list position. A `yes_no`
+/// question with no options gets the canonical Yes/No pair, because results
+/// tallying maps `true`/`false` answers onto option 0/1.
+fn normalize_options(
+    question_type: Option<&str>,
+    input: Vec<QuestionOptionInput>,
+) -> Vec<QuestionOption> {
+    if input.is_empty() && question_type == Some("yes_no") {
+        return ["Yes", "No"]
+            .iter()
+            .enumerate()
+            .map(|(i, text)| QuestionOption {
+                id: Uuid::new_v4(),
+                text: (*text).to_string(),
+                order: i as i32,
+            })
+            .collect();
+    }
+    input
+        .into_iter()
+        .enumerate()
+        .map(|(i, o)| QuestionOption {
+            id: o.id.unwrap_or_else(Uuid::new_v4),
+            text: o.text,
+            order: o.order.unwrap_or(i as i32),
+        })
+        .collect()
+}
+
 /// Request to add a question.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddQuestionRequest {
     pub question_text: String,
     pub description: Option<String>,
     pub question_type: String,
-    pub options: Vec<QuestionOption>,
+    #[serde(default)]
+    pub options: Vec<QuestionOptionInput>,
     pub display_order: Option<i32>,
     pub is_required: Option<bool>,
 }
@@ -124,7 +167,7 @@ pub struct AddQuestionRequest {
 pub struct UpdateQuestionRequest {
     pub question_text: Option<String>,
     pub description: Option<String>,
-    pub options: Option<Vec<QuestionOption>>,
+    pub options: Option<Vec<QuestionOptionInput>>,
     pub display_order: Option<i32>,
     pub is_required: Option<bool>,
 }
@@ -797,8 +840,8 @@ async fn add_question(
         vote_id: id,
         question_text: req.question_text,
         description: req.description,
+        options: normalize_options(Some(&req.question_type), req.options),
         question_type: req.question_type,
-        options: req.options,
         display_order: req.display_order,
         is_required: req.is_required,
     };
@@ -910,7 +953,7 @@ async fn update_question(
     let data = UpdateVoteQuestion {
         question_text: req.question_text,
         description: req.description,
-        options: req.options,
+        options: req.options.map(|o| normalize_options(None, o)),
         display_order: req.display_order,
         is_required: req.is_required,
     };

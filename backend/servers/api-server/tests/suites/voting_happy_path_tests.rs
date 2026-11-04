@@ -603,3 +603,179 @@ async fn list_active_by_building_succeeds(pool: PgPool) {
         .await;
     assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
 }
+
+// ---------------------------------------------------------------------------
+// Round-3 audit #5 / #6: ballot payload contract
+// ---------------------------------------------------------------------------
+
+impl Ctx {
+    async fn post_question(
+        &self,
+        vote_id: Uuid,
+        body: serde_json::Value,
+    ) -> crate::common::TestResponse {
+        self.app
+            .execute(
+                self.app
+                    .post(&format!("/api/v1/voting/{vote_id}/questions"))
+                    .bearer(&self.token)
+                    .header("X-Tenant-ID", &self.tenant())
+                    .json(body)
+                    .build(),
+            )
+            .await
+    }
+}
+
+/// #5: `GET /voting/{id}` must carry `questions` (with options) so the ballot
+/// page can render and residents can vote.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_vote_includes_questions_with_options(pool: PgPool) {
+    let ctx = setup(pool, "getq").await;
+    let vote_id = ctx.create_vote().await;
+    let question_id = ctx.add_question(vote_id).await;
+
+    let resp = ctx
+        .app
+        .execute(
+            ctx.app
+                .get(&format!("/api/v1/voting/{vote_id}"))
+                .bearer(&ctx.token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body = resp.json_value();
+    let questions = body["questions"].as_array().expect("questions array");
+    assert_eq!(questions.len(), 1);
+    assert_eq!(body["question_count"], 1);
+    assert_eq!(questions[0]["id"], question_id.to_string());
+    assert_eq!(questions[0]["options"].as_array().map(Vec::len), Some(2));
+}
+
+/// #6: options may omit `id` / `order`; the server generates ids and uses the
+/// list position as the order.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_question_generates_missing_option_ids(pool: PgPool) {
+    let ctx = setup(pool, "optids").await;
+    let vote_id = ctx.create_vote().await;
+
+    let resp = ctx
+        .post_question(
+            vote_id,
+            json!({
+                "question_text": "Which contractor?",
+                "question_type": "single_choice",
+                "options": [{"text": "Alpha"}, {"text": "Beta"}]
+            }),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let options = resp.json_value()["options"]
+        .as_array()
+        .cloned()
+        .expect("options");
+    assert_eq!(options.len(), 2);
+    for (i, o) in options.iter().enumerate() {
+        let id = o["id"].as_str().expect("generated id");
+        assert!(
+            Uuid::parse_str(id).is_ok(),
+            "option id must be a UUID: {id}"
+        );
+        assert_eq!(o["order"], i as i64);
+    }
+    assert_ne!(options[0]["id"], options[1]["id"]);
+
+    // A yes/no question with no options gets the Yes/No pair results rely on.
+    let resp = ctx
+        .post_question(
+            vote_id,
+            json!({ "question_text": "Approve?", "question_type": "yes_no" }),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let options = resp.json_value()["options"]
+        .as_array()
+        .cloned()
+        .expect("options");
+    let texts: Vec<_> = options.iter().map(|o| o["text"].clone()).collect();
+    assert_eq!(texts, [json!("Yes"), json!("No")]);
+
+    // Supplied UUIDs are kept as-is.
+    let keep = Uuid::new_v4();
+    let resp = ctx
+        .post_question(
+            vote_id,
+            json!({
+                "question_text": "Keep ids?",
+                "question_type": "single_choice",
+                "options": [{"id": keep, "text": "A", "order": 5}, {"text": "B"}]
+            }),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let options = resp.json_value()["options"]
+        .as_array()
+        .cloned()
+        .expect("options");
+    assert_eq!(options[0]["id"], keep.to_string());
+    assert_eq!(options[0]["order"], 5);
+}
+
+/// The vote list carries `question_count` (VoteCard renders it), on both the
+/// org list and the per-building active list.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_votes_includes_question_count(pool: PgPool) {
+    let ctx = setup(pool, "qcount").await;
+    let with_two = ctx.create_vote().await;
+    ctx.add_question(with_two).await;
+    ctx.add_question(with_two).await;
+    let empty = ctx.create_vote().await;
+
+    let resp = ctx
+        .app
+        .execute(
+            ctx.app
+                .get("/api/v1/voting")
+                .bearer(&ctx.token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body = resp.json_value();
+    let list = body
+        .as_array()
+        .or_else(|| body["votes"].as_array())
+        .or_else(|| body["items"].as_array())
+        .unwrap_or_else(|| panic!("unexpected list shape: {body}"));
+    let count_of = |id: Uuid| {
+        list.iter()
+            .find(|v| v["id"] == id.to_string())
+            .map(|v| v["question_count"].clone())
+            .unwrap_or_else(|| panic!("vote {id} missing from list"))
+    };
+    assert_eq!(count_of(with_two), 2);
+    assert_eq!(count_of(empty), 0);
+
+    ctx.publish_now(with_two).await;
+    let resp = ctx
+        .app
+        .execute(
+            ctx.app
+                .get(&format!(
+                    "/api/v1/voting/building/{}/active",
+                    ctx.building_id
+                ))
+                .bearer(&ctx.token)
+                .header("X-Tenant-ID", &ctx.tenant())
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let active = resp.json_value();
+    let active = active.as_array().expect("active list");
+    assert_eq!(active.len(), 1);
+    assert_eq!(active[0]["question_count"], 2);
+}

@@ -23,6 +23,36 @@ pub mod sensor_type {
     pub const NOISE: &str = "noise";
     pub const AIR_QUALITY: &str = "air_quality";
     pub const OCCUPANCY: &str = "occupancy";
+
+    /// Every value the `sensors.sensor_type` CHECK constraint accepts.
+    pub const ALL: &[&str] = &[
+        TEMPERATURE,
+        HUMIDITY,
+        MOTION,
+        CO2,
+        WATER_LEAK,
+        ENERGY,
+        SMOKE,
+        DOOR,
+        WINDOW,
+        LIGHT,
+        PRESSURE,
+        NOISE,
+        AIR_QUALITY,
+        OCCUPANCY,
+    ];
+}
+
+/// Sensor connection type enum (`sensors.connection_type` CHECK constraint).
+#[allow(missing_docs)]
+pub mod sensor_connection_type {
+    pub const API: &str = "api";
+    pub const MQTT: &str = "mqtt";
+    pub const WEBHOOK: &str = "webhook";
+    pub const POLLING: &str = "polling";
+
+    /// Every value the `sensors.connection_type` CHECK constraint accepts.
+    pub const ALL: &[&str] = &[API, MQTT, WEBHOOK, POLLING];
 }
 
 /// Sensor status enum.
@@ -34,6 +64,9 @@ pub mod sensor_status {
     pub const ERROR: &str = "error";
     pub const MAINTENANCE: &str = "maintenance";
     pub const DISABLED: &str = "disabled";
+
+    /// Every value the `sensors.status` CHECK constraint accepts.
+    pub const ALL: &[&str] = &[PENDING, ACTIVE, OFFLINE, ERROR, MAINTENANCE, DISABLED];
 }
 
 /// IoT sensor entity.

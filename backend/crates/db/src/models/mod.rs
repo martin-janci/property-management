@@ -78,11 +78,11 @@ pub use equipment::{
     UpdateEquipment, UpdateMaintenance,
 };
 pub use sensor::{
-    sensor_status, sensor_type, AggregatedReading, AlertQuery, BatchSensorReadings, CreateSensor,
-    CreateSensorAlert, CreateSensorFaultCorrelation, CreateSensorReading, CreateSensorThreshold,
-    ReadingQuery, Sensor, SensorAlert, SensorDashboard, SensorFaultCorrelation, SensorQuery,
-    SensorReading, SensorSummary, SensorThreshold, SensorThresholdTemplate, SensorTypeCount,
-    SingleReading, UpdateSensor, UpdateSensorThreshold,
+    sensor_connection_type, sensor_status, sensor_type, AggregatedReading, AlertQuery,
+    BatchSensorReadings, CreateSensor, CreateSensorAlert, CreateSensorFaultCorrelation,
+    CreateSensorReading, CreateSensorThreshold, ReadingQuery, Sensor, SensorAlert, SensorDashboard,
+    SensorFaultCorrelation, SensorQuery, SensorReading, SensorSummary, SensorThreshold,
+    SensorThresholdTemplate, SensorTypeCount, SingleReading, UpdateSensor, UpdateSensorThreshold,
 };
 pub use sentiment::{
     alert_type, BuildingSentiment, CreateSentimentAlert, SentimentAlert, SentimentDashboard,
