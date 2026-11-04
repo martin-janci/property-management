@@ -313,6 +313,20 @@ pub async fn verify_email(
 
 // ==================== Resend Verification (Story 1.1) ====================
 
+/// Decide how the resend-verification handler reacts to the result of
+/// invalidating a user's outstanding email-verification tokens.
+///
+/// Issuing a fresh verification token while a previous one remains valid widens
+/// the window in which a stale link can be used, so a DB failure while
+/// invalidating the old tokens must be surfaced (propagated as a 500) rather
+/// than swallowed — matching the error convention of the surrounding handlers.
+fn invalidation_outcome(result: Result<u64, sqlx::Error>) -> Result<(), AuthError> {
+    // PRE-FIX placeholder: swallow the result (mirrors the original
+    // `let _ = ...`). Replaced in the fix commit.
+    let _ = result;
+    Ok(())
+}
+
 /// Resend verification request.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ResendVerificationRequest {
@@ -364,8 +378,10 @@ pub async fn resend_verification(
     // Try to find user and send email
     match state.user_repo.find_by_email(&req.email).await {
         Ok(Some(user)) if user.status == "pending" => {
-            // Invalidate old tokens
-            let _ = state.user_repo.invalidate_user_tokens(user.id).await;
+            // Invalidate old verification tokens before issuing a new one. A
+            // failure here must not be swallowed: proceeding would issue a
+            // fresh token while leaving the prior token(s) valid.
+            invalidation_outcome(state.user_repo.invalidate_user_tokens(user.id).await)?;
 
             // Generate new token
             let token = state.auth_service.generate_token();
@@ -402,4 +418,35 @@ pub async fn resend_verification(
     }
 
     Ok(Json(response))
+}
+
+#[cfg(test)]
+mod resend_verification_token_tests {
+    use super::invalidation_outcome;
+    use axum::http::StatusCode;
+
+    /// Regression: a DB failure while invalidating a user's existing
+    /// email-verification tokens must NOT be silently swallowed. Before the
+    /// fix the handler did `let _ = state.user_repo.invalidate_user_tokens(..)`,
+    /// so a failed invalidation left the prior verification token(s) valid
+    /// while a brand-new token was issued (security issue: old verification
+    /// tokens must be invalidated when a new one is issued). The invalidation
+    /// outcome must surface as an error so the handler aborts instead of
+    /// proceeding as if invalidation succeeded.
+    #[test]
+    fn invalidation_db_error_is_surfaced_not_swallowed() {
+        let outcome = invalidation_outcome(Err(sqlx::Error::PoolClosed));
+        assert!(
+            outcome.is_err(),
+            "a DB failure while invalidating old verification tokens must be surfaced, not swallowed"
+        );
+        let (status, _) = outcome.unwrap_err();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    /// A successful invalidation lets the handler proceed to issue the new token.
+    #[test]
+    fn invalidation_success_proceeds() {
+        assert!(invalidation_outcome(Ok(2)).is_ok());
+    }
 }
