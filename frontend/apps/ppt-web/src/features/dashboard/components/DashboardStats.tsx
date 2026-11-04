@@ -38,7 +38,6 @@ function QuickStat({ label, value, color }: QuickStatProps) {
 
 /** Renders the dashboard summary stats. Implements SectionProps so it can
  *  be mounted directly by LayoutRenderer. */
-// biome-ignore lint/correctness/noUnusedVariables: mode/props are part of SectionProps contract
 export function DashboardStats({ mode: _mode, props: _props }: SectionProps) {
   const { t } = useTranslation();
   const faultStats = useFaultStatistics();
