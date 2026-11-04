@@ -37,3 +37,9 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=financial` now invalidates the `financial` root; `App.tsx` wires `onEntityEvent`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-06-03 — agent: confirmed FinancialDashboardPageRoute wired to getARAgingReport/getOverdueInvoices/listInvoices via TanStack Query (#975.1); apiStatus -> partial (no org-wide payments endpoint).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: added quick-nav cards to invoices/payments/budgets/reports; recent payments wired to listPayments(limit 5); overdue View → /financial/invoices/:id; building/date filters hidden (no API filter params)

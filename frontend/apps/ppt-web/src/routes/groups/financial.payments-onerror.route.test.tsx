@@ -71,6 +71,7 @@ vi.mock('@ppt/api-client', () => ({
   getOverdueInvoices: vi.fn(),
   downloadInvoicePdf: vi.fn(),
   exportReport: vi.fn(),
+  getInvoice: vi.fn(),
   sendInvoice: vi.fn(),
 }));
 

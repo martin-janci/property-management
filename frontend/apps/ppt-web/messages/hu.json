@@ -938,7 +938,23 @@
     "paidDate": "Fizetés dátuma",
     "statusPaid": "Fizetve",
     "statusPending": "Függőben",
-    "statusOverdue": "Késedelmes"
+    "statusOverdue": "Késedelmes",
+    "dashboard": {
+      "quickNav": {
+        "label": "Pénzügyi részlegek",
+        "invoices": "Számlák",
+        "invoicesDesc": "Számlák létrehozása, küldése és követése",
+        "payments": "Befizetések",
+        "paymentsDesc": "Befizetések rögzítése és egyeztetése",
+        "budgets": "Költségvetések",
+        "budgetsDesc": "Költségvetések tervezése és követése",
+        "reports": "Kimutatások",
+        "reportsDesc": "Eredménykimutatás, mérleg és pénzforgalom"
+      }
+    },
+    "invoiceDetail": {
+      "loadFailed": "A számlát nem sikerült betölteni."
+    }
   },
   "announcements": {
     "form": {

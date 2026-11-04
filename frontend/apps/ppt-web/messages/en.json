@@ -1066,6 +1066,22 @@
       "budgetsList": "Budgets",
       "noBudgets": "No budgets found",
       "createFirst": "Create Your First Budget"
+    },
+    "dashboard": {
+      "quickNav": {
+        "label": "Finance sections",
+        "invoices": "Invoices",
+        "invoicesDesc": "Create, send and track invoices",
+        "payments": "Payments",
+        "paymentsDesc": "Record and reconcile payments",
+        "budgets": "Budgets",
+        "budgetsDesc": "Plan and track budgets",
+        "reports": "Reports",
+        "reportsDesc": "Income statement, balance sheet and cash flow"
+      }
+    },
+    "invoiceDetail": {
+      "loadFailed": "Could not load this invoice."
     }
   },
   "announcements": {

@@ -938,7 +938,23 @@
     "paidDate": "Bezahlt am",
     "statusPaid": "Bezahlt",
     "statusPending": "Ausstehend",
-    "statusOverdue": "Überfällig"
+    "statusOverdue": "Überfällig",
+    "dashboard": {
+      "quickNav": {
+        "label": "Finanzbereiche",
+        "invoices": "Rechnungen",
+        "invoicesDesc": "Rechnungen erstellen, versenden und verfolgen",
+        "payments": "Zahlungen",
+        "paymentsDesc": "Zahlungen erfassen und abgleichen",
+        "budgets": "Budgets",
+        "budgetsDesc": "Budgets planen und verfolgen",
+        "reports": "Berichte",
+        "reportsDesc": "Gewinn- und Verlustrechnung, Bilanz und Cashflow"
+      }
+    },
+    "invoiceDetail": {
+      "loadFailed": "Diese Rechnung konnte nicht geladen werden."
+    }
   },
   "announcements": {
     "form": {

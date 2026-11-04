@@ -985,7 +985,23 @@
     "paidDate": "Datum platby",
     "statusPaid": "Zaplaceno",
     "statusPending": "Čekající",
-    "statusOverdue": "Po splatnosti"
+    "statusOverdue": "Po splatnosti",
+    "dashboard": {
+      "quickNav": {
+        "label": "Sekce financí",
+        "invoices": "Faktury",
+        "invoicesDesc": "Vytvářejte, odesílejte a sledujte faktury",
+        "payments": "Platby",
+        "paymentsDesc": "Zaznamenávejte a párujte platby",
+        "budgets": "Rozpočty",
+        "budgetsDesc": "Plánujte a sledujte rozpočty",
+        "reports": "Výkazy",
+        "reportsDesc": "Výkaz zisku a ztráty, rozvaha a peněžní toky"
+      }
+    },
+    "invoiceDetail": {
+      "loadFailed": "Fakturu se nepodařilo načíst."
+    }
   },
   "announcements": {
     "form": {

@@ -940,7 +940,23 @@
     "paidDate": "Data płatności",
     "statusPaid": "Zapłacone",
     "statusPending": "Oczekujące",
-    "statusOverdue": "Zaległe"
+    "statusOverdue": "Zaległe",
+    "dashboard": {
+      "quickNav": {
+        "label": "Sekcje finansów",
+        "invoices": "Faktury",
+        "invoicesDesc": "Twórz, wysyłaj i śledź faktury",
+        "payments": "Płatności",
+        "paymentsDesc": "Rejestruj i uzgadniaj płatności",
+        "budgets": "Budżety",
+        "budgetsDesc": "Planuj i monitoruj budżety",
+        "reports": "Raporty",
+        "reportsDesc": "Rachunek zysków i strat, bilans i przepływy pieniężne"
+      }
+    },
+    "invoiceDetail": {
+      "loadFailed": "Nie udało się wczytać tej faktury."
+    }
   },
   "announcements": {
     "form": {

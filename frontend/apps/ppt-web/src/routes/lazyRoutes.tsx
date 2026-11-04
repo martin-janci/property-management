@@ -251,6 +251,9 @@ export const FinancialDashboardPage = lazy(() =>
 export const InvoiceManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.InvoiceManagementPage }))
 );
+export const InvoiceDetail = lazy(() =>
+  import('../features/financial').then((m) => ({ default: m.InvoiceDetail }))
+);
 export const PaymentManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.PaymentManagementPage }))
 );

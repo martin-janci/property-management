@@ -35,3 +35,9 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
 - 2026-06-03 — agent: confirmed InvoiceManagementPageRoute wired to listInvoices (status + pagination) + sendInvoice via TanStack Query (#975.2); apiStatus -> partial (no building_id/search params).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: registered /financial/invoices/:invoiceId — deep-links the InvoiceDetail modal (getInvoice) over the list; /financial/invoices/new still has no create page
