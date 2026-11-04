@@ -1275,6 +1275,46 @@ impl FaultRepository {
         Ok(())
     }
 
+    /// Find an attachment scoped to its parent fault.
+    ///
+    /// Returns `None` when `attachment_id` does not belong to `fault_id`, so a
+    /// caller who passes their own fault id as the parent cannot reach another
+    /// fault's (or another org's) attachment.
+    pub async fn find_attachment_for_fault(
+        &self,
+        fault_id: Uuid,
+        attachment_id: Uuid,
+    ) -> Result<Option<FaultAttachment>, SqlxError> {
+        sqlx::query_as::<_, FaultAttachment>(
+            r#"
+            SELECT * FROM fault_attachments
+            WHERE id = $1 AND fault_id = $2
+            "#,
+        )
+        .bind(attachment_id)
+        .bind(fault_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Delete an attachment only if it belongs to `fault_id`.
+    ///
+    /// Returns the number of rows deleted (0 when the attachment does not
+    /// belong to the fault).
+    pub async fn delete_attachment_for_fault(
+        &self,
+        fault_id: Uuid,
+        attachment_id: Uuid,
+    ) -> Result<u64, SqlxError> {
+        let result = sqlx::query("DELETE FROM fault_attachments WHERE id = $1 AND fault_id = $2")
+            .bind(attachment_id)
+            .bind(fault_id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected())
+    }
+
     // ========================================================================
     // Timeline
     // ========================================================================
