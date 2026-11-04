@@ -1422,7 +1422,10 @@
       "loadMore": "Több betöltése",
       "loading": "Betöltés...",
       "errorTitle": "Nem sikerült betölteni a végrehajtásokat",
-      "errorMessage": "Kérjük, próbálja újra később."
+      "errorMessage": "Kérjük, próbálja újra később.",
+      "notFoundTitle": "Az ütemterv nem található",
+      "notFoundDescription": "Ez a jelentésütemterv nem létezik, vagy nincs hozzáférése.",
+      "frequencyAt": "{{frequency}}, {{time}}"
     },
     "schedule": {
       "created": "Ütemezés sikeresen létrehozva.",

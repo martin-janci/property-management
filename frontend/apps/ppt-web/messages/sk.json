@@ -1475,7 +1475,10 @@
       "loadMore": "Načítať viac",
       "loading": "Načítava sa...",
       "errorTitle": "Nepodarilo sa načítať spustenia",
-      "errorMessage": "Skúste to prosím neskôr."
+      "errorMessage": "Skúste to prosím neskôr.",
+      "notFoundTitle": "Plán sa nenašiel",
+      "notFoundDescription": "Tento plán reportov neexistuje alebo k nemu nemáte prístup.",
+      "frequencyAt": "{{frequency}} o {{time}}"
     },
     "schedule": {
       "created": "Plán bol úspešne vytvorený.",

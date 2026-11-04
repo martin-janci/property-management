@@ -3710,7 +3710,10 @@
       "loadMore": "Load more",
       "loading": "Loading...",
       "errorTitle": "Failed to load executions",
-      "errorMessage": "Please try again later."
+      "errorMessage": "Please try again later.",
+      "notFoundTitle": "Schedule not found",
+      "notFoundDescription": "This report schedule doesn't exist or you don't have access to it.",
+      "frequencyAt": "{{frequency}} at {{time}}"
     },
     "schedule": {
       "created": "Schedule created successfully.",

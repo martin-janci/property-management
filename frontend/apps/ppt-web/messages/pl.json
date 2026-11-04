@@ -1428,7 +1428,10 @@
       "loadMore": "Wczytaj więcej",
       "loading": "Wczytywanie...",
       "errorTitle": "Nie udało się wczytać wykonań",
-      "errorMessage": "Spróbuj ponownie później."
+      "errorMessage": "Spróbuj ponownie później.",
+      "notFoundTitle": "Nie znaleziono harmonogramu",
+      "notFoundDescription": "Ten harmonogram raportów nie istnieje lub nie masz do niego dostępu.",
+      "frequencyAt": "{{frequency}} o {{time}}"
     },
     "schedule": {
       "created": "Harmonogram został utworzony.",
