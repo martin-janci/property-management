@@ -14,7 +14,6 @@
  * "never uses window.prompt or window.alert" assertion added for
  * `ContentModerationPage` in #2841.
  */
-import { useDownloadDsaReportPdf, useDsaMetrics, usePublishDsaReport } from '@ppt/api-client';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components';
