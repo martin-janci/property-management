@@ -12,6 +12,7 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{
     CreateSubmissionWindow, CreateUtilityBill, DistributeUtilityBill, RegisterMeter, ReplaceMeter,
     SubmitReading, ValidateReading,
@@ -272,6 +273,41 @@ async fn verify_org_access(
     Ok(())
 }
 
+/// Verify the authenticated user is a manager-tier member of `org_id`.
+///
+/// The role is read from `organization_members` (never the JWT). A non-member
+/// gets the same 403 as `verify_org_access`; a member without a manager-class
+/// role gets 403 `INSUFFICIENT_ROLE`.
+async fn verify_org_manager(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(state, user_id, org_id).await?;
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to load membership role");
+            internal_error("Database error")
+        })?;
+    let is_manager = role_type
+        .as_deref()
+        .and_then(TenantRole::from_role_type)
+        .is_some_and(|r| r.is_manager());
+    if !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required",
+            )),
+        ));
+    }
+    Ok(())
+}
+
 /// Resolve the organization that owns `building_id` and verify the caller is a
 /// member of it. Returns the building's organization_id on success. A 404 is
 /// returned for an unknown building so cross-tenant probing cannot distinguish
@@ -404,7 +440,7 @@ async fn register_meter(
 ) -> ApiResult<(StatusCode, Json<db::models::Meter>)> {
     // Trust the authenticated principal, not the client-supplied org: the
     // caller must be a member of the target org AND own the target building.
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
     let building_org =
         verify_building_access(&state, auth.user_id, payload.data.building_id).await?;
     if building_org != payload.organization_id {
@@ -519,6 +555,7 @@ async fn replace_meter(
             "organization_id does not match the meter's organization",
         ));
     }
+    verify_org_manager(&state, auth.user_id, meter.organization_id).await?;
 
     let repo = &state.meter_repo;
 
@@ -676,7 +713,14 @@ async fn create_submission_window(
     auth: AuthUser,
     Json(payload): Json<CreateSubmissionWindowRequest>,
 ) -> ApiResult<(StatusCode, Json<db::models::ReadingSubmissionWindow>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
+    // The window's building must belong to the same org, otherwise members of
+    // the building's real org would be served a foreign window.
+    let building_org =
+        verify_building_access(&state, auth.user_id, payload.data.building_id).await?;
+    if building_org != payload.organization_id {
+        return Err(not_found_error("Building not found"));
+    }
 
     let repo = &state.meter_repo;
 
@@ -705,12 +749,14 @@ async fn get_open_window(
     auth: AuthUser,
     Path(building_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::ReadingSubmissionWindow>> {
-    verify_building_access(&state, auth.user_id, building_id).await?;
+    let building_org = verify_building_access(&state, auth.user_id, building_id).await?;
 
     let repo = &state.meter_repo;
 
     match repo.get_open_submission_window(building_id).await {
-        Ok(Some(window)) => Ok(Json(window)),
+        // Never serve a window stamped with another org.
+        Ok(Some(window)) if window.organization_id == building_org => Ok(Json(window)),
+        Ok(Some(_)) => Err(not_found_error("No open submission window")),
         Ok(None) => Err(not_found_error("No open submission window")),
         Err(e) => {
             tracing::error!("Failed to get submission window: {:?}", e);
@@ -750,7 +796,8 @@ async fn validate_reading(
             internal_error("Failed to get reading")
         })?
         .ok_or_else(|| not_found_error("Reading not found"))?;
-    verify_meter_access(&state, auth.user_id, reading.meter_id).await?;
+    let meter = verify_meter_access(&state, auth.user_id, reading.meter_id).await?;
+    verify_org_manager(&state, auth.user_id, meter.organization_id).await?;
 
     match repo.validate_reading(id, auth.user_id, payload).await {
         Ok(Some(reading)) => Ok(Json(reading)),
@@ -844,7 +891,14 @@ async fn create_utility_bill(
     auth: AuthUser,
     Json(payload): Json<CreateUtilityBillRequest>,
 ) -> ApiResult<(StatusCode, Json<db::models::UtilityBill>)> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
+    // The bill's building must belong to the same org: distribution later
+    // fans out to every unit of `building_id`.
+    let building_org =
+        verify_building_access(&state, auth.user_id, payload.data.building_id).await?;
+    if building_org != payload.organization_id {
+        return Err(not_found_error("Building not found"));
+    }
 
     let repo = &state.meter_repo;
 
@@ -905,7 +959,14 @@ async fn distribute_bill(
     Path(id): Path<Uuid>,
     Json(payload): Json<DistributeUtilityBill>,
 ) -> ApiResult<Json<db::models::UtilityBillResponse>> {
-    verify_bill_access(&state, auth.user_id, id).await?;
+    let bill = verify_bill_access(&state, auth.user_id, id).await?;
+    verify_org_manager(&state, auth.user_id, bill.organization_id).await?;
+    // Defense in depth for bills created before building/org validation:
+    // never distribute onto units of a building outside the bill's org.
+    let building_org = verify_building_access(&state, auth.user_id, bill.building_id).await?;
+    if building_org != bill.organization_id {
+        return Err(not_found_error("Utility bill not found"));
+    }
 
     let repo = &state.meter_repo;
 
@@ -1064,9 +1125,19 @@ async fn ingest_smart_reading(
     auth: AuthUser,
     Json(payload): Json<IngestReadingRequest>,
 ) -> ApiResult<StatusCode> {
-    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    verify_org_manager(&state, auth.user_id, payload.organization_id).await?;
 
     let repo = &state.meter_repo;
+
+    // The provider must belong to the same org.
+    match repo.get_smart_meter_provider(payload.provider_id).await {
+        Ok(Some(provider)) if provider.organization_id == payload.organization_id => {}
+        Ok(_) => return Err(not_found_error("Provider not found")),
+        Err(e) => {
+            tracing::error!("Failed to find provider: {:?}", e);
+            return Err(internal_error("Failed to find provider"));
+        }
+    }
 
     // Find meter by number
     let meter = match repo
@@ -1153,7 +1224,8 @@ async fn resolve_alert(
             internal_error("Failed to get alert")
         })?
         .ok_or_else(|| not_found_error("Alert not found"))?;
-    verify_meter_access(&state, auth.user_id, alert.meter_id).await?;
+    let meter = verify_meter_access(&state, auth.user_id, alert.meter_id).await?;
+    verify_org_manager(&state, auth.user_id, meter.organization_id).await?;
 
     match repo
         .resolve_missing_alert(id, auth.user_id, payload.notes.as_deref())

@@ -1,6 +1,6 @@
 //! Sensor CRUD handlers (Story 14.1).
 
-use super::shared::{db_error, not_found, write_error};
+use super::shared::{db_error, not_found, write_error, IotManager};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -73,6 +73,7 @@ pub(super) fn validate_update_sensor(
 )]
 pub(super) async fn create_sensor(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Json(mut req): Json<CreateSensor>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
@@ -128,9 +129,10 @@ pub(super) async fn get_sensor(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let out = state
         .sensor_repo
-        .find_by_id(&mut **rls.conn(), id)
+        .find_by_id(&mut **rls.conn(), org_id, id)
         .await
         .map_err(|e| db_error("Failed to get sensor", e))
         .and_then(|maybe| match maybe {
@@ -143,6 +145,7 @@ pub(super) async fn get_sensor(
 
 pub(super) async fn update_sensor(
     State(state): State<AppState>,
+    manager: IotManager,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSensor>,
@@ -153,7 +156,7 @@ pub(super) async fn update_sensor(
     }
     let out = state
         .sensor_repo
-        .update(&mut **rls.conn(), id, req)
+        .update(&mut **rls.conn(), manager.tenant_id, id, req)
         .await
         .map(|sensor| Json(serde_json::json!(sensor)))
         .map_err(|e| write_error("Failed to update sensor", "Sensor not found", e));
@@ -163,12 +166,13 @@ pub(super) async fn update_sensor(
 
 pub(super) async fn delete_sensor(
     State(state): State<AppState>,
+    manager: IotManager,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let out = state
         .sensor_repo
-        .delete(&mut **rls.conn(), id)
+        .delete(&mut **rls.conn(), manager.tenant_id, id)
         .await
         .map_err(|e| db_error("Failed to delete sensor", e))
         .and_then(|deleted| {

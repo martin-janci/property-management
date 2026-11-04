@@ -50,17 +50,19 @@ impl SensorRepository {
         .await
     }
 
-    /// Get sensor by ID.
+    /// Get sensor by ID, scoped to `org_id` (another org's sensor is `None`).
     pub async fn find_by_id<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<Sensor>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as("SELECT * FROM sensors WHERE id = $1")
+        sqlx::query_as("SELECT * FROM sensors WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(executor)
             .await
     }
@@ -103,10 +105,12 @@ impl SensorRepository {
         .await
     }
 
-    /// Update a sensor.
+    /// Update a sensor, scoped to `org_id` (another org's sensor yields
+    /// `RowNotFound`).
     pub async fn update<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         id: Uuid,
         data: UpdateSensor,
     ) -> Result<Sensor, sqlx::Error>
@@ -129,7 +133,7 @@ impl SensorRepository {
                 firmware_version = COALESCE($12, firmware_version),
                 metadata = COALESCE($13, metadata),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $14
             RETURNING *
             "#,
         )
@@ -146,17 +150,24 @@ impl SensorRepository {
         .bind(data.model)
         .bind(data.firmware_version)
         .bind(data.metadata.map(sqlx::types::Json))
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
 
-    /// Delete a sensor.
-    pub async fn delete<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    /// Delete a sensor, scoped to `org_id`.
+    pub async fn delete<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result = sqlx::query("DELETE FROM sensors WHERE id = $1")
+        let result = sqlx::query("DELETE FROM sensors WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)

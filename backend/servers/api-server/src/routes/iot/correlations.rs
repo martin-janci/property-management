@@ -1,6 +1,6 @@
 //! Sensor-fault correlation handlers (Story 14.5) — list, create, delete.
 
-use super::shared::{db_error, insert_child_error, not_found};
+use super::shared::{db_error, ensure_in_org, insert_child_error, not_found, IotManager, IotScope};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -17,6 +17,7 @@ pub(super) async fn list_correlations(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
     let out = state
         .sensor_repo
         .list_correlations_for_sensor(&mut **rls.conn(), id)
@@ -29,10 +30,13 @@ pub(super) async fn list_correlations(
 
 pub(super) async fn create_correlation(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorFaultCorrelation>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Sensor(id)).await?;
+    ensure_in_org(&state, &mut rls, IotScope::Fault(req.fault_id)).await?;
     req.sensor_id = id;
     req.created_by = Some(rls.user_id());
     let out = state
@@ -47,9 +51,11 @@ pub(super) async fn create_correlation(
 
 pub(super) async fn delete_correlation(
     State(state): State<AppState>,
+    _manager: IotManager,
     mut rls: RlsConnection,
     Path(correlation_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    ensure_in_org(&state, &mut rls, IotScope::Correlation(correlation_id)).await?;
     let out = state
         .sensor_repo
         .delete_correlation(&mut **rls.conn(), correlation_id)
