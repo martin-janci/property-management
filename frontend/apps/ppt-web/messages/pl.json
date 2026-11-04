@@ -1902,7 +1902,14 @@
     "sensorRegistered": "Czujnik zarejestrowany",
     "sensorRegisterFailed": "Nie udało się zarejestrować czujnika",
     "sensorUpdated": "Czujnik zaktualizowany",
-    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika"
+    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika",
+    "connectionTypeNone": "Nie określono",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Cykliczne odpytywanie"
+    }
   },
   "commandPalette": {
     "commands": {

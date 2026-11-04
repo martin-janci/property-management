@@ -1927,7 +1927,14 @@
     "sensorRegistered": "Sensor registriert",
     "sensorRegisterFailed": "Sensor konnte nicht registriert werden",
     "sensorUpdated": "Sensor aktualisiert",
-    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden"
+    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden",
+    "connectionTypeNone": "Nicht angegeben",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Periodische Abfrage"
+    }
   },
   "commandPalette": {
     "commands": {

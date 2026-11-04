@@ -1896,7 +1896,14 @@
     "sensorRegistered": "Érzékelő regisztrálva",
     "sensorRegisterFailed": "Az érzékelő regisztrálása sikertelen",
     "sensorUpdated": "Érzékelő frissítve",
-    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen"
+    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen",
+    "connectionTypeNone": "Nincs megadva",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Időszakos lekérdezés"
+    }
   },
   "commandPalette": {
     "commands": {

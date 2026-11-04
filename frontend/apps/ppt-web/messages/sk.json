@@ -1980,7 +1980,14 @@
     "sensorRegistered": "Senzor zaregistrovaný",
     "sensorRegisterFailed": "Nepodarilo sa zaregistrovať senzor",
     "sensorUpdated": "Senzor aktualizovaný",
-    "sensorUpdateFailed": "Nepodarilo sa aktualizovať senzor"
+    "sensorUpdateFailed": "Nepodarilo sa aktualizovať senzor",
+    "connectionTypeNone": "Neuvedené",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Pravidelné dopytovanie"
+    }
   },
   "commandPalette": {
     "commands": {

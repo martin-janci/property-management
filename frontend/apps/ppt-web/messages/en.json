@@ -4184,7 +4184,14 @@
     "sensorRegistered": "Sensor registered",
     "sensorRegisterFailed": "Failed to register sensor",
     "sensorUpdated": "Sensor updated",
-    "sensorUpdateFailed": "Failed to update sensor"
+    "sensorUpdateFailed": "Failed to update sensor",
+    "connectionTypeNone": "Not specified",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Polling"
+    }
   },
   "commandPalette": {
     "commands": {
