@@ -571,6 +571,12 @@
       "fetchFailedTitle": "Einrichtungen konnten nicht geladen werden",
       "fetchFailedDescription": "Beim Laden der Einrichtungen ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "retry": "Erneut versuchen"
+    },
+    "nav": {
+      "label": "Gemeinschaftseinrichtungen",
+      "book": "Einrichtung buchen",
+      "myBookings": "Meine Buchungen",
+      "buildingFacilities": "Gemeinschaftseinrichtungen"
     }
   },
   "faults": {

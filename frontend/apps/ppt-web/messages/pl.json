@@ -573,6 +573,12 @@
       "fetchFailedTitle": "Nie udało się załadować obiektów",
       "fetchFailedDescription": "Podczas ładowania obiektów wystąpił błąd. Spróbuj ponownie.",
       "retry": "Spróbuj ponownie"
+    },
+    "nav": {
+      "label": "Pomieszczenia wspólne",
+      "book": "Zarezerwuj pomieszczenie",
+      "myBookings": "Moje rezerwacje",
+      "buildingFacilities": "Pomieszczenia wspólne"
     }
   },
   "faults": {

@@ -76,3 +76,9 @@ Endpoints (not yet registered in `@ppt/sitemap`, so listed here in prose):
 
 ## Agent Log
 - 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: `BuildingDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/buildings.tsx` now renders its missing-param fallback via `t('errors.buildingNotFound', 'Building not found')` (was a hardcoded English literal); locale bundles gained the `errors.buildingNotFound` key across en/sk/cs/de/hu/pl. No route or component change.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: added Facilities quick link → /buildings/:id/facilities (previously no inbound link)

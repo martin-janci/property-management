@@ -8,6 +8,7 @@
 
 import type { BuildingStatus, BuildingType } from '@ppt/api-client';
 import { isSafeImageUrl } from '@ppt/shared';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { BuildingLocationMap, UnitsSection } from '../components';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
@@ -38,6 +39,7 @@ const TYPE_LABELS: Record<BuildingType, string> = {
 };
 
 export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
+  const { t } = useTranslation();
   const {
     data: building,
     isLoading: buildingLoading,
@@ -150,6 +152,12 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"
             >
               Person-months
+            </Link>
+            <Link
+              to={`/buildings/${buildingId}/facilities`}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"
+            >
+              {t('facilities.nav.buildingFacilities')}
             </Link>
           </div>
 

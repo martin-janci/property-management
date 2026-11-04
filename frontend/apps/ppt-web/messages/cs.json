@@ -572,6 +572,12 @@
       "fetchFailedTitle": "Prostory se nepodařilo načíst",
       "fetchFailedDescription": "Při načítání prostorů došlo k chybě. Zkuste to znovu.",
       "retry": "Zkusit znovu"
+    },
+    "nav": {
+      "label": "Společné prostory",
+      "book": "Rezervovat prostor",
+      "myBookings": "Moje rezervace",
+      "buildingFacilities": "Společné prostory"
     }
   },
   "faults": {

@@ -12,10 +12,17 @@
  */
 
 /// <reference types="vitest/globals" />
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MyUnitPage } from './MyUnitPage';
+
+// The page links out to facilities, so it needs a router context.
+function render(ui: ReactElement) {
+  return rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 const mockUseMyUnits = vi.fn();
 vi.mock('@ppt/api-client', () => ({
@@ -131,5 +138,18 @@ describe('MyUnitPage', () => {
     await user.selectOptions(switcher, 'unit-2');
 
     expect(screen.getByRole('heading', { name: /unit 2C/i })).toBeInTheDocument();
+  });
+
+  it("links to the unit's building facilities and the resident's bookings", () => {
+    mockUseMyUnits.mockReturnValue({ isLoading: false, isError: false, data: [makeUnit()] });
+    render(<MyUnitPage />);
+    expect(screen.getByRole('link', { name: /book a facility/i })).toHaveAttribute(
+      'href',
+      '/buildings/bld-1/facilities'
+    );
+    expect(screen.getByRole('link', { name: /my bookings/i })).toHaveAttribute(
+      'href',
+      '/facilities/bookings/my'
+    );
   });
 });

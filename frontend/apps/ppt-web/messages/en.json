@@ -590,6 +590,12 @@
       "fetchFailedTitle": "Couldn't load facilities",
       "fetchFailedDescription": "Something went wrong while loading facilities. Please try again.",
       "retry": "Try again"
+    },
+    "nav": {
+      "label": "Facilities",
+      "book": "Book a facility",
+      "myBookings": "My bookings",
+      "buildingFacilities": "Facilities"
     }
   },
   "faults": {
