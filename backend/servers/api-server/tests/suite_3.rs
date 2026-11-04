@@ -33,6 +33,8 @@ mod dev_mode_tenant_tests;
 mod dispute_cross_org_idor_tests;
 #[path = "suites/dispute_evidence_auth_tests.rs"]
 mod dispute_evidence_auth_tests;
+#[path = "suites/dispute_subresource_tenant_tests.rs"]
+mod dispute_subresource_tenant_tests;
 #[path = "suites/disputes_happy_path_tests.rs"]
 mod disputes_happy_path_tests;
 #[path = "suites/document_access_rls_tests.rs"]
