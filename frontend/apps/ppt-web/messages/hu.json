@@ -1787,6 +1787,13 @@
     "fieldLocation": "Hely",
     "fieldLocationDescription": "Helyleírás",
     "fieldConnectionType": "Kapcsolat típusa",
+    "connectionTypeNone": "Nincs megadva",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Időszakos lekérdezés"
+    },
     "fieldUnit": "Mértékegység",
     "fieldInterval": "Jelentési időköz (mp)",
     "fieldManufacturer": "Gyártó",
@@ -1899,14 +1906,7 @@
     "sensorRegistered": "Érzékelő regisztrálva",
     "sensorRegisterFailed": "Az érzékelő regisztrálása sikertelen",
     "sensorUpdated": "Érzékelő frissítve",
-    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen",
-    "connectionTypeNone": "Nincs megadva",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Időszakos lekérdezés"
-    }
+    "sensorUpdateFailed": "Az érzékelő frissítése sikertelen"
   },
   "commandPalette": {
     "commands": {

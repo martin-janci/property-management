@@ -1818,6 +1818,13 @@
     "fieldLocation": "Standort",
     "fieldLocationDescription": "Standortbeschreibung",
     "fieldConnectionType": "Verbindungstyp",
+    "connectionTypeNone": "Nicht angegeben",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Periodische Abfrage"
+    },
     "fieldUnit": "Maßeinheit",
     "fieldInterval": "Meldeintervall (s)",
     "fieldManufacturer": "Hersteller",
@@ -1930,14 +1937,7 @@
     "sensorRegistered": "Sensor registriert",
     "sensorRegisterFailed": "Sensor konnte nicht registriert werden",
     "sensorUpdated": "Sensor aktualisiert",
-    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden",
-    "connectionTypeNone": "Nicht angegeben",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Periodische Abfrage"
-    }
+    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden"
   },
   "commandPalette": {
     "commands": {

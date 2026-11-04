@@ -1871,6 +1871,13 @@
     "fieldLocation": "Umiestnenie",
     "fieldLocationDescription": "Popis umiestnenia",
     "fieldConnectionType": "Typ pripojenia",
+    "connectionTypeNone": "Neuvedené",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Pravidelné dopytovanie"
+    },
     "fieldUnit": "Merná jednotka",
     "fieldInterval": "Interval hlásenia (s)",
     "fieldManufacturer": "Výrobca",
@@ -1983,14 +1990,7 @@
     "sensorRegistered": "Senzor zaregistrovaný",
     "sensorRegisterFailed": "Nepodarilo sa zaregistrovať senzor",
     "sensorUpdated": "Senzor aktualizovaný",
-    "sensorUpdateFailed": "Nepodarilo sa aktualizovať senzor",
-    "connectionTypeNone": "Neuvedené",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Pravidelné dopytovanie"
-    }
+    "sensorUpdateFailed": "Nepodarilo sa aktualizovať senzor"
   },
   "commandPalette": {
     "commands": {

@@ -1793,6 +1793,13 @@
     "fieldLocation": "Lokalizacja",
     "fieldLocationDescription": "Opis lokalizacji",
     "fieldConnectionType": "Typ połączenia",
+    "connectionTypeNone": "Nie określono",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Cykliczne odpytywanie"
+    },
     "fieldUnit": "Jednostka miary",
     "fieldInterval": "Interwał raportowania (s)",
     "fieldManufacturer": "Producent",
@@ -1905,14 +1912,7 @@
     "sensorRegistered": "Czujnik zarejestrowany",
     "sensorRegisterFailed": "Nie udało się zarejestrować czujnika",
     "sensorUpdated": "Czujnik zaktualizowany",
-    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika",
-    "connectionTypeNone": "Nie określono",
-    "connectionTypes": {
-      "api": "API",
-      "mqtt": "MQTT",
-      "webhook": "Webhook",
-      "polling": "Cykliczne odpytywanie"
-    }
+    "sensorUpdateFailed": "Nie udało się zaktualizować czujnika"
   },
   "commandPalette": {
     "commands": {
