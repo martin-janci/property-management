@@ -211,3 +211,208 @@ export interface RentalDashboardStatistics {
   revenue_this_month: string;
   revenue_last_month: string;
 }
+
+// ============================================
+// Calendar (Story 18.2)
+// ============================================
+
+/** `CalendarEvent.event_type`: a booking-linked block or a manual block. */
+export type RentalCalendarEventType = 'booking' | 'block';
+
+/**
+ * Row of `GET /api/v1/rentals/calendar/{unit_id}` (`CalendarEvent`).
+ *
+ * `id` is the `rental_calendar_blocks` row id (not the booking id). Dates are
+ * half-open: `end_date` is the check-out day / first free day.
+ */
+export interface RentalCalendarEvent {
+  id: string;
+  unit_id: string;
+  start_date: string;
+  end_date: string;
+  event_type: RentalCalendarEventType | string;
+  /** Guest name for bookings, "Maintenance" / "Owner Use" / "Blocked" for blocks. */
+  title: string;
+  platform?: string | null;
+  booking_status?: string | null;
+  /** Hex colour hint from the server. */
+  color: string;
+}
+
+/** `GET /api/v1/rentals/calendar/{unit_id}` query (`CalendarQuery`); both required. */
+export interface RentalCalendarQuery {
+  start_date: string;
+  end_date: string;
+}
+
+/** `GET /api/v1/rentals/calendar/{unit_id}/availability` response. */
+export interface RentalAvailability {
+  available: boolean;
+  start_date: string;
+  end_date: string;
+}
+
+/** `block_reason` values accepted for a manual block. */
+export type RentalCalendarBlockReason = 'maintenance' | 'owner_use' | 'blocked';
+
+/** `POST /api/v1/rentals/calendar/blocks` body (`CreateCalendarBlock`). */
+export interface RentalCreateCalendarBlockBody {
+  unit_id: string;
+  block_start: string;
+  /** Exclusive end (first day the unit is free again). */
+  block_end: string;
+  reason: RentalCalendarBlockReason;
+  notes?: string | null;
+}
+
+/** `CalendarBlock` returned by the create route. */
+export interface RentalCalendarBlock {
+  id: string;
+  organization_id: string;
+  unit_id: string;
+  block_start: string;
+  block_end: string;
+  reason: string;
+  booking_id?: string | null;
+  source_platform?: string | null;
+  synced_at?: string | null;
+  notes?: string | null;
+  created_at: string;
+}
+
+// ============================================
+// Authority guest reports (Story 18.4)
+// ============================================
+
+/** `report_type` values. */
+export type RentalReportType = 'monthly' | 'quarterly' | 'annual';
+
+/** Authority codes the server knows (`authority_code`). */
+export type RentalReportAuthorityCode = 'SK_UHUL' | 'CZ_CIZPOL' | 'AT_ZMR' | 'DE_MELDEWESEN';
+
+/** `report_status` values. */
+export type RentalReportStatus = 'draft' | 'generated' | 'submitted' | 'confirmed';
+
+/** `NationalityStats`. */
+export interface RentalNationalityStats {
+  /** ISO country code, `UNK` when the guest has none. */
+  nationality: string;
+  country_name: string;
+  count: number;
+  percentage: number;
+}
+
+/** `POST /api/v1/rentals/reports/preview` body (`ReportPreviewRequest`). */
+export interface RentalReportPreviewBody {
+  building_id: string;
+  period_start: string;
+  period_end: string;
+}
+
+/** `ReportPreview`. Counts only registered/reported guests of stays fully inside the period. */
+export interface RentalReportPreview {
+  building_id: string;
+  building_name: string;
+  period_start: string;
+  period_end: string;
+  total_guests: number;
+  by_nationality: RentalNationalityStats[];
+  bookings_count: number;
+}
+
+/** `GET /api/v1/rentals/reports` query (`ListReportsQuery`). */
+export interface RentalReportListQuery {
+  building_id?: string;
+  limit?: number;
+}
+
+/** Row of `GET /api/v1/rentals/reports` (`ReportSummary`). */
+export interface RentalReportSummary {
+  id: string;
+  building_id: string;
+  building_name: string;
+  report_type: string;
+  period_start: string;
+  period_end: string;
+  authority_code: string;
+  authority_name: string;
+  total_guests: number;
+  status: string;
+  report_file_url?: string | null;
+  submitted_at?: string | null;
+}
+
+/** `POST /api/v1/rentals/reports` body (`GenerateReport`). */
+export interface RentalGenerateReportBody {
+  building_id: string;
+  report_type: RentalReportType;
+  period_start: string;
+  period_end: string;
+  authority_code: RentalReportAuthorityCode;
+  /** Defaults server-side; no file is rendered yet. */
+  report_format?: string;
+}
+
+/** `RentalGuestReport` returned by create / get / submit. */
+export interface RentalGuestReport {
+  id: string;
+  organization_id: string;
+  building_id: string;
+  report_type: string;
+  period_start: string;
+  period_end: string;
+  authority_code: string;
+  authority_name: string;
+  total_guests: number;
+  guests_by_nationality?: RentalNationalityStats[] | null;
+  report_file_url?: string | null;
+  report_format: string;
+  status: string;
+  submitted_at?: string | null;
+  submission_reference?: string | null;
+  submission_response?: string | null;
+  generated_by?: string | null;
+  submitted_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================
+// Building / unit pickers
+// ============================================
+
+/** Row of `GET /api/v1/buildings` (`BuildingSummary`, snake_case on the wire). */
+export interface RentalBuildingListItem {
+  id: string;
+  name?: string | null;
+  street: string;
+  city: string;
+  postal_code: string;
+  status: string;
+}
+
+/** `GET /api/v1/buildings` response (`BuildingsListResponse`). */
+export interface RentalBuildingsPage {
+  buildings: RentalBuildingListItem[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+/** Row of `GET /api/v1/buildings/{id}/units` (`UnitSummary`). */
+export interface RentalBuildingUnitItem {
+  id: string;
+  building_id: string;
+  designation: string;
+  floor: number;
+  unit_type: string;
+  status: string;
+}
+
+/** `GET /api/v1/buildings/{id}/units` response (`UnitsListResponse`). */
+export interface RentalBuildingUnitsPage {
+  units: RentalBuildingUnitItem[];
+  total: number;
+  offset: number;
+  limit: number;
+}
