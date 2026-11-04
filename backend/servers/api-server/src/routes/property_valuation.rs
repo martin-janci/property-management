@@ -12,7 +12,7 @@ use axum::{
 use serde::Deserialize;
 use uuid::Uuid;
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, TenantAuthUser};
 use db::models::property_valuation::*;
 
 use crate::state::AppState;
@@ -95,6 +95,111 @@ fn get_org_id(auth: &AuthUser) -> Result<Uuid, (StatusCode, String)> {
     ))
 }
 
+/// Manager-class role (membership role via `TenantAuthUser`) for every
+/// valuation mutation, including approving valuations and signing reports.
+fn require_manager(auth: &AuthUser) -> Result<(), (StatusCode, String)> {
+    if auth.role.is_some_and(|r| r.is_manager()) {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            "Manager role required for this action".to_string(),
+        ))
+    }
+}
+
+fn db_err(e: impl std::fmt::Display) -> (StatusCode, String) {
+    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+}
+
+fn not_found(what: &str) -> (StatusCode, String) {
+    (StatusCode::NOT_FOUND, format!("{what} not found"))
+}
+
+/// 404 unless the unit (`property_id`) belongs to `org_id`.
+async fn ensure_unit(
+    state: &AppState,
+    org_id: Uuid,
+    unit_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    if state
+        .unit_repo
+        .belongs_to_organization(unit_id, org_id)
+        .await
+        .map_err(db_err)?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Property"))
+    }
+}
+
+/// 404 unless the building belongs to `org_id`.
+async fn ensure_building(
+    state: &AppState,
+    org_id: Uuid,
+    building_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    if state
+        .building_repo
+        .belongs_to_organization(building_id, org_id)
+        .await
+        .map_err(db_err)?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Building"))
+    }
+}
+
+/// 404 unless the valuation belongs to `org_id`.
+async fn ensure_valuation(
+    state: &AppState,
+    org_id: Uuid,
+    valuation_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    state
+        .property_valuation_repo
+        .get_valuation(org_id, valuation_id)
+        .await
+        .map_err(db_err)?
+        .map(|_| ())
+        .ok_or_else(|| not_found("Valuation"))
+}
+
+/// 404 unless the valuation model belongs to `org_id`.
+async fn ensure_model(
+    state: &AppState,
+    org_id: Uuid,
+    model_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    state
+        .property_valuation_repo
+        .get_model(org_id, model_id)
+        .await
+        .map_err(db_err)?
+        .map(|_| ())
+        .ok_or_else(|| not_found("Model"))
+}
+
+/// 404 unless the comparable belongs to `org_id`.
+async fn ensure_comparable(
+    state: &AppState,
+    org_id: Uuid,
+    comparable_id: Uuid,
+) -> Result<(), (StatusCode, String)> {
+    let owned = state
+        .property_valuation_repo
+        .comparable_in_org(org_id, comparable_id)
+        .await
+        .map_err(db_err)?;
+    if owned {
+        Ok(())
+    } else {
+        Err(not_found("Comparable"))
+    }
+}
+
 /// Create the property valuation router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -172,7 +277,7 @@ pub fn router() -> Router<AppState> {
 /// Get valuation dashboard summary
 async fn get_dashboard(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
 ) -> Result<Json<ValuationDashboard>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
 
@@ -187,7 +292,7 @@ async fn get_dashboard(
 /// Get valuations expiring soon
 async fn get_expiring_valuations(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<ExpiringQuery>,
 ) -> Result<Json<Vec<PropertyValuation>>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -207,7 +312,7 @@ async fn get_expiring_valuations(
 /// List valuation models
 async fn list_models(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<ListModelsQuery>,
 ) -> Result<Json<Vec<PropertyValuationModel>>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -223,9 +328,10 @@ async fn list_models(
 /// Create a valuation model
 async fn create_model(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateValuationModel>,
 ) -> Result<(StatusCode, Json<PropertyValuationModel>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -239,7 +345,7 @@ async fn create_model(
 /// Get a valuation model by ID
 async fn get_model(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(model_id): Path<Uuid>,
 ) -> Result<Json<PropertyValuationModel>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -256,10 +362,11 @@ async fn get_model(
 /// Update a valuation model
 async fn update_model(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(model_id): Path<Uuid>,
     Json(data): Json<UpdateValuationModel>,
 ) -> Result<Json<PropertyValuationModel>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -274,9 +381,10 @@ async fn update_model(
 /// Delete a valuation model
 async fn delete_model(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(model_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     let deleted = state
@@ -299,7 +407,7 @@ async fn delete_model(
 /// List valuations
 async fn list_valuations(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<ListValuationsQuery>,
 ) -> Result<Json<Vec<PropertyValuation>>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -321,10 +429,18 @@ async fn list_valuations(
 /// Create a valuation
 async fn create_valuation(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreatePropertyValuation>,
 ) -> Result<(StatusCode, Json<PropertyValuation>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
+    ensure_unit(&state, org_id, data.property_id).await?;
+    if let Some(building_id) = data.building_id {
+        ensure_building(&state, org_id, building_id).await?;
+    }
+    if let Some(model_id) = data.model_id {
+        ensure_model(&state, org_id, model_id).await?;
+    }
 
     state
         .property_valuation_repo
@@ -337,7 +453,7 @@ async fn create_valuation(
 /// Get a valuation by ID
 async fn get_valuation(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
 ) -> Result<Json<PropertyValuation>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -354,10 +470,11 @@ async fn get_valuation(
 /// Update a valuation
 async fn update_valuation(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
     Json(data): Json<UpdatePropertyValuation>,
 ) -> Result<Json<PropertyValuation>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -372,9 +489,10 @@ async fn update_valuation(
 /// Delete a valuation
 async fn delete_valuation(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     let deleted = state
@@ -398,10 +516,11 @@ pub struct ApproveRequest {
 
 async fn approve_valuation(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
     Json(data): Json<ApproveRequest>,
 ) -> Result<Json<PropertyValuation>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -420,7 +539,7 @@ async fn approve_valuation(
 /// List comparables for a valuation
 async fn list_comparables(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
 ) -> Result<Json<Vec<ValuationComparable>>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -436,11 +555,16 @@ async fn list_comparables(
 /// Create a comparable
 async fn create_comparable(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
     Json(mut data): Json<CreateComparable>,
 ) -> Result<(StatusCode, Json<ValuationComparable>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
+    ensure_valuation(&state, org_id, valuation_id).await?;
+    if let Some(unit_id) = data.comparable_property_id {
+        ensure_unit(&state, org_id, unit_id).await?;
+    }
     data.valuation_id = Some(valuation_id);
 
     state
@@ -454,10 +578,11 @@ async fn create_comparable(
 /// Update a comparable
 async fn update_comparable(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(comparable_id): Path<Uuid>,
     Json(data): Json<UpdateComparable>,
 ) -> Result<Json<ValuationComparable>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -472,9 +597,10 @@ async fn update_comparable(
 /// Delete a comparable
 async fn delete_comparable(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(comparable_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     let deleted = state
@@ -497,12 +623,15 @@ async fn delete_comparable(
 /// List adjustments for a comparable
 async fn list_adjustments(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(comparable_id): Path<Uuid>,
 ) -> Result<Json<Vec<ComparableAdjustment>>, (StatusCode, String)> {
+    let org_id = get_org_id(&auth)?;
+    ensure_comparable(&state, org_id, comparable_id).await?;
+
     state
         .property_valuation_repo
-        .list_adjustments(comparable_id)
+        .list_adjustments(org_id, comparable_id)
         .await
         .map(Json)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
@@ -511,29 +640,34 @@ async fn list_adjustments(
 /// Create an adjustment
 async fn create_adjustment(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(comparable_id): Path<Uuid>,
     Json(mut data): Json<CreateAdjustment>,
 ) -> Result<(StatusCode, Json<ComparableAdjustment>), (StatusCode, String)> {
+    require_manager(&auth)?;
+    let org_id = get_org_id(&auth)?;
     data.comparable_id = comparable_id;
 
     state
         .property_valuation_repo
-        .create_adjustment(&data)
+        .create_adjustment(org_id, &data)
         .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .map(|a| (StatusCode::CREATED, Json(a)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .ok_or((StatusCode::NOT_FOUND, "Comparable not found".to_string()))
 }
 
 /// Delete an adjustment
 async fn delete_adjustment(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(adjustment_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    require_manager(&auth)?;
+    let org_id = get_org_id(&auth)?;
     let deleted = state
         .property_valuation_repo
-        .delete_adjustment(adjustment_id)
+        .delete_adjustment(org_id, adjustment_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -551,7 +685,7 @@ async fn delete_adjustment(
 /// Get market data
 async fn get_market_data(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<MarketDataQuery>,
 ) -> Result<Json<Vec<ValuationMarketData>>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -572,9 +706,10 @@ async fn get_market_data(
 /// Create market data
 async fn create_market_data(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateMarketData>,
 ) -> Result<(StatusCode, Json<ValuationMarketData>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -588,10 +723,11 @@ async fn create_market_data(
 /// Update market data
 async fn update_market_data(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(market_data_id): Path<Uuid>,
     Json(data): Json<UpdateMarketData>,
 ) -> Result<Json<ValuationMarketData>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -610,7 +746,7 @@ async fn update_market_data(
 /// Get value history for a property
 async fn get_value_history(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(property_id): Path<Uuid>,
     Query(query): Query<ValueHistoryQuery>,
 ) -> Result<Json<Vec<PropertyValueHistory>>, (StatusCode, String)> {
@@ -627,11 +763,16 @@ async fn get_value_history(
 /// Create value history entry
 async fn create_value_history(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(property_id): Path<Uuid>,
     Json(mut data): Json<CreateValueHistory>,
 ) -> Result<(StatusCode, Json<PropertyValueHistory>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
+    ensure_unit(&state, org_id, property_id).await?;
+    if let Some(valuation_id) = data.valuation_id {
+        ensure_valuation(&state, org_id, valuation_id).await?;
+    }
     data.property_id = property_id;
 
     state
@@ -649,7 +790,7 @@ async fn create_value_history(
 /// List valuation requests
 async fn list_requests(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Query(query): Query<ListRequestsQuery>,
 ) -> Result<Json<Vec<ValuationRequest>>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -671,10 +812,12 @@ async fn list_requests(
 /// Create a valuation request
 async fn create_request(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Json(data): Json<CreateValuationRequest>,
 ) -> Result<(StatusCode, Json<ValuationRequest>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
+    ensure_unit(&state, org_id, data.property_id).await?;
 
     state
         .property_valuation_repo
@@ -687,7 +830,7 @@ async fn create_request(
 /// Get a valuation request
 async fn get_request(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(request_id): Path<Uuid>,
 ) -> Result<Json<ValuationRequest>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -704,11 +847,15 @@ async fn get_request(
 /// Update a valuation request
 async fn update_request(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(request_id): Path<Uuid>,
     Json(data): Json<UpdateValuationRequest>,
 ) -> Result<Json<ValuationRequest>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
+    if let Some(valuation_id) = data.valuation_id {
+        ensure_valuation(&state, org_id, valuation_id).await?;
+    }
 
     state
         .property_valuation_repo
@@ -726,7 +873,7 @@ async fn update_request(
 /// Get property features
 async fn get_features(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(property_id): Path<Uuid>,
 ) -> Result<Json<PropertyValuationFeatures>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -743,11 +890,13 @@ async fn get_features(
 /// Create property features
 async fn create_features(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(property_id): Path<Uuid>,
     Json(mut data): Json<CreatePropertyFeatures>,
 ) -> Result<(StatusCode, Json<PropertyValuationFeatures>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
+    ensure_unit(&state, org_id, property_id).await?;
     data.property_id = property_id;
 
     state
@@ -761,10 +910,11 @@ async fn create_features(
 /// Update property features
 async fn update_features(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(feature_id): Path<Uuid>,
     Json(data): Json<UpdatePropertyFeatures>,
 ) -> Result<Json<PropertyValuationFeatures>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -783,7 +933,7 @@ async fn update_features(
 /// List reports for a valuation
 async fn list_reports(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
 ) -> Result<Json<Vec<ValuationReport>>, (StatusCode, String)> {
     let org_id = get_org_id(&auth)?;
@@ -799,11 +949,13 @@ async fn list_reports(
 /// Create a report
 async fn create_report(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
     Json(mut data): Json<CreateValuationReport>,
 ) -> Result<(StatusCode, Json<ValuationReport>), (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
+    ensure_valuation(&state, org_id, valuation_id).await?;
     data.valuation_id = valuation_id;
 
     state
@@ -817,10 +969,11 @@ async fn create_report(
 /// Update a report
 async fn update_report(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(report_id): Path<Uuid>,
     Json(data): Json<UpdateValuationReport>,
 ) -> Result<Json<ValuationReport>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -835,9 +988,10 @@ async fn update_report(
 /// Sign a report
 async fn sign_report(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(report_id): Path<Uuid>,
 ) -> Result<Json<ValuationReport>, (StatusCode, String)> {
+    require_manager(&auth)?;
     let org_id = get_org_id(&auth)?;
 
     state
@@ -856,7 +1010,7 @@ async fn sign_report(
 /// Get audit logs for a valuation
 async fn get_audit_logs(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantAuthUser(auth): TenantAuthUser,
     Path(valuation_id): Path<Uuid>,
     Query(query): Query<AuditLogQuery>,
 ) -> Result<Json<Vec<ValuationAuditLog>>, (StatusCode, String)> {

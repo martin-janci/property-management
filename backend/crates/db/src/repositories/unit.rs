@@ -1014,6 +1014,25 @@ impl UnitRepository {
         Ok(count > 0)
     }
 
+    /// Whether `unit_id` belongs to a building of `organization_id`.
+    pub async fn belongs_to_organization(
+        &self,
+        unit_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM units u JOIN buildings b ON b.id = u.building_id
+                WHERE u.id = $1 AND b.organization_id = $2)
+            "#,
+        )
+        .bind(unit_id)
+        .bind(organization_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Count units by organization (Story 88.5: Report Export Fallback).
     ///
     /// Counts all active units in all buildings belonging to an organization.

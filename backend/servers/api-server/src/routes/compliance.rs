@@ -5,7 +5,7 @@
 #![allow(clippy::type_complexity)]
 
 use crate::state::AppState;
-use api_core::extractors::{AuthUser, RlsConnection};
+use api_core::extractors::{AuthUser, RlsConnection, TenantAuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -157,7 +157,7 @@ pub struct AuditLogListResponse {
 /// Get paginated audit logs.
 async fn get_audit_logs(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
@@ -228,7 +228,7 @@ pub struct ActionCountResponse {
 /// Get audit log summary.
 async fn get_audit_summary(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<AuditSummaryResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
@@ -267,7 +267,7 @@ async fn get_audit_summary(
 /// Get audit logs for a specific user.
 async fn get_user_audit_logs(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(user_id): Path<Uuid>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
@@ -338,7 +338,7 @@ pub struct IntegrityResponse {
 /// Verify audit log integrity.
 async fn verify_audit_integrity(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<IntegrityResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
     let entries_to_check: i64 = 10000;
@@ -392,7 +392,7 @@ pub struct DataExportReportResponse {
 /// Get data export report.
 async fn get_data_export_report(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<DataExportReportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -450,7 +450,7 @@ pub struct DeletionRequestsReportResponse {
 /// Get deletion requests report.
 async fn get_deletion_requests_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<DeletionRequestsReportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -508,7 +508,7 @@ pub struct PrivacySettingsReportResponse {
 /// Get privacy settings report.
 async fn get_privacy_settings_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<PrivacySettingsReportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -583,7 +583,7 @@ pub struct LoginActivityReportResponse {
 /// Get login activity report.
 async fn get_login_activity_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<LoginActivityReportResponse>, (StatusCode, String)> {
@@ -670,7 +670,7 @@ pub struct MfaStatusReportResponse {
 /// Get MFA status report.
 async fn get_mfa_status_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
 ) -> Result<Json<MfaStatusReportResponse>, (StatusCode, String)> {
     require_platform_admin(&user)?;
@@ -730,7 +730,7 @@ pub struct FailedLoginsReportResponse {
 /// Get failed logins report.
 async fn get_failed_logins_report(
     State(_state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     mut rls: RlsConnection,
     Query(params): Query<ReportQueryParams>,
 ) -> Result<Json<FailedLoginsReportResponse>, (StatusCode, String)> {

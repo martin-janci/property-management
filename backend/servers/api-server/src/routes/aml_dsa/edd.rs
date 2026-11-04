@@ -1,7 +1,7 @@
 //! Story 67.2: Enhanced Due Diligence endpoints.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::TenantAuthUser;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -66,7 +66,7 @@ pub struct ComplianceNoteResponse {
 /// Initiate Enhanced Due Diligence.
 pub(super) async fn initiate_edd(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Json(req): Json<InitiateEddRequest>,
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
@@ -137,7 +137,7 @@ pub(super) async fn initiate_edd(
 /// Get EDD record by ID.
 pub(super) async fn get_edd_record(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
@@ -241,7 +241,7 @@ pub struct UploadEddDocumentRequest {
 /// Upload a document for EDD.
 pub(super) async fn upload_edd_document(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(edd_id): Path<Uuid>,
     Json(req): Json<UploadEddDocumentRequest>,
 ) -> Result<Json<EddDocumentResponse>, (StatusCode, String)> {
@@ -317,7 +317,7 @@ pub struct VerifyDocumentRequest {
 /// Verify an EDD document.
 pub(super) async fn verify_edd_document(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path((edd_id, doc_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<VerifyDocumentRequest>,
 ) -> Result<Json<EddDocumentResponse>, (StatusCode, String)> {
@@ -409,7 +409,7 @@ pub struct AddComplianceNoteRequest {
 /// Add a compliance note to EDD record.
 pub(super) async fn add_edd_note(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(edd_id): Path<Uuid>,
     Json(req): Json<AddComplianceNoteRequest>,
 ) -> Result<Json<ComplianceNoteResponse>, (StatusCode, String)> {
@@ -484,7 +484,7 @@ pub(super) async fn add_edd_note(
 /// Complete EDD process.
 pub(super) async fn complete_edd(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
     Path(edd_id): Path<Uuid>,
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
@@ -562,7 +562,7 @@ pub(super) async fn complete_edd(
 /// List pending EDD records.
 pub(super) async fn list_pending_edd(
     State(state): State<AppState>,
-    user: AuthUser,
+    TenantAuthUser(user): TenantAuthUser,
 ) -> Result<Json<Vec<EddRecordResponse>>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
