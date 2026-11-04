@@ -6,7 +6,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authenticatedFetchJson } from '../lib/fetch';
-import type { AnnouncementsApi } from './api';
+import { type AnnouncementsApi, toAnnouncementCommentBody, toAnnouncementWriteBody } from './api';
 import type {
   AddAttachmentRequest,
   Announcement,
@@ -462,7 +462,7 @@ export function useCreateAnnouncement() {
     mutationFn: (data: CreateAnnouncementRequest) =>
       fetchJson<{ id: string; message: string }>(ANNOUNCEMENTS_BASE, {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(toAnnouncementWriteBody(data)),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
@@ -478,7 +478,7 @@ export function useUpdateAnnouncement(id: string) {
     mutationFn: (data: UpdateAnnouncementRequest) =>
       fetchJson<{ message: string; announcement: Announcement }>(`${ANNOUNCEMENTS_BASE}/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data),
+        body: JSON.stringify(toAnnouncementWriteBody(data)),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
@@ -697,7 +697,7 @@ export function useCreateAnnouncementComment() {
         `${ANNOUNCEMENTS_BASE}/${announcementId}/comments`,
         {
           method: 'POST',
-          body: JSON.stringify({ content, parentId, aiTrainingConsent }),
+          body: JSON.stringify(toAnnouncementCommentBody({ content, parentId, aiTrainingConsent })),
         }
       ),
     onMutate: async (vars) => {
