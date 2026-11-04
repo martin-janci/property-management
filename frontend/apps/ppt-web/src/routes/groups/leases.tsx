@@ -56,6 +56,7 @@ import {
   useApplications,
   useBuildings,
   useCreateLease,
+  useCreateLeaseAmendment,
   useCreateLeaseTemplate,
   useCreateViolation,
   useCreateViolationAppeal,
@@ -67,7 +68,10 @@ import {
   useLeaseTemplates,
   useOrganizationMembers,
   useRecordLeasePayment,
+  useRenewLease,
   useReviewApplication,
+  useTerminateLease,
+  useUpdateLease,
   useUpdateLeaseTemplate,
   useUpdateViolation,
   useViolation,
@@ -77,13 +81,26 @@ import {
 import { useQueries } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Route, useNavigate, useParams } from 'react-router-dom';
+import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
+import { ConfirmationDialog } from '../../components/ConfirmationDialog';
 import { useAuth } from '../../contexts';
+import {
+  AddAmendmentModal,
+  type AmendmentFormData,
+  type EditLeaseFormData,
+  EditLeaseModal,
+  type RenewLeaseFormData,
+  RenewLeaseModal,
+  type TerminateLeaseFormData,
+  TerminateLeaseModal,
+} from '../../features/leases/components/LeaseActionModals';
 import {
   type RecordPaymentFormData,
   RecordPaymentModal,
 } from '../../features/leases/components/RecordPaymentModal';
+import type { ApplicationListParams } from '../../features/leases/pages/ApplicationsPage';
+import type { LeaseListParams } from '../../features/leases/pages/LeasesListPage';
 import type {
   CreateLeaseData,
   CreateTemplateData,
@@ -718,44 +735,157 @@ function LeasesDashboardPageRoute() {
       onNavigateToLeases={() => navigate('/leases/list')}
       onNavigateToApplications={() => navigate('/leases/applications')}
       onNavigateToCreateLease={() => navigate('/leases/new')}
+      onRenewLease={(id) => navigate(`/leases/${id}?action=renew`)}
     />
   );
 }
 
-/** Route wrapper: leases list, live across the organization. */
+/** Page size of the paginated lease / application lists (server `limit`). */
+export const LIST_PAGE_SIZE = 12;
+
+/** Lease statuses the list filter offers (UI values). */
+const UI_LEASE_STATUSES: readonly UiLeaseStatus[] = [
+  'active',
+  'pending_signatures',
+  'expiring_soon',
+  'expired',
+  'terminated',
+  'renewed',
+  'draft',
+];
+
+/** Days window used for the synthetic `expiring_soon` status filter. */
+const EXPIRING_SOON_DAYS = 90;
+
+/** Positive integer from a URL search param, else `undefined`. */
+function positiveInt(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
+/**
+ * Lease list filters persisted in the URL (`?status=&expiring=&page=`). Only
+ * filters the backend `GET /leases` query supports are kept (`status`,
+ * `expiring_within_days`, `limit`/`offset`); it has no building or text
+ * search, so those controls are hidden.
+ */
+export function readLeaseListParams(params: URLSearchParams): {
+  filters: Omit<LeaseListParams, 'page' | 'pageSize'>;
+  page: number;
+} {
+  const rawStatus = params.get('status');
+  const status = UI_LEASE_STATUSES.find((s) => s === rawStatus);
+  return {
+    filters: { status, expiringWithinDays: positiveInt(params.get('expiring')) },
+    page: positiveInt(params.get('page')) ?? 1,
+  };
+}
+
+/** Serialize lease list filters back into URL search params (empty values dropped). */
+export function writeLeaseListParams(p: LeaseListParams): URLSearchParams {
+  const out = new URLSearchParams();
+  if (p.status) out.set('status', p.status);
+  if (p.expiringWithinDays) out.set('expiring', String(p.expiringWithinDays));
+  if (p.page > 1) out.set('page', String(p.page));
+  return out;
+}
+
+/** UI lease list filters → backend `ListLeasesQuery` fields. */
+export function toLeaseListQuery(
+  filters: Omit<LeaseListParams, 'page' | 'pageSize'>,
+  page: number
+): { status?: string; expiring_within_days?: number; limit: number; offset: number } {
+  let status: string | undefined;
+  let expiring = filters.expiringWithinDays;
+  switch (filters.status) {
+    case undefined:
+      break;
+    case 'pending_signatures':
+      status = 'pending_signature';
+      break;
+    case 'expiring_soon':
+      // Not a stored status: active leases ending within the window.
+      status = 'active';
+      expiring = expiring ?? EXPIRING_SOON_DAYS;
+      break;
+    default:
+      status = filters.status;
+  }
+  return {
+    status,
+    expiring_within_days: expiring,
+    limit: LIST_PAGE_SIZE,
+    offset: (page - 1) * LIST_PAGE_SIZE,
+  };
+}
+
+/** Route wrapper: leases list, live across the organization, URL-persisted filters. */
 function LeasesListPageRoute() {
   const navigate = useNavigate();
   const { organizationId } = useOrganization();
-  const { data, isLoading } = useLeases({ organization_id: organizationId });
-  const { data: buildingsData } = useBuildings();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { filters, page } = readLeaseListParams(searchParams);
+  const { data, isLoading } = useLeases({
+    organization_id: organizationId,
+    ...toLeaseListQuery(filters, page),
+  });
 
   const leases = (data?.items ?? []).map(mapLeaseSummaryToUi);
-  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
 
   return (
     <LeasesListPage
       leases={leases}
       total={data?.total ?? 0}
-      buildings={buildings}
+      buildings={[]}
       isLoading={isLoading}
+      initialFilters={filters}
+      initialPage={page}
+      pageSize={LIST_PAGE_SIZE}
+      showSearch={false}
+      showBuildingFilter={false}
       onNavigateToCreate={() => navigate('/leases/new')}
       onNavigateToView={(id) => navigate(`/leases/${id}`)}
-      onRenewLease={(id) => navigate(`/leases/${id}`)}
-      onTerminateLease={(id) => navigate(`/leases/${id}`)}
-      onFilterChange={() => {}}
+      onRenewLease={(id) => navigate(`/leases/${id}?action=renew`)}
+      onTerminateLease={(id) => navigate(`/leases/${id}?action=terminate`)}
+      onFilterChange={(next) => setSearchParams(writeLeaseListParams(next), { replace: true })}
     />
   );
 }
 
-/** Route wrapper: lease detail (`/leases/:leaseId`), live. */
+type LeaseDialog = 'edit' | 'renew' | 'terminate' | 'terminate-confirm' | 'amendment';
+
+/** `?action=` deep links from the list / dashboard cards (renew, terminate). */
+function initialDialog(action: string | null): LeaseDialog | null {
+  return action === 'renew' || action === 'terminate' ? action : null;
+}
+
+/**
+ * Route wrapper: lease detail (`/leases/:leaseId`), live. Wires the lifecycle
+ * actions to their endpoints:
+ *  - edit → `PUT /leases/{id}` (ancillary fields only — `UpdateLease`),
+ *  - renew → `POST /leases/{id}/renew` (navigates to the new draft lease),
+ *  - terminate → `POST /leases/{id}/terminate` (form + confirmation),
+ *  - add amendment → `POST /leases/{id}/amendments`,
+ *  - record payment → `POST /leases/{payment_id}/payments`.
+ */
 function LeaseDetailPageRoute() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { leaseId } = useParams<{ leaseId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading } = useLease(leaseId);
   const recordPayment = useRecordLeasePayment();
+  const updateLease = useUpdateLease();
+  const renewLease = useRenewLease();
+  const terminateLease = useTerminateLease();
+  const createAmendment = useCreateLeaseAmendment();
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [dialog, setDialogState] = useState<LeaseDialog | null>(() =>
+    initialDialog(searchParams.get('action'))
+  );
+  const [termination, setTermination] = useState<TerminateLeaseFormData | null>(null);
 
   if (isLoading || !data) {
     return <LeaseLoadingNotice onBack={() => navigate('/leases/list')} isLoading={isLoading} />;
@@ -763,6 +893,38 @@ function LeaseDetailPageRoute() {
 
   const lease = mapLeaseWithDetailsToUi(data);
   const payment = paymentId ? lease.upcomingPayments.find((p) => p.id === paymentId) : undefined;
+  const isOpenLease =
+    lease.status === 'active' ||
+    lease.status === 'expiring_soon' ||
+    lease.status === 'draft' ||
+    lease.status === 'pending_signatures';
+  const canRenewOrTerminate = lease.status === 'active' || lease.status === 'expiring_soon';
+  // A deep-linked action that no longer applies (e.g. lease already terminated)
+  // is ignored rather than opening a dialog the page would not offer.
+  const activeDialog =
+    dialog === 'edit' || dialog === 'amendment'
+      ? isOpenLease
+        ? dialog
+        : null
+      : dialog && canRenewOrTerminate
+        ? dialog
+        : null;
+
+  const setDialog = (next: LeaseDialog | null) => {
+    setDialogState(next);
+    if (searchParams.has('action')) {
+      const params = new URLSearchParams(searchParams);
+      params.delete('action');
+      setSearchParams(params, { replace: true });
+    }
+  };
+
+  const fail = (err: unknown, titleKey: string, titleDefault: string, msgKey: string) =>
+    showToast({
+      type: 'error',
+      title: t(titleKey, { defaultValue: titleDefault }),
+      message: errorMessage(err, t(msgKey)),
+    });
 
   const handleRecordPayment = async (form: RecordPaymentFormData) => {
     if (!payment) return;
@@ -795,15 +957,111 @@ function LeaseDetailPageRoute() {
     }
   };
 
+  const handleEdit = async (form: EditLeaseFormData) => {
+    try {
+      await updateLease.mutateAsync({
+        id: lease.id,
+        body: {
+          tenant_phone: form.tenantPhone,
+          parking_spaces: form.parkingSpaces,
+          storage_units: form.storageUnits,
+          max_occupants: form.maxOccupants,
+          pets_allowed: form.petsAllowed,
+          smoking_allowed: form.smokingAllowed,
+          notes: form.notes,
+        },
+      });
+      setDialog(null);
+      showToast({
+        type: 'success',
+        title: t('common.saved', { defaultValue: 'Saved' }),
+        message: t('leases.actions.edit.success'),
+      });
+    } catch (err) {
+      fail(err, 'common.saveFailed', 'Save failed', 'leases.actions.edit.failed');
+    }
+  };
+
+  const handleRenew = async (form: RenewLeaseFormData) => {
+    try {
+      const renewed = await renewLease.mutateAsync({
+        id: lease.id,
+        body: {
+          new_end_date: form.newEndDate,
+          new_monthly_rent: form.newMonthlyRent,
+          new_security_deposit: form.newSecurityDeposit,
+          term_months: form.termMonths,
+          notes: form.notes,
+        },
+      });
+      setDialog(null);
+      showToast({
+        type: 'success',
+        title: t('common.saved', { defaultValue: 'Saved' }),
+        message: t('leases.actions.renew.success'),
+      });
+      if (renewed?.id) navigate(`/leases/${renewed.id}`);
+    } catch (err) {
+      fail(err, 'common.saveFailed', 'Save failed', 'leases.actions.renew.failed');
+    }
+  };
+
+  const handleTerminate = async () => {
+    if (!termination) return;
+    try {
+      await terminateLease.mutateAsync({
+        id: lease.id,
+        body: {
+          termination_reason: termination.reason,
+          termination_notes: termination.notes,
+          effective_date: termination.effectiveDate,
+        },
+      });
+      setDialog(null);
+      setTermination(null);
+      showToast({
+        type: 'success',
+        title: t('common.updated', { defaultValue: 'Updated' }),
+        message: t('leases.actions.terminate.success'),
+      });
+    } catch (err) {
+      fail(err, 'common.updateFailed', 'Update failed', 'leases.actions.terminate.failed');
+    }
+  };
+
+  const handleAmendment = async (form: AmendmentFormData) => {
+    try {
+      await createAmendment.mutateAsync({
+        id: lease.id,
+        body: {
+          title: form.title,
+          description: form.description,
+          effective_date: form.effectiveDate,
+          changes: form.newMonthlyRent != null ? { monthly_rent: String(form.newMonthlyRent) } : {},
+        },
+      });
+      setDialog(null);
+      showToast({
+        type: 'success',
+        title: t('common.created', { defaultValue: 'Created' }),
+        message: t('leases.actions.amendment.success'),
+      });
+    } catch (err) {
+      fail(err, 'common.createFailed', 'Create failed', 'leases.actions.amendment.failed');
+    }
+  };
+
+  const unitLabel = `${lease.unit.buildingName} - ${lease.unit.number}`;
+
   return (
     <>
       <LeaseDetailPage
         lease={lease}
         onBack={() => navigate('/leases/list')}
-        onEdit={(id) => navigate(`/leases/${id}`)}
-        onRenew={(id) => navigate(`/leases/${id}`)}
-        onTerminate={(id) => navigate(`/leases/${id}`)}
-        onAddAmendment={(id) => navigate(`/leases/${id}`)}
+        onEdit={() => setDialog('edit')}
+        onRenew={() => setDialog('renew')}
+        onTerminate={() => setDialog('terminate')}
+        onAddAmendment={() => setDialog('amendment')}
         onRecordPayment={(id) => setPaymentId(id)}
       />
       {payment && (
@@ -812,6 +1070,72 @@ function LeaseDetailPageRoute() {
           isSubmitting={recordPayment.isPending}
           onSubmit={handleRecordPayment}
           onClose={() => setPaymentId(null)}
+        />
+      )}
+      {activeDialog === 'edit' && (
+        <EditLeaseModal
+          initial={{
+            tenantPhone: data.lease.tenant_phone ?? undefined,
+            parkingSpaces: data.lease.parking_spaces ?? 0,
+            storageUnits: data.lease.storage_units ?? 0,
+            maxOccupants: data.lease.max_occupants ?? undefined,
+            petsAllowed: data.lease.pets_allowed ?? false,
+            smokingAllowed: data.lease.smoking_allowed ?? false,
+            notes: data.lease.notes ?? undefined,
+          }}
+          isSubmitting={updateLease.isPending}
+          onSubmit={handleEdit}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {activeDialog === 'renew' && (
+        <RenewLeaseModal
+          currentEndDate={lease.endDate}
+          currentRent={lease.rentAmount}
+          currency={lease.currency}
+          isSubmitting={renewLease.isPending}
+          onSubmit={handleRenew}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {activeDialog === 'terminate' && (
+        <TerminateLeaseModal
+          initial={termination ?? undefined}
+          onSubmit={(form) => {
+            setTermination(form);
+            setDialog('terminate-confirm');
+          }}
+          onClose={() => {
+            setTermination(null);
+            setDialog(null);
+          }}
+        />
+      )}
+      <ConfirmationDialog
+        isOpen={activeDialog === 'terminate-confirm' && termination != null}
+        variant="danger"
+        title={t('leases.actions.terminate.confirmTitle')}
+        message={t('leases.actions.terminate.confirmMessage', {
+          unit: unitLabel,
+          tenant: lease.tenant.name,
+          date: termination
+            ? new Date(`${termination.effectiveDate}T00:00:00Z`).toLocaleDateString(undefined, {
+                timeZone: 'UTC',
+              })
+            : '',
+        })}
+        confirmLabel={t('leases.actions.terminate.confirm')}
+        cancelLabel={t('common.back')}
+        isLoading={terminateLease.isPending}
+        onConfirm={handleTerminate}
+        onCancel={() => setDialog('terminate')}
+      />
+      {activeDialog === 'amendment' && (
+        <AddAmendmentModal
+          currency={lease.currency}
+          isSubmitting={createAmendment.isPending}
+          onSubmit={handleAmendment}
+          onClose={() => setDialog(null)}
         />
       )}
     </>
@@ -971,22 +1295,85 @@ function TemplatesPageRoute() {
   );
 }
 
-/** Route wrapper: applications list, live. Unit selector pending an endpoint. */
+/** Application statuses the list filter offers (UI values). */
+const UI_APPLICATION_STATUSES: readonly UiApplicationStatus[] = [
+  'submitted',
+  'under_review',
+  'screening',
+  'approved',
+  'rejected',
+  'withdrawn',
+  'draft',
+];
+
+/**
+ * Application list filters persisted in the URL (`?status=&unit=&page=`). The
+ * backend `GET /leases/applications` filters by `status` + `unit_id` only.
+ */
+export function readApplicationListParams(params: URLSearchParams): {
+  filters: Omit<ApplicationListParams, 'page' | 'pageSize'>;
+  page: number;
+} {
+  const rawStatus = params.get('status');
+  return {
+    filters: {
+      status: UI_APPLICATION_STATUSES.find((s) => s === rawStatus),
+      unitId: params.get('unit') || undefined,
+    },
+    page: positiveInt(params.get('page')) ?? 1,
+  };
+}
+
+/** Serialize application list filters back into URL search params. */
+export function writeApplicationListParams(p: ApplicationListParams): URLSearchParams {
+  const out = new URLSearchParams();
+  if (p.status) out.set('status', p.status);
+  if (p.unitId) out.set('unit', p.unitId);
+  if (p.page > 1) out.set('page', String(p.page));
+  return out;
+}
+
+/**
+ * UI application status → backend `tenant_application_status`. The UI folds
+ * `screening_pending` + `screening_complete` into one `screening` status; the
+ * server filters by a single value, so the filter targets the pending one
+ * (applications still waiting on a screening result).
+ */
+function toApiApplicationStatus(status: UiApplicationStatus | undefined): string | undefined {
+  return status === 'screening' ? 'screening_pending' : status;
+}
+
+/** Route wrapper: applications list, live, URL-persisted status + unit filters. */
 function ApplicationsPageRoute() {
   const navigate = useNavigate();
   const { organizationId } = useOrganization();
-  const { data, isLoading } = useApplications({ organization_id: organizationId });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { filters, page } = readApplicationListParams(searchParams);
+  const { units } = useOrganizationUnits();
+  const { data, isLoading } = useApplications({
+    organization_id: organizationId,
+    status: toApiApplicationStatus(filters.status),
+    unit_id: filters.unitId,
+    limit: LIST_PAGE_SIZE,
+    offset: (page - 1) * LIST_PAGE_SIZE,
+  });
 
   const applications = (data?.items ?? []).map(mapApplicationSummaryToUi);
   return (
     <ApplicationsPage
       applications={applications}
       total={data?.total ?? 0}
-      units={[]}
+      units={units}
       isLoading={isLoading}
+      initialFilters={filters}
+      initialPage={page}
+      pageSize={LIST_PAGE_SIZE}
+      showSearch={false}
       onNavigateToView={(id) => navigate(`/leases/applications/${id}`)}
       onNavigateToReview={(id) => navigate(`/leases/applications/${id}`)}
-      onFilterChange={() => {}}
+      onFilterChange={(next) =>
+        setSearchParams(writeApplicationListParams(next), { replace: true })
+      }
     />
   );
 }
@@ -1113,7 +1500,8 @@ function ViolationsPageRoute() {
       onResolveViolation={(id) => navigate(`/leases/violations/${id}`)}
       onDisputeViolation={(id) => navigate(`/leases/violations/${id}`)}
       onCreateViolation={() => navigate('/leases/violations/new')}
-      onExportReport={() => {}}
+      // No violations export endpoint exists (`routes/violations.rs`), so the
+      // export button is hidden by omitting `onExportReport`.
     />
   );
 }
@@ -1139,7 +1527,7 @@ function CreateViolationPageRoute() {
           const body: CreateViolationRequest = {
             category: mapViolationCategory(formData.violationType),
             severity: mapSeverityToApi(formData.severity),
-            title: `${formData.violationType} violation`,
+            title: t(`leases.violations.type.${formData.violationType}`),
             description: formData.description,
             occurred_at: toDateTime(formData.violationDate),
           };
@@ -1320,6 +1708,8 @@ function toDateTime(date: string): string {
   return date.includes('T') ? date : `${date}T00:00:00Z`;
 }
 
+type LeaseEntity = 'lease' | 'application' | 'violation';
+
 /**
  * Lightweight loading / not-found notice for single-entity routes while their
  * fetch is in flight (or when the entity is missing).
@@ -1331,28 +1721,23 @@ function LeaseLoadingNotice({
 }: {
   onBack: () => void;
   isLoading?: boolean;
-  label?: string;
+  label?: LeaseEntity;
 }) {
   const { t } = useTranslation();
-  const entity = `${label[0].toUpperCase()}${label.slice(1)}`;
   return (
     <div className="mx-auto max-w-md py-16 text-center">
       <h1 className="text-lg font-semibold text-gray-900">
-        {isLoading
-          ? `Loading ${label}…`
-          : t('errors.entityNotFound', { entity, defaultValue: '{{entity}} not found' })}
+        {isLoading ? t(`leases.notice.loading.${label}`) : t(`leases.notice.notFound.${label}`)}
       </h1>
       {!isLoading && (
-        <p className="mt-2 text-sm text-gray-500">
-          This {label} could not be loaded. It may have been removed or you may not have access.
-        </p>
+        <p className="mt-2 text-sm text-gray-500">{t(`leases.notice.notFoundBody.${label}`)}</p>
       )}
       <button
         type="button"
         onClick={onBack}
         className="mt-6 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
       >
-        Back to leases
+        {t(`leases.notice.back.${label}`)}
       </button>
     </div>
   );

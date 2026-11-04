@@ -437,8 +437,10 @@ export function TemplatesPage({
                     )}
                     {template.defaultLeaseDurationMonths && (
                       <span>
-                        {t('leases.templates.duration')}: {template.defaultLeaseDurationMonths}{' '}
-                        {t('leases.templates.months')}
+                        {t('leases.templates.duration')}:{' '}
+                        {t('leases.templates.months', {
+                          count: template.defaultLeaseDurationMonths,
+                        })}
                       </span>
                     )}
                   </div>
