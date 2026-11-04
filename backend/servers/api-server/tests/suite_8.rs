@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/finance_r4_authz_tests.rs"]
+mod finance_r4_authz_tests;
 #[path = "suites/mobile_config_route_tests.rs"]
 mod mobile_config_route_tests;
 #[path = "suites/reports_export_org_scope_tests.rs"]
