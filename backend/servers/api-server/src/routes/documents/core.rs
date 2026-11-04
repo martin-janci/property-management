@@ -3,7 +3,7 @@
 //! Document routes (Epic 7A: Basic Document Management, Epic 7B: Document Versioning, Epic 28: Document Intelligence, Epic 92: Intelligent Document Generation).
 
 use crate::state::AppState;
-use api_core::{extractors::RlsConnection, AuthUser, TenantExtractor};
+use api_core::{extractors::RlsConnection, AuthUser, ValidatedTenantExtractor};
 use axum::{
     extract::{DefaultBodyLimit, Path, Query, State},
     http::StatusCode,
@@ -500,7 +500,7 @@ pub fn router() -> Router<AppState> {
 async fn create_document(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Json(req): Json<CreateDocumentRequest>,
 ) -> Result<(StatusCode, Json<CreateDocumentResponse>), (StatusCode, Json<ErrorResponse>)> {
@@ -618,6 +618,9 @@ async fn create_document(
         }
     }
 
+    // Nested id: the target folder must belong to the caller's org.
+    super::folders::ensure_folder_in_org(&state, &mut rls, req.folder_id, org_id).await?;
+
     let data = CreateDocument {
         organization_id: org_id,
         folder_id: req.folder_id,
@@ -677,7 +680,7 @@ async fn create_document(
 async fn list_documents(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Query(query): Query<ListDocumentsQuery>,
 ) -> Result<Json<DocumentListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -781,7 +784,7 @@ async fn list_documents(
 async fn get_document(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DocumentDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -837,7 +840,7 @@ async fn get_document(
 async fn update_document(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDocumentRequest>,
@@ -866,6 +869,10 @@ async fn update_document(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool): a
+    // foreign-org document is indistinguishable from a missing one.
+    validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can update
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -902,6 +909,9 @@ async fn update_document(
             ));
         }
     }
+
+    // Nested id: the target folder must belong to the caller's org.
+    super::folders::ensure_folder_in_org(&state, &mut rls, req.folder_id, tenant.tenant_id).await?;
 
     let data = UpdateDocument {
         title: req.title,
@@ -955,7 +965,7 @@ async fn update_document(
 async fn delete_document(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
@@ -983,6 +993,10 @@ async fn delete_document(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool): a
+    // foreign-org document is indistinguishable from a missing one.
+    validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can delete
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -1031,7 +1045,7 @@ async fn delete_document(
 async fn move_document(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<MoveDocumentRequest>,
@@ -1061,6 +1075,10 @@ async fn move_document(
         }
     };
 
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool): a
+    // foreign-org document is indistinguishable from a missing one.
+    validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
+
     // Only creator or manager can move
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
         return Err((
@@ -1071,6 +1089,9 @@ async fn move_document(
             )),
         ));
     }
+
+    // Nested id: the target folder must belong to the caller's org.
+    super::folders::ensure_folder_in_org(&state, &mut rls, req.folder_id, tenant.tenant_id).await?;
 
     let data = MoveDocument {
         document_id: id,
@@ -1121,7 +1142,7 @@ async fn move_document(
 async fn update_document_access(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAccessRequest>,
@@ -1150,6 +1171,10 @@ async fn update_document_access(
             ));
         }
     };
+
+    // Explicit org guard (FORCE RLS does not bind a BYPASSRLS pool): a
+    // foreign-org document is indistinguishable from a missing one.
+    validate_document_org_scope(existing.organization_id, tenant.tenant_id)?;
 
     // Only creator or manager can update access
     if existing.created_by != auth.user_id && !tenant.role.is_manager() {
@@ -1286,7 +1311,7 @@ fn target_ids_intersect(access_target_ids: &serde_json::Value, member_ids: &[Uui
 async fn get_download_url(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<UrlResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1416,7 +1441,7 @@ async fn get_download_url(
 async fn get_preview_url(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<UrlResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1678,7 +1703,7 @@ fn validate_upload_url_request(
 async fn create_upload_url(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     Json(req): Json<CreateUploadUrlRequest>,
 ) -> Result<Json<CreateUploadUrlResponse>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = tenant.tenant_id;
@@ -1802,7 +1827,7 @@ async fn create_upload_url(
 async fn delete_by_file_key(
     State(state): State<AppState>,
     _auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Query(query): Query<DeleteByFileKeyQuery>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
@@ -1916,7 +1941,7 @@ async fn delete_by_file_key(
 async fn upload_document(
     State(state): State<AppState>,
     auth: AuthUser,
-    tenant: TenantExtractor,
+    tenant: ValidatedTenantExtractor,
     mut rls: RlsConnection,
     mut multipart: Multipart,
 ) -> Result<(StatusCode, Json<UploadDocumentResponse>), (StatusCode, Json<ErrorResponse>)> {
@@ -2120,6 +2145,9 @@ async fn upload_document(
             Json(ErrorResponse::new("BAD_REQUEST", "Invalid category")),
         ));
     }
+
+    // --- Nested id: the target folder must belong to the caller's org ---
+    super::folders::ensure_folder_in_org(&state, &mut rls, folder_id, org_id).await?;
 
     // --- Generate S3-compatible storage key ---
     let file_key = integrations::generate_storage_key(org_id, &file_name);

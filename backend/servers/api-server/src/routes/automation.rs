@@ -87,6 +87,41 @@ fn enforce_org_match(principal: &RequestPrincipal, path_org_id: Uuid) -> ApiResu
     Ok(())
 }
 
+/// Require a manager-tier role in `org_id` for rule mutations.
+///
+/// `RequestPrincipal` proves membership only, so the role is read from the
+/// caller's `organization_members` row (never the JWT). Platform principals
+/// pass. Returns 403 for non-managers.
+async fn require_manager(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    org_id: Uuid,
+) -> ApiResult<()> {
+    if principal.is_platform() {
+        return Ok(());
+    }
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, principal.user_id)
+        .await
+        .map_err(db_error("Failed to resolve role"))?;
+    let is_manager = role_type
+        .as_deref()
+        .and_then(common::tenant::TenantRole::from_role_type)
+        .is_some_and(|role| role.is_manager());
+    if is_manager {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required to manage automation rules",
+            )),
+        ))
+    }
+}
+
 fn not_found(resource: &str) -> (StatusCode, Json<ErrorResponse>) {
     (
         StatusCode::NOT_FOUND,
@@ -246,6 +281,7 @@ pub async fn create_rule(
     Json(data): Json<CreateAutomationRule>,
 ) -> ApiResult<(StatusCode, Json<WorkflowAutomationRule>)> {
     enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
 
     let rule = state
         .automation_repo
@@ -313,6 +349,7 @@ pub async fn update_rule(
     Json(data): Json<UpdateAutomationRule>,
 ) -> ApiResult<Json<WorkflowAutomationRule>> {
     let org_id = require_tenant_id(&principal)?;
+    require_manager(&state, &principal, org_id).await?;
 
     let rule = state
         .automation_repo
@@ -346,6 +383,7 @@ pub async fn delete_rule(
     Path(path): Path<RuleIdPath>,
 ) -> ApiResult<StatusCode> {
     let org_id = require_tenant_id(&principal)?;
+    require_manager(&state, &principal, org_id).await?;
 
     let deleted = state
         .automation_repo
@@ -382,6 +420,7 @@ pub async fn toggle_rule(
     Json(data): Json<ToggleRuleRequest>,
 ) -> ApiResult<StatusCode> {
     let org_id = require_tenant_id(&principal)?;
+    require_manager(&state, &principal, org_id).await?;
 
     let toggled = state
         .automation_repo
@@ -596,6 +635,7 @@ pub async fn create_from_template(
     Json(data): Json<CreateRuleFromTemplate>,
 ) -> ApiResult<(StatusCode, Json<WorkflowAutomationRule>)> {
     enforce_org_match(&principal, path.org_id)?;
+    require_manager(&state, &principal, path.org_id).await?;
 
     let rule = state
         .automation_repo

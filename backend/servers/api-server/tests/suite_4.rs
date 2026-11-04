@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/comms_cluster_org_scope_tests.rs"]
+mod comms_cluster_org_scope_tests;
 #[path = "suites/esignature_email_status_tracking_tests.rs"]
 mod esignature_email_status_tracking_tests;
 #[path = "suites/esignature_nonce_replay_tests.rs"]
