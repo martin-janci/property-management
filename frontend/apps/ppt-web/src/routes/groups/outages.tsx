@@ -123,7 +123,7 @@ function CreateOutagePageRoute() {
       showToast({
         type: 'error',
         title: t('outages.failedToCreate'),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -174,7 +174,7 @@ function ViewOutagePageRoute() {
       showToast({
         type: 'error',
         title: t('outages.failedToStart'),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -187,7 +187,7 @@ function ViewOutagePageRoute() {
       showToast({
         type: 'error',
         title: t('outages.failedToResolve'),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -200,7 +200,7 @@ function ViewOutagePageRoute() {
       showToast({
         type: 'error',
         title: t('outages.failedToCancel'),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -311,7 +311,7 @@ function EditOutagePageRoute() {
       showToast({
         type: 'error',
         title: t('outages.failedToUpdate'),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };

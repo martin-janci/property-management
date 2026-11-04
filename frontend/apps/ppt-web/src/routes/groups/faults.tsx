@@ -246,7 +246,7 @@ function FaultsPageRoute() {
       showToast({
         type: 'error',
         title: t('faults.failedToLoad', { defaultValue: 'Failed to load faults' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   }, [error, showToast, t]);
@@ -376,10 +376,7 @@ function CreateFaultPageRoute() {
           showToast({
             type: 'error',
             title: t('faults.reportFailed', { defaultValue: 'Failed to report fault' }),
-            message:
-              err instanceof Error
-                ? err.message
-                : t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+            error: err,
           });
         }
       }}
@@ -417,7 +414,7 @@ function FaultDetailPageRoute() {
       showToast({
         type: 'error',
         title: t('faults.failedToLoad', { defaultValue: 'Failed to load fault' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   }, [error, showToast, t]);
@@ -520,10 +517,7 @@ function EditFaultPageRoute() {
           showToast({
             type: 'error',
             title: t('faults.updateFailed', { defaultValue: 'Failed to update fault' }),
-            message:
-              err instanceof Error
-                ? err.message
-                : t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+            error: err,
           });
         }
       }}

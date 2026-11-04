@@ -121,7 +121,7 @@ function IotDashboardPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -133,7 +133,7 @@ function IotDashboardPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -201,7 +201,7 @@ function SensorListPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.sensorDeleteFailed', { defaultValue: 'Failed to delete sensor' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -268,7 +268,7 @@ function RegisterSensorPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.sensorRegisterFailed', { defaultValue: 'Failed to register sensor' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -351,7 +351,7 @@ function EditSensorPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.sensorUpdateFailed', { defaultValue: 'Failed to update sensor' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -421,7 +421,7 @@ function IotAlertsPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.acknowledgeFailed', { defaultValue: 'Failed to acknowledge alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -433,7 +433,7 @@ function IotAlertsPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.resolveFailed', { defaultValue: 'Failed to resolve alert' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -537,7 +537,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdCreateFailed', { defaultValue: 'Failed to create threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
       throw error;
     }
@@ -582,7 +582,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdDeleteFailed', { defaultValue: 'Failed to delete threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
@@ -597,7 +597,7 @@ function ThresholdConfigPageRoute() {
       showToast({
         type: 'error',
         title: t('iot.thresholdUpdateFailed', { defaultValue: 'Failed to update threshold' }),
-        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        error: error,
       });
     }
   };
