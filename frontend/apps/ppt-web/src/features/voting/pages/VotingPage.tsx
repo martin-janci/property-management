@@ -7,10 +7,11 @@
  */
 import { useVotes, type VoteStatus } from '@ppt/api-client';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components';
 import { VoteCard, VotingBuildingSelect } from '../components';
 import { useVotingBuilding } from '../hooks';
-import { VOTE_STATUS_LABELS } from '../types';
+import { VOTE_STATUS_LABEL_KEYS } from '../types';
 
 interface VotingPageProps {
   onOpenVote: (voteId: string) => void;
@@ -27,6 +28,7 @@ const STATUS_FILTERS: Array<VoteStatus | 'all'> = [
 ];
 
 export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
+  const { t } = useTranslation();
   const {
     buildingId,
     options: buildingOptions,
@@ -56,10 +58,11 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Voting</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('voting.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {counts.total} vote{counts.total === 1 ? '' : 's'} · {counts.open} open ·{' '}
-            {counts.closed} closed
+            {t('voting.list.voteCount', { count: counts.total })} ·{' '}
+            {t('voting.list.openCount', { count: counts.open })} ·{' '}
+            {t('voting.list.closedCount', { count: counts.closed })}
           </p>
         </div>
         <button
@@ -67,7 +70,7 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
           onClick={onCreateVote}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          + New vote
+          + {t('voting.list.newVote')}
         </button>
       </div>
 
@@ -91,7 +94,7 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            {s === 'all' ? 'All' : VOTE_STATUS_LABELS[s]}
+            {s === 'all' ? t('common.all') : t(VOTE_STATUS_LABEL_KEYS[s])}
           </button>
         ))}
       </div>
@@ -104,18 +107,20 @@ export function VotingPage({ onOpenVote, onCreateVote }: VotingPageProps) {
         ) : error ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
             <p className="text-sm text-red-700">
-              Failed to load votes: {error instanceof Error ? error.message : 'Unknown error'}
+              {t('voting.list.loadFailed', {
+                error: error instanceof Error ? error.message : t('voting.detail.unexpectedError'),
+              })}
             </p>
           </div>
         ) : !votes || votes.length === 0 ? (
           <div className="rounded-lg bg-white p-12 text-center shadow">
-            <p className="text-gray-500">No votes yet.</p>
+            <p className="text-gray-500">{t('voting.list.empty')}</p>
             <button
               type="button"
               onClick={onCreateVote}
               className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800"
             >
-              Create the first vote
+              {t('voting.list.createFirst')}
             </button>
           </div>
         ) : (

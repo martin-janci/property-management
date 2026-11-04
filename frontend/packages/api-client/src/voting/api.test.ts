@@ -10,6 +10,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearOrgProvider, setOrgProvider } from '../auth/org-provider';
+import { clearTokenProvider, setTokenProvider } from '../auth/token-provider';
 import {
   addComment,
   addQuestion,
@@ -43,7 +45,10 @@ function lastCall(): { url: string; method: string } {
   const calls = vi.mocked(fetch).mock.calls;
   const call = calls[calls.length - 1];
   if (!call) throw new Error('fetch was not called');
-  const url = String(call[0]);
+  // Requests go through `authenticatedFetch`, which resolves the path against
+  // the generated client's base URL; compare on path + query only.
+  const resolved = new URL(String(call[0]), 'http://origin.invalid');
+  const url = resolved.pathname + resolved.search;
   const method = ((call[1] as RequestInit | undefined)?.method ?? 'GET').toUpperCase();
   return { url, method };
 }
@@ -138,5 +143,26 @@ describe('voting api client — request wiring contract', () => {
   it('addComment → POST /api/v1/voting/{id}/comments', async () => {
     await addComment(VOTE_ID, { content: 'hi' } as Parameters<typeof addComment>[1]);
     expect(lastCall()).toEqual({ url: `/api/v1/voting/${VOTE_ID}/comments`, method: 'POST' });
+  });
+});
+
+describe('voting api client — authentication', () => {
+  afterEach(() => {
+    clearTokenProvider();
+    clearOrgProvider();
+    vi.restoreAllMocks();
+  });
+
+  it('attaches the bearer token and tenant header from the shared providers', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(okJson([]));
+    setTokenProvider(() => 'tok-123');
+    setOrgProvider(() => 'org-456');
+
+    await listVotes();
+
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init.headers);
+    expect(headers.get('Authorization')).toBe('Bearer tok-123');
+    expect(headers.get('X-Tenant-ID')).toBe('org-456');
   });
 });

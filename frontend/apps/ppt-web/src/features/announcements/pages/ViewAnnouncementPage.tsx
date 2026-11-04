@@ -39,12 +39,12 @@ const statusPillClass: Record<AnnouncementStatus, string> = {
   archived: 'ann-status-pill ann-status-pill--archived',
 };
 
-const targetTypeLabels = {
-  all: 'All Users',
-  building: 'Building',
-  units: 'Specific Units',
-  roles: 'By Role',
-};
+const targetTypeLabelKeys = {
+  all: 'announcements.target.allUsers',
+  building: 'announcements.target.building',
+  units: 'announcements.target.specificUnits',
+  roles: 'announcements.target.byRole',
+} as const;
 
 export function ViewAnnouncementPage({
   announcement,
@@ -61,7 +61,7 @@ export function ViewAnnouncementPage({
   acknowledgmentStats,
   commentsProps,
 }: ViewAnnouncementPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const canEdit = announcement.status === 'draft' || announcement.status === 'scheduled';
   const canDelete = announcement.status === 'draft';
   const canPublish = announcement.status === 'draft' || announcement.status === 'scheduled';
@@ -88,7 +88,7 @@ export function ViewAnnouncementPage({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Announcements
+        {t('announcements.view.backToList')}
       </button>
 
       <div className="view-announcement__card">
@@ -96,7 +96,7 @@ export function ViewAnnouncementPage({
           <div>
             <div className="view-announcement__badge-row">
               {announcement.pinned && (
-                <span className="view-announcement__pin-icon" title="Pinned">
+                <span className="view-announcement__pin-icon" title={t('announcements.pinned')}>
                   <svg
                     width="20"
                     height="20"
@@ -109,35 +109,45 @@ export function ViewAnnouncementPage({
                 </span>
               )}
               <span className={statusPillClass[announcement.status]}>
-                {announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}
+                {t(`announcements.status.${announcement.status}`)}
               </span>
             </div>
             <h1 className="view-announcement__title">{announcement.title}</h1>
             <div className="view-announcement__byline">
-              <span>By {announcement.authorName}</span>
-              <span>{targetTypeLabels[announcement.targetType]}</span>
+              <span>{t('announcements.view.byAuthor', { author: announcement.authorName })}</span>
+              <span>{t(targetTypeLabelKeys[announcement.targetType])}</span>
               {announcement.publishedAt && (
-                <span>Published: {new Date(announcement.publishedAt).toLocaleDateString()}</span>
+                <span>
+                  {t('announcements.card.publishedOn', {
+                    date: new Date(announcement.publishedAt).toLocaleDateString(i18n.language),
+                  })}
+                </span>
               )}
             </div>
           </div>
 
           <div className="view-announcement__stats">
             <span className="view-announcement__stat">
-              <strong>{announcement.readCount}</strong> reads
+              <strong>{announcement.readCount}</strong>{' '}
+              {t('announcements.view.reads', { count: announcement.readCount })}
             </span>
             {announcement.acknowledgmentRequired && (
               <span className="view-announcement__stat">
-                <strong>{announcement.acknowledgedCount}</strong> acknowledged
+                <strong>{announcement.acknowledgedCount}</strong>{' '}
+                {t('announcements.view.acknowledgedCount', {
+                  count: announcement.acknowledgedCount,
+                })}
               </span>
             )}
             {announcement.commentsEnabled && (
               <span className="view-announcement__stat">
-                <strong>{announcement.commentCount}</strong> comments
+                <strong>{announcement.commentCount}</strong>{' '}
+                {t('announcements.view.comments', { count: announcement.commentCount })}
               </span>
             )}
             <span className="view-announcement__stat">
-              <strong>{announcement.attachmentCount}</strong> attachments
+              <strong>{announcement.attachmentCount}</strong>{' '}
+              {t('announcements.view.attachments', { count: announcement.attachmentCount })}
             </span>
           </div>
         </div>
@@ -148,7 +158,9 @@ export function ViewAnnouncementPage({
 
         {attachments.length > 0 && (
           <div className="view-announcement__attachments">
-            <h3 className="view-announcement__attachments-title">Attachments</h3>
+            <h3 className="view-announcement__attachments-title">
+              {t('announcements.view.attachmentsTitle')}
+            </h3>
             <ul className="view-announcement__attachment-list">
               {attachments.map((attachment) => (
                 <li key={attachment.id} className="view-announcement__attachment">
@@ -197,7 +209,7 @@ export function ViewAnnouncementPage({
               onClick={onEdit}
               className="view-announcement__btn view-announcement__btn--edit"
             >
-              Edit
+              {t('common.edit')}
             </button>
           )}
           {canPublish && (
@@ -206,7 +218,7 @@ export function ViewAnnouncementPage({
               onClick={onPublish}
               className="view-announcement__btn view-announcement__btn--publish"
             >
-              Publish Now
+              {t('announcements.actions.publishNow')}
             </button>
           )}
           {canArchive && (
@@ -215,7 +227,7 @@ export function ViewAnnouncementPage({
               onClick={onArchive}
               className="view-announcement__btn view-announcement__btn--archive"
             >
-              Archive
+              {t('announcements.actions.archive')}
             </button>
           )}
           <button
@@ -223,7 +235,9 @@ export function ViewAnnouncementPage({
             onClick={() => onPin(!announcement.pinned)}
             className="view-announcement__btn view-announcement__btn--pin"
           >
-            {announcement.pinned ? 'Unpin' : 'Pin'}
+            {announcement.pinned
+              ? t('announcements.actions.unpin')
+              : t('announcements.actions.pin')}
           </button>
           {announcement.acknowledgmentRequired && onAcknowledge && (
             <button
@@ -231,7 +245,7 @@ export function ViewAnnouncementPage({
               onClick={onAcknowledge}
               className="view-announcement__btn view-announcement__btn--ack"
             >
-              Acknowledge
+              {t('announcements.actions.acknowledge')}
             </button>
           )}
           {onMarkRead && (
@@ -240,7 +254,7 @@ export function ViewAnnouncementPage({
               onClick={onMarkRead}
               className="view-announcement__btn view-announcement__btn--read"
             >
-              Mark as Read
+              {t('announcements.actions.markAsRead')}
             </button>
           )}
           {canDelete && (
@@ -249,7 +263,7 @@ export function ViewAnnouncementPage({
               onClick={onDelete}
               className="view-announcement__btn view-announcement__btn--delete"
             >
-              Delete
+              {t('common.delete')}
             </button>
           )}
         </div>

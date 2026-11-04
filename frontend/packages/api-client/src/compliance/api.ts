@@ -5,6 +5,7 @@
  * API functions for AML, content moderation, and DSA compliance.
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   AmlAssessmentsResponse,
   AmlThresholdsResponse,
@@ -34,7 +35,7 @@ const AML_DSA_BASE = '/api/v1/aml-dsa';
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
   // TODO(Phase-1): Add authentication headers to fetchApi
   // Will be implemented when auth context is available
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

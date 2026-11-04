@@ -6,9 +6,11 @@
  * are thin: the pages consume the voting hooks directly and the wrappers only
  * supply navigation callbacks and the `:voteId` route param.
  */
+
 import { Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '../../components';
 import { VoteCreatePage, VoteDetailPage, VotingPage } from '../lazyRoutes';
+import { MANAGER_ROLES } from '../shared';
 
 /** Route wrapper: voting list (`/voting`). */
 function VotingPageRoute() {
@@ -57,7 +59,7 @@ export function votingRoutes() {
       <Route
         path="/voting/new"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <VoteCreatePageRoute />
           </ProtectedRoute>
         }

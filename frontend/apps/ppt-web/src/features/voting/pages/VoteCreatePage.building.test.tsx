@@ -24,6 +24,7 @@ vi.mock('@ppt/api-client', () => ({
   }),
   useMyUnits: () => ({ data: [], isLoading: false }),
   useCreateVote: () => ({ mutateAsync: h.createVote, isPending: false }),
+  useDeleteVote: () => ({ mutateAsync: vi.fn(async () => undefined), isPending: false }),
   addQuestion: vi.fn(async () => ({})),
   publishVote: vi.fn(async () => ({})),
 }));

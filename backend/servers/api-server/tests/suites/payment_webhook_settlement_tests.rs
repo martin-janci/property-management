@@ -430,6 +430,100 @@ async fn webhook_matching_amount_total_settles(pool: PgPool) {
     assert_eq!(sess_status, "completed", "session marked completed");
 }
 
+/// Regression (BIT — "silently drops paid events when invoice is missing"):
+/// a correctly-SIGNED `checkout.session.completed` (`payment_status = "paid"`)
+/// whose *pending* session references an invoice that no longer exists must NOT
+/// be acked away. Stripe has already collected the money; acking (200) would
+/// drop the paid event with no record anywhere. The handler must fail loud with
+/// a 5xx so Stripe's at-least-once retry keeps redelivering while operators
+/// reconcile.
+///
+/// On the old code (ack 200 on missing invoice) this FAILS; after the fix
+/// (refuse to ack) it PASSES.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_missing_invoice_is_not_acked(pool: PgPool) {
+    let _guard = ENV_LOCK.lock().await;
+    let secret = "whsec_missing_invoice";
+    std::env::set_var(SECRET_ENV, secret);
+
+    let provider_session_id = "cs_test_missing_invoice_1";
+    let (invoice_id, session_pk) = seed_invoice_with_session(
+        &pool,
+        "missinginv",
+        provider_session_id,
+        Decimal::new(10000, 2),
+    )
+    .await;
+
+    // Make the session dangle: drop the FK (ON DELETE CASCADE would otherwise
+    // take the session with it) then hard-delete the invoice, leaving a real
+    // pending session whose `invoice_id` resolves to nothing — exactly the
+    // data-integrity state the handler must not silently ack.
+    sqlx::query(
+        "ALTER TABLE online_payment_sessions \
+         DROP CONSTRAINT online_payment_sessions_invoice_id_fkey",
+    )
+    .execute(&pool)
+    .await
+    .expect("drop session->invoice fk");
+    sqlx::query("DELETE FROM invoices WHERE id = $1")
+        .bind(invoice_id)
+        .execute(&pool)
+        .await
+        .expect("delete invoice");
+
+    let app = TestApp::new(pool.clone()).await;
+
+    let body = serde_json::json!({
+        "type": "checkout.session.completed",
+        "data": { "object": {
+            "id": provider_session_id,
+            "payment_status": "paid",
+            "payment_intent": "pi_test_missing_invoice_1"
+        }}
+    });
+    let raw = body.to_string();
+    let ts = chrono::Utc::now().timestamp();
+    let header = sign(secret, ts, raw.as_bytes());
+
+    let resp = app
+        .execute(
+            app.post(WEBHOOK_URI)
+                .header(SIG_HEADER, &header)
+                .json(body)
+                .build(),
+        )
+        .await;
+
+    std::env::remove_var(SECRET_ENV);
+
+    // The core property: a PAID event for a missing invoice is NOT acked away.
+    assert_ne!(
+        resp.status,
+        StatusCode::OK,
+        "paid webhook with a missing invoice must NOT be acked (would silently drop a collected payment); body: {}",
+        resp.text()
+    );
+    assert_eq!(
+        resp.status,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "missing invoice must fail loud (5xx) so Stripe retries; body: {}",
+        resp.text()
+    );
+
+    // The session stays pending — nothing was settled.
+    let sess_status: String =
+        sqlx::query_scalar("SELECT status FROM online_payment_sessions WHERE id = $1")
+            .bind(session_pk)
+            .fetch_one(&pool)
+            .await
+            .expect("load session");
+    assert_eq!(
+        sess_status, "pending",
+        "session must stay pending when its invoice is missing"
+    );
+}
+
 /// Concurrent-replay (the race the sequential test above cannot catch):
 /// Stripe is at-least-once and does not serialize deliveries, so two duplicate
 /// `checkout.session.completed` events can BOTH read the session as not-yet

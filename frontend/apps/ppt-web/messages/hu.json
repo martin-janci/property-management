@@ -686,7 +686,28 @@
       "deleteError": "Törlés sikertelen",
       "deleteErrorMessage": "A mappa törlése nem sikerült",
       "createError": "Létrehozás sikertelen",
-      "createErrorMessage": "A mappa létrehozása nem sikerült"
+      "createErrorMessage": "A mappa létrehozása nem sikerült",
+      "rename": "Átnevezés",
+      "delete": "Törlés",
+      "namePlaceholder": "Mappa neve…",
+      "deleteConfirm": "Biztosan törli a(z) <strong>{{name}}</strong> mappát?",
+      "deleteKeepDocuments": "Törlés (dokumentumok áthelyezése a gyökérbe)",
+      "deleteWithDocuments": "Törlés a dokumentumokkal együtt",
+      "count_one": "{{count}} mappa",
+      "count_other": "{{count}} mappa",
+      "newFolder": "Új mappa",
+      "allDocuments": "Minden dokumentum",
+      "loadError": "Nem sikerült betölteni a mappákat.",
+      "empty": "Nincsenek mappák",
+      "createFirst": "Első mappa létrehozása",
+      "collapse": "Összecsukás",
+      "expand": "Kibontás",
+      "breadcrumbRoot": "Összes",
+      "folderEmpty": "A mappa üres",
+      "uploadDocuments": "Dokumentumok feltöltése",
+      "showAll_one": "{{count}} dokumentum megjelenítése",
+      "showAll_other": "Mind a(z) {{count}} dokumentum megjelenítése",
+      "documentSelected": "{{id}} dokumentum kiválasztva"
     },
     "versionHistory": {
       "title": "Verziótörténet",
@@ -695,6 +716,311 @@
       "empty": "Ehhez a dokumentumhoz nincsenek elérhető verziók.",
       "version": "{{n}}. verzió",
       "current": "Aktuális"
+    },
+    "esign": {
+      "title": "Elektronikus aláírás",
+      "send": "Aláírásra küldés",
+      "loading": "Aláírási kérelmek betöltése…",
+      "loadError": "Nem sikerült betölteni az aláírási kérelmeket.",
+      "empty": "Ezt a dokumentumot még nem küldték el aláírásra.",
+      "requestedAt": "Kérve: {{date}}",
+      "signedAt": "aláírva: {{date}}",
+      "remind": "Emlékeztető küldése",
+      "reminding": "Küldés…",
+      "remindSent": "Elküldött emlékeztetők: {{count}}.",
+      "cancel": "Kérelem visszavonása",
+      "cancelling": "Visszavonás…",
+      "cancelConfirm": "Visszavonja ezt az aláírási kérelmet? Az aláírók ezután nem tudnak aláírni.",
+      "allSigned": "Minden aláíró válaszolt.",
+      "status": {
+        "pending": "Aláírásra vár",
+        "in_progress": "Aláírás folyamatban",
+        "completed": "Aláírva",
+        "declined": "Elutasítva",
+        "expired": "Lejárt",
+        "cancelled": "Visszavonva"
+      },
+      "signer": {
+        "pending": "Függőben",
+        "sent": "Elküldve",
+        "viewed": "Megtekintve",
+        "signed": "Aláírva",
+        "declined": "Elutasítva"
+      },
+      "dialog": {
+        "title": "Dokumentum küldése aláírásra",
+        "signers": "Aláírók",
+        "namePlaceholder": "Teljes név",
+        "emailPlaceholder": "email@example.com",
+        "removeSigner": "Aláíró eltávolítása",
+        "addSigner": "+ Aláíró hozzáadása",
+        "signerRequired": "Adjon meg legalább egy aláírót névvel és érvényes e-mail-címmel.",
+        "subject": "Tárgy (nem kötelező)",
+        "subjectPlaceholder": "pl. Kezelési szerződés",
+        "message": "Üzenet az aláíróknak (nem kötelező)",
+        "messagePlaceholder": "Kérjük, tekintse át és írja alá a csatolt dokumentumot.",
+        "sending": "Küldés…",
+        "send": "Aláírásra küldés"
+      },
+      "genericError": "Hiba történt. Próbálja újra."
+    },
+    "category": {
+      "contract": "Szerződés",
+      "invoice": "Számla",
+      "receipt": "Nyugta",
+      "report": "Jelentés",
+      "minutes": "Jegyzőkönyv",
+      "policy": "Szabályzat",
+      "notice": "Értesítés",
+      "maintenance": "Karbantartás",
+      "insurance": "Biztosítás",
+      "legal": "Jogi",
+      "financial": "Pénzügyi",
+      "correspondence": "Levelezés",
+      "other": "Egyéb"
+    },
+    "downloadError": {
+      "title": "A letöltés nem sikerült",
+      "message": "Nem sikerült letölteni a dokumentumot."
+    },
+    "move": {
+      "successTitle": "Dokumentum áthelyezve",
+      "successToFolder": "A(z) „{{title}}” dokumentum átkerült a mappába.",
+      "successToRoot": "A(z) „{{title}}” dokumentum a gyökérmappába került.",
+      "failedTitle": "Az áthelyezés nem sikerült",
+      "failedMessage": "Nem sikerült áthelyezni a dokumentumot.",
+      "documentCount_one": "{{count}} dokumentum",
+      "documentCount_other": "{{count}} dokumentum",
+      "destination": "Cél:",
+      "rootNoFolder": "Gyökér (mappa nélkül)",
+      "allDocumentsNoFolder": "Minden dokumentum (mappa nélkül)",
+      "moving": "Áthelyezés…",
+      "moveHere": "Áthelyezés ide"
+    },
+    "page": {
+      "folders": "Mappák",
+      "upload": "Feltöltés",
+      "templates": "Sablonok",
+      "search": "Keresés",
+      "list": "Lista"
+    },
+    "browse": {
+      "audience": {
+        "organization": "Minden lakó",
+        "building": "Épület",
+        "unit": "Csak az egység",
+        "user": "Meghatározott felhasználók",
+        "public": "Nyilvános"
+      },
+      "tabs": {
+        "all": "Összes",
+        "published": "Közzétett",
+        "draft": "Piszkozatok",
+        "archived": "Archivált"
+      },
+      "statusDraft": "Piszkozat",
+      "statusArchived": "Archivált",
+      "downloadFile": "{{name}} letöltése",
+      "preview": "Előnézet",
+      "previewFile": "{{name}} előnézete",
+      "moveToFolder": "Áthelyezés mappába",
+      "moveFile": "{{name}} áthelyezése mappába",
+      "searchPlaceholder": "Keresés cím szerint…",
+      "audienceLegend": "Célközönség",
+      "categoryLegend": "Kategória",
+      "clearFilters": "Szűrők törlése",
+      "loadError": "Nem sikerült betölteni a dokumentumokat.",
+      "emptyFiltered": "Egy dokumentum sem felel meg a kiválasztott szűrőknek.",
+      "totalCount_one": "{{count}} dokumentum",
+      "totalCount_other": "{{count}} dokumentum",
+      "shownCount": "{{shown}} látható",
+      "prevPage": "Előző",
+      "nextPage": "Következő",
+      "pageOf": "{{page}}. oldal / {{total}}"
+    },
+    "preview": {
+      "loading": "Előnézet betöltése…",
+      "unavailable": "Az előnézet nem érhető el.",
+      "unsupportedType": "Ehhez a fájltípushoz nem érhető el előnézet. A megtekintéshez töltse le a fájlt.",
+      "downloading": "Letöltés…",
+      "documentUnavailable": "A dokumentum előnézete nem érhető el.",
+      "typeUnavailable": "Ehhez a fájltípushoz nem érhető el előnézet.",
+      "downloadFile": "Fájl letöltése",
+      "pdfError": "Hiba a PDF betöltésekor: {{error}}",
+      "documentPreview": "Dokumentum előnézete",
+      "pageOf": "/"
+    },
+    "detail": {
+      "audience": {
+        "organization": "Minden tag",
+        "building": "Az épület tagjai",
+        "unit": "Az egység tagjai",
+        "user": "Meghatározott felhasználók",
+        "public": "Nyilvános"
+      },
+      "loading": "Dokumentum betöltése...",
+      "forbidden": "Ez a dokumentum az Ön fiókja számára nem érhető el.",
+      "forbiddenHint": "Lehet, hogy a dokumentum csak a kezelők vagy meghatározott felhasználók számára látható.",
+      "loadError": "Nem sikerült betölteni a dokumentum adatait.",
+      "visibleTo": "Látható: {{audience}}",
+      "createdAt": "Létrehozva: {{date}}",
+      "updatedAt": "Frissítve: {{date}}",
+      "intelligence": "Dokumentumelemzés",
+      "extractedText": "Kinyert szöveg",
+      "wordsExtracted_one": "{{count}} szó kinyerve",
+      "wordsExtracted_other": "{{count}} szó kinyerve"
+    },
+    "share": {
+      "type": {
+        "user": "Meghatározott felhasználó",
+        "role": "Szerepkör",
+        "building": "Épület",
+        "link": "Nyilvános hivatkozás"
+      },
+      "title": "Megosztás",
+      "newShare": "Új megosztás",
+      "userId": "Felhasználói azonosító",
+      "userIdPlaceholder": "felhasznalo-uuid",
+      "mustBeUuid": "Érvényes UUID szükséges.",
+      "roleName": "Szerepkör neve",
+      "roleNamePlaceholder": "pl. manager",
+      "passwordProtect": "Jelszavas védelem",
+      "password": "Jelszó",
+      "passwordPlaceholder": "Min. 4 karakter",
+      "setExpiry": "Lejárat beállítása",
+      "days_one": "nap",
+      "days_other": "nap",
+      "creating": "Létrehozás…",
+      "create": "Megosztás létrehozása",
+      "linkCopied": "Hivatkozás másolva",
+      "copyFailed": "A másolás nem sikerült",
+      "copyFailedMessage": "Nem sikerült a vágólapra másolni.",
+      "revoked": "Megosztás visszavonva",
+      "revokeFailed": "A visszavonás nem sikerült",
+      "revokeFailedMessage": "Sikertelen.",
+      "empty": "Még nincs aktív megosztás.",
+      "activeShares": "Aktív megosztások",
+      "roleLabel": "Szerepkör: {{role}}",
+      "userLabel": "Felhasználó:",
+      "expires": "Lejár: {{date}}",
+      "copyLink": "Hivatkozás másolása",
+      "revoke": "Visszavonás",
+      "revokeConfirmTitle": "Visszavonja a megosztást?",
+      "revokeConfirmMessage": "A címzettek azonnal elveszítik a hozzáférést. Ez a művelet nem vonható vissza.",
+      "created": "Megosztás létrehozva",
+      "publicLinkCopied": "Nyilvános hivatkozás másolva.",
+      "linkMessage": "Hivatkozás: {{url}}",
+      "loading": "Megosztások betöltése…",
+      "loadError": "Nem sikerült betölteni a megosztásokat.",
+      "errors": {
+        "userIdRequired": "A felhasználói azonosító megadása kötelező.",
+        "userIdInvalid": "A felhasználói azonosítónak érvényes UUID-nek kell lennie.",
+        "roleRequired": "A szerepkör nevének megadása kötelező.",
+        "passwordTooShort": "A jelszónak legalább 4 karakterből kell állnia.",
+        "expiryTooShort": "A lejáratnak legalább 1 napnak kell lennie.",
+        "createFailed": "Nem sikerült létrehozni a megosztást."
+      }
+    },
+    "uploadForm": {
+      "subtitle": "Töltsön fel dokumentumokat automatikus szövegfelismeréshez (OCR) és MI-elemzéshez",
+      "dropFiles": "Húzza ide a fájlokat",
+      "orBrowse": "vagy kattintson a tallózáshoz",
+      "supportedTypes": "Támogatott: PDF, képek, Word-dokumentumok és szövegfájlok (max. {{max}} MB)",
+      "selectedFiles": "Kiválasztott fájlok ({{count}})",
+      "uploadedSuccessfully": "Sikeresen feltöltve",
+      "removeFile": "{{name}} eltávolítása",
+      "detailsTitle": "Dokumentum adatai",
+      "title": "Cím",
+      "titlePlaceholder": "Adja meg a dokumentum címét",
+      "description": "Leírás",
+      "descriptionPlaceholder": "Leírás (nem kötelező)",
+      "category": "Kategória",
+      "categoryHint": "Az elemzés után a MI kategóriát javasol",
+      "ocrInfoTitle": "Automatikus szövegfelismerés",
+      "ocrInfoText": "Feltöltés után az OCR automatikusan kinyeri a szöveget a dokumentumokból. Ez lehetővé teszi a teljes szöveges keresést, a MI-alapú besorolást és az összefoglalást.",
+      "uploading": "Feltöltés...",
+      "uploadAndProcess": "Feltöltés és feldolgozás",
+      "uploadFailed": "A feltöltés nem sikerült",
+      "networkError": "Megszakadt a kapcsolat. Ellenőrizze az internetkapcsolatot, és próbálja újra.",
+      "uploadCancelled": "A feltöltés megszakítva.",
+      "retry": "Újrapróbálás",
+      "retryFile": "{{name}} feltöltésének újrapróbálása",
+      "unsupportedType": "Nem támogatott fájltípus: {{type}}",
+      "unknownType": "ismeretlen",
+      "fileTooLarge": "A fájl túl nagy: {{size}} MB (max. {{max}} MB)"
+    },
+    "summary": {
+      "title": "Összefoglaló",
+      "generatePrompt": "Készüljön MI-összefoglaló a dokumentumról?",
+      "styleLabel": "Az összefoglaló stílusa:",
+      "style": {
+        "brief": "Rövid",
+        "detailed": "Részletes",
+        "bullets": "Felsorolás"
+      },
+      "generating": "Készül...",
+      "generate": "Összefoglaló készítése",
+      "tooShort_one": "A dokumentum túl rövid az összefoglaláshoz (legalább {{count}} szó szükséges).",
+      "tooShort_other": "A dokumentum túl rövid az összefoglaláshoz (legalább {{count}} szó szükséges).",
+      "generateFailed": "Nem sikerült elkészíteni az összefoglalót. Próbálja újra.",
+      "inProgress": "Az összefoglaló készül, hamarosan megjelenik...",
+      "regenerate": "Új összefoglaló készítése",
+      "generatedAt": "Készült: {{date}}"
+    },
+    "classification": {
+      "none": "Besorolás még nem érhető el. A dokumentum elemzése automatikusan megtörténik.",
+      "title": "MI-alapú besorolás",
+      "classifiedAt": "Besorolva: {{date}}",
+      "confirmed": "Ön megerősítette, hogy a besorolás helyes.",
+      "corrected": "Ön javítást adott meg ehhez a besoroláshoz.",
+      "isCorrect": "Helyes ez a besorolás?",
+      "saving": "Mentés...",
+      "yesCorrect": "Igen, helyes",
+      "suggestCorrection": "Nem, javítást javaslok",
+      "selectCorrect": "Válassza ki a helyes kategóriát:",
+      "selectCategory": "Válasszon kategóriát...",
+      "submitCorrection": "Javítás küldése",
+      "feedbackFailed": "Nem sikerült elküldeni a visszajelzést. Próbálja újra."
+    },
+    "search": {
+      "audience": {
+        "organization": "Minden tag",
+        "building": "Épület",
+        "unit": "Egység",
+        "user": "Privát",
+        "public": "Nyilvános"
+      },
+      "ocr": {
+        "completed": "Szöveg kinyerve",
+        "pending": "Függőben",
+        "processing": "Feldolgozás alatt",
+        "failed": "Sikertelen"
+      },
+      "placeholder": "Keresés a dokumentumok tartalmában, címében és leírásában...",
+      "categories": "Kategóriák",
+      "ocrStatus": "OCR-állapot",
+      "audienceLegend": "Célközönség",
+      "audienceTitle": "Csak az alábbiak számára látható dokumentumok: {{audience}}",
+      "dateRange": "Időszak",
+      "dateTo": "–",
+      "hasSummary": "Van MI-összefoglaló",
+      "error": "Hiba a dokumentumok keresésekor: {{error}}",
+      "found_one": "{{count}} dokumentum található ({{ms}} ms)",
+      "found_other": "{{count}} dokumentum található ({{ms}} ms)",
+      "noResults": "Nincs a(z) „{{query}}” keresésnek megfelelő dokumentum",
+      "minChars_one": "A kereséshez írjon be legalább {{count}} karaktert",
+      "minChars_other": "A kereséshez írjon be legalább {{count}} karaktert"
+    },
+    "searchResult": {
+      "field": {
+        "title": "Cím",
+        "description": "Leírás",
+        "ocrText": "Dokumentum tartalma (OCR)",
+        "summary": "MI-összefoglaló"
+      },
+      "relevance": "Relevancia: {{score}}",
+      "match": "{{percent}}% egyezés",
+      "hasSummary": "Van összefoglaló"
     }
   },
   "disputes": {
@@ -925,6 +1251,196 @@
       "descriptionPlaceholder": "Rövid leírás (nem kötelező)",
       "descriptionLabel": "{{name}} leírása",
       "removeLabel": "{{name}} eltávolítása"
+    },
+    "categoryCommonArea": "Közös helyiségek",
+    "categoryParking": "Parkolás",
+    "categoryPets": "Háziállatok",
+    "categoryMaintenance": "Karbantartás",
+    "categoryPrivacy": "Magánszféra",
+    "categoryHarassment": "Zaklatás",
+    "categoryOther": "Egyéb",
+    "priorityLow": "Alacsony",
+    "priorityMedium": "Közepes",
+    "priorityHigh": "Magas",
+    "priorityUrgent": "Sürgős",
+    "priorityWithLabel": "Prioritás: {{priority}}",
+    "partyCount_one": "{{count}} fél",
+    "partyCount_other": "{{count}} fél",
+    "filedByName": "Benyújtotta: {{name}}",
+    "assignedToName": "Felelős: {{name}}",
+    "filedDaysAgo_one": "{{count}} napja",
+    "filedDaysAgo_other": "{{count}} napja",
+    "statusUpdated": "Állapot frissítve",
+    "statusUpdateFailed": "Nem sikerült frissíteni az állapotot",
+    "notImplemented": "Még nem érhető el",
+    "actionPendingImpl": "A(z) „{{action}}” funkció egy későbbi kiadásban lesz elérhető.",
+    "pendingAction": {
+      "addEvidence": "Bizonyíték hozzáadása",
+      "deleteEvidence": "Bizonyíték törlése",
+      "proposeResolution": "Megoldás javaslata",
+      "voteResolution": "Szavazás a megoldásról",
+      "acceptResolution": "Megoldás elfogadása",
+      "implementResolution": "Megoldás végrehajtása",
+      "completeResolutionTerm": "Megoldási feltétel teljesítése",
+      "createAction": "Teendő létrehozása",
+      "completeAction": "Teendő lezárása",
+      "sendReminder": "Emlékeztető küldése",
+      "escalate": "Eszkalálás"
+    },
+    "validation": {
+      "typeRequired": "Válassza ki a vita típusát.",
+      "subjectMin": "A tárgynak legalább 5 karakter hosszúnak kell lennie.",
+      "subjectMax": "A tárgy legfeljebb 200 karakter lehet.",
+      "descriptionMin": "A leírásnak legalább 30 karakter hosszúnak kell lennie.",
+      "descriptionMax": "A leírás legfeljebb 5000 karakter lehet.",
+      "unitRequired": "Válasszon egységet."
+    },
+    "types": {
+      "noise": {
+        "label": "Zaj",
+        "description": "Túlzott zaj, zavarás, a csendes órák megsértése"
+      },
+      "damage": {
+        "label": "Vagyoni kár",
+        "description": "Ingatlan, berendezés vagy közös helyiségek fizikai károsodása"
+      },
+      "payment": {
+        "label": "Fizetés / díjak",
+        "description": "Vitatott terhelések, kifizetetlen díjak, elszámolási nézeteltérések"
+      },
+      "lease": {
+        "label": "Bérleti feltételek",
+        "description": "A bérleti feltételek megsértése vagy az azokkal kapcsolatos nézeteltérések"
+      },
+      "maintenance": {
+        "label": "Karbantartás",
+        "description": "Megoldatlan karbantartási problémák, elhanyagolt javítások"
+      },
+      "other": {
+        "label": "Egyéb",
+        "description": "Minden egyéb vita, amely nem tartozik a fenti kategóriákba"
+      }
+    },
+    "form": {
+      "pageSubtitle": "Nyújtson be hivatalos vitát. A <1>*</1> jellel jelölt mezők kötelezők.",
+      "disputeType": "A vita típusa",
+      "location": "Helyszín",
+      "unit": "Egység",
+      "selectUnit": "Válasszon egységet…",
+      "otherPartyOptional": "Ellenérdekű fél (nem kötelező)",
+      "notSpecified": "Nincs megadva",
+      "details": "Részletek",
+      "subject": "Tárgy",
+      "description": "Leírás",
+      "minCharacters_one": "Min. {{count}} karakter",
+      "minCharacters_other": "Min. {{count}} karakter",
+      "evidenceOptional": "Bizonyítékok (nem kötelező)",
+      "evidenceHint": "Csatoljon fényképeket, dokumentumokat vagy felvételeket a vita alátámasztására. A fájlok a vita létrehozása után töltődnek fel.",
+      "nextStepsTitle": "Mi történik ezután?",
+      "nextStep1": "A vita hivatkozási számot kap",
+      "nextStep2": "Az ellenérdekű fél értesítést kap, és válaszolhat",
+      "nextStep3": "Egy kezelő vagy mediátor megvizsgálja az ügyet",
+      "nextStep4": "Szükség esetén közvetítői egyeztetésekre kerül sor",
+      "nextStep5": "Megoldási javaslat készül, amelynek teljesülését nyomon követjük",
+      "filing": "Benyújtás…",
+      "submit": "Vita benyújtása",
+      "categoryRequired": "Kategória *",
+      "titleRequired": "Cím *",
+      "buildingOptional": "Épület (nem kötelező)",
+      "selectBuilding": "Válasszon épületet...",
+      "unitOptional": "Egység (nem kötelező)",
+      "descriptionRequired": "A probléma leírása *",
+      "issuePlaceholder": "Írja le részletesen a problémát. Adja meg a dátumokat, időpontokat és a konkrét eseteket.",
+      "desiredResolutionOptional": "Kívánt megoldás (nem kötelező)",
+      "desiredResolutionPlaceholder": "Milyen eredményt szeretne?",
+      "otherParties": "További érintett felek",
+      "evidenceNotice": "Bizonyítékokat (fényképeket, dokumentumokat) a vita benyújtása után adhat hozzá."
+    },
+    "detail": {
+      "role": {
+        "complainant": "Panaszos",
+        "respondent": "Ellenérdekű fél",
+        "witness": "Tanú",
+        "mediator": "Mediátor"
+      },
+      "mediation": "Mediáció",
+      "resolve": "Lezárás megoldással",
+      "overdueActions_one": "{{count}} lejárt teendő",
+      "overdueActions_other": "{{count}} lejárt teendő",
+      "pendingActions_one": "{{count}} függő teendő",
+      "pendingActions_other": "{{count}} függő teendő",
+      "desiredResolution": "Kívánt megoldás",
+      "evidenceCount": "Bizonyítékok ({{count}})",
+      "noEvidence": "Nem nyújtottak be bizonyítékot.",
+      "uploadedBy": "Feltöltötte: {{name}} – {{date}}",
+      "resolutions": "Megoldási javaslatok",
+      "proposeResolution": "Megoldás javaslata",
+      "noResolutions": "Még nincs megoldási javaslat.",
+      "actionItems": "Teendők",
+      "createAction": "Teendő létrehozása",
+      "noActionItems": "Nincsenek teendők.",
+      "building": "Épület",
+      "filedOn": "Benyújtás dátuma",
+      "assignedTo": "Felelős",
+      "parties": "Felek",
+      "proposalPlaceholder": "Írja le a javasolt megoldást...",
+      "propose": "Javaslat",
+      "createActionItem": "Teendő létrehozása",
+      "actionTitle": "Cím",
+      "assignTo": "Hozzárendelés",
+      "selectParty": "Válasszon felet...",
+      "dueDate": "Határidő"
+    },
+    "timeline": {
+      "title": "Tevékenységek idővonala",
+      "empty": "Még nincs tevékenység.",
+      "statusChange": "Állapot: {{from}} → {{to}}",
+      "showMore": "További tevékenységek..."
+    },
+    "resolution": {
+      "status": {
+        "proposed": "Javasolt",
+        "accepted": "Elfogadva",
+        "rejected": "Elutasítva",
+        "partially_accepted": "Részben elfogadva",
+        "implemented": "Végrehajtva"
+      },
+      "approval": "{{percent}}% jóváhagyás",
+      "proposedBy": "Javasolta: {{name}}, {{date}}",
+      "proposalTitle": "Megoldási javaslat",
+      "terms": "Feltételek ({{completed}}/{{total}})",
+      "assignedTo": "Felelős: {{name}}",
+      "due": "Határidő: {{date}}",
+      "completedOn": "Teljesítve: {{date}}",
+      "votes": "Szavazatok",
+      "reject": "Elutasítás",
+      "accept": "Elfogadás",
+      "finalize": "Megoldás véglegesítése",
+      "markImplemented": "Megjelölés végrehajtottként"
+    },
+    "action": {
+      "status": {
+        "pending": "Függőben",
+        "in_progress": "Folyamatban",
+        "completed": "Kész",
+        "overdue": "Lejárt",
+        "escalated": "Eszkalálva"
+      },
+      "overdueBy_one": "{{count}} napja lejárt",
+      "overdueBy_other": "{{count}} napja lejárt",
+      "dueToday": "Ma esedékes",
+      "dueTomorrow": "Holnap esedékes",
+      "dueInDays_one": "{{count}} nap múlva esedékes",
+      "dueInDays_other": "{{count}} nap múlva esedékes",
+      "dueOn": "Határidő: {{date}}",
+      "assignedTo": "Felelős:",
+      "completedLabel": "Teljesítve:",
+      "reminderSent": "Emlékeztető elküldve: {{date}}",
+      "escalatedOn": "Eszkalálva: {{date}}",
+      "start": "Indítás",
+      "complete": "Befejezés",
+      "sendReminder": "Emlékeztető küldése",
+      "escalate": "Eszkalálás"
     }
   },
   "financial": {
@@ -973,6 +1489,112 @@
       "titleTooLong": "A cím legfeljebb 255 karakter lehet",
       "contentRequired": "A tartalom megadása kötelező",
       "selectTarget": "Válasszon legalább egy célt"
+    },
+    "failedToLoad": "Nem sikerült betölteni a közleményeket",
+    "markedRead": "Olvasottként megjelölve",
+    "markReadFailed": "Nem sikerült olvasottként megjelölni",
+    "acknowledged": "Tudomásulvétel visszaigazolva",
+    "acknowledgeFailed": "Nem sikerült visszaigazolni a tudomásulvételt",
+    "published": "Közzétéve",
+    "publishFailed": "A közzététel nem sikerült",
+    "archived": "Archiválva",
+    "archiveFailed": "Az archiválás nem sikerült",
+    "pinned": "Kitűzve",
+    "unpinned": "Kitűzés megszüntetve",
+    "pinFailed": "A kitűzés nem sikerült",
+    "deleted": "Törölve",
+    "deleteFailed": "A törlés nem sikerült",
+    "commentPosted": "Hozzászólás elküldve",
+    "commentFailed": "Nem sikerült elküldeni a hozzászólást",
+    "commentDeleted": "Hozzászólás törölve",
+    "commentDeleteFailed": "Nem sikerült törölni a hozzászólást",
+    "comments": {
+      "deletedText": "[Ezt a hozzászólást törölték]",
+      "reply": "Válasz",
+      "delete": "Törlés",
+      "deleting": "Törlés…",
+      "postReply": "Válasz küldése",
+      "cancel": "Mégse",
+      "replyPlaceholder": "Írjon választ…",
+      "discussion": "Beszélgetés",
+      "empty": "Még nincs hozzászólás. Kezdje el elsőként a beszélgetést!",
+      "newCommentPlaceholder": "Hozzászólás írása… (küldés: Ctrl+Enter)",
+      "postComment": "Hozzászólás küldése",
+      "posting": "Küldés…"
+    },
+    "title": "Közlemények",
+    "failedToLoadOne": "Nem sikerült betölteni a közleményt",
+    "created": "Létrehozva",
+    "createdMessage": "A közlemény létrejött",
+    "createFailed": "Nem sikerült létrehozni a közleményt",
+    "updated": "Frissítve",
+    "updatedMessage": "A közlemény frissült",
+    "updateFailed": "Nem sikerült frissíteni a közleményt",
+    "unreadCount_one": "{{count}} olvasatlan közlemény",
+    "unreadCount_other": "{{count}} olvasatlan közlemény",
+    "status": {
+      "draft": "Piszkozat",
+      "scheduled": "Ütemezett",
+      "published": "Közzétett",
+      "archived": "Archivált"
+    },
+    "actions": {
+      "view": "Megtekintés",
+      "publish": "Közzététel",
+      "publishNow": "Közzététel most",
+      "archive": "Archiválás",
+      "pin": "Kitűzés",
+      "unpin": "Kitűzés megszüntetése",
+      "acknowledge": "Tudomásulvétel visszaigazolása",
+      "markAsRead": "Megjelölés olvasottként"
+    },
+    "card": {
+      "acknowledgmentRequired": "Visszaigazolás szükséges",
+      "commentsEnabled": "Hozzászólások engedélyezve",
+      "publishedOn": "Közzétéve: {{date}}"
+    },
+    "list": {
+      "allStatuses": "Minden állapot",
+      "allTargets": "Minden célcsoport",
+      "empty": "Nem található közlemény.",
+      "createFirst": "Hozza létre az első közleményt",
+      "showingRange": "{{from}}–{{to}} / {{total}}",
+      "pageOf": "{{page}}. oldal / {{totalPages}}"
+    },
+    "ackStats": {
+      "title": "Visszaigazolások állapota",
+      "read": "Elolvasta ({{percent}}%)",
+      "acknowledged": "Visszaigazolta ({{percent}}%)",
+      "pending_one": "felhasználó még nem olvasta",
+      "pending_other": "felhasználó még nem olvasta"
+    },
+    "schedule": {
+      "label": "Ütemezés későbbre (nem kötelező)",
+      "clear": "Törlés",
+      "hint": "Hagyja üresen a piszkozatként való mentéshez, vagy válasszon dátumot az automatikus közzétételhez."
+    },
+    "createPage": {
+      "subtitle": "Hozzon létre új közleményt a szervezete számára."
+    },
+    "editPage": {
+      "title": "Közlemény szerkesztése",
+      "subtitle": "Frissítse a közleményt. A módosítások piszkozatként mentődnek, hacsak nem teszi közzé.",
+      "cannotEditTitle": "Nem szerkeszthető",
+      "cannotEditBody": "Csak piszkozat és ütemezett közlemény szerkeszthető. Jelenlegi állapot: {{status}}.",
+      "goBack": "Vissza"
+    },
+    "view": {
+      "backToList": "Vissza a közleményekhez",
+      "byAuthor": "Szerző: {{author}}",
+      "reads_one": "olvasás",
+      "reads_other": "olvasás",
+      "acknowledgedCount_one": "visszaigazolás",
+      "acknowledgedCount_other": "visszaigazolás",
+      "comments_one": "hozzászólás",
+      "comments_other": "hozzászólás",
+      "attachments_one": "melléklet",
+      "attachments_other": "melléklet",
+      "attachmentsTitle": "Mellékletek"
     }
   },
   "emergency": {
@@ -1128,7 +1750,9 @@
         "message": "Váratlan hiba történt."
       },
       "rateLimitRetry": "Kérjük, várjon {{seconds}} másodpercet, mielőtt újra próbálkozik."
-    }
+    },
+    "accessDenied": "Hozzáférés megtagadva",
+    "backToDashboard": "Vissza az áttekintéshez"
   },
   "notifications": {
     "title": "Értesítések",
@@ -1422,7 +2046,10 @@
       "loadMore": "Több betöltése",
       "loading": "Betöltés...",
       "errorTitle": "Nem sikerült betölteni a végrehajtásokat",
-      "errorMessage": "Kérjük, próbálja újra később."
+      "errorMessage": "Kérjük, próbálja újra később.",
+      "notFoundTitle": "Az ütemterv nem található",
+      "notFoundDescription": "Ez a jelentésütemterv nem létezik, vagy nincs hozzáférése.",
+      "frequencyAt": "{{frequency}}, {{time}}"
     },
     "schedule": {
       "created": "Ütemezés sikeresen létrehozva.",
@@ -1784,6 +2411,13 @@
     "fieldLocation": "Hely",
     "fieldLocationDescription": "Helyleírás",
     "fieldConnectionType": "Kapcsolat típusa",
+    "connectionTypeNone": "Nincs megadva",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Időszakos lekérdezés"
+    },
     "fieldUnit": "Mértékegység",
     "fieldInterval": "Jelentési időköz (mp)",
     "fieldManufacturer": "Gyártó",
@@ -2155,6 +2789,86 @@
       "closeFailed": "A szavazás lezárása sikertelen",
       "cancelDone": "Szavazás visszavonva",
       "cancelFailed": "A szavazás visszavonása sikertelen"
+    },
+    "title": "Szavazások",
+    "status": {
+      "draft": "Piszkozat",
+      "scheduled": "Ütemezett",
+      "active": "Folyamatban",
+      "closed": "Lezárt",
+      "cancelled": "Visszavonva"
+    },
+    "questionType": {
+      "yes_no": "Igen / Nem",
+      "single_choice": "Egy választás",
+      "multiple_choice": "Több választás",
+      "ranked": "Rangsorolás"
+    },
+    "quorumType": {
+      "simple_majority": "Egyszerű többség (50% + 1)",
+      "two_thirds": "Kétharmados többség (2/3)",
+      "weighted": "Tulajdoni hányad szerint súlyozva"
+    },
+    "quorum": {
+      "met": "Határozatképes",
+      "participation": "{{eligible}} jogosultból {{participation}} szavazott"
+    },
+    "card": {
+      "questionCount_one": "{{count}} kérdés",
+      "questionCount_other": "{{count}} kérdés"
+    },
+    "results": {
+      "responseCount_one": "{{count}} válasz",
+      "responseCount_other": "{{count}} válasz"
+    },
+    "list": {
+      "voteCount_one": "{{count}} szavazás",
+      "voteCount_other": "{{count}} szavazás",
+      "openCount_one": "{{count}} folyamatban",
+      "openCount_other": "{{count}} folyamatban",
+      "closedCount_one": "{{count}} lezárt",
+      "closedCount_other": "{{count}} lezárt",
+      "newVote": "Új szavazás",
+      "loadFailed": "Nem sikerült betölteni a szavazásokat: {{error}}",
+      "empty": "Még nincs szavazás.",
+      "createFirst": "Első szavazás létrehozása"
+    },
+    "create": {
+      "title": "Szavazás létrehozása",
+      "topic": "Téma",
+      "titleLabel": "Cím",
+      "titlePlaceholder": "pl. A homlokzatfelújítás költségvetésének jóváhagyása",
+      "descriptionPlaceholder": "Háttérinformáció, amely a tulajdonosok megalapozott döntéséhez szükséges",
+      "questions": "Kérdések",
+      "addQuestion": "Kérdés hozzáadása",
+      "questionNumber": "{{number}}. kérdés",
+      "remove": "Eltávolítás",
+      "questionTextPlaceholder": "A kérdés szövege",
+      "optionTextPlaceholder": "A válaszlehetőség szövege",
+      "addOption": "Lehetőség hozzáadása",
+      "yesNoOptions": "Lehetőségek: Igen / Nem",
+      "required": "Kötelező",
+      "quorumAndSchedule": "Határozatképesség és ütemezés",
+      "quorumRule": "Határozatképességi szabály",
+      "quorumPercentage": "Határozatképesség százalékban (nem kötelező)",
+      "quorumPercentagePlaceholder": "pl. 50",
+      "closesAt": "Lezárás időpontja",
+      "saveDraft": "Piszkozat mentése",
+      "saving": "Mentés…",
+      "publishVote": "Szavazás közzététele",
+      "checkForm": "Ellenőrizze az űrlapot",
+      "draftSaved": "Piszkozat mentve",
+      "draftSavedBody": "Később is közzéteheti.",
+      "publishedBody": "A jogosult tulajdonosok most már szavazhatnak.",
+      "createFailed": "Nem sikerült létrehozni a szavazást",
+      "errors": {
+        "noBuilding": "Ehhez a fiókhoz nem tartozik épület.",
+        "titleRequired": "A cím megadása kötelező.",
+        "endAtRequired": "A lezárás dátumának megadása kötelező.",
+        "noQuestions": "Adjon hozzá legalább egy kérdést.",
+        "questionTextRequired": "Minden kérdésnek szöveget kell tartalmaznia.",
+        "minOptions": "A(z) „{{question}}” kérdéshez legalább 2 lehetőség szükséges."
+      }
     }
   },
   "marketplace": {

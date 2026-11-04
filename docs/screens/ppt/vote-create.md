@@ -114,5 +114,6 @@ UC-04 vote creation. 5-step wizard balances thoroughness (binding decision) with
 <!-- newest entries on top -->
 
 - 2026-11-04 — agent: ppt-web `VoteCreatePage` creates the vote for the building selected via `?building=` / new `VotingBuildingSelect` (was always `buildings[0]`); cancel returns to `/voting` with the same param. Frontmatter unchanged.
+- 2026-11-04 — agent: yes/no option ids are now UUIDs (422 `options[0].id: UUID parsing failed` on publish), and a draft whose questions fail to attach is deleted via `useDeleteVote` instead of left as an orphan (R3 #6). Status unchanged.
 - 2026-06-08 — agent (CTO/PAP-19): built ppt-web `VoteCreatePage` (sectioned form: topic, per-type question/option builder for yes-no/single/multiple/ranked, quorum + close schedule) wired to `useCreateVote` + `addQuestion` + `publishVote`; route `/voting/new`; buildStatus planned→shipped, apiStatus stub→complete, component renamed VoteCreateWizard→VoteCreatePage. 5-step stepper chrome + auto-save + legal-preset chips remain a design follow-up.
 - 2026-05-09 — agent: bootstrapped from Batch E (pages/ppt-vote-create.html — 6 artboards: steps 1-5 + confirm); 7 sections + 6 states + 4 notes (with Ranked tally + ZoVB legal flags); declared 8 sharedComponents; parent ppt/voting; sibling ppt/vote-detail
