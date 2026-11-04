@@ -44,6 +44,7 @@ export {
 // WebSocket (Story 79.4)
 export {
   buildWebSocketUrl,
+  buildWsSubprotocols,
   type ConnectionState,
   type ConnectionStateHandler,
   createWebSocketService,
@@ -54,5 +55,7 @@ export {
   type WebSocketMessage,
   WebSocketService,
   type WebSocketServiceConfig,
+  WS_BEARER_SUBPROTOCOL_PREFIX,
   WS_NOTIFICATIONS_PATH,
+  WS_PROTOCOL_VERSION,
 } from './websocket';
