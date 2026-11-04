@@ -19,6 +19,8 @@ interface MetersPageProps {
   onNavigateToDetail: (meterId: string) => void;
   onNavigateToSubmitReading: (meterId: string) => void;
   onNavigateToComparison?: () => void;
+  /** Manager-only: pending reading validations queue. */
+  onNavigateToValidations?: () => void;
   onExport?: (options: ExportOptions) => void;
 }
 
@@ -31,6 +33,7 @@ export function MetersPage({
   onNavigateToDetail,
   onNavigateToSubmitReading,
   onNavigateToComparison,
+  onNavigateToValidations,
   onExport,
 }: MetersPageProps) {
   const { t, i18n } = useTranslation();
@@ -108,6 +111,15 @@ export function MetersPage({
           )}
         </div>
         <div className="flex items-center gap-2">
+          {onNavigateToValidations && (
+            <button
+              type="button"
+              onClick={onNavigateToValidations}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              {t('meters.nav.validations')}
+            </button>
+          )}
           {onNavigateToComparison && (
             <button
               type="button"

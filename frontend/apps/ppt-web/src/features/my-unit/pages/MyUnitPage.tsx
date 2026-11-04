@@ -16,6 +16,7 @@
 import { useMyUnits } from '@ppt/api-client';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 export function MyUnitPage() {
   const { t } = useTranslation();
@@ -145,6 +146,13 @@ export function MyUnitPage() {
           <br />
           {building.postalCode} {building.city}
         </address>
+        <nav
+          className="my-unit-page__links mt-2 flex flex-wrap gap-4"
+          aria-label={t('facilities.nav.label')}
+        >
+          <Link to={`/buildings/${building.id}/facilities`}>{t('facilities.nav.book')}</Link>
+          <Link to="/facilities/bookings/my">{t('facilities.nav.myBookings')}</Link>
+        </nav>
       </section>
 
       <section className="my-unit-page__association" aria-label={t('aria.yourResidency')}>

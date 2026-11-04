@@ -114,6 +114,7 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 <!-- newest entries on top -->
 
 - 2026-11-04 — agent: r3-nav-roles — Edit and Triage are passed to the cards only for `isManagerRole` users; residents get View only (audit r3 #14).
+- 2026-11-04 — agent: hid Delete action — API has no DELETE /faults/{id} (405); FaultCard renders Delete only when onDelete is wired
 - 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=faults` now invalidates the `faults` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 
 - 2026-06-22 — agent: screen-map-drift-pr-1418-ppt — reconcile drift from PR #1418 (BIT-21): the PR touched `routes/groups/faults.route.test.tsx` (added missing `beforeEach` import from `vitest`) without a screen-map update. Test-import fix only on the `FaultsPageRoute` gap-79-1 suite — no behavior/API/status change. Added Notes entry; frontmatter unchanged; docs-only

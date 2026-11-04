@@ -736,6 +736,8 @@ function LeasesDashboardPageRoute() {
       onNavigateToApplications={() => navigate('/leases/applications')}
       onNavigateToCreateLease={() => navigate('/leases/new')}
       onRenewLease={(id) => navigate(`/leases/${id}?action=renew`)}
+      onNavigateToTemplates={() => navigate('/leases/templates')}
+      onNavigateToViolations={() => navigate('/leases/violations')}
     />
   );
 }

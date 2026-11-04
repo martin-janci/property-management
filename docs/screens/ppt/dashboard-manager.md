@@ -40,3 +40,9 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 - 2026-11-04 — agent: r3-nav-roles — quick stats now read live counts (new faults from /faults/statistics, active votes, unread messages); the hard-coded tiles and the "pending approvals" tile (no data source) are gone (audit r3 #16).
 - 2026-10-05 — agent: reconciled screen-map with PR #3002 — `/dashboard/manager` role-gated to MANAGER_ROLES (resident lands on Access-Denied, not the manager shell); access-control only, no build/api status change.
 - 2026-05-18 — agent: created stub for unmapped route.
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: action queue: View → /voting/:id (was /votes/:id); budget approvals/person-months render without a View link (no route); widget hidden outside DEV mock mode (no /api/v1/action-queue) instead of a false 'all caught up'

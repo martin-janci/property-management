@@ -14,6 +14,8 @@ interface EditFaultPageProps {
   isSubmitting?: boolean;
   onSubmit: (data: FaultFormData) => void;
   onCancel: () => void;
+  /** Called when the selected building changes (parent loads its units). */
+  onBuildingChange?: (buildingId: string) => void;
 }
 
 export function EditFaultPage({
@@ -24,6 +26,7 @@ export function EditFaultPage({
   isSubmitting,
   onSubmit,
   onCancel,
+  onBuildingChange,
 }: EditFaultPageProps) {
   const { t } = useTranslation();
 
@@ -49,6 +52,7 @@ export function EditFaultPage({
           isSubmitting={isSubmitting}
           onSubmit={onSubmit}
           onCancel={onCancel}
+          onBuildingChange={onBuildingChange}
         />
       </div>
     </div>

@@ -17,6 +17,8 @@ interface CreateFaultPageProps {
   onCancel: () => void;
   /** Enable photo-first mode with AI suggestions (Epic 126) */
   enablePhotoFirst?: boolean;
+  /** Called when the selected building changes (parent loads its units). */
+  onBuildingChange?: (buildingId: string) => void;
 }
 
 /**
@@ -37,6 +39,7 @@ export function CreateFaultPage({
   onSubmit,
   onCancel,
   enablePhotoFirst = true,
+  onBuildingChange,
 }: CreateFaultPageProps) {
   const { t } = useTranslation();
   const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
@@ -105,6 +108,7 @@ export function CreateFaultPage({
           aiSuggestionLoading={aiSuggestionLoading}
           aiSuggestionUnavailable={aiSuggestionUnavailable}
           onPhotosChange={handlePhotosChange}
+          onBuildingChange={onBuildingChange}
         />
       </div>
     </div>

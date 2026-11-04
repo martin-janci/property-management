@@ -146,6 +146,12 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
             >
               {t('buildings.detail.personMonths')}
             </Link>
+            <Link
+              to={`/buildings/${buildingId}/facilities`}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"
+            >
+              {t('facilities.nav.buildingFacilities')}
+            </Link>
           </div>
 
           {/* Stats */}

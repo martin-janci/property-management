@@ -21,6 +21,7 @@ import {
   rejectMatch,
   uploadStatement,
 } from '../api/paymentMatching';
+import { AccountingSubNav } from '../components/AccountingSubNav';
 
 const MATCH_STATES = ['unmatched', 'suggested', 'matched'] as const;
 
@@ -86,6 +87,7 @@ export function PaymentMatchingPage() {
 
   return (
     <div className="p-8">
+      <AccountingSubNav />
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">

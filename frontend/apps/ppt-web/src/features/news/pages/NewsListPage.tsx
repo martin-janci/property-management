@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import { useOrganization } from '../../../hooks';
 import { getApiClient } from '../../../lib/api';
 import { isManagerRole } from '../../../routes/shared';
@@ -15,6 +16,7 @@ import type { ArticleStatus, ArticleSummary } from '../types';
 
 export function NewsListPage() {
   const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const { organizationId } = useOrganization();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -80,7 +82,14 @@ export function NewsListPage() {
   const handleDelete = useCallback(
     async (id: string) => {
       if (!organizationId) return;
-      if (!confirm(t('news.confirmDelete'))) return;
+      if (
+        !(await confirm({
+          message: t('news.confirmDelete'),
+          confirmLabel: t('common.delete'),
+          variant: 'danger',
+        }))
+      )
+        return;
 
       try {
         await getApiClient().delete(`/news/${id}`, {
@@ -92,7 +101,7 @@ export function NewsListPage() {
         setError(err instanceof Error ? err.message : t('news.errors.deleteFailed'));
       }
     },
-    [organizationId, t]
+    [organizationId, confirm, t]
   );
 
   const handlePublish = useCallback(
@@ -254,6 +263,7 @@ export function NewsListPage() {
           ))}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

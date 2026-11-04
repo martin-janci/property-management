@@ -8,6 +8,8 @@
 import type { RegistryStatus } from '@ppt/api-client';
 import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import { PetRegistrationList } from '../components/PetRegistrationList';
 import { VehicleRegistrationList } from '../components/VehicleRegistrationList';
 
@@ -21,6 +23,8 @@ const registryApi = createRegistryApi({
 });
 
 export function RegistryPage() {
+  const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState<'pets' | 'vehicles'>('pets');
 
   // Pet state
@@ -97,7 +101,13 @@ export function RegistryPage() {
 
   const handlePetDelete = useCallback(
     async (id: string) => {
-      if (window.confirm('Are you sure you want to delete this pet registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.deletePet'),
+          confirmLabel: t('common.delete'),
+          variant: 'danger',
+        })
+      ) {
         try {
           await deletePetMutation.mutateAsync(id);
         } catch (error) {
@@ -105,13 +115,19 @@ export function RegistryPage() {
         }
       }
     },
-    [deletePetMutation]
+    [deletePetMutation, confirm, t]
   );
 
   const handlePetReview = useCallback(
     async (id: string) => {
       // Simple approval - in a real app, this would open a modal to approve/reject with reason
-      if (window.confirm('Approve this pet registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.approvePet'),
+          confirmLabel: t('registry.confirm.approve'),
+          variant: 'default',
+        })
+      ) {
         try {
           await reviewPetMutation.mutateAsync({
             id,
@@ -122,7 +138,7 @@ export function RegistryPage() {
         }
       }
     },
-    [reviewPetMutation]
+    [reviewPetMutation, confirm, t]
   );
 
   const handlePetCreate = useCallback(() => {
@@ -154,7 +170,13 @@ export function RegistryPage() {
 
   const handleVehicleDelete = useCallback(
     async (id: string) => {
-      if (window.confirm('Are you sure you want to delete this vehicle registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.deleteVehicle'),
+          confirmLabel: t('common.delete'),
+          variant: 'danger',
+        })
+      ) {
         try {
           await deleteVehicleMutation.mutateAsync(id);
         } catch (error) {
@@ -162,13 +184,19 @@ export function RegistryPage() {
         }
       }
     },
-    [deleteVehicleMutation]
+    [deleteVehicleMutation, confirm, t]
   );
 
   const handleVehicleReview = useCallback(
     async (id: string) => {
       // Simple approval - in a real app, this would open a modal to approve/reject with reason
-      if (window.confirm('Approve this vehicle registration?')) {
+      if (
+        await confirm({
+          message: t('registry.confirm.approveVehicle'),
+          confirmLabel: t('registry.confirm.approve'),
+          variant: 'default',
+        })
+      ) {
         try {
           await reviewVehicleMutation.mutateAsync({
             id,
@@ -179,7 +207,7 @@ export function RegistryPage() {
         }
       }
     },
-    [reviewVehicleMutation]
+    [reviewVehicleMutation, confirm, t]
   );
 
   const handleVehicleCreate = useCallback(() => {
@@ -329,6 +357,7 @@ export function RegistryPage() {
           />
         )}
       </div>
+      {confirmDialog}
     </div>
   );
 }

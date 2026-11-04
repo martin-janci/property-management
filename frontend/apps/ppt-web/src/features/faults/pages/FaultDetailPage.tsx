@@ -77,7 +77,8 @@ interface FaultDetailPageProps {
   onConfirm: (rating?: number, feedback?: string) => void;
   onReopen: (reason: string) => void;
   onAddComment: (note: string, isInternal: boolean) => void;
-  onAddAttachment: (file: File) => void;
+  /** Omit to hide the upload control (no client-side storage upload flow yet). */
+  onAddAttachment?: (file: File) => void;
   onDeleteAttachment: (id: string) => void;
 }
 
@@ -198,7 +199,7 @@ export function FaultDetailPage({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onAddAttachment(file);
+      onAddAttachment?.(file);
     }
   };
 
@@ -306,15 +307,17 @@ export function FaultDetailPage({
               <h2 className="text-lg font-semibold text-gray-900">
                 {t('faults.attachments')} ({attachments.length})
               </h2>
-              <label className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                {t('faults.addPhoto')}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </label>
+              {onAddAttachment && (
+                <label className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  {t('faults.addPhoto')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              )}
             </div>
             {attachments.length === 0 ? (
               <p className="text-gray-500">{t('faults.noAttachments')}</p>

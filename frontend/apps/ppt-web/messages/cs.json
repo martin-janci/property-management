@@ -204,7 +204,8 @@
     "unknown": "Neznámé",
     "expand": "Rozbalit",
     "collapse": "Sbalit",
-    "unknownError": "Došlo k chybě. Zkuste to prosím znovu."
+    "unknownError": "Došlo k chybě. Zkuste to prosím znovu.",
+    "confirmTitle": "Jste si jisti?"
   },
   "nav": {
     "home": "Domů",
@@ -542,7 +543,8 @@
       "security": "Bezpečnost",
       "cleaning": "Úklid",
       "other": "Jiné"
-    }
+    },
+    "createDescription": "Popište problém, který řešíte. Uveďte co nejvíce podrobností, abychom jej mohli rychle vyřešit."
   },
   "financial": {
     "title": "Finance",
@@ -633,7 +635,8 @@
       "send": "Odeslat fakturu",
       "sending": "Odesílá se...",
       "downloadPdf": "Stáhnout PDF",
-      "recordPayment": "Zaevidovat platbu"
+      "recordPayment": "Zaevidovat platbu",
+      "loadFailed": "Fakturu se nepodařilo načíst."
     },
     "paymentMethods": {
       "bank_transfer": "Bankovní převod",
@@ -778,6 +781,19 @@
         "itemRemoveFailed": "Položku se nepodařilo odebrat",
         "actualRecorded": "Čerpání bylo zapsáno",
         "actualFailed": "Čerpání se nepodařilo zapsat"
+      }
+    },
+    "dashboard": {
+      "quickNav": {
+        "label": "Sekce financí",
+        "invoices": "Faktury",
+        "invoicesDesc": "Vytvářejte, odesílejte a sledujte faktury",
+        "payments": "Platby",
+        "paymentsDesc": "Zaznamenávejte a párujte platby",
+        "budgets": "Rozpočty",
+        "budgetsDesc": "Plánujte a sledujte rozpočty",
+        "reports": "Výkazy",
+        "reportsDesc": "Výkaz zisku a ztráty, rozvaha a peněžní toky"
       }
     }
   },
@@ -1734,6 +1750,10 @@
         "application": "Zpět na žádosti",
         "violation": "Zpět na porušení"
       }
+    },
+    "nav": {
+      "templates": "Šablony smluv",
+      "violations": "Porušení"
     }
   },
   "iot": {
@@ -2125,6 +2145,9 @@
       "notFound": "Měřidlo nebylo nalezeno",
       "notFoundBody": "Toto měřidlo se nepodařilo načíst. Mohlo být odstraněno nebo k němu nemáte přístup.",
       "back": "Zpět na měřidla"
+    },
+    "nav": {
+      "validations": "Čekající ověření"
     }
   },
   "personMonths": {
@@ -3022,5 +3045,185 @@
       "expired": "Vypršelo",
       "removed": "Odstraněno"
     }
+  },
+  "facilities": {
+    "bookings": {
+      "myTitle": "Moje rezervace",
+      "pendingTitle": "Rezervace čekající na schválení",
+      "listTitle": "Rezervace",
+      "bookFacility": "Rezervovat prostor",
+      "empty": "Nebyly nalezeny žádné rezervace.",
+      "allCaughtUp": "Vše vyřízeno! Žádné čekající rezervace ke kontrole."
+    },
+    "errors": {
+      "fetchFailedTitle": "Prostory se nepodařilo načíst",
+      "fetchFailedDescription": "Při načítání prostorů došlo k chybě. Zkuste to znovu.",
+      "retry": "Zkusit znovu"
+    },
+    "nav": {
+      "label": "Společné prostory",
+      "book": "Rezervovat prostor",
+      "myBookings": "Moje rezervace",
+      "buildingFacilities": "Společné prostory"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Registry rules saved",
+        "savedBody": "Your registry rule changes have been applied.",
+        "saveFailed": "Failed to save registry rules",
+        "saveFailedBody": "Your changes could not be saved. Please try again."
+      }
+    },
+    "confirm": {
+      "deletePet": "Smazat tuto registraci zvířete?",
+      "approvePet": "Schválit tuto registraci zvířete?",
+      "deleteVehicle": "Smazat tuto registraci vozidla?",
+      "approveVehicle": "Schválit tuto registraci vozidla?",
+      "approve": "Schválit"
+    }
+  },
+  "accounting": {
+    "title": "Vystavené faktury",
+    "subtitle": "Nativní účetnictví MVP",
+    "createInvoice": "Vytvořit fakturu",
+    "newInvoice": "Nová faktura",
+    "createFailed": "Fakturu se nepodařilo vytvořit",
+    "deleteFailed": "Fakturu se nepodařilo smazat",
+    "deleteConfirmTitle": "Smazat fakturu",
+    "deleteConfirmMessage": "Opravdu chcete smazat tuto fakturu?",
+    "emptyTitle": "Nebyly nalezeny žádné faktury",
+    "emptyBody": "Začněte vytvořením své první faktury.",
+    "due": "Splatnost: {{date}}",
+    "vat": "DPH: {{amount}}",
+    "editLabel": "Upravit fakturu",
+    "deleteLabel": "Smazat fakturu",
+    "status": {
+      "draft": "Koncept",
+      "issued": "Vystavená",
+      "paid": "Zaplacená",
+      "partiallyPaid": "Částečně zaplacená",
+      "overdue": "Po splatnosti"
+    },
+    "form": {
+      "contact": "Kontakt",
+      "selectContact": "Vyberte kontakt",
+      "invoiceNumber": "Číslo faktury",
+      "variableSymbol": "Variabilní symbol",
+      "issueDate": "Datum vystavení",
+      "dueDate": "Datum splatnosti",
+      "currency": "Měna",
+      "vatCountry": "Země DPH",
+      "country": {
+        "cz": "Česká republika",
+        "sk": "Slovensko"
+      },
+      "lineItems": "Položky",
+      "addItem": "Přidat položku",
+      "itemDescriptionPlaceholder": "Popis položky",
+      "customPercent": "Vlastní %",
+      "remove": "Odebrat",
+      "baseAmount": "Základ",
+      "vatAmount": "Částka DPH",
+      "total": "Celkem",
+      "updateInvoice": "Aktualizovat fakturu",
+      "col": {
+        "description": "Popis",
+        "qty": "Množství",
+        "unitPrice": "Jednotková cena",
+        "vatRate": "Sazba DPH",
+        "total": "Celkem"
+      },
+      "vatRate": {
+        "standard": "Základní (21% CZ / 20% SK)",
+        "reduced": "Snížená (10%)",
+        "firstReduced": "První snížená (15% CZ)",
+        "zero": "Nulová (0%)"
+      },
+      "errors": {
+        "requiredFields": "Vyplňte všechna povinná pole",
+        "invalidNumbers": "Množství a jednotková cena musí být platná čísla"
+      }
+    },
+    "nav": {
+      "label": "Sekce účetnictví",
+      "invoices": "Faktury",
+      "paymentMatching": "Párování plateb"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "AI přehledy",
+      "sentiment": "Nálada obyvatel",
+      "predictiveMaintenance": "Prediktivní údržba"
+    }
+  },
+  "news": {
+    "confirmDelete": "Smazat tento článek? Tuto akci nelze vrátit.",
+    "title": "Novinky",
+    "createArticle": "Vytvořit článek",
+    "editArticle": "Upravit článek",
+    "titlePlaceholder": "Zadejte název článku",
+    "excerpt": "Úryvek",
+    "excerptPlaceholder": "Stručné shrnutí článku",
+    "content": "Obsah",
+    "contentPlaceholder": "Sem napište obsah článku...",
+    "coverImage": "URL titulního obrázku",
+    "coverImagePlaceholder": "https://example.com/image.jpg",
+    "status": "Stav",
+    "statusDraft": "Koncept",
+    "statusPublished": "Zveřejněno",
+    "statusArchived": "Archivováno",
+    "commentsEnabled": "Povolit komentáře",
+    "reactionsEnabled": "Povolit reakce",
+    "errors": {
+      "titleRequired": "Název je povinný",
+      "contentRequired": "Obsah je povinný",
+      "createFailed": "Článek se nepodařilo vytvořit",
+      "updateFailed": "Článek se nepodařilo aktualizovat",
+      "loadFailed": "Článek se nepodařilo načíst"
+    }
+  },
+  "aiChat": {
+    "confirmDelete": "Opravdu chcete smazat tuto konverzaci?",
+    "title": "AI asistent",
+    "subtitle": "Zeptejte se mě na cokoli o vaší budově",
+    "welcomeTitle": "Jak vám dnes mohu pomoci?",
+    "welcomeDescription": "Odpovím na dotazy o vaší budově a pomohu s hlášením závad, hlasováním a dalšími věcmi.",
+    "suggestedQuestions": "Zkuste se zeptat na",
+    "inputPlaceholder": "Napište zprávu...",
+    "messageInput": "Pole pro zadání zprávy",
+    "pressEnter": "Stisknutím klávesy Enter odešlete",
+    "send": "Odeslat zprávu",
+    "loading": "Načítá se...",
+    "messageLog": "Zprávy chatu",
+    "messageFrom": "Zpráva od: {{role}}",
+    "newConversation": "Nová konverzace",
+    "noConversations": "Zatím žádné konverzace",
+    "startConversationHint": "Zahajte novou konverzaci a získejte pomoc",
+    "untitledConversation": "Nový chat",
+    "messageCount": "{{count}} zpráv",
+    "messageCount_one": "{{count}} zpráva",
+    "messageCount_few": "{{count}} zprávy",
+    "messageCount_many": "{{count}} zpráv",
+    "deleteConversation": "Smazat konverzaci",
+    "closeSidebar": "Zavřít postranní panel",
+    "openSidebar": "Otevřít postranní panel",
+    "sendError": "Zprávu se nepodařilo odeslat. Zkuste to znovu.",
+    "confidence": {
+      "low": "Nízká jistota",
+      "medium": "Střední jistota",
+      "high": "Vysoká jistota"
+    },
+    "escalated": "Tento dotaz může vyžadovat pomoc člověka",
+    "sources": "{{count}} zdrojů",
+    "sources_one": "{{count}} zdroj",
+    "sources_few": "{{count}} zdroje",
+    "sources_many": "{{count}} zdrojů",
+    "wasHelpful": "Byla tato odpověď užitečná?",
+    "helpful": "Označit jako užitečné",
+    "notHelpful": "Označit jako neužitečné",
+    "responseTime": "Doba odpovědi: {{ms}} ms"
   }
 }

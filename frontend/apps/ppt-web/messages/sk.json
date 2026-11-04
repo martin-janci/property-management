@@ -204,7 +204,8 @@
     "selectOrganization": "Vyberte organizáciu",
     "unknown": "Neznáme",
     "expand": "Rozbaliť",
-    "collapse": "Zbaliť"
+    "collapse": "Zbaliť",
+    "confirmTitle": "Ste si istí?"
   },
   "nav": {
     "home": "Domov",
@@ -542,7 +543,8 @@
       "security": "Bezpečnosť",
       "cleaning": "Upratovanie",
       "other": "Iné"
-    }
+    },
+    "createDescription": "Opíšte problém, ktorý riešite. Uveďte čo najviac podrobností, aby sme ho mohli rýchlo vyriešiť."
   },
   "financial": {
     "title": "Financie",
@@ -633,7 +635,8 @@
       "send": "Odoslať faktúru",
       "sending": "Odosiela sa...",
       "downloadPdf": "Stiahnuť PDF",
-      "recordPayment": "Zaevidovať platbu"
+      "recordPayment": "Zaevidovať platbu",
+      "loadFailed": "Faktúru sa nepodarilo načítať."
     },
     "paymentMethods": {
       "bank_transfer": "Bankový prevod",
@@ -778,6 +781,19 @@
         "itemRemoveFailed": "Položku sa nepodarilo odstrániť",
         "actualRecorded": "Čerpanie bolo zapísané",
         "actualFailed": "Čerpanie sa nepodarilo zapísať"
+      }
+    },
+    "dashboard": {
+      "quickNav": {
+        "label": "Sekcie financií",
+        "invoices": "Faktúry",
+        "invoicesDesc": "Vytvárajte, odosielajte a sledujte faktúry",
+        "payments": "Platby",
+        "paymentsDesc": "Zaznamenávajte a párujte platby",
+        "budgets": "Rozpočty",
+        "budgetsDesc": "Plánujte a sledujte rozpočty",
+        "reports": "Výkazy",
+        "reportsDesc": "Výkaz ziskov a strát, súvaha a peňažné toky"
       }
     }
   },
@@ -1734,6 +1750,10 @@
         "application": "Späť na žiadosti",
         "violation": "Späť na porušenia"
       }
+    },
+    "nav": {
+      "templates": "Šablóny zmlúv",
+      "violations": "Porušenia"
     }
   },
   "iot": {
@@ -2125,6 +2145,9 @@
       "notFound": "Meradlo sa nenašlo",
       "notFoundBody": "Toto meradlo sa nepodarilo načítať. Mohlo byť odstránené alebo k nemu nemáte prístup.",
       "back": "Späť na meradlá"
+    },
+    "nav": {
+      "validations": "Čakajúce overenia"
     }
   },
   "personMonths": {
@@ -3022,5 +3045,185 @@
       "expired": "Expirované",
       "removed": "Odstránené"
     }
+  },
+  "facilities": {
+    "bookings": {
+      "myTitle": "Moje rezervácie",
+      "pendingTitle": "Rezervácie čakajúce na schválenie",
+      "listTitle": "Rezervácie",
+      "bookFacility": "Rezervovať priestor",
+      "empty": "Nenašli sa žiadne rezervácie.",
+      "allCaughtUp": "Všetko vybavené! Žiadne čakajúce rezervácie na kontrolu."
+    },
+    "errors": {
+      "fetchFailedTitle": "Priestory sa nepodarilo načítať",
+      "fetchFailedDescription": "Pri načítavaní priestorov sa vyskytla chyba. Skúste to znova.",
+      "retry": "Skúsiť znova"
+    },
+    "nav": {
+      "label": "Spoločné priestory",
+      "book": "Rezervovať priestor",
+      "myBookings": "Moje rezervácie",
+      "buildingFacilities": "Spoločné priestory"
+    }
+  },
+  "registry": {
+    "rules": {
+      "toast": {
+        "saved": "Pravidlá registra uložené",
+        "savedBody": "Vaše zmeny pravidiel registra boli použité.",
+        "saveFailed": "Pravidlá registra sa nepodarilo uložiť",
+        "saveFailedBody": "Vaše zmeny sa nepodarilo uložiť. Skúste to znova."
+      }
+    },
+    "confirm": {
+      "deletePet": "Vymazať túto registráciu zvieraťa?",
+      "approvePet": "Schváliť túto registráciu zvieraťa?",
+      "deleteVehicle": "Vymazať túto registráciu vozidla?",
+      "approveVehicle": "Schváliť túto registráciu vozidla?",
+      "approve": "Schváliť"
+    }
+  },
+  "accounting": {
+    "title": "Vystavené faktúry",
+    "subtitle": "Natívne účtovníctvo MVP",
+    "createInvoice": "Vytvoriť faktúru",
+    "newInvoice": "Nová faktúra",
+    "createFailed": "Faktúru sa nepodarilo vytvoriť",
+    "deleteFailed": "Faktúru sa nepodarilo odstrániť",
+    "deleteConfirmTitle": "Odstrániť faktúru",
+    "deleteConfirmMessage": "Naozaj chcete odstrániť túto faktúru?",
+    "emptyTitle": "Nenašli sa žiadne faktúry",
+    "emptyBody": "Začnite vytvorením svojej prvej faktúry.",
+    "due": "Splatnosť: {{date}}",
+    "vat": "DPH: {{amount}}",
+    "editLabel": "Upraviť faktúru",
+    "deleteLabel": "Odstrániť faktúru",
+    "status": {
+      "draft": "Koncept",
+      "issued": "Vystavená",
+      "paid": "Zaplatená",
+      "partiallyPaid": "Čiastočne zaplatená",
+      "overdue": "Po splatnosti"
+    },
+    "form": {
+      "contact": "Kontakt",
+      "selectContact": "Vyberte kontakt",
+      "invoiceNumber": "Číslo faktúry",
+      "variableSymbol": "Variabilný symbol",
+      "issueDate": "Dátum vystavenia",
+      "dueDate": "Dátum splatnosti",
+      "currency": "Mena",
+      "vatCountry": "Krajina DPH",
+      "country": {
+        "cz": "Česká republika",
+        "sk": "Slovensko"
+      },
+      "lineItems": "Položky",
+      "addItem": "Pridať položku",
+      "itemDescriptionPlaceholder": "Popis položky",
+      "customPercent": "Vlastné %",
+      "remove": "Odstrániť",
+      "baseAmount": "Základ",
+      "vatAmount": "Suma DPH",
+      "total": "Spolu",
+      "updateInvoice": "Aktualizovať faktúru",
+      "col": {
+        "description": "Popis",
+        "qty": "Množstvo",
+        "unitPrice": "Jednotková cena",
+        "vatRate": "Sadzba DPH",
+        "total": "Spolu"
+      },
+      "vatRate": {
+        "standard": "Základná (21% CZ / 20% SK)",
+        "reduced": "Znížená (10%)",
+        "firstReduced": "Prvá znížená (15% CZ)",
+        "zero": "Nulová (0%)"
+      },
+      "errors": {
+        "requiredFields": "Vyplňte všetky povinné polia",
+        "invalidNumbers": "Množstvo a jednotková cena musia byť platné čísla"
+      }
+    },
+    "nav": {
+      "label": "Sekcie účtovníctva",
+      "invoices": "Faktúry",
+      "paymentMatching": "Párovanie platieb"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "AI prehľady",
+      "sentiment": "Nálada obyvateľov",
+      "predictiveMaintenance": "Prediktívna údržba"
+    }
+  },
+  "news": {
+    "confirmDelete": "Vymazať tento článok? Túto akciu nie je možné vrátiť.",
+    "title": "Novinky",
+    "createArticle": "Vytvoriť článok",
+    "editArticle": "Upraviť článok",
+    "titlePlaceholder": "Zadajte názov článku",
+    "excerpt": "Úryvok",
+    "excerptPlaceholder": "Stručné zhrnutie článku",
+    "content": "Obsah",
+    "contentPlaceholder": "Sem napíšte obsah článku...",
+    "coverImage": "URL titulného obrázka",
+    "coverImagePlaceholder": "https://example.com/image.jpg",
+    "status": "Stav",
+    "statusDraft": "Koncept",
+    "statusPublished": "Zverejnené",
+    "statusArchived": "Archivované",
+    "commentsEnabled": "Povoliť komentáre",
+    "reactionsEnabled": "Povoliť reakcie",
+    "errors": {
+      "titleRequired": "Názov je povinný",
+      "contentRequired": "Obsah je povinný",
+      "createFailed": "Článok sa nepodarilo vytvoriť",
+      "updateFailed": "Článok sa nepodarilo aktualizovať",
+      "loadFailed": "Článok sa nepodarilo načítať"
+    }
+  },
+  "aiChat": {
+    "confirmDelete": "Naozaj chcete vymazať túto konverzáciu?",
+    "title": "AI asistent",
+    "subtitle": "Opýtajte sa ma na čokoľvek o vašej budove",
+    "welcomeTitle": "Ako vám dnes môžem pomôcť?",
+    "welcomeDescription": "Odpoviem na otázky o vašej budove a pomôžem s nahlasovaním porúch, hlasovaním a ďalšími vecami.",
+    "suggestedQuestions": "Skúste sa opýtať na",
+    "inputPlaceholder": "Napíšte správu...",
+    "messageInput": "Pole na zadanie správy",
+    "pressEnter": "Stlačením klávesu Enter odošlete",
+    "send": "Odoslať správu",
+    "loading": "Načítava sa...",
+    "messageLog": "Správy chatu",
+    "messageFrom": "Správa od: {{role}}",
+    "newConversation": "Nová konverzácia",
+    "noConversations": "Zatiaľ žiadne konverzácie",
+    "startConversationHint": "Začnite novú konverzáciu a získajte pomoc",
+    "untitledConversation": "Nový chat",
+    "messageCount": "{{count}} správ",
+    "messageCount_one": "{{count}} správa",
+    "messageCount_few": "{{count}} správy",
+    "messageCount_many": "{{count}} správ",
+    "deleteConversation": "Vymazať konverzáciu",
+    "closeSidebar": "Zavrieť bočný panel",
+    "openSidebar": "Otvoriť bočný panel",
+    "sendError": "Správu sa nepodarilo odoslať. Skúste to znova.",
+    "confidence": {
+      "low": "Nízka istota",
+      "medium": "Stredná istota",
+      "high": "Vysoká istota"
+    },
+    "escalated": "Táto otázka môže vyžadovať pomoc človeka",
+    "sources": "{{count}} zdrojov",
+    "sources_one": "{{count}} zdroj",
+    "sources_few": "{{count}} zdroje",
+    "sources_many": "{{count}} zdrojov",
+    "wasHelpful": "Bola táto odpoveď užitočná?",
+    "helpful": "Označiť ako užitočné",
+    "notHelpful": "Označiť ako neužitočné",
+    "responseTime": "Čas odpovede: {{ms}} ms"
   }
 }

@@ -356,7 +356,8 @@
     "enabled": "Włączone",
     "disabled": "Wyłączone",
     "more": "Więcej opcji",
-    "settings": "Ustawienia"
+    "settings": "Ustawienia",
+    "confirmTitle": "Czy na pewno?"
   },
   "nav": {
     "home": "Strona główna",
@@ -826,6 +827,12 @@
         "selectDay": "Wybierz co najmniej jeden dostępny dzień",
         "notNegative": "Wartość nie może być ujemna"
       }
+    },
+    "nav": {
+      "label": "Pomieszczenia wspólne",
+      "book": "Zarezerwuj pomieszczenie",
+      "myBookings": "Moje rezerwacje",
+      "buildingFacilities": "Pomieszczenia wspólne"
     }
   },
   "faults": {
@@ -963,7 +970,7 @@
     },
     "viewReports": "Zobacz raporty",
     "statsTotal": "Łącznie",
-    "createDescription": "Opisz problem. Podaj jak najwięcej szczegółów, abyśmy mogli szybko go rozwiązać.",
+    "createDescription": "Opisz problem, który występuje. Podaj jak najwięcej szczegółów, abyśmy mogli szybko go rozwiązać.",
     "reports": {
       "title": "Raporty usterek",
       "subtitle": "Analiza usterek według budynków i okresu.",
@@ -1223,7 +1230,7 @@
       "remindSent": "Wysłane przypomnienia: {{count}}.",
       "cancel": "Anuluj prośbę",
       "cancelling": "Anulowanie…",
-      "cancelConfirm": "Anulować tę prośbę o podpis? Sygnatariusze nie będą już mogli podpisać.",
+      "cancelConfirm": "Anulować tę prośbę o podpis? Sygnatariusze nie będą mogli już podpisać.",
       "allSigned": "Wszyscy sygnatariusze odpowiedzieli.",
       "status": {
         "pending": "Oczekuje na podpis",
@@ -2072,7 +2079,18 @@
       "overdueSubtitle_one": "{{count}} faktura po terminie",
       "overdueSubtitle_few": "{{count}} faktury po terminie",
       "overdueSubtitle_many": "{{count}} faktur po terminie",
-      "overdueSubtitle_other": "{{count}} faktury po terminie"
+      "overdueSubtitle_other": "{{count}} faktury po terminie",
+      "quickNav": {
+        "label": "Sekcje finansów",
+        "invoices": "Faktury",
+        "invoicesDesc": "Twórz, wysyłaj i śledź faktury",
+        "payments": "Płatności",
+        "paymentsDesc": "Rejestruj i uzgadniaj płatności",
+        "budgets": "Budżety",
+        "budgetsDesc": "Planuj i monitoruj budżety",
+        "reports": "Raporty",
+        "reportsDesc": "Rachunek zysków i strat, bilans i przepływy pieniężne"
+      }
     },
     "invoiceChart": {
       "title": "Status faktur",
@@ -2124,7 +2142,8 @@
       "paid": "Zapłacono",
       "balanceDue": "Pozostało do zapłaty",
       "notes": "Uwagi",
-      "recordPayment": "Zarejestruj płatność"
+      "recordPayment": "Zarejestruj płatność",
+      "loadFailed": "Nie udało się wczytać tej faktury."
     },
     "totals": {
       "subtotal": "Suma częściowa:",
@@ -2678,7 +2697,7 @@
     "loadingArticle": "Ładowanie artykułu...",
     "emptyFiltered": "Żaden artykuł nie pasuje do filtrów.",
     "empty": "Nie ma jeszcze artykułów. Utwórz pierwszy artykuł!",
-    "confirmDelete": "Czy na pewno chcesz usunąć ten artykuł?",
+    "confirmDelete": "Usunąć ten artykuł? Tej operacji nie można cofnąć.",
     "backToNews": "Powrót do aktualności",
     "pinned": "Przypięte",
     "views": "Wyświetlenia",
@@ -4852,6 +4871,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Usunąć tę rejestrację zwierzęcia?",
+      "approvePet": "Zatwierdzić tę rejestrację zwierzęcia?",
+      "deleteVehicle": "Usunąć tę rejestrację pojazdu?",
+      "approveVehicle": "Zatwierdzić tę rejestrację pojazdu?",
+      "approve": "Zatwierdź"
     }
   },
   "community": {
@@ -5726,6 +5752,10 @@
         "application": "Powrót do wniosków",
         "violation": "Powrót do naruszeń"
       }
+    },
+    "nav": {
+      "templates": "Szablony umów",
+      "violations": "Naruszenia"
     }
   },
   "meters": {
@@ -5911,6 +5941,9 @@
       "notFound": "Nie znaleziono licznika",
       "notFoundBody": "Nie udało się wczytać tego licznika. Mógł zostać usunięty lub nie masz do niego dostępu.",
       "back": "Powrót do liczników"
+    },
+    "nav": {
+      "validations": "Oczekujące weryfikacje"
     }
   },
   "personMonths": {
@@ -6017,6 +6050,11 @@
       "linkedInvoice": "Powiązana faktura:",
       "noSuggestions": "Brak aktywnych sugestii dopasowania",
       "actionFailed": "Nie udało się wykonać operacji. Spróbuj ponownie."
+    },
+    "nav": {
+      "label": "Sekcje księgowości",
+      "invoices": "Faktury",
+      "paymentMatching": "Dopasowanie płatności"
     }
   },
   "shell": {
@@ -6672,6 +6710,13 @@
     "errors": {
       "loadSettings": "Nie udało się wczytać ustawień prywatności",
       "loadHistory": "Nie udało się wczytać historii eksportów"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "Analizy AI",
+      "sentiment": "Nastroje mieszkańców",
+      "predictiveMaintenance": "Konserwacja predykcyjna"
     }
   }
 }

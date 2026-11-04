@@ -41,3 +41,9 @@ already built but unrouted; this screen is now reachable on web.
 ## Agent Log
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 19).
 - 2026-11-04 — agent: "Export report" button hidden — `routes/violations.rs` has no export endpoint (`onExportReport` is now optional).
+
+## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-11-04 — agent: now linked from the leases dashboard header (was orphan)

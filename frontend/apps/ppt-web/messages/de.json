@@ -356,7 +356,8 @@
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "more": "Weitere Optionen",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "confirmTitle": "Sind Sie sicher?"
   },
   "nav": {
     "home": "Startseite",
@@ -824,6 +825,12 @@
         "selectDay": "Wählen Sie mindestens einen verfügbaren Tag",
         "notNegative": "Darf nicht negativ sein"
       }
+    },
+    "nav": {
+      "label": "Gemeinschaftseinrichtungen",
+      "book": "Einrichtung buchen",
+      "myBookings": "Meine Buchungen",
+      "buildingFacilities": "Gemeinschaftseinrichtungen"
     }
   },
   "faults": {
@@ -961,7 +968,7 @@
     },
     "viewReports": "Berichte anzeigen",
     "statsTotal": "Gesamt",
-    "createDescription": "Beschreiben Sie das Problem. Je mehr Details Sie angeben, desto schneller können wir es beheben.",
+    "createDescription": "Beschreiben Sie das Problem. Geben Sie möglichst viele Details an, damit wir es schnell beheben können.",
     "reports": {
       "title": "Störungsberichte",
       "subtitle": "Störungsanalyse nach Gebäuden und Zeitraum.",
@@ -1211,7 +1218,7 @@
       "remindSent": "Gesendete Erinnerungen: {{count}}.",
       "cancel": "Anfrage stornieren",
       "cancelling": "Wird storniert…",
-      "cancelConfirm": "Diese Signaturanfrage stornieren? Unterzeichner können dann nicht mehr unterschreiben.",
+      "cancelConfirm": "Diese Signaturanfrage abbrechen? Unterzeichner können dann nicht mehr unterschreiben.",
       "allSigned": "Alle Unterzeichner haben reagiert.",
       "status": {
         "pending": "Unterschrift ausstehend",
@@ -2030,7 +2037,18 @@
       "outstanding": "Offene Posten",
       "outstandingSubtitle": "Ausstehende Zahlungen",
       "overdueSubtitle_one": "{{count}} überfällige Rechnung",
-      "overdueSubtitle_other": "{{count}} überfällige Rechnungen"
+      "overdueSubtitle_other": "{{count}} überfällige Rechnungen",
+      "quickNav": {
+        "label": "Finanzbereiche",
+        "invoices": "Rechnungen",
+        "invoicesDesc": "Rechnungen erstellen, versenden und verfolgen",
+        "payments": "Zahlungen",
+        "paymentsDesc": "Zahlungen erfassen und abgleichen",
+        "budgets": "Budgets",
+        "budgetsDesc": "Budgets planen und verfolgen",
+        "reports": "Berichte",
+        "reportsDesc": "Gewinn- und Verlustrechnung, Bilanz und Cashflow"
+      }
     },
     "invoiceChart": {
       "title": "Rechnungsstatus",
@@ -2080,7 +2098,8 @@
       "paid": "Bezahlt",
       "balanceDue": "Offener Betrag",
       "notes": "Notizen",
-      "recordPayment": "Zahlung erfassen"
+      "recordPayment": "Zahlung erfassen",
+      "loadFailed": "Diese Rechnung konnte nicht geladen werden."
     },
     "totals": {
       "subtotal": "Zwischensumme:",
@@ -2618,7 +2637,7 @@
     "loadingArticle": "Artikel wird geladen...",
     "emptyFiltered": "Keine Artikel entsprechen Ihren Filtern.",
     "empty": "Noch keine Artikel. Erstellen Sie Ihren ersten Artikel!",
-    "confirmDelete": "Möchten Sie diesen Artikel wirklich löschen?",
+    "confirmDelete": "Diesen Artikel löschen? Dies kann nicht rückgängig gemacht werden.",
     "backToNews": "Zurück zu den Neuigkeiten",
     "pinned": "Angeheftet",
     "views": "Aufrufe",
@@ -3754,6 +3773,10 @@
         "application": "Zurück zu den Bewerbungen",
         "violation": "Zurück zu den Verstößen"
       }
+    },
+    "nav": {
+      "templates": "Mietvertragsvorlagen",
+      "violations": "Verstöße"
     }
   },
   "settings": {
@@ -5295,6 +5318,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Diese Haustier-Registrierung löschen?",
+      "approvePet": "Diese Haustier-Registrierung genehmigen?",
+      "deleteVehicle": "Diese Fahrzeug-Registrierung löschen?",
+      "approveVehicle": "Diese Fahrzeug-Registrierung genehmigen?",
+      "approve": "Genehmigen"
     }
   },
   "community": {
@@ -5801,6 +5831,9 @@
       "notFound": "Zähler nicht gefunden",
       "notFoundBody": "Dieser Zähler konnte nicht geladen werden. Möglicherweise wurde er entfernt oder Sie haben keinen Zugriff.",
       "back": "Zurück zu den Zählern"
+    },
+    "nav": {
+      "validations": "Ausstehende Prüfungen"
     }
   },
   "personMonths": {
@@ -5907,6 +5940,11 @@
       "linkedInvoice": "Verknüpfte Rechnung:",
       "noSuggestions": "Keine aktiven Zuordnungsvorschläge",
       "actionFailed": "Die Aktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+    },
+    "nav": {
+      "label": "Buchhaltungsbereiche",
+      "invoices": "Rechnungen",
+      "paymentMatching": "Zahlungsabgleich"
     }
   },
   "shell": {
@@ -6534,6 +6572,13 @@
     "errors": {
       "loadSettings": "Datenschutzeinstellungen konnten nicht geladen werden",
       "loadHistory": "Exportverlauf konnte nicht geladen werden"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "KI-Einblicke",
+      "sentiment": "Bewohnerstimmung",
+      "predictiveMaintenance": "Vorausschauende Wartung"
     }
   }
 }

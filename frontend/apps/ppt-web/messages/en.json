@@ -370,7 +370,8 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "more": "More options",
-    "settings": "Settings"
+    "settings": "Settings",
+    "confirmTitle": "Are you sure?"
   },
   "nav": {
     "home": "Home",
@@ -838,6 +839,12 @@
         "selectDay": "Select at least one available day",
         "notNegative": "Cannot be negative"
       }
+    },
+    "nav": {
+      "label": "Facilities",
+      "book": "Book a facility",
+      "myBookings": "My bookings",
+      "buildingFacilities": "Facilities"
     }
   },
   "faults": {
@@ -2088,7 +2095,18 @@
       "outstanding": "Outstanding",
       "outstandingSubtitle": "Pending payments",
       "overdueSubtitle_one": "{{count}} invoice past due",
-      "overdueSubtitle_other": "{{count}} invoices past due"
+      "overdueSubtitle_other": "{{count}} invoices past due",
+      "quickNav": {
+        "label": "Finance sections",
+        "invoices": "Invoices",
+        "invoicesDesc": "Create, send and track invoices",
+        "payments": "Payments",
+        "paymentsDesc": "Record and reconcile payments",
+        "budgets": "Budgets",
+        "budgetsDesc": "Plan and track budgets",
+        "reports": "Reports",
+        "reportsDesc": "Income statement, balance sheet and cash flow"
+      }
     },
     "invoiceChart": {
       "title": "Invoice Status",
@@ -2138,7 +2156,8 @@
       "paid": "Paid",
       "balanceDue": "Balance due",
       "notes": "Notes",
-      "recordPayment": "Record payment"
+      "recordPayment": "Record payment",
+      "loadFailed": "Could not load this invoice."
     },
     "totals": {
       "subtotal": "Subtotal:",
@@ -2708,7 +2727,7 @@
     "loadingArticle": "Loading article...",
     "emptyFiltered": "No articles match your filters.",
     "empty": "No articles yet. Create your first article!",
-    "confirmDelete": "Are you sure you want to delete this article?",
+    "confirmDelete": "Delete this article? This cannot be undone.",
     "backToNews": "Back to News",
     "pinned": "Pinned",
     "views": "Views",
@@ -3498,6 +3517,9 @@
       "notFound": "Meter not found",
       "notFoundBody": "This meter could not be loaded. It may have been removed or you may not have access.",
       "back": "Back to meters"
+    },
+    "nav": {
+      "validations": "Pending validations"
     }
   },
   "personMonths": {
@@ -5082,6 +5104,10 @@
         "application": "Back to applications",
         "violation": "Back to violations"
       }
+    },
+    "nav": {
+      "templates": "Lease templates",
+      "violations": "Violations"
     }
   },
   "help": {
@@ -7255,6 +7281,13 @@
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
       }
+    },
+    "confirm": {
+      "deletePet": "Delete this pet registration?",
+      "approvePet": "Approve this pet registration?",
+      "deleteVehicle": "Delete this vehicle registration?",
+      "approveVehicle": "Approve this vehicle registration?",
+      "approve": "Approve"
     }
   },
   "community": {
@@ -7679,6 +7712,11 @@
       "linkedInvoice": "Linked to invoice:",
       "noSuggestions": "No active match suggestions",
       "actionFailed": "The action could not be completed. Please try again."
+    },
+    "nav": {
+      "label": "Accounting sections",
+      "invoices": "Invoices",
+      "paymentMatching": "Payment matching"
     }
   },
   "shell": {
@@ -7811,6 +7849,13 @@
     "errors": {
       "loadSettings": "Failed to load privacy settings",
       "loadHistory": "Failed to load export history"
+    }
+  },
+  "aiDashboards": {
+    "nav": {
+      "label": "AI insights",
+      "sentiment": "Resident sentiment",
+      "predictiveMaintenance": "Predictive maintenance"
     }
   }
 }

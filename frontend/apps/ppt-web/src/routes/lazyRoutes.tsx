@@ -38,6 +38,12 @@ export const NewsListPage = lazy(() =>
 export const ArticleDetailPage = lazy(() =>
   import('../features/news').then((m) => ({ default: m.ArticleDetailPage }))
 );
+export const CreateArticlePage = lazy(() =>
+  import('../features/news').then((m) => ({ default: m.CreateArticlePage }))
+);
+export const EditArticlePage = lazy(() =>
+  import('../features/news').then((m) => ({ default: m.EditArticlePage }))
+);
 
 // Emergency feature (Epic 62)
 export const EmergencyContactDirectoryPage = lazy(() =>
@@ -253,6 +259,9 @@ export const FinancialDashboardPage = lazy(() =>
 );
 export const InvoiceManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.InvoiceManagementPage }))
+);
+export const InvoiceDetail = lazy(() =>
+  import('../features/financial').then((m) => ({ default: m.InvoiceDetail }))
 );
 export const PaymentManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.PaymentManagementPage }))
