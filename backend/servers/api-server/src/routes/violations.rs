@@ -393,6 +393,13 @@ async fn add_evidence(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationEvidence>,
 ) -> ApiResult<Json<db::models::violations::ViolationEvidence>> {
+    // Attaching evidence to a violation is a privileged staff action, gated the
+    // same as `delete_evidence`. Previously only tenant *membership* (a non-null
+    // `tenant_id`) was required, so any Resident could attach evidence to any
+    // violation in their org (gh-issue-3164). Evidence is enforcement record,
+    // not a self-service surface like appeals/comments.
+    require_manager(&user)?;
+
     let org_id = user
         .tenant_id
         .ok_or_else(|| forbidden_error("No organization context"))?;
