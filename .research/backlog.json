@@ -14579,13 +14579,15 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
+        "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)",
+        "PR #3273"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/integrations/webhook/payment.rs:177-181 — get_invoice returning Ok(None) logs the drop and acks 200 OK (stops Stripe retries) with no metric/alert/dead-letter. A confirmed payment whose invoice is absent (race/deletion/drift) is lost.",
-        "Fix: before acking, enqueue to a dead-letter/reconciliation path so ops can recover; keep 200 to avoid retry storms."
+        "Fix: before acking, enqueue to a dead-letter/reconciliation path so ops can recover; keep 200 to avoid retry storms.",
+        "resolved: PR #3273 merged 2026-11-04 — ack 200→500 on missing-invoice branch; task_id matches verbatim in PR body."
       ],
       "files": [
         "backend/servers/api-server/src/routes/integrations/webhook/payment.rs"
@@ -14721,39 +14723,81 @@
       "id": "code-review-ppt-web-core-refresh-token-localstorage",
       "title": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
       "vector": "security",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)"
       ],
       "evidence": [
         "See .research/signals/2026-11-03-ppt-web-core-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
-        "Security-sensitive but confidence=medium — security fast-track requires confidence=high, so stays at score 2 without auto-promotion."
+        "Security-sensitive but confidence=medium — security fast-track requires confidence=high, so stays at score 2 without auto-promotion.",
+        "confidence upgrade medium→high: this run re-read frontend/apps/ppt-web/src/contexts/AuthContext.tsx:99-197 and confirmed REFRESH_TOKEN_KEY = ppt_refresh_token is set via localStorage.setItem at line 147 and read back at 139 — static-proof, no inference. Security fast-track eligible at score=2."
       ],
       "files": [
         "frontend/apps/ppt-web/src/"
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",
-      "plan": null
+      "plan": "plans/code-review-ppt-web-core-refresh-token-localstorage.md"
     },
     {
       "id": "code-review-ppt-web-core-ws-jwt-in-url",
       "title": "SECURITY: ppt-web WebSocket sends JWT as URL query parameter — token leaks into access logs",
       "vector": "security",
-      "confidence": "medium",
+      "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)"
       ],
       "evidence": [
         "See .research/signals/2026-11-03-ppt-web-core-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
-        "Security-sensitive but confidence=medium; stays at score 2."
+        "Security-sensitive but confidence=medium; stays at score 2.",
+        "confidence upgrade medium→high: this run re-read frontend/apps/ppt-web/src/lib/websocket.ts:94-101 and confirmed buildWebSocketUrl() does url.searchParams.set(\"token\", token) placing the raw JWT in the query string. vector corrected security (candidate was bug). Security fast-track eligible at score=2."
       ],
       "files": [
         "frontend/apps/ppt-web/src/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": "plans/code-review-ppt-web-core-ws-jwt-in-url.md"
+    },
+    {
+      "id": "untriaged-issue-3283",
+      "title": "Untriaged: Follow-up on PR #3225 — realtor public profile renders hardcoded Slovak UI",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Issue #3283"
+      ],
+      "evidence": [
+        "New issue #3283 opened 2026-11-04 10:30 UTC, no labels — triaged by dispatcher pre-spawn claim (c8e821e1). Context: realtor profile page (rewritten in PR #3225) still uses hardcoded Slovak strings despite 6-language i18n."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "untriaged-issue-3284",
+      "title": "Untriaged: Follow-up on PR #3273 — add durable DLQ for Stripe missing-invoice paid webhooks",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Issue #3284"
+      ],
+      "evidence": [
+        "New issue #3284 opened 2026-11-04 10:30 UTC, no labels. Context: PR #3273 (stripe-webhook-drops-settlement) switched the response from 200 to 500 on missing-invoice — relies on Stripe retries only, and the PR body flagged that a durable in-house DLQ table is a worthwhile follow-up."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook/payment.rs"
       ],
       "created_at": "2026-11-04",
       "updated_at": "2026-11-04",

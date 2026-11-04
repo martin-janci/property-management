@@ -249,6 +249,30 @@
       ],
       "confidence": "medium",
       "candidate_vector": "security"
+    },
+    {
+      "id": "untriaged-issue-3283",
+      "type": "untriaged-issue",
+      "source": "Issue #3283 (opened 2026-11-04 10:30 UTC, no labels)",
+      "score_delta": 1,
+      "evidence": [
+        "New issue #3283 opened 2026-11-04 10:30 UTC, no labels. Title: Follow-up on PR #3225 — realtor public profile renders hardcoded Slovak UI on a 6-language portal. Context: PR #3225 rewrote /realtor/[id] to real API data but kept Slovak strings. Dispatcher pre-spawn claim already picked it up (commit c8e821e1).",
+        "Routing: triage vector per Phase 1 rule (untriaged-issue, no labels)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-3284",
+      "type": "untriaged-issue",
+      "source": "Issue #3284 (opened 2026-11-04 10:30 UTC, no labels)",
+      "score_delta": 1,
+      "evidence": [
+        "New issue #3284 opened 2026-11-04 10:30 UTC, no labels. Title: Follow-up on PR #3273 — add durable DLQ for Stripe missing-invoice paid-webhook events. Context: PR #3273 (just merged) flipped the response from 200→500 so Stripe retries hold the event, but does not add a durable DLQ table — the PR body flagged this as a worthwhile follow-up.",
+        "Routing: triage vector per Phase 1 rule (untriaged-issue, no labels)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
     }
   ],
   "auto_fix_actions": [],
@@ -298,23 +322,23 @@
     {
       "goal": "G6",
       "passed": true,
-      "command": "no new plans; adversarial pass N/A",
-      "observed": "0 new plans",
+      "command": "every new plan annotated \"adversarial pass:\" in brief",
+      "observed": "2 new plans — annotated in brief",
       "expected": "each annotated"
     },
     {
       "goal": "G7-count",
       "passed": true,
       "command": "new plans count <= 2",
-      "observed": "0",
+      "observed": "2",
       "expected": "<=2"
     },
     {
       "goal": "G7-sections",
       "passed": true,
-      "command": "no new plans → vacuous",
-      "observed": "vacuous",
-      "expected": "15 sections each"
+      "command": "15 sections (4 metadata + 11 headings) + Mode + ≥1 capability + files exist",
+      "observed": "both plans pass (verified this run)",
+      "expected": "15 each"
     },
     {
       "goal": "G8",
@@ -334,7 +358,7 @@
       "goal": "G10",
       "passed": true,
       "command": "diff -q backlog.md regen",
-      "observed": "identical",
+      "observed": "identical (regenerated 2026-11-04 refill run)",
       "expected": "identical"
     },
     {
@@ -362,7 +386,7 @@
       "goal": "G14",
       "passed": true,
       "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "identical",
+      "observed": "identical (regenerated 2026-11-04 refill run)",
       "expected": "identical"
     },
     {
