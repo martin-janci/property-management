@@ -9887,8 +9887,9 @@
       "score": 3,
       "status": "ready",
       "sources": [
+        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)",
         "rotating-expert-review 2026-08-30 (dispatcher Tier-1d mobile-native-kmp)",
-        "rotating-expert-review (dispatcher Tier-1d 2026-08-31 mobile-native-kmp create-listing nav wiring)"
+        "rotating-expert-review 2026-11-03 mobile-native-kmp (dispatcher Tier-1d, signal: code-review-mobile-native-kmp-create-listing-stub)"
       ],
       "evidence": [
         "Navigation.kt:493 wires CreateListingScreen with `onSubmit = { _ -> Result.failure(NotImplementedError(\"Wire to listing API\")) }` — reachable from AgencyHubScreen (:415) and MyListingsScreen (:484); users see `realtor_create_validation_publish_failed` and the entered listing is never created",
@@ -9896,7 +9897,8 @@
         "Fix: add `createListing(input): Result<Unit>` to PortalListingsRepository (POST /api/v1/my/listings) + pass it as the composable's `onSubmit`. Mobile-native/KMP — unlandable in current cloud runner (AGP egress blocked, issue #2652). IG3: KMP unit test that CreateListingScreen success path calls the repo POST",
         "Corroborated by dispatcher Tier-1d 2026-08-31 mobile-native-kmp review: CreateListingScreen composable's onSubmit still a NotImplementedError stub (high-confidence, +2). Item score 2→4.",
         "decayed 2026-09-20: no new signals in 14d (routine-lag: 19d) (score 4 → 3)",
-        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207"
+        "promoted 2026-09-20: routine catch-up run (19d lag); backend endpoint verified live at portal_listings.rs:207",
+        "2026-11-04: dispatcher Tier-1d mobile-native-kmp re-surfaced this (signal id code-review-mobile-native-kmp-create-listing-stub) — still stubbed. No new score (existing row is already ready with a plan)."
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/navigation/Navigation.kt",
@@ -9905,7 +9907,7 @@
         "backend/servers/reality-server/src/routes/portal_listings.rs"
       ],
       "created_at": "2026-08-30",
-      "updated_at": "2026-09-20",
+      "updated_at": "2026-11-04",
       "plan": "plans/code-review-mobile-native-kmp-create-listing-not-wired.md"
     },
     {
@@ -13444,16 +13446,18 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "needs-human-judgement",
+      "status": "done",
       "sources": [
-        "PR #3108"
+        "PR #3108",
+        "dispatcher auto-close 2026-11-03 (dev history rewrite)"
       ],
       "evidence": [
-        "PR #3108 opened 2026-10-16 (11d open), draft, no reviewDecision. Dispatcher-authored fix for issue 3104; still in iteration. Verify progress or escalate."
+        "PR #3108 opened 2026-10-16 (11d open), draft, no reviewDecision. Dispatcher-authored fix for issue 3104; still in iteration. Verify progress or escalate.",
+        "resolved: PR #3108 auto-closed 2026-11-03 16:36 UTC by PPT dispatcher — branch orphaned by dev history rewrite; stalled condition no longer applicable. Dispatcher will respawn the task on a fresh branch."
       ],
       "files": [],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-11-04",
       "plan": null
     },
     {
@@ -13462,16 +13466,18 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "needs-human-judgement",
+      "status": "done",
       "sources": [
-        "PR #3075"
+        "PR #3075",
+        "dispatcher auto-close 2026-11-03 (dev history rewrite)"
       ],
       "evidence": [
-        "PR #3075 opened 2026-10-13 (15d open), draft, no reviewDecision. Dispatcher-authored fix for the COUNT(*)+1 numbering race in violations.rs — sitting in draft for 2 weeks."
+        "PR #3075 opened 2026-10-13 (15d open), draft, no reviewDecision. Dispatcher-authored fix for the COUNT(*)+1 numbering race in violations.rs — sitting in draft for 2 weeks.",
+        "resolved: PR #3075 auto-closed 2026-11-03 16:36 UTC by PPT dispatcher — branch orphaned by dev history rewrite; stalled condition no longer applicable. Dispatcher will respawn the task on a fresh branch."
       ],
       "files": [],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-11-04",
       "plan": null
     },
     {
@@ -13480,16 +13486,18 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "needs-human-judgement",
+      "status": "done",
       "sources": [
-        "PR #3119"
+        "PR #3119",
+        "dispatcher auto-close 2026-11-03 (dev history rewrite)"
       ],
       "evidence": [
-        "PR #3119 opened 2026-10-18 (10d open), not draft, no reviewDecision. Dispatcher-authored i18n fallback fix; waiting on reviewer."
+        "PR #3119 opened 2026-10-18 (10d open), not draft, no reviewDecision. Dispatcher-authored i18n fallback fix; waiting on reviewer.",
+        "resolved: PR #3119 auto-closed 2026-11-03 16:36 UTC by PPT dispatcher — branch orphaned by dev history rewrite; stalled condition no longer applicable. Dispatcher will respawn the task on a fresh branch."
       ],
       "files": [],
       "created_at": "2026-10-28",
-      "updated_at": "2026-10-28",
+      "updated_at": "2026-11-04",
       "plan": null
     },
     {
@@ -14431,6 +14439,325 @@
       "score_delta": 1,
       "candidate_vector": "bug",
       "expert": "rust"
+    },
+    {
+      "id": "churn-hotspot-reality-web-realtor-id-page",
+      "title": "Watch reality-web realtor/[id] page.tsx — top-1 churn this run after PR #3225 rewrite",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3225"
+      ],
+      "evidence": [
+        "PR #3225 (wire /realtor/[id] to real data + honest contact) rewrote the file +449/-388 and deleted _mock.ts (-147). First-time hotspot; watch for a follow-up churn cycle that would indicate the rewrite is unstable."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-ppt-web-messages-sk",
+      "title": "Watch ppt-web i18n locale drops — PR #3218 + #3220 touched 6 locale files identically",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3218",
+        "PR #3220"
+      ],
+      "evidence": [
+        "ppt-web i18n drops in PR #3218 (EvidenceUploader) + PR #3220 (Community) bumped all 6 locale message files identically (+430/-2 each). sk.json representative of bulk pattern. Informational — expected drop shape, not instability."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/messages/sk.json",
+        "frontend/apps/ppt-web/messages/en.json",
+        "frontend/apps/ppt-web/messages/cs.json",
+        "frontend/apps/ppt-web/messages/de.json",
+        "frontend/apps/ppt-web/messages/hu.json",
+        "frontend/apps/ppt-web/messages/pl.json"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3217-reality",
+      "title": "Screen-map drift: PR #3217 edited reality-web listings/[id]/edit without updating docs/screens/reality/account-listing-edit.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3217"
+      ],
+      "evidence": [
+        "PR #3217 touched frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx (+ _number.ts/_number.test.ts) without updating docs/screens/reality/account-listing-edit.md.",
+        "Best-effort heuristic — review candidate; refactor extracts a tested numeric helper but no screen-map behavioral update needed if API/UX is unchanged."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/account-listing-edit.md"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3224-reality",
+      "title": "Screen-map drift: PR #3224 translated inquiry type without updating docs/screens/reality/inquiries.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3224"
+      ],
+      "evidence": [
+        "PR #3224 (translate inquiry type via next-intl) touched frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx without updating docs/screens/reality/inquiries.md.",
+        "Best-effort heuristic — review candidate."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/inquiries/page.tsx",
+        "docs/screens/reality/inquiries.md"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3225-reality",
+      "title": "Screen-map drift: PR #3225 rewrote realtor/[id] page.tsx without updating docs/screens/reality/agent-profile.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3225"
+      ],
+      "evidence": [
+        "PR #3225 rewrote frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx to wire real API data and show an honest-contact section; deleted _mock.ts. docs/screens/reality/agent-profile.md was not updated to reflect the behavioral shift.",
+        "Best-effort heuristic — unlike the other two drift signals, this one carries a real behavioral change (mock→real data + contact UX) so the screen-map doc genuinely drifted."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/realtor/[id]/page.tsx",
+        "docs/screens/reality/agent-profile.md"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-refresh-rotation-nonatomic",
+      "title": "api-server refresh-token rotation is non-atomic — revoke failure leaves old refresh token live alongside new one",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/mod.rs:1009-1013 — revoke_token error is only logged ('Continue anyway - better to issue new token than fail'); handler then issues a NEW refresh token at 1035-1063. If revoke fails, both tokens are concurrently valid, defeating rotation-based replay detection.",
+        "Fix: make revoke+issue atomic in one tx, or fail refresh (500) when revoke fails."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth/mod.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-stripe-webhook-drops-settlement",
+      "title": "api-server Stripe settlement webhook silently drops paid events when invoice is missing (no DLQ)",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook/payment.rs:177-181 — get_invoice returning Ok(None) logs the drop and acks 200 OK (stops Stripe retries) with no metric/alert/dead-letter. A confirmed payment whose invoice is absent (race/deletion/drift) is lost.",
+        "Fix: before acking, enqueue to a dead-letter/reconciliation path so ops can recover; keep 200 to avoid retry storms."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook/payment.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-reset-token-invalidate-ignored",
+      "title": "api-server password_reset ignores invalidate_user_tokens error — stale reset tokens remain valid alongside new ones",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-04 api-handlers (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/password_reset.rs:62-70 — issuance discards invalidate_user_tokens result ('let _ = ...'); then stores a fresh reset token (68-84). If invalidate fails, prior unexpired reset tokens stay valid alongside the new one — widens account-takeover window on earlier-leaked tokens. The subsequent create error IS handled, so the silent discard is inconsistent.",
+        "Fix: handle invalidate error (log + abort issuance, or invalidate+create in one tx). auth/registration.rs:368 has the same pattern for email-verification tokens; apply the same fix there."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth/password_reset.rs",
+        "backend/servers/api-server/src/routes/auth/registration.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-api-call-client-build-expect",
+      "title": "api-server workflow api_call client-build uses .expect() — panics on TLS/connect-pool misconfig instead of returning error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "See .research/signals/2026-11-03-api-core-tier1d.json for full finding. Catch-up: routine skipped 2026-11-03 run so Tier-1d signals from that day are absorbed into this run's backlog.",
+        "Backdated to 2026-11-04 updated_at per Phase 2 'this signal's ID is not in state.seen_signals'."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-suspend-cascade-silent-skip",
+      "title": "api-server suspend-cascade handler silently skips downstream cleanup on partial error",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "See .research/signals/2026-11-03-api-handlers-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-templates-list-swallows-db-error",
+      "title": "api-server templates list handler swallows DB error and returns an empty 200 response",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "See .research/signals/2026-11-03-api-handlers-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-listing-detail-photos-silent-drop",
+      "title": "api-server listing-detail silently drops photos on serialization edge case",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 api-handlers (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "See .research/signals/2026-11-03-api-handlers-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
+      "title": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 mobile-native-kmp (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "See .research/signals/2026-11-03-mobile-native-kmp-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run."
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-refresh-token-localstorage",
+      "title": "SECURITY: ppt-web refresh-token persisted in localStorage — XSS-reachable",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "See .research/signals/2026-11-03-ppt-web-core-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
+        "Security-sensitive but confidence=medium — security fast-track requires confidence=high, so stays at score 2 without auto-promotion."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-jwt-in-url",
+      "title": "SECURITY: ppt-web WebSocket sends JWT as URL query parameter — token leaks into access logs",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-03 ppt-web-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "See .research/signals/2026-11-03-ppt-web-core-tier1d.json for full finding. Catch-up for 2026-11-03 skipped run.",
+        "Security-sensitive but confidence=medium; stays at score 2."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null
     }
   ]
 }
