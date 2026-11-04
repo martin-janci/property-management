@@ -249,18 +249,18 @@
     {
       "task_id": "gh-issue-3299",
       "branch": "auto-impl/gh-issue-3299-dca306cd",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-04T18:30:06Z",
-      "last_updated": "2026-11-04T18:30:06Z",
-      "status_changed_at": "2026-11-04T18:30:06Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-04T18:56:05Z",
+      "status_changed_at": "2026-11-04T18:56:05Z",
+      "pr_number": 3317,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3317",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3317 status=done specialist=react-web scope_drift=false note=cleared fixable frontend Biome lint debt (14 files); Lint&Format gate green today (biome exits 0 on warns); Closes #3299; verify green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -322,5 +322,5 @@
       "first_open_at": null
     }
   ],
-  "generated": "2026-11-04T18:53:12Z"
+  "generated": "2026-11-04T18:56:05Z"
 }
