@@ -2067,11 +2067,20 @@
       "description": "Beschreibung",
       "quantity": "Menge",
       "unitPrice": "Einzelpreis",
-      "tax": "MwSt.-Satz",
-      "sending": "Wird gesendet…",
+      "tax": "MwSt.",
+      "sending": "Wird gesendet...",
       "send": "Rechnung senden",
       "downloadPdf": "PDF herunterladen",
-      "paymentHistory": "Zahlungsverlauf"
+      "paymentHistory": "Zahlungsverlauf",
+      "issueDate": "Rechnungsdatum",
+      "dueDate": "Fälligkeitsdatum",
+      "amount": "Betrag",
+      "subtotal": "Zwischensumme",
+      "total": "Gesamt",
+      "paid": "Bezahlt",
+      "balanceDue": "Offener Betrag",
+      "notes": "Notizen",
+      "recordPayment": "Zahlung erfassen"
     },
     "totals": {
       "subtotal": "Zwischensumme:",
@@ -2097,8 +2106,24 @@
       "itemsRequired": "Mindestens eine Position ist erforderlich",
       "addItem": "Position hinzufügen",
       "taxRatePlaceholder": "MwSt. %",
-      "notesPlaceholder": "Optionale Notiz, die auf der Rechnung erscheint",
-      "submitting": "Wird erstellt…"
+      "notesPlaceholder": "Optionale Notizen auf der Rechnung",
+      "submitting": "Wird erstellt...",
+      "unit": "Einheit",
+      "selectUnit": "Einheit auswählen",
+      "unitRequired": "Einheit ist erforderlich",
+      "dueDate": "Fälligkeitsdatum",
+      "currency": "Währung",
+      "lineItems": "Positionen",
+      "description": "Beschreibung",
+      "quantity": "Menge",
+      "unitPrice": "Einzelpreis",
+      "taxRate": "MwSt. %",
+      "removeItem": "Position entfernen",
+      "subtotal": "Zwischensumme",
+      "tax": "MwSt.",
+      "total": "Gesamt",
+      "notes": "Notizen",
+      "submit": "Rechnung erstellen"
     },
     "paymentForm": {
       "allocateToInvoices": "Rechnungen zuordnen",
@@ -2109,9 +2134,17 @@
       "selectPaymentMethod": "Zahlungsart auswählen",
       "paymentMethodRequired": "Zahlungsart ist erforderlich",
       "reference": "Referenznummer",
-      "referencePlaceholder": "Bankreferenz, Schecknr. usw.",
+      "referencePlaceholder": "Verwendungszweck, Schecknummer usw.",
       "paymentDate": "Zahlungsdatum",
-      "submitting": "Wird erfasst…"
+      "submitting": "Wird erfasst...",
+      "unit": "Einheit",
+      "selectUnit": "Einheit auswählen",
+      "unitRequired": "Einheit ist erforderlich",
+      "amount": "Betrag",
+      "currency": "Währung",
+      "notes": "Notizen",
+      "notesPlaceholder": "Optionale Notizen",
+      "submit": "Zahlung erfassen"
     },
     "reconciliation": {
       "title": "Zahlungsabgleich",
@@ -2215,6 +2248,41 @@
         "unit_ledger": "Einheitenkonten",
         "custom": "Benutzerdefiniert"
       }
+    },
+    "paymentMethods": {
+      "bank_transfer": "Banküberweisung",
+      "card": "Karte",
+      "cash": "Bargeld",
+      "check": "Scheck",
+      "online": "Online-Zahlung",
+      "direct_debit": "Lastschrift",
+      "other": "Sonstige"
+    },
+    "invoiceStatuses": {
+      "draft": "Entwurf",
+      "sent": "Gesendet",
+      "paid": "Bezahlt",
+      "partial": "Teilweise bezahlt",
+      "overdue": "Überfällig",
+      "cancelled": "Storniert",
+      "void": "Ungültig"
+    },
+    "pages": {
+      "newInvoiceTitle": "Neue Rechnung",
+      "newInvoiceSubtitle": "Gebühren und Leistungen einer Einheit in Rechnung stellen",
+      "newPaymentTitle": "Zahlung erfassen",
+      "newPaymentSubtitle": "Eingegangene Zahlung erfassen und offenen Rechnungen zuordnen",
+      "backToInvoices": "Zurück zu Rechnungen",
+      "backToPayments": "Zurück zu Zahlungen",
+      "invoiceCreated": "Rechnung erstellt",
+      "createInvoiceFailed": "Rechnung konnte nicht erstellt werden",
+      "paymentRecorded": "Zahlung erfasst",
+      "recordPaymentFailed": "Zahlung konnte nicht erfasst werden",
+      "invoiceSent": "Rechnung gesendet",
+      "sendInvoiceFailed": "Rechnung konnte nicht gesendet werden",
+      "pdfFailed": "PDF konnte nicht heruntergeladen werden",
+      "invoiceNotFound": "Rechnung nicht gefunden",
+      "noUnits": "Keine Einheiten verfügbar. Fügen Sie zuerst Einheiten zu einem Gebäude hinzu."
     }
   },
   "announcements": {

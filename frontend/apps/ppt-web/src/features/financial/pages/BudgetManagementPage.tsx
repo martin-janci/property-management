@@ -36,8 +36,13 @@ export interface BudgetManagementPageProps {
     currency: string;
   };
   isLoading?: boolean;
-  onNavigateToCreate: () => void;
-  onNavigateToDetail: (budgetId: string) => void;
+  /**
+   * Create / open a budget. Optional: the budget create & detail screens are
+   * not wired yet, so the route omits them and the related buttons are hidden
+   * (or inert) instead of leading to a not-found page.
+   */
+  onNavigateToCreate?: () => void;
+  onNavigateToDetail?: (budgetId: string) => void;
   onYearChange: (year: number) => void;
   onBuildingChange: (buildingId?: string) => void;
 }
@@ -114,13 +119,15 @@ export function BudgetManagementPage({
                   </option>
                 ))}
               </select>
-              <button
-                type="button"
-                onClick={onNavigateToCreate}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
-              >
-                {t('financial.budgets.createNew')}
-              </button>
+              {onNavigateToCreate && (
+                <button
+                  type="button"
+                  onClick={onNavigateToCreate}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                >
+                  {t('financial.budgets.createNew')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -172,13 +179,15 @@ export function BudgetManagementPage({
                 />
               </svg>
               <p className="mt-4 text-gray-500">{t('financial.budgets.noBudgets')}</p>
-              <button
-                type="button"
-                onClick={onNavigateToCreate}
-                className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
-              >
-                {t('financial.budgets.createFirst')}
-              </button>
+              {onNavigateToCreate && (
+                <button
+                  type="button"
+                  onClick={onNavigateToCreate}
+                  className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                >
+                  {t('financial.budgets.createFirst')}
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -186,7 +195,8 @@ export function BudgetManagementPage({
                 <button
                   type="button"
                   key={budget.id}
-                  onClick={() => onNavigateToDetail(budget.id)}
+                  onClick={() => onNavigateToDetail?.(budget.id)}
+                  disabled={!onNavigateToDetail}
                   className="bg-white rounded-lg shadow p-6 text-left hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between">

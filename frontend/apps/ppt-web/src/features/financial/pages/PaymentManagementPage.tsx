@@ -29,7 +29,11 @@ export interface PaymentManagementPageProps {
   isLoading?: boolean;
   /** Managers only; omitted for residents so the record button is hidden. */
   onNavigateToRecord?: () => void;
-  onNavigateToDetail: (paymentId: string) => void;
+  /**
+   * Open a payment's detail view. Optional: there is no payment-detail screen
+   * yet, so the route omits it and the "view all" link stays hidden.
+   */
+  onNavigateToDetail?: (paymentId: string) => void;
   onMatch: (paymentId: string, invoiceId: string, amount: number) => void;
   onAutoMatch: () => void;
   onFilterChange: (params: {
@@ -188,7 +192,11 @@ export function PaymentManagementPage({
           <RecentPaymentsList
             payments={payments}
             isLoading={isLoading}
-            onViewAll={() => onNavigateToDetail(payments[0]?.id || '')}
+            onViewAll={
+              onNavigateToDetail && payments[0]
+                ? () => onNavigateToDetail(payments[0].id)
+                : undefined
+            }
           />
         </div>
       </div>
