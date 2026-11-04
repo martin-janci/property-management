@@ -46,17 +46,40 @@ owns these routes, all rendered by pages under
 - `/rentals/guests` — `GuestRegistrationPage` (UC-29.5 + UC-30 guest registration)
 - `/rentals/reports` — `TaxReportPage` (UC-29.13/29.14/29.15 statistics + tax export)
 
-Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`):
-- `rentalsApiListReservations` — reservation list (dashboard + bookings)
-- `rentalsApiGetReservation` — single reservation (booking detail)
-- `rentalsApiListConnections` / `rentalsApiCreateConnection` — platform connections
-- `rentalsApiSyncPlatforms` — trigger a channel sync
-- `rentalsApiListGuests` — guest registrations
-- `rentalsApiCheckIn` / `rentalsApiCheckOut` — guest check-in / check-out
+Rentals calls go through the hand-written `@ppt/api-client` rentals module
+(`frontend/packages/api-client/src/rentals/`) against the real
+`/api/v1/rentals` routes (the TypeSpec `rentalsApi*` SDK targets routes the
+server never implemented):
+- `listRentalBookings`, `getRentalBookingWithGuests`, `updateRentalBookingStatus` — bookings
+- `listRentalGuests`, `createRentalGuest`, `updateRentalGuest`, `registerRentalGuest`, `deleteRentalGuest` — guests
+- `listRentalConnections`, `createRentalConnection` — platform connections; `getRentalStatistics` — dashboard
+- `getRentalCalendar`, `checkRentalAvailability`, `createRentalCalendarBlock`, `deleteRentalCalendarBlock` — calendar
+- `listRentalReports`, `previewRentalReport`, `createRentalReport`, `submitRentalReport` — daňový výkaz
+- `listRentalBuildings` + `listRentalBuildingUnits` (`GET /buildings?organization_id=…`,
+  `GET /buildings/{id}/units`) — building/unit pickers on calendar, bookings, connections, reports
 
 ## Notes
 
 ### Specific (recent)
+- 2026-11-05 — **calendar + daňový výkaz wired to real data.** `/rentals/calendar`
+  loads `GET /rentals/calendar/{unit_id}` for the visible Monday-first month grid
+  (unit picker from real buildings/units, `?unit=` in the URL, Intl month/day
+  names). Events are half-open (`end_date` = check-out / first free day); blocks
+  are created inclusive in the UI and sent with `block_end = last day + 1` after
+  an availability check. Clicking a reservation resolves the booking via
+  `GET /rentals/bookings?unit_id&from_date&to_date` (calendar events carry the
+  block id, not the booking id); clicking a manual block offers removal.
+  `/rentals/reports` is now the authority guest report ("Daňový výkaz"): building
+  + authority + month/quarter/year → `POST /rentals/reports/preview` (guests,
+  reservations, nationality breakdown), save via `POST /rentals/reports`, stored
+  list via `GET /rentals/reports`, "mark as submitted" via
+  `POST /rentals/reports/{id}/submit`. Income/expense/income-tax figures and file
+  export are hidden — the server computes neither and never sets
+  `report_file_url` (a Download link appears only if it does). Calendar + tax keys
+  translated in all six locales; the rest of the `rentals` namespace is still
+  en-only. Tests: `features/rentals/mappers.test.ts`,
+  `pages/CalendarPage.test.tsx`, `pages/TaxReportPage.test.tsx`,
+  `routes/groups/rentals.properties.test.ts`, `i18n/rentalsCalendarTaxI18n.test.ts`.
 - 2026-08-04 — **rentals mutations now guard auth (session-expiry UX), PR #2648.**
   The rentals route group (`groups/rentals.tsx`) no longer dereferences `auth!`
   on the request path. All 10 rentals request sites route through
@@ -82,15 +105,20 @@ Rentals calls (via `@ppt/api-client` `ShortTermRentalsService` — `rentalsApi*`
   `/rentals` and its sibling routes had no screen-map at all.
 - `endpoints` left empty: the rentals endpoints are not (yet) in the
   `@ppt/sitemap` endpoint catalogue (same situation as `ppt/settings-integrations`).
-- `apiStatus: partial` — reservations / connections / guests / check-in-out are
-  live, but the calendar and tax-report routes still render with empty data
-  (no calendar or tax-report endpoint exists yet; see the route wrappers in
-  `groups/rentals.tsx`).
+- `apiStatus: partial` — bookings, guests, connections, statistics, calendar and
+  the authority guest report are live. Still missing server-side: rental
+  income / expense / income-tax computation and report file rendering, plus the
+  connection disconnect / settings actions (no-ops in the route wrapper).
 - No `sitemapRefs`: the `/rentals*` routes are not present in `@ppt/sitemap`
   (only `/settings/integrations` is). The rest of the rentals routes remain
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-11-05 — agent: wired `/rentals/calendar` (calendar events, blocks,
+  availability, booking lookup) and `/rentals/reports` (daňový výkaz preview /
+  save / submit / list) to the real rentals API; real building/unit pickers on
+  calendar, bookings, connections and reports; Calls list updated to the
+  hand-written rentals client. `apiStatus` stays `partial` (see Notes).
 - 2026-08-18 — agent: screen-map-drift-pr-2647-ppt-retry2 — noted i18n update in
   PR #2647: `BookingDetailPageRoute` in `frontend/apps/ppt-web/src/routes/groups/rentals.tsx`
   now renders its missing-param fallback via

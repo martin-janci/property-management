@@ -577,6 +577,32 @@ pub struct BookingWithGuests {
     pub registration_complete: bool,
 }
 
+/// Guest list query parameters (`GET /api/v1/rentals/guests`).
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct GuestListQuery {
+    /// Filter by registration status (pending, registered, reported, expired).
+    pub status: Option<String>,
+    /// Filter to one booking.
+    pub booking_id: Option<Uuid>,
+    /// Max rows (default 200, capped at 500).
+    pub limit: Option<i64>,
+}
+
+/// A guest row with the booking context the guest-registration list needs.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct GuestListItem {
+    #[sqlx(flatten)]
+    #[serde(flatten)]
+    pub guest: RentalGuest,
+    /// Lead guest name recorded on the booking.
+    pub booking_guest_name: String,
+    pub unit_id: Uuid,
+    pub unit_name: String,
+    pub check_in: NaiveDate,
+    pub check_out: NaiveDate,
+    pub booking_status: String,
+}
+
 /// Guest check-in reminder notification.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CheckInReminder {

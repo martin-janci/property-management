@@ -159,4 +159,65 @@ describe('ViewAnnouncementPage', () => {
     expect(screen.getByLabelText('Loading')).toBeInTheDocument();
     expect(screen.queryByText('Roof repair scheduled')).not.toBeInTheDocument();
   });
+  it('renders the markdown body as formatted, sanitized HTML', () => {
+    const { container } = render(
+      <ViewAnnouncementPage
+        announcement={announcement({
+          content: '## Water outage\n\nPlease **store water**.\n\n- Item one\n\n<script>x</script>',
+        })}
+        attachments={[]}
+        {...noopHandlers()}
+      />
+    );
+    expect(screen.getByRole('heading', { level: 2, name: 'Water outage' })).toBeInTheDocument();
+    expect(screen.getByText('store water').tagName).toBe('STRONG');
+    expect(screen.getByText('Item one').tagName).toBe('LI');
+    expect(container.querySelector('script')).toBeNull();
+    expect(screen.queryByText(/## Water outage/)).not.toBeInTheDocument();
+  });
+
+  it('hides the author line when the author name is missing', () => {
+    render(
+      <ViewAnnouncementPage
+        announcement={announcement({ authorName: '' })}
+        attachments={[]}
+        {...noopHandlers()}
+      />
+    );
+    expect(screen.queryByText(/^By\b/)).not.toBeInTheDocument();
+  });
+
+  it('hides manager actions and read statistics from residents (canManage=false)', () => {
+    render(
+      <ViewAnnouncementPage
+        announcement={announcement({ pinned: true, acknowledgmentRequired: true })}
+        attachments={[]}
+        onMarkRead={vi.fn()}
+        onAcknowledge={vi.fn()}
+        acknowledgmentStats={ackStats}
+        canManage={false}
+        {...noopHandlers()}
+      />
+    );
+    for (const name of [/^Archive$/, /^Unpin$/, /^Pin$/, /^Edit$/, /^Delete$/, /^Publish Now$/]) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByText('Acknowledgment Status')).not.toBeInTheDocument();
+    expect(screen.queryByText('4')).not.toBeInTheDocument();
+    // Resident-facing actions remain.
+    expect(screen.getByRole('button', { name: 'Acknowledge' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mark as Read' })).toBeInTheDocument();
+  });
+
+  it('shows manager actions by default', () => {
+    render(
+      <ViewAnnouncementPage
+        announcement={announcement({ pinned: true })}
+        attachments={[]}
+        {...noopHandlers()}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unpin' })).toBeInTheDocument();
+  });
 });
