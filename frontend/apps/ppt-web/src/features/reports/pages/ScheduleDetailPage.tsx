@@ -101,7 +101,13 @@ function formatFileSize(bytes?: number): string {
 // ============================================================================
 
 export interface ScheduleDetailPageProps {
-  schedule: ReportSchedule;
+  /**
+   * The schedule, or `undefined` while it loads / when it does not exist.
+   * With no schedule the page shows a spinner (`isScheduleLoading`) or a
+   * not-found state instead of placeholder details.
+   */
+  schedule: ReportSchedule | undefined;
+  isScheduleLoading?: boolean;
   executions: ReportExecution[];
   isLoading?: boolean;
   isError?: boolean;
@@ -116,7 +122,42 @@ export interface ScheduleDetailPageProps {
 // Component
 // ============================================================================
 
-export function ScheduleDetailPage({
+export function ScheduleDetailPage(props: ScheduleDetailPageProps) {
+  const { schedule, isScheduleLoading, onBack } = props;
+  if (!schedule) {
+    return <ScheduleUnavailable isLoading={isScheduleLoading} onBack={onBack} />;
+  }
+  return <ScheduleDetailContent {...props} schedule={schedule} />;
+}
+
+/** Loading / not-found state for a schedule id that has no schedule. */
+function ScheduleUnavailable({ isLoading, onBack }: { isLoading?: boolean; onBack?: () => void }) {
+  const { t } = useTranslation();
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16" role="status">
+        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+      <h1 className="text-xl font-semibold text-gray-900">{t('reports.detail.notFoundTitle')}</h1>
+      <p className="mt-2 text-sm text-gray-500">{t('reports.detail.notFoundDescription')}</p>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="mt-6 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+        >
+          {t('reports.detail.backToSchedules')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ScheduleDetailContent({
   schedule,
   executions,
   isLoading,
@@ -126,7 +167,7 @@ export function ScheduleDetailPage({
   onDownload,
   onRetry,
   onBack,
-}: ScheduleDetailPageProps) {
+}: ScheduleDetailPageProps & { schedule: ReportSchedule }) {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<ExecutionFilters>({});
   const [retryingId, setRetryingId] = useState<string | null>(null);
@@ -224,7 +265,10 @@ export function ScheduleDetailPage({
                 {t('reports.detail.frequency.label', 'Frequency')}
               </dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {frequencyLabel(schedule.frequency)} at {schedule.time}
+                {t('reports.detail.frequencyAt', {
+                  frequency: frequencyLabel(schedule.frequency),
+                  time: schedule.time,
+                })}
               </dd>
             </div>
             <div>

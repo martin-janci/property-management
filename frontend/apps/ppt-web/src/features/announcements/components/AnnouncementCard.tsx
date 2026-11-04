@@ -1,4 +1,5 @@
 import type { AnnouncementStatus, AnnouncementSummary } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import './AnnouncementCard.css';
 
 interface AnnouncementCardProps {
@@ -18,12 +19,12 @@ const statusPillClass: Record<AnnouncementStatus, string> = {
   archived: 'ann-status-pill ann-status-pill--archived',
 };
 
-const targetTypeLabels = {
-  all: 'All Users',
-  building: 'Building',
-  units: 'Specific Units',
-  roles: 'By Role',
-};
+const targetTypeLabelKeys = {
+  all: 'announcements.target.allUsers',
+  building: 'announcements.target.building',
+  units: 'announcements.target.specificUnits',
+  roles: 'announcements.target.byRole',
+} as const;
 
 export function AnnouncementCard({
   announcement,
@@ -34,6 +35,7 @@ export function AnnouncementCard({
   onArchive,
   onPin,
 }: AnnouncementCardProps) {
+  const { t, i18n } = useTranslation();
   const canEdit = announcement.status === 'draft' || announcement.status === 'scheduled';
   const canDelete = announcement.status === 'draft';
   const canPublish = announcement.status === 'draft' || announcement.status === 'scheduled';
@@ -45,7 +47,7 @@ export function AnnouncementCard({
         <div>
           <div className="announcement-card__title-row">
             {announcement.pinned && (
-              <span className="announcement-card__pin-icon" title="Pinned">
+              <span className="announcement-card__pin-icon" title={t('announcements.pinned')}>
                 <svg
                   width="16"
                   height="16"
@@ -61,25 +63,27 @@ export function AnnouncementCard({
           </div>
           <div className="announcement-card__meta">
             <span className={statusPillClass[announcement.status]}>
-              {announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}
+              {t(`announcements.status.${announcement.status}`)}
             </span>
             <span className="announcement-card__target">
-              {targetTypeLabels[announcement.targetType]}
+              {t(targetTypeLabelKeys[announcement.targetType])}
             </span>
             {announcement.acknowledgmentRequired && (
               <span className="announcement-card__flag announcement-card__flag--ack">
-                Acknowledgment Required
+                {t('announcements.card.acknowledgmentRequired')}
               </span>
             )}
             {announcement.commentsEnabled && (
               <span className="announcement-card__flag announcement-card__flag--comments">
-                Comments Enabled
+                {t('announcements.card.commentsEnabled')}
               </span>
             )}
           </div>
           {announcement.publishedAt && (
             <p className="announcement-card__date">
-              Published: {new Date(announcement.publishedAt).toLocaleDateString()}
+              {t('announcements.card.publishedOn', {
+                date: new Date(announcement.publishedAt).toLocaleDateString(i18n.language),
+              })}
             </p>
           )}
         </div>
@@ -91,7 +95,7 @@ export function AnnouncementCard({
           onClick={() => onView?.(announcement.id)}
           className="announcement-card__action announcement-card__action--view"
         >
-          View
+          {t('announcements.actions.view')}
         </button>
         {canEdit && (
           <button
@@ -99,7 +103,7 @@ export function AnnouncementCard({
             onClick={() => onEdit?.(announcement.id)}
             className="announcement-card__action announcement-card__action--edit"
           >
-            Edit
+            {t('common.edit')}
           </button>
         )}
         {canPublish && (
@@ -108,7 +112,7 @@ export function AnnouncementCard({
             onClick={() => onPublish?.(announcement.id)}
             className="announcement-card__action announcement-card__action--publish"
           >
-            Publish
+            {t('announcements.actions.publish')}
           </button>
         )}
         {canArchive && (
@@ -117,7 +121,7 @@ export function AnnouncementCard({
             onClick={() => onArchive?.(announcement.id)}
             className="announcement-card__action announcement-card__action--archive"
           >
-            Archive
+            {t('announcements.actions.archive')}
           </button>
         )}
         <button
@@ -125,7 +129,7 @@ export function AnnouncementCard({
           onClick={() => onPin?.(announcement.id, !announcement.pinned)}
           className="announcement-card__action announcement-card__action--pin"
         >
-          {announcement.pinned ? 'Unpin' : 'Pin'}
+          {announcement.pinned ? t('announcements.actions.unpin') : t('announcements.actions.pin')}
         </button>
         {canDelete && (
           <button
@@ -133,7 +137,7 @@ export function AnnouncementCard({
             onClick={() => onDelete?.(announcement.id)}
             className="announcement-card__action announcement-card__action--delete"
           >
-            Delete
+            {t('common.delete')}
           </button>
         )}
       </div>

@@ -195,7 +195,7 @@ describe('AuthContext integration', () => {
         expect.objectContaining({ method: 'POST' })
       );
       const [, init] = (globalThis.fetch as jest.Mock).mock.calls.at(-1) ?? [];
-      expect(JSON.parse(init.body)).toEqual({ refresh_token: 'stored-refresh' });
+      expect(JSON.parse(init.body)).toEqual({ refreshToken: 'stored-refresh' });
       // The session is trusted only with the freshly-issued token.
       expect(result.current.accessToken).toBe('refreshed-access');
       expect(result.current.user).toEqual(sampleUser);
@@ -243,8 +243,7 @@ describe('AuthContext integration', () => {
   describe('login', () => {
     it('persists tokens and flips into the authenticated state on success', async () => {
       const store = primeSecureStore();
-      // The api-server returns snake_case JSON keys; keep the test aligned
-      // with the real contract so AuthContext's mapping is exercised.
+      // Legacy snake_case response with an embedded user is still accepted.
       mockFetchOnce({
         access_token: 'new-access',
         refresh_token: 'new-refresh',
@@ -280,6 +279,45 @@ describe('AuthContext integration', () => {
       expect(store.get('ppt_access_token')).toBe('new-access');
       expect(store.get('ppt_refresh_token')).toBe('new-refresh');
       expect(JSON.parse(store.get('ppt_user') ?? '{}')).toEqual(sampleUser);
+    });
+
+    it('handles the real camelCase api-server contract (no embedded user)', async () => {
+      const store = primeSecureStore();
+      const access = makeJwt({
+        sub: 'u-9',
+        email: 'novakova@example.sk',
+        name: 'Jana Nováková',
+        exp: nowSec() + 900,
+      });
+      mockFetchOnce({
+        accessToken: access,
+        refreshToken: 'camel-refresh',
+        expiresIn: 900,
+        tokenType: 'Bearer',
+        tenants: [{ tenantId: 'org-1', tenantName: 'SVB Hlavná 1', role: 'owner' }],
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await act(async () => {
+        await result.current.login('novakova@example.sk', 'pw');
+      });
+
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.accessToken).toBe(access);
+      expect(result.current.user).toMatchObject({
+        id: 'u-9',
+        email: 'novakova@example.sk',
+        firstName: 'Jana',
+        lastName: 'Nováková',
+        role: 'owner',
+        organizationId: 'org-1',
+        organizationName: 'SVB Hlavná 1',
+      });
+      expect(store.get('ppt_refresh_token')).toBe('camel-refresh');
+      // The org is remembered so requests can send X-Tenant-ID.
+      expect(store.get('ppt_tenant_id')).toBe('org-1');
     });
 
     it('evicts a stale cached tenant id on login (issue #2329)', async () => {
@@ -490,8 +528,9 @@ describe('AuthContext integration', () => {
 
       const [url, init] = (globalThis.fetch as jest.Mock).mock.calls.at(-1) ?? [];
       expect(url).toBe(`${API_BASE}/api/v1/auth/refresh`);
-      // Backend's RefreshTokenRequest uses snake_case.
-      expect(JSON.parse(init.body)).toEqual({ refresh_token: 'old-refresh' });
+      // Backend's RefreshTokenRequest is camelCase (`refreshToken`); a
+      // snake_case body is rejected with 422 "missing field `refreshToken`".
+      expect(JSON.parse(init.body)).toEqual({ refreshToken: 'old-refresh' });
 
       expect(result.current.accessToken).toBe('rotated-access');
       expect(store.get('ppt_access_token')).toBe('rotated-access');

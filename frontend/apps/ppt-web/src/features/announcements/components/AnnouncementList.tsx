@@ -86,13 +86,13 @@ export function AnnouncementList({
 
       {/* Header with filters */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('announcements.title')}</h1>
         <button
           type="button"
           onClick={onCreate}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
-          Create Announcement
+          {t('announcements.form.create')}
         </button>
       </div>
 
@@ -103,11 +103,11 @@ export function AnnouncementList({
           onChange={(e) => handleStatusChange(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
+          <option value="">{t('announcements.list.allStatuses')}</option>
+          <option value="draft">{t('announcements.status.draft')}</option>
+          <option value="scheduled">{t('announcements.status.scheduled')}</option>
+          <option value="published">{t('announcements.status.published')}</option>
+          <option value="archived">{t('announcements.status.archived')}</option>
         </select>
 
         <select
@@ -115,11 +115,11 @@ export function AnnouncementList({
           onChange={(e) => handleTargetTypeChange(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Targets</option>
-          <option value="all">All Users</option>
-          <option value="building">Building</option>
-          <option value="units">Specific Units</option>
-          <option value="roles">By Role</option>
+          <option value="">{t('announcements.list.allTargets')}</option>
+          <option value="all">{t('announcements.target.allUsers')}</option>
+          <option value="building">{t('announcements.target.building')}</option>
+          <option value="units">{t('announcements.target.specificUnits')}</option>
+          <option value="roles">{t('announcements.target.byRole')}</option>
         </select>
       </div>
 
@@ -148,13 +148,13 @@ export function AnnouncementList({
         </div>
       ) : announcements.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          <p>No announcements found.</p>
+          <p>{t('announcements.list.empty')}</p>
           <button
             type="button"
             onClick={onCreate}
             className="mt-4 text-blue-600 hover:text-blue-800"
           >
-            Create your first announcement
+            {t('announcements.list.createFirst')}
           </button>
         </div>
       ) : (
@@ -178,7 +178,11 @@ export function AnnouncementList({
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+            {t('announcements.list.showingRange', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -187,10 +191,10 @@ export function AnnouncementList({
               disabled={page === 1}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('common.previous')}
             </button>
             <span className="px-3 py-1">
-              Page {page} of {totalPages}
+              {t('announcements.list.pageOf', { page, totalPages })}
             </span>
             <button
               type="button"
@@ -198,7 +202,7 @@ export function AnnouncementList({
               disabled={page === totalPages}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </div>

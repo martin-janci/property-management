@@ -2,6 +2,7 @@
  * Emergency Contacts API client for Epic 62.
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   CreateEmergencyContact,
   EmergencyContact,
@@ -26,7 +27,7 @@ export async function listEmergencyContacts(
   if (query.limit) params.append('limit', String(query.limit));
   if (query.offset) params.append('offset', String(query.offset));
 
-  const response = await fetch(`${API_BASE}/contacts?${params.toString()}`);
+  const response = await authenticatedFetch(`${API_BASE}/contacts?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error('Unable to load emergency contacts. Please try again later.');
@@ -45,7 +46,7 @@ export async function getEmergencyContact(
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/contacts/${id}?${params.toString()}`);
+  const response = await authenticatedFetch(`${API_BASE}/contacts/${id}?${params.toString()}`);
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -64,7 +65,7 @@ export async function createEmergencyContact(
   organizationId: string,
   data: CreateEmergencyContact
 ): Promise<EmergencyContact> {
-  const response = await fetch(`${API_BASE}/contacts`, {
+  const response = await authenticatedFetch(`${API_BASE}/contacts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -90,7 +91,7 @@ export async function updateEmergencyContact(
   organizationId: string,
   data: UpdateEmergencyContact
 ): Promise<EmergencyContact> {
-  const response = await fetch(`${API_BASE}/contacts/${id}`, {
+  const response = await authenticatedFetch(`${API_BASE}/contacts/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ export async function deleteEmergencyContact(id: string, organizationId: string)
   const params = new URLSearchParams();
   params.append('organization_id', organizationId);
 
-  const response = await fetch(`${API_BASE}/contacts/${id}?${params.toString()}`, {
+  const response = await authenticatedFetch(`${API_BASE}/contacts/${id}?${params.toString()}`, {
     method: 'DELETE',
   });
 

@@ -15,6 +15,7 @@ import {
   buildAnnouncementQuery,
   insertCommentIntoTree,
   OPTIMISTIC_COMMENT_PREFIX,
+  toAnnouncementDetail,
   toPaginatedResponse,
 } from './hooks';
 import type { CommentWithAuthor } from './types';
@@ -153,5 +154,82 @@ describe('insertCommentIntoTree (Story 6.3 — optimistic add)', () => {
 
   it('exposes a stable optimistic-id prefix', () => {
     expect(OPTIMISTIC_COMMENT_PREFIX).toBe('optimistic-');
+  });
+});
+
+describe('toAnnouncementDetail', () => {
+  it('maps the snake_case detail payload to the camelCase UI shape', () => {
+    const { announcement, attachments } = toAnnouncementDetail({
+      announcement: {
+        id: 'a1',
+        organization_id: 'org-1',
+        author_id: 'u1',
+        author_name: 'Ing. Peter Horváth',
+        title: 'Water outage',
+        content: '## Heads up',
+        target_type: 'building',
+        target_ids: ['b1'],
+        status: 'published',
+        scheduled_at: null,
+        published_at: '2026-04-10T08:00:00Z',
+        pinned: true,
+        pinned_at: null,
+        pinned_by: null,
+        comments_enabled: true,
+        acknowledgment_required: true,
+        created_at: '2026-04-09T08:00:00Z',
+        updated_at: '2026-04-09T08:00:00Z',
+        read_count: 7,
+        acknowledged_count: 3,
+        comment_count: 2,
+        attachment_count: 1,
+      },
+      attachments: [
+        {
+          id: 'f1',
+          announcement_id: 'a1',
+          file_key: 'k',
+          file_name: 'plan.pdf',
+          file_type: 'application/pdf',
+          file_size: 2048,
+          created_at: '2026-04-09T08:00:00Z',
+        },
+      ],
+    });
+    expect(announcement).toMatchObject({
+      authorName: 'Ing. Peter Horváth',
+      targetType: 'building',
+      targetIds: ['b1'],
+      publishedAt: '2026-04-10T08:00:00Z',
+      scheduledAt: undefined,
+      commentsEnabled: true,
+      acknowledgmentRequired: true,
+      readCount: 7,
+      acknowledgedCount: 3,
+      commentCount: 2,
+      attachmentCount: 1,
+    });
+    expect(attachments).toEqual([
+      {
+        id: 'f1',
+        announcementId: 'a1',
+        fileKey: 'k',
+        fileName: 'plan.pdf',
+        fileType: 'application/pdf',
+        fileSize: 2048,
+        createdAt: '2026-04-09T08:00:00Z',
+      },
+    ]);
+  });
+
+  it('accepts camelCase payloads and defaults missing counters to 0', () => {
+    const { announcement, attachments } = toAnnouncementDetail({
+      announcement: { id: 'a2', title: 't', content: 'c', status: 'draft', authorName: 'X' },
+    });
+    expect(announcement.authorName).toBe('X');
+    expect(announcement.readCount).toBe(0);
+    expect(announcement.attachmentCount).toBe(0);
+    expect(announcement.targetType).toBe('all');
+    expect(attachments).toEqual([]);
   });
 });

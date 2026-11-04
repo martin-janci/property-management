@@ -7,6 +7,7 @@
  * helpers) so the modules stay consistent.
  */
 
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   CreateApplicationRequest,
   CreateLeaseRequest,
@@ -46,7 +47,7 @@ function buildQueryString(
 
 /** Generic fetch wrapper with error handling. */
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

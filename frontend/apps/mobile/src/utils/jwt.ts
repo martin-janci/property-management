@@ -24,7 +24,12 @@ export function decodeJwtPayload(token: string): Record<string, unknown> | null 
     // jest-expo runtime) can decode it, re-adding the stripped `=` padding.
     const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padding = '='.repeat((4 - (padded.length % 4)) % 4);
-    const json = atob(padded + padding);
+    const binary = atob(padded + padding);
+    // `atob` yields one char per byte; re-assemble the UTF-8 bytes so claims
+    // such as a Slovak `name` ("Nováková") don't come out as mojibake.
+    const json = decodeURIComponent(
+      Array.from(binary, (ch) => `%${ch.charCodeAt(0).toString(16).padStart(2, '0')}`).join('')
+    );
     return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return null;

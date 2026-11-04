@@ -56,3 +56,12 @@
   color: var(--ppt-fg-muted);
   margin: 0;
 }
+
+.protected-route-unauthorized__back {
+  display: inline-flex;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+}

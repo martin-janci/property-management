@@ -26,6 +26,51 @@ import type {
   UpdateAnnouncementRequest,
 } from './types';
 
+// ============================================================================
+// Request body mapping
+// ============================================================================
+
+/**
+ * The api-server request structs (`CreateAnnouncementRequest`,
+ * `UpdateAnnouncementRequest`, `ScheduleAnnouncementRequest`,
+ * `CreateCommentRequest`) are snake_case with no serde rename, so the
+ * camelCase client shapes must be mapped before sending. Sending them as-is
+ * made every create fail with 422 `missing field target_type`.
+ */
+export function toAnnouncementWriteBody(
+  data: CreateAnnouncementRequest | UpdateAnnouncementRequest
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    title: data.title,
+    content: data.content,
+    target_type: data.targetType,
+    target_ids: data.targetIds,
+    scheduled_at: data.scheduledAt,
+    comments_enabled: data.commentsEnabled,
+    acknowledgment_required: data.acknowledgmentRequired,
+  };
+  for (const key of Object.keys(body)) {
+    if (body[key] === undefined) delete body[key];
+  }
+  return body;
+}
+
+/** Map a schedule request to the server's `{ scheduled_at }` body. */
+export function toAnnouncementScheduleBody(data: ScheduleAnnouncementRequest): {
+  scheduled_at: string;
+} {
+  return { scheduled_at: data.scheduledAt };
+}
+
+/** Map a comment request to the server's snake_case body. */
+export function toAnnouncementCommentBody(data: CreateCommentRequest): Record<string, unknown> {
+  return {
+    content: data.content,
+    ...(data.parentId !== undefined && { parent_id: data.parentId }),
+    ...(data.aiTrainingConsent !== undefined && { ai_training_consent: data.aiTrainingConsent }),
+  };
+}
+
 const buildHeaders = (config: ApiConfig): HeadersInit => ({
   'Content-Type': 'application/json',
   ...(config.accessToken && { Authorization: `Bearer ${config.accessToken}` }),
@@ -91,7 +136,7 @@ export const createAnnouncementsApi = (config: ApiConfig) => {
       const response = await fetch(baseUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toAnnouncementWriteBody(data)),
       });
       return handleResponse(response);
     },
@@ -119,7 +164,7 @@ export const createAnnouncementsApi = (config: ApiConfig) => {
       const response = await fetch(`${baseUrl}/${id}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toAnnouncementWriteBody(data)),
       });
       return handleResponse(response);
     },
@@ -159,7 +204,7 @@ export const createAnnouncementsApi = (config: ApiConfig) => {
       const response = await fetch(`${baseUrl}/${id}/schedule`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toAnnouncementScheduleBody(data)),
       });
       return handleResponse(response);
     },
@@ -305,7 +350,7 @@ export const createAnnouncementsApi = (config: ApiConfig) => {
       const response = await fetch(`${baseUrl}/${id}/comments`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(toAnnouncementCommentBody(data)),
       });
       return handleResponse(response);
     },

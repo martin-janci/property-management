@@ -4,6 +4,7 @@
  * API functions for direct messaging (Epic 6, Story 6.5).
  */
 
+import { getOrg, getToken } from '../auth';
 import type { ApiConfig } from '../index';
 import type {
   AttachmentDownloadResponse,
@@ -24,11 +25,21 @@ import type {
   UnreadMessagesResponse,
 } from './types';
 
-const buildHeaders = (config: ApiConfig): HeadersInit => ({
-  'Content-Type': 'application/json',
-  ...(config.accessToken && { Authorization: `Bearer ${config.accessToken}` }),
-  ...(config.tenantId && { 'X-Tenant-ID': config.tenantId }),
-});
+/**
+ * Build request headers at request time. The token comes from the registered
+ * token provider first, so a client created before sign-in finished (or
+ * before a refresh) never sends a missing or stale bearer token; the
+ * construction-time `config` values are only the fallback.
+ */
+const buildHeaders = (config: ApiConfig): Record<string, string> => {
+  const token = getToken() ?? config.accessToken;
+  const tenantId = config.tenantId ?? getOrg() ?? undefined;
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(tenantId && { 'X-Tenant-ID': tenantId }),
+  };
+};
 
 const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
@@ -40,7 +51,6 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
 
 export const createMessagingApi = (config: ApiConfig) => {
   const baseUrl = `${config.baseUrl}/api/v1/messages`;
-  const headers = buildHeaders(config);
 
   return {
     // ========================================================================
@@ -60,7 +70,7 @@ export const createMessagingApi = (config: ApiConfig) => {
       const url = searchParams.toString()
         ? `${baseUrl}/threads?${searchParams}`
         : `${baseUrl}/threads`;
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, { headers: buildHeaders(config) });
       return handleResponse(response);
     },
 
@@ -70,7 +80,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     startThread: async (data: StartThreadRequest): Promise<ThreadDetailResponse> => {
       const response = await fetch(`${baseUrl}/threads`, {
         method: 'POST',
-        headers,
+        headers: buildHeaders(config),
         body: JSON.stringify(data),
       });
       return handleResponse(response);
@@ -87,7 +97,7 @@ export const createMessagingApi = (config: ApiConfig) => {
       const url = searchParams.toString()
         ? `${baseUrl}/threads/${id}?${searchParams}`
         : `${baseUrl}/threads/${id}`;
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, { headers: buildHeaders(config) });
       return handleResponse(response);
     },
 
@@ -100,7 +110,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     ): Promise<SendMessageResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/messages`, {
         method: 'POST',
-        headers,
+        headers: buildHeaders(config),
         body: JSON.stringify(data),
       });
       return handleResponse(response);
@@ -112,7 +122,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     markThreadRead: async (threadId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/read`, {
         method: 'POST',
-        headers,
+        headers: buildHeaders(config),
       });
       return handleResponse(response);
     },
@@ -123,7 +133,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     deleteMessage: async (threadId: string, messageId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/messages/${messageId}`, {
         method: 'DELETE',
-        headers,
+        headers: buildHeaders(config),
       });
       return handleResponse(response);
     },
@@ -137,7 +147,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     deleteThread: async (threadId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}`, {
         method: 'DELETE',
-        headers,
+        headers: buildHeaders(config),
       });
       return handleResponse(response);
     },
@@ -148,7 +158,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     archiveThread: async (threadId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/archive`, {
         method: 'POST',
-        headers,
+        headers: buildHeaders(config),
       });
       return handleResponse(response);
     },
@@ -159,7 +169,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     unarchiveThread: async (threadId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/archive`, {
         method: 'DELETE',
-        headers,
+        headers: buildHeaders(config),
       });
       return handleResponse(response);
     },
@@ -179,7 +189,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     ): Promise<AttachmentUploadUrlResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/attachments/upload-url`, {
         method: 'POST',
-        headers,
+        headers: buildHeaders(config),
         body: JSON.stringify(data),
       });
       return handleResponse(response);
@@ -197,7 +207,7 @@ export const createMessagingApi = (config: ApiConfig) => {
         `${baseUrl}/threads/${threadId}/messages/${messageId}/attachments`,
         {
           method: 'POST',
-          headers,
+          headers: buildHeaders(config),
           body: JSON.stringify(data),
         }
       );
@@ -213,7 +223,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     ): Promise<MessageAttachmentsResponse> => {
       const response = await fetch(
         `${baseUrl}/threads/${threadId}/messages/${messageId}/attachments`,
-        { headers }
+        { headers: buildHeaders(config) }
       );
       return handleResponse(response);
     },
@@ -227,7 +237,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     ): Promise<AttachmentDownloadResponse> => {
       const response = await fetch(
         `${baseUrl}/threads/${threadId}/attachments/${attachmentId}/download`,
-        { headers }
+        { headers: buildHeaders(config) }
       );
       return handleResponse(response);
     },
@@ -240,7 +250,7 @@ export const createMessagingApi = (config: ApiConfig) => {
      * List blocked users
      */
     listBlockedUsers: async (): Promise<BlockedUsersResponse> => {
-      const response = await fetch(`${baseUrl}/users/blocked`, { headers });
+      const response = await fetch(`${baseUrl}/users/blocked`, { headers: buildHeaders(config) });
       return handleResponse(response);
     },
 
@@ -250,7 +260,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     blockUser: async (userId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/users/${userId}/block`, {
         method: 'POST',
-        headers,
+        headers: buildHeaders(config),
       });
       return handleResponse(response);
     },
@@ -261,7 +271,7 @@ export const createMessagingApi = (config: ApiConfig) => {
     unblockUser: async (userId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/users/${userId}/block`, {
         method: 'DELETE',
-        headers,
+        headers: buildHeaders(config),
       });
       return handleResponse(response);
     },
@@ -274,7 +284,7 @@ export const createMessagingApi = (config: ApiConfig) => {
      * Get unread message count
      */
     getUnreadCount: async (): Promise<UnreadMessagesResponse> => {
-      const response = await fetch(`${baseUrl}/unread-count`, { headers });
+      const response = await fetch(`${baseUrl}/unread-count`, { headers: buildHeaders(config) });
       return handleResponse(response);
     },
   };

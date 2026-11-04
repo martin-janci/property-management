@@ -21,8 +21,12 @@
 export function makeJwt(payload: Record<string, unknown>, keepPadding = false): string {
   // `btoa` is a global in the RN / jest-expo runtime (Node ≥ 16 too), the same
   // one the source decoder pairs with `atob`, so the test stays off `Buffer`.
-  // Payloads are ASCII, so Latin1 `btoa` is safe.
-  const base64 = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_');
+  // Encode the UTF-8 bytes (as a real server does) so non-ASCII claims such as
+  // Slovak names round-trip.
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  const base64 = btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
   const segment = keepPadding ? base64 : base64.replace(/=+$/, '');
   return `header.${segment}.signature`;
 }
