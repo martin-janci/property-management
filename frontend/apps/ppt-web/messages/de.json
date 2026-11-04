@@ -694,7 +694,28 @@
       "deleteError": "Löschen fehlgeschlagen",
       "deleteErrorMessage": "Ordner konnte nicht gelöscht werden",
       "createError": "Erstellen fehlgeschlagen",
-      "createErrorMessage": "Ordner konnte nicht erstellt werden"
+      "createErrorMessage": "Ordner konnte nicht erstellt werden",
+      "rename": "Umbenennen",
+      "delete": "Löschen",
+      "namePlaceholder": "Ordnername…",
+      "deleteConfirm": "Möchten Sie den Ordner <strong>{{name}}</strong> wirklich löschen?",
+      "deleteKeepDocuments": "Löschen (Dokumente in oberste Ebene verschieben)",
+      "deleteWithDocuments": "Einschließlich Dokumenten löschen",
+      "count_one": "{{count}} Ordner",
+      "count_other": "{{count}} Ordner",
+      "newFolder": "Neuer Ordner",
+      "allDocuments": "Alle Dokumente",
+      "loadError": "Ordner konnten nicht geladen werden.",
+      "empty": "Keine Ordner",
+      "createFirst": "Ersten Ordner erstellen",
+      "collapse": "Einklappen",
+      "expand": "Ausklappen",
+      "breadcrumbRoot": "Alle",
+      "folderEmpty": "Dieser Ordner ist leer",
+      "uploadDocuments": "Dokumente hochladen",
+      "showAll_one": "{{count}} Dokument anzeigen",
+      "showAll_other": "Alle {{count}} Dokumente anzeigen",
+      "documentSelected": "Dokument {{id}} ausgewählt"
     },
     "versionHistory": {
       "title": "Versionsverlauf",
@@ -705,7 +726,309 @@
       "current": "Aktuell"
     },
     "esign": {
-      "cancelConfirm": "Diese Signaturanfrage abbrechen? Unterzeichner können dann nicht mehr unterschreiben."
+      "cancelConfirm": "Diese Signaturanfrage abbrechen? Unterzeichner können dann nicht mehr unterschreiben.",
+      "title": "E-Signatur",
+      "send": "Zur Unterschrift senden",
+      "loading": "Signaturanfragen werden geladen…",
+      "loadError": "Signaturanfragen konnten nicht geladen werden.",
+      "empty": "Dieses Dokument wurde noch nicht zur Unterschrift gesendet.",
+      "requestedAt": "Angefordert am {{date}}",
+      "signedAt": "unterschrieben am {{date}}",
+      "remind": "Erinnerung senden",
+      "reminding": "Wird gesendet…",
+      "remindSent": "Gesendete Erinnerungen: {{count}}.",
+      "cancel": "Anfrage stornieren",
+      "cancelling": "Wird storniert…",
+      "allSigned": "Alle Unterzeichner haben reagiert.",
+      "status": {
+        "pending": "Unterschrift ausstehend",
+        "in_progress": "Unterzeichnung läuft",
+        "completed": "Unterschrieben",
+        "declined": "Abgelehnt",
+        "expired": "Abgelaufen",
+        "cancelled": "Storniert"
+      },
+      "signer": {
+        "pending": "Ausstehend",
+        "sent": "Gesendet",
+        "viewed": "Angesehen",
+        "signed": "Unterschrieben",
+        "declined": "Abgelehnt"
+      },
+      "dialog": {
+        "title": "Dokument zur Unterschrift senden",
+        "signers": "Unterzeichner",
+        "namePlaceholder": "Vollständiger Name",
+        "emailPlaceholder": "email@example.com",
+        "removeSigner": "Unterzeichner entfernen",
+        "addSigner": "+ Unterzeichner hinzufügen",
+        "signerRequired": "Fügen Sie mindestens einen Unterzeichner mit Namen und gültiger E-Mail hinzu.",
+        "subject": "Betreff (optional)",
+        "subjectPlaceholder": "z. B. Verwaltervertrag",
+        "message": "Nachricht an die Unterzeichner (optional)",
+        "messagePlaceholder": "Bitte prüfen und unterschreiben Sie das beigefügte Dokument.",
+        "sending": "Wird gesendet…",
+        "send": "Zur Unterschrift senden"
+      },
+      "genericError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    },
+    "category": {
+      "contract": "Vertrag",
+      "invoice": "Rechnung",
+      "receipt": "Quittung",
+      "report": "Bericht",
+      "minutes": "Protokoll",
+      "policy": "Richtlinie",
+      "notice": "Aushang",
+      "maintenance": "Instandhaltung",
+      "insurance": "Versicherung",
+      "legal": "Rechtliches",
+      "financial": "Finanzen",
+      "correspondence": "Korrespondenz",
+      "other": "Sonstiges"
+    },
+    "downloadError": {
+      "title": "Download fehlgeschlagen",
+      "message": "Das Dokument konnte nicht heruntergeladen werden."
+    },
+    "move": {
+      "successTitle": "Dokument verschoben",
+      "successToFolder": "„{{title}}“ wurde in den Ordner verschoben.",
+      "successToRoot": "„{{title}}“ wurde in die oberste Ebene verschoben.",
+      "failedTitle": "Verschieben fehlgeschlagen",
+      "failedMessage": "Das Dokument konnte nicht verschoben werden.",
+      "documentCount_one": "{{count}} Dokument",
+      "documentCount_other": "{{count}} Dokumente",
+      "destination": "Ziel:",
+      "rootNoFolder": "Oberste Ebene (kein Ordner)",
+      "allDocumentsNoFolder": "Alle Dokumente (kein Ordner)",
+      "moving": "Wird verschoben…",
+      "moveHere": "Hierher verschieben"
+    },
+    "page": {
+      "folders": "Ordner",
+      "upload": "Hochladen",
+      "templates": "Vorlagen",
+      "search": "Suche",
+      "list": "Liste"
+    },
+    "browse": {
+      "audience": {
+        "organization": "Alle Bewohner",
+        "building": "Gebäude",
+        "unit": "Nur Einheit",
+        "user": "Bestimmte Benutzer",
+        "public": "Öffentlich"
+      },
+      "tabs": {
+        "all": "Alle",
+        "published": "Veröffentlicht",
+        "draft": "Entwürfe",
+        "archived": "Archiviert"
+      },
+      "statusDraft": "Entwurf",
+      "statusArchived": "Archiviert",
+      "downloadFile": "{{name}} herunterladen",
+      "preview": "Vorschau",
+      "previewFile": "Vorschau von {{name}}",
+      "moveToFolder": "In Ordner verschieben",
+      "moveFile": "{{name}} in einen Ordner verschieben",
+      "searchPlaceholder": "Nach Titel suchen…",
+      "audienceLegend": "Zielgruppe",
+      "categoryLegend": "Kategorie",
+      "clearFilters": "Filter zurücksetzen",
+      "loadError": "Dokumente konnten nicht geladen werden.",
+      "emptyFiltered": "Keine Dokumente entsprechen den gewählten Filtern.",
+      "totalCount_one": "{{count}} Dokument",
+      "totalCount_other": "{{count}} Dokumente",
+      "shownCount": "{{shown}} angezeigt",
+      "prevPage": "Zurück",
+      "nextPage": "Weiter",
+      "pageOf": "Seite {{page}} / {{total}}"
+    },
+    "preview": {
+      "loading": "Vorschau wird geladen…",
+      "unavailable": "Vorschau nicht verfügbar.",
+      "unsupportedType": "Für diesen Dateityp ist keine Vorschau verfügbar. Laden Sie die Datei herunter, um sie anzusehen.",
+      "downloading": "Wird heruntergeladen…",
+      "documentUnavailable": "Dokumentvorschau nicht verfügbar.",
+      "typeUnavailable": "Für diesen Dateityp ist keine Vorschau verfügbar.",
+      "downloadFile": "Datei herunterladen",
+      "pdfError": "Fehler beim Laden der PDF: {{error}}",
+      "documentPreview": "Dokumentvorschau",
+      "pageOf": "von"
+    },
+    "detail": {
+      "audience": {
+        "organization": "Alle Mitglieder",
+        "building": "Mitglieder des Gebäudes",
+        "unit": "Mitglieder der Einheit",
+        "user": "Bestimmte Benutzer",
+        "public": "Öffentlich"
+      },
+      "loading": "Dokument wird geladen...",
+      "forbidden": "Dieses Dokument ist für Ihr Konto nicht zugänglich.",
+      "forbiddenHint": "Das Dokument ist möglicherweise nur für Verwalter oder bestimmte Benutzer sichtbar.",
+      "loadError": "Dokumentdetails konnten nicht geladen werden.",
+      "visibleTo": "Sichtbar für: {{audience}}",
+      "createdAt": "Erstellt: {{date}}",
+      "updatedAt": "Aktualisiert: {{date}}",
+      "intelligence": "Dokumentanalyse",
+      "extractedText": "Extrahierter Text",
+      "wordsExtracted_one": "{{count}} Wort extrahiert",
+      "wordsExtracted_other": "{{count}} Wörter extrahiert"
+    },
+    "share": {
+      "type": {
+        "user": "Bestimmter Benutzer",
+        "role": "Rolle",
+        "building": "Gebäude",
+        "link": "Öffentlicher Link"
+      },
+      "title": "Teilen",
+      "newShare": "Neue Freigabe",
+      "userId": "Benutzer-ID",
+      "userIdPlaceholder": "uuid-des-benutzers",
+      "mustBeUuid": "Muss eine gültige UUID sein.",
+      "roleName": "Rollenname",
+      "roleNamePlaceholder": "z. B. manager",
+      "passwordProtect": "Mit Passwort schützen",
+      "password": "Passwort",
+      "passwordPlaceholder": "Mind. 4 Zeichen",
+      "setExpiry": "Ablauf festlegen",
+      "days_one": "Tag",
+      "days_other": "Tage",
+      "creating": "Wird erstellt…",
+      "create": "Freigabe erstellen",
+      "linkCopied": "Link kopiert",
+      "copyFailed": "Kopieren fehlgeschlagen",
+      "copyFailedMessage": "Kopieren in die Zwischenablage nicht möglich.",
+      "revoked": "Freigabe widerrufen",
+      "revokeFailed": "Widerruf fehlgeschlagen",
+      "revokeFailedMessage": "Fehlgeschlagen.",
+      "empty": "Noch keine aktiven Freigaben.",
+      "activeShares": "Aktive Freigaben",
+      "roleLabel": "Rolle: {{role}}",
+      "userLabel": "Benutzer:",
+      "expires": "Läuft ab: {{date}}",
+      "copyLink": "Link kopieren",
+      "revoke": "Widerrufen",
+      "revokeConfirmTitle": "Freigabe widerrufen?",
+      "revokeConfirmMessage": "Empfänger verlieren sofort den Zugriff. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "created": "Freigabe erstellt",
+      "publicLinkCopied": "Öffentlicher Link kopiert.",
+      "linkMessage": "Link: {{url}}",
+      "loading": "Freigaben werden geladen…",
+      "loadError": "Freigaben konnten nicht geladen werden.",
+      "errors": {
+        "userIdRequired": "Benutzer-ID ist erforderlich.",
+        "userIdInvalid": "Die Benutzer-ID muss eine gültige UUID sein.",
+        "roleRequired": "Rollenname ist erforderlich.",
+        "passwordTooShort": "Das Passwort muss mindestens 4 Zeichen lang sein.",
+        "expiryTooShort": "Die Gültigkeit muss mindestens 1 Tag betragen.",
+        "createFailed": "Freigabe konnte nicht erstellt werden."
+      }
+    },
+    "uploadForm": {
+      "subtitle": "Laden Sie Dokumente zur automatischen Texterkennung (OCR) und KI-Analyse hoch",
+      "dropFiles": "Dateien hier ablegen",
+      "orBrowse": "oder klicken zum Auswählen",
+      "supportedTypes": "Unterstützt PDF, Bilder, Word-Dokumente und Textdateien (max. {{max}} MB)",
+      "selectedFiles": "Ausgewählte Dateien ({{count}})",
+      "uploadedSuccessfully": "Erfolgreich hochgeladen",
+      "removeFile": "{{name}} entfernen",
+      "detailsTitle": "Dokumentdetails",
+      "title": "Titel",
+      "titlePlaceholder": "Dokumenttitel eingeben",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Optionale Beschreibung",
+      "category": "Kategorie",
+      "categoryHint": "Die KI schlägt nach der Analyse eine Kategorie vor",
+      "ocrInfoTitle": "Automatische Texterkennung",
+      "ocrInfoText": "Nach dem Hochladen extrahiert OCR automatisch den Text aus Ihren Dokumenten. Das ermöglicht Volltextsuche, KI-Klassifizierung und Zusammenfassungen.",
+      "uploading": "Wird hochgeladen...",
+      "uploadAndProcess": "Hochladen & verarbeiten",
+      "uploadFailed": "Hochladen fehlgeschlagen",
+      "networkError": "Die Verbindung wurde unterbrochen. Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+      "uploadCancelled": "Das Hochladen wurde abgebrochen.",
+      "retry": "Erneut versuchen",
+      "retryFile": "{{name}} erneut hochladen",
+      "unsupportedType": "Nicht unterstützter Dateityp: {{type}}",
+      "unknownType": "unbekannt",
+      "fileTooLarge": "Datei zu groß: {{size}} MB (max. {{max}} MB)"
+    },
+    "summary": {
+      "title": "Zusammenfassung",
+      "generatePrompt": "KI-Zusammenfassung für dieses Dokument erstellen?",
+      "styleLabel": "Stil der Zusammenfassung:",
+      "style": {
+        "brief": "Kurz",
+        "detailed": "Ausführlich",
+        "bullets": "Stichpunkte"
+      },
+      "generating": "Wird erstellt...",
+      "generate": "Zusammenfassung erstellen",
+      "tooShort_one": "Das Dokument ist für eine Zusammenfassung zu kurz (mindestens {{count}} Wort erforderlich).",
+      "tooShort_other": "Das Dokument ist für eine Zusammenfassung zu kurz (mindestens {{count}} Wörter erforderlich).",
+      "generateFailed": "Zusammenfassung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+      "inProgress": "Die Zusammenfassung wird erstellt und erscheint in Kürze...",
+      "regenerate": "Neue Zusammenfassung erstellen",
+      "generatedAt": "Erstellt: {{date}}"
+    },
+    "classification": {
+      "none": "Noch keine Klassifizierung verfügbar. Das Dokument wird automatisch analysiert.",
+      "title": "KI-Klassifizierung",
+      "classifiedAt": "Klassifiziert: {{date}}",
+      "confirmed": "Sie haben bestätigt, dass diese Klassifizierung korrekt ist.",
+      "corrected": "Sie haben eine Korrektur für diese Klassifizierung angegeben.",
+      "isCorrect": "Ist diese Klassifizierung korrekt?",
+      "saving": "Wird gespeichert...",
+      "yesCorrect": "Ja, korrekt",
+      "suggestCorrection": "Nein, Korrektur vorschlagen",
+      "selectCorrect": "Wählen Sie die richtige Kategorie:",
+      "selectCategory": "Kategorie auswählen...",
+      "submitCorrection": "Korrektur senden",
+      "feedbackFailed": "Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    },
+    "search": {
+      "audience": {
+        "organization": "Alle Mitglieder",
+        "building": "Gebäude",
+        "unit": "Einheit",
+        "user": "Privat",
+        "public": "Öffentlich"
+      },
+      "ocr": {
+        "completed": "Text extrahiert",
+        "pending": "Ausstehend",
+        "processing": "In Bearbeitung",
+        "failed": "Fehlgeschlagen"
+      },
+      "placeholder": "Inhalte, Titel und Beschreibungen von Dokumenten durchsuchen...",
+      "categories": "Kategorien",
+      "ocrStatus": "OCR-Status",
+      "audienceLegend": "Zielgruppe",
+      "audienceTitle": "Nur Dokumente anzeigen, die sichtbar sind für: {{audience}}",
+      "dateRange": "Zeitraum",
+      "dateTo": "bis",
+      "hasSummary": "Mit KI-Zusammenfassung",
+      "error": "Fehler bei der Dokumentsuche: {{error}}",
+      "found_one": "{{count}} Dokument in {{ms}} ms gefunden",
+      "found_other": "{{count}} Dokumente in {{ms}} ms gefunden",
+      "noResults": "Keine Dokumente zu „{{query}}“ gefunden",
+      "minChars_one": "Geben Sie mindestens {{count}} Zeichen ein, um zu suchen",
+      "minChars_other": "Geben Sie mindestens {{count}} Zeichen ein, um zu suchen"
+    },
+    "searchResult": {
+      "field": {
+        "title": "Titel",
+        "description": "Beschreibung",
+        "ocrText": "Dokumentinhalt (OCR)",
+        "summary": "KI-Zusammenfassung"
+      },
+      "relevance": "Relevanzwert: {{score}}",
+      "match": "{{percent}} % Übereinstimmung",
+      "hasSummary": "Mit Zusammenfassung"
     }
   },
   "disputes": {
@@ -936,6 +1259,196 @@
       "descriptionPlaceholder": "Kurze Beschreibung (optional)",
       "descriptionLabel": "Beschreibung für {{name}}",
       "removeLabel": "{{name}} entfernen"
+    },
+    "categoryCommonArea": "Gemeinschaftsbereich",
+    "categoryParking": "Parken",
+    "categoryPets": "Haustiere",
+    "categoryMaintenance": "Instandhaltung",
+    "categoryPrivacy": "Privatsphäre",
+    "categoryHarassment": "Belästigung",
+    "categoryOther": "Sonstiges",
+    "priorityLow": "Niedrig",
+    "priorityMedium": "Mittel",
+    "priorityHigh": "Hoch",
+    "priorityUrgent": "Dringend",
+    "priorityWithLabel": "Priorität: {{priority}}",
+    "partyCount_one": "{{count}} Partei",
+    "partyCount_other": "{{count}} Parteien",
+    "filedByName": "Eingereicht von {{name}}",
+    "assignedToName": "Zugewiesen an {{name}}",
+    "filedDaysAgo_one": "vor {{count}} Tag",
+    "filedDaysAgo_other": "vor {{count}} Tagen",
+    "statusUpdated": "Status aktualisiert",
+    "statusUpdateFailed": "Status konnte nicht aktualisiert werden",
+    "notImplemented": "Noch nicht verfügbar",
+    "actionPendingImpl": "„{{action}}“ wird in einer zukünftigen Version verfügbar sein.",
+    "pendingAction": {
+      "addEvidence": "Beweis hinzufügen",
+      "deleteEvidence": "Beweis löschen",
+      "proposeResolution": "Lösung vorschlagen",
+      "voteResolution": "Über Lösung abstimmen",
+      "acceptResolution": "Lösung annehmen",
+      "implementResolution": "Lösung umsetzen",
+      "completeResolutionTerm": "Lösungsbedingung erfüllen",
+      "createAction": "Maßnahme erstellen",
+      "completeAction": "Maßnahme abschließen",
+      "sendReminder": "Erinnerung senden",
+      "escalate": "Eskalieren"
+    },
+    "validation": {
+      "typeRequired": "Bitte wählen Sie eine Streitart aus.",
+      "subjectMin": "Der Betreff muss mindestens 5 Zeichen lang sein.",
+      "subjectMax": "Der Betreff darf höchstens 200 Zeichen lang sein.",
+      "descriptionMin": "Die Beschreibung muss mindestens 30 Zeichen lang sein.",
+      "descriptionMax": "Die Beschreibung darf höchstens 5000 Zeichen lang sein.",
+      "unitRequired": "Bitte wählen Sie eine Einheit aus."
+    },
+    "types": {
+      "noise": {
+        "label": "Lärm",
+        "description": "Übermäßiger Lärm, Störungen, Verstöße gegen die Ruhezeiten"
+      },
+      "damage": {
+        "label": "Sachschaden",
+        "description": "Beschädigung von Eigentum, Ausstattung oder Gemeinschaftsbereichen"
+      },
+      "payment": {
+        "label": "Zahlungen / Gebühren",
+        "description": "Strittige Kosten, unbezahlte Gebühren, Abrechnungsstreitigkeiten"
+      },
+      "lease": {
+        "label": "Mietbedingungen",
+        "description": "Verstöße oder Unstimmigkeiten zu den Mietbedingungen"
+      },
+      "maintenance": {
+        "label": "Instandhaltung",
+        "description": "Ungelöste Instandhaltungsprobleme, vernachlässigte Reparaturen"
+      },
+      "other": {
+        "label": "Sonstiges",
+        "description": "Jeder andere Streitfall, der nicht unter die obigen Kategorien fällt"
+      }
+    },
+    "form": {
+      "pageSubtitle": "Reichen Sie einen formellen Streitfall ein. Mit <1>*</1> markierte Felder sind Pflichtfelder.",
+      "disputeType": "Art des Streitfalls",
+      "location": "Ort",
+      "unit": "Einheit",
+      "selectUnit": "Einheit auswählen…",
+      "otherPartyOptional": "Gegenpartei (optional)",
+      "notSpecified": "Nicht angegeben",
+      "details": "Details",
+      "subject": "Betreff",
+      "description": "Beschreibung",
+      "minCharacters_one": "Mind. {{count}} Zeichen",
+      "minCharacters_other": "Mind. {{count}} Zeichen",
+      "evidenceOptional": "Beweise (optional)",
+      "evidenceHint": "Fügen Sie Fotos, Dokumente oder Aufnahmen zur Unterstützung Ihres Streitfalls bei. Die Dateien werden nach dem Anlegen des Streitfalls hochgeladen.",
+      "nextStepsTitle": "Wie geht es weiter?",
+      "nextStep1": "Ihr Streitfall erhält eine Referenznummer",
+      "nextStep2": "Die Gegenpartei wird benachrichtigt und kann antworten",
+      "nextStep3": "Ein Verwalter oder Mediator prüft den Fall",
+      "nextStep4": "Bei Bedarf werden Mediationstermine angesetzt",
+      "nextStep5": "Eine Lösung wird vorgeschlagen und nachverfolgt",
+      "filing": "Wird eingereicht…",
+      "submit": "Streitfall einreichen",
+      "categoryRequired": "Kategorie *",
+      "titleRequired": "Titel *",
+      "buildingOptional": "Gebäude (optional)",
+      "selectBuilding": "Gebäude auswählen...",
+      "unitOptional": "Einheit (optional)",
+      "descriptionRequired": "Beschreibung des Problems *",
+      "issuePlaceholder": "Beschreiben Sie das Problem ausführlich. Nennen Sie Daten, Uhrzeiten und konkrete Vorfälle.",
+      "desiredResolutionOptional": "Gewünschte Lösung (optional)",
+      "desiredResolutionPlaceholder": "Welches Ergebnis wünschen Sie sich?",
+      "otherParties": "Weitere beteiligte Parteien",
+      "evidenceNotice": "Beweise (Fotos, Dokumente) können Sie nach dem Einreichen hinzufügen."
+    },
+    "detail": {
+      "role": {
+        "complainant": "Beschwerdeführer",
+        "respondent": "Antragsgegner",
+        "witness": "Zeuge",
+        "mediator": "Mediator"
+      },
+      "mediation": "Mediation",
+      "resolve": "Lösen",
+      "overdueActions_one": "{{count}} überfällige Maßnahme",
+      "overdueActions_other": "{{count}} überfällige Maßnahmen",
+      "pendingActions_one": "{{count}} offene Maßnahme",
+      "pendingActions_other": "{{count}} offene Maßnahmen",
+      "desiredResolution": "Gewünschte Lösung",
+      "evidenceCount": "Beweise ({{count}})",
+      "noEvidence": "Keine Beweise eingereicht.",
+      "uploadedBy": "Hochgeladen von {{name}} – {{date}}",
+      "resolutions": "Lösungen",
+      "proposeResolution": "Lösung vorschlagen",
+      "noResolutions": "Noch keine Lösungen vorgeschlagen.",
+      "actionItems": "Maßnahmen",
+      "createAction": "Maßnahme erstellen",
+      "noActionItems": "Keine Maßnahmen.",
+      "building": "Gebäude",
+      "filedOn": "Eingereicht am",
+      "assignedTo": "Zugewiesen an",
+      "parties": "Parteien",
+      "proposalPlaceholder": "Beschreiben Sie Ihren Lösungsvorschlag...",
+      "propose": "Vorschlagen",
+      "createActionItem": "Maßnahme erstellen",
+      "actionTitle": "Titel",
+      "assignTo": "Zuweisen an",
+      "selectParty": "Partei auswählen...",
+      "dueDate": "Fälligkeitsdatum"
+    },
+    "timeline": {
+      "title": "Aktivitätsverlauf",
+      "empty": "Noch keine Aktivität.",
+      "statusChange": "Status: {{from}} → {{to}}",
+      "showMore": "Weitere Aktivitäten anzeigen..."
+    },
+    "resolution": {
+      "status": {
+        "proposed": "Vorgeschlagen",
+        "accepted": "Angenommen",
+        "rejected": "Abgelehnt",
+        "partially_accepted": "Teilweise angenommen",
+        "implemented": "Umgesetzt"
+      },
+      "approval": "{{percent}} % Zustimmung",
+      "proposedBy": "Vorgeschlagen von {{name}} am {{date}}",
+      "proposalTitle": "Lösungsvorschlag",
+      "terms": "Bedingungen ({{completed}}/{{total}})",
+      "assignedTo": "Zuständig: {{name}}",
+      "due": "Fällig: {{date}}",
+      "completedOn": "Erledigt: {{date}}",
+      "votes": "Stimmen",
+      "reject": "Ablehnen",
+      "accept": "Annehmen",
+      "finalize": "Lösung festlegen",
+      "markImplemented": "Als umgesetzt markieren"
+    },
+    "action": {
+      "status": {
+        "pending": "Ausstehend",
+        "in_progress": "In Bearbeitung",
+        "completed": "Erledigt",
+        "overdue": "Überfällig",
+        "escalated": "Eskaliert"
+      },
+      "overdueBy_one": "{{count}} Tag überfällig",
+      "overdueBy_other": "{{count}} Tage überfällig",
+      "dueToday": "Heute fällig",
+      "dueTomorrow": "Morgen fällig",
+      "dueInDays_one": "Fällig in {{count}} Tag",
+      "dueInDays_other": "Fällig in {{count}} Tagen",
+      "dueOn": "Fällig am {{date}}",
+      "assignedTo": "Zuständig:",
+      "completedLabel": "Erledigt:",
+      "reminderSent": "Erinnerung gesendet: {{date}}",
+      "escalatedOn": "Eskaliert: {{date}}",
+      "start": "Starten",
+      "complete": "Abschließen",
+      "sendReminder": "Erinnerung senden",
+      "escalate": "Eskalieren"
     }
   },
   "financial": {
@@ -1000,6 +1513,112 @@
       "titleTooLong": "Titel darf maximal 255 Zeichen haben",
       "contentRequired": "Inhalt ist erforderlich",
       "selectTarget": "Bitte wählen Sie mindestens ein Ziel aus"
+    },
+    "failedToLoad": "Ankündigungen konnten nicht geladen werden",
+    "markedRead": "Als gelesen markiert",
+    "markReadFailed": "Als gelesen markieren fehlgeschlagen",
+    "acknowledged": "Bestätigt",
+    "acknowledgeFailed": "Bestätigung fehlgeschlagen",
+    "published": "Veröffentlicht",
+    "publishFailed": "Veröffentlichung fehlgeschlagen",
+    "archived": "Archiviert",
+    "archiveFailed": "Archivierung fehlgeschlagen",
+    "pinned": "Angeheftet",
+    "unpinned": "Losgelöst",
+    "pinFailed": "Anheften fehlgeschlagen",
+    "deleted": "Gelöscht",
+    "deleteFailed": "Löschen fehlgeschlagen",
+    "commentPosted": "Kommentar veröffentlicht",
+    "commentFailed": "Kommentar konnte nicht veröffentlicht werden",
+    "commentDeleted": "Kommentar gelöscht",
+    "commentDeleteFailed": "Kommentar konnte nicht gelöscht werden",
+    "comments": {
+      "deletedText": "[Dieser Kommentar wurde gelöscht]",
+      "reply": "Antworten",
+      "delete": "Löschen",
+      "deleting": "Wird gelöscht…",
+      "postReply": "Antwort senden",
+      "cancel": "Abbrechen",
+      "replyPlaceholder": "Antwort schreiben…",
+      "discussion": "Diskussion",
+      "empty": "Noch keine Kommentare. Starten Sie die Diskussion!",
+      "newCommentPlaceholder": "Kommentar hinzufügen… (Strg+Enter zum Senden)",
+      "postComment": "Kommentar senden",
+      "posting": "Wird gesendet…"
+    },
+    "title": "Ankündigungen",
+    "failedToLoadOne": "Ankündigung konnte nicht geladen werden",
+    "created": "Erstellt",
+    "createdMessage": "Ankündigung erstellt",
+    "createFailed": "Ankündigung konnte nicht erstellt werden",
+    "updated": "Aktualisiert",
+    "updatedMessage": "Ankündigung aktualisiert",
+    "updateFailed": "Ankündigung konnte nicht aktualisiert werden",
+    "unreadCount_one": "{{count}} ungelesene Ankündigung",
+    "unreadCount_other": "{{count}} ungelesene Ankündigungen",
+    "status": {
+      "draft": "Entwurf",
+      "scheduled": "Geplant",
+      "published": "Veröffentlicht",
+      "archived": "Archiviert"
+    },
+    "actions": {
+      "view": "Anzeigen",
+      "publish": "Veröffentlichen",
+      "publishNow": "Jetzt veröffentlichen",
+      "archive": "Archivieren",
+      "pin": "Anheften",
+      "unpin": "Loslösen",
+      "acknowledge": "Kenntnisnahme bestätigen",
+      "markAsRead": "Als gelesen markieren"
+    },
+    "card": {
+      "acknowledgmentRequired": "Bestätigung erforderlich",
+      "commentsEnabled": "Kommentare aktiviert",
+      "publishedOn": "Veröffentlicht: {{date}}"
+    },
+    "list": {
+      "allStatuses": "Alle Status",
+      "allTargets": "Alle Zielgruppen",
+      "empty": "Keine Ankündigungen gefunden.",
+      "createFirst": "Erstellen Sie Ihre erste Ankündigung",
+      "showingRange": "{{from}} bis {{to}} von {{total}}",
+      "pageOf": "Seite {{page}} von {{totalPages}}"
+    },
+    "ackStats": {
+      "title": "Bestätigungsstatus",
+      "read": "Gelesen ({{percent}} %)",
+      "acknowledged": "Bestätigt ({{percent}} %)",
+      "pending_one": "Benutzer hat sie noch nicht gelesen",
+      "pending_other": "Benutzer haben sie noch nicht gelesen"
+    },
+    "schedule": {
+      "label": "Für später planen (optional)",
+      "clear": "Zurücksetzen",
+      "hint": "Leer lassen, um als Entwurf zu speichern, oder ein Datum für die automatische Veröffentlichung wählen."
+    },
+    "createPage": {
+      "subtitle": "Erstellen Sie eine neue Ankündigung für Ihre Organisation."
+    },
+    "editPage": {
+      "title": "Ankündigung bearbeiten",
+      "subtitle": "Aktualisieren Sie Ihre Ankündigung. Änderungen werden als Entwurf gespeichert, sofern Sie nicht veröffentlichen.",
+      "cannotEditTitle": "Bearbeitung nicht möglich",
+      "cannotEditBody": "Nur Entwürfe und geplante Ankündigungen können bearbeitet werden. Aktueller Status: {{status}}.",
+      "goBack": "Zurück"
+    },
+    "view": {
+      "backToList": "Zurück zu den Ankündigungen",
+      "byAuthor": "Von {{author}}",
+      "reads_one": "gelesen",
+      "reads_other": "gelesen",
+      "acknowledgedCount_one": "bestätigt",
+      "acknowledgedCount_other": "bestätigt",
+      "comments_one": "Kommentar",
+      "comments_other": "Kommentare",
+      "attachments_one": "Anhang",
+      "attachments_other": "Anhänge",
+      "attachmentsTitle": "Anhänge"
     }
   },
   "emergency": {
@@ -1155,7 +1774,9 @@
         "message": "Ein unerwarteter Fehler ist aufgetreten."
       },
       "rateLimitRetry": "Bitte warten Sie {{seconds}} Sekunden, bevor Sie es erneut versuchen."
-    }
+    },
+    "accessDenied": "Zugriff verweigert",
+    "backToDashboard": "Zurück zur Übersicht"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1449,7 +2070,10 @@
       "loadMore": "Mehr laden",
       "loading": "Laden...",
       "errorTitle": "Ausführungen konnten nicht geladen werden",
-      "errorMessage": "Bitte versuchen Sie es später erneut."
+      "errorMessage": "Bitte versuchen Sie es später erneut.",
+      "notFoundTitle": "Zeitplan nicht gefunden",
+      "notFoundDescription": "Dieser Berichtszeitplan existiert nicht oder Sie haben keinen Zugriff darauf.",
+      "frequencyAt": "{{frequency}} um {{time}}"
     },
     "schedule": {
       "created": "Zeitplan erfolgreich erstellt.",
@@ -1958,7 +2582,14 @@
     "sensorRegistered": "Sensor registriert",
     "sensorRegisterFailed": "Sensor konnte nicht registriert werden",
     "sensorUpdated": "Sensor aktualisiert",
-    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden"
+    "sensorUpdateFailed": "Sensor konnte nicht aktualisiert werden",
+    "connectionTypeNone": "Nicht angegeben",
+    "connectionTypes": {
+      "api": "API",
+      "mqtt": "MQTT",
+      "webhook": "Webhook",
+      "polling": "Periodische Abfrage"
+    }
   },
   "commandPalette": {
     "commands": {
@@ -2213,6 +2844,86 @@
       "closeFailed": "Abstimmung konnte nicht beendet werden",
       "cancelDone": "Abstimmung abgebrochen",
       "cancelFailed": "Abstimmung konnte nicht abgebrochen werden"
+    },
+    "title": "Abstimmungen",
+    "status": {
+      "draft": "Entwurf",
+      "scheduled": "Geplant",
+      "active": "Offen",
+      "closed": "Abgeschlossen",
+      "cancelled": "Abgebrochen"
+    },
+    "questionType": {
+      "yes_no": "Ja / Nein",
+      "single_choice": "Einfachauswahl",
+      "multiple_choice": "Mehrfachauswahl",
+      "ranked": "Rangfolge"
+    },
+    "quorumType": {
+      "simple_majority": "Einfache Mehrheit (50 % + 1)",
+      "two_thirds": "Zweidrittelmehrheit (2/3)",
+      "weighted": "Gewichtet nach Miteigentumsanteil"
+    },
+    "quorum": {
+      "met": "Quorum erreicht",
+      "participation": "{{participation}} von {{eligible}} Stimmberechtigten haben abgestimmt"
+    },
+    "card": {
+      "questionCount_one": "{{count}} Frage",
+      "questionCount_other": "{{count}} Fragen"
+    },
+    "results": {
+      "responseCount_one": "{{count}} Antwort",
+      "responseCount_other": "{{count}} Antworten"
+    },
+    "list": {
+      "voteCount_one": "{{count}} Abstimmung",
+      "voteCount_other": "{{count}} Abstimmungen",
+      "openCount_one": "{{count}} offen",
+      "openCount_other": "{{count}} offen",
+      "closedCount_one": "{{count}} abgeschlossen",
+      "closedCount_other": "{{count}} abgeschlossen",
+      "newVote": "Neue Abstimmung",
+      "loadFailed": "Abstimmungen konnten nicht geladen werden: {{error}}",
+      "empty": "Noch keine Abstimmungen.",
+      "createFirst": "Erste Abstimmung erstellen"
+    },
+    "create": {
+      "title": "Abstimmung erstellen",
+      "topic": "Thema",
+      "titleLabel": "Titel",
+      "titlePlaceholder": "z. B. Budget für die Fassadensanierung genehmigen",
+      "descriptionPlaceholder": "Hintergrund, den Eigentümer für eine fundierte Entscheidung brauchen",
+      "questions": "Fragen",
+      "addQuestion": "Frage hinzufügen",
+      "questionNumber": "Frage {{number}}",
+      "remove": "Entfernen",
+      "questionTextPlaceholder": "Fragetext",
+      "optionTextPlaceholder": "Antwortoption",
+      "addOption": "Option hinzufügen",
+      "yesNoOptions": "Optionen: Ja / Nein",
+      "required": "Pflichtfrage",
+      "quorumAndSchedule": "Quorum & Zeitplan",
+      "quorumRule": "Quorumregel",
+      "quorumPercentage": "Quorum in Prozent (optional)",
+      "quorumPercentagePlaceholder": "z. B. 50",
+      "closesAt": "Endet am",
+      "saveDraft": "Entwurf speichern",
+      "saving": "Wird gespeichert…",
+      "publishVote": "Abstimmung veröffentlichen",
+      "checkForm": "Formular prüfen",
+      "draftSaved": "Entwurf gespeichert",
+      "draftSavedBody": "Sie können sie später veröffentlichen.",
+      "publishedBody": "Stimmberechtigte Eigentümer können jetzt abstimmen.",
+      "createFailed": "Abstimmung konnte nicht erstellt werden",
+      "errors": {
+        "noBuilding": "Für dieses Konto ist kein Gebäude verfügbar.",
+        "titleRequired": "Ein Titel ist erforderlich.",
+        "endAtRequired": "Ein Enddatum ist erforderlich.",
+        "noQuestions": "Fügen Sie mindestens eine Frage hinzu.",
+        "questionTextRequired": "Jede Frage braucht einen Text.",
+        "minOptions": "„{{question}}“ braucht mindestens 2 Optionen."
+      }
     }
   },
   "marketplace": {

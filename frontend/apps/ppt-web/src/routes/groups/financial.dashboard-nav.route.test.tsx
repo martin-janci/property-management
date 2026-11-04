@@ -11,7 +11,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Suspense } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
 import { financialRoutes } from './financial';
 
@@ -26,6 +26,8 @@ vi.mock('react-i18next', async (importOriginal) => ({
 vi.mock('../../components', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../components')>()),
   useToast: () => ({ showToast: vi.fn() }),
+  // Role gating is covered by the ProtectedRoute tests; render children here.
+  ProtectedRoute: ({ children }: { children: ReactNode }) => children,
 }));
 
 const authRole = vi.hoisted(() => ({ current: 'manager' }));

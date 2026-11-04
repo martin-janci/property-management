@@ -9,20 +9,26 @@ import type {
   SearchHighlight,
   DocumentSearchResult as SearchResult,
 } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
-/** Maps backend access_scope values to human-readable audience labels (7a-3). */
-const SCOPE_LABEL: Record<AccessScope, string> = {
-  organization: 'All members',
-  building: 'Building',
-  unit: 'Unit',
-  user: 'Private',
-  public: 'Public',
+/** Maps backend access_scope values to i18n keys for audience labels (7a-3). */
+const SCOPE_LABEL_KEYS: Record<AccessScope, string> = {
+  organization: 'documents.search.audience.organization',
+  building: 'documents.search.audience.building',
+  unit: 'documents.search.audience.unit',
+  user: 'documents.search.audience.user',
+  public: 'documents.search.audience.public',
 };
 
 /** Shows a pill indicating who can see the document (RLS-resolved audience, 7a-3). */
 function AudienceBadge({ scope }: { scope: AccessScope }) {
+  const { t } = useTranslation();
+  const label = SCOPE_LABEL_KEYS[scope] ? t(SCOPE_LABEL_KEYS[scope]) : scope;
   return (
-    <span className="badge badge-audience" title={`Visible to: ${SCOPE_LABEL[scope]}`}>
+    <span
+      className="badge badge-audience"
+      title={t('documents.detail.visibleTo', { audience: label })}
+    >
       <svg
         width="10"
         height="10"
@@ -36,7 +42,7 @@ function AudienceBadge({ scope }: { scope: AccessScope }) {
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
         <circle cx="12" cy="12" r="3" />
       </svg>
-      {SCOPE_LABEL[scope]}
+      {label}
     </span>
   );
 }
@@ -51,6 +57,7 @@ interface DocumentSearchResultProps {
 }
 
 export function DocumentSearchResult({ result, onClick }: DocumentSearchResultProps) {
+  const { t, i18n } = useTranslation();
   const { document, score, highlights } = result;
 
   // Format file size
@@ -63,7 +70,7 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
   // Format date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -92,13 +99,13 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
   const getFieldLabel = (field: SearchHighlight['field']): string => {
     switch (field) {
       case 'title':
-        return 'Title';
+        return t('documents.searchResult.field.title');
       case 'description':
-        return 'Description';
+        return t('documents.searchResult.field.description');
       case 'ocr_text':
-        return 'Document Content (OCR)';
+        return t('documents.searchResult.field.ocrText');
       case 'summary':
-        return 'AI Summary';
+        return t('documents.searchResult.field.summary');
       default:
         return field;
     }
@@ -110,12 +117,17 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
       <div className="result-header">
         <div className="result-title-row">
           <h3 className="result-title">{document.title}</h3>
-          <span className="result-score" title={`Relevance score: ${score.toFixed(2)}`}>
-            {Math.round(score * 100)}% match
+          <span
+            className="result-score"
+            title={t('documents.searchResult.relevance', { score: score.toFixed(2) })}
+          >
+            {t('documents.searchResult.match', { percent: Math.round(score * 100) })}
           </span>
         </div>
         <div className="result-meta">
-          <span className="meta-item">{document.category}</span>
+          <span className="meta-item">
+            {t(`documents.category.${document.category}`, { defaultValue: document.category })}
+          </span>
           <span className="meta-separator">|</span>
           <span className="meta-item">{document.file_name}</span>
           <span className="meta-separator">|</span>
@@ -135,7 +147,9 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
             compact
           />
         )}
-        {document.summary && <span className="badge badge-summary">Has Summary</span>}
+        {document.summary && (
+          <span className="badge badge-summary">{t('documents.searchResult.hasSummary')}</span>
+        )}
         {document.access_scope && <AudienceBadge scope={document.access_scope} />}
       </div>
 

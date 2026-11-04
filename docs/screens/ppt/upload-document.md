@@ -152,6 +152,7 @@ UC-08 document upload — single-step form. Multi-file with per-file progress an
 
 <!-- newest entries on top -->
 
+- 2026-11-04 — agent: failed uploads show a translated error (network / cancelled / generic) instead of the api-client's English text, and the row gets Retry + Remove so Upload is enabled again (R3 #26).
 - 2026-07-23 — agent: gap-84-1 verified already wired in dev (api-client binding + `DocumentUpload` integration + tests all present); documented the deliberate `building_id` omission on the direct-upload register path (#2366 — no backend column/field, forwarding would be a false-green) with an anchor comment in `uploadDocumentDirect` + a regression test; reconciled backend ref to #2309. #2366 remains blocked on a backend migration/product decision.
 - 2026-07-15 — agent: wired direct-to-S3 upload (gap-84-1) — added `createUploadUrl` + `uploadDocumentDirect` bindings and `useUploadDocumentDirect` hook to @ppt/api-client; switched `DocumentUpload` to the direct hook (upload-url → presigned PUT → register). Frontend-only; backend endpoint landed in #2309.
 - 2026-05-09 — agent: design analyzed (pages/ppt-upload-document.html — 3 artboards: loaded-4-files-mixed / empty-drag-over / success-toast); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (10 sections), 6 states, design-specific notes (HLAVNÝ auto-detect + per-file error specificity + audience-driven notification count + draft-bypass-upload-completion); declared 8 sharedComponents; added 1 relatedScreen (document-detail sibling)

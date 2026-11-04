@@ -25,7 +25,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '../../components';
+import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
 import {
   BudgetManagementPage,
@@ -35,7 +35,7 @@ import {
   InvoiceManagementPage,
   PaymentManagementPage,
 } from '../lazyRoutes';
-import { isManagerRole } from '../shared';
+import { isManagerRole, MANAGER_ROLES } from '../shared';
 
 /** Trigger a browser download for a fetched report blob. */
 function downloadBlob(blob: Blob, filename: string) {
@@ -517,11 +517,39 @@ export function financialRoutes() {
   return (
     <>
       <Route path="/financial" element={<FinancialDashboardPageRoute />} />
-      <Route path="/financial/invoices" element={<InvoiceManagementPageRoute />} />
-      <Route path="/financial/invoices/:invoiceId" element={<InvoiceManagementPageRoute />} />
+      <Route
+        path="/financial/invoices"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <InvoiceManagementPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/financial/invoices/:invoiceId"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <InvoiceManagementPageRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/financial/payments" element={<PaymentManagementPageRoute />} />
-      <Route path="/financial/budgets" element={<BudgetManagementPageRoute />} />
-      <Route path="/financial/reports" element={<FinancialReportsPageRoute />} />
+      <Route
+        path="/financial/budgets"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <BudgetManagementPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/financial/reports"
+        element={
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+            <FinancialReportsPageRoute />
+          </ProtectedRoute>
+        }
+      />
     </>
   );
 }

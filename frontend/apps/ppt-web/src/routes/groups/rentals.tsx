@@ -4,24 +4,37 @@
  * Owns the rentals API↔UI mappers, the `useRentalsAuth` helper, the lazy page
  * imports, the route-wrapper components, and the `<Route>` table fragment.
  * Extracted from App.tsx to isolate rentals work.
+ *
+ * Data comes from the real api-server routes under `/api/v1/rentals`
+ * (`bookings`, `bookings/{id}/guests`, `bookings/{id}/status`, `guests`,
+ * `connections`, `statistics`) via the hand-written `@ppt/api-client` rentals
+ * module. The TypeSpec-generated `rentalsApi*` SDK targets routes the server
+ * never implemented (`/rentals/reservations`, `/rentals/sync`, …) and 404/405s.
  */
 import type {
-  RentalsGuestRegistration,
-  RentalsPlatformConnection,
-  RentalsRentalPlatform,
-  RentalsReservation,
-  RentalsSyncStatus,
+  RentalBookingRecord,
+  RentalBookingSummary,
+  RentalConnectionSummary,
+  RentalDashboardStatistics,
+  RentalGuestListItem,
+  RentalGuestRecord,
+  RentalUpdateGuestBody,
 } from '@ppt/api-client';
 import {
+  createRentalConnection,
+  createRentalGuest,
+  deleteRentalGuest,
+  getRentalBookingWithGuests,
+  getRentalStatistics,
   getToken,
-  rentalsApiCheckIn,
-  rentalsApiCheckOut,
-  rentalsApiCreateConnection,
-  rentalsApiGetReservation,
-  rentalsApiListConnections,
-  rentalsApiListGuests,
-  rentalsApiListReservations,
-  rentalsApiSyncPlatforms,
+  listRentalBookings,
+  listRentalConnections,
+  listRentalGuests,
+  registerRentalGuest,
+  syncAirbnb,
+  syncBooking,
+  updateRentalBookingStatus,
+  updateRentalGuest,
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
@@ -32,6 +45,7 @@ import { AuthError, type AuthErrorCode, useAuth } from '../../contexts';
 import type {
   BookingListParams,
   BookingWithGuests,
+  CreateGuestRequest,
   RentalBooking,
   BookingStatus as RentalBookingStatus,
   CalendarEvent as RentalCalendarEvent,
@@ -40,7 +54,9 @@ import type {
   PlatformType as RentalPlatformType,
   RentalStatistics,
   TaxReportData,
+  UpdateGuestRequest,
 } from '../../features/rentals/types';
+import { MANAGER_ROLES } from '../shared';
 
 // Rentals feature pages (Epic 18 / UC-29, UC-30) — lazy-loaded for code splitting.
 const RentalsDashboardPage = lazy(() =>
@@ -66,12 +82,11 @@ const TaxReportPage = lazy(() =>
 );
 
 /**
- * Map a generated RentalsRentalPlatform → the page-level BookingSource.
- * The generated platform enum carries 'vrbo' which the page lacks; fold it to 'other'.
+ * Map a backend `rental_platform` value → the page-level BookingSource.
+ * The backend enum carries 'vrbo' which the page lacks; fold it (and anything
+ * unknown) to 'other'.
  */
-export function mapRentalPlatformToSource(
-  platform: RentalsRentalPlatform
-): RentalBooking['source'] {
+export function mapRentalPlatformToSource(platform: string): RentalBooking['source'] {
   switch (platform) {
     case 'airbnb':
       return 'airbnb';
@@ -84,89 +99,215 @@ export function mapRentalPlatformToSource(
   }
 }
 
-/** Map a generated RentalsRentalPlatform → the page PlatformType (airbnb | booking). */
-export function mapRentalPlatformToType(platform: RentalsRentalPlatform): RentalPlatformType {
+/** Map a backend `rental_platform` value → the page PlatformType (airbnb | booking). */
+export function mapRentalPlatformToType(platform: string): RentalPlatformType {
   return platform === 'booking' ? 'booking' : 'airbnb';
 }
 
-/** Map a generated RentalsSyncStatus → the page ConnectionStatus. */
-export function mapSyncStatusToConnectionStatus(
-  syncStatus: RentalsSyncStatus,
-  isActive: boolean
-): RentalPlatformConnection['status'] {
-  if (!isActive) return 'disconnected';
-  switch (syncStatus) {
-    case 'synced':
-      return 'connected';
-    case 'pending':
-      return 'pending';
-    case 'error':
-      return 'error';
-    default:
-      return 'disconnected';
-  }
+/** Parse a `rust_decimal` amount (serialized as a string) into a number. */
+export function parseRentalAmount(amount: string | null | undefined): number | undefined {
+  if (amount === null || amount === undefined || amount === '') return undefined;
+  const n = Number(amount);
+  return Number.isFinite(n) ? n : undefined;
 }
 
-/** Map a generated RentalsReservation → the page RentalBooking. */
-export function mapReservationToBooking(res: RentalsReservation): RentalBooking {
+/** Map a `GET /rentals/bookings` row → the page RentalBooking. */
+export function mapBookingSummaryToUi(row: RentalBookingSummary): RentalBooking {
   return {
-    id: res.id,
-    unitId: res.unitId,
-    // The reservation payload does not carry building context; left blank.
+    id: row.id,
+    unitId: row.unit_id,
+    unitName: row.unit_name,
+    // The summary carries the building name but not its id.
     buildingId: '',
-    guestName: res.guestName,
-    guestEmail: res.guestEmail,
-    guestPhone: res.guestPhone,
-    checkIn: res.checkIn,
-    checkOut: res.checkOut,
-    status: res.status as RentalBookingStatus,
-    source: mapRentalPlatformToSource(res.platform),
-    platformBookingId: res.externalId,
-    totalPrice: res.totalPrice?.amount,
-    currency: res.totalPrice?.currency,
-    guestCount: res.guestCount,
-    notes: res.notes,
-    createdAt: res.createdAt,
-    updatedAt: res.updatedAt,
+    buildingName: row.building_name || undefined,
+    guestName: row.guest_name,
+    checkIn: row.check_in,
+    checkOut: row.check_out,
+    status: row.status as RentalBookingStatus,
+    source: mapRentalPlatformToSource(row.platform),
+    platformBookingId: row.external_booking_id ?? undefined,
+    totalPrice: parseRentalAmount(row.total_amount),
+    currency: row.currency ?? undefined,
+    guestCount: row.guest_count,
+    // The list row has no timestamps; detail views use the full record.
+    createdAt: '',
+    updatedAt: '',
   };
 }
 
-/** Map a generated RentalsPlatformConnection → the page PlatformConnection. */
-export function mapApiConnectionToUi(conn: RentalsPlatformConnection): RentalPlatformConnection {
+/** Map a full `RentalBooking` record → the page RentalBooking. */
+export function mapBookingRecordToUi(rec: RentalBookingRecord): RentalBooking {
   return {
-    id: conn.id,
-    unitId: conn.unitId,
-    platform: mapRentalPlatformToType(conn.platform),
-    status: mapSyncStatusToConnectionStatus(conn.syncStatus, conn.isActive),
-    platformPropertyId: conn.externalListingId,
-    lastSyncAt: conn.lastSyncAt,
-    isAutoSyncEnabled: conn.isActive,
-    createdAt: conn.createdAt,
-  };
-}
-
-/** Map a generated RentalsGuestRegistration → the page RentalGuest. */
-export function mapApiGuestToUi(guest: RentalsGuestRegistration): RentalGuest {
-  return {
-    id: guest.id,
-    bookingId: guest.reservationId ?? '',
-    firstName: guest.firstName,
-    lastName: guest.lastName,
-    dateOfBirth: guest.dateOfBirth,
-    nationality: guest.nationality,
-    documentType: guest.documentType,
-    documentNumber: guest.documentNumber,
-    documentExpiry: guest.documentExpiry,
-    registrationStatus: guest.submittedToAuthorities ? 'registered' : 'pending',
-    registeredAt: guest.submittedAt,
-    isPrimary: false,
-    createdAt: guest.createdAt,
+    id: rec.id,
+    unitId: rec.unit_id,
+    buildingId: '',
+    guestName: rec.guest_name,
+    guestEmail: rec.guest_email ?? undefined,
+    guestPhone: rec.guest_phone ?? undefined,
+    checkIn: rec.check_in,
+    checkOut: rec.check_out,
+    status: rec.status as RentalBookingStatus,
+    source: mapRentalPlatformToSource(rec.platform),
+    platformBookingId: rec.external_booking_id ?? undefined,
+    totalPrice: parseRentalAmount(rec.total_amount),
+    currency: rec.currency ?? undefined,
+    guestCount: rec.guest_count,
+    notes: rec.guest_notes ?? rec.internal_notes ?? undefined,
+    createdAt: rec.created_at,
+    updatedAt: rec.updated_at,
   };
 }
 
 /**
- * Build the auth header + tenant id required by the generated
- * ShortTermRentalsService methods. Returns null when either is missing so
+ * Map a `GET /rentals/connections` row → the page PlatformConnection.
+ * Inactive → 'disconnected'; a recorded sync error → 'error'; a completed sync
+ * → 'connected'; otherwise the connection has not synced yet → 'pending'.
+ */
+export function mapConnectionSummaryToUi(conn: RentalConnectionSummary): RentalPlatformConnection {
+  let status: RentalPlatformConnection['status'];
+  if (!conn.is_active) status = 'disconnected';
+  else if (conn.sync_error) status = 'error';
+  else if (conn.last_sync_at) status = 'connected';
+  else status = 'pending';
+  return {
+    id: conn.id,
+    unitId: conn.unit_id,
+    unitName: conn.unit_name,
+    platform: mapRentalPlatformToType(conn.platform),
+    status,
+    lastSyncAt: conn.last_sync_at ?? undefined,
+    syncErrorMessage: conn.sync_error ?? undefined,
+    isAutoSyncEnabled: conn.is_active,
+    // The summary row carries no creation timestamp.
+    createdAt: '',
+  };
+}
+
+/**
+ * Map a backend `guest_registration_status` → the page status.
+ * 'registered' and 'reported' (already sent to the authority) are both done;
+ * 'expired' is a failed registration.
+ */
+export function mapGuestStatusToUi(status: string): RentalGuest['registrationStatus'] {
+  switch (status) {
+    case 'registered':
+    case 'reported':
+      return 'registered';
+    case 'expired':
+      return 'failed';
+    default:
+      return 'pending';
+  }
+}
+
+/** Map a backend `RentalGuest` → the page RentalGuest. */
+export function mapGuestRecordToUi(guest: RentalGuestRecord): RentalGuest {
+  return {
+    id: guest.id,
+    bookingId: guest.booking_id,
+    firstName: guest.first_name,
+    lastName: guest.last_name,
+    email: guest.email ?? undefined,
+    phone: guest.phone ?? undefined,
+    dateOfBirth: guest.date_of_birth ?? undefined,
+    nationality: guest.nationality ?? undefined,
+    documentType: guest.id_type ?? undefined,
+    documentNumber: guest.id_number ?? undefined,
+    documentExpiry: guest.id_expiry_date ?? undefined,
+    address: guest.address_street ?? undefined,
+    city: guest.address_city ?? undefined,
+    country: guest.address_country ?? undefined,
+    registrationStatus: mapGuestStatusToUi(guest.status),
+    registeredAt: guest.registered_at ?? undefined,
+    isPrimary: guest.is_primary,
+    createdAt: guest.created_at,
+  };
+}
+
+/** A booking + its guests, as the guest-registration page lists them. */
+export interface GuestRegistrationBooking {
+  id: string;
+  guestName: string;
+  unitName: string;
+  checkIn: string;
+  checkOut: string;
+  guests: RentalGuest[];
+}
+
+/**
+ * Group `GET /rentals/guests` rows by booking, keeping only bookings that still
+ * have at least one guest awaiting registration (the page's purpose). Row order
+ * from the server (check-in, then primary guest first) is preserved.
+ */
+export function groupGuestsByBooking(rows: RentalGuestListItem[]): GuestRegistrationBooking[] {
+  const byBooking = new Map<string, GuestRegistrationBooking>();
+  for (const row of rows) {
+    let entry = byBooking.get(row.booking_id);
+    if (!entry) {
+      entry = {
+        id: row.booking_id,
+        guestName: row.booking_guest_name,
+        unitName: row.unit_name,
+        checkIn: row.check_in,
+        checkOut: row.check_out,
+        guests: [],
+      };
+      byBooking.set(row.booking_id, entry);
+    }
+    entry.guests.push(mapGuestRecordToUi(row));
+  }
+  return Array.from(byBooking.values()).filter((b) =>
+    b.guests.some((g) => g.registrationStatus === 'pending')
+  );
+}
+
+/** Map the page guest form → the backend `UpdateGuest` body. */
+export function mapGuestFormToApi(data: UpdateGuestRequest): RentalUpdateGuestBody {
+  return {
+    first_name: data.firstName,
+    last_name: data.lastName,
+    email: data.email,
+    phone: data.phone,
+    date_of_birth: data.dateOfBirth,
+    nationality: data.nationality,
+    id_type: data.documentType,
+    id_number: data.documentNumber,
+    id_expiry_date: data.documentExpiry,
+    address_street: data.address,
+    address_city: data.city,
+    address_country: data.country,
+  };
+}
+
+/**
+ * Map backend dashboard statistics → the page RentalStatistics.
+ * The server reports occupancy as a percentage (0–100); the page formats a
+ * fraction, so it is divided by 100 here. The average stay is derived from the
+ * listed bookings' `nights` since the statistics endpoint does not carry it.
+ */
+export function mapStatisticsToUi(
+  stats: RentalDashboardStatistics | undefined,
+  bookings: RentalBookingSummary[],
+  totalBookings: number
+): RentalStatistics {
+  const stays = bookings.filter((b) => b.nights > 0);
+  const averageStayDuration =
+    stays.length > 0 ? stays.reduce((sum, b) => sum + b.nights, 0) / stays.length : 0;
+  return {
+    totalBookings,
+    activeBookings: stats?.active_bookings ?? 0,
+    upcomingBookings: stats?.upcoming_bookings ?? 0,
+    totalRevenue: parseRentalAmount(stats?.revenue_this_month) ?? 0,
+    occupancyRate: (stats?.occupancy_rate ?? 0) / 100,
+    averageStayDuration,
+    pendingGuestRegistrations: stats?.pending_registrations ?? 0,
+    currency: bookings.find((b) => b.currency)?.currency ?? 'EUR',
+  };
+}
+
+/**
+ * Build the auth header + tenant id required by the rentals routes (which
+ * resolve the tenant from `X-Tenant-ID`). Returns null when either is missing so
  * the calling query stays disabled.
  */
 function useRentalsAuth(): RentalsAuth | null {
@@ -180,7 +321,7 @@ type RentalsAuth = { authorization: string; xTenantId: string };
 type RentalsAuthHeaders = { Authorization: string; 'X-Tenant-ID': string };
 
 /**
- * Build the auth headers the generated ShortTermRentalsService methods require,
+ * Build the auth headers every rentals request requires,
  * or throw a typed {@link AuthError} when the session was lost mid-flight.
  *
  * Queries gate on `enabled: !!auth`, so their `queryFn` never runs while auth is
@@ -263,39 +404,32 @@ function RentalsDashboardPageRoute() {
   const navigate = useNavigate();
   const auth = useRentalsAuth();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['rentals', 'reservations', auth?.xTenantId],
-    queryFn: () =>
-      rentalsApiListReservations({
-        headers: requireRentalsAuthHeaders(auth),
-      }),
+  const { data: bookingsPage, isLoading } = useQuery({
+    queryKey: ['rentals', 'bookings', auth?.xTenantId, 'dashboard'],
+    queryFn: () => listRentalBookings({ limit: 100 }, requireRentalsAuthHeaders(auth)),
+    enabled: !!auth,
+  });
+  const { data: stats } = useQuery({
+    queryKey: ['rentals', 'statistics', auth?.xTenantId],
+    queryFn: () => getRentalStatistics(requireRentalsAuthHeaders(auth)),
     enabled: !!auth,
   });
   const { data: connData } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
-    queryFn: () =>
-      rentalsApiListConnections({
-        headers: requireRentalsAuthHeaders(auth),
-      }),
+    queryFn: () => listRentalConnections(requireRentalsAuthHeaders(auth)),
     enabled: !!auth,
   });
 
-  const bookings = (data?.data?.data ?? []).map(mapReservationToBooking);
-  const connections = (connData?.data ?? []).map(mapApiConnectionToUi);
-  const now = Date.now();
-  const upcomingBookings = bookings.filter((b) => new Date(b.checkIn).getTime() >= now);
+  const rows = bookingsPage?.bookings ?? [];
+  const bookings = rows.map(mapBookingSummaryToUi);
+  const connections = (connData ?? []).map(mapConnectionSummaryToUi);
+  const today = new Date().toISOString().slice(0, 10);
+  const upcomingBookings = bookings
+    .filter((b) => b.checkIn > today && (b.status === 'pending' || b.status === 'confirmed'))
+    .sort((a, b) => a.checkIn.localeCompare(b.checkIn));
   const activeBookings = bookings.filter((b) => b.status === 'checked_in');
 
-  const statistics: RentalStatistics = {
-    totalBookings: bookings.length,
-    activeBookings: activeBookings.length,
-    upcomingBookings: upcomingBookings.length,
-    totalRevenue: bookings.reduce((sum, b) => sum + (b.totalPrice ?? 0), 0),
-    occupancyRate: 0,
-    averageStayDuration: 0,
-    pendingGuestRegistrations: 0,
-    currency: bookings[0]?.currency ?? 'EUR',
-  };
+  const statistics = mapStatisticsToUi(stats, rows, bookingsPage?.total ?? bookings.length);
 
   return (
     <RentalsDashboardPage
@@ -327,19 +461,16 @@ function PlatformConnectionsPageRoute() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
-    queryFn: () =>
-      rentalsApiListConnections({
-        headers: requireRentalsAuthHeaders(auth),
-      }),
+    queryFn: () => listRentalConnections(requireRentalsAuthHeaders(auth)),
     enabled: !!auth,
   });
 
   const createConnection = useMutation({
     mutationFn: (vars: { unitId: string; platform: RentalPlatformType }) =>
-      rentalsApiCreateConnection({
-        headers: requireRentalsAuthHeaders(auth),
-        body: { unitId: vars.unitId, platform: vars.platform as RentalsRentalPlatform },
-      }),
+      createRentalConnection(
+        { unit_id: vars.unitId, platform: vars.platform },
+        requireRentalsAuthHeaders(auth)
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
@@ -354,12 +485,13 @@ function PlatformConnectionsPageRoute() {
       }),
   });
 
-  const syncPlatforms = useMutation({
-    mutationFn: (unitId: string) =>
-      rentalsApiSyncPlatforms({
-        headers: requireRentalsAuthHeaders(auth),
-        query: { unitId },
-      }),
+  // There is no per-connection sync route; each channel syncs org-wide through
+  // its integrations endpoint (`/integrations/organizations/{org}/{airbnb|booking}/sync`).
+  const syncPlatform = useMutation({
+    mutationFn: (platform: RentalPlatformType) => {
+      const { 'X-Tenant-ID': orgId } = requireRentalsAuthHeaders(auth);
+      return platform === 'booking' ? syncBooking(orgId) : syncAirbnb(orgId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
@@ -372,7 +504,7 @@ function PlatformConnectionsPageRoute() {
       }),
   });
 
-  const connections = (data?.data ?? []).map(mapApiConnectionToUi);
+  const connections = (data ?? []).map(mapConnectionSummaryToUi);
 
   return (
     <PlatformConnectionsPage
@@ -383,7 +515,7 @@ function PlatformConnectionsPageRoute() {
       onDisconnect={() => {}}
       onSync={(connectionId) => {
         const conn = connections.find((c) => c.id === connectionId);
-        if (conn) syncPlatforms.mutate(conn.unitId);
+        if (conn) syncPlatform.mutate(conn.platform);
       }}
       onSettings={() => {}}
       onCreateConnection={(unitId, platform) => createConnection.mutate({ unitId, platform })}
@@ -392,48 +524,136 @@ function PlatformConnectionsPageRoute() {
   );
 }
 
+/**
+ * Shared booking-status mutation (check-in / check-out / cancel) via
+ * `PUT /rentals/bookings/{id}/status`. Invalidates every rentals booking query.
+ */
+function useBookingStatusMutation(auth: RentalsAuth | null) {
+  const { logout } = useAuth();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: (vars: { id: string; status: 'checked_in' | 'checked_out' | 'cancelled' }) =>
+      updateRentalBookingStatus(vars.id, { status: vars.status }, requireRentalsAuthHeaders(auth)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rentals'] });
+    },
+    onError: (error, vars) =>
+      handleRentalsMutationError(error, {
+        logout,
+        showToast,
+        title:
+          vars.status === 'checked_in'
+            ? t('rentals.bookingDetail.checkInFailed', { defaultValue: 'Failed to check in' })
+            : vars.status === 'checked_out'
+              ? t('rentals.bookingDetail.checkOutFailed', { defaultValue: 'Failed to check out' })
+              : t('rentals.bookingDetail.cancelFailed', {
+                  defaultValue: 'Failed to cancel booking',
+                }),
+        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+      }),
+  });
+}
+
 /** Route wrapper for the bookings list. */
 function BookingsPageRoute() {
   const navigate = useNavigate();
   const auth = useRentalsAuth();
   const [filters, setFilters] = useState<BookingListParams>({});
+  const updateStatus = useBookingStatusMutation(auth);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['rentals', 'reservations', auth?.xTenantId, filters],
+    queryKey: ['rentals', 'bookings', auth?.xTenantId, filters],
     queryFn: () =>
-      rentalsApiListReservations({
-        headers: requireRentalsAuthHeaders(auth),
-        query: {
-          unitId: filters.unitId,
-          status: filters.status as RentalsReservation['status'],
-          from: filters.fromDate,
-          to: filters.toDate,
+      listRentalBookings(
+        {
+          unit_id: filters.unitId,
+          building_id: filters.buildingId,
+          platform: filters.platform,
+          status: filters.status,
+          from_date: filters.fromDate,
+          to_date: filters.toDate,
           page: filters.page,
           limit: filters.limit,
         },
-      }),
+        requireRentalsAuthHeaders(auth)
+      ),
     enabled: !!auth,
   });
 
-  const bookings = (data?.data?.data ?? []).map(mapReservationToBooking);
+  const bookings = (data?.bookings ?? []).map(mapBookingSummaryToUi);
 
   return (
     <BookingsPage
       bookings={bookings}
-      total={data?.data?.pagination?.totalItems ?? bookings.length}
+      total={data?.total ?? bookings.length}
       buildings={[]}
       units={[]}
       isLoading={isLoading}
       onFilterChange={setFilters}
       onViewBooking={(id) => navigate(`/rentals/bookings/${id}`)}
       onEditBooking={(id) => navigate(`/rentals/bookings/${id}`)}
-      onCancelBooking={() => {}}
-      onCheckIn={() => {}}
-      onCheckOut={() => {}}
+      onCancelBooking={(id) => updateStatus.mutate({ id, status: 'cancelled' })}
+      onCheckIn={(id) => updateStatus.mutate({ id, status: 'checked_in' })}
+      onCheckOut={(id) => updateStatus.mutate({ id, status: 'checked_out' })}
       onCreateBooking={() => navigate('/rentals/bookings')}
       onBack={() => navigate('/rentals')}
     />
   );
+}
+
+/** Guest mutations shared by the booking detail and guest-registration pages. */
+function useGuestMutations(auth: RentalsAuth | null) {
+  const { logout } = useAuth();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const onError = (titleKey: string, defaultTitle: string) => (error: unknown) =>
+    handleRentalsMutationError(error, {
+      logout,
+      showToast,
+      title: t(titleKey, { defaultValue: defaultTitle }),
+      fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
+    });
+  const onSuccess = () => queryClient.invalidateQueries({ queryKey: ['rentals'] });
+
+  const register = useMutation({
+    mutationFn: (guestIds: string[]) =>
+      Promise.all(guestIds.map((id) => registerRentalGuest(id, requireRentalsAuthHeaders(auth)))),
+    onSuccess,
+    onError: onError('rentals.guests.registerFailed', 'Failed to register guest'),
+  });
+  const update = useMutation({
+    mutationFn: (vars: { id: string; data: UpdateGuestRequest }) =>
+      updateRentalGuest(vars.id, mapGuestFormToApi(vars.data), requireRentalsAuthHeaders(auth)),
+    onSuccess,
+    onError: onError('rentals.guests.updateFailed', 'Failed to update guest'),
+  });
+  const create = useMutation({
+    mutationFn: (data: CreateGuestRequest) =>
+      createRentalGuest(
+        {
+          ...mapGuestFormToApi(data),
+          booking_id: data.bookingId,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          is_primary: data.isPrimary,
+        },
+        requireRentalsAuthHeaders(auth)
+      ),
+    onSuccess,
+    onError: onError('rentals.guests.createFailed', 'Failed to add guest'),
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteRentalGuest(id, requireRentalsAuthHeaders(auth)),
+    onSuccess,
+    onError: onError('rentals.guests.deleteFailed', 'Failed to delete guest'),
+  });
+
+  return { register, update, create, remove };
 }
 
 /** Route wrapper for a single booking detail. */
@@ -441,59 +661,21 @@ function BookingDetailPageRoute() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const auth = useRentalsAuth();
-  const { logout } = useAuth();
-  const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const { showToast } = useToast();
+  const updateStatus = useBookingStatusMutation(auth);
+  const guestMutations = useGuestMutations(auth);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['rentals', 'reservation', bookingId, auth?.xTenantId],
-    queryFn: () =>
-      rentalsApiGetReservation({
-        headers: requireRentalsAuthHeaders(auth),
-        path: { id: bookingId! },
-      }),
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['rentals', 'booking', bookingId, auth?.xTenantId],
+    queryFn: () => getRentalBookingWithGuests(bookingId!, requireRentalsAuthHeaders(auth)),
     enabled: !!auth && !!bookingId,
   });
 
-  const checkIn = useMutation({
-    mutationFn: () =>
-      rentalsApiCheckIn({
-        headers: requireRentalsAuthHeaders(auth),
-        path: { id: bookingId! },
-      }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
-    onError: (error) =>
-      handleRentalsMutationError(error, {
-        logout,
-        showToast,
-        title: t('rentals.bookingDetail.checkInFailed', { defaultValue: 'Failed to check in' }),
-        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
-      }),
-  });
-  const checkOut = useMutation({
-    mutationFn: () =>
-      rentalsApiCheckOut({
-        headers: requireRentalsAuthHeaders(auth),
-        path: { id: bookingId! },
-      }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
-    onError: (error) =>
-      handleRentalsMutationError(error, {
-        logout,
-        showToast,
-        title: t('rentals.bookingDetail.checkOutFailed', { defaultValue: 'Failed to check out' }),
-        fallbackMessage: t('common.pleaseTryAgain', { defaultValue: 'Please try again.' }),
-      }),
-  });
-
-  if (!bookingId) {
+  if (!bookingId || isError) {
     return <div>{t('errors.bookingNotFound', 'Booking not found')}</div>;
   }
 
-  if (isLoading || !data || !data.data) {
+  if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -501,7 +683,10 @@ function BookingDetailPageRoute() {
     );
   }
 
-  const booking: BookingWithGuests = { ...mapReservationToBooking(data.data), guests: [] };
+  const booking: BookingWithGuests = {
+    ...mapBookingRecordToUi(data.booking),
+    guests: data.guests.map(mapGuestRecordToUi),
+  };
 
   return (
     <BookingDetailPage
@@ -509,13 +694,13 @@ function BookingDetailPageRoute() {
       isLoading={isLoading}
       onBack={() => navigate('/rentals/bookings')}
       onEdit={() => {}}
-      onCancel={() => {}}
-      onCheckIn={() => checkIn.mutate()}
-      onCheckOut={() => checkOut.mutate()}
+      onCancel={(id) => updateStatus.mutate({ id, status: 'cancelled' })}
+      onCheckIn={(id) => updateStatus.mutate({ id, status: 'checked_in' })}
+      onCheckOut={(id) => updateStatus.mutate({ id, status: 'checked_out' })}
       onAddGuest={() => navigate('/rentals/guests')}
       onEditGuest={() => navigate('/rentals/guests')}
-      onRegisterGuest={() => navigate('/rentals/guests')}
-      onDeleteGuest={() => {}}
+      onRegisterGuest={(guestId) => guestMutations.register.mutate([guestId])}
+      onDeleteGuest={(guestId) => guestMutations.remove.mutate(guestId)}
     />
   );
 }
@@ -542,47 +727,30 @@ function RentalsCalendarPageRoute() {
 function GuestRegistrationPageRoute() {
   const navigate = useNavigate();
   const auth = useRentalsAuth();
+  const guestMutations = useGuestMutations(auth);
 
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'guests', auth?.xTenantId],
-    queryFn: () =>
-      rentalsApiListGuests({
-        headers: requireRentalsAuthHeaders(auth),
-      }),
+    queryFn: () => listRentalGuests({}, requireRentalsAuthHeaders(auth)),
     enabled: !!auth,
   });
 
-  // Group registered guests by reservation so the page can list per-booking
-  // pending registrations. Without per-booking metadata we surface a single
-  // synthetic grouping keyed by reservationId.
-  const guests = (data?.data?.data ?? []).map(mapApiGuestToUi);
-  const byBooking = new Map<string, RentalGuest[]>();
-  for (const g of guests) {
-    const list = byBooking.get(g.bookingId) ?? [];
-    list.push(g);
-    byBooking.set(g.bookingId, list);
-  }
-  const bookingsWithPendingGuests = Array.from(byBooking.entries()).map(
-    ([bookingId, bookingGuests]) => ({
-      id: bookingId,
-      guestName: bookingGuests[0]
-        ? `${bookingGuests[0].firstName} ${bookingGuests[0].lastName}`
-        : '',
-      unitName: '',
-      checkIn: '',
-      checkOut: '',
-      guests: bookingGuests,
-    })
-  );
+  const bookingsWithPendingGuests = groupGuestsByBooking(data ?? []);
 
   return (
     <GuestRegistrationPage
       bookingsWithPendingGuests={bookingsWithPendingGuests}
       isLoading={isLoading}
-      onRegisterGuest={() => {}}
-      onRegisterAllGuests={() => {}}
-      onEditGuest={() => {}}
-      onAddGuest={() => {}}
+      onRegisterGuest={(guestId) => guestMutations.register.mutate([guestId])}
+      onRegisterAllGuests={(bookingId) => {
+        const booking = bookingsWithPendingGuests.find((b) => b.id === bookingId);
+        const pendingIds = (booking?.guests ?? [])
+          .filter((g) => g.registrationStatus === 'pending')
+          .map((g) => g.id);
+        if (pendingIds.length > 0) guestMutations.register.mutate(pendingIds);
+      }}
+      onEditGuest={(id, guestData) => guestMutations.update.mutate({ id, data: guestData })}
+      onAddGuest={(guestData) => guestMutations.create.mutate(guestData)}
       onBack={() => navigate('/rentals')}
     />
   );
@@ -635,7 +803,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <RentalsDashboardPageRoute />
           </ProtectedRoute>
         }
@@ -643,7 +811,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/connections"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <PlatformConnectionsPageRoute />
           </ProtectedRoute>
         }
@@ -651,7 +819,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/bookings"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <BookingsPageRoute />
           </ProtectedRoute>
         }
@@ -659,7 +827,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/bookings/:bookingId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <BookingDetailPageRoute />
           </ProtectedRoute>
         }
@@ -667,7 +835,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/calendar"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <RentalsCalendarPageRoute />
           </ProtectedRoute>
         }
@@ -675,7 +843,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/guests"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <GuestRegistrationPageRoute />
           </ProtectedRoute>
         }
@@ -683,7 +851,7 @@ export function rentalRoutes() {
       <Route
         path="/rentals/reports"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <TaxReportPageRoute />
           </ProtectedRoute>
         }

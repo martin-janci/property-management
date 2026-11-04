@@ -4,7 +4,7 @@
  * API functions for managing buildings (UC-15).
  */
 
-import { bearerAuthHeader } from '../auth';
+import { bearerAuthHeader, getOrg } from '../auth';
 import type { ApiConfig } from '../index';
 import type {
   Building,
@@ -105,25 +105,100 @@ function normalizeBuilding<T extends Partial<Building>>(building: T): T {
   return building;
 }
 
-/** Normalize every building in a paginated list response. */
-function normalizeBuildingList(
-  response: BuildingsPaginatedResponse<Building>
-): BuildingsPaginatedResponse<Building> {
-  if (!response || !Array.isArray(response.items)) return response;
-  return { ...response, items: response.items.map(normalizeBuilding) };
+/**
+ * Map an api-server building payload onto the client `Building` shape.
+ *
+ * `GET /api/v1/buildings` and `GET /api/v1/buildings/{id}` return flat
+ * snake_case rows (`street`, `postal_code`, `total_floors`, `unit_count`,
+ * `organization_id`, …) while the UI reads `address.*`, `floorCount`,
+ * `unitCount`, … Without this mapping every building rendered with an empty
+ * address and "undefined" counts. Payloads that already carry `address` are
+ * passed through untouched (mocks, future camelCase responses).
+ */
+export function fromApiBuilding(raw: unknown): Building {
+  if (!raw || typeof raw !== 'object') return raw as Building;
+  const r = raw as Record<string, unknown>;
+  if (r.address && typeof r.address === 'object')
+    return normalizeBuilding(r as unknown as Building);
+  const str = (v: unknown) => (typeof v === 'string' ? v : undefined);
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const building = {
+    id: String(r.id ?? ''),
+    organizationId: str(r.organization_id) ?? str(r.organizationId) ?? '',
+    name: str(r.name) ?? '',
+    address: {
+      street: str(r.street) ?? '',
+      city: str(r.city) ?? '',
+      postalCode: str(r.postal_code) ?? str(r.postalCode) ?? '',
+      country: str(r.country) ?? '',
+    },
+    type: (str(r.type) ?? str(r.building_type) ?? 'residential') as Building['type'],
+    floorCount: num(r.total_floors) ?? num(r.floorCount) ?? 0,
+    unitCount: num(r.unit_count) ?? num(r.unitCount) ?? 0,
+    yearBuilt: num(r.year_built) ?? num(r.yearBuilt),
+    totalAreaM2: num(r.total_area_m2) ?? num(r.totalAreaM2),
+    photoUrl: str(r.photo_url) ?? str(r.photoUrl),
+    description: str(r.description),
+    status: (str(r.status) ?? 'active') as Building['status'],
+    createdAt: str(r.created_at) ?? str(r.createdAt) ?? '',
+    updatedAt: str(r.updated_at) ?? str(r.updatedAt) ?? '',
+    latitude: r.latitude,
+    longitude: r.longitude,
+  };
+  const { latitude: _lat, longitude: _lng, ...rest } = normalizeBuilding(building);
+  return rest as Building;
+}
+
+/**
+ * Normalize a list response. api-server returns
+ * `{ buildings, total, offset, limit }`; the client contract is
+ * `{ items, total, page, pageSize, totalPages }`.
+ */
+function normalizeBuildingList(response: unknown): BuildingsPaginatedResponse<Building> {
+  const r = (response ?? {}) as Record<string, unknown>;
+  const rows = Array.isArray(r.items) ? r.items : Array.isArray(r.buildings) ? r.buildings : [];
+  const total = typeof r.total === 'number' ? r.total : rows.length;
+  const limit =
+    typeof r.pageSize === 'number'
+      ? r.pageSize
+      : typeof r.limit === 'number' && r.limit > 0
+        ? r.limit
+        : Math.max(rows.length, 1);
+  const page =
+    typeof r.page === 'number'
+      ? r.page
+      : typeof r.offset === 'number'
+        ? Math.floor(r.offset / limit) + 1
+        : 1;
+  return {
+    items: rows.map(fromApiBuilding),
+    total,
+    page,
+    pageSize: limit,
+    totalPages:
+      typeof r.totalPages === 'number' ? r.totalPages : Math.max(1, Math.ceil(total / limit)),
+  };
 }
 
 /**
  * List buildings with optional filters.
+ *
+ * api-server requires `organization_id` (it must equal the active tenant) and
+ * paginates with `offset` / `limit`; translate the client's page-based params.
  */
 export async function listBuildings(
   params?: ListBuildingsParams,
   signal?: AbortSignal
 ): Promise<BuildingsPaginatedResponse<Building>> {
-  const qs = buildQueryString(params || {});
-  const response = await apiRequest<BuildingsPaginatedResponse<Building>>(`${API_BASE}${qs}`, {
-    signal,
+  const { page, pageSize, ...filters } = params ?? {};
+  const limit = pageSize ?? 50;
+  const qs = buildQueryString({
+    organization_id: getOrg() ?? undefined,
+    offset: page && page > 1 ? (page - 1) * limit : undefined,
+    limit: pageSize,
+    ...filters,
   });
+  const response = await apiRequest<unknown>(`${API_BASE}${qs}`, { signal });
   return normalizeBuildingList(response);
 }
 
@@ -131,8 +206,8 @@ export async function listBuildings(
  * Get building by ID.
  */
 export async function getBuilding(id: string, signal?: AbortSignal): Promise<Building> {
-  const building = await apiRequest<Building>(`${API_BASE}/${id}`, { signal });
-  return normalizeBuilding(building);
+  const building = await apiRequest<unknown>(`${API_BASE}/${id}`, { signal });
+  return fromApiBuilding(building);
 }
 
 // ============================================
@@ -168,17 +243,16 @@ export const createBuildingsApi = (config: ApiConfig) => {
      * List buildings with optional filters.
      */
     list: async (params?: ListBuildingsParams): Promise<BuildingsPaginatedResponse<Building>> => {
-      const searchParams = new URLSearchParams();
-      if (params?.page) searchParams.set('page', params.page.toString());
-      if (params?.pageSize) searchParams.set('pageSize', params.pageSize.toString());
-      if (params?.status) searchParams.set('status', params.status);
-      if (params?.type) searchParams.set('type', params.type);
-
-      const url = searchParams.toString() ? `${baseUrl}?${searchParams}` : baseUrl;
-      const response = await fetch(url, { headers });
-      return normalizeBuildingList(
-        await handleResponse<BuildingsPaginatedResponse<Building>>(response)
-      );
+      const { page, pageSize, ...filters } = params ?? {};
+      const limit = pageSize ?? 50;
+      const qs = buildQueryString({
+        organization_id: config.tenantId ?? getOrg() ?? undefined,
+        offset: page && page > 1 ? (page - 1) * limit : undefined,
+        limit: pageSize,
+        ...filters,
+      });
+      const response = await fetch(`${baseUrl}${qs}`, { headers });
+      return normalizeBuildingList(await handleResponse<unknown>(response));
     },
 
     /**
@@ -190,7 +264,7 @@ export const createBuildingsApi = (config: ApiConfig) => {
         headers,
         body: JSON.stringify(data),
       });
-      return normalizeBuilding(await handleResponse<Building>(response));
+      return fromApiBuilding(await handleResponse<unknown>(response));
     },
 
     /**
@@ -198,7 +272,7 @@ export const createBuildingsApi = (config: ApiConfig) => {
      */
     get: async (id: string): Promise<Building> => {
       const response = await fetch(`${baseUrl}/${id}`, { headers });
-      return normalizeBuilding(await handleResponse<Building>(response));
+      return fromApiBuilding(await handleResponse<unknown>(response));
     },
 
     /**
@@ -210,7 +284,7 @@ export const createBuildingsApi = (config: ApiConfig) => {
         headers,
         body: JSON.stringify(data),
       });
-      return normalizeBuilding(await handleResponse<Building>(response));
+      return fromApiBuilding(await handleResponse<unknown>(response));
     },
 
     /**

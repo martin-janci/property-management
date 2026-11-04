@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Spinner } from '../../../components/Spinner';
 import { type ActionItem, ActionItemCard } from '../components/ActionItemCard';
 import type { DisputeCategory, DisputePriority, DisputeStatus } from '../components/DisputeCard';
-import { categoryLabels, priorityLabels, statusLabels } from '../components/DisputeCard';
+import { categoryLabelKeys, priorityLabelKeys, statusLabelKeys } from '../components/DisputeCard';
 import { DisputeTimeline, type TimelineEntry } from '../components/DisputeTimeline';
 import { type Resolution, ResolutionCard, type ResolutionVote } from '../components/ResolutionCard';
 
@@ -112,11 +112,11 @@ const priorityColors: Record<DisputePriority, string> = {
   urgent: 'text-red-600 font-bold',
 };
 
-const roleLabels: Record<string, string> = {
-  complainant: 'Complainant',
-  respondent: 'Respondent',
-  witness: 'Witness',
-  mediator: 'Mediator',
+const roleLabelKeys: Record<DisputeParty['role'], string> = {
+  complainant: 'disputes.detail.role.complainant',
+  respondent: 'disputes.detail.role.respondent',
+  witness: 'disputes.detail.role.witness',
+  mediator: 'disputes.detail.role.mediator',
 };
 
 export function DisputeDetailPage({
@@ -146,7 +146,7 @@ export function DisputeDetailPage({
   onEscalate,
   onNavigateToMediation,
 }: DisputeDetailPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showProposeDialog, setShowProposeDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [proposalText, setProposalText] = useState('');
@@ -211,7 +211,7 @@ export function DisputeDetailPage({
           onClick={onBack}
           className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4"
         >
-          Back to Disputes
+          {t('common.backToDisputes')}
         </button>
         <div className="flex items-start justify-between">
           <div>
@@ -220,14 +220,16 @@ export function DisputeDetailPage({
               <span
                 className={`px-2 py-1 text-sm font-medium rounded ${statusColors[dispute.status]}`}
               >
-                {statusLabels[dispute.status]}
+                {t(statusLabelKeys[dispute.status])}
               </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">{dispute.title}</h1>
             <div className="mt-2 flex items-center gap-4 text-sm">
-              <span className="text-gray-500">{categoryLabels[dispute.category]}</span>
+              <span className="text-gray-500">{t(categoryLabelKeys[dispute.category])}</span>
               <span className={priorityColors[dispute.priority]}>
-                {priorityLabels[dispute.priority]} Priority
+                {t('disputes.priorityWithLabel', {
+                  priority: t(priorityLabelKeys[dispute.priority]),
+                })}
               </span>
             </div>
           </div>
@@ -239,7 +241,7 @@ export function DisputeDetailPage({
                   onClick={onNavigateToMediation}
                   className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Mediation
+                  {t('disputes.detail.mediation')}
                 </button>
                 {dispute.status !== 'resolved' && (
                   <button
@@ -247,7 +249,7 @@ export function DisputeDetailPage({
                     onClick={() => onUpdateStatus('resolved')}
                     className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    Resolve
+                    {t('disputes.detail.resolve')}
                   </button>
                 )}
               </>
@@ -263,9 +265,11 @@ export function DisputeDetailPage({
         >
           <p className={overdueActions.length > 0 ? 'text-red-800' : 'text-yellow-800'}>
             {overdueActions.length > 0 ? (
-              <span className="font-medium">{overdueActions.length} overdue action(s)</span>
+              <span className="font-medium">
+                {t('disputes.detail.overdueActions', { count: overdueActions.length })}
+              </span>
             ) : (
-              <span>{pendingActions.length} pending action(s)</span>
+              <span>{t('disputes.detail.pendingActions', { count: pendingActions.length })}</span>
             )}
           </p>
         </div>
@@ -276,11 +280,15 @@ export function DisputeDetailPage({
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Description</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              {t('disputes.form.description')}
+            </h2>
             <p className="text-gray-700 whitespace-pre-wrap">{dispute.description}</p>
             {dispute.desiredResolution && (
               <div className="mt-4 pt-4 border-t">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Desired Resolution</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  {t('disputes.detail.desiredResolution')}
+                </h3>
                 <p className="text-gray-600">{dispute.desiredResolution}</p>
               </div>
             )}
@@ -289,16 +297,18 @@ export function DisputeDetailPage({
           {/* Evidence */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Evidence ({evidence.length})</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('disputes.detail.evidenceCount', { count: evidence.length })}
+              </h2>
               {(isParty || canManage) && (
                 <label className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  Add Evidence
+                  {t('disputes.addEvidence')}
                   <input type="file" className="hidden" onChange={handleFileUpload} />
                 </label>
               )}
             </div>
             {evidence.length === 0 ? (
-              <p className="text-gray-500">No evidence submitted.</p>
+              <p className="text-gray-500">{t('disputes.detail.noEvidence')}</p>
             ) : (
               <div className="space-y-3">
                 {evidence.map((item) => (
@@ -309,8 +319,10 @@ export function DisputeDetailPage({
                     <div>
                       <p className="font-medium">{item.originalFilename}</p>
                       <p className="text-sm text-gray-500">
-                        Uploaded by {item.uploaderName} -{' '}
-                        {new Date(item.createdAt).toLocaleDateString()}
+                        {t('disputes.detail.uploadedBy', {
+                          name: item.uploaderName,
+                          date: new Date(item.createdAt).toLocaleDateString(i18n.language),
+                        })}
                       </p>
                       {item.description && (
                         <p className="text-sm text-gray-600 mt-1">{item.description}</p>
@@ -323,7 +335,7 @@ export function DisputeDetailPage({
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 text-sm"
                       >
-                        View
+                        {t('disputes.view')}
                       </a>
                       {canManage && (
                         <button
@@ -331,7 +343,7 @@ export function DisputeDetailPage({
                           onClick={() => onDeleteEvidence(item.id)}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >
-                          Delete
+                          {t('common.delete')}
                         </button>
                       )}
                     </div>
@@ -344,19 +356,21 @@ export function DisputeDetailPage({
           {/* Resolutions */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Resolutions</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('disputes.detail.resolutions')}
+              </h2>
               {canPropose && activeStatus && (
                 <button
                   type="button"
                   onClick={() => setShowProposeDialog(true)}
                   className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Propose Resolution
+                  {t('disputes.detail.proposeResolution')}
                 </button>
               )}
             </div>
             {resolutions.length === 0 ? (
-              <p className="text-gray-500">No resolutions proposed yet.</p>
+              <p className="text-gray-500">{t('disputes.detail.noResolutions')}</p>
             ) : (
               <div className="space-y-4">
                 {resolutions.map((resolution) => (
@@ -381,19 +395,21 @@ export function DisputeDetailPage({
           {/* Action Items */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Action Items</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('disputes.detail.actionItems')}
+              </h2>
               {canManage && (
                 <button
                   type="button"
                   onClick={() => setShowActionDialog(true)}
                   className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Create Action
+                  {t('disputes.detail.createAction')}
                 </button>
               )}
             </div>
             {actionItems.length === 0 ? (
-              <p className="text-gray-500">No action items.</p>
+              <p className="text-gray-500">{t('disputes.detail.noActionItems')}</p>
             ) : (
               <div className="space-y-4">
                 {actionItems.map((action) => (
@@ -421,31 +437,35 @@ export function DisputeDetailPage({
         <div className="space-y-6">
           {/* Details */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {t('disputes.form.details')}
+            </h3>
             <dl className="space-y-3 text-sm">
               {dispute.buildingName && (
                 <div>
-                  <dt className="text-gray-500">Building</dt>
+                  <dt className="text-gray-500">{t('disputes.detail.building')}</dt>
                   <dd className="font-medium">{dispute.buildingName}</dd>
                 </div>
               )}
               {dispute.unitDesignation && (
                 <div>
-                  <dt className="text-gray-500">Unit</dt>
+                  <dt className="text-gray-500">{t('disputes.form.unit')}</dt>
                   <dd className="font-medium">{dispute.unitDesignation}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-gray-500">Filed by</dt>
+                <dt className="text-gray-500">{t('disputes.filedBy')}</dt>
                 <dd className="font-medium">{dispute.filedByName}</dd>
               </div>
               <div>
-                <dt className="text-gray-500">Filed on</dt>
-                <dd className="font-medium">{new Date(dispute.createdAt).toLocaleDateString()}</dd>
+                <dt className="text-gray-500">{t('disputes.detail.filedOn')}</dt>
+                <dd className="font-medium">
+                  {new Date(dispute.createdAt).toLocaleDateString(i18n.language)}
+                </dd>
               </div>
               {dispute.assignedToName && (
                 <div>
-                  <dt className="text-gray-500">Assigned to</dt>
+                  <dt className="text-gray-500">{t('disputes.detail.assignedTo')}</dt>
                   <dd className="font-medium">{dispute.assignedToName}</dd>
                 </div>
               )}
@@ -454,14 +474,16 @@ export function DisputeDetailPage({
 
           {/* Parties */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Parties</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {t('disputes.detail.parties')}
+            </h3>
             <div className="space-y-3">
               {parties.map((party) => (
                 <div key={party.id} className="p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{party.userName}</span>
                     <span className="text-xs px-2 py-0.5 bg-gray-200 rounded">
-                      {roleLabels[party.role]}
+                      {t(roleLabelKeys[party.role])}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">{party.userEmail}</p>
@@ -484,12 +506,14 @@ export function DisputeDetailPage({
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Propose Resolution</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                {t('disputes.detail.proposeResolution')}
+              </h2>
               <textarea
                 value={proposalText}
                 onChange={(e) => setProposalText(e.target.value)}
                 rows={6}
-                placeholder="Describe your proposed resolution..."
+                placeholder={t('disputes.detail.proposalPlaceholder')}
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
               />
               <div className="flex justify-end gap-3 mt-4">
@@ -498,7 +522,7 @@ export function DisputeDetailPage({
                   onClick={() => setShowProposeDialog(false)}
                   className="px-4 py-2 border rounded-lg"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -506,7 +530,7 @@ export function DisputeDetailPage({
                   disabled={!proposalText.trim()}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
                 >
-                  Propose
+                  {t('disputes.detail.propose')}
                 </button>
               </div>
             </div>
@@ -526,10 +550,14 @@ export function DisputeDetailPage({
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Create Action Item</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                {t('disputes.detail.createActionItem')}
+              </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('disputes.detail.actionTitle')}
+                  </label>
                   <input
                     type="text"
                     value={newActionTitle}
@@ -538,7 +566,9 @@ export function DisputeDetailPage({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('disputes.form.description')}
+                  </label>
                   <textarea
                     value={newActionDescription}
                     onChange={(e) => setNewActionDescription(e.target.value)}
@@ -547,13 +577,15 @@ export function DisputeDetailPage({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Assign to</label>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('disputes.detail.assignTo')}
+                  </label>
                   <select
                     value={newActionAssignee}
                     onChange={(e) => setNewActionAssignee(e.target.value)}
                     className="w-full rounded-md border border-gray-300 px-3 py-2"
                   >
-                    <option value="">Select party...</option>
+                    <option value="">{t('disputes.detail.selectParty')}</option>
                     {parties.map((party) => (
                       <option key={party.id} value={party.userId}>
                         {party.userName}
@@ -562,7 +594,9 @@ export function DisputeDetailPage({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Due Date</label>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('disputes.detail.dueDate')}
+                  </label>
                   <input
                     type="date"
                     value={newActionDueDate}
@@ -577,7 +611,7 @@ export function DisputeDetailPage({
                   onClick={() => setShowActionDialog(false)}
                   className="px-4 py-2 border rounded-lg"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -585,7 +619,7 @@ export function DisputeDetailPage({
                   disabled={!newActionTitle.trim() || !newActionAssignee || !newActionDueDate}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
                 >
-                  Create
+                  {t('common.create')}
                 </button>
               </div>
             </div>

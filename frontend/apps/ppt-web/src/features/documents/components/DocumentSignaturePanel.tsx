@@ -270,7 +270,7 @@ function SignatureRequestCard({ documentId, request, onChanged }: SignatureReque
         <p className="signature-card__hint signature-card__hint--error" role="alert">
           {actionError instanceof Error
             ? actionError.message
-            : t('common.unknownError', 'Something went wrong. Please try again.')}
+            : t('documents.esign.genericError', 'Something went wrong. Please try again.')}
         </p>
       )}
       {confirmDialog}
@@ -551,7 +551,7 @@ function CreateSignatureRequestDialog({
               <p className="text-sm text-red-700">
                 {createRequest.error instanceof Error
                   ? createRequest.error.message
-                  : t('common.unknownError', 'Something went wrong. Please try again.')}
+                  : t('documents.esign.genericError', 'Something went wrong. Please try again.')}
               </p>
             </div>
           )}
