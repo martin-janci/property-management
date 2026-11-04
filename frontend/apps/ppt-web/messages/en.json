@@ -1168,6 +1168,108 @@
       "pdfFailed": "Failed to download PDF",
       "invoiceNotFound": "Invoice not found",
       "noUnits": "No units available. Add units to a building first."
+    },
+    "budgetPages": {
+      "loading": "Loading…",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "budgeted": "Budgeted",
+      "actual": "Actual",
+      "remaining": "Remaining",
+      "wholeOrganization": "Whole organization",
+      "backToBudgets": "Back to budgets",
+      "newTitle": "New budget",
+      "newSubtitle": "Set up an annual budget, then add its line items",
+      "notFound": "Budget not found",
+      "status": {
+        "draft": "Draft",
+        "pending_approval": "Pending approval",
+        "approved": "Approved",
+        "active": "Active",
+        "closed": "Closed"
+      },
+      "list": {
+        "title": "Budget Management",
+        "subtitle": "Plan and track budgets against actual spending",
+        "createNew": "Create budget",
+        "createFirst": "Create your first budget",
+        "budgetsList": "Budgets",
+        "noBudgets": "No budgets for {{year}}",
+        "loadFailed": "Failed to load budgets",
+        "totalBudget": "Total budgeted",
+        "totalActual": "Total actual",
+        "remaining": "Remaining",
+        "yearFilter": "Fiscal year"
+      },
+      "form": {
+        "name": "Budget name",
+        "namePlaceholder": "e.g. Operating budget 2027",
+        "nameRequired": "Enter a budget name",
+        "fiscalYear": "Fiscal year",
+        "building": "Building",
+        "wholeOrganization": "Whole organization (all buildings)",
+        "notes": "Notes",
+        "itemsHint": "After saving you can add budget line items by category.",
+        "submit": "Create budget"
+      },
+      "detail": {
+        "fiscalYear": "Fiscal year {{year}}",
+        "approvedOn": "Approved on {{date}}",
+        "itemsOverBudget": "Items over budget"
+      },
+      "items": {
+        "title": "Budget items",
+        "empty": "This budget has no items.",
+        "emptyDraft": "No items yet. Add the first line item below.",
+        "addTitle": "Add line item",
+        "add": "Add item",
+        "category": "Category",
+        "newCategory": "+ New category",
+        "newCategoryName": "New category name",
+        "noCategories": "No categories yet — name a new one.",
+        "name": "Item",
+        "amount": "Budgeted amount",
+        "description": "Description",
+        "actions": "Actions",
+        "remove": "Remove",
+        "removeNamed": "Remove {{name}}",
+        "categoryRequired": "Enter a category name",
+        "nameRequired": "Enter an item name",
+        "amountInvalid": "Enter a valid amount"
+      },
+      "actuals": {
+        "record": "Record actual",
+        "recordNamed": "Record actual spend for {{name}}",
+        "title": "Record actual spend for {{item}}",
+        "amount": "Amount spent",
+        "date": "Date",
+        "save": "Save",
+        "dateRequired": "Enter a date"
+      },
+      "actions": {
+        "submit": "Submit for approval",
+        "approve": "Approve",
+        "activate": "Activate",
+        "close": "Close budget",
+        "delete": "Delete",
+        "confirmDelete": "Confirm delete"
+      },
+      "toast": {
+        "created": "Budget created",
+        "createFailed": "Failed to create budget",
+        "submitDone": "Budget submitted for approval",
+        "approveDone": "Budget approved",
+        "activateDone": "Budget activated",
+        "closeDone": "Budget closed",
+        "deleteDone": "Budget deleted",
+        "actionFailed": "Action failed",
+        "itemAdded": "Item added",
+        "itemAddFailed": "Failed to add item",
+        "itemRemoveFailed": "Failed to remove item",
+        "actualRecorded": "Actual spend recorded",
+        "actualFailed": "Failed to record actual spend"
+      }
     }
   },
   "announcements": {

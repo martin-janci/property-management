@@ -5,7 +5,13 @@
 export { ARAgingTable } from './ARAgingTable';
 export { BalanceSheetView } from './BalanceSheetView';
 export { BudgetCard } from './BudgetCard';
-export { BudgetForm } from './BudgetForm';
+export {
+  type BudgetActualValues,
+  BudgetDetail,
+  type BudgetDetailAction,
+  type NewBudgetItemValues,
+} from './BudgetDetail';
+export { BudgetForm, type BudgetFormValues } from './BudgetForm';
 export { BudgetOverview } from './BudgetOverview';
 export { BuildingFilter } from './BuildingFilter';
 export { CashFlowView } from './CashFlowView';

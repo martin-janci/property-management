@@ -2,7 +2,7 @@
  * Shared constants for financial components.
  */
 
-import type { InvoiceStatus, PaymentMethod } from '@ppt/api-client';
+import type { BudgetStatus, InvoiceStatus, PaymentMethod } from '@ppt/api-client';
 
 /**
  * Tailwind CSS class names for invoice status badges.
@@ -49,3 +49,14 @@ export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = Object.fromEntries(
   PAYMENT_METHODS.map((method) => [method.value, method.label])
 ) as Record<PaymentMethod, string>;
+
+/**
+ * Tailwind CSS class names for budget status badges (Epic 24 lifecycle).
+ */
+export const BUDGET_STATUS_STYLES: Record<BudgetStatus, string> = {
+  draft: 'bg-gray-100 text-gray-800',
+  pending_approval: 'bg-yellow-100 text-yellow-800',
+  approved: 'bg-blue-100 text-blue-800',
+  active: 'bg-green-100 text-green-800',
+  closed: 'bg-purple-100 text-purple-800',
+};
