@@ -14345,6 +14345,67 @@
       "score_delta": 1,
       "candidate_vector": "i18n",
       "expert": "frontend"
+    },
+    {
+      "id": "code-review-api-handlers-registration-token-discard",
+      "title": "api-server resend-verification silently discards invalidate_user_tokens() result — a DB error leaves prior email-verification tokens valid",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/auth/registration.rs:368 — resend_verification does `let _ = state.user_repo.invalidate_user_tokens(user.id).await;` then immediately issues a fresh verification token; the invalidation result is dropped with no error handling and no best-effort rationale comment",
+        "Contrast: the `let _ =` discard sites in routes/messaging.rs (L502,L640,L994) and integrations/sync.rs (L837) each carry an explicit best-effort comment explaining why a failure is tolerable; this security-token path has none",
+        "Impact (low): if invalidate_user_tokens fails (DB hiccup), the user's previous unexpired email-verification token(s) remain valid alongside the newly minted one, widening the window of usable verification links; the operation still returns the enumeration-safe success response, masking the failure",
+        "Fix: match on the Result and at minimum tracing::error! on failure (as the sibling password_reset.rs paths do), or propagate so the resend is retried rather than silently issuing a second concurrently-valid token"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth/registration.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-mfa-audit-discard",
+      "title": "api-server MFA security-event audit writes are fire-and-forget (let _ = audit.record) — a DB failure silently drops MFA enroll/disable/verify/recovery audit records",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review [api-handlers]"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/admin/mfa/enroll.rs:159,259,331 — every audit.record(...) for mfa_enroll_start / verify / complete is discarded with `let _ =`; the Result (and thus any DB write failure) is never inspected or logged",
+        "Same pattern in admin/mfa/disable.rs:133 (mfa_disable_rejected, AuditOutcome::Denied) and :216 (disable success), admin/mfa/verify.rs:117,149, and admin/mfa/recovery.rs:90,123,171,220",
+        "Impact (low/compliance): these are security-sensitive events (MFA enrolment, disablement, denied verification attempts). A transient DB failure on the audit write produces a silent gap in the security/forensics audit trail with no error surfaced, no retry, and no alert — defeating the purpose of recording AuditOutcome::Denied for attack detection",
+        "Fix: on audit.record failure emit tracing::error! (so the gap is at least observable/alertable), consistently across the MFA handlers; a dropped audit record for a security event should never be invisible"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/admin/mfa/enroll.rs",
+        "backend/servers/api-server/src/routes/admin/mfa/disable.rs",
+        "backend/servers/api-server/src/routes/admin/mfa/verify.rs",
+        "backend/servers/api-server/src/routes/admin/mfa/recovery.rs"
+      ],
+      "created_at": "2026-11-04",
+      "updated_at": "2026-11-04",
+      "plan": null,
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "candidate_vector": "bug",
+      "expert": "rust"
     }
   ]
 }
