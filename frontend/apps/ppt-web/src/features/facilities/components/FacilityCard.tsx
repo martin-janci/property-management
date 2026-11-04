@@ -5,6 +5,7 @@
  */
 
 import type { FacilitySummary, FacilityType } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface FacilityCardProps {
   facility: FacilitySummary;
@@ -13,22 +14,6 @@ interface FacilityCardProps {
   onEdit?: (id: string) => void;
   isManager?: boolean;
 }
-
-const facilityTypeLabels: Record<FacilityType, string> = {
-  gym: 'Gym',
-  laundry: 'Laundry',
-  meeting_room: 'Meeting Room',
-  party_room: 'Party Room',
-  sauna: 'Sauna',
-  pool: 'Pool',
-  playground: 'Playground',
-  parking: 'Parking',
-  storage: 'Storage',
-  garden: 'Garden',
-  bbq: 'BBQ Area',
-  bike_storage: 'Bike Storage',
-  other: 'Other',
-};
 
 const facilityTypeIcons: Record<FacilityType, string> = {
   gym: 'M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z',
@@ -47,6 +32,7 @@ const facilityTypeIcons: Record<FacilityType, string> = {
 };
 
 export function FacilityCard({ facility, onView, onBook, onEdit, isManager }: FacilityCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
       {/* Header with photo or icon */}
@@ -74,16 +60,16 @@ export function FacilityCard({ facility, onView, onBook, onEdit, isManager }: Fa
           <h3 className="text-lg font-semibold text-gray-900">{facility.name}</h3>
           <div className="mt-1 flex items-center gap-2 flex-wrap">
             <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
-              {facilityTypeLabels[facility.facility_type]}
+              {t(`facilities.types.${facility.facility_type}`)}
             </span>
             {!facility.is_active && (
               <span className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">
-                Inactive
+                {t('facilities.card.inactive')}
               </span>
             )}
             {facility.requires_approval && (
               <span className="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
-                Requires Approval
+                {t('facilities.card.requiresApproval')}
               </span>
             )}
           </div>
@@ -100,7 +86,7 @@ export function FacilityCard({ facility, onView, onBook, onEdit, isManager }: Fa
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
             </svg>
-            Capacity: {facility.capacity}
+            {t('facilities.card.capacity', { count: facility.capacity })}
           </span>
         )}
         {facility.location && (
@@ -125,27 +111,29 @@ export function FacilityCard({ facility, onView, onBook, onEdit, isManager }: Fa
                 clipRule="evenodd"
               />
             </svg>
-            {facility.hourly_fee}/hr
+            {t('facilities.card.perHour', { fee: facility.hourly_fee })}
           </span>
         )}
       </div>
 
       {/* Actions */}
       <div className="mt-4 flex items-center gap-2 border-t pt-3">
-        <button
-          type="button"
-          onClick={() => onView?.(facility.id)}
-          className="text-sm text-blue-600 hover:text-blue-800"
-        >
-          View Details
-        </button>
+        {onView && (
+          <button
+            type="button"
+            onClick={() => onView(facility.id)}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            {t('facilities.card.viewDetails')}
+          </button>
+        )}
         {facility.is_bookable && facility.is_active && (
           <button
             type="button"
             onClick={() => onBook?.(facility.id)}
             className="text-sm px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
           >
-            Book Now
+            {t('facilities.card.bookNow')}
           </button>
         )}
         {isManager && (
@@ -154,7 +142,7 @@ export function FacilityCard({ facility, onView, onBook, onEdit, isManager }: Fa
             onClick={() => onEdit?.(facility.id)}
             className="text-sm text-gray-600 hover:text-gray-800 ml-auto"
           >
-            Edit
+            {t('facilities.card.edit')}
           </button>
         )}
       </div>

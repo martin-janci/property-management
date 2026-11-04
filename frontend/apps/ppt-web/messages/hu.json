@@ -565,12 +565,197 @@
       "listTitle": "Foglalások",
       "bookFacility": "Létesítmény foglalása",
       "empty": "Nem található foglalás.",
-      "allCaughtUp": "Minden rendben! Nincsenek jóváhagyásra váró foglalások."
+      "allCaughtUp": "Minden rendben! Nincsenek jóváhagyásra váró foglalások.",
+      "status": {
+        "pending": "Jóváhagyásra vár",
+        "approved": "Jóváhagyva",
+        "rejected": "Elutasítva",
+        "cancelled": "Lemondva",
+        "completed": "Teljesítve",
+        "no_show": "Nem jelent meg"
+      },
+      "allStatuses": "Minden állapot",
+      "statusLabel": "Foglalás állapota",
+      "from": "Ettől:",
+      "to": "Eddig:",
+      "duration": "Időtartam: {{duration}}",
+      "durationHours": "{{hours}} óra",
+      "durationMinutes": "{{minutes}} perc",
+      "durationHoursMinutes": "{{hours}} óra {{minutes}} perc",
+      "attendees": "Résztvevők: {{count}}",
+      "rejectionReason": "Elutasítás oka:",
+      "cancellationReason": "Lemondás oka:",
+      "depositPaid": "Kaució kifizetve",
+      "viewDetails": "Részletek megtekintése",
+      "approve": "Jóváhagyás",
+      "reject": "Elutasítás",
+      "cancelBooking": "Foglalás lemondása",
+      "loadFailed": "Nem sikerült betölteni a foglalásokat",
+      "loadPendingFailed": "Nem sikerült betölteni a függő foglalásokat",
+      "cancelFailed": "Nem sikerült lemondani a foglalást",
+      "approveFailed": "Nem sikerült jóváhagyni a foglalást",
+      "rejectFailed": "Nem sikerült elutasítani a foglalást",
+      "createFailed": "Nem sikerült létrehozni a foglalást",
+      "loadFacilityFailed": "Nem sikerült betölteni a helyiség adatait",
+      "form": {
+        "location": "Elhelyezkedés: {{location}}",
+        "capacity": "Férőhely (fő): {{count}}",
+        "fee": "Díj: {{fee}}/óra",
+        "maxDuration": "Maximális időtartam: {{hours}} óra",
+        "requiresApproval": "A helyiség foglalása jóváhagyáshoz kötött",
+        "date": "Dátum",
+        "startTime": "Kezdés",
+        "endTime": "Befejezés",
+        "selectTime": "Válasszon időpontot",
+        "unavailable": "(nem elérhető)",
+        "purpose": "A foglalás célja",
+        "purposePlaceholder": "pl. megbeszélés, születésnapi buli",
+        "attendeesCount": "Résztvevők száma",
+        "maxPlaceholder": "Max.: {{count}}",
+        "notes": "További megjegyzések",
+        "notesPlaceholder": "Különleges igények vagy megjegyzések",
+        "durationLabel": "Időtartam:",
+        "hoursValue": "{{hours}} óra",
+        "estimatedTotal": "Becsült végösszeg:",
+        "depositRequired": "Szükséges kaució:",
+        "cancel": "Mégse",
+        "submitting": "Foglalás folyamatban…",
+        "submitForApproval": "Beküldés jóváhagyásra",
+        "bookNow": "Foglalás",
+        "errors": {
+          "selectDate": "Válasszon dátumot",
+          "selectStart": "Válassza ki a kezdés időpontját",
+          "selectEnd": "Válassza ki a befejezés időpontját",
+          "endAfterStart": "A befejezésnek a kezdés után kell lennie",
+          "maxDuration": "A foglalás legfeljebb {{hours}} óra lehet",
+          "maxCapacity": "A maximális férőhely {{count}}"
+        }
+      },
+      "cancelDialog": {
+        "title": "Foglalás lemondása",
+        "confirm": "Biztosan le szeretné mondani ezt a foglalást?",
+        "reason": "Lemondás oka (nem kötelező)",
+        "reasonPlaceholder": "Ossza meg, miért mondja le a foglalást…",
+        "keep": "Foglalás megtartása",
+        "submitting": "Lemondás…",
+        "submit": "Foglalás lemondása"
+      },
+      "rejectDialog": {
+        "title": "Foglalás elutasítása",
+        "subtitle": "Foglalás elutasítása: {{name}}",
+        "reason": "Elutasítás oka *",
+        "reasonPlaceholder": "Kérjük, indokolja meg az elutasítást…",
+        "reasonRequired": "Adja meg az elutasítás okát",
+        "cancel": "Mégse",
+        "submitting": "Elutasítás…",
+        "submit": "Foglalás elutasítása"
+      }
     },
     "errors": {
       "fetchFailedTitle": "A létesítmények betöltése nem sikerült",
       "fetchFailedDescription": "Hiba történt a létesítmények betöltése közben. Kérjük, próbálja újra.",
-      "retry": "Újrapróbálkozás"
+      "retry": "Újrapróbálkozás",
+      "createFailed": "Nem sikerült létrehozni a helyiséget",
+      "updateFailed": "Nem sikerült menteni a helyiséget",
+      "loadFailed": "Nem sikerült betölteni a helyiséget",
+      "unexpected": "Váratlan hiba történt."
+    },
+    "title": "Közös helyiségek",
+    "addFacility": "Helyiség hozzáadása",
+    "addFirstFacility": "Első helyiség hozzáadása",
+    "empty": "Nem található helyiség.",
+    "createTitle": "Új helyiség hozzáadása",
+    "editTitle": "Helyiség szerkesztése",
+    "notFound": "A helyiség nem található",
+    "notBookable": "Ez a helyiség nem foglalható",
+    "goBack": "Vissza",
+    "types": {
+      "gym": "Edzőterem",
+      "laundry": "Mosókonyha",
+      "meeting_room": "Tárgyaló",
+      "party_room": "Közösségi terem",
+      "sauna": "Szauna",
+      "pool": "Medence",
+      "playground": "Játszótér",
+      "parking": "Parkoló",
+      "storage": "Tároló",
+      "garden": "Kert",
+      "bbq": "Grillező hely",
+      "bike_storage": "Kerékpártároló",
+      "other": "Egyéb"
+    },
+    "filters": {
+      "allTypes": "Minden típus",
+      "typeLabel": "Helyiség típusa",
+      "bookableLabel": "Foglalhatóság",
+      "allFacilities": "Minden helyiség",
+      "bookableOnly": "Csak foglalható",
+      "nonBookable": "Nem foglalható"
+    },
+    "pagination": {
+      "showing": "{{from}} – {{to}} / {{total}}",
+      "previous": "Előző",
+      "next": "Következő",
+      "page": "{{page}}. oldal / {{totalPages}}"
+    },
+    "card": {
+      "inactive": "Inaktív",
+      "requiresApproval": "Jóváhagyás szükséges",
+      "capacity": "Férőhely: {{count}}",
+      "perHour": "{{fee}}/óra",
+      "viewDetails": "Részletek megtekintése",
+      "bookNow": "Foglalás",
+      "edit": "Szerkesztés"
+    },
+    "days": {
+      "mon": "H",
+      "tue": "K",
+      "wed": "Sze",
+      "thu": "Cs",
+      "fri": "P",
+      "sat": "Szo",
+      "sun": "V"
+    },
+    "form": {
+      "basicInfo": "Alapadatok",
+      "bookingRules": "Foglalási szabályok",
+      "pricing": "Árak",
+      "amenities": "Felszereltség",
+      "name": "Név *",
+      "type": "Típus *",
+      "description": "Leírás",
+      "location": "Elhelyezkedés",
+      "locationPlaceholder": "pl. földszint, A épület",
+      "capacity": "Férőhely",
+      "capacityPlaceholder": "Maximális létszám",
+      "allowBooking": "Foglalás engedélyezése",
+      "active": "Aktív",
+      "requiresApproval": "Jóváhagyás szükséges",
+      "maxBookingHours": "Foglalás maximális hossza (óra)",
+      "maxAdvanceDays": "Foglalás legfeljebb előre (nap)",
+      "minAdvanceHours": "Foglalás legalább előre (óra)",
+      "availableFrom": "Elérhető ettől",
+      "availableTo": "Elérhető eddig",
+      "availableDays": "Elérhető napok",
+      "hourlyFee": "Óradíj",
+      "hourlyFeePlaceholder": "pl. 25.00",
+      "depositAmount": "Kaució összege",
+      "depositPlaceholder": "pl. 50.00",
+      "amenityPlaceholder": "Felszereltség hozzáadása (pl. Wi-Fi, projektor)",
+      "add": "Hozzáadás",
+      "removeAmenity": "{{name}} eltávolítása",
+      "cancel": "Mégse",
+      "saving": "Mentés…",
+      "update": "Módosítások mentése",
+      "create": "Helyiség létrehozása",
+      "errors": {
+        "nameRequired": "Adja meg a nevet",
+        "typeRequired": "Válassza ki a helyiség típusát",
+        "availableToAfterFrom": "Az „Elérhető eddig” időpontnak későbbinek kell lennie, mint az „Elérhető ettől”",
+        "mustBePositive": "Az értéknek 0-nál nagyobbnak kell lennie",
+        "selectDay": "Válasszon legalább egy elérhető napot",
+        "notNegative": "Az érték nem lehet negatív"
+      }
     }
   },
   "faults": {
@@ -1205,9 +1390,11 @@
     "completeIn60Seconds": "A legtöbb feladat 60 másodperc alatt elvégezhető",
     "recentActivity": "Legutóbbi tevékenység",
     "activity": {
-      "meterReadingSubmitted": "Mérőóra leolvasás beküldve",
-      "voteSubmitted": "Szavazat beküldve",
-      "faultReported": "Hiba jelentve"
+      "announcementPublished": "Új közlemény: {{title}}",
+      "faultReportedByYou": "Hibát jelentett: {{title}}",
+      "loading": "Tevékenység betöltése…",
+      "loadFailed": "Nem sikerült betölteni a legutóbbi tevékenységet.",
+      "empty": "Még nincs tevékenység. Itt jelennek meg az új közlemények és az Ön által jelentett hibák."
     },
     "stats": {
       "pendingFaults": "Függő hibák",
@@ -1225,7 +1412,8 @@
       "closeFilters": "Szűrők bezárása",
       "showHelp": "Súgó megjelenítése",
       "hint": "Fókuszáljon a feladatlistára a billentyűparancsok használatához"
-    }
+    },
+    "viewMyUnit": "Saját lakás megtekintése"
   },
   "admin": {
     "common": {
@@ -1508,6 +1696,28 @@
       "statusPending": "Függőben",
       "statusCancelled": "Megszakított",
       "statusSkipped": "Kihagyott"
+    },
+    "page": {
+      "title": "Kimutatások és elemzések",
+      "tabs": {
+        "dashboard": "Áttekintés",
+        "reports": "Kimutatások",
+        "schedules": "Ütemezések"
+      },
+      "newReport": "+ Új kimutatás",
+      "newSchedule": "+ Új ütemezés",
+      "keyMetrics": "Fő mutatók",
+      "trends": "Trendek",
+      "revenueTrend": "Bevételek alakulása",
+      "analytics": "Elemzések",
+      "monthlyPerformance": "Havi teljesítmény",
+      "buildingPerformance": "Épületek teljesítménye",
+      "savedReports": "Mentett kimutatások",
+      "noReports": "Még nem hozott létre kimutatást",
+      "createFirstReport": "Első kimutatás létrehozása",
+      "createdOn": "Létrehozva: {{date}}",
+      "public": "Nyilvános",
+      "createSchedule": "Ütemezés létrehozása"
     }
   },
   "settings": {
@@ -3023,7 +3233,7 @@
   },
   "accounting": {
     "title": "Kiállított számlák",
-    "subtitle": "Natív könyvelés MVP",
+    "subtitle": "A szervezet számlái, kifizetései és könyvelési bizonylatai",
     "createInvoice": "Számla létrehozása",
     "newInvoice": "Új számla",
     "createFailed": "A számla létrehozása nem sikerült",
@@ -3082,6 +3292,164 @@
         "requiredFields": "Töltse ki az összes kötelező mezőt",
         "invalidNumbers": "A mennyiségnek és az egységárnak érvényes számnak kell lennie"
       }
+    },
+    "paymentMatching": {
+      "title": "Fizetések párosítása",
+      "subtitle": "Ellenőrizze és hagyja jóvá a bankszámlakivonatokból javasolt párosításokat",
+      "statements": "Bankszámlakivonatok",
+      "uploadCsv": "CSV feltöltése",
+      "chooseFile": "Fájl kiválasztása",
+      "uploading": "Feltöltés…",
+      "uploadFailed": "A feltöltés sikertelen",
+      "noStatements": "Még nincs feltöltött kivonat",
+      "transactions": "Tranzakciók",
+      "selectStatement": "Válasszon kivonatot a tételek megtekintéséhez",
+      "noTransactions": "A kivonat nem tartalmaz tranzakciót",
+      "variableSymbol": "Változó szimbólum",
+      "counterpartyIban": "Partner IBAN",
+      "state": {
+        "unmatched": "Párosítatlan",
+        "suggested": "Javasolt",
+        "matched": "Párosítva"
+      },
+      "matchReview": "Párosítás ellenőrzése",
+      "selectTransaction": "Válasszon tranzakciót a javasolt számlák megtekintéséhez",
+      "confidence": "Egyezés mértéke",
+      "invoiceReference": "Számla",
+      "matchReason": "A javaslat oka",
+      "matchReasonText": "A javaslat a változó szimbólum egyezésén alapul; az egyező összeg és partner IBAN növeli az egyezés mértékét.",
+      "confirm": "Párosítás jóváhagyása",
+      "confirming": "Feldolgozás…",
+      "reject": "Nem egyezik",
+      "rejecting": "Elutasítás…",
+      "confirmed": "Párosítás jóváhagyva",
+      "linkedInvoice": "Kapcsolt számla:",
+      "noSuggestions": "Nincs aktív párosítási javaslat",
+      "actionFailed": "A művelet nem sikerült. Próbálja újra."
+    }
+  },
+  "aiChat": {
+    "title": "MI-asszisztens",
+    "subtitle": "Kérdezzen bármit az épületéről",
+    "welcomeTitle": "Miben segíthetek ma?",
+    "welcomeDescription": "Válaszolok az épülettel kapcsolatos kérdésekre, és segítek hibabejelentésben, szavazásban és sok másban.",
+    "suggestedQuestions": "Próbálja megkérdezni",
+    "inputPlaceholder": "Írja be üzenetét…",
+    "messageInput": "Üzenet beviteli mező",
+    "pressEnter": "Küldéshez nyomja meg az Entert",
+    "send": "Üzenet küldése",
+    "loading": "Betöltés…",
+    "messageLog": "Csevegés üzenetei",
+    "messageFrom": "Üzenet tőle: {{role}}",
+    "newConversation": "Új beszélgetés",
+    "noConversations": "Még nincs beszélgetés",
+    "startConversationHint": "Indítson új beszélgetést, hogy segítséget kapjon",
+    "untitledConversation": "Új csevegés",
+    "messageCount_one": "{{count}} üzenet",
+    "messageCount_other": "{{count}} üzenet",
+    "deleteConversation": "Beszélgetés törlése",
+    "confirmDelete": "Biztosan törli ezt a beszélgetést?",
+    "closeSidebar": "Oldalsáv bezárása",
+    "openSidebar": "Oldalsáv megnyitása",
+    "sendError": "Nem sikerült elküldeni az üzenetet. Próbálja újra.",
+    "confidence": {
+      "low": "Alacsony megbízhatóság",
+      "medium": "Közepes megbízhatóság",
+      "high": "Magas megbízhatóság"
+    },
+    "escalated": "Ehhez a kérdéshez emberi segítség kellhet",
+    "sources_one": "{{count}} forrás",
+    "sources_other": "{{count}} forrás",
+    "wasHelpful": "Hasznos volt?",
+    "helpful": "Megjelölés hasznosként",
+    "notHelpful": "Megjelölés nem hasznosként",
+    "responseTime": "Válaszidő: {{ms}} ms",
+    "suggested": {
+      "reportFault": "Hogyan jelenthetek be egy hibát?",
+      "upcomingVotes": "Milyen szavazások várhatók az épületben?",
+      "meterReadings": "Hogyan küldhetem be a mérőóra-állásokat?",
+      "buildingContacts": "Kik az épületem kapcsolattartói?",
+      "ownersMeeting": "Mikor lesz a következő tulajdonosi gyűlés?",
+      "paymentHistory": "Hol találom a fizetési előzményeimet?"
+    },
+    "categories": {
+      "faults": "Hibák",
+      "voting": "Szavazás",
+      "utilities": "Közművek és mérők",
+      "community": "Közösség",
+      "events": "Események",
+      "finance": "Pénzügyek"
+    }
+  },
+  "oauthGrants": {
+    "title": "Engedélyezett alkalmazások",
+    "loading": "Engedélyezett alkalmazások betöltése…",
+    "loadFailed": "Nem sikerült betölteni az engedélyezett alkalmazásokat. Próbálja újra.",
+    "retry": "Újra",
+    "description": "Ezek a külső alkalmazások hozzáférnek a fiókjához. A hozzáférést bármikor visszavonhatja – ezután az alkalmazásnak újra engedélyt kell kérnie.",
+    "empty": "Nincs engedélyezett külső alkalmazása.",
+    "authorized": "Engedélyezve:",
+    "permissions": "Jogosultságok:",
+    "scopesLabel": "Hatókörök: {{scopes}}",
+    "revoke": "Hozzáférés visszavonása",
+    "revokeFor": "Hozzáférés visszavonása: {{name}}",
+    "revoking": "Visszavonás…",
+    "cancel": "Mégse",
+    "confirmTitle": "Visszavonja a hozzáférést?",
+    "confirmMessage": "A(z) <strong>{{name}}</strong> hozzáférésének visszavonása érvényteleníti az összes aktív tokent. Az alkalmazás addig nem fér hozzá a fiókjához, amíg újra engedélyt nem ad.",
+    "revoked": "Hozzáférés visszavonva",
+    "revokedMessage": "A(z) {{name}} többé nem fér hozzá a fiókjához.",
+    "revokeFailed": "Nem sikerült visszavonni a hozzáférést",
+    "unexpected": "Váratlan hiba történt."
+  },
+  "gdprPrivacy": {
+    "title": "Adatvédelem és adatok",
+    "subtitle": "Kezelje adatvédelmi beállításait és adatait a GDPR szerint.",
+    "loading": "Adatvédelmi beállítások betöltése…",
+    "dismiss": "Bezárás",
+    "preferences": {
+      "title": "Adatvédelmi beállítások",
+      "visibility": "Profil láthatósága",
+      "visible": "Minden lakó számára látható",
+      "contactsOnly": "Csak a kapcsolatok számára látható",
+      "hidden": "Mindenki elől rejtett",
+      "visibilityHint": "Meghatározza, ki láthatja a profilját a lakók névjegyzékében.",
+      "showContact": "Elérhetőségek megjelenítése a profilon",
+      "showContactHint": "Bekapcsolva e-mail-címe és telefonszáma látható lesz a profilján.",
+      "save": "Beállítások mentése",
+      "saving": "Mentés…",
+      "saved": "Az adatvédelmi beállítások mentve",
+      "saveFailed": "Nem sikerült menteni a beállításokat"
+    },
+    "export": {
+      "title": "Az Ön adatai",
+      "description": "A GDPR 15. cikke alapján joga van hozzáférni személyes adataihoz. Kérje le az Önről tárolt összes adat másolatát.",
+      "request": "Adatexport kérése",
+      "requested": "Az adatexportot kérelmezte. Értesítjük, amikor elkészül.",
+      "requestFailed": "Nem sikerült adatexportot kérni",
+      "history": "Exportálási előzmények",
+      "download": "Letöltés",
+      "status": {
+        "pending": "Függőben",
+        "processing": "Feldolgozás alatt",
+        "completed": "Kész",
+        "failed": "Sikertelen"
+      }
+    },
+    "deletion": {
+      "title": "Fiók törlése",
+      "description": "A GDPR 17. cikke alapján joga van a törléshez („az elfeledtetéshez való jog”). A kérelem után fiókját és minden kapcsolódó adatát 30 napos türelmi idő elteltével véglegesen töröljük.",
+      "warningLabel": "Figyelem:",
+      "warning": "A türelmi idő után ez a művelet nem vonható vissza. Elveszíti hozzáférését minden adatához, üzenetéhez és fiókelőzményéhez.",
+      "request": "Fióktörlés kérése",
+      "confirmPrompt": "Fiókját és minden kapcsolódó adatát 30 napos türelmi idő után véglegesen töröljük. A türelmi idő után ez nem vonható vissza.\n\nA megerősítéshez írja be fiókja e-mail-címét:",
+      "emailMismatch": "A megadott e-mail-cím nem egyezik a fiókja e-mail-címével.",
+      "requested": "A fióktörlési kérelmet rögzítettük. 30 napon belül visszavonhatja.",
+      "requestFailed": "Nem sikerült fióktörlést kérni"
+    },
+    "errors": {
+      "loadSettings": "Nem sikerült betölteni az adatvédelmi beállításokat",
+      "loadHistory": "Nem sikerült betölteni az exportálási előzményeket"
     }
   }
 }

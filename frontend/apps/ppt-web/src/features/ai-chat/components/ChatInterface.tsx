@@ -140,7 +140,7 @@ export function ChatInterface({
     [messageFeedback]
   );
 
-  const suggestedQuestions = getDefaultSuggestedQuestions();
+  const suggestedQuestions = getDefaultSuggestedQuestions(t);
   const isSending = sendMessage.isPending || createSession.isPending;
   const showWelcome = !currentSessionId || messages.length === 0;
 

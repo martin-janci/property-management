@@ -584,12 +584,197 @@
       "listTitle": "Bookings",
       "bookFacility": "Book Facility",
       "empty": "No bookings found.",
-      "allCaughtUp": "All caught up! No pending bookings to review."
+      "allCaughtUp": "All caught up! No pending bookings to review.",
+      "status": {
+        "pending": "Pending approval",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled",
+        "completed": "Completed",
+        "no_show": "No show"
+      },
+      "allStatuses": "All statuses",
+      "statusLabel": "Booking status",
+      "from": "From:",
+      "to": "To:",
+      "duration": "Duration: {{duration}}",
+      "durationHours": "{{hours}}h",
+      "durationMinutes": "{{minutes}}m",
+      "durationHoursMinutes": "{{hours}}h {{minutes}}m",
+      "attendees": "Attendees: {{count}}",
+      "rejectionReason": "Rejection reason:",
+      "cancellationReason": "Cancellation reason:",
+      "depositPaid": "Deposit paid",
+      "viewDetails": "View details",
+      "approve": "Approve",
+      "reject": "Reject",
+      "cancelBooking": "Cancel booking",
+      "loadFailed": "Failed to load bookings",
+      "loadPendingFailed": "Failed to load pending bookings",
+      "cancelFailed": "Failed to cancel booking",
+      "approveFailed": "Failed to approve booking",
+      "rejectFailed": "Failed to reject booking",
+      "createFailed": "Failed to create booking",
+      "loadFacilityFailed": "Failed to load facility details",
+      "form": {
+        "location": "Location: {{location}}",
+        "capacity": "Capacity (people): {{count}}",
+        "fee": "Fee: {{fee}}/hour",
+        "maxDuration": "Max duration: {{hours}} h",
+        "requiresApproval": "This facility requires approval",
+        "date": "Date",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "selectTime": "Select time",
+        "unavailable": "(unavailable)",
+        "purpose": "Purpose of booking",
+        "purposePlaceholder": "e.g. team meeting, birthday party",
+        "attendeesCount": "Number of attendees",
+        "maxPlaceholder": "Max: {{count}}",
+        "notes": "Additional notes",
+        "notesPlaceholder": "Any special requirements or notes",
+        "durationLabel": "Duration:",
+        "hoursValue": "{{hours}} h",
+        "estimatedTotal": "Estimated total:",
+        "depositRequired": "Deposit required:",
+        "cancel": "Cancel",
+        "submitting": "Booking…",
+        "submitForApproval": "Submit for approval",
+        "bookNow": "Book now",
+        "errors": {
+          "selectDate": "Please select a date",
+          "selectStart": "Please select a start time",
+          "selectEnd": "Please select an end time",
+          "endAfterStart": "End time must be after start time",
+          "maxDuration": "Maximum booking duration is {{hours}} hours",
+          "maxCapacity": "Maximum capacity is {{count}}"
+        }
+      },
+      "cancelDialog": {
+        "title": "Cancel booking",
+        "confirm": "Are you sure you want to cancel this booking?",
+        "reason": "Reason for cancellation (optional)",
+        "reasonPlaceholder": "Let others know why you're cancelling…",
+        "keep": "Keep booking",
+        "submitting": "Cancelling…",
+        "submit": "Cancel booking"
+      },
+      "rejectDialog": {
+        "title": "Reject booking",
+        "subtitle": "Rejecting booking for: {{name}}",
+        "reason": "Reason for rejection *",
+        "reasonPlaceholder": "Please explain why this booking is being rejected…",
+        "reasonRequired": "Please provide a reason for rejection",
+        "cancel": "Cancel",
+        "submitting": "Rejecting…",
+        "submit": "Reject booking"
+      }
     },
     "errors": {
       "fetchFailedTitle": "Couldn't load facilities",
       "fetchFailedDescription": "Something went wrong while loading facilities. Please try again.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "createFailed": "Failed to create facility",
+      "updateFailed": "Failed to update facility",
+      "loadFailed": "Failed to load facility",
+      "unexpected": "An unexpected error occurred."
+    },
+    "title": "Facilities",
+    "addFacility": "Add facility",
+    "addFirstFacility": "Add the first facility",
+    "empty": "No facilities found.",
+    "createTitle": "Add new facility",
+    "editTitle": "Edit facility",
+    "notFound": "Facility not found",
+    "notBookable": "This facility is not available for booking",
+    "goBack": "Go back",
+    "types": {
+      "gym": "Gym",
+      "laundry": "Laundry",
+      "meeting_room": "Meeting room",
+      "party_room": "Party room",
+      "sauna": "Sauna",
+      "pool": "Pool",
+      "playground": "Playground",
+      "parking": "Parking",
+      "storage": "Storage",
+      "garden": "Garden",
+      "bbq": "BBQ area",
+      "bike_storage": "Bike storage",
+      "other": "Other"
+    },
+    "filters": {
+      "allTypes": "All types",
+      "typeLabel": "Facility type",
+      "bookableLabel": "Bookability",
+      "allFacilities": "All facilities",
+      "bookableOnly": "Bookable only",
+      "nonBookable": "Non-bookable"
+    },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{page}} of {{totalPages}}"
+    },
+    "card": {
+      "inactive": "Inactive",
+      "requiresApproval": "Requires approval",
+      "capacity": "Capacity: {{count}}",
+      "perHour": "{{fee}}/hr",
+      "viewDetails": "View details",
+      "bookNow": "Book now",
+      "edit": "Edit"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "form": {
+      "basicInfo": "Basic information",
+      "bookingRules": "Booking rules",
+      "pricing": "Pricing",
+      "amenities": "Amenities",
+      "name": "Name *",
+      "type": "Type *",
+      "description": "Description",
+      "location": "Location",
+      "locationPlaceholder": "e.g. ground floor, building A",
+      "capacity": "Capacity",
+      "capacityPlaceholder": "Maximum number of people",
+      "allowBooking": "Allow booking",
+      "active": "Active",
+      "requiresApproval": "Requires approval",
+      "maxBookingHours": "Max booking duration (hours)",
+      "maxAdvanceDays": "Max advance booking (days)",
+      "minAdvanceHours": "Min advance booking (hours)",
+      "availableFrom": "Available from",
+      "availableTo": "Available until",
+      "availableDays": "Available days",
+      "hourlyFee": "Hourly fee",
+      "hourlyFeePlaceholder": "e.g. 25.00",
+      "depositAmount": "Deposit amount",
+      "depositPlaceholder": "e.g. 50.00",
+      "amenityPlaceholder": "Add amenity (e.g. Wi-Fi, projector)",
+      "add": "Add",
+      "removeAmenity": "Remove {{name}}",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "update": "Save changes",
+      "create": "Create facility",
+      "errors": {
+        "nameRequired": "Name is required",
+        "typeRequired": "Facility type is required",
+        "availableToAfterFrom": "Available until must be after available from",
+        "mustBePositive": "Must be greater than 0",
+        "selectDay": "Select at least one available day",
+        "notNegative": "Cannot be negative"
+      }
     }
   },
   "faults": {
@@ -1496,9 +1681,11 @@
     "completeIn60Seconds": "Most tasks complete in under 60 seconds",
     "recentActivity": "Recent activity",
     "activity": {
-      "meterReadingSubmitted": "Meter reading submitted",
-      "voteSubmitted": "Vote submitted",
-      "faultReported": "Fault reported"
+      "announcementPublished": "New announcement: {{title}}",
+      "faultReportedByYou": "You reported a fault: {{title}}",
+      "loading": "Loading activity…",
+      "loadFailed": "Could not load recent activity.",
+      "empty": "No activity yet. New announcements and faults you report will appear here."
     },
     "stats": {
       "pendingFaults": "Pending faults",
@@ -1516,7 +1703,8 @@
       "closeFilters": "Close filters",
       "showHelp": "Show this help",
       "hint": "Focus the action list to use these shortcuts"
-    }
+    },
+    "viewMyUnit": "View my unit"
   },
   "neighbors": {
     "title": "Building Neighbors",
@@ -3513,7 +3701,23 @@
     "wasHelpful": "Was this helpful?",
     "helpful": "Mark as helpful",
     "notHelpful": "Mark as not helpful",
-    "responseTime": "Response time: {{ms}}ms"
+    "responseTime": "Response time: {{ms}}ms",
+    "suggested": {
+      "reportFault": "How do I report a maintenance issue?",
+      "upcomingVotes": "What are the upcoming building votes?",
+      "meterReadings": "How do I submit my meter readings?",
+      "buildingContacts": "Who are my building contacts?",
+      "ownersMeeting": "When is the next owners meeting?",
+      "paymentHistory": "How do I view my payment history?"
+    },
+    "categories": {
+      "faults": "Faults",
+      "voting": "Voting",
+      "utilities": "Utilities",
+      "community": "Community",
+      "events": "Events",
+      "finance": "Finance"
+    }
   },
   "admin": {
     "common": {
@@ -3796,6 +4000,28 @@
       "statusPending": "Pending",
       "statusCancelled": "Cancelled",
       "statusSkipped": "Skipped"
+    },
+    "page": {
+      "title": "Reports & analytics",
+      "tabs": {
+        "dashboard": "Dashboard",
+        "reports": "Reports",
+        "schedules": "Schedules"
+      },
+      "newReport": "+ New report",
+      "newSchedule": "+ New schedule",
+      "keyMetrics": "Key metrics",
+      "trends": "Trends",
+      "revenueTrend": "Revenue trend",
+      "analytics": "Analytics",
+      "monthlyPerformance": "Monthly performance",
+      "buildingPerformance": "Building performance",
+      "savedReports": "Saved reports",
+      "noReports": "No reports created yet",
+      "createFirstReport": "Create your first report",
+      "createdOn": "Created {{date}}",
+      "public": "Public",
+      "createSchedule": "Create schedule"
     }
   },
   "settings": {
@@ -5338,7 +5564,7 @@
   },
   "accounting": {
     "title": "Issued Invoices",
-    "subtitle": "Native accounting MVP",
+    "subtitle": "Invoices, payments and accounting records for your organization",
     "createInvoice": "Create Invoice",
     "newInvoice": "New Invoice",
     "createFailed": "Failed to create invoice",
@@ -5397,6 +5623,111 @@
         "requiredFields": "Please fill all required fields",
         "invalidNumbers": "Quantity and unit price must be valid numbers"
       }
+    },
+    "paymentMatching": {
+      "title": "Payment matching",
+      "subtitle": "Review and confirm matches from bank statements",
+      "statements": "Bank statements",
+      "uploadCsv": "Upload CSV",
+      "chooseFile": "Choose file",
+      "uploading": "Processing upload…",
+      "uploadFailed": "Upload failed",
+      "noStatements": "No statements uploaded yet",
+      "transactions": "Transactions",
+      "selectStatement": "Select a statement to view items",
+      "noTransactions": "This statement has no transactions",
+      "variableSymbol": "Variable symbol",
+      "counterpartyIban": "Counterparty IBAN",
+      "state": {
+        "unmatched": "Unmatched",
+        "suggested": "Suggested",
+        "matched": "Matched"
+      },
+      "matchReview": "Match review",
+      "selectTransaction": "Select a transaction to see suggested invoice matches",
+      "confidence": "Confidence score",
+      "invoiceReference": "Invoice reference",
+      "matchReason": "Match reason",
+      "matchReasonText": "Suggested from a variable symbol match; a matching amount and counterparty IBAN raise the score.",
+      "confirm": "Confirm payment match",
+      "confirming": "Processing…",
+      "reject": "Not a match",
+      "rejecting": "Rejecting…",
+      "confirmed": "Match confirmed",
+      "linkedInvoice": "Linked to invoice:",
+      "noSuggestions": "No active match suggestions",
+      "actionFailed": "The action could not be completed. Please try again."
+    }
+  },
+  "oauthGrants": {
+    "title": "Authorized applications",
+    "loading": "Loading authorized applications…",
+    "loadFailed": "Failed to load authorized applications. Please try again.",
+    "retry": "Retry",
+    "description": "These third-party applications have been granted access to your account. You can revoke access at any time — the application will need to request authorization again to regain access.",
+    "empty": "You have no authorized third-party applications.",
+    "authorized": "Authorized:",
+    "permissions": "Permissions:",
+    "scopesLabel": "Scopes: {{scopes}}",
+    "revoke": "Revoke access",
+    "revokeFor": "Revoke access for {{name}}",
+    "revoking": "Revoking…",
+    "cancel": "Cancel",
+    "confirmTitle": "Revoke access?",
+    "confirmMessage": "Revoking access for <strong>{{name}}</strong> will invalidate all active tokens. The application will no longer be able to access your account until you grant access again.",
+    "revoked": "Access revoked",
+    "revokedMessage": "{{name}} can no longer access your account.",
+    "revokeFailed": "Failed to revoke access",
+    "unexpected": "An unexpected error occurred."
+  },
+  "gdprPrivacy": {
+    "title": "Privacy & data settings",
+    "subtitle": "Manage your privacy preferences and data in accordance with GDPR.",
+    "loading": "Loading privacy settings…",
+    "dismiss": "Dismiss",
+    "preferences": {
+      "title": "Privacy preferences",
+      "visibility": "Profile visibility",
+      "visible": "Visible to all residents",
+      "contactsOnly": "Visible to contacts only",
+      "hidden": "Hidden from everyone",
+      "visibilityHint": "Controls who can see your profile in the resident directory.",
+      "showContact": "Show contact information on profile",
+      "showContactHint": "When enabled, your email and phone will be visible on your profile.",
+      "save": "Save preferences",
+      "saving": "Saving…",
+      "saved": "Privacy settings saved successfully",
+      "saveFailed": "Failed to save settings"
+    },
+    "export": {
+      "title": "Your data",
+      "description": "Under GDPR Article 15, you have the right to access your personal data. Request a copy of all data we hold about you.",
+      "request": "Request data export",
+      "requested": "Data export requested. You will be notified when it is ready.",
+      "requestFailed": "Failed to request data export",
+      "history": "Export history",
+      "download": "Download",
+      "status": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      }
+    },
+    "deletion": {
+      "title": "Delete account",
+      "description": "Under GDPR Article 17, you have the right to erasure (\"right to be forgotten\"). Requesting deletion will schedule your account and all associated data for permanent removal after a 30-day grace period.",
+      "warningLabel": "Warning:",
+      "warning": "This action cannot be undone after the grace period. You will lose access to all your data, messages, and account history.",
+      "request": "Request account deletion",
+      "confirmPrompt": "This will schedule your account and all associated data for permanent deletion after a 30-day grace period. This cannot be undone after the grace period.\n\nType your account email address to confirm:",
+      "emailMismatch": "The email you entered does not match your account email.",
+      "requested": "Account deletion requested. You have 30 days to cancel this request.",
+      "requestFailed": "Failed to request account deletion"
+    },
+    "errors": {
+      "loadSettings": "Failed to load privacy settings",
+      "loadHistory": "Failed to load export history"
     }
   }
 }

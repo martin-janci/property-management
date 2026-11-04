@@ -53,17 +53,22 @@ export function LeasesDashboardPage({
   onRenewLease,
   onTerminateLease,
 }: LeasesDashboardPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(i18n.language, {
       style: 'currency',
       currency,
     }).format(amount);
   };
 
+  // Locale-aware percent (sk → "0,0 %", en → "0.0%"); `value` is a 0..1 ratio.
   const formatPercentage = (value: number) => {
-    return `${(value * 100).toFixed(1)}%`;
+    return new Intl.NumberFormat(i18n.language, {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(value);
   };
 
   if (isLoading) {
