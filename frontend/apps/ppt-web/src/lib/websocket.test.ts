@@ -114,11 +114,13 @@ class MockWebSocket {
   onmessage: ((event: { data: string }) => void) | null = null;
 
   readonly url: string;
+  readonly protocols?: string | string[];
   readonly sent: string[] = [];
   readonly closeCalls: { code?: number; reason?: string }[] = [];
 
-  constructor(url: string) {
+  constructor(url: string, protocols?: string | string[]) {
     this.url = url;
+    this.protocols = protocols;
     MockWebSocket.instances.push(this);
   }
 
@@ -176,6 +178,42 @@ describe('WebSocketService heartbeat (regression: #ws-pong-timeout-drop)', () =>
     expect(MockWebSocket.instances).toHaveLength(1);
     // …and must still report itself connected.
     expect(service.getConnectionState()).toBe('connected');
+
+    service.disconnect();
+  });
+});
+
+describe('WebSocketService auth transport (security: JWT must not leak into URL)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    MockWebSocket.instances = [];
+    vi.stubGlobal('WebSocket', MockWebSocket);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it('never puts the JWT in the connection URL and carries it as a subprotocol', () => {
+    // Regression: the client used to append `?token=<jwt>` to the WS URL, which
+    // leaks the bearer token into api-server access logs / proxy logs (a single
+    // log line is enough for session takeover). The token must now travel in the
+    // `Sec-WebSocket-Protocol` handshake header as `bearer.<jwt>` instead.
+    const jwt = 'secret-jwt-token-value';
+    const service = new WebSocketService({ getToken: () => jwt });
+
+    service.connect();
+    expect(MockWebSocket.instances).toHaveLength(1);
+    const socket = MockWebSocket.instances[0];
+
+    // The token must NOT appear anywhere in the connection URL.
+    expect(socket.url).not.toContain(jwt);
+    expect(socket.url).not.toContain('token=');
+
+    // It must instead be offered as the `bearer.<jwt>` subprotocol, alongside
+    // the `ppt.v1` protocol the server echoes to complete the handshake.
+    expect(socket.protocols).toEqual([`bearer.${jwt}`, 'ppt.v1']);
 
     service.disconnect();
   });
