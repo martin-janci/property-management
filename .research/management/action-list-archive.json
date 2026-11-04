@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-11-03T16:38:28Z",
+  "archived_at": "2026-11-04T00:38:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -6170,6 +6170,52 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-vote-list-invalid-start-date",
+      "action": "mobile VotingScreen renders \"Invalid Date\" as every vote card's start date",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-03T06:25:58Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T00:32:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T06:25:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "9e5365c91c5b06525586251823d51d17e311ecbd",
+        "subject": "code-review-mobile-rn-vote-list-invalid-start-date: stop rendering Invalid Date as every vote card start date (#3230)",
+        "at": "2026-11-04T00:32:46Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-vote-quorum-nan-width",
+      "action": "mobile VotingScreen quorum bar width becomes NaN% when eligible_count is null/0",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-03T06:25:58Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T00:32:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T06:25:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "f01cbe6aa9bdaed4390ad30ff54a33b4a05a42ef",
+        "subject": "code-review-mobile-rn-vote-quorum-nan-width: guard VotingScreen quorum bar width against null/0 eligible_count (#3228)",
+        "at": "2026-11-04T00:32:46Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-votedetail-conditional-hooks",
       "action": "VoteDetailScreen calls data hooks after an early return (Rules of Hooks violation -> crash)",
       "owner_role": "pm-backend",
@@ -9338,6 +9384,29 @@
       }
     },
     {
+      "id": "code-review-reality-web-agent-profile-mock-data",
+      "action": "reality-web agent public profile (/realtor/[id]) renders hardcoded MOCK_AGENT for every id and its contact form fakes submit (no API call)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-03T08:26:12Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T00:32:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T08:26:12Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "d8121221dceaf40687d91b7964cb75328ddb84f4",
+        "subject": "code-review-reality-web-agent-profile-mock-data: wire /realtor/[id] to real data + honest contact (#3225)",
+        "at": "2026-11-04T00:32:46Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-auth-ctx-transient-logout",
       "action": "reality-web: auth-context checkSession treats ANY /users/me non-ok as auth failure → transient 5xx wipes session",
       "owner_role": "pm-backend",
@@ -9501,6 +9570,29 @@
       }
     },
     {
+      "id": "code-review-reality-web-feed-sync-silent-fail",
+      "action": "reality-web FeedImport 'Sync now' fires useSyncFeedSource mutation with no error handling — sync failures are silent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-03T08:26:12Z (score=2 conf=medium vector=bug) | dev-reconcile 2026-11-04T00:32:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T08:26:12Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "eb7b4d607aadae7bb534f3403a0834490708b513",
+        "subject": "code-review-reality-web-feed-sync-silent-fail: surface FeedImport Sync now errors to the user (#3226)",
+        "at": "2026-11-04T00:32:46Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-formatprice-hardcoded-locale",
       "action": "reality-web: ListingHeader & AgencyListings hardcode locale=en-US in formatPrice on a 4-language portal",
       "owner_role": "pm-backend",
@@ -9594,6 +9686,29 @@
         "merged_pr": 2895,
         "merged_at": "2026-08-30T22:32:15Z",
         "at": "2026-08-30T22:34:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-untranslated",
+      "action": "reality-web inquiries page renders raw inquiry.type enum via .replace('_',' ') — untranslated for sk/cs/de users",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-03T08:26:12Z (score=1 conf=medium vector=i18n) | dev-reconcile 2026-11-04T00:32:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T08:26:12Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "i18n"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "4e392bf238b6be13e0868250700e39a30440237f",
+        "subject": "code-review-reality-web-inquiry-type-untranslated: translate inquiry type via next-intl (#3224)",
+        "at": "2026-11-04T00:32:46Z"
       }
     },
     {
@@ -20707,6 +20822,32 @@
         "merged_pr": 3209,
         "merged_at": "2026-11-01T12:35:00Z",
         "at": "2026-11-01T14:26:13Z"
+      }
+    },
+    {
+      "id": "gh-issue-3223",
+      "action": "Follow-up: vote eligibility-reason i18n depends on brittle exact-English string matching against backend free-text (PR #3222) (Closes #3223)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-03T20:24:02Z (#3223) | dev-reconcile 2026-11-04T00:32:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-03T20:24:02Z",
+      "issue_ref": {
+        "number": 3223,
+        "url": "https://github.com/martin-janci/property-management/issues/3223",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "d6cb6731789bbc69c99be4c2f7b7756ed80dd468",
+        "subject": "gh-issue-3223: guard vote eligibility-reason i18n against backend copy-edits (#3229)",
+        "at": "2026-11-04T00:32:46Z"
       }
     },
     {
