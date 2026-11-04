@@ -11,6 +11,7 @@
  */
 
 import { bearerAuthHeader } from '../auth';
+import { authenticatedFetch } from '../lib/fetch';
 import type {
   CreateTemplateRequest,
   CreateTemplateResponse,
@@ -26,7 +27,7 @@ import type {
 const TEMPLATES_BASE = '/api/v1/templates';
 
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

@@ -8,6 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useTranslation } from 'react-i18next';
 import { resetLocalData } from '../services/resetLocalData';
 import { isJwtExpired } from '../utils/jwt';
+import { buildSessionUser, readTokenPair, TENANT_ID_KEY } from '../utils/session';
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
@@ -29,6 +30,8 @@ export interface User {
   buildingId?: string;
   unitId?: string;
   avatarUrl?: string;
+  organizationId?: string;
+  organizationName?: string;
 }
 
 export interface AuthState {
@@ -95,11 +98,15 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         }
 
         const data = await response.json();
-        // The api-server returns snake_case fields; map them to the camelCase
-        // names we use throughout the app state.
-        const accessToken = data.access_token;
-        const refreshToken = data.refresh_token;
-        const user = data.user;
+        // The api-server answers in camelCase (`accessToken`, `refreshToken`,
+        // `tenants[]`) and embeds no user object, so the user is derived from
+        // the token claims plus the active tenant.
+        const tokens = readTokenPair(data);
+        if (!tokens) {
+          throw new Error('Login failed');
+        }
+        const { accessToken, refreshToken } = tokens;
+        const { user, tenantId } = buildSessionUser(data, accessToken);
 
         // Store tokens securely
         await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
@@ -123,6 +130,14 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         await resetLocalData();
         queryClient.clear();
 
+        // Remember the organisation so tenant-scoped requests can send
+        // X-Tenant-ID (the access token has no `tenant_id` claim).
+        if (tenantId) {
+          await SecureStore.setItemAsync(TENANT_ID_KEY, tenantId);
+        } else {
+          await SecureStore.deleteItemAsync(TENANT_ID_KEY);
+        }
+
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -144,6 +159,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
       await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
+      await SecureStore.deleteItemAsync(TENANT_ID_KEY);
 
       // Wipe the whole query cache on logout (issue #2329). `useTenantId`
       // caches the tenant id forever (`staleTime: Infinity`) and nothing else
@@ -184,16 +200,18 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refresh_token: storedRefreshToken }),
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
       });
 
       if (!response.ok) {
         throw new Error('Token refresh failed');
       }
 
-      const data = await response.json();
-      const accessToken = data.access_token;
-      const newRefreshToken = data.refresh_token;
+      const tokens = readTokenPair(await response.json());
+      if (!tokens) {
+        throw new Error('Token refresh failed');
+      }
+      const { accessToken, refreshToken: newRefreshToken } = tokens;
 
       // Store new tokens
       await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);

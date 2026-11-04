@@ -49,7 +49,8 @@ export interface LoginResponse {
   refreshToken: string;
   /** Seconds until the access token expires */
   expiresIn?: number;
-  user: AuthUser;
+  /** Not returned by api-server login/refresh; derive via `buildSessionUser`. */
+  user?: AuthUser;
   /** Tenant memberships available to this user (used to derive user.role) */
   tenants?: TenantMembership[];
 }

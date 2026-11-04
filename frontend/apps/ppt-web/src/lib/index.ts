@@ -17,6 +17,7 @@ export {
   type TokenGetter,
 } from './api';
 // Error Handler (Story 79.3)
+export { type DescribedError, describeError, errorStatusCode } from './describeError';
 export {
   type ErrorResponse,
   formatValidationErrors,

@@ -57,16 +57,17 @@ function YesNo({
   value: AnswerValue | undefined;
   onChange: (v: AnswerValue) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 gap-3">
       {[
-        { label: 'Yes', val: true },
-        { label: 'No', val: false },
+        { id: 'yes', label: t('common.yes'), val: true },
+        { id: 'no', label: t('common.no'), val: false },
       ].map((opt) => {
         const selected = value === opt.val;
         return (
           <button
-            key={opt.label}
+            key={opt.id}
             type="button"
             onClick={() => onChange(opt.val)}
             className={`rounded-md border px-4 py-3 text-sm font-medium ${

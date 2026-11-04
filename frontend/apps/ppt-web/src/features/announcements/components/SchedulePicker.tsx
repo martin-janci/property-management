@@ -1,9 +1,12 @@
+import { useTranslation } from 'react-i18next';
+
 interface SchedulePickerProps {
   scheduledAt?: string;
   onScheduleChange: (date?: string) => void;
 }
 
 export function SchedulePicker({ scheduledAt, onScheduleChange }: SchedulePickerProps) {
+  const { t } = useTranslation();
   const minDate = new Date();
   minDate.setMinutes(minDate.getMinutes() + 5); // At least 5 minutes in the future
 
@@ -41,7 +44,7 @@ export function SchedulePicker({ scheduledAt, onScheduleChange }: SchedulePicker
   return (
     <div>
       <label htmlFor="schedule-picker" className="block text-sm font-medium text-gray-700 mb-2">
-        Schedule for Later (Optional)
+        {t('announcements.schedule.label')}
       </label>
       <div className="flex items-center gap-3">
         <input
@@ -58,13 +61,11 @@ export function SchedulePicker({ scheduledAt, onScheduleChange }: SchedulePicker
             onClick={() => onScheduleChange(undefined)}
             className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
           >
-            Clear
+            {t('announcements.schedule.clear')}
           </button>
         )}
       </div>
-      <p className="mt-1 text-xs text-gray-500">
-        Leave empty to save as draft, or select a date to schedule automatic publishing.
-      </p>
+      <p className="mt-1 text-xs text-gray-500">{t('announcements.schedule.hint')}</p>
     </div>
   );
 }

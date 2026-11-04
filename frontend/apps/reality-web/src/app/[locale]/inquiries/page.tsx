@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { inquiryTypeLabel } from '@/lib/inquiry-type';
 
 // Status labels are resolved via next-intl (`pages.inquiries.status.<status>`);
 // only the presentational colors live here.
@@ -64,7 +65,8 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
               {inquiry.listingTitle}
             </Link>
             <p className="inquiry-date">
-              {new Date(inquiry.createdAt).toLocaleDateString()} • {inquiry.type.replace('_', ' ')}
+              {new Date(inquiry.createdAt).toLocaleDateString()} •{' '}
+              {inquiryTypeLabel(t, inquiry.type)}
             </p>
           </div>
         </div>
