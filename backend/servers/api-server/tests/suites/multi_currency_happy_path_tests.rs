@@ -3,11 +3,11 @@
 //! Exercises 20+ different endpoints covering currency configuration, exchange rate management,
 //! cross-currency transactions, cross-border lease management, reporting, and dashboard.
 //!
-//! Auth note: every handler in `routes/multi_currency.rs` derives the org from
-//! `AuthUser.tenant_id`, which is read from the JWT `tenant_id` claim — NOT from
-//! the `X-Tenant-ID` header or `organization_members`. A token minted by the
-//! login flow carries no tenant claim, so we mint one directly here (the same
-//! pattern as `analytics_owner_success_tests.rs`).
+//! Auth note: org-scoped handlers in `routes/multi_currency.rs` resolve the
+//! org through `ValidatedTenantExtractor` (the `X-Tenant-ID` header plus an
+//! active `organization_members` row; the role comes from the DB), and
+//! mutations require a manager-class role. Exchange-rate writes are global and
+//! require a platform principal (`users.principal_kind`). The test seeds both.
 
 use axum::http::StatusCode;
 use chrono::Utc;
@@ -17,7 +17,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::common::{TestApp, TestConfig};
+use crate::common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT mint — tenant-scoped access token (AuthUser reads `tenant_id` from claims)
@@ -92,6 +92,20 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let email = format!("mc-{}@example.com", Uuid::new_v4());
     let user_id = seed_user(&app.pool, &email).await;
     let token = mint(user_id, &email, org_id);
+    // Handlers resolve the org from `ValidatedTenantExtractor` (X-Tenant-ID +
+    // active membership, role from the DB). Exchange rates are global and
+    // writable only by a platform principal (`users.principal_kind`).
+    seed_membership(&app.pool, org_id, user_id, "manager").await;
+    let platform_email = format!("mc-platform-{}@example.com", Uuid::new_v4());
+    let platform_user = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+           VALUES ($1, 'hash', 'MC Platform', 'active', NOW(), 'platform') RETURNING id"#,
+    )
+    .bind(&platform_email)
+    .fetch_one(&app.pool)
+    .await
+    .expect("seed platform user");
+    let platform_token = mint(platform_user, &platform_email, org_id);
 
     // Seed building
     let building_id = sqlx::query_scalar::<_, Uuid>(
@@ -123,6 +137,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.post("/api/v1/multi-currency/config")
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&create_config_payload)
                 .build(),
         )
@@ -137,6 +152,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.put("/api/v1/multi-currency/config")
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&update_config_payload)
                 .build(),
         )
@@ -148,6 +164,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/config")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -169,6 +186,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.post("/api/v1/multi-currency/properties")
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&create_prop_payload)
                 .build(),
         )
@@ -183,6 +201,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.put(&format!("/api/v1/multi-currency/properties/{building_id}"))
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&update_prop_payload)
                 .build(),
         )
@@ -194,6 +213,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get(&format!("/api/v1/multi-currency/properties/{building_id}"))
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -204,6 +224,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/properties")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -224,7 +245,8 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             app.post("/api/v1/multi-currency/rates")
-                .bearer(&token)
+                .bearer(&platform_token)
+                .tenant(org_id)
                 .json(&create_rate_payload)
                 .build(),
         )
@@ -236,6 +258,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/rates?from_currency=EUR&to_currency=USD")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -246,6 +269,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/rates/latest?from_currency=EUR&to_currency=USD")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -262,7 +286,8 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     let resp = app
         .execute(
             app.post("/api/v1/multi-currency/rates/override")
-                .bearer(&token)
+                .bearer(&platform_token)
+                .tenant(org_id)
                 .json(&override_payload)
                 .build(),
         )
@@ -274,6 +299,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.post("/api/v1/multi-currency/rates/fetch")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -307,6 +333,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.post("/api/v1/multi-currency/transactions")
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&create_tx_payload)
                 .build(),
         )
@@ -320,6 +347,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get(&format!("/api/v1/multi-currency/transactions/{tx_id}"))
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -334,6 +362,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.put(&format!("/api/v1/multi-currency/transactions/{tx_id}/rate"))
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&update_rate_payload)
                 .build(),
         )
@@ -345,6 +374,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/transactions")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -355,7 +385,29 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
     // ========================================================================
 
     // 5.1 POST /api/v1/multi-currency/cross-border -> create_cross_border_lease (200)
-    let lease_id = Uuid::new_v4();
+    // The cross-border record must reference a lease of the caller's org.
+    let unit_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO units (building_id, designation) VALUES ($1, 'MC-1') RETURNING id",
+    )
+    .bind(building_id)
+    .fetch_one(&app.pool)
+    .await
+    .expect("seed unit");
+    let lease_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO leases \
+             (organization_id, unit_id, landlord_name, tenant_name, tenant_email, \
+              start_date, end_date, term_months, monthly_rent, security_deposit, \
+              status, created_by) \
+         VALUES ($1,$2,'Landlord','Tenant','tenant@test.local', \
+                 CURRENT_DATE, CURRENT_DATE + 365, 12, 800.00, 1600.00, \
+                 'active',$3) RETURNING id",
+    )
+    .bind(org_id)
+    .bind(unit_id)
+    .bind(user_id)
+    .fetch_one(&app.pool)
+    .await
+    .expect("seed lease");
     let create_lease_payload = json!({
         "lease_id": lease_id,
         "property_country": "SK",
@@ -374,6 +426,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.post("/api/v1/multi-currency/cross-border")
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&create_lease_payload)
                 .build(),
         )
@@ -389,6 +442,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.put(&format!("/api/v1/multi-currency/cross-border/{lease_id}"))
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&update_lease_payload)
                 .build(),
         )
@@ -400,6 +454,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get(&format!("/api/v1/multi-currency/cross-border/{lease_id}"))
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -410,6 +465,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/cross-border")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -420,6 +476,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/cross-border/compliance/SK")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -445,6 +502,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.post("/api/v1/multi-currency/reports/configs")
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&create_report_config_payload)
                 .build(),
         )
@@ -458,6 +516,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/reports/configs")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -474,6 +533,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.post("/api/v1/multi-currency/reports/generate")
                 .bearer(&token)
+                .tenant(org_id)
                 .json(&generate_payload)
                 .build(),
         )
@@ -485,6 +545,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/reports/snapshots")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -495,6 +556,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/reports/exposure")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -509,6 +571,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/dashboard")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
@@ -519,6 +582,7 @@ async fn multi_currency_endpoints_happy_path(pool: PgPool) {
         .execute(
             app.get("/api/v1/multi-currency/statistics")
                 .bearer(&token)
+                .tenant(org_id)
                 .build(),
         )
         .await;
