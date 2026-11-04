@@ -879,6 +879,89 @@ impl UnitRepository {
         Ok(count > 0)
     }
 
+    /// Whether `unit_id` is a unit of `org_id` (via its building) that
+    /// `user_id` is currently linked to as an active owner or a current
+    /// resident. Used to stop a member from binding resources (e.g. a voice
+    /// device) to another resident's unit or to a unit of another org.
+    pub async fn is_user_linked_to_unit_in_org<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        unit_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM units u
+                JOIN buildings b ON b.id = u.building_id
+                WHERE u.id = $2
+                  AND b.organization_id = $1
+                  AND (
+                    EXISTS (
+                        SELECT 1 FROM unit_owners uo
+                        WHERE uo.unit_id = u.id
+                          AND uo.user_id = $3
+                          AND uo.status = 'active'
+                    )
+                    OR EXISTS (
+                        SELECT 1 FROM unit_residents ur
+                        WHERE ur.unit_id = u.id
+                          AND ur.user_id = $3
+                          AND ur.end_date IS NULL
+                    )
+                  )
+            )
+            "#,
+        )
+        .bind(org_id)
+        .bind(unit_id)
+        .bind(user_id)
+        .fetch_one(executor)
+        .await
+    }
+
+    /// [`Self::is_user_linked_to_unit_in_org`] on the repository's own pool,
+    /// for handlers that have no RLS-context connection.
+    pub async fn is_user_linked_to_unit_in_org_pooled(
+        &self,
+        org_id: Uuid,
+        unit_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        self.is_user_linked_to_unit_in_org(&self.pool, org_id, unit_id, user_id)
+            .await
+    }
+
+    /// Whether `unit_id` belongs to a building of `org_id`.
+    pub async fn unit_belongs_to_org<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        unit_id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM units u
+                JOIN buildings b ON b.id = u.building_id
+                WHERE u.id = $2 AND b.organization_id = $1
+            )
+            "#,
+        )
+        .bind(org_id)
+        .bind(unit_id)
+        .fetch_one(executor)
+        .await
+    }
+
     /// Get units owned by a user.
     pub async fn get_user_units(&self, user_id: Uuid) -> Result<Vec<UnitSummary>, SqlxError> {
         let units = sqlx::query_as::<_, UnitSummary>(

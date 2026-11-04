@@ -156,6 +156,8 @@ pub struct OrganizationIntegration {
     pub integration_id: Uuid,
     pub status: String,
     pub configuration: Option<serde_json::Value>,
+    /// Stored integration credentials are never sent to API clients.
+    #[serde(skip_serializing)]
     pub credentials_encrypted: Option<String>,
     pub enabled: bool,
     pub last_sync_at: Option<DateTime<Utc>>,
@@ -670,7 +672,10 @@ pub struct PreBuiltIntegrationConnection {
     pub integration_type: String,
     pub status: String,
     pub configuration: serde_json::Value,
+    /// Stored OAuth tokens are never sent to API clients.
+    #[serde(skip_serializing)]
     pub access_token_encrypted: Option<String>,
+    #[serde(skip_serializing)]
     pub refresh_token_encrypted: Option<String>,
     pub token_expires_at: Option<DateTime<Utc>>,
     pub last_sync_at: Option<DateTime<Utc>>,
@@ -1015,4 +1020,51 @@ pub struct ApiEcosystemStatistics {
     pub data_transferred_bytes: i64,
     pub average_sync_duration_ms: f64,
     pub error_rate: f64,
+}
+
+#[cfg(test)]
+mod credential_serialization_tests {
+    use super::*;
+
+    #[test]
+    fn stored_tokens_and_credentials_are_never_serialized() {
+        let now = Utc::now();
+        let conn = PreBuiltIntegrationConnection {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::new_v4(),
+            integration_type: "quickbooks".into(),
+            status: "connected".into(),
+            configuration: serde_json::json!({}),
+            access_token_encrypted: Some("secret-access".into()),
+            refresh_token_encrypted: Some("secret-refresh".into()),
+            token_expires_at: None,
+            last_sync_at: None,
+            last_error: None,
+            sync_enabled: true,
+            created_by: Uuid::new_v4(),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_value(&conn).unwrap();
+        assert!(json.get("access_token_encrypted").is_none());
+        assert!(json.get("refresh_token_encrypted").is_none());
+        assert!(!json.to_string().contains("secret-"));
+
+        let integ = OrganizationIntegration {
+            id: Uuid::new_v4(),
+            organization_id: Uuid::new_v4(),
+            integration_id: Uuid::new_v4(),
+            status: "active".into(),
+            configuration: None,
+            credentials_encrypted: Some("secret-creds".into()),
+            enabled: true,
+            last_sync_at: None,
+            last_error: None,
+            installed_by: Uuid::new_v4(),
+            installed_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_value(&integ).unwrap();
+        assert!(json.get("credentials_encrypted").is_none());
+    }
 }

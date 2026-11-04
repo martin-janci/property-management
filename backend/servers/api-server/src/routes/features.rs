@@ -73,8 +73,14 @@ pub struct PreferenceResponse {
 // ==================== Helper Functions ====================
 
 /// Extract user context from headers.
-/// Uses JWT token validation to extract user identity.
-fn extract_user_context(
+///
+/// The user comes from the validated access token. The organization comes
+/// from the `X-Tenant-ID` header (what the web/mobile clients send — login
+/// tokens carry no org claim) or, for tokens minted for one org, the `org_id`
+/// claim; if both are present they must agree. SECURITY: the caller must be an
+/// active member of that organization (checked in the database), and the role
+/// is the membership `role_type`, never a token claim.
+async fn extract_user_context(
     headers: &axum::http::HeaderMap,
     state: &AppState,
 ) -> Result<UserContext, (StatusCode, Json<ErrorResponse>)> {
@@ -124,20 +130,52 @@ fn extract_user_context(
         )
     })?;
 
-    // Parse org_id from claims if present
-    let org_id: Uuid = claims
-        .org_id
-        .as_ref()
-        .and_then(|id| id.parse().ok())
+    let header_org: Option<Uuid> = headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse().ok());
+    let claim_org: Option<Uuid> = claims.org_id.as_ref().and_then(|id| id.parse().ok());
+    if let (Some(h), Some(c)) = (header_org, claim_org) {
+        if h != c {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new("TENANT_MISMATCH", "Tenant mismatch")),
+            ));
+        }
+    }
+    let org_id = header_org.or(claim_org).ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "MISSING_ORG",
+                "Organization context required",
+            )),
+        )
+    })?;
+
+    // Active membership + role from the database (get_user_role_type only
+    // returns active memberships).
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to verify organization membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?
         .ok_or_else(|| {
             (
-                StatusCode::BAD_REQUEST,
+                StatusCode::FORBIDDEN,
                 Json(ErrorResponse::new(
-                    "MISSING_ORG",
-                    "Organization context required",
+                    "NOT_MEMBER",
+                    "You are not a member of this organization",
                 )),
             )
         })?;
+    let role = common::TenantRole::from_role_type(&role_type);
 
     // User type and role_id would typically come from database lookup
     // For now, default to "user" type and no specific role
@@ -146,6 +184,7 @@ fn extract_user_context(
         org_id,
         user_type: "user".to_string(),
         role_id: None,
+        is_manager: role.is_some_and(|r| r.is_manager()),
     })
 }
 
@@ -155,6 +194,8 @@ struct UserContext {
     org_id: Uuid,
     user_type: String,
     role_id: Option<Uuid>,
+    /// Manager-class role in `org_id` (from the membership row).
+    is_manager: bool,
 }
 
 // ==================== Route Handlers ====================
@@ -185,7 +226,7 @@ async fn get_resolved_features(
     headers: axum::http::HeaderMap,
     Query(query): Query<ResolvedFeaturesQuery>,
 ) -> Result<Json<ResolvedFeaturesResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state)?;
+    let ctx = extract_user_context(&headers, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -231,7 +272,7 @@ async fn check_feature(
     headers: axum::http::HeaderMap,
     Path(key): Path<String>,
 ) -> Result<Json<FeatureCheckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state)?;
+    let ctx = extract_user_context(&headers, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -273,7 +314,7 @@ async fn get_upgrade_options(
     Path(key): Path<String>,
 ) -> Result<Json<UpgradeOptionsResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Verify authentication
-    let _ = extract_user_context(&headers, &state)?;
+    let _ = extract_user_context(&headers, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -315,7 +356,7 @@ async fn set_feature_preference(
     Path(key): Path<String>,
     Json(body): Json<SetFeaturePreference>,
 ) -> Result<Json<PreferenceResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state)?;
+    let ctx = extract_user_context(&headers, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -418,7 +459,7 @@ async fn log_feature_event(
     headers: axum::http::HeaderMap,
     Json(body): Json<LogFeatureEvent>,
 ) -> Result<Json<LogEventResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let ctx = extract_user_context(&headers, &state)?;
+    let ctx = extract_user_context(&headers, &state).await?;
 
     let service = FeatureService::new(state.db.clone());
 
@@ -468,13 +509,23 @@ async fn get_feature_stats(
     Path(feature_id): Path<Uuid>,
     Query(query): Query<FeatureStatsQuery>,
 ) -> Result<Json<FeatureStatsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify authentication (in production, would also check for admin role)
-    let _ = extract_user_context(&headers, &state)?;
+    // Usage analytics are a manager view, and only of the caller's own org:
+    // the shared feature_usage_events table holds every tenant's events.
+    let ctx = extract_user_context(&headers, &state).await?;
+    if !ctx.is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager-level access required",
+            )),
+        ));
+    }
 
     let analytics_repo = FeatureAnalyticsRepository::new(state.db.clone());
 
     let stats = analytics_repo
-        .get_feature_stats(feature_id, query.start_date, query.end_date)
+        .get_feature_stats_for_org(feature_id, ctx.org_id, query.start_date, query.end_date)
         .await
         .map_err(|e| {
             (

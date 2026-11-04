@@ -500,8 +500,10 @@ pub async fn get_organization(
         .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
-        Ok(Some(_)) => {}
-        Ok(None) => {
+        // Only an *active* membership counts: suspended / pending / invited
+        // rows are returned by find_by_org_and_user_rls (status != 'removed').
+        Ok(Some(m)) if m.status == "active" => {}
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::FORBIDDEN,
@@ -609,8 +611,10 @@ pub async fn update_organization(
         .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
-        Ok(Some(m)) => m,
-        Ok(None) => {
+        // Only an *active* membership counts (suspended / pending rows are
+        // returned by find_by_org_and_user_rls, which only skips 'removed').
+        Ok(Some(m)) if m.status == "active" => m,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::FORBIDDEN,
@@ -769,8 +773,10 @@ pub async fn delete_organization(
         .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
-        Ok(Some(m)) => m,
-        Ok(None) => {
+        // Only an *active* membership counts (suspended / pending rows are
+        // returned by find_by_org_and_user_rls, which only skips 'removed').
+        Ok(Some(m)) if m.status == "active" => m,
+        Ok(_) => {
             rls.release().await;
             return Err((
                 StatusCode::FORBIDDEN,
