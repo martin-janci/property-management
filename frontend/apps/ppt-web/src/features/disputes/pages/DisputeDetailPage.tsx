@@ -65,7 +65,10 @@ export interface DisputeDetail {
 }
 
 interface DisputeDetailPageProps {
-  dispute: DisputeDetail;
+  /** Undefined while loading, after a failed load, or for an unknown id. */
+  dispute: DisputeDetail | undefined;
+  /** The dispute query failed (403, 5xx, network). */
+  isError?: boolean;
   parties: DisputeParty[];
   evidence: DisputeEvidence[];
   timeline: TimelineEntry[];
@@ -134,7 +137,46 @@ const priorityColors: Record<DisputePriority, string> = {
   urgent: 'text-red-600 font-bold',
 };
 
-export function DisputeDetailPage({
+/**
+ * Dispute detail page. Shows loading, error and not-found states before any
+ * `dispute.*` field is read — reading `dispute.status` while the dispute was
+ * still undefined crashed the page when its query failed.
+ */
+export function DisputeDetailPage(props: DisputeDetailPageProps) {
+  const { dispute, isLoading, isError, onBack } = props;
+  const { t } = useTranslation();
+
+  if (!dispute) {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center py-12" role="status">
+          <Spinner size="lg" color="blue" />
+        </div>
+      );
+    }
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <h1 className="text-xl font-semibold text-gray-900">
+          {isError ? t('errors.errorLoadingDispute') : t('errors.disputeNotFound')}
+        </h1>
+        <p className="mt-2 text-sm text-gray-500">
+          {isError ? t('errors.disputeLoadError') : t('errors.disputeNotFoundDesc')}
+        </p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="mt-6 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+        >
+          {t('common.backToDisputes')}
+        </button>
+      </div>
+    );
+  }
+
+  return <DisputeDetailContent {...props} dispute={dispute} />;
+}
+
+function DisputeDetailContent({
   dispute,
   parties,
   evidence,
@@ -159,7 +201,7 @@ export function DisputeDetailPage({
   onSendReminder,
   onEscalate,
   onNavigateToMediation,
-}: DisputeDetailPageProps) {
+}: DisputeDetailPageProps & { dispute: DisputeDetail }) {
   const { t, i18n } = useTranslation();
   const [showProposeDialog, setShowProposeDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);

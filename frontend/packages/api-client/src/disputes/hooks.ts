@@ -51,6 +51,8 @@ export function useDisputes(organizationId: string, query?: DisputeListQuery) {
   return useQuery({
     queryKey: disputeKeys.list(organizationId, query),
     queryFn: () => api.listDisputes(organizationId, query),
+    // No organization yet (e.g. while auth restores): don't fetch.
+    enabled: !!organizationId,
     staleTime: 30_000,
   });
 }

@@ -34,7 +34,6 @@ import type {
   DisputeSummary,
   DisputeStatus as UiDisputeStatus,
 } from '../../features/disputes/components/DisputeCard';
-import type { DisputeDetail as UiDisputeDetail } from '../../features/disputes/pages/DisputeDetailPage';
 import { FileDisputePageRoute } from '../../features/disputes/pages/FileDisputePageRoute';
 import { mapDisputeDetailForUi } from '../../features/disputes/utils/mapDisputeDetail';
 import { DisputeDetailPage, DisputesPage, MediationWorkspacePage } from '../lazyRoutes';
@@ -57,12 +56,10 @@ function DisputesPageRoute() {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  // Require organization context for disputes
-  if (!user?.organizationId) {
-    return <AuthRequiredGate />;
-  }
-
-  const organizationId = user.organizationId;
+  // Every hook runs before the organization gate below: returning early
+  // first changed the hook count between renders and crashed the page
+  // ("Rendered more hooks than during the previous render").
+  const organizationId = user?.organizationId ?? '';
 
   // Filter state for API query. The UI status/category/priority values are the
   // same strings the backend `GET /api/v1/disputes` list filters on.
@@ -97,6 +94,11 @@ function DisputesPageRoute() {
       });
     }
   }, [error, showToast, t]);
+
+  // Require organization context for disputes
+  if (!organizationId) {
+    return <AuthRequiredGate />;
+  }
 
   // Transform API response to match component interface
   const disputes: DisputeSummary[] = data?.data ?? [];
@@ -234,8 +236,9 @@ function DisputeDetailRoute() {
 
   return (
     <DisputeDetailPage
-      // The page shows a spinner until the dispute has loaded.
-      dispute={ui.dispute as UiDisputeDetail}
+      // The page renders loading / error / not-found itself while undefined.
+      dispute={ui.dispute}
+      isError={!!error}
       parties={ui.parties}
       evidence={ui.evidence}
       timeline={ui.timeline}
@@ -244,7 +247,7 @@ function DisputeDetailRoute() {
       isManager={isManagerRole(user?.role)}
       isParty={ui.isParty}
       isMediator={ui.isMediator}
-      isLoading={!ui.dispute || isLoading || timelineLoading || evidenceLoading}
+      isLoading={isLoading || timelineLoading || evidenceLoading}
       currentUserId={user?.id}
       onBack={() => navigate('/disputes')}
       onUpdateStatus={(status, reason) =>
