@@ -4,11 +4,9 @@
  * Configuration UI for notification digests - bundled notification summaries.
  */
 
-import type { DayOfWeek, DigestConfig, NotificationCategory } from '@ppt/api-client';
+import type { DayOfWeek, DigestConfig } from '@ppt/api-client';
 import {
-  ALL_CATEGORIES,
   ALL_DAYS,
-  CATEGORY_LABELS,
   DAY_FULL_LABELS,
   DIGEST_OPTIONS,
   FREQUENCY_DESCRIPTIONS,
@@ -24,17 +22,6 @@ interface DigestPreferencesProps {
 
 export function DigestPreferences({ config, loading, onUpdate }: DigestPreferencesProps) {
   const { t } = useTranslation();
-  const handleCategoryToggle = (category: NotificationCategory) => {
-    const newCategories = config.includeCategories.includes(category)
-      ? config.includeCategories.filter((c) => c !== category)
-      : [...config.includeCategories, category];
-    onUpdate({ includeCategories: newCategories });
-  };
-
-  const categoryLabel = (category: NotificationCategory) =>
-    t(`settings.notifications.advanced.categories.${category}.label`, {
-      defaultValue: CATEGORY_LABELS[category],
-    });
   const dayLabel = (day: DayOfWeek) =>
     t(`settings.notifications.advanced.days.${day}`, { defaultValue: DAY_FULL_LABELS[day] });
 
@@ -193,46 +180,9 @@ export function DigestPreferences({ config, loading, onUpdate }: DigestPreferenc
             <p className="text-sm text-blue-800">{getNextDeliveryText()}</p>
           </div>
 
-          {/* Categories to include */}
-          <fieldset className="border-0 p-0 m-0">
-            <legend className="block text-sm font-medium text-gray-700 mb-2">
-              {t('settings.notifications.advanced.digest.include')}
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {ALL_CATEGORIES.map((category) => {
-                const isSelected = config.includeCategories.includes(category);
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => handleCategoryToggle(category)}
-                    disabled={loading}
-                    className={`
-                      px-3 py-1.5 rounded-full text-xs font-medium transition-colors
-                      ${
-                        isSelected
-                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                      }
-                      ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    `}
-                  >
-                    {categoryLabel(category)}
-                  </button>
-                );
-              })}
-            </div>
-            {/* Empty array = no filter = all categories included in digest */}
-            <p className="text-xs text-gray-500 mt-2">
-              {config.includeCategories.length === 0
-                ? t('settings.notifications.advanced.digest.allCategories')
-                : t('settings.notifications.advanced.digest.categoriesSelected', {
-                    selected: config.includeCategories.length,
-                    total: ALL_CATEGORIES.length,
-                  })}
-            </p>
-          </fieldset>
+          <p className="text-xs text-gray-500">
+            The digest summarises notifications from all categories.
+          </p>
         </div>
       )}
     </div>

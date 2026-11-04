@@ -1534,6 +1534,20 @@ export type OrganizationsInviteMemberRequest = {
 };
 
 /**
+ * List organization members response (mirrors api-server `ListMembersResponse`)
+ */
+export type OrganizationsListOrganizationMembersResponse = {
+    /**
+     * Members
+     */
+    members: Array<OrganizationsOrganizationMemberListItem>;
+    /**
+     * Total count
+     */
+    total: number;
+};
+
+/**
  * Member status
  */
 export type OrganizationsMemberStatus = 'active' | 'invited' | 'suspended';
@@ -1682,6 +1696,40 @@ export type OrganizationsOrganizationMember = {
      * Membership status
      */
     status: OrganizationsMemberStatus;
+};
+
+/**
+ * Organization member as returned by the member list endpoint (snake_case, mirrors api-server `MemberResponse`)
+ */
+export type OrganizationsOrganizationMemberListItem = {
+    /**
+     * User ID
+     */
+    user_id: SharedUuid;
+    /**
+     * User name
+     */
+    name: string;
+    /**
+     * User email
+     */
+    email: string;
+    /**
+     * Role ID
+     */
+    role_id: SharedUuid | null;
+    /**
+     * Role name
+     */
+    role_name: string;
+    /**
+     * Role type
+     */
+    role_type: string;
+    /**
+     * Joined timestamp (RFC 3339)
+     */
+    joined_at: string | null;
 };
 
 /**
@@ -5840,18 +5888,9 @@ export type OrganizationsApiListMembersError = OrganizationsApiListMembersErrors
 
 export type OrganizationsApiListMembersResponses = {
     /**
-     * Paginated response wrapper
+     * The request has succeeded.
      */
-    200: {
-        /**
-         * Array of items
-         */
-        data: Array<OrganizationsOrganizationMember>;
-        /**
-         * Pagination metadata
-         */
-        pagination: SharedPaginationMeta;
-    };
+    200: OrganizationsListOrganizationMembersResponse;
 };
 
 export type OrganizationsApiListMembersResponse = OrganizationsApiListMembersResponses[keyof OrganizationsApiListMembersResponses];
